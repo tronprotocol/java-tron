@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!-- Be sure to flush latest logs on exit -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/tron.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover hourly -->
+            <fileNamePattern>./logs/tron-%d{yyyy-MM-dd-'h'HH}.log.zip
+            </fileNamePattern>
+            <!-- ~1 month -->
+            <maxHistory>720</maxHistory>
+            <totalSizeCap>50GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>TRACE</level>
+        </filter>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
+        <discardingThreshold>0</discardingThreshold>
+        <!-- Default is 256 -->
+        <!-- Logger will block incoming events (log calls) until queue will free some space -->
+        <!-- (the smaller value -> flush occurs often) -->
+        <queueSize>100</queueSize>
+
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="ASYNC"/>
+    </root>
+
+    <logger name="consensus" level="INFO"/>
+    <logger name="example" level="INFO"/>
+    <logger name="configer" level="INFO"/>
+    <logger name="transaction" level="INFO"/>
+    <logger name="kafka" level="INFO"/>
+    <logger name="wallet" level="INFO"/>
+    <logger name="db" level="INFO"/>
+    <logger name="command" level="INFO"/>
+    <logger name="UTXOSet" level="INFO"/>
+    <logger name="TransactionMessageHandler" level="INFO"/>
+    <logger name="BlockMessageHandler" level="INFO"/>
+    <logger name="BlockStores" level="INFO"/>
+    <logger name="BlockChain" level="INFO"/>
+
+</configuration>
+

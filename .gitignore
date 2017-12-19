@@ -1,0 +1,28 @@
+# IDEA
+.idea
+*iml
+.DS_Store
+
+# gradle
+.gradle
+build
+gradle
+gradlew
+gradlew.bat
+
+
+# log
+logs
+
+# lombok
+out
+
+# levelDB
+tron-data
+database*
+
+# database
+database
+
+# doc
+doc
