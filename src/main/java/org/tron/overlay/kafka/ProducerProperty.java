@@ -1,7 +1,12 @@
 package org.tron.overlay.kafka;
 
+import org.tron.config.Configer;
+
+import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
+import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
+
 public class ProducerProperty {
-    private final static String DEFAULT_BOOTSTRAP_SERVERS = "11.11.11.12:9092";
+    private final static String DEFAULT_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
     private final static String DEFAULT_ACKS = "all";
     private final static String DEFAULT_RETRIES = "0";
     private final static String DEFAULT_BATCH_SIZE = "16384";
@@ -36,8 +41,14 @@ public class ProducerProperty {
     }
 
     public static ProducerProperty getDefault() {
+        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + ":" + Configer.getConf().getString(KAFKA_PORT);
+
+        if (":".equals(bootstrapServers)) {
+            bootstrapServers = DEFAULT_BOOTSTRAP_SERVERS;
+        }
+
         return new ProducerProperty(
-                DEFAULT_BOOTSTRAP_SERVERS,
+                bootstrapServers,
                 DEFAULT_ACKS,
                 DEFAULT_RETRIES,
                 DEFAULT_BATCH_SIZE,
