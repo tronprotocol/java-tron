@@ -2,6 +2,7 @@ package org.tron.consensus.client;
 
 import io.atomix.catalyst.transport.Address;
 import io.atomix.catalyst.transport.netty.NettyTransport;
+import io.atomix.copycat.client.ConnectionStrategies;
 import io.atomix.copycat.client.CopycatClient;
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.PutCommand;
@@ -19,13 +20,14 @@ public class Client {
                 .withTransport(NettyTransport.builder()
                         .withThreads(2)
                         .build())
+                .withConnectionStrategy(ConnectionStrategies.FIBONACCI_BACKOFF)
                 .build();
 
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
         Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.50.129", 5000)
+                new Address("192.168.0.108", 5000)
 
         );
 
@@ -44,10 +46,15 @@ public class Client {
         System.out.println("Put message success");
     }
 
-    public static void getMessage(String key) {
+    public static void getMessage1(String key) {
         client.submit(new GetQuery(key)).thenAccept(result -> {
             System.out.println("Consensus " + key + " is: " +
                     result);
         });
+    }
+    public static void getMessage(String key) {
+        Object result = client.submit(new GetQuery(key)).join();
+        System.out.println("Consensus " + key + " is: " + result);
+
     }
 }
