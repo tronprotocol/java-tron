@@ -6,7 +6,7 @@ import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
 public class ConsumerProperty {
-    private final static String DEFAULT_BOOTSTRAP_SERVERS = "11.11.11.12:9092";
+    private final static String DEFAULT_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
     private final static String DEFAULT_GROUP_ID = Configer.getGNPK();
     private final static String DEFAULT_ENABLE_AUTO_COMMIT = "true";
     private final static String DEFAULT_AUTO_COMMIT_INTERVAL_MS = "1000";
