@@ -1,7 +1,5 @@
 package org.tron.crypto;
 
-import org.tron.crypto.jce.*;
-import org.tron.utils.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.ASN1InputStream;
@@ -28,6 +26,8 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.crypto.jce.*;
+import org.tron.utils.ByteUtil;
 
 import javax.annotation.Nullable;
 import javax.crypto.KeyAgreement;

@@ -10,6 +10,7 @@ import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
+import org.tron.wallet.Wallet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
