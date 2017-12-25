@@ -13,6 +13,7 @@ public class HelpCommand extends Command {
         new GetBalanceCommand().usage();
         new AccountCommand().usage();
         new PrintBlockchainCommand().usage();
+        new ConsensusCommand().usage();
     }
 
     @Override

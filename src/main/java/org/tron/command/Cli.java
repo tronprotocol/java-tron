@@ -42,6 +42,16 @@ public class Cli {
                 case "printblockchain":
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
                     break;
+
+                case "consensus":
+                    new ConsensusCommand().server();
+                    break;
+                case "getmessage":
+                    new ConsensusCommand().getClient(cmdParameters);
+                    break;
+                case "putmessage":
+                    new ConsensusCommand().putClient(cmdParameters);
+                    break;
                 case "help":
                 default:
                     new HelpCommand().execute(peer, cmdParameters);

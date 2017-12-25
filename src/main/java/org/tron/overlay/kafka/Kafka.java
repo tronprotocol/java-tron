@@ -20,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 import static org.tron.core.Constant.*;
 
 public class Kafka implements Net {
+    public final static String KAFKA_HOST = "kafka.host";
+    public final static String KAFKA_PORT = "kafka.port";
+
     private final static String EMPTY_KEY = "";
     private final static int DEFAULT_WORKER_NUM = 4;
 
