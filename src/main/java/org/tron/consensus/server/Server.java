@@ -31,7 +31,7 @@ public class Server {
                             .withThreads(4)
                             .build())
                     .withStorage(Storage.builder()
-                            .withDirectory(new File("logs"))
+                            .withDirectory(new File("consensus-logs"))
                             .withStorageLevel(StorageLevel.DISK)
                             .build())
                     .build();
@@ -55,6 +55,7 @@ public class Server {
                     System.out.println("Server state: " + state);
                 }
             });
+            server.context();
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
