@@ -14,7 +14,7 @@ public class LevelDbDataSourceTest {
     public void testGet()  {
         LevelDbDataSource dataSource = new LevelDbDataSource("test");
         dataSource.init();
-        String key1="000134yyyhy";
+        String key1="000134yyyh";
         byte[] key = key1.getBytes();
         byte[] value = dataSource.get(key);
         String s = ByteArray.toStr(value);
@@ -26,7 +26,7 @@ public class LevelDbDataSourceTest {
     public void testPut() {
         LevelDbDataSource dataSource = new LevelDbDataSource("test");
         dataSource.init();
-        String key1="000134yyyhy";
+        String key1="000134yyyh";
         byte[] key = key1.getBytes();
 
         String value1="50000";
