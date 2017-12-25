@@ -8,6 +8,7 @@ import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
+import org.tron.wallet.Wallet;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;

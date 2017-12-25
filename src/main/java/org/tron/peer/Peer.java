@@ -12,6 +12,7 @@ import org.tron.overlay.message.Type;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
+import org.tron.wallet.Wallet;
 
 import java.util.Arrays;
 
