@@ -1,4 +1,4 @@
-# What’s TRON? [![Build Status](https://www.travis-ci.org/tron-network/java-tron.svg?branch=develop)](https://www.travis-ci.org/tron-network/java-tron) [![GitHub last commit](https://img.shields.io/github/last-commit/google/skia.svg)]()
+# What’s TRON? [![Build Status](https://www.travis-ci.org/tron-network/java-tron.svg?branch=develop)](https://www.travis-ci.org/tron-network/java-tron) [![GitHub last commit](https://img.shields.io/github/last-commit/tron-network/java-tron.svg)](https://github.com/tron-network/java-tron/commits/develop)
 
 TRON is a block chain-based decentralized smart protocol and an application development platform. It allows each user to freely publish, store and own contents and data, and in the decentralized autonomous form, decides an incentive mechanism and enables application developers and content creators through digital asset distribution, circulation and transaction, thus forming a decentralized content entertainment ecosystem.
 
