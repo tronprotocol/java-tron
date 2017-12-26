@@ -33,5 +33,5 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 # License
 
-java-tron is released under the [![license](https://img.shields.io/github/license/pwhuanle/java-tron.svg)](LICENSE).
+java-tron is released under the [![license](https://img.shields.io/github/license/pwhuanle/java-tron.svg)](LICENSE)
 
