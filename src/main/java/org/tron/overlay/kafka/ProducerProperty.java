@@ -2,6 +2,7 @@ package org.tron.overlay.kafka;
 
 import org.tron.config.Configer;
 
+import static org.tron.overlay.kafka.Kafka.EMPTY_STRING;
 import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
@@ -41,9 +42,9 @@ public class ProducerProperty {
     }
 
     public static ProducerProperty getDefault() {
-        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + ":" + Configer.getConf().getString(KAFKA_PORT);
+        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + Configer.getConf().getString(KAFKA_PORT);
 
-        if (":".equals(bootstrapServers)) {
+        if (EMPTY_STRING.equals(bootstrapServers)) {
             bootstrapServers = DEFAULT_BOOTSTRAP_SERVERS;
         }
 
