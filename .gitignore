@@ -13,6 +13,7 @@ gradlew.bat
 
 # log
 logs
+consensus-logs
 
 # lombok
 out
