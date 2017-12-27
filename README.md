@@ -9,7 +9,7 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 **Download and build**
 
 ```shell
-> git clone https://github.com/tron-network/java-tron.git
+> git clone https://github.com/pwhuanle/java-tron.git
 > cd java-tron
 > gradle build
 ```
