@@ -1,4 +1,4 @@
-<p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.jpeg"></p>
+<p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.png"></p>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) 
