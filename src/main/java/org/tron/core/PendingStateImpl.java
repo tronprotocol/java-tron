@@ -43,7 +43,6 @@ public class PendingStateImpl implements PendingState {
     public synchronized void addPendingTransaction(Blockchain blockchain, Transaction tx, Net net) {
         pendingTransactions.add(tx);
         if (pendingTransactions.size() == 1) {
-            System.out.println("pending...");
             blockchain.addBlock(pendingTransactions, net);
             pendingTransactions.clear();
             System.out.println();

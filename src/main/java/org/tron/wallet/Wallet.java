@@ -7,7 +7,7 @@ import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;
 
 public class Wallet {
-    private static final Logger logger = LoggerFactory.getLogger("wallet");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Wallet");
 
     private ECKey ecKey;
     private byte[] address;
@@ -29,7 +29,7 @@ public class Wallet {
         this.ecKey = ecKey;
         address = this.ecKey.getAddress();
 
-        logger.info("wallet address: {}", ByteArray.toHexString(address));
+        LOGGER.info("wallet address: {}", ByteArray.toHexString(address));
     }
 
     public ECKey getEcKey() {

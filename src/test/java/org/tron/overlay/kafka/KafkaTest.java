@@ -14,7 +14,7 @@ import static org.tron.core.Constant.TOPIC_BLOCK;
 import static org.tron.core.Constant.TOPIC_TRANSACTION;
 
 public class KafkaTest {
-    private static final Logger logger = LoggerFactory.getLogger("test");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
 
     @Test
     public void testKafka() {

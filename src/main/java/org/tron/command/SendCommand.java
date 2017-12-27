@@ -10,7 +10,7 @@ import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
 public class SendCommand extends Command {
-    private static final Logger logger = LoggerFactory.getLogger("command");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Command");
 
     public SendCommand() {
     }
@@ -42,12 +42,12 @@ public class SendCommand extends Command {
     @Override
     public boolean check(String[] parameters) {
         if (parameters.length < 2) {
-            logger.error("missing parameters");
+            LOGGER.error("missing parameters");
             return false;
         }
 
         if (parameters[0].length() != 40) {
-            logger.error("address invalid");
+            LOGGER.error("address invalid");
             return false;
         }
 
@@ -56,12 +56,12 @@ public class SendCommand extends Command {
         try {
             amount = Long.valueOf(parameters[1]);
         } catch (NumberFormatException e) {
-            logger.error("amount invalid");
+            LOGGER.error("amount invalid");
             return false;
         }
 
         if (amount <= 0) {
-            logger.error("amount required a positive number");
+            LOGGER.error("amount required a positive number");
             return false;
         }
 

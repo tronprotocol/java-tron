@@ -18,7 +18,7 @@ import java.util.Scanner;
 
 public class BlockLoader {
 
-    private static final Logger logger = LoggerFactory.getLogger("blockqueue");
+    private static final Logger LOGGER = LoggerFactory.getLogger("BlockLoader");
 
     @Autowired
     private TronBlockChainImpl blockchain;
@@ -49,7 +49,7 @@ public class BlockLoader {
         }, new Functional.Consumer<Throwable>() {
             @Override
             public void accept(Throwable throwable) {
-                logger.error("Unhandled exception: ", throwable);
+                LOGGER.error("Unhandled exception: ", throwable);
             }
         });
 

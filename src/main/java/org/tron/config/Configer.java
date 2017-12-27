@@ -12,7 +12,7 @@ import java.io.*;
 import java.util.Properties;
 
 public class Configer {
-    private static Logger logger = LoggerFactory.getLogger("configer");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Configer");
 
     private final static String TRON_CONF = "tron.conf";
     private final static String DATABASE_DIRECTORY = "database.directory";
@@ -42,9 +42,9 @@ public class Configer {
                 try (Writer w = new FileWriter(file)) {
                     props.store(w, "Generated NodeID.");
                 }
-                logger.info("New nodeID generated: " + props.getProperty
+                LOGGER.info("New nodeID generated: " + props.getProperty
                         ("nodeId"));
-                logger.info("Generated nodeID and its private key stored " +
+                LOGGER.info("Generated nodeID and its private key stored " +
                         "in " + file);
             }
             generatedNodePrivateKey = props.getProperty("nodeIdPrivateKey");
