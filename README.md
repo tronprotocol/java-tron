@@ -25,16 +25,16 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 **Import project to IDEA**
 
-1. [File] -> [New] -> [Project from Existing Sources...]
-2. Select java-tron/build.gradle
-3. Dialog [Import Project from Gradle], confirm [Use auto-import] and [Use gradle wrapper task configuration] have been
+- [File] -> [New] -> [Project from Existing Sources...]
+- Select java-tron/build.gradle
+- Dialog [Import Project from Gradle], confirm [Use auto-import] and [Use gradle wrapper task configuration] have been
  selected，then select Gradle JVM（JDK 1.8）and click [OK]
 
 # Testing
 
-- Install Kafka and create two topics (block and transaction)
+**Install Kafka and create two topics (block and transaction)**
 
-- Update the configuration:
+**Update the configuration**
 File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
 
 ```yml
@@ -44,11 +44,11 @@ kafka {
 }
 ```
 
-- Starting program:
+**Starting program**
 
-IDEA: [Edit Configurations...] -> [Program arguments]: `--type server`
-
-Run
+IDEA: 
+- [Edit Configurations...] -> [Program arguments]: `--type server`
+- Run
 
 # Commands
 **help**
