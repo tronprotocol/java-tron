@@ -9,8 +9,6 @@ public class SystemProperties {
     private @interface ValidateMe {
     }
 
-    ;
-
     private static SystemProperties CONFIG;
     private static boolean useOnlySpringConfig = false;
 

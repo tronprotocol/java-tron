@@ -7,7 +7,7 @@ import org.tron.datasource.leveldb.LevelDbDataSource;
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 public class BlockStores  {
-    public static final Logger logger = LoggerFactory.getLogger("BlockStores");
+    private static final Logger LOGGER = LoggerFactory.getLogger("BlockStores");
     private LevelDbDataSource blockDbDataSource;
 
 

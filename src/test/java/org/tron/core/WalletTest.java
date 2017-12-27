@@ -7,14 +7,14 @@ import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 public class WalletTest {
-    private static final Logger logger = LoggerFactory.getLogger("test");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
 
     @Test
     public void testWallet() {
         Wallet wallet = new Wallet();
         wallet.init();
 
-        logger.info("wallet address = {}", ByteArray.toHexString(wallet
+        LOGGER.info("wallet address = {}", ByteArray.toHexString(wallet
                 .getAddress()));
     }
 }

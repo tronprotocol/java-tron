@@ -23,7 +23,7 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 public class LevelDbDataSource implements DbSource<byte[]> {
 
-    private static final Logger logger = LoggerFactory.getLogger("db");
+    private static final Logger LOGGER = LoggerFactory.getLogger("DB");
 
     private final static String LEVEL_DB_DIRECTORY = "database-test.directory";
     public final static String databaseName = Configer.getConf().getString
@@ -41,14 +41,14 @@ public class LevelDbDataSource implements DbSource<byte[]> {
 
     public LevelDbDataSource(String name) {
         this.name = name;
-        logger.debug("New LevelDbDataSource: " + name);
+        LOGGER.debug("New LevelDbDataSource: " + name);
     }
 
     @Override
     public void init() {
         resetDbLock.writeLock().lock();
         try {
-            logger.debug("~> LevelDbDataSource.init(): " + name);
+            LOGGER.debug("~> LevelDbDataSource.init(): " + name);
 
             if (isAlive()) return;
 
@@ -104,12 +104,12 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     public void destroyDB(File fileLocation) {
         resetDbLock.writeLock().lock();
         try {
-            logger.debug("Destroying existing database: " + fileLocation);
+            LOGGER.debug("Destroying existing database: " + fileLocation);
             Options options = new Options();
             try {
                 factory.destroy(fileLocation, options);
             } catch (IOException e) {
-                logger.error(e.getMessage(), e);
+                LOGGER.error(e.getMessage(), e);
             }
         } finally {
             resetDbLock.writeLock().unlock();
@@ -229,7 +229,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
                 db.close();
                 alive = false;
             } catch (IOException e) {
-                logger.error("Failed to find the db file on the close: {} ", name);
+                LOGGER.error("Failed to find the db file on the close: {} ", name);
             }
         } finally {
             resetDbLock.writeLock().unlock();
