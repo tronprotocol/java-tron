@@ -1,5 +1,12 @@
-# Hello TRON
-[![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) [![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) [![GitHub contributors](https://img.shields.io/github/contributors/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/graphs/contributors) [![license](https://img.shields.io/github/license/tronprotocol/java-tron.svg)](LICENSE)
+<p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.jpeg"></p>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) 
+[![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) 
+[![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) 
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/pulls)
+[![GitHub contributors](https://img.shields.io/github/contributors/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/graphs/contributors) 
+[![license](https://img.shields.io/github/license/tronprotocol/java-tron.svg)](LICENSE)
 
 # What's TRON?
 TRON is a block chain-based decentralized smart protocol and an application development platform. It allows each user to freely publish, store and own contents and data, and in the decentralized autonomous form, decides an incentive mechanism and enables application developers and content creators through digital asset distribution, circulation and transaction, thus forming a decentralized content entertainment ecosystem.
