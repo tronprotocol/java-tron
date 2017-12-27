@@ -35,6 +35,7 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 **Install Kafka and create two topics (block and transaction)**
 
 **Update the configuration**
+
 File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
 
 ```yml
