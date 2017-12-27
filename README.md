@@ -32,13 +32,73 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 # Testing
 
-- Install Kafka, create two topics (block and transaction)
-- Adjust constant **DEFAULT_BOOTSTRAP_SERVERS** in ConsumerProperty.java file and ProducerProperty.java file to your Kafka's host（like：192.168.1.199:9092）
-- IDEA: [Edit Configurations...] -> [Program arguments]: **--type server**
-- Run Tron (server)
-- IDEA: [Edit Configurations...] -> [Program arguments]: **--type normal**
-- Run Tron (client)
-- Execute `help` command on the client
+- Install Kafka and create two topics (block and transaction)
 
+- Update the configuration:
+File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
 
+```yml
+kafka {
+    host = "127.0.0.1"  # your Kafka's host
+    port = ":9092"      # your Kafka's port
+}
+```
+
+- Starting program:
+
+IDEA: [Edit Configurations...] -> [Program arguments]: `--type server`
+
+Run
+
+# Commands
+**help**
+
+| Description | Example |
+| --- | --- |
+| Help tips | `help` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/help.gif)
+
+**account**
+
+| Description | Example |
+| --- | --- |
+| Get address | `account` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/account.gif)
+
+**getbalance**
+
+| Description | Example |
+| --- | --- |
+| Get balance | `getbalance` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/getbalance.gif)
+
+**send [to] [balance]**
+
+| Description | Example |
+| --- | --- |
+| Send balance to address | `send 2cddf5707aefefb199cb16430fb0f6220d460dfe 2` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send.gif)
+
+**printblockchain**
+
+| Description | Example |
+| --- | --- |
+| Print blockchain | `printblockchain` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/printblockchain.gif)
+
+**exit**
+
+| Description | Example |
+| --- | --- |
+| Exit | `exit` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/exit.gif)
+
+# Contribution
+Contributions are welcomed and greatly appreciated. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
 
