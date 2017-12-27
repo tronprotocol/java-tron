@@ -1,6 +1,6 @@
 <p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.png"></p>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) 
 [![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) 
 [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) 
