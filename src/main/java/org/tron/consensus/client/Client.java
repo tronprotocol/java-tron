@@ -4,14 +4,17 @@ import io.atomix.catalyst.transport.Address;
 import io.atomix.catalyst.transport.netty.NettyTransport;
 import io.atomix.copycat.client.ConnectionStrategies;
 import io.atomix.copycat.client.CopycatClient;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.PutCommand;
+import org.tron.overlay.kafka.ConsumerWorker;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-public class Client {
+public class Client{
 
     private static CopycatClient client = null;
 
@@ -47,10 +50,24 @@ public class Client {
     }
 
     public static void getMessage1(String key) {
+
         client.submit(new GetQuery(key)).thenAccept(result -> {
-            System.out.println("Consensus " + key + " is: " +
-                    result);
+            System.out.println("Consensus " + key + " is: " + result);
         });
+//        Thread thread = new Thread(() -> {
+//            while (true) {
+//                try {
+//                    client.submit(new GetQuery(key)).thenAccept(result -> {
+//                        System.out.println("Consensus " + key + " is: " +
+//                                result);
+//                    });
+//                    Thread.sleep(5000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+        //thread.start();
     }
     public static void getMessage(String key) {
         Object result = client.submit(new GetQuery(key)).join();
