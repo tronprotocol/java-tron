@@ -1,4 +1,4 @@
-# What’s TRON? [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) [![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues)
+# What’s TRON? [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) [![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) [![license](https://img.shields.io/github/license/tronprotocol/java-tron.svg)](LICENSE)
 
 TRON is a block chain-based decentralized smart protocol and an application development platform. It allows each user to freely publish, store and own contents and data, and in the decentralized autonomous form, decides an incentive mechanism and enables application developers and content creators through digital asset distribution, circulation and transaction, thus forming a decentralized content entertainment ecosystem.
 
@@ -31,7 +31,5 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 - Run Tron (client)
 - Execute `help` command on the client
 
-# License
 
-java-tron is released under the [![license](https://img.shields.io/github/license/tronprotocol/java-tron.svg)](LICENSE)
 
