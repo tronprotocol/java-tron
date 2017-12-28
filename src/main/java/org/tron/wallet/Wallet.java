@@ -1,4 +1,18 @@
-package org.tron.core;
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.tron.wallet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +21,7 @@ import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;
 
 public class Wallet {
-    private static final Logger logger = LoggerFactory.getLogger("wallet");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Wallet");
 
     private ECKey ecKey;
     private byte[] address;
@@ -29,7 +43,7 @@ public class Wallet {
         this.ecKey = ecKey;
         address = this.ecKey.getAddress();
 
-        logger.info("wallet address: {}", ByteArray.toHexString(address));
+        LOGGER.info("wallet address: {}", ByteArray.toHexString(address));
     }
 
     public ECKey getEcKey() {

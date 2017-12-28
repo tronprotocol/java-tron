@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
@@ -29,8 +43,8 @@ import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.datasource.leveldb.LevelDbDataSource.databaseName;
 
 public class Blockchain {
-    public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    public static final String genesisCoinbaseData = "0x00";
+    private static final Logger LOGGER = LoggerFactory.getLogger("Blockchain");
+    public static final String GENESIS_COINBASE_DATA = "0x00";
     private LevelDbDataSource blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
@@ -44,7 +58,7 @@ public class Blockchain {
      */
     public Blockchain(String address) {
         if (dbExists()) {
-            logger.info("blockchain already exists.");
+            LOGGER.info("blockchain already exists.");
             System.exit(0);
         }
 
@@ -52,7 +66,7 @@ public class Blockchain {
         blockDB.init();
 
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-                (address, genesisCoinbaseData);
+                (address, GENESIS_COINBASE_DATA);
         Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
 
         this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
@@ -66,7 +80,7 @@ public class Blockchain {
 
         blockDB.put(LAST_HASH, lastHash);
 
-        logger.info("new blockchain");
+        LOGGER.info("new blockchain");
     }
 
     /**
@@ -74,7 +88,7 @@ public class Blockchain {
      */
     public Blockchain() {
         if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one " +
+            LOGGER.info("no existing blockchain found. please create one " +
                     "first");
             System.exit(0);
         }
@@ -85,7 +99,7 @@ public class Blockchain {
         this.lastHash = blockDB.get(LAST_HASH);
         this.currentHash = this.lastHash;
 
-        logger.info("load blockchain");
+        LOGGER.info("load blockchain");
     }
 
     /**
@@ -277,7 +291,7 @@ public class Blockchain {
     }
 
     public static String getGenesisCoinbaseData() {
-        return genesisCoinbaseData;
+        return GENESIS_COINBASE_DATA;
     }
 
     public LevelDbDataSource getBlockDB() {

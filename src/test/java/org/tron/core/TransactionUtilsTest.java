@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -8,14 +22,14 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
 
 public class TransactionUtilsTest {
-    private static final Logger logger = LoggerFactory.getLogger("test");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
 
     @Test
     public void testNewCoinbaseTransaction() {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        logger.info("test new coinbase transaction: {}", coinbaseTransaction);
+        LOGGER.info("test new coinbase transaction: {}", coinbaseTransaction);
     }
 
     @Test
@@ -23,7 +37,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        logger.info("test get hash: {}", ByteArray.toHexString
+        LOGGER.info("test get hash: {}", ByteArray.toHexString
                 (TransactionUtils.getHash(coinbaseTransaction)));
     }
 
@@ -32,7 +46,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        logger.info("test to print string: {}", TransactionUtils
+        LOGGER.info("test to print string: {}", TransactionUtils
                 .toPrintString(coinbaseTransaction));
     }
 
@@ -41,7 +55,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        logger.info("test is coinbase transaction: {}", TransactionUtils
+        LOGGER.info("test is coinbase transaction: {}", TransactionUtils
                 .isCoinbaseTransaction(coinbaseTransaction));
     }
 

@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.command;
 
 import org.slf4j.Logger;
@@ -10,7 +24,7 @@ import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
 public class SendCommand extends Command {
-    private static final Logger logger = LoggerFactory.getLogger("command");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Command");
 
     public SendCommand() {
     }
@@ -42,12 +56,12 @@ public class SendCommand extends Command {
     @Override
     public boolean check(String[] parameters) {
         if (parameters.length < 2) {
-            logger.error("missing parameters");
+            LOGGER.error("missing parameters");
             return false;
         }
 
         if (parameters[0].length() != 40) {
-            logger.error("address invalid");
+            LOGGER.error("address invalid");
             return false;
         }
 
@@ -56,12 +70,12 @@ public class SendCommand extends Command {
         try {
             amount = Long.valueOf(parameters[1]);
         } catch (NumberFormatException e) {
-            logger.error("amount invalid");
+            LOGGER.error("amount invalid");
             return false;
         }
 
         if (amount <= 0) {
-            logger.error("amount required a positive number");
+            LOGGER.error("amount required a positive number");
             return false;
         }
 
