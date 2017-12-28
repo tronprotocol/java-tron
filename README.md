@@ -51,6 +51,8 @@ IDEA:
 - [Edit Configurations...] -> [Program arguments]: `--type server`
 - Run
 
+![run](https://github.com/tronprotocol/wiki/blob/master/images/show-how/run.gif)
+
 # Commands
 **help**
 
