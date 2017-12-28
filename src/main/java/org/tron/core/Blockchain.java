@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.consensus.client.Client;
 import org.tron.crypto.ECKey;
 import org.tron.datasource.leveldb.LevelDbDataSource;
 import org.tron.example.Tron;
@@ -30,7 +31,7 @@ import static org.tron.datasource.leveldb.LevelDbDataSource.databaseName;
 
 public class Blockchain {
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    public static final String genesisCoinbaseData = "0x00";
+    public static final String genesisCoinbaseData = "0x10";
     private LevelDbDataSource blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
@@ -248,6 +249,34 @@ public class Blockchain {
         }
     }
 
+    /*auth:linmaorong
+  date:2017/12/26
+ */
+    public void addBlock(List<Transaction> transactions) {
+        // get lastHash
+        byte[] lastHash = blockDB.get(LAST_HASH);
+        ByteString parentHash = ByteString.copyFrom(lastHash);
+        // get number
+        long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
+                .getBlockchain());
+        // get difficulty
+        ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
+        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+                number);
+
+        String value = ByteArray.toHexString(block.toByteArray());
+        // View the type of peer
+        //System.out.println(Tron.getPeer().getType());
+
+        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+            Message message = new Message(value, Type.BLOCK);
+            //net.broadcast(message);
+            Client.putMessage1(message); // consensus: put message
+        }
+
+
+    }
+
     public void receiveBlock(Block block, UTXOSet utxoSet) {
 
         byte[] lastHashKey = LAST_HASH;
@@ -271,7 +300,7 @@ public class Blockchain {
 
         this.lastHash = ch;
         currentHash = ch;
-
+        System.out.println(BlockUtils.toPrintString(block));
         // update UTXO cache
         utxoSet.reindex();
     }
