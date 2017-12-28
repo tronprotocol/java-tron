@@ -1,14 +1,12 @@
 package org.tron.command;
 
 import org.tron.peer.Peer;
-
 import java.util.Arrays;
 import java.util.Scanner;
 
 public class Cli {
     public Cli() {
     }
-
     public void run(Peer peer) {
         Scanner in = new Scanner(System.in);
 
@@ -51,6 +49,9 @@ public class Cli {
                     break;
                 case "putmessage":
                     new ConsensusCommand().putClient(cmdParameters);
+                    break;
+                case "put":
+                    new ConsensusCommand().execute(peer, cmdParameters);
                     break;
                 case "help":
                 default:

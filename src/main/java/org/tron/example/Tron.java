@@ -8,10 +8,9 @@ import org.tron.peer.PeerType;
 
 public class Tron {
     @Parameter(names = {"--type", "-t"}, validateWith = PeerType.class)
-    private String type = "normal";
+    private String type = "server";
 
     private static Peer peer;
-
     public static void main(String[] args) {
         Tron tron = new Tron();
         JCommander.newBuilder()
