@@ -22,14 +22,14 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
 
 public class TransactionUtilsTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     @Test
     public void testNewCoinbaseTransaction() {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        LOGGER.info("test new coinbase transaction: {}", coinbaseTransaction);
+        logger.info("test new coinbase transaction: {}", coinbaseTransaction);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        LOGGER.info("test get hash: {}", ByteArray.toHexString
+        logger.info("test get hash: {}", ByteArray.toHexString
                 (TransactionUtils.getHash(coinbaseTransaction)));
     }
 
@@ -46,7 +46,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        LOGGER.info("test to print string: {}", TransactionUtils
+        logger.info("test to print string: {}", TransactionUtils
                 .toPrintString(coinbaseTransaction));
     }
 
@@ -55,7 +55,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        LOGGER.info("test is coinbase transaction: {}", TransactionUtils
+        logger.info("test is coinbase transaction: {}", TransactionUtils
                 .isCoinbaseTransaction(coinbaseTransaction));
     }
 

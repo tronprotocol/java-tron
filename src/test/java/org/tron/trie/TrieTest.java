@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 
 public class TrieTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     private static String LONG_STRING = "1234567890abcdefghijklmnopqrstuvwxxzABCEFGHIJKLMNOPQRSTUVWXYZ";
 

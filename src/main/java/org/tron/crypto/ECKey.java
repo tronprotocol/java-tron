@@ -59,7 +59,7 @@ import static org.tron.utils.BIUtil.isLessThan;
 import static org.tron.utils.ByteUtil.bigIntegerToBytes;
 
 public class ECKey implements Serializable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ECKey.class);
+    private static final Logger logger = LoggerFactory.getLogger(ECKey.class);
     private static final BigInteger SECP256K1N = new BigInteger
             ("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
 
@@ -979,7 +979,7 @@ public class ECKey implements Serializable {
             // specially crafted signatures.
             // Those signatures are inherently invalid/attack sigs so we just
             // fail them here rather than crash the thread.
-            LOGGER.error("Caught NPE inside bouncy castle", npe);
+            logger.error("Caught NPE inside bouncy castle", npe);
             return false;
         }
     }

@@ -34,7 +34,7 @@ import static org.tron.crypto.Hash.sha256;
 import static org.tron.utils.Utils.getRandom;
 
 public class TransactionUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Transaction");
+    private static final Logger logger = LoggerFactory.getLogger("Transaction");
     private final static int RESERVE_BALANCE = 10;
 
     public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
@@ -46,7 +46,7 @@ public class TransactionUtils {
         SpendableOutputs spendableOutputs = utxoSet.findSpendableOutputs(pubKeyHash, amount);
 
         if (spendableOutputs.getAmount() < amount) {
-            LOGGER.error("Not enough funds");
+            logger.error("Not enough funds");
             return null;
         }
 
@@ -207,7 +207,7 @@ public class TransactionUtils {
         for (TXInput vin : transaction.getVinList()) {
             if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
             )).getId().toByteArray().length == 0) {
-                LOGGER.error("ERROR: Previous transaction is not correct");
+                logger.error("ERROR: Previous transaction is not correct");
                 return null;
             }
         }
@@ -251,7 +251,7 @@ public class TransactionUtils {
         for (TXInput vin : transaction.getVinList()) {
             if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
             )).getId().toByteArray().length == 0) {
-                LOGGER.error("ERROR: Previous transaction is not correct");
+                logger.error("ERROR: Previous transaction is not correct");
             }
         }
 

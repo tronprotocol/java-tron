@@ -43,7 +43,7 @@ import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.datasource.leveldb.LevelDbDataSource.databaseName;
 
 public class Blockchain {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Blockchain");
+    private static final Logger logger = LoggerFactory.getLogger("Blockchain");
     public static final String GENESIS_COINBASE_DATA = "0x00";
     private LevelDbDataSource blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
@@ -58,7 +58,7 @@ public class Blockchain {
      */
     public Blockchain(String address) {
         if (dbExists()) {
-            LOGGER.info("blockchain already exists.");
+            logger.info("blockchain already exists.");
             System.exit(0);
         }
 
@@ -80,7 +80,7 @@ public class Blockchain {
 
         blockDB.put(LAST_HASH, lastHash);
 
-        LOGGER.info("new blockchain");
+        logger.info("new blockchain");
     }
 
     /**
@@ -88,7 +88,7 @@ public class Blockchain {
      */
     public Blockchain() {
         if (!dbExists()) {
-            LOGGER.info("no existing blockchain found. please create one " +
+            logger.info("no existing blockchain found. please create one " +
                     "first");
             System.exit(0);
         }
@@ -99,7 +99,7 @@ public class Blockchain {
         this.lastHash = blockDB.get(LAST_HASH);
         this.currentHash = this.lastHash;
 
-        LOGGER.info("load blockchain");
+        logger.info("load blockchain");
     }
 
     /**

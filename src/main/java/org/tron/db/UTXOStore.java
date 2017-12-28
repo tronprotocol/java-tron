@@ -23,7 +23,7 @@ import java.util.Set;
 import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 public class UTXOStore   {
-    private static final Logger LOGGER = LoggerFactory.getLogger("UTXOStore");
+    private static final Logger logger = LoggerFactory.getLogger("UTXOStore");
     private LevelDbDataSource uTXODataSource;
 
     public UTXOStore( ) {
