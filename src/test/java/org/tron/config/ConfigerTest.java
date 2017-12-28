@@ -21,12 +21,12 @@ import org.tron.crypto.ECKey;
 import org.tron.utils.ByteArray;
 
 public class ConfigerTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     @Test
     public void testGetECKey() {
         ECKey key = Configer.getMyKey();
 
-        LOGGER.info("address = {}", ByteArray.toHexString(key.getAddress()));
+        logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
     }
 }

@@ -19,13 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoggerTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     @Test
     public void testLogger() {
-        LOGGER.debug("test debug: {}", "success");
-        LOGGER.info("test info: {}", "success");
-        LOGGER.warn("test warn: {}", "success");
-        LOGGER.error("test error: {}", "success");
+        logger.debug("test debug: {}", "success");
+        logger.info("test info: {}", "success");
+        logger.warn("test warn: {}", "success");
+        logger.error("test error: {}", "success");
     }
 }

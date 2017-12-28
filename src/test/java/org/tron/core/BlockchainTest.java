@@ -35,14 +35,14 @@ import static org.tron.utils.ByteArray.toHexString;
 
 
 public class BlockchainTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     @Test
     public void testBlockchain() {
         Blockchain blockchain = new Blockchain
                 ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85");
 
-        LOGGER.info("test blockchain: lashHash = {}, currentHash = {}",
+        logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
                         .toHexString(blockchain.getCurrentHash()));
     }
@@ -51,7 +51,7 @@ public class BlockchainTest {
     public void testBlockchainNew() {
         Blockchain blockchain = new Blockchain();
 
-        LOGGER.info("test blockchain new: lastHash = {}", ByteArray
+        logger.info("test blockchain new: lastHash = {}", ByteArray
                 .toHexString(blockchain.getLastHash()));
 
         byte[] blockBytes = blockchain.getBlockDB().get(blockchain.getLastHash());
@@ -60,7 +60,7 @@ public class BlockchainTest {
             Block block = Block.parseFrom(blockBytes);
 
             for (Transaction transaction : block.getTransactionsList()) {
-                LOGGER.info("transaction id = {}", ByteArray.toHexString
+                logger.info("transaction id = {}", ByteArray.toHexString
                         (transaction.getId().toByteArray()));
             }
         } catch (InvalidProtocolBufferException e) {
@@ -75,7 +75,7 @@ public class BlockchainTest {
         BlockchainIterator bi = new BlockchainIterator(blockchain);
         while (bi.hasNext()) {
             info = (Block) bi.next();
-            LOGGER.info("blockParentHash:{},number:{}", toHexString(info
+            logger.info("blockParentHash:{},number:{}", toHexString(info
                     .getBlockHeader()
                     .getParentHash().toByteArray()), info.getBlockHeader()
                     .getNumber());
@@ -91,12 +91,12 @@ public class BlockchainTest {
         Transaction transaction = blockchain.findTransaction(ByteString
                 .copyFrom(ByteArray.fromHexString
                         ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
-        LOGGER.info("{}", TransactionUtils.toPrintString(transaction));
+        logger.info("{}", TransactionUtils.toPrintString(transaction));
     }
 
     @Test
     public void testDBExists() {
-        LOGGER.info("test db exists: {}", dbExists());
+        logger.info("test db exists: {}", dbExists());
     }
 
     @Test

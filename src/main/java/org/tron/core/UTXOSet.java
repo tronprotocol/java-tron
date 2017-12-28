@@ -29,7 +29,7 @@ import java.util.*;
 import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 public class UTXOSet {
-    private static final Logger LOGGER = LoggerFactory.getLogger("UTXOSet");
+    private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
     private Blockchain blockchain;
     private LevelDbDataSource txDB = null;
@@ -48,7 +48,7 @@ public class UTXOSet {
     }
 
     public void reindex() {
-        LOGGER.info("reindex");
+        logger.info("reindex");
 
         txDB.reset();
 

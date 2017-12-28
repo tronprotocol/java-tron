@@ -38,7 +38,7 @@ import static org.tron.core.Constant.LAST_HASH;
 public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
         .TronBlockChain {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("Blockchain");
+    private static final Logger logger = LoggerFactory.getLogger("Blockchain");
 
     SystemProperties config = SystemProperties.getDefault();
 
@@ -134,7 +134,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
             bw.write("\n");
 
         } catch (IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         } finally {
             try {
                 if (bw != null) bw.close();
