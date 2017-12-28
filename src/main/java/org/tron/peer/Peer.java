@@ -93,7 +93,7 @@ public class Peer {
     private void init() {
         initWallet();
 
-        initBlockchian();
+        initBlockchain();
 
         initUTXOSet();
 
@@ -105,7 +105,7 @@ public class Peer {
         wallet.init(myKey);
     }
 
-    private void initBlockchian() {
+    private void initBlockchain() {
         if (Blockchain.dbExists()) {
             blockchain = new Blockchain();
         } else {
