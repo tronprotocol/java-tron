@@ -33,7 +33,7 @@ public class SendCommand extends Command {
     public void execute(Peer peer, String[] parameters) {
         if (check(parameters)) {
             String to = parameters[0];
-            long amount = Long.valueOf(parameters[1]);
+            long amount = Long.parseLong(parameters[1]);
             TronTransaction.Transaction transaction = TransactionUtils.newTransaction(peer.getWallet(), to, amount,
                     peer.getUTXOSet());
 
@@ -68,7 +68,7 @@ public class SendCommand extends Command {
 
         long amount = 0;
         try {
-            amount = Long.valueOf(parameters[1]);
+            amount = Long.parseLong(parameters[1]);
         } catch (NumberFormatException e) {
             LOGGER.error("amount invalid");
             return false;
