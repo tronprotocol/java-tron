@@ -50,19 +50,18 @@
         <appender-ref ref="ASYNC"/>
     </root>
 
-    <logger name="consensus" level="INFO"/>
-    <logger name="example" level="INFO"/>
-    <logger name="configer" level="INFO"/>
-    <logger name="transaction" level="INFO"/>
-    <logger name="kafka" level="INFO"/>
-    <logger name="wallet" level="INFO"/>
-    <logger name="db" level="INFO"/>
-    <logger name="command" level="INFO"/>
+    <logger name="Configer" level="INFO"/>
+    <logger name="Transaction" level="INFO"/>
+    <logger name="Wallet" level="INFO"/>
+    <logger name="DB" level="INFO"/>
+    <logger name="Command" level="INFO"/>
     <logger name="UTXOSet" level="INFO"/>
+    <logger name="UTXOStore" level="INFO"/>
     <logger name="TransactionMessageHandler" level="INFO"/>
     <logger name="BlockMessageHandler" level="INFO"/>
     <logger name="BlockStores" level="INFO"/>
-    <logger name="BlockChain" level="INFO"/>
+    <logger name="Blockchain" level="INFO"/>
+    <logger name="BlockLoader" level="INFO"/>
 
 </configuration>
 

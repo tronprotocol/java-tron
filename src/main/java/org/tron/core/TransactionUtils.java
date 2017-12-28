@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
@@ -8,6 +22,7 @@ import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
+import org.tron.wallet.Wallet;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -19,8 +34,8 @@ import static org.tron.crypto.Hash.sha256;
 import static org.tron.utils.Utils.getRandom;
 
 public class TransactionUtils {
-    private static final Logger logger = LoggerFactory.getLogger("transaction");
-    private final static int subsidy = 10; // Mining reward
+    private static final Logger LOGGER = LoggerFactory.getLogger("Transaction");
+    private final static int RESERVE_BALANCE = 10;
 
     public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
         ArrayList<TXInput> txInputs = new ArrayList<>();
@@ -31,7 +46,7 @@ public class TransactionUtils {
         SpendableOutputs spendableOutputs = utxoSet.findSpendableOutputs(pubKeyHash, amount);
 
         if (spendableOutputs.getAmount() < amount) {
-            logger.error("Not enough funds");
+            LOGGER.error("Not enough funds");
             return null;
         }
 
@@ -86,7 +101,7 @@ public class TransactionUtils {
 
         TXInput txi = TXInputUtils.newTXInput(new byte[]{}, -1, new byte[]{},
                 ByteArray.fromHexString(data));
-        TXOutput txo = TXOutputUtils.newTXOutput(subsidy, to);
+        TXOutput txo = TXOutputUtils.newTXOutput(RESERVE_BALANCE, to);
 
         Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
                 .addVin(txi)
@@ -192,7 +207,7 @@ public class TransactionUtils {
         for (TXInput vin : transaction.getVinList()) {
             if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
             )).getId().toByteArray().length == 0) {
-                logger.error("ERROR: Previous transaction is not correct");
+                LOGGER.error("ERROR: Previous transaction is not correct");
                 return null;
             }
         }
@@ -236,7 +251,7 @@ public class TransactionUtils {
         for (TXInput vin : transaction.getVinList()) {
             if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
             )).getId().toByteArray().length == 0) {
-                logger.error("ERROR: Previous transaction is not correct");
+                LOGGER.error("ERROR: Previous transaction is not correct");
             }
         }
 

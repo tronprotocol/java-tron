@@ -1,7 +1,19 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.crypto;
 
-import org.tron.crypto.jce.*;
-import org.tron.utils.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.ASN1InputStream;
@@ -28,6 +40,8 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.crypto.jce.*;
+import org.tron.utils.ByteUtil;
 
 import javax.annotation.Nullable;
 import javax.crypto.KeyAgreement;
@@ -45,7 +59,7 @@ import static org.tron.utils.BIUtil.isLessThan;
 import static org.tron.utils.ByteUtil.bigIntegerToBytes;
 
 public class ECKey implements Serializable {
-    private static final Logger logger = LoggerFactory.getLogger(ECKey.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ECKey.class);
     private static final BigInteger SECP256K1N = new BigInteger
             ("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
 
@@ -965,7 +979,7 @@ public class ECKey implements Serializable {
             // specially crafted signatures.
             // Those signatures are inherently invalid/attack sigs so we just
             // fail them here rather than crash the thread.
-            logger.error("Caught NPE inside bouncy castle", npe);
+            LOGGER.error("Caught NPE inside bouncy castle", npe);
             return false;
         }
     }

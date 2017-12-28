@@ -25,7 +25,7 @@ for us. We will appreciate it.
 ### Create issues
 
 Any significant improvement should be documented as [a GitHub
-issue](https://github.com/tron-network/java-tron/issues) before anybody
+issue](https://github.com/tronprotocol/java-tron/issues) before anybody
 starts working on it. 
 
 Also when filing an issue, make sure to answer these three questions:
