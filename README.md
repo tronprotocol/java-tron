@@ -107,6 +107,10 @@ IDEA:
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/exit.gif)
 
+# Contact
+
+Chat with us via [Gitter](https://gitter.im/tronprotocol/java-tron).
+
 # Contribution
 Contributions are welcomed and greatly appreciated. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
 
