@@ -31,7 +31,7 @@ public class Client{
         client.serializer().register(GetQuery.class);
 
         Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.108", 5000)
+                new Address("192.168.0.109", 5000)
 
         );
 
