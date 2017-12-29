@@ -20,7 +20,7 @@ public class BlockchainIterator implements Iterator {
 
     @Override
     public boolean hasNext() {
-        return (index == null || index.length == 0);
+        return !(index == null || index.length == 0);
     }
 
     @Override
