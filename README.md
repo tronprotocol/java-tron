@@ -1,4 +1,10 @@
-<p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.png"></p>
+<h1 align="center">
+  <br>
+  <img width=20% src="https://raw.githubusercontent.com/tronprotocol/wiki/master/images/java-tron.png">
+  <br>
+  java-tron
+  <br>
+</h1>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) 
