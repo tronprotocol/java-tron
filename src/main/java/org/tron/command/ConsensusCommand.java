@@ -3,6 +3,7 @@ package org.tron.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.consensus.client.Client;
+import org.tron.consensus.client.MessageType;
 import org.tron.consensus.server.Server;
 import org.tron.core.TransactionUtils;
 import org.tron.overlay.message.Message;
@@ -25,7 +26,10 @@ public class ConsensusCommand extends Command {
     }
 
     public void getClient(String[] args) {
-        Client.getMessage1(args[0]);
+        //Client.getMessage(args[0]);
+        Client.getMessage(MessageType.TRANSACTION);
+        Client.getMessage(MessageType.BLOCK);
+
     }
 
     public void usage() {
@@ -59,7 +63,6 @@ public class ConsensusCommand extends Command {
             if (transaction != null) {
                 Message message = new Message(ByteArray.toHexString
                         (transaction.toByteArray()), Type.TRANSACTION);
-                System.out.println(message);
                 Client.putMessage1(message);
             }
         }

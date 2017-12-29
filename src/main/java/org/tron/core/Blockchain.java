@@ -51,7 +51,6 @@ public class Blockchain {
 
         blockDB = new LevelDbDataSource(BLOCK_DB_NAME);
         blockDB.init();
-
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
                 (address, genesisCoinbaseData);
         Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);

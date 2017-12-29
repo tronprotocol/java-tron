@@ -49,7 +49,8 @@ public class Client{
         client.submit(new PutCommand(key, value));
         System.out.println("Put message success");
     }
-    public static void getMessage(String key) {
+
+    public static void getMessage1(String key) {
         Object result = client.submit(new GetQuery(key)).join();
         System.out.println("Consensus " + key + " is: " + result);
 //        client.submit(new GetQuery(key)).thenAccept(result -> {
@@ -60,41 +61,60 @@ public class Client{
 
     public static void putMessage1(Message message) {
         if (message.getType() == Type.TRANSACTION) {
+            /*
             System.out.println("transaction:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
-                    () + "; message: " + message.getMessage());
+                    () + "; message: " + message.getMessage()); */
             client.submit(new PutCommand("transaction", message.getMessage()));
-            System.out.println("transaction: Put message success");
+            client.submit(new PutCommand("time", System.currentTimeMillis()));
+            System.out.println("transaction: consensus success");
         }
 
         if (message.getType() == Type.BLOCK) {
+            /*
             System.out.println("block:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
-                    () + "; message:" + message.getMessage());
+                    () + "; message:" + message.getMessage());*/
             client.submit(new PutCommand("block", message.getMessage()));
-            System.out.println("Block: Put Block success");
+            System.out.println("Block: consensus success");
         }
     }
 
-    public static void getMessage1(String key)  {
+    public static void getMessage(String key)  {
 
         Peer peerConsensus = Peer.getInstance("server");
         final String[] preMessage = {null};
+        final String[] preTime = {null};
         if (key.equals("transaction")) {
-            client.submit(new GetQuery(key)).thenAccept(result -> {
-                System.out.println("Consensus " + key + " is: " +
-                        result);
-                //System.out.println("type: " + result.getClass().getSimpleName());
-                peerConsensus.addReceiveTransaction(String.valueOf(result));
+            Thread thread = new Thread(() -> {
+                while(true){
+                    Object time = client.submit(new GetQuery("time")).join();
+                    if(!time.toString().equals(preTime[0])) {
+                        client.submit(new GetQuery(key)).thenAccept(result -> {
+                            //System.out.println("Consensus " + key + " is: " + result);
+                            //System.out.println("type: " + result.getClass().getSimpleName());
+                            peerConsensus.addReceiveTransaction(String.valueOf(result));
+                        });
+                        preTime[0] = time.toString();
+                    }else {
+                        preTime[0] = preTime[0];
+                    }
+                    try {
+                        Thread.sleep(4000);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
             });
+            thread.start();
         }
 
         if (key.equals("block")) {
             Thread thread = new Thread(() -> {
                 while(true){
                     client.submit(new GetQuery(key)).thenAccept(result -> {
-                        System.out.println("Consensus " + key + " is: " +
-                                result);
+                        /*System.out.println("Consensus " + key + " is: " +
+                                result);*/
                         if (!String.valueOf(result).equals(preMessage[0])) {
                             peerConsensus.addReceiveBlock(String.valueOf(result));
                             preMessage[0] = String.valueOf(result);
@@ -103,8 +123,8 @@ public class Client{
                         }
                     });
                     try {
-                        Thread.sleep(20000);
-                    } catch (InterruptedException e) {
+                        Thread.sleep(4000);
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
