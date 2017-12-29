@@ -10,7 +10,6 @@ import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
 
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
