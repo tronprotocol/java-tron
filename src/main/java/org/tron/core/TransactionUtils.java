@@ -25,10 +25,7 @@ import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.tron.crypto.Hash.sha256;
 import static org.tron.utils.Utils.getRandom;
@@ -38,8 +35,8 @@ public class TransactionUtils {
     private final static int RESERVE_BALANCE = 10;
 
     public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
-        ArrayList<TXInput> txInputs = new ArrayList<>();
-        ArrayList<TXOutput> txOutputs = new ArrayList<>();
+        List<TXInput> txInputs = new ArrayList<>();
+        List<TXOutput> txOutputs = new ArrayList<>();
 
         byte[] pubKeyHash = wallet.getEcKey().getPubKey();
 
