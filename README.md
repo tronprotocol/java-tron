@@ -21,6 +21,8 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 # Quick Start
 
+> Note: This repository is a IDEA project which you can simply download and import.
+
 **Download and build**
 
 ```shell
