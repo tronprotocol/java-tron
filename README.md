@@ -56,6 +56,9 @@ kafka {
 **Starting program**
 
 IDEA: 
+- [Edit Configurations...] -> [Add New Configuration] -> [Application]
+- [Edit Configurations...] -> [Main Class]: `org.tron.example.Tron`
+- [Edit Configurations...] -> [Use classpath of module]: `java-tron_main`
 - [Edit Configurations...] -> [Program arguments]: `--type server`
 - Run
 
