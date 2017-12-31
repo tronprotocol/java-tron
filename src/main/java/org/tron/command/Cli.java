@@ -56,7 +56,6 @@ public class Cli {
                 case "printblockchain":
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
                     break;
-
                 case "consensus":
                     new ConsensusCommand().server();
                     break;
