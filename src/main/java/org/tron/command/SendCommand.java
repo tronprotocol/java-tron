@@ -48,7 +48,7 @@ public class SendCommand extends Command {
     public void usage() {
         System.out.println("");
         System.out.println("USAGE [send]:");
-        System.out.println("Command: send [receiver] [mount]");
+        System.out.println("Command: send [receiver] [amount]");
         System.out.println("Description: Make a transaction.");
         System.out.println("");
     }
