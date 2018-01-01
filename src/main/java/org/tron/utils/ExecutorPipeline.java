@@ -21,15 +21,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ExecutorPipeline<In, Out> {
 
     private BlockingQueue<Runnable> queue;
     private ThreadPoolExecutor exce;
     private boolean preserveOrder = false;
-    private Functional.Function<In, Out> processor;
+    private Function<In, Out> processor;
     private ExecutorPipeline<Out, ?> next;
-    private Functional.Consumer<Throwable> exceptionHandler;
+    private Consumer<Throwable> exceptionHandler;
     private String threadPoolName;
     private AtomicLong orderCounter = new AtomicLong();
 
@@ -41,15 +43,10 @@ public class ExecutorPipeline<In, Out> {
     private static AtomicInteger pipeNumber = new AtomicInteger(1);
     private AtomicInteger threadNumber = new AtomicInteger(1);
 
-    public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder, Functional.Function<In, Out> processor,
-                            Functional.Consumer<Throwable> exceptionHandler) {
+    public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder, Function<In, Out> processor,
+                            Consumer<Throwable> exceptionHandler) {
         queue = new LimitedQueue<>(queueSize);
-        exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement());
-            }
-        });
+        exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
         this.preserveOrder = preserveOrder;
         this.processor = processor;
         this.exceptionHandler = exceptionHandler;
@@ -74,18 +71,15 @@ public class ExecutorPipeline<In, Out> {
         }
     }
 
-    public ExecutorPipeline<Out, Void> add(int threads, int queueSize, final Functional.Consumer<Out> consumer) {
-        return add(threads, queueSize, false, new Functional.Function<Out, Void>() {
-            @Override
-            public Void apply(Out out) {
-                consumer.accept(out);
-                return null;
-            }
+    public ExecutorPipeline<Out, Void> add(int threads, int queueSize, final Consumer<Out> consumer) {
+        return add(threads, queueSize, false, out -> {
+            consumer.accept(out);
+            return null;
         });
     }
 
     public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize, boolean preserveOrder,
-                                                        Functional.Function<Out, NextOut> processor) {
+                                                        Function<Out, NextOut> processor) {
         ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder, processor,
                 exceptionHandler);
         next = ret;
