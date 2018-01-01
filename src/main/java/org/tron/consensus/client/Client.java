@@ -21,6 +21,8 @@ import io.atomix.copycat.client.CopycatClient;
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.PutCommand;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -40,13 +42,18 @@ public class Client {
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
-        Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.108", 5000)
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+            Collection<Address> cluster = Arrays.asList(
+                    new Address(localhost.getHostAddress(), 5000)
+            );
 
-        );
-
-        CompletableFuture<CopycatClient> future = client.connect(cluster);
-        future.join();
+            CompletableFuture<CopycatClient> future = client.connect(cluster);
+            future.join();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     public static CopycatClient getClient() {
