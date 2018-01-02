@@ -1,12 +1,12 @@
 package org.tron.storage;
 
 
-public abstract class AbstractChainedSourceInter<Key, Value, SourceKey, SourceValue> implements SourceInter<Key, Value> {
+public abstract class AbstractChainedSource<Key, Value, SourceKey, SourceValue> implements SourceInter<Key, Value> {
 
     private SourceInter<SourceKey, SourceValue> sourceInter;
     protected boolean flushSource;
 
-    public AbstractChainedSourceInter(SourceInter<SourceKey, SourceValue> sourceInter) {
+    public AbstractChainedSource(SourceInter<SourceKey, SourceValue> sourceInter) {
         this.sourceInter = sourceInter;
     }
 

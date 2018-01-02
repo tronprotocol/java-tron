@@ -1,8 +1,8 @@
-package org.tron.db;
+package org.tron.dbStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.storage.leveldb.LevelDbDataSourceInterImpl;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
 import java.util.Set;
 
@@ -10,10 +10,10 @@ import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 public class UTXOStore   {
     public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
-    private LevelDbDataSourceInterImpl uTXODataSource;
+    private LevelDbDataSourceImpl uTXODataSource;
 
     public UTXOStore( ) {
-        uTXODataSource=new LevelDbDataSourceInterImpl(TRANSACTION_DB_NAME);
+        uTXODataSource=new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
         uTXODataSource.initDB();
     }
 

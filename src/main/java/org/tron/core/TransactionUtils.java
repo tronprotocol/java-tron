@@ -113,7 +113,7 @@ public class TransactionUtils {
     }
 
     /**
-     * get print string of the transaction
+     * getData print string of the transaction
      *
      * @param transaction {@link Transaction} transaction
      * @return String format string of the transaction
@@ -267,7 +267,7 @@ public class TransactionUtils {
         return true;
     }
 
-    // get sender
+    // getData sender
     public static byte[] getSender(Transaction tx) {
         byte[] pubKey = tx.getVin(0).getPubKey().toByteArray();
         return ECKey.computeAddress(pubKey);

@@ -1,7 +1,7 @@
 package org.tron.storage;
 
 
-public class SourceInterCodec<Key, Value, SourceKey, SourceValue> extends AbstractChainedSourceInter<Key, Value, SourceKey, SourceValue> {
+public class SourceCodec<Key, Value, SourceKey, SourceValue> extends AbstractChainedSource<Key, Value, SourceKey, SourceValue> {
 
     protected Serializer<Key, SourceKey> keySerializer;
     protected Serializer<Value, SourceValue> valSerializer;
@@ -13,7 +13,7 @@ public class SourceInterCodec<Key, Value, SourceKey, SourceValue> extends Abstra
      * @param keySerializer  Key codec Key <=> SourceKey
      * @param valSerializer  Value codec Value <=> SourceValue
      */
-    public SourceInterCodec(SourceInter<SourceKey, SourceValue> src, Serializer<Key, SourceKey> keySerializer, Serializer<Value, SourceValue> valSerializer) {
+    public SourceCodec(SourceInter<SourceKey, SourceValue> src, Serializer<Key, SourceKey> keySerializer, Serializer<Value, SourceValue> valSerializer) {
         super(src);
         this.keySerializer = keySerializer;
         this.valSerializer = valSerializer;
@@ -45,7 +45,7 @@ public class SourceInterCodec<Key, Value, SourceKey, SourceValue> extends Abstra
     /**
      * Shortcut class when only value conversion is required
      */
-    public static class ValueOnly<Key, Value, SourceValue> extends SourceInterCodec<Key, Value, Key, SourceValue> {
+    public static class ValueOnly<Key, Value, SourceValue> extends SourceCodec<Key, Value, Key, SourceValue> {
         public ValueOnly(SourceInter<Key, SourceValue> src, Serializer<Value, SourceValue> valSerializer) {
             super(src, new Serializers.Identity<Key>(), valSerializer);
         }

@@ -21,39 +21,39 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 
-public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
+public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
-    private static final Logger logger = LoggerFactory.getLogger("db");
+    private static final Logger logger = LoggerFactory.getLogger("dbStore");
 
     private final static String LEVEL_DB_DIRECTORY = "database-test.directory";
     public final static String databaseName = Configer.getConf().getString
             (LEVEL_DB_DIRECTORY);
 
     String dataBaseName;
-    DB db;
+    DB database;
     boolean alive;
 
 
 
     private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
-    public LevelDbDataSourceInterImpl() {
+    public LevelDbDataSourceImpl() {
     }
 
-    public LevelDbDataSourceInterImpl(String name) {
+    public LevelDbDataSourceImpl(String name) {
         this.dataBaseName = name;
-        logger.debug("New LevelDbDataSourceInterImpl: " + name);
+        logger.debug("New LevelDbDataSourceImpl: " + name);
     }
 
     @Override
     public void initDB() {
         resetDbLock.writeLock().lock();
         try {
-            logger.debug("~> LevelDbDataSourceInterImpl.initDB(): " + dataBaseName);
+            logger.debug("~> LevelDbDataSourceImpl.initDB(): " + dataBaseName);
 
             if (isAlive()) return;
 
-            if (dataBaseName == null) throw new NullPointerException("no name set to the db");
+            if (dataBaseName == null) throw new NullPointerException("no name set to the dbStore");
 
             Options dbOptions = new Options();
             dbOptions.createIfMissing(true);
@@ -69,11 +69,11 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
                 final Path dbPath = getDBPath();
                 if (!Files.isSymbolicLink(dbPath.getParent())) Files.createDirectories(dbPath.getParent());
                 try {
-                    db = factory.open(dbPath.toFile(), dbOptions);
+                    database = factory.open(dbPath.toFile(), dbOptions);
                 } catch (IOException e) {
                     if (e.getMessage().contains("Corruption:")) {
                         factory.repair(dbPath.toFile(), dbOptions);
-                        db = factory.open(dbPath.toFile(), dbOptions);
+                        database = factory.open(dbPath.toFile(), dbOptions);
                     } else {
                         throw e;
                     }
@@ -130,17 +130,14 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
     @Override
     public byte[] getData(byte[] key) {
         resetDbLock.readLock().lock();
-        try {
 
             try {
-                byte[] ret = db.get(key);
-
-                return ret;
+                return database.get(key);
             } catch (DBException e) {
-                byte[] ret = db.get(key);
+                byte[] ret = database.get(key);
                 return ret;
             }
-        } finally {
+         finally {
             resetDbLock.readLock().unlock();
         }
     }
@@ -149,7 +146,7 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
     public void putData(byte[] key, byte[] value) {
         resetDbLock.readLock().lock();
         try {
-            db.put(key, value);
+            database.put(key, value);
         } finally {
             resetDbLock.readLock().unlock();
         }
@@ -159,7 +156,7 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
     public void deleteData(byte[] key) {
         resetDbLock.readLock().lock();
         try {
-            db.delete(key);
+            database.delete(key);
         } finally {
             resetDbLock.readLock().unlock();
         }
@@ -169,7 +166,7 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
     public Set<byte[]> allKeys() {
         resetDbLock.readLock().lock();
         try {
-            try (DBIterator iterator = db.iterator()) {
+            try (DBIterator iterator = database.iterator()) {
                 Set<byte[]> result = new HashSet<>();
                 for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
                     result.add(iterator.peekNext().getKey());
@@ -185,7 +182,7 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
     }
 
     private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
-        try (WriteBatch batch = db.createWriteBatch()) {
+        try (WriteBatch batch = database.createWriteBatch()) {
             for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
                 if (entry.getValue() == null) {
                     batch.delete(entry.getKey());
@@ -193,7 +190,7 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
                     batch.put(entry.getKey(), entry.getValue());
                 }
             }
-            db.write(batch);
+            database.write(batch);
         }
     }
 
@@ -227,10 +224,10 @@ public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
             if (!isAlive()) return;
 
             try {
-                db.close();
+                database.close();
                 alive = false;
             } catch (IOException e) {
-                logger.error("Failed to find the db file on the closeDB: {} ", dataBaseName);
+                logger.error("Failed to find the dbStore file on the closeDB: {} ", dataBaseName);
             }
         } finally {
             resetDbLock.writeLock().unlock();

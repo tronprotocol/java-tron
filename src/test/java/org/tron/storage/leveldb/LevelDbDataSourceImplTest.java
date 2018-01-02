@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Ignore
-public class LevelDbDataSourceInterTest {
+public class LevelDbDataSourceImplTest {
 
     @Test
     public void testGet()  {

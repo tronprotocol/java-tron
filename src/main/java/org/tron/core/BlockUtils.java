@@ -26,7 +26,7 @@ public class BlockUtils {
     private byte[] serializEncode;
 
     /**
-     * get a new block
+     * getData a new block
      *
      * @return {@link Block} block
      */
@@ -86,7 +86,7 @@ public class BlockUtils {
     }
 
     /**
-     * get prepare data of the block
+     * getData prepare data of the block
      *
      * @param block {@link Block} block
      * @return byte[] data
@@ -115,7 +115,7 @@ public class BlockUtils {
     }
 
     /**
-     * get print string of the block
+     * getData print string of the block
      *
      * @param block {@link Block} block
      * @return String format string of the block
@@ -148,7 +148,7 @@ public class BlockUtils {
     }
 
     /**
-     * get mine value
+     * getData mine value
      *
      * @param block {@link Block} block
      * @return byte[] mine value
@@ -162,7 +162,7 @@ public class BlockUtils {
     }
 
     /**
-     * get Verified boundary
+     * getData Verified boundary
      *
      * @param block {@link Block} block
      * @return byte[] boundary
@@ -175,17 +175,17 @@ public class BlockUtils {
     }
 
     /**
-     * get increase number + 1
+     * getData increase number + 1
      *
      * @return long number
      */
     public static long getIncreaseNumber(Blockchain blockchain) {
-        byte[] lastHash = blockchain.getBlockDB().get(LAST_HASH);
+        byte[] lastHash = blockchain.getBlockDB().getData(LAST_HASH);
         if (lastHash == null) {
             return 0;
         }
 
-        byte[] value = blockchain.getBlockDB().get(lastHash);
+        byte[] value = blockchain.getBlockDB().getData(lastHash);
         if (value == null) {
             return 0;
         }

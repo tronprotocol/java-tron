@@ -1,19 +1,19 @@
-package org.tron.db;
+package org.tron.dbStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.storage.leveldb.LevelDbDataSourceInterImpl;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 public class BlockStores  {
     public static final Logger logger = LoggerFactory.getLogger("BlockStores");
-    private LevelDbDataSourceInterImpl blockDbDataSource;
+    private LevelDbDataSourceImpl blockDbDataSource;
 
 
     public BlockStores( ) {
 
-        blockDbDataSource=new LevelDbDataSourceInterImpl(BLOCK_DB_NAME);
+        blockDbDataSource=new LevelDbDataSourceImpl(BLOCK_DB_NAME);
         blockDbDataSource.initDB();
     }
 

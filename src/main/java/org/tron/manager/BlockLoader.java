@@ -37,7 +37,7 @@ public class BlockLoader {
 
             public TronBlock.Block apply(TronBlock.Block block) {
                 if (block.getBlockHeader().getNumber() >= blockchain
-                        .getBlockStore().getBestBlock().getBlockHeader()
+                        .getBlockStoreInter().getBestBlock().getBlockHeader()
                         .getNumber()) {
                     for (TronTransaction.Transaction tx : block
                             .getTransactionsList()) {
@@ -91,9 +91,9 @@ public class BlockLoader {
     }
 
     private void blockWork(TronBlock.Block block) {
-        if (block.getBlockHeader().getNumber() >= blockchain.getBlockStore()
+        if (block.getBlockHeader().getNumber() >= blockchain.getBlockStoreInter()
                 .getBestBlock().getBlockHeader().getNumber()
-                || blockchain.getBlockStore().getBlockByHash(block
+                || blockchain.getBlockStoreInter().getBlockByHash(block
                 .getBlockHeader().getHash().toByteArray()) == null) {
             if (block.getBlockHeader().getNumber() > 0) {
                 throw new RuntimeException();

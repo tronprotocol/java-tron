@@ -1,9 +1,9 @@
-package org.tron.db;
+package org.tron.dbStore;
 
 import org.junit.Test;
 import org.tron.utils.ByteArray;
 
-public class BlockStoresTest {
+public class BlockStoresTestInter {
 
     @Test
     public void saveBlock() {

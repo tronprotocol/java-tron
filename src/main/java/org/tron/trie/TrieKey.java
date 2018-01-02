@@ -93,7 +93,7 @@ public final class TrieKey {
         if (len < kLen) return null;
 
         if ((off & 1) == (k.off & 1)) {
-            // optimization to compare whole keys bytes
+            // optimization to compare whole allKeys bytes
             if ((off & 1) == 1) {
                 if (getHex(0) != k.getHex(0)) return null;
             }

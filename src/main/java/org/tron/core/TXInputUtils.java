@@ -25,7 +25,7 @@ public class TXInputUtils {
     }
 
     /**
-     * get print string of the transaction input
+     * getData print string of the transaction input
      *
      * @param txi {@link TXInput} txi
      * @return String format string of the transaction input

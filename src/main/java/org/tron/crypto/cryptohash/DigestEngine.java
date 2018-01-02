@@ -20,7 +20,7 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
      * Perform the final padding and store the result in the
      * provided buffer. This method shall call {@link #flush}
      * and then {@link #update} with the appropriate padding
-     * data in order to get the full input data.
+     * data in order to getData the full input data.
      *
      * @param buf the output buffer
      * @param off the output offset

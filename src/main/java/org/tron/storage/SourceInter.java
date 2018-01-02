@@ -1,16 +1,16 @@
 package org.tron.storage;
 
 
-public interface Source<K, V> {
+public interface SourceInter<K, V> {
 
 
-    void put(K key, V val);
+    void putData(K key, V val);
 
 
-    V get(K key);
+    V getData(K key);
 
 
-    void delete(K key);
+    void deleteData(K key);
 
 
     boolean flush();

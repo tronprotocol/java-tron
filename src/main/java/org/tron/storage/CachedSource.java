@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * SourceInter which internally caches underlying SourceInter key-value pairs
  */
-public interface CachedSourceInter<Key, Value> extends SourceInter<Key, Value> {
+public interface CachedSource<Key, Value> extends SourceInter<Key, Value> {
 
     /**
      * @return The underlying SourceInter
@@ -34,6 +34,6 @@ public interface CachedSourceInter<Key, Value> extends SourceInter<Key, Value> {
     /**
      * Just a convenient shortcut to the most popular Sources with byte[] key
      */
-    interface BytesKey<Value> extends CachedSourceInter<byte[], Value> {
+    interface BytesKey<Value> extends CachedSource<byte[], Value> {
     }
 }

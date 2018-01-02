@@ -4,8 +4,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.crypto.Hash;
-import org.tron.datasource.Source;
-import org.tron.datasource.inmem.HashMapDB;
+import org.tron.storage.SourceInter;
+import org.tron.storage.inmem.HashMapDB;
 import org.tron.utils.FastByteComparisons;
 
 
@@ -614,7 +614,7 @@ public class TrieImpl implements Trie<byte[]> {
         void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value);
     }
 
-    private Source<byte[], byte[]> cache;
+    private SourceInter<byte[], byte[]> cache;
     private Node root;
     private boolean async = true;
 
@@ -626,11 +626,11 @@ public class TrieImpl implements Trie<byte[]> {
         this(new HashMapDB<byte[]>(), root);
     }
 
-    public TrieImpl(Source<byte[], byte[]> cache) {
+    public TrieImpl(SourceInter<byte[], byte[]> cache) {
         this(cache, null);
     }
 
-    public TrieImpl(Source<byte[], byte[]> cache, byte[] root) {
+    public TrieImpl(SourceInter<byte[], byte[]> cache, byte[] root) {
         this.cache = cache;
         setRoot(root);
     }
@@ -658,24 +658,24 @@ public class TrieImpl implements Trie<byte[]> {
         return root != null && root.resolveCheck();
     }
 
-    public Source<byte[], byte[]> getCache() {
+    public SourceInter<byte[], byte[]> getCache() {
         return cache;
     }
 
     private byte[] getHash(byte[] hash) {
-        return cache.get(hash);
+        return cache.getData(hash);
     }
 
     private void addHash(byte[] hash, byte[] ret) {
-        cache.put(hash, ret);
+        cache.putData(hash, ret);
     }
 
     private void deleteHash(byte[] hash) {
-        cache.delete(hash);
+        cache.deleteData(hash);
     }
 
 
-    public byte[] get(byte[] key) {
+    public byte[] getData(byte[] key) {
         if (!hasRoot()) return null; // treating unknown root hash as empty trie
         TrieKey k = TrieKey.fromNormal(key);
         return get(root, k);
@@ -700,7 +700,7 @@ public class TrieImpl implements Trie<byte[]> {
         }
     }
 
-    public void put(byte[] key, byte[] value) {
+    public void putData(byte[] key, byte[] value) {
         TrieKey k = TrieKey.fromNormal(key);
         if (root == null) {
             if (value != null && value.length > 0) {
@@ -759,7 +759,7 @@ public class TrieImpl implements Trie<byte[]> {
     }
 
     @Override
-    public void delete(byte[] key) {
+    public void deleteData(byte[] key) {
         TrieKey k = TrieKey.fromNormal(key);
         if (root != null) {
             root = delete(root, k);
@@ -800,7 +800,7 @@ public class TrieImpl implements Trie<byte[]> {
                 return n;
             } else if (type == NodeType.KVNodeValue) {
                 if (k1.isEmpty()) {
-                    // delete this kvNode
+                    // deleteData this kvNode
                     n.dispose();
                     return null;
                 } else {
@@ -814,7 +814,7 @@ public class TrieImpl implements Trie<byte[]> {
             }
         }
 
-        // if we get here a new kvNode was created, now need to check
+        // if we getData here a new kvNode was created, now need to check
         // if it should be compacted with child kvNode
         Node newChild = newKvNode.kvNodeGetChildNode();
         if (newChild.getType() != NodeType.BranchNode) {
@@ -843,7 +843,7 @@ public class TrieImpl implements Trie<byte[]> {
     @Override
     public boolean flush() {
         if (root != null && root.dirty) {
-            // persist all dirty nodes to underlying Source
+            // persist all dirty nodes to underlying SourceInter
             encode();
             // release all Trie Node instances for GC
             root = new Node(root.hash);
