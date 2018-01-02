@@ -45,27 +45,15 @@ public class BlockLoader {
     ExecutorPipeline<TronBlock.Block, ?> exce2;
 
     public void loadBlocks() {
-<<<<<<< HEAD
-        exce1 = new ExecutorPipeline(8, 1000, true, new Functional
-                .Function<TronBlock.Block, TronBlock.Block>() {
 
-            public TronBlock.Block apply(TronBlock.Block block) {
-                if (block.getBlockHeader().getNumber() >= blockchain
-                        .getBlockStoreInter().getBestBlock().getBlockHeader()
-                        .getNumber()) {
-                    for (TronTransaction.Transaction tx : block
-                            .getTransactionsList()) {
-                        TransactionUtils.getSender(tx);
-                    }
-=======
         exce1 = new ExecutorPipeline(8, 1000, true, (Function<TronBlock.Block, TronBlock.Block>) block -> {
             if (block.getBlockHeader().getNumber() >= blockchain
-                    .getBlockStore().getBestBlock().getBlockHeader()
+                    .getBlockStoreInter().getBestBlock().getBlockHeader()
                     .getNumber()) {
                 for (TronTransaction.Transaction tx : block
                         .getTransactionsList()) {
                     TransactionUtils.getSender(tx);
->>>>>>> a13b6fb432f828b624ae96b8d9412bfcbe635b9c
+
                 }
             }
             return block;
