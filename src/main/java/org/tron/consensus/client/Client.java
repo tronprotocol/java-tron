@@ -10,6 +10,8 @@ import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,13 +32,23 @@ public class Client{
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
-        Collection<Address> cluster = Arrays.asList(
+        /*Collection<Address> cluster = Arrays.asList(
                 new Address("192.168.0.109", 5000)
-
         );
-
         CompletableFuture<CopycatClient> future = client.connect(cluster);
-        future.join();
+        future.join();*/
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+            Collection<Address> cluster = Arrays.asList(
+                    new Address(localhost.getHostAddress(), 5000)
+            );
+
+            CompletableFuture<CopycatClient> future = client.connect(cluster);
+            future.join();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     public static CopycatClient getClient() {
@@ -90,10 +102,12 @@ public class Client{
                 while(true){
                     Object time = client.submit(new GetQuery("time")).join();
                     if(!time.toString().equals(preTime[0])) {
-                        client.submit(new GetQuery(key)).thenAccept(result -> {
+                        client.submit(new GetQuery(key)).thenAccept(transaction
+                                -> {
                             //System.out.println("Consensus " + key + " is: " + result);
                             //System.out.println("type: " + result.getClass().getSimpleName());
-                            peerConsensus.addReceiveTransaction(String.valueOf(result));
+                            peerConsensus.addReceiveTransaction(String
+                                    .valueOf(transaction));
                         });
                         preTime[0] = time.toString();
                     }else {
@@ -112,12 +126,13 @@ public class Client{
         if (key.equals("block")) {
             Thread thread = new Thread(() -> {
                 while(true){
-                    client.submit(new GetQuery(key)).thenAccept(result -> {
+                    client.submit(new GetQuery(key)).thenAccept(block -> {
                         /*System.out.println("Consensus " + key + " is: " +
                                 result);*/
-                        if (!String.valueOf(result).equals(preMessage[0])) {
-                            peerConsensus.addReceiveBlock(String.valueOf(result));
-                            preMessage[0] = String.valueOf(result);
+                        if (!String.valueOf(block).equals(preMessage[0])) {
+                            peerConsensus.addReceiveBlock(String.valueOf
+                                    (block));
+                            preMessage[0] = String.valueOf(block);
                         }else {
                             preMessage[0] = preMessage[0];
                         }
