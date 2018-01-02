@@ -43,7 +43,7 @@ public class Server {
             future.join();
 
             //Collection<Address> cluster = Collections.singleton(new Address
-            //        ("192.16.0.109", 5000));
+            //        ("192.168.0.100", 5000));
             //server.join(cluster).join();
 
             System.out.println("Server xxd: " + server.cluster().members());
