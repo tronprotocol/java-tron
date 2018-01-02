@@ -79,19 +79,20 @@ public class Peer {
     }
 
     private void initBlockchian() {
+        new ConsensusCommand().server();
         if (Blockchain.dbExists()) {
-            new ConsensusCommand().server();
             blockchain = new Blockchain();
         } else {
             //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));
             if (this.type.equals(Peer.PEER_SERVER)){
-                new ConsensusCommand().server();
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
                         .getAddress()));
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
-//                System.out.println("BlockChain loadding  ...");
-                Client.loadBlock(this);
+                //System.out.println("BlockChain loadding  ...");
+                //Client.loadBlock(this);
+                blockchain = new Blockchain(ByteArray.toHexString(wallet
+                        .getAddress()));
             }
         }
     }
