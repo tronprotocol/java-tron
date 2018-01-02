@@ -1,5 +1,7 @@
 package org.tron.core;
 
+import com.alibaba.fastjson.JSON;
+import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
@@ -20,10 +22,10 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.utils.ByteArray;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
@@ -51,9 +53,31 @@ public class Blockchain {
 
         blockDB = new LevelDbDataSource(BLOCK_DB_NAME);
         blockDB.init();
-        Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-                (address, genesisCoinbaseData);
-        Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+        String json = null;
+        try {
+            json = new String(ByteStreams.toByteArray(is));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
+
+        Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
+
+        List<Transaction> transactions = new ArrayList<>();
+
+        while (iterator.hasNext()) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            String key = (String) entry.getKey();
+            Integer value = (Integer) entry.getValue();
+
+            Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
+            transactions.add(transaction);
+        }
+
+        Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
 
         this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;

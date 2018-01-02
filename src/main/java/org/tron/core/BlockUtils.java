@@ -85,6 +85,28 @@ public class BlockUtils {
         return genesisBlock.build();
     }
 
+    public static Block newGenesisBlock(List<Transaction> transactions) {
+
+        Block.Builder genesisBlock = Block.newBuilder();
+
+        for (Transaction tx : transactions) {
+            genesisBlock.addTransactions(tx);
+        }
+
+        BlockHeader.Builder builder = BlockHeader.newBuilder();
+        builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString
+                ("2001")));
+
+        genesisBlock.setBlockHeader(builder.build());
+
+        builder.setHash(ByteString.copyFrom(sha3(prepareData
+                (genesisBlock.build()))));
+
+        genesisBlock.setBlockHeader(builder.build());
+
+        return genesisBlock.build();
+    }
+
     /**
      * get prepare data of the block
      *
@@ -96,7 +118,6 @@ public class BlockUtils {
 
         BlockHeader.Builder blockHeader = tmp.getBlockHeaderBuilder();
         blockHeader.clearHash();
-        blockHeader.clearIsPoW();
         blockHeader.clearNonce();
 
         tmp.setBlockHeader(blockHeader.build());
