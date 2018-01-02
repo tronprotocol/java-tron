@@ -49,12 +49,7 @@ public final class TronBlockHeader {
     com.google.protobuf.ByteString getDifficulty();
 
     /**
-     * <code>bool isPoW = 7;</code>
-     */
-    boolean getIsPoW();
-
-    /**
-     * <code>int64 number = 8;</code>
+     * <code>int64 number = 7;</code>
      */
     long getNumber();
   }
@@ -77,7 +72,6 @@ public final class TronBlockHeader {
       hash_ = com.google.protobuf.ByteString.EMPTY;
       nonce_ = com.google.protobuf.ByteString.EMPTY;
       difficulty_ = com.google.protobuf.ByteString.EMPTY;
-      isPoW_ = false;
       number_ = 0L;
     }
 
@@ -140,11 +134,6 @@ public final class TronBlockHeader {
               break;
             }
             case 56: {
-
-              isPoW_ = input.readBool();
-              break;
-            }
-            case 64: {
 
               number_ = input.readInt64();
               break;
@@ -227,19 +216,10 @@ public final class TronBlockHeader {
       return difficulty_;
     }
 
-    public static final int ISPOW_FIELD_NUMBER = 7;
-    private boolean isPoW_;
-    /**
-     * <code>bool isPoW = 7;</code>
-     */
-    public boolean getIsPoW() {
-      return isPoW_;
-    }
-
-    public static final int NUMBER_FIELD_NUMBER = 8;
+    public static final int NUMBER_FIELD_NUMBER = 7;
     private long number_;
     /**
-     * <code>int64 number = 8;</code>
+     * <code>int64 number = 7;</code>
      */
     public long getNumber() {
       return number_;
@@ -275,11 +255,8 @@ public final class TronBlockHeader {
       if (!difficulty_.isEmpty()) {
         output.writeBytes(6, difficulty_);
       }
-      if (isPoW_ != false) {
-        output.writeBool(7, isPoW_);
-      }
       if (number_ != 0L) {
-        output.writeInt64(8, number_);
+        output.writeInt64(7, number_);
       }
       unknownFields.writeTo(output);
     }
@@ -313,13 +290,9 @@ public final class TronBlockHeader {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(6, difficulty_);
       }
-      if (isPoW_ != false) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(7, isPoW_);
-      }
       if (number_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(8, number_);
+          .computeInt64Size(7, number_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -349,8 +322,6 @@ public final class TronBlockHeader {
           .equals(other.getNonce());
       result = result && getDifficulty()
           .equals(other.getDifficulty());
-      result = result && (getIsPoW()
-          == other.getIsPoW());
       result = result && (getNumber()
           == other.getNumber());
       result = result && unknownFields.equals(other.unknownFields);
@@ -377,9 +348,6 @@ public final class TronBlockHeader {
       hash = (53 * hash) + getNonce().hashCode();
       hash = (37 * hash) + DIFFICULTY_FIELD_NUMBER;
       hash = (53 * hash) + getDifficulty().hashCode();
-      hash = (37 * hash) + ISPOW_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-          getIsPoW());
       hash = (37 * hash) + NUMBER_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getNumber());
@@ -524,8 +492,6 @@ public final class TronBlockHeader {
 
         difficulty_ = com.google.protobuf.ByteString.EMPTY;
 
-        isPoW_ = false;
-
         number_ = 0L;
 
         return this;
@@ -556,7 +522,6 @@ public final class TronBlockHeader {
         result.hash_ = hash_;
         result.nonce_ = nonce_;
         result.difficulty_ = difficulty_;
-        result.isPoW_ = isPoW_;
         result.number_ = number_;
         onBuilt();
         return result;
@@ -616,9 +581,6 @@ public final class TronBlockHeader {
         }
         if (other.getDifficulty() != com.google.protobuf.ByteString.EMPTY) {
           setDifficulty(other.getDifficulty());
-        }
-        if (other.getIsPoW() != false) {
-          setIsPoW(other.getIsPoW());
         }
         if (other.getNumber() != 0L) {
           setNumber(other.getNumber());
@@ -821,41 +783,15 @@ public final class TronBlockHeader {
         return this;
       }
 
-      private boolean isPoW_ ;
-      /**
-       * <code>bool isPoW = 7;</code>
-       */
-      public boolean getIsPoW() {
-        return isPoW_;
-      }
-      /**
-       * <code>bool isPoW = 7;</code>
-       */
-      public Builder setIsPoW(boolean value) {
-        
-        isPoW_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>bool isPoW = 7;</code>
-       */
-      public Builder clearIsPoW() {
-        
-        isPoW_ = false;
-        onChanged();
-        return this;
-      }
-
       private long number_ ;
       /**
-       * <code>int64 number = 8;</code>
+       * <code>int64 number = 7;</code>
        */
       public long getNumber() {
         return number_;
       }
       /**
-       * <code>int64 number = 8;</code>
+       * <code>int64 number = 7;</code>
        */
       public Builder setNumber(long value) {
         
@@ -864,7 +800,7 @@ public final class TronBlockHeader {
         return this;
       }
       /**
-       * <code>int64 number = 8;</code>
+       * <code>int64 number = 7;</code>
        */
       public Builder clearNumber() {
         
@@ -935,12 +871,12 @@ public final class TronBlockHeader {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\032core/TronBlockHeader.proto\022\006protos\"\230\001\n" +
+      "\n\032core/TronBlockHeader.proto\022\006protos\"\211\001\n" +
       "\013BlockHeader\022\021\n\ttimestamp\030\001 \001(\003\022\022\n\ntxTri" +
       "eRoot\030\002 \001(\014\022\022\n\nparentHash\030\003 \001(\014\022\014\n\004hash\030" +
       "\004 \001(\014\022\r\n\005nonce\030\005 \001(\014\022\022\n\ndifficulty\030\006 \001(\014" +
-      "\022\r\n\005isPoW\030\007 \001(\010\022\016\n\006number\030\010 \001(\003B\'\n\024org.t" +
-      "ron.protos.coreB\017TronBlockHeaderb\006proto3"
+      "\022\016\n\006number\030\007 \001(\003B\'\n\024org.tron.protos.core" +
+      "B\017TronBlockHeaderb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -959,7 +895,7 @@ public final class TronBlockHeader {
     internal_static_protos_BlockHeader_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_protos_BlockHeader_descriptor,
-        new java.lang.String[] { "Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce", "Difficulty", "IsPoW", "Number", });
+        new java.lang.String[] { "Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce", "Difficulty", "Number", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
