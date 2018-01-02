@@ -2,7 +2,7 @@ package org.tron.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceInterImpl;
 
 import java.util.Set;
 
@@ -10,24 +10,24 @@ import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 public class UTXOStore   {
     public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
-    private LevelDbDataSource uTXODataSource;
+    private LevelDbDataSourceInterImpl uTXODataSource;
 
     public UTXOStore( ) {
-        uTXODataSource=new LevelDbDataSource(TRANSACTION_DB_NAME);
-        uTXODataSource.init();
+        uTXODataSource=new LevelDbDataSourceInterImpl(TRANSACTION_DB_NAME);
+        uTXODataSource.initDB();
     }
 
     public void reset(){
-        uTXODataSource.reset();
+        uTXODataSource.resetDB();
     }
 
     public byte[] find(byte[] key){
-        return uTXODataSource.get(key);
+        return uTXODataSource.getData(key);
     }
 
 
     public Set<byte[]> getKeys(){
-        return uTXODataSource.keys();
+        return uTXODataSource.allKeys();
     }
     /**
      * save  utxo
@@ -35,10 +35,10 @@ public class UTXOStore   {
      * @param utxoData
      */
     public void saveUTXO(byte[] utxoKey, byte[]utxoData){
-        uTXODataSource.put(utxoKey,utxoData);
+        uTXODataSource.putData(utxoKey,utxoData);
     }
 
     public void close(){
-        uTXODataSource.close();
+        uTXODataSource.closeDB();
     }
 }

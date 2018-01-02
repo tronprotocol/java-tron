@@ -1,10 +1,10 @@
-package org.tron.datasource.leveldb;
+package org.tron.storage.leveldb;
 
 import org.iq80.leveldb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.config.Configer;
-import org.tron.datasource.DbSource;
+import org.tron.storage.DbSourceInter;
 import org.tron.utils.FileUtil;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 
-public class LevelDbDataSource implements DbSource<byte[]> {
+public class LevelDbDataSourceInterImpl implements DbSourceInter<byte[]> {
 
     private static final Logger logger = LoggerFactory.getLogger("db");
 
@@ -29,50 +29,51 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     public final static String databaseName = Configer.getConf().getString
             (LEVEL_DB_DIRECTORY);
 
-    String name;
+    String dataBaseName;
     DB db;
     boolean alive;
 
 
+
     private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
-    public LevelDbDataSource() {
+    public LevelDbDataSourceInterImpl() {
     }
 
-    public LevelDbDataSource(String name) {
-        this.name = name;
-        logger.debug("New LevelDbDataSource: " + name);
+    public LevelDbDataSourceInterImpl(String name) {
+        this.dataBaseName = name;
+        logger.debug("New LevelDbDataSourceInterImpl: " + name);
     }
 
     @Override
-    public void init() {
+    public void initDB() {
         resetDbLock.writeLock().lock();
         try {
-            logger.debug("~> LevelDbDataSource.init(): " + name);
+            logger.debug("~> LevelDbDataSourceInterImpl.initDB(): " + dataBaseName);
 
             if (isAlive()) return;
 
-            if (name == null) throw new NullPointerException("no name set to the db");
+            if (dataBaseName == null) throw new NullPointerException("no name set to the db");
 
-            Options options = new Options();
-            options.createIfMissing(true);
-            options.compressionType(CompressionType.NONE);
-            options.blockSize(10 * 1024 * 1024);
-            options.writeBufferSize(10 * 1024 * 1024);
-            options.cacheSize(0);
-            options.paranoidChecks(true);
-            options.verifyChecksums(true);
-            options.maxOpenFiles(32);
+            Options dbOptions = new Options();
+            dbOptions.createIfMissing(true);
+            dbOptions.compressionType(CompressionType.NONE);
+            dbOptions.blockSize(10 * 1024 * 1024);
+            dbOptions.writeBufferSize(10 * 1024 * 1024);
+            dbOptions.cacheSize(0);
+            dbOptions.paranoidChecks(true);
+            dbOptions.verifyChecksums(true);
+            dbOptions.maxOpenFiles(32);
 
             try {
-                final Path dbPath = getPath();
+                final Path dbPath = getDBPath();
                 if (!Files.isSymbolicLink(dbPath.getParent())) Files.createDirectories(dbPath.getParent());
                 try {
-                    db = factory.open(dbPath.toFile(), options);
+                    db = factory.open(dbPath.toFile(), dbOptions);
                 } catch (IOException e) {
                     if (e.getMessage().contains("Corruption:")) {
-                        factory.repair(dbPath.toFile(), options);
-                        db = factory.open(dbPath.toFile(), options);
+                        factory.repair(dbPath.toFile(), dbOptions);
+                        db = factory.open(dbPath.toFile(), dbOptions);
                     } else {
                         throw e;
                     }
@@ -86,14 +87,14 @@ public class LevelDbDataSource implements DbSource<byte[]> {
         }
     }
 
-    private Path getPath() {
-        return Paths.get(databaseName, name);
+    private Path getDBPath() {
+        return Paths.get(databaseName, dataBaseName);
     }
 
-    public void reset() {
-        close();
-        FileUtil.recursiveDelete(getPath().toString());
-        init();
+    public void resetDB() {
+        closeDB();
+        FileUtil.recursiveDelete(getDBPath().toString());
+        initDB();
     }
 
     @Override
@@ -117,17 +118,17 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public void setName(String name) {
-        this.name = name;
+    public void setDBName(String name) {
+        this.dataBaseName = name;
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getDBName() {
+        return dataBaseName;
     }
 
     @Override
-    public byte[] get(byte[] key) {
+    public byte[] getData(byte[] key) {
         resetDbLock.readLock().lock();
         try {
 
@@ -145,7 +146,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public void put(byte[] key, byte[] value) {
+    public void putData(byte[] key, byte[] value) {
         resetDbLock.readLock().lock();
         try {
             db.put(key, value);
@@ -155,7 +156,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public void delete(byte[] key) {
+    public void deleteData(byte[] key) {
         resetDbLock.readLock().lock();
         try {
             db.delete(key);
@@ -165,7 +166,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public Set<byte[]> keys() {
+    public Set<byte[]> allKeys() {
         resetDbLock.readLock().lock();
         try {
             try (DBIterator iterator = db.iterator()) {
@@ -183,7 +184,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
         }
     }
 
-    private void updateBatchInternal(Map<byte[], byte[]> rows) throws IOException {
+    private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
         try (WriteBatch batch = db.createWriteBatch()) {
             for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
                 if (entry.getValue() == null) {
@@ -197,14 +198,14 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public void updateBatch(Map<byte[], byte[]> rows) {
+    public void updateByBatch(Map<byte[], byte[]> rows) {
         resetDbLock.readLock().lock();
         try {
             try {
-                updateBatchInternal(rows);
+                updateByBatchInner(rows);
             } catch (Exception e) {
                 try {
-                    updateBatchInternal(rows);
+                    updateByBatchInner(rows);
                 } catch (Exception e1) {
                     throw new RuntimeException(e);
                 }
@@ -220,7 +221,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
     }
 
     @Override
-    public void close() {
+    public void closeDB() {
         resetDbLock.writeLock().lock();
         try {
             if (!isAlive()) return;
@@ -229,7 +230,7 @@ public class LevelDbDataSource implements DbSource<byte[]> {
                 db.close();
                 alive = false;
             } catch (IOException e) {
-                logger.error("Failed to find the db file on the close: {} ", name);
+                logger.error("Failed to find the db file on the closeDB: {} ", dataBaseName);
             }
         } finally {
             resetDbLock.writeLock().unlock();
