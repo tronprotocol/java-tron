@@ -54,7 +54,7 @@ public class Blockchain {
         blockDB = new LevelDbDataSource(BLOCK_DB_NAME);
         blockDB.init();
 
-        InputStream is = getClass().getClassLoader().getResourceAsStream("genesis-test.json");
+        InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
         String json = null;
         try {
             json = new String(ByteStreams.toByteArray(is));
