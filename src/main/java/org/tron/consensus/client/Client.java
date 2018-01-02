@@ -114,9 +114,7 @@ public class Client{
         }
     }
 
-    public static void getMessage(String key)  {
-
-        Peer peerConsensus = Peer.getInstance("normal");
+    public static void getMessage(Peer peer,String key)  {
         final String[] preMessage = {null};
         final String[] preTime = {null};
         if (key.equals("transaction")) {
@@ -128,7 +126,7 @@ public class Client{
                                 -> {
                             //System.out.println("Consensus " + key + " is: " + result);
                             //System.out.println("type: " + result.getClass().getSimpleName());
-                            peerConsensus.addReceiveTransaction(String
+                            peer.addReceiveTransaction(String
                                     .valueOf(transaction));
                         });
                         preTime[0] = time.toString();
@@ -172,7 +170,7 @@ public class Client{
                         /*System.out.println("Consensus " + key + " is: " +
                                 block);*/
                         if (!String.valueOf(block).equals(preMessage[0])) {
-                            peerConsensus.addReceiveBlock(String.valueOf
+                            peer.addReceiveBlock(String.valueOf
                                     (block));
                             preMessage[0] = String.valueOf(block);
                         }else {
@@ -190,7 +188,7 @@ public class Client{
         }
     }
     public static void loadBlock(Peer peer){
-        int i = 1;
+        int i = 2;
         boolean f = true;
         while(f){
             String block_key = "block" + i;

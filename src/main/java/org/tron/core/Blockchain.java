@@ -63,7 +63,8 @@ public class Blockchain {
         byte[] lastHash = genesisBlock.getBlockHeader()
                 .getHash()
                 .toByteArray();
-
+        byte[] lastHash1 =
+                "89e8bc710e1215fe108890ef255901bef845bac05e0396d8385389bdbf1a9ba5".getBytes();
         blockDB.put(LAST_HASH, lastHash);
         // put message to consensus 2018/1/2
         String value = ByteArray.toHexString(genesisBlock.toByteArray());
