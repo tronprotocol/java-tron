@@ -78,13 +78,9 @@ public class BlockUtilsTest {
     @Test
     public void testGetMineValue() {
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-<<<<<<< HEAD
-                ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", genesisCoinbaseData);
-        logger.info("test getData mine value: {}", ByteArray.toHexString
-=======
+
                 ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA);
         logger.info("test get mine value: {}", ByteArray.toHexString
->>>>>>> a13b6fb432f828b624ae96b8d9412bfcbe635b9c
                 (BlockUtils.getMineValue(BlockUtils.newGenesisBlock(coinbase)
                 )));
     }
@@ -92,13 +88,9 @@ public class BlockUtilsTest {
     @Test
     public void testGetPowBoundary() {
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-<<<<<<< HEAD
-                ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", genesisCoinbaseData);
-        logger.info("test getData pow boundary: {}", ByteArray.toHexString
-=======
+
                 ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA);
         logger.info("test get pow boundary: {}", ByteArray.toHexString
->>>>>>> a13b6fb432f828b624ae96b8d9412bfcbe635b9c
                 (BlockUtils.getPowBoundary(BlockUtils.newGenesisBlock
                         (coinbase))));
     }
