@@ -90,7 +90,7 @@ public class Peer {
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
                 System.out.println("BlockChain loadding  ...");
-                Client.loadBlock();
+                Client.loadBlock(PEER_NORMAL);
             }
         }
     }
