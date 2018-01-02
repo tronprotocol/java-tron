@@ -1,6 +1,3 @@
-<<<<<<< HEAD:src/main/java/org/tron/storage/inmem/HashMapDB.java
-package org.tron.storage.inmem;
-=======
 /*
  * java-tron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,9 +12,7 @@ package org.tron.storage.inmem;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.datasource.inmem;
->>>>>>> a13b6fb432f828b624ae96b8d9412bfcbe635b9c:src/main/java/org/tron/datasource/inmem/HashMapDB.java
-
+package org.tron.storage.inmem;
 
 import org.tron.storage.DbSourceInter;
 import org.tron.utils.ALock;
