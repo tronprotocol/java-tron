@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SourceInterChainBox<Key, Value, SourceKey, SourceValue> extends AbstractChainedSourceInter<Key, Value, SourceKey,
+public class SourceChainBox<Key, Value, SourceKey, SourceValue> extends AbstractChainedSource<Key, Value, SourceKey,
         SourceValue> {
 
 
     List<SourceInter> chain = new ArrayList<SourceInter>();
     SourceInter<Key, Value> lastSourceInter;
 
-    public SourceInterChainBox(SourceInter<SourceKey, SourceValue> sourceInter) {
+    public SourceChainBox(SourceInter<SourceKey, SourceValue> sourceInter) {
         super(sourceInter);
     }
 
@@ -24,7 +24,7 @@ public class SourceInterChainBox<Key, Value, SourceKey, SourceValue> extends Abs
     /**
      * Adds next SourceInter in the chain to the collection
      * Sources should be added from most bottom (connected to the backing SourceInter)
-     * All calls to the SourceInterChainBox will be delegated to the last added
+     * All calls to the SourceChainBox will be delegated to the last added
      * SourceInter
      */
     public void add(SourceInter src) {

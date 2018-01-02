@@ -13,7 +13,7 @@ public class Wallet {
     private byte[] address;
 
     /**
-     * get a new wallet key
+     * getData a new wallet key
      */
     public void init() {
         this.ecKey = new ECKey(Utils.getRandom());
@@ -21,7 +21,7 @@ public class Wallet {
     }
 
     /**
-     * get a wallet by the key
+     * getData a wallet by the key
      *
      * @param ecKey keypair
      */

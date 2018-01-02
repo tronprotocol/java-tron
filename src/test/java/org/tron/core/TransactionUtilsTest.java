@@ -23,7 +23,7 @@ public class TransactionUtilsTest {
         Transaction coinbaseTransaction = TransactionUtils
                 .newCoinbaseTransaction("12", "");
 
-        logger.info("test get hash: {}", ByteArray.toHexString
+        logger.info("test getData hash: {}", ByteArray.toHexString
                 (TransactionUtils.getHash(coinbaseTransaction)));
     }
 

@@ -1,7 +1,7 @@
-package org.tron.datasource.inmem;
+package org.tron.storage.inmem;
 
 
-import org.tron.datasource.DbSource;
+import org.tron.storage.DbSourceInter;
 import org.tron.utils.ALock;
 import org.tron.utils.ByteArrayMap;
 
@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
-public class HashMapDB<V> implements DbSource<V> {
+public class HashMapDB<V> implements DbSourceInter<V> {
 
     protected final Map<byte[], V> storage;
 
@@ -28,9 +28,9 @@ public class HashMapDB<V> implements DbSource<V> {
     }
 
     @Override
-    public void put(byte[] key, V val) {
+    public void putData(byte[] key, V val) {
         if (val == null) {
-            delete(key);
+            deleteData(key);
         } else {
             try (ALock l = writeLock.lock()) {
                 storage.put(key, val);
@@ -39,14 +39,14 @@ public class HashMapDB<V> implements DbSource<V> {
     }
 
     @Override
-    public V get(byte[] key) {
+    public V getData(byte[] key) {
         try (ALock l = readLock.lock()) {
             return storage.get(key);
         }
     }
 
     @Override
-    public void delete(byte[] key) {
+    public void deleteData(byte[] key) {
         try (ALock l = writeLock.lock()) {
             storage.remove(key);
         }
@@ -58,15 +58,15 @@ public class HashMapDB<V> implements DbSource<V> {
     }
 
     @Override
-    public void setName(String name) {}
+    public void setDBName(String name) {}
 
     @Override
-    public String getName() {
+    public String getDBName() {
         return "in-memory";
     }
 
     @Override
-    public void init() {}
+    public void initDB() {}
 
     @Override
     public boolean isAlive() {
@@ -74,20 +74,20 @@ public class HashMapDB<V> implements DbSource<V> {
     }
 
     @Override
-    public void close() {}
+    public void closeDB() {}
 
     @Override
-    public Set<byte[]> keys() {
+    public Set<byte[]> allKeys() {
         try (ALock l = readLock.lock()) {
             return getStorage().keySet();
         }
     }
 
     @Override
-    public void updateBatch(Map<byte[], V> rows) {
+    public void updateByBatch(Map<byte[], V> rows) {
         try (ALock l = writeLock.lock()) {
             for (Map.Entry<byte[], V> entry : rows.entrySet()) {
-                put(entry.getKey(), entry.getValue());
+                putData(entry.getKey(), entry.getValue());
             }
         }
     }

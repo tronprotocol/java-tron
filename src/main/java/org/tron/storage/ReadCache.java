@@ -1,8 +1,8 @@
 
-package org.tron.datasource;
+package org.tron.storage;
 
 import org.apache.commons.collections4.map.LRUMap;
-import org.tron.db.ByteArrayWrapper;
+import org.tron.dbStore.ByteArrayWrapper;
 import org.tron.utils.ByteArrayMap;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
     private Map<Key, Value> cache;
     private boolean byteKeyMap;
 
-    public ReadCache(Source<Key, Value> src) {
+    public ReadCache(SourceInter<Key, Value> src) {
         super(src);
         withCache(new HashMap<Key, Value>());
     }
@@ -45,7 +45,7 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
         });
     }
 
-    // the guard against incorrect Map implementation for byte[] keys
+    // the guard against incorrect Map implementation for byte[] allKeys
     private boolean checked = false;
     private void checkByteArrKey(Key key) {
         if (checked) return;
@@ -59,26 +59,26 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
     }
 
     @Override
-    public void put(Key key, Value val) {
+    public void putData(Key key, Value val) {
         checkByteArrKey(key);
         if (val == null) {
-            delete(key);
+            deleteData(key);
         } else {
             cache.put(key, val);
             cacheAdded(key, val);
-            getSource().put(key, val);
+            getSourceInter().putData(key, val);
         }
     }
 
     @Override
-    public Value get(Key key) {
+    public Value getData(Key key) {
         checkByteArrKey(key);
         Value ret = cache.get(key);
         if (ret == NULL) {
             return null;
         }
         if (ret == null) {
-            ret = getSource().get(key);
+            ret = getSourceInter().getData(key);
             cache.put(key, ret == null ? NULL : ret);
             cacheAdded(key, ret);
         }
@@ -86,16 +86,21 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
     }
 
     @Override
-    public void delete(Key key) {
+    public void deleteData(Key key) {
         checkByteArrKey(key);
         Value value = cache.remove(key);
         cacheRemoved(key, value);
-        getSource().delete(key);
+        getSourceInter().deleteData(key);
     }
 
     @Override
     protected boolean flushImpl() {
         return false;
+    }
+
+    @Override
+    public SourceInter<Key, Value> getSource() {
+        return null;
     }
 
     public synchronized Collection<Key> getModified() {
@@ -114,12 +119,12 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
     }
 
     /**
-     * Shortcut for ReadCache with byte[] keys. Also prevents accidental
+     * Shortcut for ReadCache with byte[] allKeys. Also prevents accidental
      * usage of regular Map implementation (non byte[])
      */
     public static class BytesKey<V> extends ReadCache<byte[], V> implements CachedSource.BytesKey<V> {
 
-        public BytesKey(Source<byte[], V> src) {
+        public BytesKey(SourceInter<byte[], V> src) {
             super(src);
             withCache(new ByteArrayMap<V>());
         }
@@ -133,6 +138,11 @@ public class ReadCache<Key, Value> extends AbstractCachedSource<Key, Value> {
                 }
             }));
             return this;
+        }
+
+        @Override
+        public SourceInter<byte[], V> getSource() {
+            return null;
         }
     }
 }

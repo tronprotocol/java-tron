@@ -1,4 +1,4 @@
-package org.tron.datasource;
+package org.tron.storage;
 
 
 import org.spongycastle.util.encoders.Hex;
@@ -25,7 +25,7 @@ public class DataSourceArray<V> extends AbstractList<V> {
         if (idx >= size()) {
             setSize(idx + 1);
         }
-        src.put(ByteUtil.intToBytes(idx), value);
+        src.putData(ByteUtil.intToBytes(idx), value);
         return value;
     }
 
@@ -42,13 +42,13 @@ public class DataSourceArray<V> extends AbstractList<V> {
     @Override
     public synchronized V get(int idx) {
         if (idx < 0 || idx >= size()) throw new IndexOutOfBoundsException(idx + " > " + size);
-        return src.get(ByteUtil.intToBytes(idx));
+        return src.getData(ByteUtil.intToBytes(idx));
     }
 
     @Override
     public synchronized int size() {
         if (size < 0) {
-            byte[] sizeBB = src.getSource().get(SIZE_KEY);
+            byte[] sizeBB = src.getSourceInter().getData(SIZE_KEY);
             size = sizeBB == null ? 0 : ByteUtil.byteArrayToInt(sizeBB);
         }
         return size;
@@ -56,6 +56,6 @@ public class DataSourceArray<V> extends AbstractList<V> {
 
     private synchronized void setSize(int newSize) {
         size = newSize;
-        src.getSource().put(SIZE_KEY, ByteUtil.intToBytes(newSize));
+        src.getSourceInter().putData(SIZE_KEY, ByteUtil.intToBytes(newSize));
     }
 }

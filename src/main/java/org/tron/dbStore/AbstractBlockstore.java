@@ -1,6 +1,6 @@
-package org.tron.db;
+package org.tron.dbStore;
 
 
-public abstract class AbstractBlockstore implements BlockStore{
+public abstract class AbstractBlockstore implements BlockStoreInter {
 
 }

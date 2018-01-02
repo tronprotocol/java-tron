@@ -1,9 +1,9 @@
 package org.tron.storage;
 
 
-public class NoDeleteSourceInter<Key, Value> extends AbstractChainedSourceInter<Key, Value, Key, Value> {
+public class NoDeleteSource<Key, Value> extends AbstractChainedSource<Key, Value, Key, Value> {
 
-    public NoDeleteSourceInter(SourceInter<Key, Value> src) {
+    public NoDeleteSource(SourceInter<Key, Value> src) {
         super(src);
         setFlushSource(true);
     }

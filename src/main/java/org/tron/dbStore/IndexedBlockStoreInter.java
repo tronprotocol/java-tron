@@ -1,18 +1,18 @@
-package org.tron.db;
+package org.tron.dbStore;
 
 
 import org.tron.storage.DataSourceArray;
-import org.tron.storage.ObjectDataSourceInter;
+import org.tron.storage.ObjectDataSource;
 import org.tron.protos.core.TronBlock;
 
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.List;
 
-public class IndexedBlockStore extends AbstractBlockstore {
+public class IndexedBlockStoreInter extends AbstractBlockstore {
 
     DataSourceArray<List<BlockInfo>> index;
-    ObjectDataSourceInter<TronBlock.Block> blocks;
+    ObjectDataSource<TronBlock.Block> blocks;
 
     @Override
     public synchronized TronBlock.Block getBestBlock() {
