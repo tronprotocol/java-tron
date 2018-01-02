@@ -36,6 +36,10 @@ public class ConsensusCommand extends Command {
         }
 
     }
+    public void loadBlock(){
+        System.out.println("BlockChain loadding  ...");
+        Client.loadBlock();
+    }
 
     public void usage() {
         System.out.println("");

@@ -189,8 +189,8 @@ public class Client{
             thread.start();
         }
     }
-    public static void loadBlock(String type){
-        Peer peerConsensus = Peer.getInstance(type);
+    public static void loadBlock(){
+        Peer peerConsensus = Peer.getInstance("normal");
         int i = 1;
         boolean f = true;
         while(f){

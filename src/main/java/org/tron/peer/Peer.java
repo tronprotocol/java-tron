@@ -90,8 +90,8 @@ public class Peer {
                         .getAddress()));
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
-                System.out.println("BlockChain loadding  ...");
-                Client.loadBlock(PEER_NORMAL);
+//                System.out.println("BlockChain loadding  ...");
+//                Client.loadBlock(PEER_NORMAL);
             }
         }
     }
