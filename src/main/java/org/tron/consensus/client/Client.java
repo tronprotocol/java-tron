@@ -189,8 +189,7 @@ public class Client{
             thread.start();
         }
     }
-    public static void loadBlock(){
-        Peer peerConsensus = Peer.getInstance("normal");
+    public static void loadBlock(Peer peer){
         int i = 1;
         boolean f = true;
         while(f){
@@ -200,7 +199,7 @@ public class Client{
                 if (!(block == null)) {
                     /*System.out.println("Consensus " + block_key + " is: " +
                                 block);*/
-                    peerConsensus.addReceiveBlock(String.valueOf
+                    peer.addReceiveBlock(String.valueOf
                             (block));
                     f =true;
                     i = i+1;
