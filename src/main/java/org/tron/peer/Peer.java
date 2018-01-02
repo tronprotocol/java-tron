@@ -90,9 +90,9 @@ public class Peer {
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
                 //System.out.println("BlockChain loadding  ...");
-                //Client.loadBlock(this);
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
                         .getAddress()));
+                Client.loadBlock(this);
             }
         }
     }
