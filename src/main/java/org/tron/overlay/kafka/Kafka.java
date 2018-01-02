@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.overlay.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -22,6 +36,7 @@ import static org.tron.core.Constant.*;
 public class Kafka implements Net {
     public final static String KAFKA_HOST = "kafka.host";
     public final static String KAFKA_PORT = "kafka.port";
+    public final static String EMPTY_STRING = "";
 
     private final static String EMPTY_KEY = "";
     private final static int DEFAULT_WORKER_NUM = 4;
