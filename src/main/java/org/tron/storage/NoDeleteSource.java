@@ -1,6 +1,5 @@
 package org.tron.storage;
 
-
 public class NoDeleteSource<Key, Value> extends AbstractChainedSource<Key, Value, Key, Value> {
 
     public NoDeleteSource(SourceInter<Key, Value> src) {
