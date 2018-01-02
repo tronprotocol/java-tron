@@ -1,8 +1,14 @@
-<p align="center"><img width=27% src="https://github.com/tronprotocol/wiki/blob/master/images/tron.png"></p>
+<h1 align="center">
+  <br>
+  <img width=20% src="https://raw.githubusercontent.com/tronprotocol/wiki/master/images/java-tron.png">
+  <br>
+  java-tron
+  <br>
+</h1>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/tronprotocol/java-tron)
 [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=feature%2Fconsensus)](https://travis-ci.org/tronprotocol/java-tron) 
-[![GitHub last commit](https://img.shields.io/github/last-commit/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/commits/develop) 
 [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) 
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/pulls)
 [![GitHub contributors](https://img.shields.io/github/contributors/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/graphs/contributors) 
@@ -15,6 +21,8 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 # Quick Start
 
+> Note: This repository is a IDEA project which you can simply download and import.
+
 **Download and build**
 
 ```shell
@@ -25,20 +33,90 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 **Import project to IDEA**
 
-1. [File] -> [New] -> [Project from Existing Sources...]
-2. Select java-tron/build.gradle
-3. Dialog [Import Project from Gradle], confirm [Use auto-import] and [Use gradle wrapper task configuration] have been
+- [File] -> [New] -> [Project from Existing Sources...]
+- Select java-tron/build.gradle
+- Dialog [Import Project from Gradle], confirm [Use auto-import] and [Use gradle wrapper task configuration] have been
  selected，then select Gradle JVM（JDK 1.8）and click [OK]
 
 # Testing
 
-- Install Kafka, create two topics (block and transaction)
-- Adjust constant **DEFAULT_BOOTSTRAP_SERVERS** in ConsumerProperty.java file and ProducerProperty.java file to your Kafka's host（like：192.168.1.199:9092）
-- IDEA: [Edit Configurations...] -> [Program arguments]: **--type server**
-- Run Tron (server)
-- IDEA: [Edit Configurations...] -> [Program arguments]: **--type normal**
-- Run Tron (client)
-- Execute `help` command on the client
+**Install Kafka and create two topics (block and transaction)**
 
+**Update the configuration**
 
+File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
+
+```yml
+kafka {
+    host = "127.0.0.1"  # your Kafka's host
+    port = ":9092"      # your Kafka's port
+}
+```
+
+**Starting program**
+
+IDEA: 
+- [Edit Configurations...] -> [Add New Configuration] -> [Application]
+- [Edit Configurations...] -> [Main Class]: `org.tron.example.Tron`
+- [Edit Configurations...] -> [Use classpath of module]: `java-tron_main`
+- [Edit Configurations...] -> [Program arguments]: `--type server`
+- Run
+
+![run](https://github.com/tronprotocol/wiki/blob/master/images/show-how/run.gif)
+
+# Commands
+**help**
+
+| Description | Example |
+| --- | --- |
+| Help tips | `help` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/help.gif)
+
+**account**
+
+| Description | Example |
+| --- | --- |
+| Get address | `account` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/account.gif)
+
+**getbalance**
+
+| Description | Example |
+| --- | --- |
+| Get balance | `getbalance` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/getbalance.gif)
+
+**send [to] [balance]**
+
+| Description | Example |
+| --- | --- |
+| Send balance to address | `send 2cddf5707aefefb199cb16430fb0f6220d460dfe 2` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send.gif)
+
+**printblockchain**
+
+| Description | Example |
+| --- | --- |
+| Print blockchain | `printblockchain` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/printblockchain.gif)
+
+**exit**
+
+| Description | Example |
+| --- | --- |
+| Exit | `exit` |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/exit.gif)
+
+# Contact
+
+Chat with us via [Gitter](https://gitter.im/tronprotocol/java-tron).
+
+# Contribution
+Contributions are welcomed and greatly appreciated. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
 

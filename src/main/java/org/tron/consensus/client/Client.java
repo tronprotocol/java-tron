@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.consensus.client;
 
 import io.atomix.catalyst.transport.Address;
@@ -10,6 +24,8 @@ import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.PutCommand;
 import org.tron.overlay.kafka.ConsumerWorker;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +45,18 @@ public class Client{
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
-        Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.108", 5000)
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+            Collection<Address> cluster = Arrays.asList(
+                    new Address(localhost.getHostAddress(), 5000)
+            );
 
-        );
-
-        CompletableFuture<CopycatClient> future = client.connect(cluster);
-        future.join();
+            CompletableFuture<CopycatClient> future = client.connect(cluster);
+            future.join();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     public static CopycatClient getClient() {
