@@ -1,6 +1,3 @@
-<<<<<<< HEAD:src/test/java/org/tron/dbStore/BlockStoresTestInter.java
-package org.tron.dbStore;
-=======
 /*
  * java-tron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +12,13 @@ package org.tron.dbStore;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.db;
->>>>>>> a13b6fb432f828b624ae96b8d9412bfcbe635b9c:src/test/java/org/tron/db/BlockStoresTest.java
+
+package org.tron.dbStore;
 
 import org.junit.Test;
 import org.tron.utils.ByteArray;
 
-public class BlockStoresTestInter {
+public class BlockStoresTest {
 
     @Test
     public void saveBlock() {
