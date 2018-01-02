@@ -80,6 +80,7 @@ public class Peer {
 
     private void initBlockchian() {
         if (Blockchain.dbExists()) {
+            new ConsensusCommand().server();
             blockchain = new Blockchain();
         } else {
             //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));

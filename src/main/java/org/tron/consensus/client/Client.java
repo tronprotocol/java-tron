@@ -104,6 +104,7 @@ public class Client{
                         client.submit(new PutCommand(block_key, message.getMessage()));
                         System.out.println("Block: consensus success");
                         f = false;
+                        break;
                     }
                 } catch (NullPointerException e) {
                     e.printStackTrace();
@@ -115,7 +116,7 @@ public class Client{
 
     public static void getMessage(String key)  {
 
-        Peer peerConsensus = Peer.getInstance("server");
+        Peer peerConsensus = Peer.getInstance("normal");
         final String[] preMessage = {null};
         final String[] preTime = {null};
         if (key.equals("transaction")) {
@@ -147,7 +148,27 @@ public class Client{
         if (key.equals("block")) {
             Thread thread = new Thread(() -> {
                 while(true){
-                    client.submit(new GetQuery(key)).thenAccept(block -> {
+                    int i = 1;
+                    boolean f = true;
+                    String block_key;
+                    while(f){
+                        block_key = "block" + i;
+                        Object block = client.submit(new GetQuery(block_key)).join();
+                        try {
+                            if (!(block == null)) {
+                                f =true;
+                                i = i+1;
+                            }else {
+                                f = false;
+                            }
+                        } catch (NullPointerException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    i = i-1;
+                    String finalBlock_key = "block" + i;
+
+                    client.submit(new GetQuery(finalBlock_key)).thenAccept(block -> {
                         /*System.out.println("Consensus " + key + " is: " +
                                 block);*/
                         if (!String.valueOf(block).equals(preMessage[0])) {
