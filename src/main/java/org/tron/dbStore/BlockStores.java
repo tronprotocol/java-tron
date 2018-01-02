@@ -2,19 +2,19 @@ package org.tron.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceInterImpl;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 public class BlockStores  {
     public static final Logger logger = LoggerFactory.getLogger("BlockStores");
-    private LevelDbDataSource blockDbDataSource;
+    private LevelDbDataSourceInterImpl blockDbDataSource;
 
 
     public BlockStores( ) {
 
-        blockDbDataSource=new LevelDbDataSource(BLOCK_DB_NAME);
-        blockDbDataSource.init();
+        blockDbDataSource=new LevelDbDataSourceInterImpl(BLOCK_DB_NAME);
+        blockDbDataSource.initDB();
     }
 
     /**
@@ -23,7 +23,7 @@ public class BlockStores  {
      * @param blockData
      */
     public void saveBlock(byte[] blockHash, byte[] blockData){
-        blockDbDataSource.put(blockHash,blockData);
+        blockDbDataSource.putData(blockHash,blockData);
 
     }
 
@@ -33,27 +33,27 @@ public class BlockStores  {
      * @return
      */
     public  byte[] findBlockByHash(byte[] blockHash){
-        return blockDbDataSource.get(blockHash);
+        return blockDbDataSource.getData(blockHash);
     }
 
     /**
-     * delete a block
+     * deleteData a block
      * @param blockHash
      */
     public void deleteBlock(byte[] blockHash){
-        blockDbDataSource.delete(blockHash);
+        blockDbDataSource.deleteData(blockHash);
     }
 
 
     /***
-     * reset the database
+     * resetDB the database
      */
     public void reset(){
-        blockDbDataSource.reset();
+        blockDbDataSource.resetDB();
     }
 
     public void close(){
-        blockDbDataSource.close();
+        blockDbDataSource.closeDB();
     }
 
 }

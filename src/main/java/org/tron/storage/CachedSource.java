@@ -1,19 +1,19 @@
-package org.tron.datasource;
+package org.tron.storage;
 
 import java.util.Collection;
 
 /**
- * Source which internally caches underlying Source key-value pairs
+ * SourceInter which internally caches underlying SourceInter key-value pairs
  */
-public interface CachedSource<Key, Value> extends Source<Key, Value> {
+public interface CachedSourceInter<Key, Value> extends SourceInter<Key, Value> {
 
     /**
-     * @return The underlying Source
+     * @return The underlying SourceInter
      */
-    Source<Key, Value> getSource();
+    SourceInter<Key, Value> getSource();
 
     /**
-     * @return Modified entry keys if this is a write cache
+     * @return Modified entry allKeys if this is a write cache
      */
     Collection<Key> getModified();
 
@@ -34,6 +34,6 @@ public interface CachedSource<Key, Value> extends Source<Key, Value> {
     /**
      * Just a convenient shortcut to the most popular Sources with byte[] key
      */
-    interface BytesKey<Value> extends CachedSource<byte[], Value> {
+    interface BytesKey<Value> extends CachedSourceInter<byte[], Value> {
     }
 }

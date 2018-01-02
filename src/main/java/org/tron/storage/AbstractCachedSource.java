@@ -1,9 +1,9 @@
-package org.tron.datasource;
+package org.tron.storage;
 
 
-public abstract class AbstractCachedSource<Key, Value>
-        extends AbstractChainedSource<Key, Value, Key, Value>
-        implements CachedSource<Key, Value> {
+public abstract class AbstractCachedSourceInter<Key, Value>
+        extends AbstractChainedSourceInter<Key, Value, Key, Value>
+        implements CachedSourceInter<Key, Value> {
 
     private final Object lock = new Object();
 
@@ -29,8 +29,8 @@ public abstract class AbstractCachedSource<Key, Value>
     protected MemSizeEstimator<Value> valueSizeEstimator;
     private int size = 0;
 
-    public AbstractCachedSource(Source<Key, Value> source) {
-        super(source);
+    public AbstractCachedSourceInter(SourceInter<Key, Value> sourceInter) {
+        super(sourceInter);
     }
 
     /**
@@ -84,7 +84,7 @@ public abstract class AbstractCachedSource<Key, Value>
     /**
      * Sets the key/value size estimators
      */
-    public AbstractCachedSource <Key, Value> withSizeEstimators(MemSizeEstimator<Key> keySizeEstimator, MemSizeEstimator<Value> valueSizeEstimator) {
+    public AbstractCachedSourceInter<Key, Value> withSizeEstimators(MemSizeEstimator<Key> keySizeEstimator, MemSizeEstimator<Value> valueSizeEstimator) {
         this.keySizeEstimator = keySizeEstimator;
         this.valueSizeEstimator = valueSizeEstimator;
         return this;

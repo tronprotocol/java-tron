@@ -1,8 +1,8 @@
 package org.tron.db;
 
 
-import org.tron.datasource.DataSourceArray;
-import org.tron.datasource.ObjectDataSource;
+import org.tron.storage.DataSourceArray;
+import org.tron.storage.ObjectDataSourceInter;
 import org.tron.protos.core.TronBlock;
 
 import java.io.Serializable;
@@ -12,7 +12,7 @@ import java.util.List;
 public class IndexedBlockStore extends AbstractBlockstore {
 
     DataSourceArray<List<BlockInfo>> index;
-    ObjectDataSource<TronBlock.Block> blocks;
+    ObjectDataSourceInter<TronBlock.Block> blocks;
 
     @Override
     public synchronized TronBlock.Block getBestBlock() {
@@ -60,7 +60,7 @@ public class IndexedBlockStore extends AbstractBlockstore {
         for (BlockInfo blockInfo : blockInfos) {
             if (blockInfo.isMainChain()) {
                 byte[] hash = blockInfo.getHash();
-                return blocks.get(hash);
+                return blocks.getData(hash);
             }
         }
 
@@ -70,12 +70,12 @@ public class IndexedBlockStore extends AbstractBlockstore {
 
     @Override
     public synchronized boolean isBlockExist(byte[] hash) {
-        return blocks.get(hash) != null;
+        return blocks.getData(hash) != null;
     }
 
     @Override
     public synchronized TronBlock.Block getBlockByHash(byte[] hash) {
-        return blocks.get(hash);
+        return blocks.getData(hash);
     }
 
 
