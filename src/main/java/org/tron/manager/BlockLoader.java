@@ -24,11 +24,10 @@ import org.tron.core.TronBlockChainImpl;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ExecutorPipeline;
-import org.tron.utils.Functional;
 
 import java.io.FileInputStream;
 import java.util.Scanner;
-
+import java.util.function.Function;
 
 public class BlockLoader {
 
@@ -46,34 +45,23 @@ public class BlockLoader {
     ExecutorPipeline<TronBlock.Block, ?> exce2;
 
     public void loadBlocks() {
-        exce1 = new ExecutorPipeline(8, 1000, true, new Functional
-                .Function<TronBlock.Block, TronBlock.Block>() {
-
-            public TronBlock.Block apply(TronBlock.Block block) {
-                if (block.getBlockHeader().getNumber() >= blockchain
-                        .getBlockStore().getBestBlock().getBlockHeader()
-                        .getNumber()) {
-                    for (TronTransaction.Transaction tx : block
-                            .getTransactionsList()) {
-                        TransactionUtils.getSender(tx);
-                    }
+        exce1 = new ExecutorPipeline(8, 1000, true, (Function<TronBlock.Block, TronBlock.Block>) block -> {
+            if (block.getBlockHeader().getNumber() >= blockchain
+                    .getBlockStore().getBestBlock().getBlockHeader()
+                    .getNumber()) {
+                for (TronTransaction.Transaction tx : block
+                        .getTransactionsList()) {
+                    TransactionUtils.getSender(tx);
                 }
-                return block;
             }
-        }, new Functional.Consumer<Throwable>() {
-            @Override
-            public void accept(Throwable throwable) {
-                logger.error("Unhandled exception: ", throwable);
-            }
-        });
+            return block;
+        }, throwable -> logger.error("Unhandled exception: ", throwable));
 
-        exce2 = exce1.add(1, 1000, new Functional.Consumer<TronBlock.Block>() {
-            public void accept(TronBlock.Block block) {
-                try {
-                    blockWork(block);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        exce2 = exce1.add(1, 1000, block -> {
+            try {
+                blockWork(block);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
