@@ -14,9 +14,11 @@
  */
 
 package org.tron.dbStore;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.utils.ByteArray;
 
+@Ignore
 public class UTXOStoreTest {
 
     /**
