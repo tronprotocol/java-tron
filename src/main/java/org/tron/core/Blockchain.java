@@ -45,7 +45,7 @@ public class Blockchain {
      *
      * @param address wallet address
      */
-    public Blockchain(String address) {
+    public Blockchain(String address, String type) {
         if (dbExists()) {
             logger.info("blockchain already exists.");
             System.exit(0);
@@ -89,7 +89,7 @@ public class Blockchain {
                 .toByteArray();
         blockDB.put(LAST_HASH, lastHash);
         // put message to consensus 2018/1/2
-        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+        if (type.equals(Peer.PEER_SERVER)) {
             String value = ByteArray.toHexString(genesisBlock.toByteArray());
             Message message = new Message(value, Type.BLOCK);
             Client.putMessage1(message); // consensus: put message GenesisBlock
