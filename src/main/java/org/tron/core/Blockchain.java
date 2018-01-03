@@ -304,7 +304,7 @@ public class Blockchain {
 
     }
 
-    public void receiveBlock(Block block, UTXOSet utxoSet) {
+    public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
 
         byte[] lastHashKey = LAST_HASH;
         byte[] lastHash = blockDB.get(lastHashKey);
@@ -323,7 +323,7 @@ public class Blockchain {
                 .toByteArray();
 
         // update lastHash
-        Tron.getPeer().getBlockchain().getBlockDB().put(lastHashKey, ch);
+        peer.getBlockchain().getBlockDB().put(lastHashKey, ch);
 
         this.lastHash = ch;
         currentHash = ch;
