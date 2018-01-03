@@ -30,6 +30,7 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Optional;
 
 import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.crypto.Hash.sha3;
@@ -49,8 +50,10 @@ public class BlockUtils {
         Block.Builder block = Block.newBuilder();
 
         for (int i = 0; transactions != null && i < transactions.size(); i++) {
-            Transaction transaction = transactions.get(i);
-            block.addTransactions(i, transaction);
+            final int index = i;
+            Optional.ofNullable(transactions.get(index)).ifPresent((transaction) ->
+                    block.addTransactions(index, transaction)
+            );
         }
 
         //Chain programming
