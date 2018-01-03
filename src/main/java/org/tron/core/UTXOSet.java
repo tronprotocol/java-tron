@@ -18,7 +18,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.ECKey;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
@@ -32,11 +32,11 @@ public class UTXOSet {
     private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
     private Blockchain blockchain;
-    private LevelDbDataSource txDB = null;
+    private LevelDbDataSourceImpl txDB = null;
 
     public UTXOSet() {
-        txDB = new LevelDbDataSource(TRANSACTION_DB_NAME);
-        txDB.init();
+        txDB = new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
+        txDB.initDB();
     }
 
     public Blockchain getBlockchain() {
@@ -50,7 +50,7 @@ public class UTXOSet {
     public void reindex() {
         logger.info("reindex");
 
-        txDB.reset();
+        txDB.resetDB();
 
         HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
 
@@ -61,7 +61,7 @@ public class UTXOSet {
             TXOutputs value = entry.getValue();
 
             for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
-                txDB.put(ByteArray.fromHexString(key), value.toByteArray());
+                txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
             }
         }
     }
@@ -71,10 +71,10 @@ public class UTXOSet {
         HashMap<String, long[]> unspentOutputs = new HashMap<>();
         long accumulated = 0L;
 
-        Set<byte[]> keySet = txDB.keys();
+        Set<byte[]> keySet = txDB.allKeys();
 
         for (byte[] key : keySet) {
-            byte[] txOutputsData = txDB.get(key);
+            byte[] txOutputsData = txDB.getData(key);
             try {
                 TXOutputs txOutputs = TronTXOutputs.TXOutputs.parseFrom(txOutputsData);
 
@@ -113,9 +113,9 @@ public class UTXOSet {
     public ArrayList<TronTXOutput.TXOutput> findUTXO(byte[] pubKeyHash) {
         ArrayList<TronTXOutput.TXOutput> utxos = new ArrayList<>();
 
-        Set<byte[]> keySet = txDB.keys();
+        Set<byte[]> keySet = txDB.allKeys();
         for (byte[] key : keySet) {
-            byte[] txData = txDB.get(key);
+            byte[] txData = txDB.getData(key);
 
             try {
                 TXOutputs txOutputs = TXOutputs.parseFrom(txData);

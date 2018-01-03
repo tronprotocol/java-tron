@@ -19,7 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
@@ -54,7 +54,7 @@ public class BlockchainTest {
         logger.info("test blockchain new: lastHash = {}", ByteArray
                 .toHexString(blockchain.getLastHash()));
 
-        byte[] blockBytes = blockchain.getBlockDB().get(blockchain.getLastHash());
+        byte[] blockBytes = blockchain.getBlockDB().getData(blockchain.getLastHash());
 
         try {
             Block block = Block.parseFrom(blockBytes);
@@ -85,8 +85,8 @@ public class BlockchainTest {
     @Test
     public void testFindTransaction() {
         Blockchain blockchain = new Blockchain();
-        LevelDbDataSource db = new LevelDbDataSource("test");
-        db.init();
+        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl("test");
+        db.initDB();
         blockchain.setBlockDB(db);
         Transaction transaction = blockchain.findTransaction(ByteString
                 .copyFrom(ByteArray.fromHexString
@@ -96,7 +96,7 @@ public class BlockchainTest {
 
     @Test
     public void testDBExists() {
-        logger.info("test db exists: {}", dbExists());
+        logger.info("test dbStore exists: {}", dbExists());
     }
 
     @Test
@@ -130,14 +130,14 @@ public class BlockchainTest {
                 difficulty, 0);
         //TronBlockChainImpl tronBlockChain = new TronBlockChainImpl();
         //tronBlockChain.addBlockToChain(block);
-        LevelDbDataSource levelDbDataSource = new LevelDbDataSource
+        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
                 ("blockStore_test");
-        levelDbDataSource.init();
+        levelDbDataSource.initDB();
         String lastHash = "lastHash";
         byte[] key = lastHash.getBytes();
         String value = "090383489592535";
         byte[] values = value.getBytes();
-        levelDbDataSource.put(key, values);
+        levelDbDataSource.putData(key, values);
 
         Blockchain blockchain = new Blockchain();
         blockchain.addBlock(block);

@@ -41,7 +41,7 @@ public class BlockchainIterator implements Iterator {
     public Object next() {
         TronBlock.Block block = null;
         if (hasNext()) {
-            byte[] value = blockchain.getBlockDB().get(index);
+            byte[] value = blockchain.getBlockDB().getData(index);
             try {
                 block = TronBlock.Block.parseFrom(value);
                 index = block.getBlockHeader().getParentHash()

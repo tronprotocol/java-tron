@@ -15,7 +15,7 @@
 
 package org.tron.trie;
 
-import org.tron.datasource.Source;
+import org.tron.storage.SourceInter;
 
 import static org.tron.crypto.Hash.sha3;
 import static org.tron.utils.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -26,26 +26,26 @@ public class SecureTrie extends TrieImpl {
         super(root);
     }
 
-    public SecureTrie(Source<byte[], byte[]> cache) {
+    public SecureTrie(SourceInter<byte[], byte[]> cache) {
         super(cache, null);
     }
 
-    public SecureTrie(Source<byte[], byte[]> cache, byte[] root) {
+    public SecureTrie(SourceInter<byte[], byte[]> cache, byte[] root) {
         super(cache, root);
     }
 
     @Override
-    public byte[] get(byte[] key) {
-        return super.get(sha3(key));
+    public byte[] getData(byte[] key) {
+        return super.getData(sha3(key));
     }
 
     @Override
-    public void put(byte[] key, byte[] value) {
-        super.put(sha3(key), value);
+    public void putData(byte[] key, byte[] value) {
+        super.putData(sha3(key), value);
     }
 
     @Override
-    public void delete(byte[] key) {
-        put(key, EMPTY_BYTE_ARRAY);
+    public void deleteData(byte[] key) {
+        putData(key, EMPTY_BYTE_ARRAY);
     }
 }

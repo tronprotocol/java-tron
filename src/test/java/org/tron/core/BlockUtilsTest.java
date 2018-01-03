@@ -78,6 +78,7 @@ public class BlockUtilsTest {
     @Test
     public void testGetMineValue() {
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+
                 ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA);
         logger.info("test get mine value: {}", ByteArray.toHexString
                 (BlockUtils.getMineValue(BlockUtils.newGenesisBlock(coinbase)
@@ -87,6 +88,7 @@ public class BlockUtilsTest {
     @Test
     public void testGetPowBoundary() {
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+
                 ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA);
         logger.info("test get pow boundary: {}", ByteArray.toHexString
                 (BlockUtils.getPowBoundary(BlockUtils.newGenesisBlock
@@ -95,7 +97,7 @@ public class BlockUtilsTest {
 
     @Test
     public void testGetIncreaseNumber() {
-        logger.info("test get increase number: {}", BlockUtils
+        logger.info("test getData increase number: {}", BlockUtils
                 .getIncreaseNumber(new Blockchain()));
     }
 }

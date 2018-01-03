@@ -13,18 +13,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.trie;
+package org.tron.dbStore;
 
-import org.tron.storage.SourceInter;
+import org.junit.Test;
+import org.tron.utils.ByteArray;
 
-public interface Trie<V> extends SourceInter<byte[], V> {
+public class BlockStoresTest {
 
-    byte[] getRootHash();
+    @Test
+    public void saveBlock() {
+        BlockStores blockStores = new BlockStores();
+        blockStores.saveBlock( "0001245".getBytes(),"xxdfrgds".getBytes());
+        blockStores.close();
+    }
 
-    void setRoot(byte[] root);
-
-    /**
-     * Recursively deleteData all nodes from root
-     */
-    void clear();
+    @Test
+    public void findBlockByHash() {
+        BlockStores blockStores = new BlockStores();
+        byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
+        blockStores.close();
+        System.out.println(ByteArray.toStr(blockByHash));
+    }
 }

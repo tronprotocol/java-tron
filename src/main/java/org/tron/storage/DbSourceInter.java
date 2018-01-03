@@ -12,19 +12,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.tron.storage;
 
-package org.tron.trie;
+import java.util.Set;
 
-import org.tron.storage.SourceInter;
 
-public interface Trie<V> extends SourceInter<byte[], V> {
+public interface DbSourceInter<V> extends BatchSourceInter<byte[], V> {
 
-    byte[] getRootHash();
 
-    void setRoot(byte[] root);
+    void setDBName(String name);
 
-    /**
-     * Recursively deleteData all nodes from root
-     */
-    void clear();
+
+    String getDBName();
+
+    void initDB();
+
+
+    boolean isAlive();
+
+
+    void closeDB();
+
+
+    Set<byte[]> allKeys() throws RuntimeException;
 }

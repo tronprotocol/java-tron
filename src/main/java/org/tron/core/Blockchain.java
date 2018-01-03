@@ -19,7 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.ECKey;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.example.Tron;
 import org.tron.overlay.Net;
 import org.tron.overlay.message.Message;
@@ -40,12 +40,18 @@ import java.util.List;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
-import static org.tron.datasource.leveldb.LevelDbDataSource.databaseName;
+import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
+
+
+    public static final String genesisCoinbaseData = "0x00";
+
+
     private static final Logger logger = LoggerFactory.getLogger("Blockchain");
     public static final String GENESIS_COINBASE_DATA = "0x00";
-    private LevelDbDataSource blockDB = null;
+
+    private LevelDbDataSourceImpl blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
     private byte[] lastHash;
@@ -62,8 +68,8 @@ public class Blockchain {
             System.exit(0);
         }
 
-        blockDB = new LevelDbDataSource(BLOCK_DB_NAME);
-        blockDB.init();
+        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+        blockDB.initDB();
 
         Transaction coinbase = TransactionUtils.newCoinbaseTransaction
                 (address, GENESIS_COINBASE_DATA);
@@ -72,19 +78,19 @@ public class Blockchain {
         this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
 
-        blockDB.put(genesisBlock.getBlockHeader().getHash().toByteArray(),
+        blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
                 genesisBlock.toByteArray());
         byte[] lastHash = genesisBlock.getBlockHeader()
                 .getHash()
                 .toByteArray();
 
-        blockDB.put(LAST_HASH, lastHash);
+        blockDB.putData(LAST_HASH, lastHash);
 
         logger.info("new blockchain");
     }
 
     /**
-     * create blockchain by db source
+     * create blockchain by dbStore source
      */
     public Blockchain() {
         if (!dbExists()) {
@@ -93,10 +99,10 @@ public class Blockchain {
             System.exit(0);
         }
 
-        blockDB = new LevelDbDataSource(BLOCK_DB_NAME);
-        blockDB.init();
+        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+        blockDB.initDB();
 
-        this.lastHash = blockDB.get(LAST_HASH);
+        this.lastHash = blockDB.getData(LAST_HASH);
         this.currentHash = this.lastHash;
 
         logger.info("load blockchain");
@@ -191,7 +197,7 @@ public class Blockchain {
     }
 
     /**
-     * judge db is exists
+     * judge dbStore is exists
      *
      * @return boolean
      */
@@ -202,20 +208,20 @@ public class Blockchain {
     }
 
     public void addBlock(Block block) {
-        byte[] blockInDB = blockDB.get(block.getBlockHeader().getHash().toByteArray());
+        byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
 
         if (blockInDB == null || blockInDB.length == 0) {
             return;
         }
 
-        blockDB.put(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
+        blockDB.putData(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
 
-        byte[] lastHash = blockDB.get(ByteArray.fromString("lashHash"));
-        byte[] lastBlockData = blockDB.get(lastHash);
+        byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
+        byte[] lastBlockData = blockDB.getData(lastHash);
         try {
             Block lastBlock = Block.parseFrom(lastBlockData);
             if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
-                blockDB.put(ByteArray.fromString("lashHash"), block.getBlockHeader().getHash().toByteArray());
+                blockDB.putData(ByteArray.fromString("lashHash"), block.getBlockHeader().getHash().toByteArray());
                 this.lastHash = block.getBlockHeader().getHash().toByteArray();
                 this.currentHash = this.lastHash;
             }
@@ -244,12 +250,12 @@ public class Blockchain {
      * @param transactions transactions
      */
     public void addBlock(List<Transaction> transactions, Net net) {
-        // get lastHash
-        byte[] lastHash = blockDB.get(LAST_HASH);
+        // getData lastHash
+        byte[] lastHash = blockDB.getData(LAST_HASH);
         ByteString parentHash = ByteString.copyFrom(lastHash);
-        // get number
+        // getData number
         long number = BlockUtils.getIncreaseNumber(Tron.getPeer().getBlockchain());
-        // get difficulty
+        // getData difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
                 number);
@@ -265,7 +271,7 @@ public class Blockchain {
     public void receiveBlock(Block block, UTXOSet utxoSet) {
 
         byte[] lastHashKey = LAST_HASH;
-        byte[] lastHash = blockDB.get(lastHashKey);
+        byte[] lastHash = blockDB.getData(lastHashKey);
 
         if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray()).equals(ByteArray.toHexString
                 (lastHash))) {
@@ -275,13 +281,13 @@ public class Blockchain {
         // save the block into the database
         byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
         byte[] blockVal = block.toByteArray();
-        blockDB.put(blockHashKey, blockVal);
+        blockDB.putData(blockHashKey, blockVal);
 
         byte[] ch = block.getBlockHeader().getHash()
                 .toByteArray();
 
         // update lastHash
-        Tron.getPeer().getBlockchain().getBlockDB().put(lastHashKey, ch);
+        Tron.getPeer().getBlockchain().getBlockDB().putData(lastHashKey, ch);
 
         this.lastHash = ch;
         currentHash = ch;
@@ -294,11 +300,11 @@ public class Blockchain {
         return GENESIS_COINBASE_DATA;
     }
 
-    public LevelDbDataSource getBlockDB() {
+    public LevelDbDataSourceImpl getBlockDB() {
         return blockDB;
     }
 
-    public void setBlockDB(LevelDbDataSource blockDB) {
+    public void setBlockDB(LevelDbDataSourceImpl blockDB) {
         this.blockDB = blockDB;
     }
 

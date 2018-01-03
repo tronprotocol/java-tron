@@ -43,13 +43,13 @@ public class ConsensusCommand {
         System.out.println("");
 
         System.out.println("");
-        System.out.println("get Message");
+        System.out.println("getData Message");
         System.out.println("Command: getmessage [key]");
         System.out.println("Description: Get consensus Message");
         System.out.println("");
 
         System.out.println("");
-        System.out.println("put Message");
+        System.out.println("putData Message");
         System.out.println("Command: putmessage [key] [value]");
         System.out.println("Description: Put a consensus Message");
         System.out.println("");

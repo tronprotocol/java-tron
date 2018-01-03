@@ -12,19 +12,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.tron.storage;
 
-package org.tron.trie;
-
-import org.tron.storage.SourceInter;
-
-public interface Trie<V> extends SourceInter<byte[], V> {
-
-    byte[] getRootHash();
-
-    void setRoot(byte[] root);
-
+public interface Serializer<T, S> {
     /**
-     * Recursively deleteData all nodes from root
+     * Converts T ==> S
+     * Should correctly handle null parameter
      */
-    void clear();
+    S serialize(T object);
+    /**
+     * Converts S ==> T
+     * Should correctly handle null parameter
+     */
+    T deserialize(S stream);
 }

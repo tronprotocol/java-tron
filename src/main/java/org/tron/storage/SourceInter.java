@@ -13,18 +13,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.trie;
+package org.tron.storage;
 
-import org.tron.storage.SourceInter;
 
-public interface Trie<V> extends SourceInter<byte[], V> {
+public interface SourceInter<K, V> {
 
-    byte[] getRootHash();
 
-    void setRoot(byte[] root);
+    void putData(K key, V val);
 
-    /**
-     * Recursively deleteData all nodes from root
-     */
-    void clear();
+
+    V getData(K key);
+
+
+    void deleteData(K key);
+
+
+    boolean flush();
+
 }
