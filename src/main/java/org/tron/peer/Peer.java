@@ -59,7 +59,7 @@ public class Peer {
         try {
             block = TronBlock.Block.parseFrom(ByteArray.fromHexString(message
                     ));
-            blockchain.receiveBlock(block, utxoSet);
+            blockchain.receiveBlock(block, utxoSet, this);
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
         }
@@ -76,8 +76,14 @@ public class Peer {
         initWallet();
         initBlockchian();
         initUTXOSet();
+        initLoadBlock();
     }
 
+    private void initLoadBlock(){
+        if (this.type.equals(Peer.PEER_NORMAL)){
+            Client.loadBlock(this);
+        }
+    }
     private void initBlockchian() {
         new ConsensusCommand().server();
         if (Blockchain.dbExists()) {
@@ -85,14 +91,15 @@ public class Peer {
         } else {
             //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));
             if (this.type.equals(Peer.PEER_SERVER)){
+                System.out.println("peer-server");
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
                         .getAddress()), this.type);
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
-                //System.out.println("BlockChain loadding  ...");
+                System.out.println("BlockChain loadding  ...");
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
                         .getAddress()), this.type);
-                Client.loadBlock(this);
+
             }
         }
     }

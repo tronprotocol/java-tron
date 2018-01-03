@@ -33,7 +33,7 @@ public class Client{
         client.serializer().register(GetQuery.class);
 
         Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.100", 5000)
+                new Address("192.168.0.107", 5000)
         );
         CompletableFuture<CopycatClient> future = client.connect(cluster);
         future.join();
@@ -104,7 +104,6 @@ public class Client{
                         client.submit(new PutCommand(block_key, message.getMessage()));
                         System.out.println("Block: consensus success");
                         f = false;
-                        break;
                     }
                 } catch (NullPointerException e) {
                     e.printStackTrace();
@@ -189,27 +188,19 @@ public class Client{
     }
     public static void loadBlock(Peer peer){
         int i = 2;
-        boolean f = true;
-        while(f){
+        boolean a = true;
+        while(a){
             String block_key = "block" + i;
             Object block = client.submit(new GetQuery(block_key)).join();
-            System.out.println(block.toString());
-            try {
-                if (!(block == null)) {
-                    /*System.out.println("Consensus " + block_key + " is: " +
-                                block);*/
-                    peer.addReceiveBlock(String.valueOf
-                            (block));
-                    f =true;
-                    i = i+1;
-                }else {
-                    f = false;
-                    break;
-                }
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-                System.out.println("object == null");
-                break;
+            if (!(block == null)) {
+                peer.addReceiveBlock(String.valueOf
+                        (block));
+                System.out.println(block.toString());
+                a = true;
+                i ++;
+            }
+            if (null == block){
+                a = false;
             }
         }
     }
