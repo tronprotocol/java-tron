@@ -16,13 +16,14 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
@@ -36,12 +37,15 @@ import static org.tron.utils.ByteArray.toHexString;
 
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
+    private static Blockchain blockchain;
+
+    @BeforeClass
+    public static void init() {
+       blockchain = new Blockchain("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85");
+    }
 
     @Test
     public void testBlockchain() {
-        Blockchain blockchain = new Blockchain
-                ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85");
-
         logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
                         .toHexString(blockchain.getCurrentHash()));
@@ -49,8 +53,6 @@ public class BlockchainTest {
 
     @Test
     public void testBlockchainNew() {
-        Blockchain blockchain = new Blockchain();
-
         logger.info("test blockchain new: lastHash = {}", ByteArray
                 .toHexString(blockchain.getLastHash()));
 
@@ -70,7 +72,6 @@ public class BlockchainTest {
 
     @Test
     public void testIterator() {
-        Blockchain blockchain = new Blockchain("");
         Block info = null;
         BlockchainIterator bi = new BlockchainIterator(blockchain);
         while (bi.hasNext()) {
@@ -84,10 +85,6 @@ public class BlockchainTest {
 
     @Test
     public void testFindTransaction() {
-        Blockchain blockchain = new Blockchain();
-        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl("test");
-        db.initDB();
-        blockchain.setBlockDB(db);
         Transaction transaction = blockchain.findTransaction(ByteString
                 .copyFrom(ByteArray.fromHexString
                         ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
@@ -101,12 +98,11 @@ public class BlockchainTest {
 
     @Test
     public void testFindUTXO() {
-        Blockchain blockchain = new Blockchain
-                ("fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31");
         Wallet wallet = new Wallet();
         wallet.init();
+        UTXOSet utxoSet = new UTXOSet();
         Transaction transaction = TransactionUtils.newTransaction(wallet,
-                "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", 10, null);
+                "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", 10, utxoSet);
         List<Transaction> transactions = new ArrayList<>();
         transactions.add(transaction);
         blockchain.addBlock(BlockUtils.newBlock(transactions, ByteString
@@ -122,14 +118,11 @@ public class BlockchainTest {
         ByteString difficulty = ByteString.copyFrom(ByteArray.fromHexString
                 ("2001"));
 
-        //Blockchain blockchain = new Blockchain();
         Wallet wallet = new Wallet();
         wallet.init();
 
         Block block = BlockUtils.newBlock(null, parentHash,
                 difficulty, 0);
-        //TronBlockChainImpl tronBlockChain = new TronBlockChainImpl();
-        //tronBlockChain.addBlockToChain(block);
         LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
                 ("blockStore_test");
         levelDbDataSource.initDB();
@@ -139,8 +132,6 @@ public class BlockchainTest {
         byte[] values = value.getBytes();
         levelDbDataSource.putData(key, values);
 
-        Blockchain blockchain = new Blockchain();
         blockchain.addBlock(block);
-
     }
 }
