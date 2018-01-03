@@ -86,12 +86,12 @@ public class Peer {
             //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));
             if (this.type.equals(Peer.PEER_SERVER)){
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
-                        .getAddress()));
+                        .getAddress()), this.type);
             }
             if (this.type.equals(Peer.PEER_NORMAL)){
                 //System.out.println("BlockChain loadding  ...");
                 blockchain = new Blockchain(ByteArray.toHexString(wallet
-                        .getAddress()));
+                        .getAddress()), this.type);
                 Client.loadBlock(this);
             }
         }
