@@ -193,6 +193,7 @@ public class Client{
         while(f){
             String block_key = "block" + i;
             Object block = client.submit(new GetQuery(block_key)).join();
+            System.out.println(block.toString());
             try {
                 if (!(block == null)) {
                     /*System.out.println("Consensus " + block_key + " is: " +
@@ -203,10 +204,12 @@ public class Client{
                     i = i+1;
                 }else {
                     f = false;
+                    break;
                 }
             } catch (NullPointerException e) {
                 e.printStackTrace();
                 System.out.println("object == null");
+                break;
             }
         }
     }
