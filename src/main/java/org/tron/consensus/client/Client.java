@@ -33,7 +33,7 @@ public class Client{
         client.serializer().register(GetQuery.class);
 
         Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.107", 5000)
+                new Address("192.168.0.109", 5000)
         );
         CompletableFuture<CopycatClient> future = client.connect(cluster);
         future.join();
@@ -186,21 +186,25 @@ public class Client{
             thread.start();
         }
     }
-    public static void loadBlock(Peer peer){
+    public static void loadBlock(Peer peer) {
         int i = 2;
-        boolean a = true;
-        while(a){
+        final boolean[] f = {true};
+        while (f[0]) {
             String block_key = "block" + i;
-            Object block = client.submit(new GetQuery(block_key)).join();
-            if (!(block == null)) {
-                peer.addReceiveBlock(String.valueOf
-                        (block));
-                System.out.println(block.toString());
-                a = true;
-                i ++;
-            }
-            if (null == block){
-                a = false;
+            client.submit(new GetQuery(block_key)).thenAccept((Object block) -> {
+                if (!(block == null)) {
+                    peer.addReceiveBlock(String.valueOf
+                            (block));
+                    f[0] = true;
+                } else{
+                    f[0] = false;
+                }
+            });
+            i++;
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
