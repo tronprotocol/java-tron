@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
@@ -11,21 +25,18 @@ import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.tron.crypto.Hash.sha256;
 import static org.tron.utils.Utils.getRandom;
 
 public class TransactionUtils {
-    private static final Logger logger = LoggerFactory.getLogger("transaction");
-    private final static int subsidy = 10; // Mining reward
+    private static final Logger logger = LoggerFactory.getLogger("Transaction");
+    private final static int RESERVE_BALANCE = 10;
 
     public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
-        ArrayList<TXInput> txInputs = new ArrayList<>();
-        ArrayList<TXOutput> txOutputs = new ArrayList<>();
+        List<TXInput> txInputs = new ArrayList<>();
+        List<TXOutput> txOutputs = new ArrayList<>();
 
         byte[] pubKeyHash = wallet.getEcKey().getPubKey();
 
@@ -87,7 +98,7 @@ public class TransactionUtils {
 
         TXInput txi = TXInputUtils.newTXInput(new byte[]{}, -1, new byte[]{},
                 ByteArray.fromHexString(data));
-        TXOutput txo = TXOutputUtils.newTXOutput(subsidy, to);
+        TXOutput txo = TXOutputUtils.newTXOutput(RESERVE_BALANCE, to);
 
         Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
                 .addVin(txi)
@@ -113,7 +124,7 @@ public class TransactionUtils {
     }
 
     /**
-     * get print string of the transaction
+     * getData print string of the transaction
      *
      * @param transaction {@link Transaction} transaction
      * @return String format string of the transaction
@@ -267,7 +278,7 @@ public class TransactionUtils {
         return true;
     }
 
-    // get sender
+    // getData sender
     public static byte[] getSender(Transaction tx) {
         byte[] pubKey = tx.getVin(0).getPubKey().toByteArray();
         return ECKey.computeAddress(pubKey);

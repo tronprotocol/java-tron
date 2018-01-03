@@ -1,12 +1,27 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.overlay.kafka;
 
 import org.tron.config.Configer;
 
+import static org.tron.overlay.kafka.Kafka.EMPTY_STRING;
 import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
 public class ConsumerProperty {
-    private final static String DEFAULT_BOOTSTRAP_SERVERS = "11.11.11.12:9092";
+    private final static String DEFAULT_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
     private final static String DEFAULT_GROUP_ID = Configer.getGNPK();
     private final static String DEFAULT_ENABLE_AUTO_COMMIT = "true";
     private final static String DEFAULT_AUTO_COMMIT_INTERVAL_MS = "1000";
@@ -44,9 +59,9 @@ public class ConsumerProperty {
     }
 
     public static ConsumerProperty getDefault() {
-        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + ":" + Configer.getConf().getString(KAFKA_PORT);
+        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + Configer.getConf().getString(KAFKA_PORT);
 
-        if (":".equals(bootstrapServers)) {
+        if (EMPTY_STRING.equals(bootstrapServers)) {
             bootstrapServers = DEFAULT_BOOTSTRAP_SERVERS;
         }
 

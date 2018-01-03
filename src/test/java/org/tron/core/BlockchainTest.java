@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
@@ -5,7 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.datasource.leveldb.LevelDbDataSource;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
@@ -21,7 +35,7 @@ import static org.tron.utils.ByteArray.toHexString;
 
 
 public class BlockchainTest {
-    private static final Logger logger = LoggerFactory.getLogger("test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
     @Test
     public void testBlockchain() {
@@ -40,7 +54,7 @@ public class BlockchainTest {
         logger.info("test blockchain new: lastHash = {}", ByteArray
                 .toHexString(blockchain.getLastHash()));
 
-        byte[] blockBytes = blockchain.getBlockDB().get(blockchain.getLastHash());
+        byte[] blockBytes = blockchain.getBlockDB().getData(blockchain.getLastHash());
 
         try {
             Block block = Block.parseFrom(blockBytes);
@@ -71,8 +85,8 @@ public class BlockchainTest {
     @Test
     public void testFindTransaction() {
         Blockchain blockchain = new Blockchain();
-        LevelDbDataSource db = new LevelDbDataSource("test");
-        db.init();
+        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl("test");
+        db.initDB();
         blockchain.setBlockDB(db);
         Transaction transaction = blockchain.findTransaction(ByteString
                 .copyFrom(ByteArray.fromHexString
@@ -82,7 +96,7 @@ public class BlockchainTest {
 
     @Test
     public void testDBExists() {
-        logger.info("test db exists: {}", dbExists());
+        logger.info("test dbStore exists: {}", dbExists());
     }
 
     @Test
@@ -116,14 +130,14 @@ public class BlockchainTest {
                 difficulty, 0);
         //TronBlockChainImpl tronBlockChain = new TronBlockChainImpl();
         //tronBlockChain.addBlockToChain(block);
-        LevelDbDataSource levelDbDataSource = new LevelDbDataSource
+        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
                 ("blockStore_test");
-        levelDbDataSource.init();
+        levelDbDataSource.initDB();
         String lastHash = "lastHash";
         byte[] key = lastHash.getBytes();
         String value = "090383489592535";
         byte[] values = value.getBytes();
-        levelDbDataSource.put(key, values);
+        levelDbDataSource.putData(key, values);
 
         Blockchain blockchain = new Blockchain();
         blockchain.addBlock(block);

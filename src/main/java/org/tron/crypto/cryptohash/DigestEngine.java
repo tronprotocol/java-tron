@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.crypto.cryptohash;
 
 import java.security.MessageDigest;
@@ -20,7 +34,7 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
      * Perform the final padding and store the result in the
      * provided buffer. This method shall call {@link #flush}
      * and then {@link #update} with the appropriate padding
-     * data in order to get the full input data.
+     * data in order to getData the full input data.
      *
      * @param buf the output buffer
      * @param off the output offset
