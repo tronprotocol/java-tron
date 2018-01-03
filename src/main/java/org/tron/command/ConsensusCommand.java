@@ -17,6 +17,8 @@ package org.tron.command;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.server.Server;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
 public class ConsensusCommand {
 
     public ConsensusCommand() {
@@ -37,21 +39,41 @@ public class ConsensusCommand {
 
     public void usage() {
         System.out.println("");
-        System.out.println("consensus server");
-        System.out.println("Command: consensus");
-        System.out.println("Description: Create a server.");
-        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold consensus|@"
+        ) );
 
         System.out.println("");
-        System.out.println("getData Message");
-        System.out.println("Command: getmessage [key]");
-        System.out.println("Description: Get consensus Message");
-        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'consensus' create a server.|@"
+        ) );
 
         System.out.println("");
-        System.out.println("putData Message");
-        System.out.println("Command: putmessage [key] [value]");
-        System.out.println("Description: Put a consensus Message");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold getmessage [key]|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'getmessage' get a consensus message.|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold putmessage [key] [value]|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'putmessage' put a consensus message.|@"
+        ) );
+
         System.out.println("");
     }
 

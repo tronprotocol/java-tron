@@ -14,41 +14,34 @@
  */
 package org.tron.command;
 
-import org.tron.core.BlockUtils;
-import org.tron.core.Blockchain;
-import org.tron.core.BlockchainIterator;
 import org.tron.peer.Peer;
-import org.tron.protos.core.TronBlock;
 
+import static org.fusesource.jansi.Ansi.Color.MAGENTA;
+import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
-public class PrintBlockchainCommand extends Command {
-    public PrintBlockchainCommand() {
+public class VersionCommand extends Command {
+    public VersionCommand() {
     }
 
     @Override
     public void execute(Peer peer, String[] parameters) {
-        Blockchain blockchian = peer.getUTXOSet().getBlockchain();
-        BlockchainIterator bi = new BlockchainIterator(blockchian);
-        while (bi.hasNext()) {
-            TronBlock.Block block = (TronBlock.Block) bi.next();
-            System.out.println(BlockUtils.toPrintString(block));
-        }
+        usage();
     }
 
     @Override
     public void usage() {
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold printblockchain|@"
-        ) );
+        String versionBanner ="" +
+                "     __                                __                                      \n" +
+                "    |__|____ ___  _______            _/  |________  ____   ____                \n" +
+                "    |  \\__  \\\\  \\/ /\\__  \\    ______ \\   __\\_  __ \\/  _ \\ /    \\    \n" +
+                "    |  |/ __ \\\\   /  / __ \\_ /_____/  |  |  |  | \\(  <_> )   |  \\         \n" +
+                "/\\__|  (____  /\\_/  (____  /          |__|  |__|   \\____/|___|  /           \n" +
+                "\\______|    \\/           \\/                                   \\/           \n";
 
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'printblockchain' print blockchain.|@"
-        ) );
+        System.out.println( ansi().eraseScreen().fg(MAGENTA).a(versionBanner).reset() );
 
         System.out.println("");
     }

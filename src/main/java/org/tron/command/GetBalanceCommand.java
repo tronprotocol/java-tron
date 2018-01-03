@@ -19,6 +19,8 @@ import org.tron.protos.core.TronTXOutput;
 
 import java.util.ArrayList;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
 public class GetBalanceCommand extends Command {
     public GetBalanceCommand() {
     }
@@ -40,9 +42,17 @@ public class GetBalanceCommand extends Command {
     @Override
     public void usage() {
         System.out.println("");
-        System.out.println("USAGE [getbalance]:");
-        System.out.println("Command: getbalance");
-        System.out.println("Description: Get your balance.");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold getbalance|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'getbalance' get your balance.|@"
+        ) );
+
         System.out.println("");
     }
 

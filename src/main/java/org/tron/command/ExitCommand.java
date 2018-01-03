@@ -16,6 +16,10 @@ package org.tron.command;
 
 import org.tron.peer.Peer;
 
+import static org.fusesource.jansi.Ansi.Color.MAGENTA;
+import static org.fusesource.jansi.Ansi.Color.RED;
+import static org.fusesource.jansi.Ansi.ansi;
+
 public class ExitCommand extends Command {
     public ExitCommand() {
     }
@@ -28,9 +32,17 @@ public class ExitCommand extends Command {
     @Override
     public void usage() {
         System.out.println("");
-        System.out.println("USAGE [exit]:");
-        System.out.println("Command: exit | quit | bye");
-        System.out.println("Description: Exit the program.");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold exit|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'exit' exit java-tron application.|@"
+        ) );
+
         System.out.println("");
     }
 

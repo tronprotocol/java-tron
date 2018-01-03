@@ -14,7 +14,11 @@
  */
 package org.tron.command;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.peer.Peer;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 public class HelpCommand extends Command {
     public HelpCommand() {
@@ -22,18 +26,103 @@ public class HelpCommand extends Command {
 
     @Override
     public void execute(Peer peer, String[] parameters) {
-        new ExitCommand().usage();
-        new SendCommand().usage();
-        new GetBalanceCommand().usage();
-        new AccountCommand().usage();
-        new PrintBlockchainCommand().usage();
-        new ConsensusCommand().usage();
+        if (parameters.length == 0) {
+            usage();
+            return;
+        }
+
+        switch (parameters[0]) {
+            case "version":
+                new VersionCommand().usage();
+                break;
+            case "account":
+                new AccountCommand().usage();
+                break;
+            case "getbalance":
+                new GetBalanceCommand().usage();
+                break;
+            case "send":
+                new SendCommand().usage();
+                break;
+            case "printblockchain":
+                new PrintBlockchainCommand().usage();
+                break;
+            case "consensus":
+            case "getmessage":
+            case "putmessage":
+                new ConsensusCommand().usage();
+                break;
+            case "exit":
+            case "quit":
+            case "bye":
+                new ExitCommand().usage();
+                break;
+            case "help":
+            default:
+                new HelpCommand().usage();
+                break;
+        }
     }
 
     @Override
     public void usage() {
-        System.out.printf("USAGE [help]");
-        System.out.println("help");
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold help [arguments]|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold AVAILABLE COMMANDS|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold version\t\tPrint the current java-tron version|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold account\t\tGet your wallet address|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold getbalance\t\tGet your balance|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold send\t\tSend balance to receiver address|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold printblockchain\t\tPrint blockchain|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold consensus\t\tCreate a server|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold getmessage\t\tGet a consensus message|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold putmessage\t\tPut a consensus message|@"
+        ) );
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold exit\t\tExit java-tron application|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "Use @|bold help [topic] for more information about that topic.|@"
+        ) );
+
+        System.out.println("");
     }
 
     @Override
