@@ -81,39 +81,39 @@ public class HelpCommand extends Command {
         System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold version\t\tPrint the current java-tron version|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "version")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold account\t\tGet your wallet address|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "account")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold getbalance\t\tGet your balance|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "getbalance")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold send\t\tSend balance to receiver address|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "send")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold printblockchain\t\tPrint blockchain|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "printblockchain")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold consensus\t\tCreate a server|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "consensus")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold getmessage\t\tGet a consensus message|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "getmessage")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold putmessage\t\tPut a consensus message|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "putmessage")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                "\t@|bold exit\t\tExit java-tron application|@"
+                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "exit")
         ) );
 
         System.out.println("");
