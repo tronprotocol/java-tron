@@ -19,6 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.core.TronBlock.Block;
@@ -104,11 +105,19 @@ public class BlockchainTest {
 
     @Test
     public void testFindUTXO() {
+        long testAmount = 10;
         Wallet wallet = new Wallet();
         wallet.init();
-        UTXOSet utxoSet = new UTXOSet();
+        SpendableOutputs spendableOutputs = new SpendableOutputs();
+        spendableOutputs.setAmount(testAmount + 1);
+        spendableOutputs.setUnspentOutputs(new HashMap<>());
+        UTXOSet mockUtxoSet = Mockito.mock(UTXOSet.class);
+        Mockito.when(mockUtxoSet.findSpendableOutputs(wallet.getEcKey().getPubKey(), testAmount)
+        ).thenReturn(spendableOutputs);
+        Mockito.when(mockUtxoSet.getBlockchain()).thenReturn(blockchain);
+
         Transaction transaction = TransactionUtils.newTransaction(wallet,
-                "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", 10, utxoSet);
+                "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", testAmount, mockUtxoSet);
         List<Transaction> transactions = new ArrayList<>();
         transactions.add(transaction);
         blockchain.addBlock(BlockUtils.newBlock(transactions, ByteString
