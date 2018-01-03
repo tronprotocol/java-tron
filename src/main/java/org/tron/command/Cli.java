@@ -45,13 +45,16 @@ public class Cli {
                     new ConsensusCommand().server();
                     break;
                 case "getmessage":
-                    new ConsensusCommand().getClient(cmdParameters);
+                    new ConsensusCommand().getClient(peer,cmdParameters);
                     break;
                 case "putmessage":
                     new ConsensusCommand().putClient(cmdParameters);
                     break;
                 case "put":
                     new ConsensusCommand().execute(peer, cmdParameters);
+                    break;
+                case "loadblock":
+                    new ConsensusCommand().loadBlock(peer);
                     break;
                 case "help":
                 default:
