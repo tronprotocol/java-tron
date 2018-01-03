@@ -139,5 +139,6 @@ public class BlockchainTest {
         levelDbDataSource.putData(key, values);
 
         blockchain.addBlock(block);
+        levelDbDataSource.closeDB();
     }
 }
