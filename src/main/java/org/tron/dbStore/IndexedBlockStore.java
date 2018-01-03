@@ -21,7 +21,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.List;
 
-public class IndexedBlockStoreInter extends AbstractBlockstore {
+public class IndexedBlockStore extends AbstractBlockstore {
 
     DataSourceArray<List<BlockInfo>> index;
     ObjectDataSource<TronBlock.Block> blocks;

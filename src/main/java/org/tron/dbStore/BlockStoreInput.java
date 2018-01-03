@@ -15,7 +15,7 @@
 package org.tron.dbStore;
 import org.tron.protos.core.TronBlock;
 
-public interface BlockStoreInter {
+public interface BlockStoreInput {
 
     TronBlock.Block getBestBlock();
 

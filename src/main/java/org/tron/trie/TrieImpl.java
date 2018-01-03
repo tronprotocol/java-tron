@@ -39,6 +39,17 @@ public class TrieImpl implements Trie<byte[]> {
     private final static int MIN_BRANCHES_CONCURRENTLY = 3;
     private static ExecutorService executor;
 
+
+    private static final int OFFSET_SHORT_ITEM = 0x80;
+
+    private static final int SIZE_THRESHOLD = 56;
+
+    private static final int OFFSET_LONG_ITEM = 0xb7;
+
+    private static final int OFFSET_SHORT_LIST = 0xc0;
+
+    private static final int OFFSET_LONG_LIST = 0xf7;
+
     public static ExecutorService getExecutor() {
         if (executor == null) {
             executor = Executors.newFixedThreadPool(4,
@@ -53,17 +64,6 @@ public class TrieImpl implements Trie<byte[]> {
         KVNodeNode
     }
 
-    //***********************************
-
-    private static final int OFFSET_SHORT_ITEM = 0x80;
-
-    private static final int SIZE_THRESHOLD = 56;
-
-    private static final int OFFSET_LONG_ITEM = 0xb7;
-
-    private static final int OFFSET_SHORT_LIST = 0xc0;
-
-    private static final int OFFSET_LONG_LIST = 0xf7;
 
     public final byte[] EMPTY_ELEMENT_SERIALIZABLE = encodeElement(new byte[0]);
 
@@ -126,8 +126,7 @@ public class TrieImpl implements Trie<byte[]> {
             data[0] = (byte) (OFFSET_SHORT_LIST + totalLength);
             copyPos = 1;
         } else {
-            // length of length = BX
-            // prefix = [BX, [length]]
+
             int tmpLength = totalLength;
             byte byteNum = 0;
             while (tmpLength != 0) {
@@ -246,8 +245,6 @@ public class TrieImpl implements Trie<byte[]> {
         return ret;
     }
 
-
-    //***********************************
 
     public final class Node {
         private byte[] hash = null;
