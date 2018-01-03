@@ -89,10 +89,11 @@ public class Blockchain {
                 .toByteArray();
         blockDB.put(LAST_HASH, lastHash);
         // put message to consensus 2018/1/2
-        String value = ByteArray.toHexString(genesisBlock.toByteArray());
-        Message message = new Message(value, Type.BLOCK);
-        Client.putMessage1(message); // consensus: put message GenesisBlock
-
+        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+            String value = ByteArray.toHexString(genesisBlock.toByteArray());
+            Message message = new Message(value, Type.BLOCK);
+            Client.putMessage1(message); // consensus: put message GenesisBlock
+        }
         logger.info("new blockchain");
     }
 
