@@ -22,7 +22,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.config.SystemProperties;
-import org.tron.dbStore.BlockStoreInter;
+import org.tron.dbStore.BlockStoreInput;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock;
 
@@ -43,14 +43,14 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
     SystemProperties config = SystemProperties.getDefault();
 
     @Autowired
-    protected BlockStoreInter blockStoreInter;
+    protected BlockStoreInput blockStoreInter;
 
     //private static TronBlock.Block bestBlock;
 
     private BigInteger totalDifficulty = BigInteger.ZERO;
 
     @Override
-    public BlockStoreInter getBlockStoreInter() {
+    public BlockStoreInput getBlockStoreInter() {
         return blockStoreInter;
     }
 

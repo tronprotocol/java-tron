@@ -29,9 +29,9 @@ import java.io.FileInputStream;
 import java.util.Scanner;
 import java.util.function.Function;
 
-public class BlockLoader {
+public class TronBlockLoader {
 
-    private static final Logger logger = LoggerFactory.getLogger("BlockLoader");
+    private static final Logger logger = LoggerFactory.getLogger("TronBlockLoader");
 
     @Autowired
     private TronBlockChainImpl blockchain;
