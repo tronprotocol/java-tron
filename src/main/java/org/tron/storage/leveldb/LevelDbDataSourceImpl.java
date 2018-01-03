@@ -13,6 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.storage.leveldb;
+
 import org.iq80.leveldb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     String dataBaseName;
     DB database;
     boolean alive;
-
 
 
     private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
@@ -143,14 +143,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     @Override
     public byte[] getData(byte[] key) {
         resetDbLock.readLock().lock();
-
-            try {
-                return database.get(key);
-            } catch (DBException e) {
-                byte[] ret = database.get(key);
-                return ret;
-            }
-         finally {
+        try {
+            return database.get(key);
+        } catch (DBException e) {
+            return database.get(key);
+        } finally {
             resetDbLock.readLock().unlock();
         }
     }
@@ -178,17 +175,14 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     @Override
     public Set<byte[]> allKeys() {
         resetDbLock.readLock().lock();
-        try {
-            try (DBIterator iterator = database.iterator()) {
-                Set<byte[]> result = new HashSet<>();
-                for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-                    result.add(iterator.peekNext().getKey());
-                }
-
-                return result;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try (DBIterator iterator = database.iterator()) {
+            Set<byte[]> result = new HashSet<>();
+            for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                result.add(iterator.peekNext().getKey());
             }
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
             resetDbLock.readLock().unlock();
         }
@@ -211,14 +205,12 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     public void updateByBatch(Map<byte[], byte[]> rows) {
         resetDbLock.readLock().lock();
         try {
+            updateByBatchInner(rows);
+        } catch (Exception e) {
             try {
                 updateByBatchInner(rows);
-            } catch (Exception e) {
-                try {
-                    updateByBatchInner(rows);
-                } catch (Exception e1) {
-                    throw new RuntimeException(e);
-                }
+            } catch (Exception e1) {
+                throw new RuntimeException(e);
             }
         } finally {
             resetDbLock.readLock().unlock();
@@ -233,15 +225,12 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     @Override
     public void closeDB() {
         resetDbLock.writeLock().lock();
+        if (!isAlive()) return;
         try {
-            if (!isAlive()) return;
-
-            try {
-                database.close();
-                alive = false;
-            } catch (IOException e) {
-                logger.error("Failed to find the dbStore file on the closeDB: {} ", dataBaseName);
-            }
+            database.close();
+            alive = false;
+        } catch (IOException e) {
+            logger.error("Failed to find the dbStore file on the closeDB: {} ", dataBaseName);
         } finally {
             resetDbLock.writeLock().unlock();
         }
