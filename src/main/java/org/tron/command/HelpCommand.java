@@ -85,35 +85,35 @@ public class HelpCommand extends Command {
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "account")
+                String.format("\t@|bold %-20s\tGet your wallet address|@", "account")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "getbalance")
+                String.format("\t@|bold %-20s\tGet your balance|@", "getbalance")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "send")
+                String.format("\t@|bold %-20s\tSend balance to receiver address|@", "send")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "printblockchain")
+                String.format("\t@|bold %-20s\tPrint blockchain|@", "printblockchain")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "consensus")
+                String.format("\t@|bold %-20s\tCreate a server|@", "consensus")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "getmessage")
+                String.format("\t@|bold %-20s\tGet a consensus|@", "getmessage")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "putmessage")
+                String.format("\t@|bold %-20s\tPut a consensus message|@", "putmessage")
         ) );
 
         System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "exit")
+                String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
         ) );
 
         System.out.println("");
