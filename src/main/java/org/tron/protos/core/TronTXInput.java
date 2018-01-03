@@ -676,7 +676,7 @@ public final class TronTXInput {
   static {
     java.lang.String[] descriptorData = {
       "\n\026core/TronTXInput.proto\022\006protos\"H\n\007TXIn" +
-      "putData\022\014\n\004txID\030\001 \001(\014\022\014\n\004vout\030\002 \001(\003\022\021\n\tsigna" +
+      "put\022\014\n\004txID\030\001 \001(\014\022\014\n\004vout\030\002 \001(\003\022\021\n\tsigna" +
       "ture\030\003 \001(\014\022\016\n\006pubKey\030\004 \001(\014B#\n\024org.tron.p" +
       "rotos.coreB\013TronTXInputb\006proto3"
     };
