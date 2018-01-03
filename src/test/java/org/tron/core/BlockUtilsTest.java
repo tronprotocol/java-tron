@@ -16,10 +16,12 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
 import static org.tron.core.Blockchain.GENESIS_COINBASE_DATA;
@@ -97,7 +99,12 @@ public class BlockUtilsTest {
 
     @Test
     public void testGetIncreaseNumber() {
+        LevelDbDataSourceImpl mockDb = Mockito.mock(LevelDbDataSourceImpl.class);
+
+        Blockchain mockBlockchain = Mockito.mock(Blockchain.class);
+        Mockito.when(mockBlockchain.getBlockDB()).thenReturn(mockDb);
+
         logger.info("test getData increase number: {}", BlockUtils
-                .getIncreaseNumber(new Blockchain("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85")));
+                .getIncreaseNumber(mockBlockchain));
     }
 }
