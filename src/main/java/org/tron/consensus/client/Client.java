@@ -9,7 +9,6 @@ import org.tron.consensus.common.PutCommand;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -30,12 +29,22 @@ public class Client{
         client.serializer().register(GetQuery.class);
 
         Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.109", 5000)
-
+                new Address("192.168.0.107", 5000)
         );
-
         CompletableFuture<CopycatClient> future = client.connect(cluster);
         future.join();
+        /*InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+            Collection<Address> cluster = Arrays.asList(
+                    new Address(localhost.getHostAddress(), 5000)
+            );
+
+            CompletableFuture<CopycatClient> future = client.connect(cluster);
+            future.join();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }*/
     }
 
     public static CopycatClient getClient() {
@@ -74,14 +83,34 @@ public class Client{
             System.out.println("block:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
                     () + "; message:" + message.getMessage());*/
-            client.submit(new PutCommand("block", message.getMessage()));
-            System.out.println("Block: consensus success");
+
+            //client.submit(new PutCommand("block", message.getMessage()));
+            //System.out.println("Block: consensus success");
+
+            int i = 1;
+            boolean f = true;
+            while(f){
+                String block_key = "block" + i;
+                Object block = client.submit(new GetQuery(block_key)).join();
+                try {
+                    if (!(block == null)) {
+                        f =true;
+                        i = i+1;
+                    }else {
+                        client.submit(new PutCommand(block_key, message.getMessage()));
+                        System.out.println("Block: consensus success");
+                        f = false;
+                        break;
+                    }
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                    System.out.println("object == null");
+                }
+            }
         }
     }
 
-    public static void getMessage(String key)  {
-
-        Peer peerConsensus = Peer.getInstance("server");
+    public static void getMessage(Peer peer,String key)  {
         final String[] preMessage = {null};
         final String[] preTime = {null};
         if (key.equals("transaction")) {
@@ -89,10 +118,12 @@ public class Client{
                 while(true){
                     Object time = client.submit(new GetQuery("time")).join();
                     if(!time.toString().equals(preTime[0])) {
-                        client.submit(new GetQuery(key)).thenAccept(result -> {
+                        client.submit(new GetQuery(key)).thenAccept(transaction
+                                -> {
                             //System.out.println("Consensus " + key + " is: " + result);
                             //System.out.println("type: " + result.getClass().getSimpleName());
-                            peerConsensus.addReceiveTransaction(String.valueOf(result));
+                            peer.addReceiveTransaction(String
+                                    .valueOf(transaction));
                         });
                         preTime[0] = time.toString();
                     }else {
@@ -111,12 +142,33 @@ public class Client{
         if (key.equals("block")) {
             Thread thread = new Thread(() -> {
                 while(true){
-                    client.submit(new GetQuery(key)).thenAccept(result -> {
+                    int i = 1;
+                    boolean f = true;
+                    String block_key;
+                    while(f){
+                        block_key = "block" + i;
+                        Object block = client.submit(new GetQuery(block_key)).join();
+                        try {
+                            if (!(block == null)) {
+                                f =true;
+                                i = i+1;
+                            }else {
+                                f = false;
+                            }
+                        } catch (NullPointerException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    i = i-1;
+                    String finalBlock_key = "block" + i;
+
+                    client.submit(new GetQuery(finalBlock_key)).thenAccept(block -> {
                         /*System.out.println("Consensus " + key + " is: " +
-                                result);*/
-                        if (!String.valueOf(result).equals(preMessage[0])) {
-                            peerConsensus.addReceiveBlock(String.valueOf(result));
-                            preMessage[0] = String.valueOf(result);
+                                block);*/
+                        if (!String.valueOf(block).equals(preMessage[0])) {
+                            peer.addReceiveBlock(String.valueOf
+                                    (block));
+                            preMessage[0] = String.valueOf(block);
                         }else {
                             preMessage[0] = preMessage[0];
                         }
@@ -129,6 +181,32 @@ public class Client{
                 }
             });
             thread.start();
+        }
+    }
+    public static void loadBlock(Peer peer){
+        int i = 2;
+        boolean f = true;
+        while(f){
+            String block_key = "block" + i;
+            Object block = client.submit(new GetQuery(block_key)).join();
+            System.out.println(block.toString());
+            try {
+                if (!(block == null)) {
+                    /*System.out.println("Consensus " + block_key + " is: " +
+                                block);*/
+                    peer.addReceiveBlock(String.valueOf
+                            (block));
+                    f =true;
+                    i = i+1;
+                }else {
+                    f = false;
+                    break;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                System.out.println("object == null");
+                break;
+            }
         }
     }
 }

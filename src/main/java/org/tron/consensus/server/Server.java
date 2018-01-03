@@ -23,7 +23,8 @@ public class Server {
             System.out.println("Server localhost: " + localhost.getHostAddress
                     ());
 
-            Address address = new Address(localhost.getHostAddress(), 5000);
+            //Address address = new Address(localhost.getHostAddress(), 5000);
+            Address address = new Address("192.168.0.107", 5000);
 
             CopycatServer server = CopycatServer.builder(address)
                     .withStateMachine(MapstateMachine::new)
@@ -43,7 +44,7 @@ public class Server {
             future.join();
 
             //Collection<Address> cluster = Collections.singleton(new Address
-            //        ("192.16.50.129", 5000));
+            //        ("192.168.0.100", 5000));
             //server.join(cluster).join();
 
             System.out.println("Server xxd: " + server.cluster().members());
@@ -55,7 +56,7 @@ public class Server {
                     System.out.println("Server state: " + state);
                 }
             });
-            server.context();
+            //server.context();
 
         } catch (UnknownHostException e) {
             e.printStackTrace();

@@ -26,15 +26,19 @@ public class ConsensusCommand extends Command {
         Client.putMessage(args);
     }
 
-    public void getClient(String[] args) {
+    public void getClient(Peer peer,String[] args) {
         //Client.getMessage(args[0]);
         if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
-            Client.getMessage(MessageType.TRANSACTION);
-            Client.getMessage(MessageType.BLOCK);
+            Client.getMessage(peer,MessageType.TRANSACTION);
+            Client.getMessage(peer,MessageType.BLOCK);
         }else{
-            Client.getMessage(MessageType.BLOCK);
+            Client.getMessage(peer,MessageType.BLOCK);
         }
 
+    }
+    public void loadBlock(Peer peer){
+        System.out.println("BlockChain loadding  ...");
+        Client.loadBlock(peer);
     }
 
     public void usage() {

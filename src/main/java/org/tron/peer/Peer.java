@@ -1,12 +1,15 @@
 package org.tron.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.command.ConsensusCommand;
 import org.tron.config.Configer;
+import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.PendingStateImpl;
 import org.tron.core.TransactionUtils;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
+import org.tron.example.Tron;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
@@ -24,8 +27,15 @@ public class Peer {
     private String type;
     private final ECKey myKey = Configer.getMyKey();
 
-    public Peer(){
+    public Peer(String type) {
+        this();
+
+        this.type = type;
+
         init();
+    }
+
+    public Peer(){
     }
 
     public void addReceiveTransaction(String message) {
@@ -57,8 +67,7 @@ public class Peer {
 
     public static Peer getInstance(String type) {
         if (INSTANCE == null) {
-            INSTANCE = new Peer();
-            INSTANCE.type = type;
+            INSTANCE = new Peer(type);
         }
         return INSTANCE;
     }
@@ -70,11 +79,21 @@ public class Peer {
     }
 
     private void initBlockchian() {
+        new ConsensusCommand().server();
         if (Blockchain.dbExists()) {
             blockchain = new Blockchain();
         } else {
-            blockchain = new Blockchain(ByteArray.toHexString(wallet
-                    .getAddress()));
+            //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));
+            if (this.type.equals(Peer.PEER_SERVER)){
+                blockchain = new Blockchain(ByteArray.toHexString(wallet
+                        .getAddress()), this.type);
+            }
+            if (this.type.equals(Peer.PEER_NORMAL)){
+                //System.out.println("BlockChain loadding  ...");
+                blockchain = new Blockchain(ByteArray.toHexString(wallet
+                        .getAddress()), this.type);
+                Client.loadBlock(this);
+            }
         }
     }
 
