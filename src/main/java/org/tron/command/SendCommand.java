@@ -23,6 +23,8 @@ import org.tron.peer.Peer;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
 public class SendCommand extends Command {
     private static final Logger logger = LoggerFactory.getLogger("Command");
 
@@ -47,9 +49,29 @@ public class SendCommand extends Command {
     @Override
     public void usage() {
         System.out.println("");
-        System.out.println("USAGE [send]:");
-        System.out.println("Command: send [receiver] [amount]");
-        System.out.println("Description: Make a transaction.");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold send [receiver] [amount]|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' send balance to receiver address.|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold Example:|@\n\t\t@|bold $ send [address] [amount]|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "\t@|bold if [amount] > balance, the command 'send' will fail to execute.|@"
+        ) );
+
         System.out.println("");
     }
 

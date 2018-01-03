@@ -17,6 +17,8 @@ package org.tron.command;
 import org.tron.peer.Peer;
 import org.tron.utils.ByteArray;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
 public class AccountCommand extends Command {
     public AccountCommand() {
     }
@@ -29,9 +31,17 @@ public class AccountCommand extends Command {
     @Override
     public void usage() {
         System.out.println("");
-        System.out.println("USAGE [account]:");
-        System.out.println("Command: account");
-        System.out.println("Description: Get your account.");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold USAGE|@\n\t@|bold account|@"
+        ) );
+
+        System.out.println("");
+
+        System.out.println( ansi().eraseScreen().render(
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
+        ) );
+
         System.out.println("");
     }
 

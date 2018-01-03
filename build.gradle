@@ -75,6 +75,8 @@ dependencies {
     compile group: 'io.atomix.copycat', name: 'copycat-client', version: '1.1.4'
     compile group: 'io.atomix.catalyst', name: 'catalyst-netty', version: '1.1.1'
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
+
+    compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'
 }
 
 tasks.matching { it instanceof Test }.all {

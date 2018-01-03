@@ -32,26 +32,24 @@ public class Cli {
 
             String[] cmdArray = cmd.split("\\s+");
 
-            if (cmdArray.length == 0) {
+            if (cmdArray.length == 0 || cmdArray[0].equals("")) {
                 continue;
             }
 
             String[] cmdParameters = Arrays.copyOfRange(cmdArray, 1, cmdArray.length);
 
             switch (cmdArray[0]) {
-                case "exit":
-                case "quit":
-                case "bye":
-                    new ExitCommand().execute(peer, cmdParameters);
+                case "version":
+                    new VersionCommand().execute(peer, cmdParameters);
                     break;
-                case "send":
-                    new SendCommand().execute(peer, cmdParameters);
+                case "account":
+                    new AccountCommand().execute(peer, cmdParameters);
                     break;
                 case "getbalance":
                     new GetBalanceCommand().execute(peer, cmdParameters);
                     break;
-                case "account":
-                    new AccountCommand().execute(peer, cmdParameters);
+                case "send":
+                    new SendCommand().execute(peer, cmdParameters);
                     break;
                 case "printblockchain":
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
@@ -64,6 +62,11 @@ public class Cli {
                     break;
                 case "putmessage":
                     new ConsensusCommand().putClient(cmdParameters);
+                    break;
+                case "exit":
+                case "quit":
+                case "bye":
+                    new ExitCommand().execute(peer, cmdParameters);
                     break;
                 case "help":
                 default:
