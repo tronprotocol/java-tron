@@ -15,7 +15,7 @@
 package org.tron.utils;
 
 
-import org.tron.db.ByteArrayWrapper;
+import org.tron.dbStore.ByteArrayWrapper;
 
 import java.util.*;
 

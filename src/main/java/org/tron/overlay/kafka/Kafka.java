@@ -136,7 +136,7 @@ public class Kafka implements Net {
     public void shutdown() {
         // TODO: must solve thread unsafe program
 //        if (consumer != null) {
-//            consumer.close();
+//            consumer.closeDB();
 //        }
 
         if (executors != null) {

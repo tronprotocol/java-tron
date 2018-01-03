@@ -711,7 +711,7 @@ public class ECKey implements Serializable {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers
-     * and put them in ECDSASignature
+     * and putData them in ECDSASignature
      *
      * @param input to sign
      * @return ECDSASignature signature that contains the R and S components
@@ -783,7 +783,7 @@ public class ECKey implements Serializable {
         try {
             signatureEncoded = Base64.decode(signatureBase64);
         } catch (RuntimeException e) {
-            // This is what you get back from Bouncy Castle if base64 doesn't
+            // This is what you getData back from Bouncy Castle if base64 doesn't
             // decode :(
             throw new SignatureException("Could not decode base64", e);
         }
@@ -1061,8 +1061,8 @@ public class ECKey implements Serializable {
      * section 4.1.6.</p>
      * <p>
      * <p>The recId is an index from 0 to 3 which indicates which of the 4
-     * possible keys is the correct one. Because
-     * the key recovery operation yields multiple potential keys, the correct
+     * possible allKeys is the correct one. Because
+     * the key recovery operation yields multiple potential allKeys, the correct
      * key must either be stored alongside the
      * signature, or you must be willing to try each recId in turn until you
      * find one that outputs the key you are
@@ -1115,7 +1115,7 @@ public class ECKey implements Serializable {
             // takes place modulo Q.
             return null;
         }
-        // Compressed keys require you to know an extra bit of data about the
+        // Compressed allKeys require you to know an extra bit of data about the
         // y-coord as there are two possibilities.
         // So it's encoded in the recId.
         ECPoint R = decompressKey(x, (recId & 1) == 1);

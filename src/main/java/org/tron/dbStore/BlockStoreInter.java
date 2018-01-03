@@ -12,19 +12,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.tron.dbStore;
+import org.tron.protos.core.TronBlock;
 
-package org.tron.trie;
+public interface BlockStoreInter {
 
-import org.tron.storage.SourceInter;
+    TronBlock.Block getBestBlock();
 
-public interface Trie<V> extends SourceInter<byte[], V> {
+    long getMaxNumber();
 
-    byte[] getRootHash();
+    TronBlock.Block getChainBlockByNumber(long blockNumber);
 
-    void setRoot(byte[] root);
+    boolean isBlockExist(byte[] hash);
+    TronBlock.Block getBlockByHash(byte[] hash);
 
-    /**
-     * Recursively deleteData all nodes from root
-     */
-    void clear();
 }

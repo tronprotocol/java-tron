@@ -13,18 +13,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.trie;
+package org.tron.dbStore;
+import org.junit.Test;
+import org.tron.utils.ByteArray;
 
-import org.tron.storage.SourceInter;
-
-public interface Trie<V> extends SourceInter<byte[], V> {
-
-    byte[] getRootHash();
-
-    void setRoot(byte[] root);
+public class UTXOStoreTest {
 
     /**
-     * Recursively deleteData all nodes from root
+     * save utxo
      */
-    void clear();
+    @Test
+    public void saveUTXO() {
+        UTXOStore utxoStore = new UTXOStore();
+        utxoStore.saveUTXO("00012546".getBytes(),"300".getBytes());
+        utxoStore.close();
+    }
+
+    @Test
+    public void find() {
+        UTXOStore utxoStore = new UTXOStore();
+        byte[] bytes = utxoStore.find("00012546".getBytes());
+        utxoStore.close();
+        System.out.println(ByteArray.toStr(bytes));
+    }
 }

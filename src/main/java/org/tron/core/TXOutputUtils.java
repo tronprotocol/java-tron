@@ -36,7 +36,7 @@ public class TXOutputUtils {
     }
 
     /**
-     * get print string of the transaction out
+     * getData print string of the transaction out
      *
      * @param txo {@link TXOutput} txo
      * @return String format string of the transaction output
