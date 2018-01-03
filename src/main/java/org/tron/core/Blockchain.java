@@ -64,48 +64,34 @@ public class Blockchain {
      */
     public Blockchain(String address) {
         if (dbExists()) {
-            logger.info("blockchain already exists.");
-            System.exit(0);
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            this.lastHash = blockDB.getData(LAST_HASH);
+            this.currentHash = this.lastHash;
+
+            logger.info("load blockchain");
+        } else {
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+                    (address, GENESIS_COINBASE_DATA);
+            Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
+
+            this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
+            this.currentHash = this.lastHash;
+
+            blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+                    genesisBlock.toByteArray());
+            byte[] lastHash = genesisBlock.getBlockHeader()
+                    .getHash()
+                    .toByteArray();
+
+            blockDB.putData(LAST_HASH, lastHash);
+
+            logger.info("new blockchain");
         }
-
-        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
-        blockDB.initDB();
-
-        Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-                (address, GENESIS_COINBASE_DATA);
-        Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
-
-        this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
-        this.currentHash = this.lastHash;
-
-        blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-                genesisBlock.toByteArray());
-        byte[] lastHash = genesisBlock.getBlockHeader()
-                .getHash()
-                .toByteArray();
-
-        blockDB.putData(LAST_HASH, lastHash);
-
-        logger.info("new blockchain");
-    }
-
-    /**
-     * create blockchain by dbStore source
-     */
-    public Blockchain() {
-        if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one " +
-                    "first");
-            System.exit(0);
-        }
-
-        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
-        blockDB.initDB();
-
-        this.lastHash = blockDB.getData(LAST_HASH);
-        this.currentHash = this.lastHash;
-
-        logger.info("load blockchain");
     }
 
     /**
