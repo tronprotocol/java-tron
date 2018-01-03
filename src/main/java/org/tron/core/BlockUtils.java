@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
@@ -26,7 +40,7 @@ public class BlockUtils {
     private byte[] serializEncode;
 
     /**
-     * get a new block
+     * getData a new block
      *
      * @return {@link Block} block
      */
@@ -86,7 +100,7 @@ public class BlockUtils {
     }
 
     /**
-     * get prepare data of the block
+     * getData prepare data of the block
      *
      * @param block {@link Block} block
      * @return byte[] data
@@ -115,7 +129,7 @@ public class BlockUtils {
     }
 
     /**
-     * get print string of the block
+     * getData print string of the block
      *
      * @param block {@link Block} block
      * @return String format string of the block
@@ -148,7 +162,7 @@ public class BlockUtils {
     }
 
     /**
-     * get mine value
+     * getData mine value
      *
      * @param block {@link Block} block
      * @return byte[] mine value
@@ -162,7 +176,7 @@ public class BlockUtils {
     }
 
     /**
-     * get Verified boundary
+     * getData Verified boundary
      *
      * @param block {@link Block} block
      * @return byte[] boundary
@@ -175,17 +189,17 @@ public class BlockUtils {
     }
 
     /**
-     * get increase number + 1
+     * getData increase number + 1
      *
      * @return long number
      */
     public static long getIncreaseNumber(Blockchain blockchain) {
-        byte[] lastHash = blockchain.getBlockDB().get(LAST_HASH);
+        byte[] lastHash = blockchain.getBlockDB().getData(LAST_HASH);
         if (lastHash == null) {
             return 0;
         }
 
-        byte[] value = blockchain.getBlockDB().get(lastHash);
+        byte[] value = blockchain.getBlockDB().getData(lastHash);
         if (value == null) {
             return 0;
         }

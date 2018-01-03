@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.wallet;
 
 import com.google.common.collect.Sets;
@@ -15,7 +29,7 @@ import java.util.HashSet;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Wallet {
-    private static final Logger logger = LoggerFactory.getLogger("wallet");
+    private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
     protected final ReentrantLock lock = Threading.lock("wallet");
 
@@ -28,7 +42,7 @@ public class Wallet {
     private byte[] address;
 
     /**
-     * get a new wallet key
+     * getData a new wallet key
      */
     public void init() {
         this.ecKey = new ECKey(Utils.getRandom());
@@ -36,7 +50,7 @@ public class Wallet {
     }
 
     /**
-     * get a wallet by the key
+     * getData a wallet by the key
      *
      * @param ecKey keypair
      */

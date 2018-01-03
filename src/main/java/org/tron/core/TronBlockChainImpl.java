@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.core;
 
 
@@ -8,8 +22,8 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.config.SystemProperties;
-import org.tron.datasource.leveldb.LevelDbDataSource;
-import org.tron.db.BlockStore;
+import org.tron.dbStore.BlockStoreInter;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock;
 
 import java.io.BufferedWriter;
@@ -24,20 +38,20 @@ import static org.tron.core.Constant.LAST_HASH;
 public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
         .TronBlockChain {
 
-    private static final Logger logger = LoggerFactory.getLogger("blockchain");
+    private static final Logger logger = LoggerFactory.getLogger("Blockchain");
 
     SystemProperties config = SystemProperties.getDefault();
 
     @Autowired
-    protected BlockStore blockStore;
+    protected BlockStoreInter blockStoreInter;
 
     //private static TronBlock.Block bestBlock;
 
     private BigInteger totalDifficulty = BigInteger.ZERO;
 
     @Override
-    public BlockStore getBlockStore() {
-        return blockStore;
+    public BlockStoreInter getBlockStoreInter() {
+        return blockStoreInter;
     }
 
 
@@ -47,13 +61,13 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
     }
 
 
-    // get the last block
+    // getData the last block
     @Override
     public synchronized TronBlock.Block getBestBlock() {
         TronBlock.Block bestBlock = null;
-        LevelDbDataSource levelDbDataSource = initBD();
-        byte[] lastHash = levelDbDataSource.get(LAST_HASH);
-        byte[] value = levelDbDataSource.get(lastHash);
+        LevelDbDataSourceImpl levelDbDataSource = initBD();
+        byte[] lastHash = levelDbDataSource.getData(LAST_HASH);
+        byte[] value = levelDbDataSource.getData(lastHash);
         try {
             bestBlock = TronBlock.Block.parseFrom(value)
                     .toBuilder()
@@ -72,13 +86,13 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
                 .getHash()) {
             byte[] blockByte = block.toByteArray();
 
-            LevelDbDataSource levelDbDataSource = initBD();
-            levelDbDataSource.put(block.getBlockHeader().getHash()
+            LevelDbDataSourceImpl levelDbDataSource = initBD();
+            levelDbDataSource.putData(block.getBlockHeader().getHash()
                     .toByteArray(), blockByte);
 
             byte[] key = LAST_HASH;
 
-            levelDbDataSource.put(key, block.getBlockHeader().getHash()
+            levelDbDataSource.putData(key, block.getBlockHeader().getHash()
                     .toByteArray());  // Storage lastHash
 
         } else {
@@ -86,11 +100,11 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
         }
     }
 
-    // init level DB blockStore
-    private static LevelDbDataSource initBD() {
-        LevelDbDataSource levelDbDataSource = new LevelDbDataSource
-                ("blockStore");
-        levelDbDataSource.init();
+    // initDB level DB blockStoreInter
+    private static LevelDbDataSourceImpl initBD() {
+        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
+                ("blockStoreInter");
+        levelDbDataSource.initDB();
         return levelDbDataSource;
     }
 

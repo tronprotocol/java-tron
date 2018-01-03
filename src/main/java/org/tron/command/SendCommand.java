@@ -1,3 +1,17 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.tron.command;
 
 import org.slf4j.Logger;
@@ -10,7 +24,7 @@ import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
 public class SendCommand extends Command {
-    private static final Logger logger = LoggerFactory.getLogger("command");
+    private static final Logger logger = LoggerFactory.getLogger("Command");
 
     public SendCommand() {
     }
@@ -19,7 +33,7 @@ public class SendCommand extends Command {
     public void execute(Peer peer, String[] parameters) {
         if (check(parameters)) {
             String to = parameters[0];
-            long amount = Long.valueOf(parameters[1]);
+            long amount = Long.parseLong(parameters[1]);
             TronTransaction.Transaction transaction = TransactionUtils.newTransaction(peer.getWallet(), to, amount,
                     peer.getUTXOSet());
 
@@ -34,7 +48,7 @@ public class SendCommand extends Command {
     public void usage() {
         System.out.println("");
         System.out.println("USAGE [send]:");
-        System.out.println("Command: send [receiver] [mount]");
+        System.out.println("Command: send [receiver] [amount]");
         System.out.println("Description: Make a transaction.");
         System.out.println("");
     }
@@ -54,7 +68,7 @@ public class SendCommand extends Command {
 
         long amount = 0;
         try {
-            amount = Long.valueOf(parameters[1]);
+            amount = Long.parseLong(parameters[1]);
         } catch (NumberFormatException e) {
             logger.error("amount invalid");
             return false;
