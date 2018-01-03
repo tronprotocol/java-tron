@@ -22,9 +22,7 @@ public class Server {
             localhost = InetAddress.getLocalHost();
             System.out.println("Server localhost: " + localhost.getHostAddress
                     ());
-
             Address address = new Address(localhost.getHostAddress(), 5000);
-
             CopycatServer server = CopycatServer.builder(address)
                     .withStateMachine(MapstateMachine::new)
                     .withTransport(NettyTransport.builder()
