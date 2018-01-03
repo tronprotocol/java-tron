@@ -16,6 +16,7 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -42,6 +43,11 @@ public class BlockchainTest {
     @BeforeClass
     public static void init() {
        blockchain = new Blockchain("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85");
+    }
+
+    @AfterClass
+    public static void teardown() {
+        blockchain.getBlockDB().closeDB();
     }
 
     @Test
