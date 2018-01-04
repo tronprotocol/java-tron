@@ -46,13 +46,14 @@ public class Cli {
                     new GetBalanceCommand().execute(peer, cmdParameters);
                     break;
                 case "send":
-                    new SendCommand().execute(peer, cmdParameters);
+                    new ConsensusCommand().putClient(cmdParameters);
+                    //new SendCommand().execute(peer, cmdParameters);
                     break;
                 case "printblockchain":
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
                     break;
                 case "consensus":
-                    new ConsensusCommand().server();
+                    //new ConsensusCommand().server();
                     break;
                 case "getmessage":
                     new ConsensusCommand().getClient(peer,cmdParameters);
@@ -68,7 +69,7 @@ public class Cli {
                     new ConsensusCommand().execute(peer, cmdParameters);
                     break;
                 case "loadblock":
-                    new ConsensusCommand().loadBlock(peer);
+                    //new ConsensusCommand().loadBlock(peer);
                     break;
                 case "help":
                 default:
