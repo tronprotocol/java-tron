@@ -195,7 +195,9 @@ public class Blockchain {
 
 
     /**
-     * add a block
+     * add a block into database
+     *
+     * @param block
      */
     public void addBlock(Block block) {
         byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
@@ -259,7 +261,10 @@ public class Blockchain {
     }
 
     /**
-     * receive block and save it into database
+     * receive a block and save it into database,update caching at the same time.
+     *
+     * @param block   block
+     * @param utxoSet utxoSet
      */
     public void receiveBlock(Block block, UTXOSet utxoSet) {
 
@@ -271,7 +276,7 @@ public class Blockchain {
             return;
         }
 
-        // save the block ginto the database
+        // save the block into the database
         byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
         byte[] blockVal = block.toByteArray();
         blockDB.putData(blockHashKey, blockVal);
