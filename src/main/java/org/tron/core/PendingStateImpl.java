@@ -62,6 +62,19 @@ public class PendingStateImpl implements PendingState {
             System.out.println();
         }
     }
+    /*
+    auth:linmaorong
+    date:2017/12/26
+    */
+    public synchronized void addPendingTransaction(Blockchain blockchain,
+                                                   Transaction tx) {
+        pendingTransactions.add(tx);
+        if (pendingTransactions.size() == 1) {
+            System.out.println("pending...");
+            blockchain.addBlock(pendingTransactions);
+            pendingTransactions.clear();
+        }
+    }
 
     @Override
     public synchronized List<Transaction> getPendingTransactions() {

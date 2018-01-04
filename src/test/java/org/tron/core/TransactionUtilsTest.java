@@ -27,7 +27,7 @@ public class TransactionUtilsTest {
     @Test
     public void testNewCoinbaseTransaction() {
         Transaction coinbaseTransaction = TransactionUtils
-                .newCoinbaseTransaction("12", "");
+                .newCoinbaseTransaction("12", "", 0);
 
         logger.info("test new coinbase transaction: {}", coinbaseTransaction);
     }
@@ -35,7 +35,7 @@ public class TransactionUtilsTest {
     @Test
     public void testGetHash() {
         Transaction coinbaseTransaction = TransactionUtils
-                .newCoinbaseTransaction("12", "");
+                .newCoinbaseTransaction("12", "", 0);
 
         logger.info("test getData hash: {}", ByteArray.toHexString
                 (TransactionUtils.getHash(coinbaseTransaction)));
@@ -44,7 +44,7 @@ public class TransactionUtilsTest {
     @Test
     public void testToPrintString() {
         Transaction coinbaseTransaction = TransactionUtils
-                .newCoinbaseTransaction("12", "");
+                .newCoinbaseTransaction("12", "", 0);
 
         logger.info("test to print string: {}", TransactionUtils
                 .toPrintString(coinbaseTransaction));
@@ -53,7 +53,7 @@ public class TransactionUtilsTest {
     @Test
     public void testIsCoinbaseTransaction() {
         Transaction coinbaseTransaction = TransactionUtils
-                .newCoinbaseTransaction("12", "");
+                .newCoinbaseTransaction("12", "", 0);
 
         logger.info("test is coinbase transaction: {}", TransactionUtils
                 .isCoinbaseTransaction(coinbaseTransaction));

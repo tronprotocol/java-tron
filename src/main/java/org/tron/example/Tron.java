@@ -25,7 +25,6 @@ public class Tron {
     private String type = "normal";
 
     private static Peer peer;
-
     public static void main(String[] args) {
         Tron tron = new Tron();
         JCommander.newBuilder()

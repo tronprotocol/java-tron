@@ -36,9 +36,7 @@ public class Server {
             localhost = InetAddress.getLocalHost();
             System.out.println("Server localhost: " + localhost.getHostAddress
                     ());
-
             Address address = new Address(localhost.getHostAddress(), 5000);
-
             CopycatServer server = CopycatServer.builder(address)
                     .withStateMachine(MapstateMachine::new)
                     .withTransport(NettyTransport.builder()
@@ -57,20 +55,12 @@ public class Server {
             future.join();
 
             //Collection<Address> cluster = Collections.singleton(new Address
-            //        ("192.16.50.129", 5000));
+            //        ("192.168.0.100", 5000));
             //server.join(cluster).join();
 
             System.out.println("Server xxd: " + server.cluster().members());
-
             CopycatServer.State state = server.state();
             System.out.println("Server state: " + state);
-            server.onStateChange(state1 -> {
-                if (state == CopycatServer.State.LEADER) {
-                    System.out.println("Server state: " + state);
-                }
-            });
-            server.context();
-
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

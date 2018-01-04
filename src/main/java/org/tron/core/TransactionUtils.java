@@ -88,7 +88,7 @@ public class TransactionUtils {
      * @param data String transaction data
      * @return {@link Transaction}
      */
-    public static Transaction newCoinbaseTransaction(String to, String data) {
+    public static Transaction newCoinbaseTransaction(String to, String data, long subsidy) {
         if (data == null || data.equals("")) {
             byte[] randBytes = new byte[20];
             SecureRandom random = getRandom();
