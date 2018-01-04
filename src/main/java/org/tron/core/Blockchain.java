@@ -14,10 +14,13 @@
  */
 package org.tron.core;
 
+import com.alibaba.fastjson.JSON;
+import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.consensus.client.Client;
 import org.tron.crypto.ECKey;
 import org.tron.example.Tron;
 import org.tron.overlay.Net;
@@ -33,24 +36,20 @@ import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
-
-
-    public static final String genesisCoinbaseData = "0x00";
-
-
-    private static final Logger logger = LoggerFactory.getLogger("Blockchain");
     public static final String GENESIS_COINBASE_DATA = "0x00";
 
+    public static final Logger logger = LoggerFactory.getLogger("BlockChain");
+    public static final String genesisCoinbaseData = "0x10";
     private LevelDbDataSourceImpl blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
@@ -62,7 +61,7 @@ public class Blockchain {
      *
      * @param address wallet address
      */
-    public Blockchain(String address) {
+    public Blockchain(String address, String type) {
         if (dbExists()) {
             blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
             blockDB.initDB();
@@ -75,23 +74,64 @@ public class Blockchain {
             blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
             blockDB.initDB();
 
-            Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-                    (address, GENESIS_COINBASE_DATA);
-            Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+            String json = null;
+            try {
+                json = new String(ByteStreams.toByteArray(is));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-            this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
-            this.currentHash = this.lastHash;
+            GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
+
+            Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
+
+            List<Transaction> transactions = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String key = (String) entry.getKey();
+                Integer value = (Integer) entry.getValue();
+
+                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
+                transactions.add(transaction);
+            }
+
+            Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
 
             blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
                     genesisBlock.toByteArray());
             byte[] lastHash = genesisBlock.getBlockHeader()
                     .getHash()
                     .toByteArray();
-
             blockDB.putData(LAST_HASH, lastHash);
-
+            // put message to consensus
+            if (type.equals(Peer.PEER_SERVER)) {
+                String value = ByteArray.toHexString(genesisBlock.toByteArray());
+                Message message = new Message(value, Type.BLOCK);
+                Client.putMessage1(message); // consensus: put message GenesisBlock
+            }
             logger.info("new blockchain");
         }
+    }
+
+    /**
+     * create blockchain by db source
+     */
+    public Blockchain() {
+        if (!dbExists()) {
+            logger.info("no existing blockchain found. please create one " +
+                    "first");
+            System.exit(0);
+        }
+
+        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+        blockDB.initDB();
+
+        this.lastHash = blockDB.getData(LAST_HASH);
+        this.currentHash = this.lastHash;
+
+        logger.info("load blockchain");
     }
 
     /**
@@ -147,7 +187,6 @@ public class Blockchain {
                             }
                         }
                     }
-
 
                     TXOutputs outs = utxo.get(txid);
 
@@ -260,13 +299,40 @@ public class Blockchain {
         }
     }
 
+    /*auth:linmaorong
+ date:2017/12/26
+*/
+    public void addBlock(List<Transaction> transactions) {
+        // get lastHash
+        byte[] lastHash = blockDB.getData(LAST_HASH);
+        ByteString parentHash = ByteString.copyFrom(lastHash);
+        // get number
+        long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
+                .getBlockchain());
+        // get difficulty
+        ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
+        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+                number);
+
+        String value = ByteArray.toHexString(block.toByteArray());
+        // View the type of peer
+        //System.out.println(Tron.getPeer().getType());
+
+        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+            Message message = new Message(value, Type.BLOCK);
+            //net.broadcast(message);
+            Client.putMessage1(message); // consensus: put message
+        }
+    }
+
     /**
      * receive a block and save it into database,update caching at the same time.
      *
      * @param block   block
      * @param utxoSet utxoSet
      */
-    public void receiveBlock(Block block, UTXOSet utxoSet) {
+
+    public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
 
         byte[] lastHashKey = LAST_HASH;
         byte[] lastHash = blockDB.getData(lastHashKey);
@@ -285,11 +351,11 @@ public class Blockchain {
                 .toByteArray();
 
         // update lastHash
-        Tron.getPeer().getBlockchain().getBlockDB().putData(lastHashKey, ch);
+        peer.getBlockchain().getBlockDB().putData(lastHashKey, ch);
 
         this.lastHash = ch;
         currentHash = ch;
-
+        System.out.println(BlockUtils.toPrintString(block));
         // update UTXO cache
         utxoSet.reindex();
     }
