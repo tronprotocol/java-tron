@@ -47,9 +47,9 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
 
 ```yml
-kafka {
-    host = "127.0.0.1"  # your Kafka's host
-    port = ":9092"      # your Kafka's port
+nodeip {
+    host = "127.0.0.1"  # your leader-node host
+    port = ":500"      # your leader-node port
 }
 ```
 
@@ -97,6 +97,12 @@ IDEA:
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send.gif)
 
+**getmessage**
+
+| Description | Example |
+| --- | --- |
+|get transaction and block| getmessage|
+ 
 **printblockchain**
 
 | Description | Example |

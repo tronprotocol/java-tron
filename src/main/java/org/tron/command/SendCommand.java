@@ -75,6 +75,7 @@ public class SendCommand extends Command {
         System.out.println("");
     }
 
+
     @Override
     public boolean check(String[] parameters) {
         if (parameters.length < 2) {
