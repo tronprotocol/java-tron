@@ -19,7 +19,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.ECKey;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.example.Tron;
 import org.tron.overlay.Net;
 import org.tron.overlay.message.Message;
@@ -30,6 +29,7 @@ import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
 import java.io.File;
@@ -193,6 +193,10 @@ public class Blockchain {
         return file.exists();
     }
 
+
+    /**
+     * add a block
+     */
     public void addBlock(Block block) {
         byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
 
@@ -254,6 +258,9 @@ public class Blockchain {
         }
     }
 
+    /**
+     * receive block and save it into database
+     */
     public void receiveBlock(Block block, UTXOSet utxoSet) {
 
         byte[] lastHashKey = LAST_HASH;
@@ -264,7 +271,7 @@ public class Blockchain {
             return;
         }
 
-        // save the block into the database
+        // save the block ginto the database
         byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
         byte[] blockVal = block.toByteArray();
         blockDB.putData(blockHashKey, blockVal);
