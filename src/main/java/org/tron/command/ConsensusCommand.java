@@ -37,8 +37,8 @@ public class ConsensusCommand extends Command {
 
     }
     public void loadBlock(Peer peer){
-        System.out.println("BlockChain loadding  ...");
-        Client.loadBlock(peer);
+        //System.out.println("BlockChain loading  ...");
+        //Client.loadBlock(peer);
     }
 
     public void usage() {
