@@ -88,7 +88,7 @@ public class Blockchain {
                 .getHash()
                 .toByteArray();
         blockDB.put(LAST_HASH, lastHash);
-        // put message to consensus 2018/1/2
+        // put message to consensus
         if (type.equals(Peer.PEER_SERVER)) {
             String value = ByteArray.toHexString(genesisBlock.toByteArray());
             Message message = new Message(value, Type.BLOCK);
@@ -169,7 +169,6 @@ public class Blockchain {
                             }
                         }
                     }
-
 
                     TXOutputs outs = utxo.get(txid);
 

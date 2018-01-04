@@ -45,16 +45,8 @@ public class Server {
             //server.join(cluster).join();
 
             System.out.println("Server xxd: " + server.cluster().members());
-
             CopycatServer.State state = server.state();
             System.out.println("Server state: " + state);
-            server.onStateChange(state1 -> {
-                if (state == CopycatServer.State.LEADER) {
-                    System.out.println("Server state: " + state);
-                }
-            });
-            //server.context();
-
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
