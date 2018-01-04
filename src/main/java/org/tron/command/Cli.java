@@ -27,12 +27,11 @@ public class Cli {
         Scanner in = new Scanner(System.in);
 
         while (true) {
-            String cmd = in.nextLine();
-            cmd = cmd.trim();
+            String cmd = in.nextLine().trim();
 
             String[] cmdArray = cmd.split("\\s+");
-
-            if (cmdArray.length == 0 || cmdArray[0].equals("")) {
+            // split on trim() string will always return at the minimum: [""]
+            if ("".equals(cmdArray[0])) {
                 continue;
             }
 

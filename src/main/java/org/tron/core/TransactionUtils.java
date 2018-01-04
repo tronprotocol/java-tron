@@ -134,14 +134,16 @@ public class TransactionUtils {
             return "";
         }
 
-        String str =
-                "\nTransaction {\n" +
-                        "\tid=" + ByteArray.toHexString(transaction.getId()
-                        .toByteArray()) + "\n" +
-                        "\tvin=[\n";
-        int i = 0;
-        for (TXInput vin : transaction.getVinList()) {
-            str += "\t\t{\n" +
+        StringBuilder sb = new StringBuilder("\nTransaction {\n" +
+                "\tid=" + ByteArray.toHexString(transaction.getId()
+                .toByteArray()) + "\n" +
+                "\tvin=[\n");
+
+
+        for (int i = 0, vinCount = transaction.getVinCount(); i < vinCount; i++) {
+            TXInput vin = transaction.getVin(i);
+
+            sb.append("\t\t{\n" +
                     "\t\t\ttxID=" + ByteArray.toHexString(vin.getTxID()
                     .toByteArray()) + "\n" +
                     "\t\t\tvout=" + vin.getVout() + "\n" +
@@ -149,39 +151,34 @@ public class TransactionUtils {
                     .getSignature().toByteArray()) + "\n" +
                     "\t\t\tpubKey=" + ByteArray.toHexString(vin.getPubKey()
                     .toByteArray()) + "\n" +
-                    "\t\t}";
+                    "\t\t}");
 
-            if (i != transaction.getVinList().size() - 1) {
-                str += ",";
+            if (i != vinCount - 1) {
+                sb.append(",");
             }
-
-            i++;
-
-            str += "\n";
+            sb.append("\n");
         }
 
-        str += "\t],\n\tvout=[\n";
+        sb.append("\t],\n\tvout=[\n");
 
-        i = 0;
-        for (TXOutput vout : transaction.getVoutList()) {
-            str += "\t\t{\n" +
+
+        for (int i = 0, voutCount =  transaction.getVoutCount(); i < voutCount; i++) {
+            TXOutput vout = transaction.getVout(i);
+            sb.append("\t\t{\n" +
                     "\t\t\tvalue=" + vout.getValue() + "\n" +
                     "\t\t\tpubKeyHash=" + ByteArray.toHexString(vout
                     .getPubKeyHash().toByteArray()) + "\n" +
-                    "\t\t}";
+                    "\t\t}");
 
-            if (i != transaction.getVoutList().size() - 1) {
-                str += ",";
+            if (i != voutCount - 1) {
+                sb.append(",");
             }
-
-            i++;
-
-            str += "\n";
+            sb.append("\n");
         }
 
-        str += "\t]\n}";
+        sb.append("\t]\n}");
 
-        return str;
+        return sb.toString();
     }
 
     /**
