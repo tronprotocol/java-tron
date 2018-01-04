@@ -105,6 +105,10 @@ public class Blockchain {
                     .getHash()
                     .toByteArray();
             blockDB.putData(LAST_HASH, lastHash);
+
+            this.lastHash = lastHash;
+            this.currentHash = lastHash;
+
             // put message to consensus
             if (type.equals(Peer.PEER_SERVER)) {
                 String value = ByteArray.toHexString(genesisBlock.toByteArray());
