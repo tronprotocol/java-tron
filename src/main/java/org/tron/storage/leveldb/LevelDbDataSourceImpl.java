@@ -39,7 +39,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
     private static final Logger logger = LoggerFactory.getLogger("dbStore");
 
-    private final static String LEVEL_DB_DIRECTORY = "database-test.directory";
+    private final static String LEVEL_DB_DIRECTORY = "database.directory";
     public final static String databaseName = Configer.getConf().getString
             (LEVEL_DB_DIRECTORY);
 
