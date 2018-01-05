@@ -28,7 +28,7 @@ import java.util.Properties;
 public class Configer {
     private static final Logger logger = LoggerFactory.getLogger("Configer");
 
-    private final static String TRON_CONF = "tron.conf";
+    public static  String TRON_CONF = "tron.conf";
     private final static String DATABASE_DIRECTORY = "database.directory";
 
     private static String generatedNodePrivateKey;
