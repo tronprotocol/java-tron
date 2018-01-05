@@ -46,7 +46,7 @@ public class Cli {
                     new GetBalanceCommand().execute(peer, cmdParameters);
                     break;
                 case "send":
-                    new ConsensusCommand().putClient(cmdParameters);
+                    new ConsensusCommand().execute(peer,cmdParameters);
                     //new SendCommand().execute(peer, cmdParameters);
                     break;
                 case "printblockchain":
