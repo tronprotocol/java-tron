@@ -72,7 +72,8 @@ public class Client {
         String key = args[0];
         String value = args[1];
         client.submit(new PutCommand(key, value));
-        System.out.println("Put message success");
+        //client.submit(new PutCommand("time", System.currentTimeMillis()));
+        System.out.println("Send message success");
     }
 
     public static void getMessage1(String key) {
