@@ -49,7 +49,7 @@ File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
 ```yml
 nodeip {
     host = "127.0.0.1"  # your leader-node host
-    port = ":500"      # your leader-node port
+    port = ":5000"      # your leader-node port
 }
 ```
 
@@ -62,7 +62,14 @@ IDEA:
 - [Edit Configurations...] -> [Program arguments]: `--type server`
 - Run
 
-![run](https://github.com/tronprotocol/wiki/blob/master/images/show-how/run.gif)
+![run](https://github.com/tronprotocol/wiki/blob/master/images/commands/default-set.gif)
+
+**Complete process**
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/process.gif)
+
+**Other nodes to join need to modify the connection ip**
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/node-ip.gif)
 
 # Commands
 **help**
@@ -95,19 +102,21 @@ IDEA:
 | --- | --- |
 | Send balance to address | `send 2cddf5707aefefb199cb16430fb0f6220d460dfe 2` |
 
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send.gif)
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send1.gif)
 
 **getmessage**
 
-| Description | Example |
-| --- | --- |
-|get transaction and block| getmessage|
+| Description | Example | Extra attention |
+| --- | --- |---|
+|get transaction and block| getmessage| Enter the command once |
+
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/getmessage.gif)
  
 **printblockchain**
 
 | Description | Example |
-| --- | --- |
-| Print blockchain | `printblockchain` |
+| --- | --- | 
+| Print blockchain | `printblockchain`|
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/printblockchain.gif)
 
