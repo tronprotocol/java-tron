@@ -45,12 +45,12 @@ public class Client {
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
-        Collection<Address> cluster = Arrays.asList(
+        /*Collection<Address> cluster = Arrays.asList(
                 new Address("192.168.0.100", 5000)
         );
         CompletableFuture<CopycatClient> future = client.connect(cluster);
-        future.join();
-        /*InetAddress localhost = null;
+        future.join();*/
+        InetAddress localhost = null;
         try {
             localhost = InetAddress.getLocalHost();
             Collection<Address> cluster = Arrays.asList(
@@ -61,7 +61,7 @@ public class Client {
             future.join();
         } catch (UnknownHostException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
     public static CopycatClient getClient() {
