@@ -62,6 +62,7 @@
     <logger name="BlockStores" level="INFO"/>
     <logger name="Blockchain" level="INFO"/>
     <logger name="BlockLoader" level="INFO"/>
+    <logger name="ConsensusCommand" level="INFO"/>
 
 </configuration>
 
