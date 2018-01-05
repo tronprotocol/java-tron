@@ -32,7 +32,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 public class ConsensusCommand extends Command {
 
     private static final Logger logger = LoggerFactory.getLogger
-            ("consensus-command");
+            ("ConsensusCommand");
 
     public void server() {
         Server.serverRun();
@@ -51,10 +51,6 @@ public class ConsensusCommand extends Command {
             Client.getMessage(peer,MessageType.BLOCK);
         }
 
-    }
-    public void loadBlock(Peer peer){
-        //System.out.println("BlockChain loading  ...");
-        //Client.loadBlock(peer);
     }
 
     public void usage() {
