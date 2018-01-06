@@ -56,38 +56,30 @@ public class ConsensusCommand extends Command {
     public void usage() {
         System.out.println("");
 
+        System.out.println("");
+
         System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold consensus|@"
+                "@|magenta,bold USAGE|@\n\t@|bold listen [key]|@"
         ) );
 
         System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'consensus' create a server.|@"
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'listen' " +
+                        "listen consensus message.|@"
         ) );
 
         System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold getmessage [key]|@"
+                "@|magenta,bold USAGE|@\n\t@|bold send [key] [value]|@"
         ) );
 
         System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'getmessage' get a consensus message.|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold putmessage [key] [value]|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'putmessage' put a consensus message.|@"
+                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' " +
+                        "send a transaction.|@"
         ) );
 
         System.out.println("");
