@@ -104,13 +104,13 @@ IDEA:
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send1.gif)
 
-**getmessage**
+**listen**
 
 | Description | Example | Extra attention |
 | --- | --- |---|
-|get transaction and block| getmessage| Enter the command once |
+|get transaction and block| listen| Enter the command once |
 
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/getmessage.gif)
+![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/listen.gif)
  
 **printblockchain**
 
