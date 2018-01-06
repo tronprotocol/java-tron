@@ -29,6 +29,7 @@ import java.util.Properties;
 public class Configer {
     private static final Logger logger = LoggerFactory.getLogger("Configer");
 
+    public static String TRON_CONF = "tron.conf";
     private final static String DATABASE_DIRECTORY = "database.directory";
     private static String generatedNodePrivateKey;
     private static Config config;
@@ -67,7 +68,7 @@ public class Configer {
 
     public static Config getConf() {
         if (config == null) {
-            config = ConfigFactory.load(Constant.NORMAL_CONF);
+            config = ConfigFactory.load(TRON_CONF);
         }
         return config;
     }
