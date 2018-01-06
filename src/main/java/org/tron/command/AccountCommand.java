@@ -32,15 +32,15 @@ public class AccountCommand extends Command {
     public void usage() {
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold account|@"
-        ) );
+        System.out.println(ansi().eraseScreen().render(
+            "@|magenta,bold USAGE|@\n\t@|bold account|@"
+        ));
 
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
-        ) );
+        System.out.println(ansi().eraseScreen().render(
+            "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
+        ));
 
         System.out.println("");
     }

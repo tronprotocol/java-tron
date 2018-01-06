@@ -27,6 +27,7 @@ import org.tron.overlay.Net;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
+import org.tron.peer.PeerType;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -104,8 +105,8 @@ public class Blockchain {
                 .getHash()
                 .toByteArray();
         blockDB.putData(LAST_HASH, lastHash);
-// put message to consensus
-        if (type.equals(Peer.PEER_SERVER)) {
+        // put message to consensus
+        if (type.equals(PeerType.PEER_SERVER)) {
             String value = ByteArray.toHexString(genesisBlock.toByteArray());
             Message message = new Message(value, Type.BLOCK);
             Client.putMessage1(message); // consensus: put message GenesisBlock
@@ -118,8 +119,7 @@ public class Blockchain {
      */
     public Blockchain() {
         if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one " +
-                    "first");
+            logger.info("no existing blockchain found. please create one first");
             System.exit(0);
         }
 
@@ -220,13 +220,12 @@ public class Blockchain {
     }
 
     /**
-     * judge dbStore is exists
+     * Checks if the database file exists
      *
      * @return boolean
      */
     public static boolean dbExists() {
         File file = new File(Paths.get(databaseName, BLOCK_DB_NAME).toString());
-
         return file.exists();
     }
 
@@ -291,15 +290,12 @@ public class Blockchain {
 
         String value = ByteArray.toHexString(block.toByteArray());
 
-        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
             Message message = new Message(value, Type.BLOCK);
             net.broadcast(message);
         }
     }
 
-    /*auth:linmaorong
- date:2017/12/26
-*/
     public void addBlock(List<Transaction> transactions) {
         // get lastHash
         byte[] lastHash = blockDB.getData(LAST_HASH);
@@ -316,7 +312,7 @@ public class Blockchain {
         // View the type of peer
         //System.out.println(Tron.getPeer().getType());
 
-        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
             Message message = new Message(value, Type.BLOCK);
             //net.broadcast(message);
             Client.putMessage1(message); // consensus: put message
@@ -329,7 +325,6 @@ public class Blockchain {
      * @param block   block
      * @param utxoSet utxoSet
      */
-
     public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
 
         byte[] lastHashKey = LAST_HASH;
