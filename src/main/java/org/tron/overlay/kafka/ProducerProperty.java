@@ -14,9 +14,9 @@
  */
 package org.tron.overlay.kafka;
 
+import com.typesafe.config.Config;
 import org.tron.config.Configer;
 
-import static org.tron.overlay.kafka.Kafka.EMPTY_STRING;
 import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
@@ -42,9 +42,15 @@ public class ProducerProperty {
     public ProducerProperty() {
     }
 
-    public ProducerProperty(String bootstrapServers, String acks, String retries, String batchSize, String lingerMS,
-                            String
-                                    bufferMemory, String keySerializer, String valueSerializer) {
+    public ProducerProperty(
+        String bootstrapServers,
+        String acks,
+        String retries,
+        String batchSize,
+        String lingerMS,
+        String bufferMemory,
+        String keySerializer,
+        String valueSerializer) {
         this.bootstrapServers = bootstrapServers;
         this.acks = acks;
         this.retries = retries;
@@ -56,21 +62,22 @@ public class ProducerProperty {
     }
 
     public static ProducerProperty getDefault() {
-        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + Configer.getConf().getString(KAFKA_PORT);
+        Config config = Configer.getConf();
+        String bootstrapServers = config.getString(KAFKA_HOST) + config.getString(KAFKA_PORT);
 
-        if (EMPTY_STRING.equals(bootstrapServers)) {
+        if (bootstrapServers.isEmpty()) {
             bootstrapServers = DEFAULT_BOOTSTRAP_SERVERS;
         }
 
         return new ProducerProperty(
-                bootstrapServers,
-                DEFAULT_ACKS,
-                DEFAULT_RETRIES,
-                DEFAULT_BATCH_SIZE,
-                DEFAULT_LINGER_MS,
-                DEFAULT_BUFFER_MEMORY,
-                DEFAULT_KEY_SERIALIZER,
-                DEFAULT_VALUE_SERIALIZER
+            bootstrapServers,
+            DEFAULT_ACKS,
+            DEFAULT_RETRIES,
+            DEFAULT_BATCH_SIZE,
+            DEFAULT_LINGER_MS,
+            DEFAULT_BUFFER_MEMORY,
+            DEFAULT_KEY_SERIALIZER,
+            DEFAULT_VALUE_SERIALIZER
         );
     }
 
