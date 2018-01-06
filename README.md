@@ -64,6 +64,9 @@ IDEA:
 
 ![run](https://github.com/tronprotocol/wiki/blob/master/images/commands/default-set.gif)
 
+or simply from terminal:
+- ./gradlew run -Pserver=true
+
 **Complete process**
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/process.gif)

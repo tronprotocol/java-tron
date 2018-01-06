@@ -114,3 +114,10 @@ protobuf {
         }
     }
 }
+
+run {
+    if (project.hasProperty('server')) {
+        standardInput = System.in
+        args = ['--type', 'server']
+    }
+}
