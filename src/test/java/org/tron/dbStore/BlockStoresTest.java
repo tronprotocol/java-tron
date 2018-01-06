@@ -15,7 +15,6 @@
 
 package org.tron.dbStore;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.config.Configer;
