@@ -48,9 +48,9 @@ import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
     public static final String GENESIS_COINBASE_DATA = "0x00";
+    public static final String genesisCoinbaseData = "0x10";
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    public static final String genesisCoinbaseData = "0x10";
     private LevelDbDataSourceImpl blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
