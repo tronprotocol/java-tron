@@ -23,7 +23,6 @@ import org.tron.core.PendingStateImpl;
 import org.tron.core.TransactionUtils;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
-import org.tron.example.Tron;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
@@ -88,7 +87,7 @@ public class Peer {
 
     private void init() {
         initWallet();
-        initBlockchian();
+        initBlockchain();
         initUTXOSet();
         initLoadBlock();
     }
@@ -100,7 +99,7 @@ public class Peer {
         }
     }
 
-    private void initBlockchian() {
+    private void initBlockchain() {
         new ConsensusCommand().server();
         if (Blockchain.dbExists()) {
             blockchain = new Blockchain();
