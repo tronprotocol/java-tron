@@ -28,8 +28,8 @@ public class PrintBlockchainCommand extends Command {
 
     @Override
     public void execute(Peer peer, String[] parameters) {
-        Blockchain blockchian = peer.getUTXOSet().getBlockchain();
-        BlockchainIterator bi = new BlockchainIterator(blockchian);
+        Blockchain blockchain = peer.getUTXOSet().getBlockchain();
+        BlockchainIterator bi = new BlockchainIterator(blockchain);
         while (bi.hasNext()) {
             TronBlock.Block block = (TronBlock.Block) bi.next();
             System.out.println(BlockUtils.toPrintString(block));
