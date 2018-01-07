@@ -64,54 +64,60 @@ public class Blockchain {
      */
     public Blockchain(String address, String type) {
         if (dbExists()) {
-            logger.info("blockchain already exists.");
-            System.exit(0);
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            this.lastHash = blockDB.getData(LAST_HASH);
+            this.currentHash = this.lastHash;
+
+            logger.info("load blockchain");
+        } else {
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+            String json = null;
+            try {
+                json = new String(ByteStreams.toByteArray(is));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
+
+            Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
+
+            List<Transaction> transactions = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String key = (String) entry.getKey();
+                Integer value = (Integer) entry.getValue();
+
+                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
+                transactions.add(transaction);
+            }
+
+            Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
+
+            this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
+            this.currentHash = this.lastHash;
+
+            blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+                    genesisBlock.toByteArray());
+            byte[] lastHash = genesisBlock.getBlockHeader()
+                    .getHash()
+                    .toByteArray();
+            blockDB.putData(LAST_HASH, lastHash);
+
+            // put message to consensus
+            if (type.equals(PeerType.PEER_SERVER)) {
+                String value = ByteArray.toHexString(genesisBlock.toByteArray());
+                Message message = new Message(value, Type.BLOCK);
+                Client.putMessage1(message); // consensus: put message GenesisBlock
+            }
+            logger.info("new blockchain");
         }
-
-        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
-        blockDB.initDB();
-
-        InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
-        String json = null;
-        try {
-            json = new String(ByteStreams.toByteArray(is));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
-
-        Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
-
-        List<Transaction> transactions = new ArrayList<>();
-
-        while (iterator.hasNext()) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String key = (String) entry.getKey();
-            Integer value = (Integer) entry.getValue();
-
-            Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
-            transactions.add(transaction);
-        }
-
-        Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
-
-        this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
-        this.currentHash = this.lastHash;
-
-        blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-                genesisBlock.toByteArray());
-        byte[] lastHash = genesisBlock.getBlockHeader()
-                .getHash()
-                .toByteArray();
-        blockDB.putData(LAST_HASH, lastHash);
-        // put message to consensus
-        if (type.equals(PeerType.PEER_SERVER)) {
-            String value = ByteArray.toHexString(genesisBlock.toByteArray());
-            Message message = new Message(value, Type.BLOCK);
-            Client.putMessage1(message); // consensus: put message GenesisBlock
-        }
-        logger.info("new blockchain");
     }
 
     /**
