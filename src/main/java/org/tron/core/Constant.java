@@ -32,10 +32,7 @@ public class Constant {
     public final static Integer PARTITION = 0;
 
     //config
-    public final  static String NORMAL_CONF="tron.conf";
-    public final  static String TEST_CONF="tron-test.conf";
-    public final  static String DATABASE_DIR="database.directory";
-
-
-
+    public final static String NORMAL_CONF = "tron.conf";
+    public final static String TEST_CONF = "tron-test.conf";
+    public final static String DATABASE_DIR = "database.directory";
 }

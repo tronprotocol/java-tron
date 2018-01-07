@@ -14,14 +14,13 @@
  */
 package org.tron.overlay.kafka;
 
+import com.typesafe.config.Config;
 import org.tron.config.Configer;
 
-import static org.tron.overlay.kafka.Kafka.EMPTY_STRING;
 import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
 public class ConsumerProperty {
-    private final static String DEFAULT_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
     private final static String DEFAULT_GROUP_ID = Configer.getGNPK();
     private final static String DEFAULT_ENABLE_AUTO_COMMIT = "true";
     private final static String DEFAULT_AUTO_COMMIT_INTERVAL_MS = "1000";
@@ -59,11 +58,8 @@ public class ConsumerProperty {
     }
 
     public static ConsumerProperty getDefault() {
-        String bootstrapServers = Configer.getConf().getString(KAFKA_HOST) + Configer.getConf().getString(KAFKA_PORT);
-
-        if (EMPTY_STRING.equals(bootstrapServers)) {
-            bootstrapServers = DEFAULT_BOOTSTRAP_SERVERS;
-        }
+        Config config = Configer.getConf();
+        String bootstrapServers = config.getString(KAFKA_HOST) + config.getString(KAFKA_PORT);
 
         return new ConsumerProperty(
                 bootstrapServers,
@@ -74,10 +70,6 @@ public class ConsumerProperty {
                 DEFAULT_KEY_DESERIALIZER,
                 DEFAULT_VALUE_DESERIALIZER
         );
-    }
-
-    public static String getDefaultBootstrapServers() {
-        return DEFAULT_BOOTSTRAP_SERVERS;
     }
 
     public static String getDefaultGroupId() {

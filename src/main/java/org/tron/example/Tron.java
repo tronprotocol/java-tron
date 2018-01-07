@@ -17,14 +17,18 @@ package org.tron.example;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.tron.command.Cli;
+import org.tron.config.Configer;
 import org.tron.peer.Peer;
+import org.tron.peer.PeerBuilder;
 import org.tron.peer.PeerType;
 
 public class Tron {
+
     @Parameter(names = {"--type", "-t"}, validateWith = PeerType.class)
     private String type = "normal";
 
     private static Peer peer;
+
     public static void main(String[] args) {
         Tron tron = new Tron();
         JCommander.newBuilder()
@@ -35,7 +39,11 @@ public class Tron {
     }
 
     public void run() {
-        peer = Peer.getInstance(type);
+        peer = new PeerBuilder()
+                .setKey(Configer.getMyKey())
+                .setType(type)
+                .build();
+
         Cli cli = new Cli();
         cli.run(peer);
     }
