@@ -16,6 +16,7 @@ package org.tron.core;
 
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.iq80.leveldb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -35,8 +36,7 @@ import java.math.BigInteger;
 import static org.tron.core.Constant.LAST_HASH;
 
 @Component
-public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
-        .TronBlockChain {
+public class TronBlockChainImpl implements TronBlockChain, org.tron.facade.TronBlockChain {
 
     private static final Logger logger = LoggerFactory.getLogger("Blockchain");
 
@@ -44,8 +44,6 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
 
     @Autowired
     protected BlockStoreInput blockStoreInter;
-
-    //private static TronBlock.Block bestBlock;
 
     private BigInteger totalDifficulty = BigInteger.ZERO;
 
@@ -61,7 +59,6 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
     }
 
 
-    // getData the last block
     @Override
     public synchronized TronBlock.Block getBestBlock() {
         TronBlock.Block bestBlock = null;
@@ -78,7 +75,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
         return bestBlock;
     }
 
-    // *******
+
     public synchronized void addBlockToChain(TronBlock.Block block) {
         TronBlock.Block bestBlock = getBestBlock();
 
@@ -100,10 +97,11 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade
         }
     }
 
-    // initDB level DB blockStoreInter
+    /**
+     * initDB level DB blockStoreInter
+     */
     private static LevelDbDataSourceImpl initBD() {
-        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
-                ("blockStoreInter");
+        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl("blockStoreInter");
         levelDbDataSource.initDB();
         return levelDbDataSource;
     }
