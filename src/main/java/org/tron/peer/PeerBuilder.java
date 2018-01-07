@@ -23,11 +23,7 @@ public class PeerBuilder {
         if (wallet == null) throw new IllegalStateException("Wallet must be set before building the blockchain");
         if (type == null) throw new IllegalStateException("Type must be set before building the blockchain");
 
-        if (Blockchain.dbExists()) {
-            blockchain = new Blockchain();
-        } else {
-            blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
-        }
+        blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
     }
 
     private void buildUTXOSet() {
