@@ -47,8 +47,8 @@ import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
-    public static final String GENESIS_COINBASE_DATA = "0x00";
-    public static final String genesisCoinbaseData = "0x10";
+
+    public static final String GENESIS_COINBASE_DATA = "0x10";
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
     private LevelDbDataSourceImpl blockDB = null;
@@ -94,7 +94,7 @@ public class Blockchain {
                 String key = (String) entry.getKey();
                 Integer value = (Integer) entry.getValue();
 
-                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
+                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
                 transactions.add(transaction);
             }
 
@@ -357,10 +357,6 @@ public class Blockchain {
         System.out.println(BlockUtils.toPrintString(block));
         // update UTXO cache
         utxoSet.reindex();
-    }
-
-    public static String getGenesisCoinbaseData() {
-        return GENESIS_COINBASE_DATA;
     }
 
     public LevelDbDataSourceImpl getBlockDB() {
