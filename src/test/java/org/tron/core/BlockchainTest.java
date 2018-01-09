@@ -50,10 +50,13 @@ public class BlockchainTest {
     }
 
     @Test
-    public void testBlockchain() {
-        logger.info("test blockchain: lashHash = {}, currentHash = {}",
+    public void testBlockchain() throws Exception {
+        throw new Exception("Test execution got as far as this!");
+        /*
+       logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
                         .toHexString(blockchain.getCurrentHash()));
+                        */
     }
 
 /*    @Test
