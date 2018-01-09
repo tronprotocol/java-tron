@@ -16,10 +16,7 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,19 +34,18 @@ import java.util.List;
 import static org.tron.core.Blockchain.dbExists;
 import static org.tron.utils.ByteArray.toHexString;
 
-@Ignore
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
     private static Blockchain blockchain;
 
-    @BeforeClass
-    public static void init() {
-       blockchain = new Blockchain
+    @Before
+    public void init() {
+        blockchain = new Blockchain
                ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
     }
 
-    @AfterClass
-    public static void teardown() {
+    @After
+    public void teardown() {
         blockchain.getBlockDB().closeDB();
     }
 
