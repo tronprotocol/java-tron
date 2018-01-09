@@ -39,9 +39,10 @@ public class BlockchainTest {
     private static Blockchain blockchain;
 
     @Before
-    public void init() {
-        blockchain = new Blockchain
-               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
+    public void init() throws Exception {
+        throw new Exception("Got as far as this");
+        //blockchain = new Blockchain
+        //       ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
     }
 
     @After
@@ -51,7 +52,6 @@ public class BlockchainTest {
 
     @Test
     public void testBlockchain() throws Exception {
-        throw new Exception("Test execution got as far as this!");
         /*
        logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
