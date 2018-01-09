@@ -145,8 +145,7 @@ public class BlockchainTest {
 
         Block block = BlockUtils.newBlock(null, parentHash,
                 difficulty, 0);
-        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl
-                ("blockStore_test");
+        LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl("blockStore_test");
         levelDbDataSource.initDB();
         String lastHash = "lastHash";
         byte[] key = lastHash.getBytes();

@@ -16,8 +16,12 @@ package org.tron.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.tron.application.Application;
+import org.tron.application.ApplicationFactory;
+import org.tron.application.CliApplication;
 import org.tron.command.Cli;
 import org.tron.config.Configer;
+import org.tron.consensus.server.Server;
 import org.tron.peer.Peer;
 import org.tron.peer.PeerBuilder;
 import org.tron.peer.PeerType;
@@ -29,6 +33,7 @@ public class Tron {
 
     private static Peer peer;
 
+
     public static void main(String[] args) {
         Tron tron = new Tron();
         JCommander.newBuilder()
@@ -39,13 +44,22 @@ public class Tron {
     }
 
     public void run() {
-        peer = new PeerBuilder()
+
+        CliApplication app = new ApplicationFactory()
+                .buildCli();
+
+        app.addService(new Server());
+        app.run();
+
+        peer = app.getInjector().getInstance(PeerBuilder.class)
                 .setKey(Configer.getMyKey())
                 .setType(type)
                 .build();
 
+        app.setPeer(peer);
+
         Cli cli = new Cli();
-        cli.run(peer);
+        cli.run(app);
     }
 
     public static Peer getPeer() {

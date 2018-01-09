@@ -16,6 +16,7 @@ package org.tron.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.application.CliApplication;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.client.MessageType;
 import org.tron.consensus.server.Server;
@@ -28,37 +29,43 @@ import org.tron.peer.PeerType;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
+
+import javax.inject.Inject;
+
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class ConsensusCommand extends Command {
 
     private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
 
-    public void server() {
-        Server.serverRun();
+    private Client client;
+    private Server server;
+
+    @Inject
+    public ConsensusCommand(Client client) {
+        this.client = client;
     }
 
     public void putClient(String[] args) {
-        Client.putMessage(args);
+        client.putMessage(args);
     }
 
     public void getClient(Peer peer) {
-
         if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
-            Client.getMessage(peer,MessageType.TRANSACTION);
-            Client.getMessage(peer,MessageType.BLOCK);
-        }else{
-            Client.getMessage(peer,MessageType.BLOCK);
+            client.getMessage(peer, MessageType.TRANSACTION);
+            client.getMessage(peer, MessageType.BLOCK);
+        } else {
+            client.getMessage(peer, MessageType.BLOCK);
         }
     }
 
     public void listen(Peer peer,String type) {
         //Client.getMessage(args[0]);
         if (type.equals(PeerType.PEER_SERVER)) {
-            Client.getMessage(peer,MessageType.TRANSACTION);
-            Client.getMessage(peer,MessageType.BLOCK);
-        }else{
-            Client.getMessage(peer,MessageType.BLOCK);
+            client.getMessage(peer, MessageType.TRANSACTION);
+            client.getMessage(peer, MessageType.BLOCK);
+        } else {
+            client.getMessage(peer, MessageType.BLOCK);
         }
     }
 
@@ -95,7 +102,9 @@ public class ConsensusCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
+        Peer peer = app.getPeer();
+
         if (check(parameters)) {
             String to = parameters[0];
             long amount = Long.valueOf(parameters[1]);
@@ -105,7 +114,7 @@ public class ConsensusCommand extends Command {
             if (transaction != null) {
                 Message message = new Message(ByteArray.toHexString
                         (transaction.toByteArray()), Type.TRANSACTION);
-                Client.putMessage1(message);
+                client.putMessage1(message);
             }
         }
     }

@@ -40,18 +40,14 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     private static final Logger logger = LoggerFactory.getLogger("dbStore");
 
     private final static String LEVEL_DB_DIRECTORY = "database.directory";
-    public final static String databaseName = Configer.getConf().getString
-            (LEVEL_DB_DIRECTORY);
+    public final static String databaseName = Configer.getConf().getString(LEVEL_DB_DIRECTORY);
 
-    String dataBaseName;
-    DB database;
-    boolean alive;
-
+    private String dataBaseName;
+    private DB database;
+    private boolean alive;
 
     private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
-    public LevelDbDataSourceImpl() {
-    }
 
     public LevelDbDataSourceImpl(String name) {
         this.dataBaseName = name;
