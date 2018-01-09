@@ -15,6 +15,7 @@
 package org.tron.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.command.ConsensusCommand;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.server.Server;
 import org.tron.core.Blockchain;
@@ -95,7 +96,6 @@ public class Peer {
             Client.loadBlock(this);
         }
     }
-<<<<<<< HEAD
 
     private void initBlockchain() {
         new ConsensusCommand().server();
@@ -118,8 +118,6 @@ public class Peer {
         wallet.init(myKey);
     }
 
-=======
->>>>>>> 4440972a2f3c8c493f7c17ae17cf0992fd93dc8a
     public ECKey getMyKey() {
         return myKey;
     }
