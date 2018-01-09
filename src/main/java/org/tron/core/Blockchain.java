@@ -115,6 +115,10 @@ public class Blockchain {
                 String value = ByteArray.toHexString(genesisBlock.toByteArray());
                 Message message = new Message(value, Type.BLOCK);
                 Client.putMessage1(message); // consensus: put message GenesisBlock
+                //Merely for the placeholders, no real meaning
+                Message time = new Message(value, Type.TRANSACTION);
+                Client.putMessage1(time);
+
             }
             logger.info("new blockchain");
         }
