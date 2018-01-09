@@ -128,8 +128,7 @@ public class Client {
                     if (time == null ) {
                         preTime[0] = null;
                     }else {
-                        if (!time.toString().equals(preTime[0]) || !time
-                                .toString().equals("null")) {
+                        if (!time.toString().equals(preTime[0])) {
                             client.submit(new GetQuery(key)).thenAccept(transaction
                                     -> {
                                 //System.out.println("type: " + result.getClass()
