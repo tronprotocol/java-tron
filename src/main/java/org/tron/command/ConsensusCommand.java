@@ -42,7 +42,7 @@ public class ConsensusCommand extends Command {
         Client.putMessage(args);
     }
 
-    public void getClient(Peer peer,String[] args) {
+    public void getClient(Peer peer) {
         //Client.getMessage(args[0]);
         if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
             Client.getMessage(peer,MessageType.TRANSACTION);
@@ -50,7 +50,16 @@ public class ConsensusCommand extends Command {
         }else{
             Client.getMessage(peer,MessageType.BLOCK);
         }
+    }
 
+    public void listen(Peer peer,String type) {
+        //Client.getMessage(args[0]);
+        if (type.equals(Peer.PEER_SERVER)) {
+            Client.getMessage(peer,MessageType.TRANSACTION);
+            Client.getMessage(peer,MessageType.BLOCK);
+        }else{
+            Client.getMessage(peer,MessageType.BLOCK);
+        }
     }
 
     public void usage() {
