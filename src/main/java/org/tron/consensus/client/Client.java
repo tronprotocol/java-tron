@@ -72,7 +72,6 @@ public class Client {
         String key = args[0];
         String value = args[1];
         client.submit(new PutCommand(key, value));
-        //client.submit(new PutCommand("time", System.currentTimeMillis()));
         System.out.println("Send message success");
     }
 
@@ -83,8 +82,7 @@ public class Client {
 
     public static void putMessage1(Message message) {
         if (message.getType() == Type.TRANSACTION) {
-            /*
-            System.out.println("transaction:" + message.getType().toString()
+            /*System.out.println("transaction:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
                     () + "; message: " + message.getMessage()); */
             client.submit(new PutCommand("transaction", message.getMessage()));
@@ -93,14 +91,9 @@ public class Client {
         }
 
         if (message.getType() == Type.BLOCK) {
-            /*
-            System.out.println("block:" + message.getType().toString()
+            /*System.out.println("block:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
                     () + "; message:" + message.getMessage());*/
-
-            //client.submit(new PutCommand("block", message.getMessage()));
-            //System.out.println("Block: consensus success");
-
             int i = 1;
             final boolean[] f = {true};
             while (f[0]) {
@@ -132,25 +125,26 @@ public class Client {
             Thread thread = new Thread(() -> {
                 while (true) {
                     Object time = client.submit(new GetQuery("time")).join();
-                    if (!time.toString().equals(preTime[0]) && !time.toString
-                            ().equals("null")) {
-                        client.submit(new GetQuery(key)).thenAccept(transaction
-                                -> {
-                            //System.out.println("Consensus " + key + " is: "
-                            // + result);
-                            //System.out.println("type: " + result.getClass()
-                            // .getSimpleName());
-                            peer.addReceiveTransaction(String.valueOf
-                                    (transaction));
-                        });
-                        preTime[0] = time.toString();
-                    } else {
-                        preTime[0] = preTime[0];
-                    }
-                    try {
-                        Thread.sleep(3000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (time == null ) {
+                        preTime[0] = null;
+                    }else {
+                        if (!time.toString().equals(preTime[0])) {
+                            client.submit(new GetQuery(key)).thenAccept(transaction
+                                    -> {
+                                //System.out.println("type: " + result.getClass()
+                                // .getSimpleName());
+                                peer.addReceiveTransaction(String.valueOf
+                                        (transaction));
+                            });
+                            preTime[0] = time.toString();
+                        } else {
+                            preTime[0] = preTime[0];
+                        }
+                        try {
+                            Thread.sleep(3000);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             });
@@ -182,7 +176,7 @@ public class Client {
                     i = i - 1;
                     String finalBlock_key = "block" + i;
                     client.submit(new GetQuery(finalBlock_key)).thenAccept
-                            (block -> {
+                            ((Object block) -> {
                         /*System.out.println("Consensus " + key + " is: " +
                         block);*/
                         if (!String.valueOf(block).equals(preMessage[0])) {
@@ -206,13 +200,12 @@ public class Client {
     public static void loadBlock(Peer peer) {
         int i = 2;
         final boolean[] f = {true};
+
         while (f[0]) {
             String block_key = "block" + i;
-            client.submit(new GetQuery(block_key)).thenAccept((Object block)
-                    -> {
+            client.submit(new GetQuery(block_key)).thenAccept((Object block) -> {
                 if (!(block == null)) {
-                    peer.addReceiveBlock(String.valueOf
-                            (block));
+                    peer.addReceiveBlock(String.valueOf(block));
                     f[0] = true;
                 } else {
                     f[0] = false;

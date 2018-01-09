@@ -26,7 +26,7 @@ public class BlockStoresTest {
 
     @Test
     public void saveBlock() {
-        Configer.TRON_CONF= Constant.TEST_CONF;
+        Configer.TRON_CONF = Constant.TEST_CONF;
         BlockStores blockStores = new BlockStores();
         blockStores.saveBlock( "0001245".getBytes(),"xxdfrgds".getBytes());
         blockStores.close();
@@ -34,7 +34,7 @@ public class BlockStoresTest {
 
     @Test
     public void findBlockByHash() {
-        Configer.TRON_CONF= Constant.TEST_CONF;
+        Configer.TRON_CONF = Constant.TEST_CONF;
         BlockStores blockStores = new BlockStores();
         byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
         blockStores.close();

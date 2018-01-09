@@ -77,7 +77,6 @@ dependencies {
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'
-    // https://mvnrepository.com/artifact/com.alibaba/fastjson
     compile group: 'com.alibaba', name: 'fastjson', version: '1.2.44'
 }
 

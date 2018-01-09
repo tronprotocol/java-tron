@@ -27,6 +27,7 @@ import org.tron.overlay.Net;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
+import org.tron.peer.PeerType;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -46,10 +47,10 @@ import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
-    public static final String GENESIS_COINBASE_DATA = "0x00";
+
+    public static final String GENESIS_COINBASE_DATA = "0x10";
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    public static final String genesisCoinbaseData = "0x10";
     private LevelDbDataSourceImpl blockDB = null;
     private PendingState pendingState = new PendingStateImpl();
 
@@ -63,54 +64,64 @@ public class Blockchain {
      */
     public Blockchain(String address, String type) {
         if (dbExists()) {
-            logger.info("blockchain already exists.");
-            System.exit(0);
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            this.lastHash = blockDB.getData(LAST_HASH);
+            this.currentHash = this.lastHash;
+
+            logger.info("load blockchain");
+        } else {
+            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB.initDB();
+
+            InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+            String json = null;
+            try {
+                json = new String(ByteStreams.toByteArray(is));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
+
+            Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
+
+            List<Transaction> transactions = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String key = (String) entry.getKey();
+                Integer value = (Integer) entry.getValue();
+
+                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
+                transactions.add(transaction);
+            }
+
+            Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
+
+            this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
+            this.currentHash = this.lastHash;
+
+            blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+                    genesisBlock.toByteArray());
+            byte[] lastHash = genesisBlock.getBlockHeader()
+                    .getHash()
+                    .toByteArray();
+            blockDB.putData(LAST_HASH, lastHash);
+
+            // put message to consensus
+            if (type.equals(PeerType.PEER_SERVER)) {
+                String value = ByteArray.toHexString(genesisBlock.toByteArray());
+                Message message = new Message(value, Type.BLOCK);
+                Client.putMessage1(message); // consensus: put message GenesisBlock
+                //Merely for the placeholders, no real meaning
+                Message time = new Message(value, Type.TRANSACTION);
+                Client.putMessage1(time);
+
+            }
+            logger.info("new blockchain");
         }
-
-        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
-        blockDB.initDB();
-
-        InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
-        String json = null;
-        try {
-            json = new String(ByteStreams.toByteArray(is));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
-
-        Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
-
-        List<Transaction> transactions = new ArrayList<>();
-
-        while (iterator.hasNext()) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String key = (String) entry.getKey();
-            Integer value = (Integer) entry.getValue();
-
-            Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, genesisCoinbaseData, value);
-            transactions.add(transaction);
-        }
-
-        Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
-
-        this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
-        this.currentHash = this.lastHash;
-
-        blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-                genesisBlock.toByteArray());
-        byte[] lastHash = genesisBlock.getBlockHeader()
-                .getHash()
-                .toByteArray();
-        blockDB.putData(LAST_HASH, lastHash);
-// put message to consensus
-        if (type.equals(Peer.PEER_SERVER)) {
-            String value = ByteArray.toHexString(genesisBlock.toByteArray());
-            Message message = new Message(value, Type.BLOCK);
-            Client.putMessage1(message); // consensus: put message GenesisBlock
-        }
-        logger.info("new blockchain");
     }
 
     /**
@@ -118,8 +129,7 @@ public class Blockchain {
      */
     public Blockchain() {
         if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one " +
-                    "first");
+            logger.info("no existing blockchain found. please create one first");
             System.exit(0);
         }
 
@@ -220,13 +230,12 @@ public class Blockchain {
     }
 
     /**
-     * judge dbStore is exists
+     * Checks if the database file exists
      *
      * @return boolean
      */
     public static boolean dbExists() {
         File file = new File(Paths.get(databaseName, BLOCK_DB_NAME).toString());
-
         return file.exists();
     }
 
@@ -291,15 +300,12 @@ public class Blockchain {
 
         String value = ByteArray.toHexString(block.toByteArray());
 
-        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
             Message message = new Message(value, Type.BLOCK);
             net.broadcast(message);
         }
     }
 
-    /*auth:linmaorong
- date:2017/12/26
-*/
     public void addBlock(List<Transaction> transactions) {
         // get lastHash
         byte[] lastHash = blockDB.getData(LAST_HASH);
@@ -316,7 +322,7 @@ public class Blockchain {
         // View the type of peer
         //System.out.println(Tron.getPeer().getType());
 
-        if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
             Message message = new Message(value, Type.BLOCK);
             //net.broadcast(message);
             Client.putMessage1(message); // consensus: put message
@@ -329,7 +335,6 @@ public class Blockchain {
      * @param block   block
      * @param utxoSet utxoSet
      */
-
     public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
 
         byte[] lastHashKey = LAST_HASH;
@@ -356,10 +361,6 @@ public class Blockchain {
         System.out.println(BlockUtils.toPrintString(block));
         // update UTXO cache
         utxoSet.reindex();
-    }
-
-    public static String getGenesisCoinbaseData() {
-        return GENESIS_COINBASE_DATA;
     }
 
     public LevelDbDataSourceImpl getBlockDB() {

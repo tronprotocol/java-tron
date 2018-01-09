@@ -112,8 +112,7 @@ public class BlockchainTest {
     @Test
     public void testFindUTXO() {
         long testAmount = 10;
-        Blockchain blockchain = new Blockchain
-                ("fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31","server");
+        Blockchain blockchain = new Blockchain("fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31","server");
         Wallet wallet = new Wallet();
         wallet.init();
         SpendableOutputs spendableOutputs = new SpendableOutputs();

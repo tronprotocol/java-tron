@@ -99,14 +99,6 @@ or simply from terminal:
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send1.gif)
 
-**listen**
-
-| Description | Example | Extra attention |
-| --- | --- |---|
-|get transaction and block| listen| Enter the command once |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/listen.gif)
- 
 **printblockchain**
 
 | Description | Example |
