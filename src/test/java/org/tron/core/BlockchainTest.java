@@ -41,7 +41,7 @@ public class BlockchainTest {
     @Before
     public void init() throws Exception {
         blockchain = new Blockchain
-               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
+               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","normal");
     }
 
     @After

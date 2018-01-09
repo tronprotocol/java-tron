@@ -62,7 +62,7 @@ public class Blockchain {
      *
      * @param address wallet address
      */
-    public Blockchain(String address, String type) throws Exception {
+    public Blockchain(String address, String type) {
         if (dbExists()) {
             blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
             blockDB.initDB();
@@ -110,16 +110,14 @@ public class Blockchain {
                     .toByteArray();
             blockDB.putData(LAST_HASH, lastHash);
 
-            throw new Exception("Got as far as this");
-
             // put message to consensus
-/*            if (type.equals(PeerType.PEER_SERVER)) {
+            if (type.equals(PeerType.PEER_SERVER)) {
                 String value = ByteArray.toHexString(genesisBlock.toByteArray());
                 Message message = new Message(value, Type.BLOCK);
                 Client.putMessage1(message); // consensus: put message GenesisBlock
                 //Merely for the placeholders, no real meaning
                 Message time = new Message(value, Type.TRANSACTION);
-                Client.putMessage1(time);*/
+                Client.putMessage1(time);
 
             }
             logger.info("new blockchain");
