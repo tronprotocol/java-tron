@@ -113,13 +113,13 @@ public class Blockchain {
             throw new Exception("Got as far as this");
 
             // put message to consensus
-            if (type.equals(PeerType.PEER_SERVER)) {
+/*            if (type.equals(PeerType.PEER_SERVER)) {
                 String value = ByteArray.toHexString(genesisBlock.toByteArray());
                 Message message = new Message(value, Type.BLOCK);
                 Client.putMessage1(message); // consensus: put message GenesisBlock
                 //Merely for the placeholders, no real meaning
                 Message time = new Message(value, Type.TRANSACTION);
-                Client.putMessage1(time);
+                Client.putMessage1(time);*/
 
             }
             logger.info("new blockchain");
