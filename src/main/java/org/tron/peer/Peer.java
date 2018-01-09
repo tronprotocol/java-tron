@@ -90,6 +90,7 @@ public class Peer {
         initBlockchain();
         initUTXOSet();
         initLoadBlock();
+        new ConsensusCommand().listen(this,this.type);
     }
 
     private void initLoadBlock(){

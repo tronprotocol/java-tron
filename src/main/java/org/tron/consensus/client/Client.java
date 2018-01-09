@@ -127,11 +127,13 @@ public class Client {
     public static void getMessage(Peer peer, String key) {
         final String[] preMessage = {null};
         final String[] preTime = {null};
+        preTime[0] = client.submit(new GetQuery("time")).join().toString();
         if (key.equals("transaction")) {
             Thread thread = new Thread(() -> {
                 while (true) {
                     Object time = client.submit(new GetQuery("time")).join();
-                    if (!time.toString().equals(preTime[0])) {
+                    if (!time.toString().equals(preTime[0]) && !time.toString
+                            ().equals("null")) {
                         client.submit(new GetQuery(key)).thenAccept(transaction
                                 -> {
                             //System.out.println("Consensus " + key + " is: "
