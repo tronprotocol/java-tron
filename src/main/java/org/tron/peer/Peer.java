@@ -90,6 +90,7 @@ public class Peer {
         initBlockchain();
         initUTXOSet();
         initLoadBlock();
+        new ConsensusCommand().listen(this,this.type);
     }
 
     private void initLoadBlock(){
@@ -104,7 +105,6 @@ public class Peer {
         if (Blockchain.dbExists()) {
             blockchain = new Blockchain();
         } else {
-            //blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()));
             blockchain = new Blockchain(ByteArray.toHexString(wallet
                     .getAddress()), this.type);
         }

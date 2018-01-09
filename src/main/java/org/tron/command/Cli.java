@@ -52,7 +52,7 @@ public class Cli {
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
                     break;
                 case "listen":
-                    new ConsensusCommand().getClient(peer,cmdParameters);
+                    new ConsensusCommand().getClient(peer);
                     break;
                 case "exit":
                 case "quit":
