@@ -29,7 +29,6 @@ public class PeerBuilder {
         if (type == null) throw new IllegalStateException("Type must be set before building the blockchain");
 
         blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
-        System.out.println();
     }
 
     private void buildUTXOSet() {
