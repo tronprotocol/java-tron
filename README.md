@@ -44,14 +44,6 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 **Update the configuration**
 
-File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
-
-```yml
-nodeip {
-    host = "127.0.0.1"  # your leader-node host
-    port = ":5000"      # your leader-node port
-}
-```
 
 **Starting program**
 
