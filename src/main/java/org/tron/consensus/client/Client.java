@@ -199,10 +199,10 @@ public class Client {
     public static void loadBlock(Peer peer) {
         int i = 2;
         final boolean[] f = {true};
+
         while (f[0]) {
             String block_key = "block" + i;
-            client.submit(new GetQuery(block_key)).thenAccept((Object block)
-                    -> {
+            client.submit(new GetQuery(block_key)).thenAccept((Object block) -> {
                 if (!(block == null)) {
                     peer.addReceiveBlock(String.valueOf(block));
                     f[0] = true;
