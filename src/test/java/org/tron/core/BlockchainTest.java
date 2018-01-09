@@ -37,7 +37,6 @@ import java.util.List;
 import static org.tron.core.Blockchain.dbExists;
 import static org.tron.utils.ByteArray.toHexString;
 
-@Ignore
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
     private static Blockchain blockchain;
