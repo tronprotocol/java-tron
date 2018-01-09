@@ -17,8 +17,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     public final long value;
 
-    private Coin(long statoshis) {
-        this.value = statoshis;
+    private Coin(long satoshis) {
+        this.value = satoshis;
     }
 
     @Override

@@ -19,8 +19,11 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class Cli {
+
     public Cli() {
+
     }
+
     public void run(Peer peer) {
         Scanner in = new Scanner(System.in);
 
@@ -52,7 +55,7 @@ public class Cli {
                     new PrintBlockchainCommand().execute(peer, cmdParameters);
                     break;
                 case "listen":
-                    new ConsensusCommand().getClient(peer,cmdParameters);
+                    //new ConsensusCommand().getClient(peer);
                     break;
                 case "exit":
                 case "quit":

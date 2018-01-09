@@ -48,8 +48,7 @@ public class HelpCommand extends Command {
                 new PrintBlockchainCommand().usage();
                 break;
             case "consensus":
-            case "getmessage":
-            case "putmessage":
+            case "listen":
                 new ConsensusCommand().usage();
                 break;
             case "exit":
@@ -102,13 +101,13 @@ public class HelpCommand extends Command {
 
         /*System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tCreate a server|@", "consensus")
-        ) );*/
+        ) );
 
         System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tlisten consensus message|@", "listen")
         ) );
 
-        /*System.out.println( ansi().eraseScreen().render(
+        System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tsend a transaction|@",
                         "send")
         ) );*/

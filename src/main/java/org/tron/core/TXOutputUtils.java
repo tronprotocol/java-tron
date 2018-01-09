@@ -30,8 +30,7 @@ public class TXOutputUtils {
     public static TXOutput newTXOutput(long value, String address) {
         return TXOutput.newBuilder()
                 .setValue(value)
-                .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString
-                        (address)))
+                .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
                 .build();
     }
 
