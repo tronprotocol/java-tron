@@ -1,5 +1,6 @@
 package org.tron.peer;
 
+import org.tron.consensus.server.Server;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
@@ -19,11 +20,16 @@ public class PeerBuilder {
     private ECKey key;
     private String type;
 
+    public PeerBuilder() {
+        Server.serverRun();
+    }
+
     private void buildBlockchain() {
         if (wallet == null) throw new IllegalStateException("Wallet must be set before building the blockchain");
         if (type == null) throw new IllegalStateException("Type must be set before building the blockchain");
 
         blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
+        System.out.println();
     }
 
     private void buildUTXOSet() {

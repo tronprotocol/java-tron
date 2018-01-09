@@ -85,7 +85,6 @@ public class Peer {
     }
 
     private void init() {
-        Server.serverRun();
         initLoadBlock();
         new ConsensusCommand().listen(this,this.type);
     }
