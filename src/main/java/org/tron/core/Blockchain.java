@@ -62,7 +62,7 @@ public class Blockchain {
      *
      * @param address wallet address
      */
-    public Blockchain(String address, String type) {
+    public Blockchain(String address, String type) throws Exception {
         if (dbExists()) {
             blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
             blockDB.initDB();
@@ -109,6 +109,8 @@ public class Blockchain {
                     .getHash()
                     .toByteArray();
             blockDB.putData(LAST_HASH, lastHash);
+
+            throw new Exception("Got as far as this");
 
             // put message to consensus
             if (type.equals(PeerType.PEER_SERVER)) {
