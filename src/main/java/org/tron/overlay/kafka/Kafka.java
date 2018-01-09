@@ -36,9 +36,9 @@ import static org.tron.core.Constant.*;
 public class Kafka implements Net {
     public final static String KAFKA_HOST = "kafka.host";
     public final static String KAFKA_PORT = "kafka.port";
-    public final static String EMPTY_STRING = "";
 
     private final static String EMPTY_KEY = "";
+
     private final static int DEFAULT_WORKER_NUM = 4;
 
     private KafkaProducer<String, String> producer = null;
@@ -61,8 +61,11 @@ public class Kafka implements Net {
         this(ProducerProperty.getDefault(), ConsumerProperty.getDefault(), source, topics);
     }
 
-    public Kafka(ProducerProperty producerProperty, ConsumerProperty consumerProperty, ReceiveSource source,
-                 List<String> topics) {
+    public Kafka(
+            ProducerProperty producerProperty,
+            ConsumerProperty consumerProperty,
+            ReceiveSource source,
+            List<String> topics) {
         this.producerProperty = producerProperty;
         this.consumerProperty = consumerProperty;
         this.source = source;

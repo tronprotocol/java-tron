@@ -24,6 +24,7 @@ import org.tron.example.Tron;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
+import org.tron.peer.PeerType;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
@@ -31,8 +32,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 public class ConsensusCommand extends Command {
 
-    private static final Logger logger = LoggerFactory.getLogger
-            ("ConsensusCommand");
+    private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
 
     public void server() {
         Server.serverRun();
@@ -42,9 +42,15 @@ public class ConsensusCommand extends Command {
         Client.putMessage(args);
     }
 
+<<<<<<< HEAD
     public void getClient(Peer peer) {
         //Client.getMessage(args[0]);
         if (Tron.getPeer().getType().equals(Peer.PEER_SERVER)) {
+=======
+    public void getClient(Peer peer,String[] args) {
+
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+>>>>>>> 4440972a2f3c8c493f7c17ae17cf0992fd93dc8a
             Client.getMessage(peer,MessageType.TRANSACTION);
             Client.getMessage(peer,MessageType.BLOCK);
         }else{
