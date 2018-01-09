@@ -36,6 +36,8 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +58,8 @@ public class Blockchain {
 
     private byte[] lastHash;
     private byte[] currentHash;
+
+    private Client client;
 
     /**
      * create new blockchain
@@ -111,13 +115,13 @@ public class Blockchain {
             blockDB.putData(LAST_HASH, lastHash);
 
             // put message to consensus
-            if (type.equals(PeerType.PEER_SERVER)) {
+            if (type.equals(PeerType.PEER_SERVER) && client != null) {
                 String value = ByteArray.toHexString(genesisBlock.toByteArray());
                 Message message = new Message(value, Type.BLOCK);
-                Client.putMessage1(message); // consensus: put message GenesisBlock
+                client.putMessage1(message); // consensus: put message GenesisBlock
                 //Merely for the placeholders, no real meaning
                 Message time = new Message(value, Type.TRANSACTION);
-                Client.putMessage1(time);
+                client.putMessage1(time);
 
             }
             logger.info("new blockchain");
@@ -127,14 +131,14 @@ public class Blockchain {
     /**
      * create blockchain by db source
      */
-    public Blockchain() {
+    @Inject
+    public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
         if (!dbExists()) {
             logger.info("no existing blockchain found. please create one first");
-            System.exit(0);
+            throw new IllegalStateException("No existing blockchain found. please create one first");
         }
 
-        blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
-        blockDB.initDB();
+        blockDB = blockDb;
 
         this.lastHash = blockDB.getData(LAST_HASH);
         this.currentHash = this.lastHash;
@@ -322,10 +326,10 @@ public class Blockchain {
         // View the type of peer
         //System.out.println(Tron.getPeer().getType());
 
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER) && client != null) {
             Message message = new Message(value, Type.BLOCK);
             //net.broadcast(message);
-            Client.putMessage1(message); // consensus: put message
+            client.putMessage1(message); // consensus: put message
         }
     }
 
@@ -393,5 +397,9 @@ public class Blockchain {
 
     public void setCurrentHash(byte[] currentHash) {
         this.currentHash = currentHash;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 }

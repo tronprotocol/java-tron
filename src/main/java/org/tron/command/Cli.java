@@ -14,7 +14,8 @@
  */
 package org.tron.command;
 
-import org.tron.peer.Peer;
+import org.tron.application.CliApplication;
+
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -24,7 +25,7 @@ public class Cli {
 
     }
 
-    public void run(Peer peer) {
+    public void run(CliApplication app) {
         Scanner in = new Scanner(System.in);
 
         while (true) {
@@ -40,19 +41,19 @@ public class Cli {
 
             switch (cmdArray[0]) {
                 case "version":
-                    new VersionCommand().execute(peer, cmdParameters);
+                    new VersionCommand().execute(app, cmdParameters);
                     break;
                 case "account":
-                    new AccountCommand().execute(peer, cmdParameters);
+                    new AccountCommand().execute(app, cmdParameters);
                     break;
                 case "getbalance":
-                    new GetBalanceCommand().execute(peer, cmdParameters);
+                    new GetBalanceCommand().execute(app, cmdParameters);
                     break;
                 case "send":
-                    new ConsensusCommand().execute(peer,cmdParameters);
+                    app.getInjector().getInstance(ConsensusCommand.class).execute(app, cmdParameters);
                     break;
                 case "printblockchain":
-                    new PrintBlockchainCommand().execute(peer, cmdParameters);
+                    new PrintBlockchainCommand().execute(app, cmdParameters);
                     break;
                 case "listen":
                     //new ConsensusCommand().getClient(peer);
@@ -60,10 +61,10 @@ public class Cli {
                 case "exit":
                 case "quit":
                 case "bye":
-                    new ExitCommand().execute(peer, cmdParameters);
+                    new ExitCommand().execute(app, cmdParameters);
                 case "help":
                 default:
-                    new HelpCommand().execute(peer, cmdParameters);
+                    new HelpCommand().execute(app, cmdParameters);
                     break;
             }
         }

@@ -14,10 +14,9 @@
  */
 package org.tron.command;
 
-import org.tron.peer.Peer;
+import org.tron.application.CliApplication;
 
 import static org.fusesource.jansi.Ansi.Color.MAGENTA;
-import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class VersionCommand extends Command {
@@ -25,7 +24,7 @@ public class VersionCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
         usage();
     }
 

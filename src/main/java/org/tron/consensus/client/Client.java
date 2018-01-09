@@ -32,9 +32,13 @@ import java.util.concurrent.CompletableFuture;
 
 public class Client {
 
-    private static CopycatClient client = null;
+    private CopycatClient client = null;
 
-    static {
+    public Client() {
+        this.buildClient();
+    }
+
+    private void buildClient() {
         client = CopycatClient.builder()
                 .withTransport(NettyTransport.builder()
                         .withThreads(2)
@@ -45,11 +49,6 @@ public class Client {
         client.serializer().register(PutCommand.class);
         client.serializer().register(GetQuery.class);
 
-        /*Collection<Address> cluster = Arrays.asList(
-                new Address("192.168.0.100", 5000)
-        );
-        CompletableFuture<CopycatClient> future = client.connect(cluster);
-        future.join();*/
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getLocalHost();
@@ -64,23 +63,19 @@ public class Client {
         }
     }
 
-    public static CopycatClient getClient() {
-        return client;
-    }
-
-    public static void putMessage(String[] args) {
+    public void putMessage(String[] args) {
         String key = args[0];
         String value = args[1];
         client.submit(new PutCommand(key, value));
         System.out.println("Send message success");
     }
 
-    public static void getMessage1(String key) {
+    public void getMessage1(String key) {
         Object result = client.submit(new GetQuery(key)).join();
         System.out.println("Consensus " + key + " is: " + result);
     }
 
-    public static void putMessage1(Message message) {
+    public void putMessage1(Message message) {
         if (message.getType() == Type.TRANSACTION) {
             /*System.out.println("transaction:" + message.getType().toString()
                     + "; type: " + message.getMessage().getClass().getSimpleName
@@ -117,7 +112,7 @@ public class Client {
         }
     }
 
-    public static void getMessage(Peer peer, String key) {
+    public void getMessage(Peer peer, String key) {
         final String[] preMessage = {null};
         final String[] preTime = {null};
         preTime[0] = client.submit(new GetQuery("time")).join().toString();
@@ -197,7 +192,7 @@ public class Client {
         }
     }
 
-    public static void loadBlock(Peer peer) {
+    public void loadBlock(Peer peer) {
         int i = 2;
         final boolean[] f = {true};
 

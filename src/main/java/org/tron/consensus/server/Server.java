@@ -19,6 +19,7 @@ import io.atomix.catalyst.transport.netty.NettyTransport;
 import io.atomix.copycat.server.CopycatServer;
 import io.atomix.copycat.server.storage.Storage;
 import io.atomix.copycat.server.storage.StorageLevel;
+import org.tron.application.Service;
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.MapstateMachine;
 import org.tron.consensus.common.PutCommand;
@@ -28,15 +29,18 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 
-public class Server {
-    public static void serverRun() {
+public class Server implements Service {
 
+    private CopycatServer server;
+
+    @Override
+    public void start() {
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getLocalHost();
             System.out.println("Server localhost: " + localhost.getHostAddress());
             Address address = new Address(localhost.getHostAddress(), 5000);
-            CopycatServer server = CopycatServer.builder(address)
+            server = CopycatServer.builder(address)
                     .withStateMachine(MapstateMachine::new)
                     .withTransport(NettyTransport.builder()
                             .withThreads(4)
@@ -63,5 +67,10 @@ public class Server {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void stop() {
+        server.leave();
     }
 }
