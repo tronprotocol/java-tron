@@ -51,14 +51,14 @@ public class BlockchainTest {
 
     @Test
     public void testBlockchain() throws Exception {
-        /*
+
        logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
                         .toHexString(blockchain.getCurrentHash()));
-                        */
+
     }
 
-/*    @Test
+    @Test
     public void testBlockchainNew() {
         logger.info("test blockchain new: lastHash = {}", ByteArray
                 .toHexString(blockchain.getLastHash()));
@@ -149,5 +149,5 @@ public class BlockchainTest {
 
         blockchain.addBlock(block);
         levelDbDataSource.closeDB();
-    }*/
+    }
 }
