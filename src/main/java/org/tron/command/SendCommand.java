@@ -16,6 +16,7 @@ package org.tron.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.application.CliApplication;
 import org.tron.core.TransactionUtils;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
@@ -32,7 +33,9 @@ public class SendCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
+        Peer peer = app.getPeer();
+
         if (check(parameters)) {
             String to = parameters[0];
             long amount = Long.parseLong(parameters[1]);

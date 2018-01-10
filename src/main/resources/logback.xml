@@ -63,6 +63,8 @@
     <logger name="Blockchain" level="INFO"/>
     <logger name="BlockLoader" level="INFO"/>
     <logger name="ConsensusCommand" level="INFO"/>
+    <logger name="Application" level="INFO"/>
+    <logger name="Services" level="INFO"/>
 
 </configuration>
 

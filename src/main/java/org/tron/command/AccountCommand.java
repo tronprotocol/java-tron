@@ -14,6 +14,7 @@
  */
 package org.tron.command;
 
+import org.tron.application.CliApplication;
 import org.tron.peer.Peer;
 import org.tron.utils.ByteArray;
 
@@ -24,8 +25,8 @@ public class AccountCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
-        System.out.println(ByteArray.toHexString(peer.getMyKey().getAddress()));
+    public void execute(CliApplication app, String[] parameters) {
+        System.out.println(ByteArray.toHexString(app.getPeer().getMyKey().getAddress()));
     }
 
     @Override
