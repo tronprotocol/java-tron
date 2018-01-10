@@ -18,6 +18,7 @@ import org.iq80.leveldb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.config.Configer;
+import org.tron.core.Constant;
 import org.tron.storage.DbSourceInter;
 import org.tron.utils.FileUtil;
 
@@ -38,18 +39,26 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
     private static final Logger logger = LoggerFactory.getLogger("dbStore");
+    private String parentName;
 
-    private final static String LEVEL_DB_DIRECTORY = "database.directory";
-    public final static String databaseName = Configer.getConf().getString(LEVEL_DB_DIRECTORY);
+    String dataBaseName;
+    DB database;
+    boolean alive;
 
-    private String dataBaseName;
-    private DB database;
-    private boolean alive;
 
     private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
+    public LevelDbDataSourceImpl() {
+    }
 
-    public LevelDbDataSourceImpl(String name) {
+    public LevelDbDataSourceImpl(String parentName ,String name) {
+        if (Constant.NORMAL==parentName){
+            parentName=Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
+        }else {
+            parentName=Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
+
+        }
+        this.parentName=parentName;
         this.dataBaseName = name;
         logger.debug("New LevelDbDataSourceImpl: " + name);
     }
@@ -97,7 +106,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     }
 
     private Path getDBPath() {
-        return Paths.get(databaseName, dataBaseName);
+        return Paths.get(parentName, dataBaseName);
     }
 
     public void resetDB() {

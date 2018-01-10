@@ -20,6 +20,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.config.Configer;
 import org.tron.consensus.client.Client;
 import org.tron.crypto.ECKey;
 import org.tron.example.Tron;
@@ -46,11 +47,11 @@ import java.util.*;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
-import static org.tron.storage.leveldb.LevelDbDataSourceImpl.databaseName;
 
 public class Blockchain {
 
     public static final String GENESIS_COINBASE_DATA = "0x10";
+    public static String parentName=Constant.NORMAL;
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
     private LevelDbDataSourceImpl blockDB = null;
@@ -68,7 +69,7 @@ public class Blockchain {
      */
     public Blockchain(String address, String type) {
         if (dbExists()) {
-            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB = new LevelDbDataSourceImpl(parentName,BLOCK_DB_NAME);
             blockDB.initDB();
 
             this.lastHash = blockDB.getData(LAST_HASH);
@@ -76,7 +77,7 @@ public class Blockchain {
 
             logger.info("load blockchain");
         } else {
-            blockDB = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+            blockDB = new LevelDbDataSourceImpl(Constant.NORMAL,BLOCK_DB_NAME);
             blockDB.initDB();
 
             InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
@@ -239,7 +240,13 @@ public class Blockchain {
      * @return boolean
      */
     public static boolean dbExists() {
-        File file = new File(Paths.get(databaseName, BLOCK_DB_NAME).toString());
+        if (Constant.NORMAL==parentName){
+            parentName= Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
+        }else {
+            parentName=Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
+
+        }
+        File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());
         return file.exists();
     }
 
