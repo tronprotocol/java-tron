@@ -2,7 +2,6 @@ package org.tron.peer;
 
 import com.google.inject.Injector;
 import org.tron.consensus.client.Client;
-import org.tron.consensus.server.Server;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
@@ -49,8 +48,7 @@ public class PeerBuilder {
     private void buildWallet() {
         if (key == null) throw new IllegalStateException("Key must be set before building the wallet");
 
-        wallet = new Wallet();
-        wallet.init(key);
+        wallet = new Wallet(key);
     }
 
     public PeerBuilder setType(String type) {
