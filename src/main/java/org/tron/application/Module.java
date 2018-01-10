@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.server.Server;
+import org.tron.core.Constant;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
 import javax.inject.Named;
@@ -35,7 +36,7 @@ public class Module extends AbstractModule {
     @Singleton
     @Named("transaction")
     public LevelDbDataSourceImpl buildTransactionDb() {
-        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
+        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL,TRANSACTION_DB_NAME);
         db.initDB();
         return db;
     }
@@ -44,7 +45,7 @@ public class Module extends AbstractModule {
     @Singleton
     @Named("block")
     public LevelDbDataSourceImpl buildBlockDb() {
-        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(BLOCK_DB_NAME);
+        LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL,BLOCK_DB_NAME);
         db.initDB();
         return db;
     }
