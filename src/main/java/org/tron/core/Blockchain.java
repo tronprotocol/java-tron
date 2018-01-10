@@ -303,7 +303,7 @@ public class Blockchain {
         byte[] lastHash = blockDB.getData(LAST_HASH);
         ByteString parentHash = ByteString.copyFrom(lastHash);
         // getData number
-        long number = BlockUtils.getIncreaseNumber(Tron.getPeer().getBlockchain());
+        long number = BlockUtils.getIncreaseNumber(this);
         // getData difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
@@ -322,8 +322,7 @@ public class Blockchain {
         byte[] lastHash = blockDB.getData(LAST_HASH);
         ByteString parentHash = ByteString.copyFrom(lastHash);
         // get number
-        long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
-                .getBlockchain());
+        long number = BlockUtils.getIncreaseNumber(this);
         // get difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
