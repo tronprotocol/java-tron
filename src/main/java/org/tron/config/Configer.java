@@ -29,14 +29,15 @@ import java.util.Properties;
 public class Configer {
     private static final Logger logger = LoggerFactory.getLogger("Configer");
 
-    public static String TRON_CONF = "tron.conf";
-    private final static String DATABASE_DIRECTORY = "database.directory";
+    public static  String TRON_CONF = Constant.NORMAL_CONF;
+    private final static String DATABASE_DIRECTORY = Constant.DATABASE_DIR;
+
     private static String generatedNodePrivateKey;
-    private static Config config;
 
     static {
         try {
-            File file = new File(Configer.getConf().getString(DATABASE_DIRECTORY), "nodeId.properties");
+            File file = new File(Configer.getConf().getString
+                    (DATABASE_DIRECTORY), "nodeId.properties");
             Properties props = new Properties();
             if (file.canRead()) {
                 try (Reader r = new FileReader(file)) {
@@ -50,15 +51,16 @@ public class Configer {
                 String nodeIdPrivateKey = ByteArray.toHexString(privKeyBytes);
 
                 props.setProperty("nodeIdPrivateKey", nodeIdPrivateKey);
-                props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
-
+                props.setProperty("nodeId", Hex.toHexString(key.getNodeId
+                        ()));
                 file.getParentFile().mkdirs();
-
                 try (Writer w = new FileWriter(file)) {
                     props.store(w, "Generated NodeID.");
                 }
-                logger.info("New nodeID generated: " + props.getProperty ("nodeId"));
-                logger.info("Generated nodeID and its private key stored " + "in " + file);
+                logger.info("New nodeID generated: " + props.getProperty
+                        ("nodeId"));
+                logger.info("Generated nodeID and its private key stored " +
+                        "in " + file);
             }
             generatedNodePrivateKey = props.getProperty("nodeIdPrivateKey");
         } catch (IOException e) {
@@ -67,10 +69,18 @@ public class Configer {
     }
 
     public static Config getConf() {
-        if (config == null) {
-            config = ConfigFactory.load(TRON_CONF);
+        return ConfigFactory.load(TRON_CONF);
+    }
+
+    public static Config getConf(String conf) {
+
+        if (conf==null||"".equals(conf)){
+            return ConfigFactory.load(TRON_CONF);
         }
-        return config;
+        else {
+            return ConfigFactory.load(conf);
+        }
+
     }
 
     public static ECKey getMyKey() {
