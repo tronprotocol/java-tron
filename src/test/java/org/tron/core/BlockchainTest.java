@@ -18,7 +18,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -37,7 +36,6 @@ import java.util.List;
 import static org.tron.core.Blockchain.dbExists;
 import static org.tron.utils.ByteArray.toHexString;
 
-@Ignore
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
     private static Blockchain blockchain;
@@ -45,7 +43,7 @@ public class BlockchainTest {
     @BeforeClass
     public static void init() {
        blockchain = new Blockchain
-               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
+               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","normal");
     }
 
     @AfterClass
@@ -55,8 +53,6 @@ public class BlockchainTest {
 
     @Test
     public void testBlockchain() {
-        Blockchain blockchain = new Blockchain
-                ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","server");
         logger.info("test blockchain: lashHash = {}, currentHash = {}",
                 ByteArray.toHexString(blockchain.getLastHash()), ByteArray
                         .toHexString(blockchain.getCurrentHash()));
@@ -83,8 +79,6 @@ public class BlockchainTest {
 
     @Test
     public void testIterator() {
-
-        Blockchain blockchain = new Blockchain("","server");
         Block info = null;
         BlockchainIterator bi = new BlockchainIterator(blockchain);
         while (bi.hasNext()) {
@@ -112,7 +106,6 @@ public class BlockchainTest {
     @Test
     public void testFindUTXO() {
         long testAmount = 10;
-        Blockchain blockchain = new Blockchain("fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31","server");
         Wallet wallet = new Wallet();
         wallet.init();
         SpendableOutputs spendableOutputs = new SpendableOutputs();
