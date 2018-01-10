@@ -26,7 +26,6 @@ public class WalletTest {
     @Test
     public void testWallet() {
         Wallet wallet = new Wallet();
-        wallet.init();
 
         logger.info("wallet address = {}", ByteArray.toHexString(wallet
                 .getAddress()));

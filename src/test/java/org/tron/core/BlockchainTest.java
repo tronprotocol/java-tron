@@ -107,7 +107,6 @@ public class BlockchainTest {
     public void testFindUTXO() {
         long testAmount = 10;
         Wallet wallet = new Wallet();
-        wallet.init();
         SpendableOutputs spendableOutputs = new SpendableOutputs();
         spendableOutputs.setAmount(testAmount + 1);
         spendableOutputs.setUnspentOutputs(new HashMap<>());
@@ -134,7 +133,6 @@ public class BlockchainTest {
                 ("2001"));
 
         Wallet wallet = new Wallet();
-        wallet.init();
 
         Block block = BlockUtils.newBlock(null, parentHash,
                 difficulty, 0);
