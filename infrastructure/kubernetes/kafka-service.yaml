@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zook
+  labels:
+    app: kafka
+spec:
+  ports:
+  - port: 2181
+    name: zookeeper-port
+    targetPort: 2181
+    protocol: TCP
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  labels:
+    app: kafka
+spec:
+  ports:
+  - port: 9092
+    name: kafka-port
+    targetPort: 9092
+    nodePort: 31000
+    protocol: TCP
+  selector:
+    app: kafka
+  type: NodePort
