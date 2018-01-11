@@ -1,6 +1,7 @@
 package org.tron.peer;
 
 import com.google.inject.Injector;
+import org.tron.consensus.client.BlockchainClientListener;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
@@ -34,7 +35,6 @@ public class PeerBuilder {
         if (type == null) throw new IllegalStateException("Type must be set before building the blockchain");
 
         blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
-        blockchain.setClient(injector.getInstance(Client.class));
     }
 
     private void buildUTXOSet() {
@@ -67,6 +67,7 @@ public class PeerBuilder {
         buildUTXOSet();
         Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
         peer.setClient(injector.getInstance(Client.class));
+        blockchain.addListener(new BlockchainClientListener(injector.getInstance(Client.class), peer));
         return peer;
     }
 }
