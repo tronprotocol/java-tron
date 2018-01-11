@@ -21,45 +21,34 @@ import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;
 
 public class Wallet {
+
     private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-    private ECKey ecKey;
-    private byte[] address;
+    private final ECKey ecKey;
 
     /**
-     * getData a new wallet key
+     * Creates a new Wallet with a random ECKey
      */
-    public void init() {
+    public Wallet() {
         this.ecKey = new ECKey(Utils.getRandom());
-        address = this.ecKey.getAddress();
     }
 
     /**
-     * getData a wallet by the key
+     * Creates a Wallet with an existing ECKey
      *
-     * @param ecKey keypair
+     * @param ECKey ecKey Existing Key
      */
-    public void init(ECKey ecKey) {
+    public Wallet(final ECKey ecKey) {
         this.ecKey = ecKey;
-        address = this.ecKey.getAddress();
-
-        logger.info("wallet address: {}", ByteArray.toHexString(address));
+        logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
     }
 
     public ECKey getEcKey() {
         return ecKey;
     }
 
-    public void setEcKey(ECKey ecKey) {
-        this.ecKey = ecKey;
-    }
-
     public byte[] getAddress() {
-        return address;
-    }
-
-    public void setAddress(byte[] address) {
-        this.address = address;
+        return ecKey.getAddress();
     }
 
 }
