@@ -14,10 +14,8 @@
  */
 package org.tron.command;
 
-import org.tron.peer.Peer;
+import org.tron.application.CliApplication;
 
-import static org.fusesource.jansi.Ansi.Color.MAGENTA;
-import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class ExitCommand extends Command {
@@ -25,8 +23,8 @@ public class ExitCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
-        System.exit(0);
+    public void execute(CliApplication app, String[] parameters) {
+        app.shutdown();
     }
 
     @Override

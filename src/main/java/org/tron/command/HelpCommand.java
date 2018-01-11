@@ -14,18 +14,19 @@
  */
 package org.tron.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tron.application.CliApplication;
 import org.tron.peer.Peer;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class HelpCommand extends Command {
+
     public HelpCommand() {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
+
         if (parameters.length == 0) {
             usage();
             return;
@@ -49,7 +50,7 @@ public class HelpCommand extends Command {
                 break;
             case "consensus":
             case "listen":
-                new ConsensusCommand().usage();
+                app.getInjector().getInstance(ConsensusCommand.class).usage();
                 break;
             case "exit":
             case "quit":
@@ -67,37 +68,37 @@ public class HelpCommand extends Command {
     public void usage() {
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 "@|magenta,bold USAGE|@\n\t@|bold help [arguments]|@"
-        ) );
+        ));
 
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold AVAILABLE COMMANDS|@"
-        ) );
+        System.out.println(ansi().eraseScreen().render(
+            "@|magenta,bold AVAILABLE COMMANDS|@"
+        ));
 
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "version")
-        ) );
+        ));
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tGet your wallet address|@", "account")
-        ) );
+        ));
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tGet your balance|@", "getbalance")
-        ) );
+        ));
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tSend balance to receiver address|@", "send")
-        ) );
+        ));
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tPrint blockchain|@", "printblockchain")
-        ) );
+        ));
 
         /*System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tCreate a server|@", "consensus")
@@ -112,15 +113,15 @@ public class HelpCommand extends Command {
                         "send")
         ) );*/
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
-        ) );
+        ));
 
         System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
+        System.out.println(ansi().eraseScreen().render(
                 "Use @|bold help [topic] for more information about that topic.|@"
-        ) );
+        ));
 
         System.out.println("");
     }

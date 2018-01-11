@@ -14,8 +14,7 @@ public class LevelDbDataSourceImplTest {
 
     @Test
     public void testGet()  {
-        Configer.TRON_CONF= Constant.TEST_CONF;
-        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl("test");
+        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST,"test");
         dataSource.initDB();
         String key1="000134yyyhy";
         byte[] key = key1.getBytes();
@@ -27,8 +26,7 @@ public class LevelDbDataSourceImplTest {
 
     @Test
     public void testPut() {
-        Configer.TRON_CONF= Constant.TEST_CONF;
-        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl("test");
+        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST,"test");
         dataSource.initDB();
         String key1="000134yyyhy";
         byte[] key = key1.getBytes();
@@ -46,8 +44,8 @@ public class LevelDbDataSourceImplTest {
 
     @Test
     public void testRest() {
-        Configer.TRON_CONF= Constant.TEST_CONF;
-        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl("test");
+
+        LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST_CONF,"test");
         dataSource.resetDB();
         dataSource.closeDB();
     }
