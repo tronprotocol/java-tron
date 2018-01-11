@@ -32,7 +32,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 public class ConsensusCommand extends Command {
 
-    private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
+    private static final Logger logger = LoggerFactory.getLogger("Command");
 
     public void server() {
         Server.serverRun();

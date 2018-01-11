@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.config.Configer;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
