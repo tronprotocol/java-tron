@@ -12,26 +12,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
-
-import org.tron.protos.core.TronBlock;
 
 import java.math.BigInteger;
 import java.util.Map;
 
+import org.tron.protos.core.TronBlock;
+
 public class BlockSummary {
 
-    private final TronBlock.Block block;
-    private final Map<byte[], BigInteger> rewards;
-    private BigInteger totalDifficulty = BigInteger.ZERO;
+  private final TronBlock.Block block;
+  private final Map<byte[], BigInteger> rewards;
+  private BigInteger totalDifficulty = BigInteger.ZERO;
 
-    public BlockSummary(TronBlock.Block block, Map<byte[], BigInteger> rewards) {
-        this.block = block;
-        this.rewards = rewards;
-    }
+  public BlockSummary(TronBlock.Block block, Map<byte[], BigInteger> rewards) {
+    this.block = block;
+    this.rewards = rewards;
+  }
 
-    public void setTotalDifficulty(BigInteger totalDifficulty) {
-        this.totalDifficulty = totalDifficulty;
-    }
+  public void setTotalDifficulty(BigInteger totalDifficulty) {
+    this.totalDifficulty = totalDifficulty;
+  }
 }

@@ -12,14 +12,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.peer;
 
 import org.tron.protos.core.TronBlock.Block;
 
 public interface ValidationRule {
-    public byte[] start(Block block);
+  byte[] start(Block block);
 
-    public void stop();
+  void stop();
 
-    public boolean validate(Block block);
+  boolean validate(Block block);
 }

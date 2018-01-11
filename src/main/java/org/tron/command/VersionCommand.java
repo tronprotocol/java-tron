@@ -12,41 +12,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.command;
 
-import org.tron.application.CliApplication;
+package org.tron.command;
 
 import static org.fusesource.jansi.Ansi.Color.MAGENTA;
 import static org.fusesource.jansi.Ansi.ansi;
 
+import org.tron.application.CliApplication;
+
 public class VersionCommand extends Command {
-    public VersionCommand() {
-    }
+  public VersionCommand() {
+  }
 
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-        usage();
-    }
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    usage();
+  }
 
-    @Override
-    public void usage() {
-        System.out.println("");
+  @Override
+  public void usage() {
+    System.out.println("");
 
-        String versionBanner ="" +
-                "     __                                __                                      \n" +
-                "    |__|____ ___  _______            _/  |________  ____   ____                \n" +
-                "    |  \\__  \\\\  \\/ /\\__  \\    ______ \\   __\\_  __ \\/  _ \\ /    \\    \n" +
-                "    |  |/ __ \\\\   /  / __ \\_ /_____/  |  |  |  | \\(  <_> )   |  \\         \n" +
-                "/\\__|  (____  /\\_/  (____  /          |__|  |__|   \\____/|___|  /           \n" +
-                "\\______|    \\/           \\/                                   \\/           \n";
+    String versionBanner = "" +
+        "     __                                __                                      \n" +
+        "    |__|____ ___  _______            _/  |________  ____   ____                \n" +
+        "    |  \\__  \\\\  \\/ /\\__  \\    ______ \\   __\\_  __ \\/  _ \\ /    \\    \n" +
+        "    |  |/ __ \\\\   /  / __ \\_ /_____/  |  |  |  | \\(  <_> )   |  \\         \n" +
+        "/\\__|  (____  /\\_/  (____  /          |__|  |__|   \\____/|___|  /           \n" +
+        "\\______|    \\/           \\/                                   \\/           \n";
 
-        System.out.println( ansi().eraseScreen().fg(MAGENTA).a(versionBanner).reset() );
+    System.out.println(ansi().eraseScreen().fg(MAGENTA).a(versionBanner).reset());
 
-        System.out.println("");
-    }
+    System.out.println("");
+  }
 
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }
