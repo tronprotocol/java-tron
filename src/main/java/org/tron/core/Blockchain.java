@@ -125,24 +125,6 @@ public class Blockchain {
     }
 
     /**
-     * create blockchain by db source
-     */
-    @Inject
-    public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
-        if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one first");
-            throw new IllegalStateException("No existing blockchain found. please create one first");
-        }
-
-        blockDB = blockDb;
-
-        this.lastHash = blockDB.getData(LAST_HASH);
-        this.currentHash = this.lastHash;
-
-        logger.info("load blockchain");
-    }
-
-    /**
      * find transaction by id
      *
      * @param id ByteString id
@@ -228,23 +210,6 @@ public class Blockchain {
 
         return utxo;
     }
-
-    /**
-     * Checks if the database file exists
-     *
-     * @return boolean
-     */
-    public static boolean dbExists() {
-        if (Constant.NORMAL==parentName){
-            parentName= Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
-        }else {
-            parentName=Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-
-        }
-        File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());
-        return file.exists();
-    }
-
 
     /**
      * add a block into database

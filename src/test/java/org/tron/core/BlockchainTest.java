@@ -14,13 +14,9 @@
  */
 package org.tron.core;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -33,13 +29,12 @@ import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.tron.core.Blockchain.GENESIS_COINBASE_DATA;
-import static org.tron.core.Blockchain.dbExists;
 import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.utils.ByteArray.toHexString;
 
@@ -105,11 +100,6 @@ public class BlockchainTest {
                 .copyFrom(ByteArray.fromHexString
                         ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
         logger.info("{}", TransactionUtils.toPrintString(transaction));
-    }
-
-    @Test
-    public void testDBExists() {
-        logger.info("test dbStore exists: {}", dbExists());
     }
 
     @Test
