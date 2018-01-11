@@ -12,21 +12,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.config;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.crypto.ECKey;
 import org.tron.utils.ByteArray;
 
 public class ConfigerTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testGetECKey() {
-        ECKey key = Configer.getMyKey();
+  @Test
+  public void testGetECKey() {
+    ECKey key = Configer.getMyKey();
 
-        logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
-    }
+    logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
+  }
 }

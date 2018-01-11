@@ -12,22 +12,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 public class WalletTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testWallet() {
-        Wallet wallet = new Wallet();
+  @Test
+  public void testWallet() {
+    Wallet wallet = new Wallet();
 
-        logger.info("wallet address = {}", ByteArray.toHexString(wallet
-                .getAddress()));
-    }
+    logger.info("wallet address = {}", ByteArray.toHexString(wallet
+        .getAddress()));
+  }
 }

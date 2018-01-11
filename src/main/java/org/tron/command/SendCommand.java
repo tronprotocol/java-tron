@@ -12,10 +12,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.application.CliApplication;
 import org.tron.core.TransactionUtils;
 import org.tron.overlay.message.Message;
@@ -24,87 +28,85 @@ import org.tron.peer.Peer;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 public class SendCommand extends Command {
-    private static final Logger logger = LoggerFactory.getLogger("Command");
+  private static final Logger logger = LoggerFactory.getLogger("Command");
 
-    public SendCommand() {
+  public SendCommand() {
+  }
+
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    Peer peer = app.getPeer();
+
+    if (check(parameters)) {
+      String to = parameters[0];
+      long amount = Long.parseLong(parameters[1]);
+      TronTransaction.Transaction transaction = TransactionUtils.newTransaction(peer.getWallet(), to, amount,
+          peer.getUTXOSet());
+
+      if (transaction != null) {
+        Message message = new Message(ByteArray.toHexString(transaction.toByteArray()), Type.TRANSACTION);
+        peer.getNet().broadcast(message);
+      }
+    }
+  }
+
+  @Override
+  public void usage() {
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold send [receiver] [amount]|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' send balance to receiver address.|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "\t@|bold Example:|@\n\t\t@|bold $ send [address] [amount]|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "\t@|bold if [amount] > balance, the command 'send' will fail to execute.|@"
+    ));
+
+    System.out.println("");
+  }
+
+
+  @Override
+  public boolean check(String[] parameters) {
+    if (parameters.length < 2) {
+      logger.error("missing parameters");
+      return false;
     }
 
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-        Peer peer = app.getPeer();
-
-        if (check(parameters)) {
-            String to = parameters[0];
-            long amount = Long.parseLong(parameters[1]);
-            TronTransaction.Transaction transaction = TransactionUtils.newTransaction(peer.getWallet(), to, amount,
-                    peer.getUTXOSet());
-
-            if (transaction != null) {
-                Message message = new Message(ByteArray.toHexString(transaction.toByteArray()), Type.TRANSACTION);
-                peer.getNet().broadcast(message);
-            }
-        }
-    }
-
-    @Override
-    public void usage() {
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold send [receiver] [amount]|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' send balance to receiver address.|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "\t@|bold Example:|@\n\t\t@|bold $ send [address] [amount]|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "\t@|bold if [amount] > balance, the command 'send' will fail to execute.|@"
-        ) );
-
-        System.out.println("");
+    if (parameters[0].length() != 40) {
+      logger.error("address invalid");
+      return false;
     }
 
 
-    @Override
-    public boolean check(String[] parameters) {
-        if (parameters.length < 2) {
-            logger.error("missing parameters");
-            return false;
-        }
-
-        if (parameters[0].length() != 40) {
-            logger.error("address invalid");
-            return false;
-        }
-
-
-        long amount = 0;
-        try {
-            amount = Long.parseLong(parameters[1]);
-        } catch (NumberFormatException e) {
-            logger.error("amount invalid");
-            return false;
-        }
-
-        if (amount <= 0) {
-            logger.error("amount required a positive number");
-            return false;
-        }
-
-        return true;
+    long amount = 0;
+    try {
+      amount = Long.parseLong(parameters[1]);
+    } catch (NumberFormatException e) {
+      logger.error("amount invalid");
+      return false;
     }
+
+    if (amount <= 0) {
+      logger.error("amount required a positive number");
+      return false;
+    }
+
+    return true;
+  }
 }

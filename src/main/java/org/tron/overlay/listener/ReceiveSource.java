@@ -12,30 +12,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.overlay.listener;
 
-import org.tron.overlay.message.Message;
+package org.tron.overlay.listener;
 
 import java.util.Enumeration;
 import java.util.Vector;
 
+import org.tron.overlay.message.Message;
+
 public class ReceiveSource {
-    private Vector repository = new Vector();
+  private Vector repository = new Vector();
 
-    public ReceiveSource() {
+  public ReceiveSource() {
 
+  }
+
+  public void addReceiveListener(ReceiveListener listener) {
+    repository.addElement(listener);
+  }
+
+  public void notifyReceiveEvent(Message message) {
+    Enumeration enumeration = repository.elements();
+
+    while (enumeration.hasMoreElements()) {
+      ReceiveListener listener = (ReceiveListener) enumeration.nextElement();
+      listener.handleReceive(message);
     }
-
-    public void addReceiveListener(ReceiveListener listener) {
-        repository.addElement(listener);
-    }
-
-    public void notifyReceiveEvent(Message message) {
-        Enumeration enumeration = repository.elements();
-
-        while (enumeration.hasMoreElements()) {
-            ReceiveListener listener = (ReceiveListener) enumeration.nextElement();
-            listener.handleReceive(message);
-        }
-    }
+  }
 }

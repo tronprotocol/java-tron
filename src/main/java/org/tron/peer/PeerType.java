@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.peer;
 
 import com.beust.jcommander.IParameterValidator;
@@ -19,18 +20,18 @@ import com.beust.jcommander.ParameterException;
 
 public class PeerType implements IParameterValidator {
 
-    public final static String PEER_NORMAL = "normal";
-    public final static String PEER_SERVER = "server";
+  public static final String PEER_NORMAL = "normal";
+  public static final String PEER_SERVER = "server";
 
-    @Override
-    public void validate(String name, String value) throws ParameterException {
-        if (!isValid(value)) {
-            throw new ParameterException(
-                "parameter " + name + " should be '" + PEER_NORMAL + "' or '" + PEER_SERVER + "' (found " + value + ")");
-        }
-    }
+  public static boolean isValid(String value) {
+    return value.equals(PEER_NORMAL) || value.equals(PEER_SERVER);
+  }
 
-    public static boolean isValid(String value) {
-        return value.equals(PEER_NORMAL) || value.equals(PEER_SERVER);
+  @Override
+  public void validate(String name, String value) throws ParameterException {
+    if (!isValid(value)) {
+      throw new ParameterException(
+          "parameter " + name + " should be '" + PEER_NORMAL + "' or '" + PEER_SERVER + "' (found " + value + ")");
     }
+  }
 }

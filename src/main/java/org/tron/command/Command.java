@@ -12,14 +12,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
 
 import org.tron.application.CliApplication;
 
 public abstract class Command {
-    public abstract void execute(CliApplication app, String[] parameters);
+  public abstract void execute(CliApplication app, String[] parameters);
 
-    public abstract void usage();
+  public abstract void usage();
 
-    public abstract boolean check(String[] parameters);
+  public abstract boolean check(String[] parameters);
 }

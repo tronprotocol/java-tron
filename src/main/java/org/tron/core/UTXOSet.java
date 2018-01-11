@@ -12,127 +12,130 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.crypto.ECKey;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.*;
-
-import static org.tron.core.Constant.TRANSACTION_DB_NAME;
-
 public class UTXOSet {
-    private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
+  private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
-    private Blockchain blockchain;
-    private LevelDbDataSourceImpl txDB = null;
+  private Blockchain blockchain;
+  private LevelDbDataSourceImpl txDB = null;
 
-    @Inject
-    public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
-        txDB = txDb;
+  @Inject
+  public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
+    txDB = txDb;
+  }
+
+  public Blockchain getBlockchain() {
+    return blockchain;
+  }
+
+  public void setBlockchain(Blockchain blockchain) {
+    this.blockchain = blockchain;
+  }
+
+  public void reindex() {
+    logger.info("reindex");
+
+    txDB.resetDB();
+
+    HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
+
+    Set<Map.Entry<String, TXOutputs>> entrySet = utxo.entrySet();
+
+    for (Map.Entry<String, TXOutputs> entry : entrySet) {
+      String key = entry.getKey();
+      TXOutputs value = entry.getValue();
+
+      for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
+        txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
+      }
     }
+  }
 
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
+  public SpendableOutputs findSpendableOutputs(byte[] pubKeyHash, long amount) {
+    SpendableOutputs spendableOutputs = new SpendableOutputs();
+    HashMap<String, long[]> unspentOutputs = new HashMap<>();
+    long accumulated = 0L;
 
-    public void setBlockchain(Blockchain blockchain) {
-        this.blockchain = blockchain;
-    }
+    Set<byte[]> keySet = txDB.allKeys();
 
-    public void reindex() {
-        logger.info("reindex");
+    for (byte[] key : keySet) {
+      byte[] txOutputsData = txDB.getData(key);
+      try {
+        TXOutputs txOutputs = TronTXOutputs.TXOutputs.parseFrom(txOutputsData);
 
-        txDB.resetDB();
+        int len = txOutputs.getOutputsCount();
 
-        HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
+        for (int i = 0; i < len; i++) {
+          TronTXOutput.TXOutput txOutput = txOutputs.getOutputs(i);
+          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
+              .getPubKeyHash()
+              .toByteArray())) && accumulated < amount) {
+            accumulated += txOutput.getValue();
 
-        Set<Map.Entry<String, TXOutputs>> entrySet = utxo.entrySet();
+            long[] v = unspentOutputs.get(ByteArray.toHexString(key));
 
-        for (Map.Entry<String, TXOutputs> entry : entrySet) {
-            String key = entry.getKey();
-            TXOutputs value = entry.getValue();
-
-            for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
-                txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
+            if (v == null) {
+              v = new long[0];
             }
+
+            long[] tmp = Arrays.copyOf(v, v.length + 1);
+            tmp[tmp.length - 1] = i;
+
+            unspentOutputs.put(ByteArray.toHexString(key), tmp);
+          }
         }
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
     }
 
-    public SpendableOutputs findSpendableOutputs(byte[] pubKeyHash, long amount) {
-        SpendableOutputs spendableOutputs = new SpendableOutputs();
-        HashMap<String, long[]> unspentOutputs = new HashMap<>();
-        long accumulated = 0L;
+    spendableOutputs.setAmount(accumulated);
+    spendableOutputs.setUnspentOutputs(unspentOutputs);
 
-        Set<byte[]> keySet = txDB.allKeys();
+    return spendableOutputs;
+  }
 
-        for (byte[] key : keySet) {
-            byte[] txOutputsData = txDB.getData(key);
-            try {
-                TXOutputs txOutputs = TronTXOutputs.TXOutputs.parseFrom(txOutputsData);
+  public ArrayList<TronTXOutput.TXOutput> findUTXO(byte[] pubKeyHash) {
+    ArrayList<TronTXOutput.TXOutput> utxos = new ArrayList<>();
 
-                int len = txOutputs.getOutputsCount();
+    Set<byte[]> keySet = txDB.allKeys();
+    for (byte[] key : keySet) {
+      byte[] txData = txDB.getData(key);
 
-                for (int i = 0; i < len; i++) {
-                    TronTXOutput.TXOutput txOutput = txOutputs.getOutputs(i);
-                    if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
-                            .getPubKeyHash()
-                            .toByteArray())) && accumulated < amount) {
-                        accumulated += txOutput.getValue();
-
-                        long[] v = unspentOutputs.get(ByteArray.toHexString(key));
-
-                        if (v == null) {
-                            v = new long[0];
-                        }
-
-                        long[] tmp = Arrays.copyOf(v, v.length + 1);
-                        tmp[tmp.length - 1] = i;
-
-                        unspentOutputs.put(ByteArray.toHexString(key), tmp);
-                    }
-                }
-            } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
-            }
+      try {
+        TXOutputs txOutputs = TXOutputs.parseFrom(txData);
+        for (TronTXOutput.TXOutput txOutput : txOutputs.getOutputsList()) {
+          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
+              .getPubKeyHash()
+              .toByteArray()))) {
+            utxos.add(txOutput);
+          }
         }
-
-        spendableOutputs.setAmount(accumulated);
-        spendableOutputs.setUnspentOutputs(unspentOutputs);
-
-        return spendableOutputs;
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
     }
 
-    public ArrayList<TronTXOutput.TXOutput> findUTXO(byte[] pubKeyHash) {
-        ArrayList<TronTXOutput.TXOutput> utxos = new ArrayList<>();
-
-        Set<byte[]> keySet = txDB.allKeys();
-        for (byte[] key : keySet) {
-            byte[] txData = txDB.getData(key);
-
-            try {
-                TXOutputs txOutputs = TXOutputs.parseFrom(txData);
-                for (TronTXOutput.TXOutput txOutput : txOutputs.getOutputsList()) {
-                    if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
-                            .getPubKeyHash()
-                            .toByteArray()))) {
-                        utxos.add(txOutput);
-                    }
-                }
-            } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return utxos;
-    }
+    return utxos;
+  }
 }

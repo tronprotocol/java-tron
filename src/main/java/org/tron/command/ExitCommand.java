@@ -12,40 +12,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.command;
 
-import org.tron.application.CliApplication;
+package org.tron.command;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
+import org.tron.application.CliApplication;
+
 public class ExitCommand extends Command {
-    public ExitCommand() {
-    }
+  public ExitCommand() {
+  }
 
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-        app.shutdown();
-    }
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    app.shutdown();
+  }
 
-    @Override
-    public void usage() {
-        System.out.println("");
+  @Override
+  public void usage() {
+    System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold exit|@"
-        ) );
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold exit|@"
+    ));
 
-        System.out.println("");
+    System.out.println("");
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'exit' exit java-tron application.|@"
-        ) );
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'exit' exit java-tron application.|@"
+    ));
 
-        System.out.println("");
-    }
+    System.out.println("");
+  }
 
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

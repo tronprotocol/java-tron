@@ -12,93 +12,93 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.command;
 
-import org.tron.application.CliApplication;
-import org.tron.peer.Peer;
+package org.tron.command;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
+import org.tron.application.CliApplication;
+
 public class HelpCommand extends Command {
 
-    public HelpCommand() {
+  public HelpCommand() {
+  }
+
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+
+    if (parameters.length == 0) {
+      usage();
+      return;
     }
 
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-
-        if (parameters.length == 0) {
-            usage();
-            return;
-        }
-
-        switch (parameters[0]) {
-            case "version":
-                new VersionCommand().usage();
-                break;
-            case "account":
-                new AccountCommand().usage();
-                break;
-            case "getbalance":
-                new GetBalanceCommand().usage();
-                break;
-            case "send":
-                new SendCommand().usage();
-                break;
-            case "printblockchain":
-                new PrintBlockchainCommand().usage();
-                break;
-            case "consensus":
-            case "listen":
-                app.getInjector().getInstance(ConsensusCommand.class).usage();
-                break;
-            case "exit":
-            case "quit":
-            case "bye":
-                new ExitCommand().usage();
-                break;
-            case "help":
-            default:
-                new HelpCommand().usage();
-                break;
-        }
+    switch (parameters[0]) {
+      case "version":
+        new VersionCommand().usage();
+        break;
+      case "account":
+        new AccountCommand().usage();
+        break;
+      case "getbalance":
+        new GetBalanceCommand().usage();
+        break;
+      case "send":
+        new SendCommand().usage();
+        break;
+      case "printblockchain":
+        new PrintBlockchainCommand().usage();
+        break;
+      case "consensus":
+      case "listen":
+        app.getInjector().getInstance(ConsensusCommand.class).usage();
+        break;
+      case "exit":
+      case "quit":
+      case "bye":
+        new ExitCommand().usage();
+        break;
+      case "help":
+      default:
+        new HelpCommand().usage();
+        break;
     }
+  }
 
-    @Override
-    public void usage() {
-        System.out.println("");
+  @Override
+  public void usage() {
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold help [arguments]|@"
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold help [arguments]|@"
+    ));
 
-        System.out.println("");
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-            "@|magenta,bold AVAILABLE COMMANDS|@"
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold AVAILABLE COMMANDS|@"
+    ));
 
-        System.out.println("");
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "version")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "version")
+    ));
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tGet your wallet address|@", "account")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tGet your wallet address|@", "account")
+    ));
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tGet your balance|@", "getbalance")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tGet your balance|@", "getbalance")
+    ));
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tSend balance to receiver address|@", "send")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tSend balance to receiver address|@", "send")
+    ));
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tPrint blockchain|@", "printblockchain")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tPrint blockchain|@", "printblockchain")
+    ));
 
         /*System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tCreate a server|@", "consensus")
@@ -113,21 +113,21 @@ public class HelpCommand extends Command {
                         "send")
         ) );*/
 
-        System.out.println(ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
+    ));
 
-        System.out.println("");
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-                "Use @|bold help [topic] for more information about that topic.|@"
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        "Use @|bold help [topic] for more information about that topic.|@"
+    ));
 
-        System.out.println("");
-    }
+    System.out.println("");
+  }
 
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

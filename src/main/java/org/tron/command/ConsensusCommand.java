@@ -12,10 +12,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.application.CliApplication;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.client.MessageType;
@@ -29,122 +34,117 @@ import org.tron.peer.PeerType;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
-
-import javax.inject.Inject;
-
-import static org.fusesource.jansi.Ansi.ansi;
-
 public class ConsensusCommand extends Command {
 
-    private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
+  private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
 
-    private Client client;
-    private Server server;
+  private Client client;
+  private Server server;
 
-    @Inject
-    public ConsensusCommand(Client client) {
-        this.client = client;
+  @Inject
+  public ConsensusCommand(Client client) {
+    this.client = client;
+  }
+
+  public void putClient(String[] args) {
+    client.putMessage(args);
+  }
+
+  public void getClient(Peer peer) {
+    if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+      client.getMessage(peer, MessageType.TRANSACTION);
+      client.getMessage(peer, MessageType.BLOCK);
+    } else {
+      client.getMessage(peer, MessageType.BLOCK);
+    }
+  }
+
+  public void listen(Peer peer, String type) {
+    //Client.getMessage(args[0]);
+    if (type.equals(PeerType.PEER_SERVER)) {
+      client.getMessage(peer, MessageType.TRANSACTION);
+      client.getMessage(peer, MessageType.BLOCK);
+    } else {
+      client.getMessage(peer, MessageType.BLOCK);
+    }
+  }
+
+  public void usage() {
+    System.out.println("");
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold listen [key]|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'listen' " +
+            "listen consensus message.|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold send [key] [value]|@"
+    ));
+
+    System.out.println("");
+
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' " +
+            "send a transaction.|@"
+    ));
+
+    System.out.println("");
+  }
+
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    Peer peer = app.getPeer();
+
+    if (check(parameters)) {
+      String to = parameters[0];
+      long amount = Long.valueOf(parameters[1]);
+      TronTransaction.Transaction transaction = TransactionUtils
+          .newTransaction(peer.getWallet(), to, amount, peer.getUTXOSet());
+
+      if (transaction != null) {
+        Message message = new Message(ByteArray.toHexString
+            (transaction.toByteArray()), Type.TRANSACTION);
+        client.putMessage1(message);
+      }
+    }
+  }
+
+  @Override
+  public boolean check(String[] parameters) {
+    if (parameters.length < 2) {
+      logger.error("missing parameter");
+      return false;
     }
 
-    public void putClient(String[] args) {
-        client.putMessage(args);
+    if (parameters[0].length() != 40) {
+      logger.error("address invalid");
+      return false;
     }
 
-    public void getClient(Peer peer) {
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
-            client.getMessage(peer, MessageType.TRANSACTION);
-            client.getMessage(peer, MessageType.BLOCK);
-        } else {
-            client.getMessage(peer, MessageType.BLOCK);
-        }
+
+    long amount = 0;
+    try {
+      amount = Long.valueOf(parameters[1]);
+    } catch (NumberFormatException e) {
+      logger.error("amount invalid");
+      return false;
     }
 
-    public void listen(Peer peer,String type) {
-        //Client.getMessage(args[0]);
-        if (type.equals(PeerType.PEER_SERVER)) {
-            client.getMessage(peer, MessageType.TRANSACTION);
-            client.getMessage(peer, MessageType.BLOCK);
-        } else {
-            client.getMessage(peer, MessageType.BLOCK);
-        }
+    if (amount < 0) {
+      logger.error("amount required a positive number");
+      return false;
     }
 
-    public void usage() {
-        System.out.println("");
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold listen [key]|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'listen' " +
-                        "listen consensus message.|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold send [key] [value]|@"
-        ) );
-
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'send' " +
-                        "send a transaction.|@"
-        ) );
-
-        System.out.println("");
-    }
-
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-        Peer peer = app.getPeer();
-
-        if (check(parameters)) {
-            String to = parameters[0];
-            long amount = Long.valueOf(parameters[1]);
-            TronTransaction.Transaction transaction = TransactionUtils
-                    .newTransaction(peer.getWallet(), to, amount, peer.getUTXOSet());
-
-            if (transaction != null) {
-                Message message = new Message(ByteArray.toHexString
-                        (transaction.toByteArray()), Type.TRANSACTION);
-                client.putMessage1(message);
-            }
-        }
-    }
-
-    @Override
-    public boolean check(String[] parameters) {
-        if (parameters.length < 2) {
-            logger.error("missing parameter");
-            return false;
-        }
-
-        if (parameters[0].length() != 40) {
-            logger.error("address invalid");
-            return false;
-        }
-
-
-        long amount = 0;
-        try {
-            amount = Long.valueOf(parameters[1]);
-        } catch (NumberFormatException e) {
-            logger.error("amount invalid");
-            return false;
-        }
-
-        if (amount < 0) {
-            logger.error("amount required a positive number");
-            return false;
-        }
-
-        return true;
-    }
+    return true;
+  }
 }

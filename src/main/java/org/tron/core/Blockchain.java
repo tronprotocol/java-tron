@@ -12,14 +12,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.LAST_HASH;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.config.Configer;
 import org.tron.consensus.client.Client;
 import org.tron.crypto.ECKey;
@@ -37,376 +54,362 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Paths;
-import java.util.*;
-
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.LAST_HASH;
-
 public class Blockchain {
 
-    public static final String GENESIS_COINBASE_DATA = "0x10";
-    public static String parentName=Constant.NORMAL;
+  public static final String GENESIS_COINBASE_DATA = "0x10";
+  public static final Logger logger = LoggerFactory.getLogger("BlockChain");
+  public static String parentName = Constant.NORMAL;
+  private LevelDbDataSourceImpl blockDB = null;
+  private PendingState pendingState = new PendingStateImpl();
 
-    public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    private LevelDbDataSourceImpl blockDB = null;
-    private PendingState pendingState = new PendingStateImpl();
+  private byte[] lastHash;
+  private byte[] currentHash;
 
-    private byte[] lastHash;
-    private byte[] currentHash;
+  private Client client;
 
-    private Client client;
+  /**
+   * create new blockchain
+   *
+   * @param address wallet address
+   */
+  public Blockchain(String address, String type) {
+    if (dbExists()) {
+      blockDB = new LevelDbDataSourceImpl(parentName, BLOCK_DB_NAME);
+      blockDB.initDB();
 
-    /**
-     * create new blockchain
-     *
-     * @param address wallet address
-     */
-    public Blockchain(String address, String type) {
-        if (dbExists()) {
-            blockDB = new LevelDbDataSourceImpl(parentName,BLOCK_DB_NAME);
-            blockDB.initDB();
+      this.lastHash = blockDB.getData(LAST_HASH);
+      this.currentHash = this.lastHash;
 
-            this.lastHash = blockDB.getData(LAST_HASH);
-            this.currentHash = this.lastHash;
+      logger.info("load blockchain");
+    } else {
+      blockDB = new LevelDbDataSourceImpl(Constant.NORMAL, BLOCK_DB_NAME);
+      blockDB.initDB();
 
-            logger.info("load blockchain");
-        } else {
-            blockDB = new LevelDbDataSourceImpl(Constant.NORMAL,BLOCK_DB_NAME);
-            blockDB.initDB();
+      InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+      String json = null;
+      try {
+        json = new String(ByteStreams.toByteArray(is));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
 
-            InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
-            String json = null;
-            try {
-                json = new String(ByteStreams.toByteArray(is));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+      Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
 
-            GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
+      List<Transaction> transactions = new ArrayList<>();
 
-            Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
+      while (iterator.hasNext()) {
+        Map.Entry entry = (Map.Entry) iterator.next();
+        String key = (String) entry.getKey();
+        Integer value = (Integer) entry.getValue();
 
-            List<Transaction> transactions = new ArrayList<>();
+        Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
+        transactions.add(transaction);
+      }
 
-            while (iterator.hasNext()) {
-                Map.Entry entry = (Map.Entry) iterator.next();
-                String key = (String) entry.getKey();
-                Integer value = (Integer) entry.getValue();
+      Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
 
-                Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
-                transactions.add(transaction);
-            }
+      this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
+      this.currentHash = this.lastHash;
 
-            Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
+      blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+          genesisBlock.toByteArray());
+      byte[] lastHash = genesisBlock.getBlockHeader()
+          .getHash()
+          .toByteArray();
+      blockDB.putData(LAST_HASH, lastHash);
 
-            this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
-            this.currentHash = this.lastHash;
+      // put message to consensus
+      if (type.equals(PeerType.PEER_SERVER) && client != null) {
+        String value = ByteArray.toHexString(genesisBlock.toByteArray());
+        Message message = new Message(value, Type.BLOCK);
+        client.putMessage1(message); // consensus: put message GenesisBlock
+        //Merely for the placeholders, no real meaning
+        Message time = new Message(value, Type.TRANSACTION);
+        client.putMessage1(time);
 
-            blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-                    genesisBlock.toByteArray());
-            byte[] lastHash = genesisBlock.getBlockHeader()
-                    .getHash()
-                    .toByteArray();
-            blockDB.putData(LAST_HASH, lastHash);
+      }
+      logger.info("new blockchain");
+    }
+  }
 
-            // put message to consensus
-            if (type.equals(PeerType.PEER_SERVER) && client != null) {
-                String value = ByteArray.toHexString(genesisBlock.toByteArray());
-                Message message = new Message(value, Type.BLOCK);
-                client.putMessage1(message); // consensus: put message GenesisBlock
-                //Merely for the placeholders, no real meaning
-                Message time = new Message(value, Type.TRANSACTION);
-                client.putMessage1(time);
-
-            }
-            logger.info("new blockchain");
-        }
+  /**
+   * create blockchain by db source
+   */
+  @Inject
+  public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
+    if (!dbExists()) {
+      logger.info("no existing blockchain found. please create one first");
+      throw new IllegalStateException("No existing blockchain found. please create one first");
     }
 
-    /**
-     * create blockchain by db source
-     */
-    @Inject
-    public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
-        if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one first");
-            throw new IllegalStateException("No existing blockchain found. please create one first");
+    blockDB = blockDb;
+
+    this.lastHash = blockDB.getData(LAST_HASH);
+    this.currentHash = this.lastHash;
+
+    logger.info("load blockchain");
+  }
+
+  /**
+   * Checks if the database file exists
+   *
+   * @return boolean
+   */
+  public static boolean dbExists() {
+    if (Constant.NORMAL == parentName) {
+      parentName = Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
+    } else {
+      parentName = Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
+
+    }
+    File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());
+    return file.exists();
+  }
+
+  /**
+   * find transaction by id
+   *
+   * @param id ByteString id
+   * @return {@link Transaction}
+   */
+  public Transaction findTransaction(ByteString id) {
+    Transaction transaction = Transaction.newBuilder().build();
+
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = (Block) bi.next();
+
+      for (Transaction tx : block.getTransactionsList()) {
+        String txID = ByteArray.toHexString(tx.getId().toByteArray());
+        String idStr = ByteArray.toHexString(id.toByteArray());
+        if (txID.equals(idStr)) {
+          transaction = tx.toBuilder().build();
+          return transaction;
+        }
+      }
+
+      if (block.getBlockHeader().getParentHash().isEmpty()) {
+        break;
+      }
+    }
+
+    return transaction;
+  }
+
+  public HashMap<String, TXOutputs> findUTXO() {
+    HashMap<String, TXOutputs> utxo = new HashMap<>();
+    HashMap<String, long[]> spenttxos = new HashMap<>();
+
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = (Block) bi.next();
+
+      for (Transaction transaction : block.getTransactionsList()) {
+        String txid = ByteArray.toHexString(transaction.getId()
+            .toByteArray());
+
+        output:
+        for (int outIdx = 0; outIdx < transaction.getVoutList().size
+            (); outIdx++) {
+          TXOutput out = transaction.getVout(outIdx);
+          if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
+            for (int i = 0; i < spenttxos.get(txid).length; i++) {
+              if (spenttxos.get(txid)[i] == outIdx) {
+                continue output;
+              }
+            }
+          }
+
+          TXOutputs outs = utxo.get(txid);
+
+          if (outs == null) {
+            outs = TXOutputs.newBuilder().build();
+          }
+
+          outs = outs.toBuilder().addOutputs(out).build();
+          utxo.put(txid, outs);
         }
 
-        blockDB = blockDb;
+        if (!TransactionUtils.isCoinbaseTransaction(transaction)) {
+          for (TXInput in : transaction.getVinList()) {
+            String inTxid = ByteArray.toHexString(in.getTxID()
+                .toByteArray());
+            long[] vindexs = spenttxos.get(inTxid);
 
-        this.lastHash = blockDB.getData(LAST_HASH);
+            if (vindexs == null) {
+              vindexs = new long[0];
+            }
+
+            vindexs = Arrays.copyOf(vindexs, vindexs.length + 1);
+            vindexs[vindexs.length - 1] = in.getVout();
+
+            spenttxos.put(inTxid, vindexs);
+          }
+        }
+      }
+
+    }
+
+    return utxo;
+  }
+
+  /**
+   * add a block into database
+   *
+   * @param block
+   */
+  public void addBlock(Block block) {
+    byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
+
+    if (blockInDB == null || blockInDB.length == 0) {
+      return;
+    }
+
+    blockDB.putData(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
+
+    byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
+    byte[] lastBlockData = blockDB.getData(lastHash);
+    try {
+      Block lastBlock = Block.parseFrom(lastBlockData);
+      if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
+        blockDB.putData(ByteArray.fromString("lashHash"), block.getBlockHeader().getHash().toByteArray());
+        this.lastHash = block.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
+      }
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+  }
 
-        logger.info("load blockchain");
+  public Transaction signTransaction(Transaction transaction, ECKey myKey) {
+    HashMap<String, Transaction> prevTXs = new HashMap<>();
+
+    for (TXInput txInput : transaction.getVinList()) {
+      ByteString txID = txInput.getTxID();
+      Transaction prevTX = this.findTransaction(txID).toBuilder().build();
+      String key = ByteArray.toHexString(txID.toByteArray());
+      prevTXs.put(key, prevTX);
     }
 
-    /**
-     * find transaction by id
-     *
-     * @param id ByteString id
-     * @return {@link Transaction}
-     */
-    public Transaction findTransaction(ByteString id) {
-        Transaction transaction = Transaction.newBuilder().build();
+    transaction = TransactionUtils.sign(transaction, myKey, prevTXs);
+    return transaction;
+  }
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = (Block) bi.next();
+  /**
+   * {@see org.tron.overlay.kafka.KafkaTest#testKafka()}
+   *
+   * @param transactions transactions
+   */
+  public void addBlock(List<Transaction> transactions, Net net) {
+    // getData lastHash
+    byte[] lastHash = blockDB.getData(LAST_HASH);
+    ByteString parentHash = ByteString.copyFrom(lastHash);
+    // getData number
+    long number = BlockUtils.getIncreaseNumber(Tron.getPeer().getBlockchain());
+    // getData difficulty
+    ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
+    Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+        number);
 
-            for (Transaction tx : block.getTransactionsList()) {
-                String txID = ByteArray.toHexString(tx.getId().toByteArray());
-                String idStr = ByteArray.toHexString(id.toByteArray());
-                if (txID.equals(idStr)) {
-                    transaction = tx.toBuilder().build();
-                    return transaction;
-                }
-            }
+    String value = ByteArray.toHexString(block.toByteArray());
 
-            if (block.getBlockHeader().getParentHash().isEmpty()) {
-                break;
-            }
-        }
+    if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+      Message message = new Message(value, Type.BLOCK);
+      net.broadcast(message);
+    }
+  }
 
-        return transaction;
+  public void addBlock(List<Transaction> transactions) {
+    // get lastHash
+    byte[] lastHash = blockDB.getData(LAST_HASH);
+    ByteString parentHash = ByteString.copyFrom(lastHash);
+    // get number
+    long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
+        .getBlockchain());
+    // get difficulty
+    ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
+    Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+        number);
+
+    String value = ByteArray.toHexString(block.toByteArray());
+    // View the type of peer
+    //System.out.println(Tron.getPeer().getType());
+
+    if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER) && client != null) {
+      Message message = new Message(value, Type.BLOCK);
+      //net.broadcast(message);
+      client.putMessage1(message); // consensus: put message
+    }
+  }
+
+  /**
+   * receive a block and save it into database,update caching at the same time.
+   *
+   * @param block   block
+   * @param utxoSet utxoSet
+   */
+  public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
+
+    byte[] lastHashKey = LAST_HASH;
+    byte[] lastHash = blockDB.getData(lastHashKey);
+
+    if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray()).equals(ByteArray.toHexString
+        (lastHash))) {
+      return;
     }
 
-    public HashMap<String, TXOutputs> findUTXO() {
-        HashMap<String, TXOutputs> utxo = new HashMap<>();
-        HashMap<String, long[]> spenttxos = new HashMap<>();
+    // save the block into the database
+    byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
+    byte[] blockVal = block.toByteArray();
+    blockDB.putData(blockHashKey, blockVal);
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = (Block) bi.next();
+    byte[] ch = block.getBlockHeader().getHash()
+        .toByteArray();
 
-            for (Transaction transaction : block.getTransactionsList()) {
-                String txid = ByteArray.toHexString(transaction.getId()
-                        .toByteArray());
+    // update lastHash
+    peer.getBlockchain().getBlockDB().putData(lastHashKey, ch);
 
-                output:
-                for (int outIdx = 0; outIdx < transaction.getVoutList().size
-                        (); outIdx++) {
-                    TXOutput out = transaction.getVout(outIdx);
-                    if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
-                        for (int i = 0; i < spenttxos.get(txid).length; i++) {
-                            if (spenttxos.get(txid)[i] == outIdx) {
-                                continue output;
-                            }
-                        }
-                    }
+    this.lastHash = ch;
+    currentHash = ch;
+    System.out.println(BlockUtils.toPrintString(block));
+    // update UTXO cache
+    utxoSet.reindex();
+  }
 
-                    TXOutputs outs = utxo.get(txid);
+  public LevelDbDataSourceImpl getBlockDB() {
+    return blockDB;
+  }
 
-                    if (outs == null) {
-                        outs = TXOutputs.newBuilder().build();
-                    }
+  public void setBlockDB(LevelDbDataSourceImpl blockDB) {
+    this.blockDB = blockDB;
+  }
 
-                    outs = outs.toBuilder().addOutputs(out).build();
-                    utxo.put(txid, outs);
-                }
+  public PendingState getPendingState() {
+    return pendingState;
+  }
 
-                if (!TransactionUtils.isCoinbaseTransaction(transaction)) {
-                    for (TXInput in : transaction.getVinList()) {
-                        String inTxid = ByteArray.toHexString(in.getTxID()
-                                .toByteArray());
-                        long[] vindexs = spenttxos.get(inTxid);
+  public void setPendingState(PendingState pendingState) {
+    this.pendingState = pendingState;
+  }
 
-                        if (vindexs == null) {
-                            vindexs = new long[0];
-                        }
+  public byte[] getLastHash() {
+    return lastHash;
+  }
 
-                        vindexs = Arrays.copyOf(vindexs, vindexs.length + 1);
-                        vindexs[vindexs.length - 1] = in.getVout();
+  public void setLastHash(byte[] lastHash) {
+    this.lastHash = lastHash;
+  }
 
-                        spenttxos.put(inTxid, vindexs);
-                    }
-                }
-            }
+  public byte[] getCurrentHash() {
+    return currentHash;
+  }
 
-        }
+  public void setCurrentHash(byte[] currentHash) {
+    this.currentHash = currentHash;
+  }
 
-        return utxo;
-    }
-
-    /**
-     * Checks if the database file exists
-     *
-     * @return boolean
-     */
-    public static boolean dbExists() {
-        if (Constant.NORMAL==parentName){
-            parentName= Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
-        }else {
-            parentName=Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-
-        }
-        File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());
-        return file.exists();
-    }
-
-
-    /**
-     * add a block into database
-     *
-     * @param block
-     */
-    public void addBlock(Block block) {
-        byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
-
-        if (blockInDB == null || blockInDB.length == 0) {
-            return;
-        }
-
-        blockDB.putData(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
-
-        byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
-        byte[] lastBlockData = blockDB.getData(lastHash);
-        try {
-            Block lastBlock = Block.parseFrom(lastBlockData);
-            if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
-                blockDB.putData(ByteArray.fromString("lashHash"), block.getBlockHeader().getHash().toByteArray());
-                this.lastHash = block.getBlockHeader().getHash().toByteArray();
-                this.currentHash = this.lastHash;
-            }
-        } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public Transaction signTransaction(Transaction transaction, ECKey myKey) {
-        HashMap<String, Transaction> prevTXs = new HashMap<>();
-
-        for (TXInput txInput : transaction.getVinList()) {
-            ByteString txID = txInput.getTxID();
-            Transaction prevTX = this.findTransaction(txID).toBuilder().build();
-            String key = ByteArray.toHexString(txID.toByteArray());
-            prevTXs.put(key, prevTX);
-        }
-
-        transaction = TransactionUtils.sign(transaction, myKey, prevTXs);
-        return transaction;
-    }
-
-    /**
-     * {@see org.tron.overlay.kafka.KafkaTest#testKafka()}
-     *
-     * @param transactions transactions
-     */
-    public void addBlock(List<Transaction> transactions, Net net) {
-        // getData lastHash
-        byte[] lastHash = blockDB.getData(LAST_HASH);
-        ByteString parentHash = ByteString.copyFrom(lastHash);
-        // getData number
-        long number = BlockUtils.getIncreaseNumber(Tron.getPeer().getBlockchain());
-        // getData difficulty
-        ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-                number);
-
-        String value = ByteArray.toHexString(block.toByteArray());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
-            Message message = new Message(value, Type.BLOCK);
-            net.broadcast(message);
-        }
-    }
-
-    public void addBlock(List<Transaction> transactions) {
-        // get lastHash
-        byte[] lastHash = blockDB.getData(LAST_HASH);
-        ByteString parentHash = ByteString.copyFrom(lastHash);
-        // get number
-        long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
-                .getBlockchain());
-        // get difficulty
-        ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-                number);
-
-        String value = ByteArray.toHexString(block.toByteArray());
-        // View the type of peer
-        //System.out.println(Tron.getPeer().getType());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER) && client != null) {
-            Message message = new Message(value, Type.BLOCK);
-            //net.broadcast(message);
-            client.putMessage1(message); // consensus: put message
-        }
-    }
-
-    /**
-     * receive a block and save it into database,update caching at the same time.
-     *
-     * @param block   block
-     * @param utxoSet utxoSet
-     */
-    public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
-
-        byte[] lastHashKey = LAST_HASH;
-        byte[] lastHash = blockDB.getData(lastHashKey);
-
-        if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray()).equals(ByteArray.toHexString
-                (lastHash))) {
-            return;
-        }
-
-        // save the block into the database
-        byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
-        byte[] blockVal = block.toByteArray();
-        blockDB.putData(blockHashKey, blockVal);
-
-        byte[] ch = block.getBlockHeader().getHash()
-                .toByteArray();
-
-        // update lastHash
-        peer.getBlockchain().getBlockDB().putData(lastHashKey, ch);
-
-        this.lastHash = ch;
-        currentHash = ch;
-        System.out.println(BlockUtils.toPrintString(block));
-        // update UTXO cache
-        utxoSet.reindex();
-    }
-
-    public LevelDbDataSourceImpl getBlockDB() {
-        return blockDB;
-    }
-
-    public void setBlockDB(LevelDbDataSourceImpl blockDB) {
-        this.blockDB = blockDB;
-    }
-
-    public PendingState getPendingState() {
-        return pendingState;
-    }
-
-    public void setPendingState(PendingState pendingState) {
-        this.pendingState = pendingState;
-    }
-
-    public byte[] getLastHash() {
-        return lastHash;
-    }
-
-    public void setLastHash(byte[] lastHash) {
-        this.lastHash = lastHash;
-    }
-
-    public byte[] getCurrentHash() {
-        return currentHash;
-    }
-
-    public void setCurrentHash(byte[] currentHash) {
-        this.currentHash = currentHash;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
+  public void setClient(Client client) {
+    this.client = client;
+  }
 }
