@@ -16,6 +16,7 @@ package org.tron.dbStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.Constant;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
 import java.util.Set;
@@ -27,8 +28,8 @@ public class UTXOStore   {
     public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
     private LevelDbDataSourceImpl uTXODataSource;
 
-    public UTXOStore( ) {
-        uTXODataSource=new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
+    public UTXOStore(String parentName,String childName ) {
+        uTXODataSource=new LevelDbDataSourceImpl( parentName, childName);
         uTXODataSource.initDB();
     }
 

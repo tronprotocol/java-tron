@@ -78,6 +78,8 @@ dependencies {
 
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'
     compile group: 'com.alibaba', name: 'fastjson', version: '1.2.44'
+
+    compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
 }
 
 tasks.matching { it instanceof Test }.all {

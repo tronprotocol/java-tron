@@ -39,6 +39,8 @@ public class Peer {
 
     private ECKey myKey;
 
+    private Client client;
+
     public Peer(
         String type,
         Blockchain blockchain,
@@ -62,8 +64,7 @@ public class Peer {
     public void addReceiveTransaction(String message) {
         try {
             TronTransaction.Transaction transaction = TronTransaction
-                    .Transaction.parseFrom(ByteArray
-                            .fromHexString(message));
+                    .Transaction.parseFrom(ByteArray.fromHexString(message));
             System.out.println(TransactionUtils.toPrintString
                     (transaction));
             PendingStateImpl pendingState = new PendingStateImpl();
@@ -86,35 +87,16 @@ public class Peer {
 
     private void init() {
         initLoadBlock();
-        new ConsensusCommand().listen(this,this.type);
+        if (client != null) {
+            new ConsensusCommand(client).listen(this, this.type);
+        }
     }
 
     private void initLoadBlock() {
-        if (this.type.equals(PeerType.PEER_NORMAL)) {
+        if (this.type.equals(PeerType.PEER_NORMAL) && client != null) {
             System.out.println("BlockChain loading  ...");
-            Client.loadBlock(this);
+            client.loadBlock(this);
         }
-    }
-
-    private void initBlockchain() {
-        new ConsensusCommand().server();
-        if (Blockchain.dbExists()) {
-            blockchain = new Blockchain();
-        } else {
-            blockchain = new Blockchain(ByteArray.toHexString(wallet
-                    .getAddress()), this.type);
-        }
-    }
-
-    private void initUTXOSet() {
-        utxoSet = new UTXOSet();
-        utxoSet.setBlockchain(blockchain);
-        utxoSet.reindex();
-    }
-
-    private void initWallet() {
-        wallet = new Wallet();
-        wallet.init(myKey);
     }
 
     public ECKey getMyKey() {
@@ -159,5 +141,9 @@ public class Peer {
 
     public Net getNet() {
         return null;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 }

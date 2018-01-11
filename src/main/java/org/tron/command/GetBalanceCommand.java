@@ -14,6 +14,7 @@
  */
 package org.tron.command;
 
+import org.tron.application.CliApplication;
 import org.tron.peer.Peer;
 import org.tron.protos.core.TronTXOutput;
 
@@ -26,7 +27,9 @@ public class GetBalanceCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
+        Peer peer = app.getPeer();
+
         byte[] pubKeyHash = peer.getWallet().getEcKey().getPubKey();
         ArrayList<TronTXOutput.TXOutput> utxos = peer.getUTXOSet().findUTXO(pubKeyHash);
 

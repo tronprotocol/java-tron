@@ -1,11 +1,14 @@
 package org.tron.peer;
 
-import org.tron.consensus.server.Server;
+import com.google.inject.Injector;
+import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
 import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
+
+import javax.inject.Inject;
 
 /**
  * Builds a peer
@@ -19,9 +22,11 @@ public class PeerBuilder {
     private Wallet wallet;
     private ECKey key;
     private String type;
+    private Injector injector;
 
-    public PeerBuilder() {
-        Server.serverRun();
+    @Inject
+    public PeerBuilder(Injector injector) {
+        this.injector = injector;
     }
 
     private void buildBlockchain() {
@@ -29,12 +34,13 @@ public class PeerBuilder {
         if (type == null) throw new IllegalStateException("Type must be set before building the blockchain");
 
         blockchain = new Blockchain(ByteArray.toHexString(wallet.getAddress()), this.type);
+        blockchain.setClient(injector.getInstance(Client.class));
     }
 
     private void buildUTXOSet() {
         if (blockchain == null) throw new IllegalStateException("Blockchain must be set before building the UTXOSet");
 
-        utxoSet = new UTXOSet();
+        utxoSet = injector.getInstance(UTXOSet.class);
         utxoSet.setBlockchain(blockchain);
         utxoSet.reindex();
     }
@@ -42,8 +48,7 @@ public class PeerBuilder {
     private void buildWallet() {
         if (key == null) throw new IllegalStateException("Key must be set before building the wallet");
 
-        wallet = new Wallet();
-        wallet.init(key);
+        wallet = new Wallet(key);
     }
 
     public PeerBuilder setType(String type) {
@@ -60,6 +65,8 @@ public class PeerBuilder {
         buildWallet();
         buildBlockchain();
         buildUTXOSet();
-        return new Peer(type, blockchain, utxoSet, wallet, key);
+        Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
+        peer.setClient(injector.getInstance(Client.class));
+        return peer;
     }
 }

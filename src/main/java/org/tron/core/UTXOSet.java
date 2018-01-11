@@ -24,6 +24,8 @@ import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.utils.ByteArray;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.*;
 
 import static org.tron.core.Constant.TRANSACTION_DB_NAME;
@@ -34,9 +36,9 @@ public class UTXOSet {
     private Blockchain blockchain;
     private LevelDbDataSourceImpl txDB = null;
 
-    public UTXOSet() {
-        txDB = new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
-        txDB.initDB();
+    @Inject
+    public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
+        txDB = txDb;
     }
 
     public Blockchain getBlockchain() {

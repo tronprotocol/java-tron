@@ -14,6 +14,7 @@
  */
 package org.tron.command;
 
+import org.tron.application.CliApplication;
 import org.tron.core.BlockUtils;
 import org.tron.core.Blockchain;
 import org.tron.core.BlockchainIterator;
@@ -27,7 +28,8 @@ public class PrintBlockchainCommand extends Command {
     }
 
     @Override
-    public void execute(Peer peer, String[] parameters) {
+    public void execute(CliApplication app, String[] parameters) {
+        Peer peer = app.getPeer();
         Blockchain blockchain = peer.getUTXOSet().getBlockchain();
         BlockchainIterator bi = new BlockchainIterator(blockchain);
         while (bi.hasNext()) {
