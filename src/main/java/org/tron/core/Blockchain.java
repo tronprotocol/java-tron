@@ -20,7 +20,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.config.Configer;
 import org.tron.consensus.client.Client;
 import org.tron.crypto.ECKey;
 import org.tron.example.Tron;
@@ -37,15 +36,10 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.*;
 
-import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
 
 public class Blockchain {
@@ -65,7 +59,10 @@ public class Blockchain {
     /**
      * create new blockchain
      *
+     * @param blockDB block database
      * @param address wallet address
+     * @param type peer type
+     *
      */
     public Blockchain(LevelDbDataSourceImpl blockDB, String address, String type) {
         this.blockDB = blockDB;
