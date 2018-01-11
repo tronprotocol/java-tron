@@ -21,14 +21,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.config.Configer;
-import org.tron.consensus.client.Client;
+import org.tron.core.events.BlockchainListener;
 import org.tron.crypto.ECKey;
-import org.tron.example.Tron;
 import org.tron.overlay.Net;
-import org.tron.overlay.message.Message;
-import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
-import org.tron.peer.PeerType;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -60,7 +56,7 @@ public class Blockchain {
     private byte[] lastHash;
     private byte[] currentHash;
 
-    private Client client;
+    private List<BlockchainListener> listeners = new ArrayList<>();
 
     /**
      * create new blockchain
@@ -115,16 +111,10 @@ public class Blockchain {
                     .toByteArray();
             blockDB.putData(LAST_HASH, lastHash);
 
-            // put message to consensus
-            if (type.equals(PeerType.PEER_SERVER) && client != null) {
-                String value = ByteArray.toHexString(genesisBlock.toByteArray());
-                Message message = new Message(value, Type.BLOCK);
-                client.putMessage1(message); // consensus: put message GenesisBlock
-                //Merely for the placeholders, no real meaning
-                Message time = new Message(value, Type.TRANSACTION);
-                client.putMessage1(time);
-
+            for (BlockchainListener listener : listeners) {
+                listener.addGenesisBlock(genesisBlock);
             }
+
             logger.info("new blockchain");
         }
     }
@@ -309,11 +299,8 @@ public class Blockchain {
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
                 number);
 
-        String value = ByteArray.toHexString(block.toByteArray());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
-            Message message = new Message(value, Type.BLOCK);
-            net.broadcast(message);
+        for (BlockchainListener listener : listeners) {
+            listener.addBlockNet(block, net);
         }
     }
 
@@ -325,17 +312,10 @@ public class Blockchain {
         long number = BlockUtils.getIncreaseNumber(this);
         // get difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-                number);
+        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty, number);
 
-        String value = ByteArray.toHexString(block.toByteArray());
-        // View the type of peer
-        //System.out.println(Tron.getPeer().getType());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER) && client != null) {
-            Message message = new Message(value, Type.BLOCK);
-            //net.broadcast(message);
-            client.putMessage1(message); // consensus: put message
+        for (BlockchainListener listener : listeners) {
+            listener.addBlock(block);
         }
     }
 
@@ -373,6 +353,10 @@ public class Blockchain {
         utxoSet.reindex();
     }
 
+    public void addListener(BlockchainListener listener) {
+        this.listeners.add(listener);
+    }
+
     public LevelDbDataSourceImpl getBlockDB() {
         return blockDB;
     }
@@ -403,9 +387,5 @@ public class Blockchain {
 
     public void setCurrentHash(byte[] currentHash) {
         this.currentHash = currentHash;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
     }
 }
