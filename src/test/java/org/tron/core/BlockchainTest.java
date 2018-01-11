@@ -14,9 +14,12 @@
  */
 package org.tron.core;
 
+import com.alibaba.fastjson.JSON;
+import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -29,26 +32,32 @@ import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.tron.core.Blockchain.GENESIS_COINBASE_DATA;
 import static org.tron.core.Blockchain.dbExists;
+import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.utils.ByteArray.toHexString;
 
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
     private static Blockchain blockchain;
+    private static LevelDbDataSourceImpl mockBlockDB;
 
-    @BeforeClass
-    public static void init() {
-       blockchain = new Blockchain
-               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","normal");
-    }
-
-    @AfterClass
-    public static void teardown() {
-        blockchain.getBlockDB().closeDB();
+    @Before
+    public void setup() throws IOException {
+        mockBlockDB = Mockito.mock(LevelDbDataSourceImpl.class);
+        Mockito.when(mockBlockDB.getData(eq(LAST_HASH))).thenReturn(null);
+        Mockito.when(mockBlockDB.getData(any())).thenReturn(ByteArray.fromString(""));
+        blockchain = new Blockchain(
+                mockBlockDB,
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
+                "normal"
+        );
     }
 
     @Test

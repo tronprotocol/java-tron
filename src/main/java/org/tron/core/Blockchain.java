@@ -54,7 +54,7 @@ public class Blockchain {
     public static String parentName=Constant.NORMAL;
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    private LevelDbDataSourceImpl blockDB = null;
+    private LevelDbDataSourceImpl blockDB;
     private PendingState pendingState = new PendingStateImpl();
 
     private byte[] lastHash;
@@ -67,19 +67,11 @@ public class Blockchain {
      *
      * @param address wallet address
      */
-    public Blockchain(String address, String type) {
-        if (dbExists()) {
-            blockDB = new LevelDbDataSourceImpl(parentName,BLOCK_DB_NAME);
-            blockDB.initDB();
+    public Blockchain(LevelDbDataSourceImpl blockDB, String address, String type) {
+        this.blockDB = blockDB;
+        this.lastHash = blockDB.getData(LAST_HASH);
 
-            this.lastHash = blockDB.getData(LAST_HASH);
-            this.currentHash = this.lastHash;
-
-            logger.info("load blockchain");
-        } else {
-            blockDB = new LevelDbDataSourceImpl(Constant.NORMAL,BLOCK_DB_NAME);
-            blockDB.initDB();
-
+        if(this.lastHash == null) {
             InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
             String json = null;
             try {
@@ -126,6 +118,9 @@ public class Blockchain {
 
             }
             logger.info("new blockchain");
+        } else {
+            this.currentHash = this.lastHash;
+            logger.info("load blockchain");
         }
     }
 
