@@ -65,6 +65,11 @@
     <logger name="ConsensusCommand" level="INFO"/>
     <logger name="Application" level="INFO"/>
     <logger name="Services" level="INFO"/>
+    <logger name="GossipManager" level="INFO"/>
+    <logger name="GossipCore" level="INFO"/>
+    <logger name="UdpTransportManager" level="INFO"/>
+    <logger name="AbstractActiveGossiper" level="INFO"/>
+    <logger name="UserDataPersister" level="INFO"/>
 
 </configuration>
 
