@@ -16,8 +16,7 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -29,26 +28,31 @@ import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.tron.core.Blockchain.dbExists;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.utils.ByteArray.toHexString;
 
 public class BlockchainTest {
     private static final Logger logger = LoggerFactory.getLogger("Test");
     private static Blockchain blockchain;
+    private static LevelDbDataSourceImpl mockBlockDB;
 
-    @BeforeClass
-    public static void init() {
-       blockchain = new Blockchain
-               ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85","normal");
-    }
-
-    @AfterClass
-    public static void teardown() {
-        blockchain.getBlockDB().closeDB();
+    @Before
+    public void setup() throws IOException {
+        mockBlockDB = Mockito.mock(LevelDbDataSourceImpl.class);
+        Mockito.when(mockBlockDB.getData(eq(LAST_HASH))).thenReturn(null);
+        Mockito.when(mockBlockDB.getData(any())).thenReturn(ByteArray.fromString(""));
+        blockchain = new Blockchain(
+                mockBlockDB,
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
+                "normal"
+        );
     }
 
     @Test
@@ -96,11 +100,6 @@ public class BlockchainTest {
                 .copyFrom(ByteArray.fromHexString
                         ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
         logger.info("{}", TransactionUtils.toPrintString(transaction));
-    }
-
-    @Test
-    public void testDBExists() {
-        logger.info("test dbStore exists: {}", dbExists());
     }
 
     @Test
