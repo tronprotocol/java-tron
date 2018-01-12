@@ -31,9 +31,6 @@ public class Tron {
     @Parameter(names = {"--type", "-t"}, validateWith = PeerType.class)
     private String type = "normal";
 
-    private static Peer peer;
-
-
     public static void main(String[] args) {
         Tron tron = new Tron();
         JCommander.newBuilder()
@@ -51,7 +48,7 @@ public class Tron {
         app.addService(new Server());
         app.run();
 
-        peer = app.getInjector().getInstance(PeerBuilder.class)
+        Peer peer = app.getInjector().getInstance(PeerBuilder.class)
                 .setKey(Configer.getMyKey())
                 .setType(type)
                 .build();
@@ -60,9 +57,5 @@ public class Tron {
 
         Cli cli = new Cli();
         cli.run(app);
-    }
-
-    public static Peer getPeer() {
-        return peer;
     }
 }
