@@ -20,9 +20,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.config.Configer;
-import org.tron.core.events.BlockchainListener
-import org.tron.consensus.client.Client;
+import org.tron.core.events.BlockchainListener;
 import org.tron.crypto.ECKey;
 import org.tron.overlay.Net;
 import org.tron.peer.Peer;
@@ -43,7 +41,7 @@ import static org.tron.core.Constant.LAST_HASH;
 public class Blockchain {
 
     public static final String GENESIS_COINBASE_DATA = "0x10";
-    public static String parentName=Constant.NORMAL;
+    public static String parentName = Constant.NORMAL;
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
     private LevelDbDataSourceImpl blockDB;
@@ -59,14 +57,13 @@ public class Blockchain {
      *
      * @param blockDB block database
      * @param address wallet address
-     * @param type peer type
-     *
+     * @param type    peer type
      */
     public Blockchain(LevelDbDataSourceImpl blockDB, String address, String type) {
         this.blockDB = blockDB;
         this.lastHash = blockDB.getData(LAST_HASH);
 
-        if(this.lastHash == null) {
+        if (this.lastHash == null) {
             InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
             String json = null;
             try {
