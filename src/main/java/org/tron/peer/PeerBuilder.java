@@ -1,9 +1,9 @@
 package org.tron.peer;
 
 import com.google.inject.Injector;
-import org.tron.consensus.client.BlockchainClientListener;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import org.tron.consensus.client.BlockchainClientListener;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
@@ -16,7 +16,7 @@ import javax.inject.Inject;
 
 /**
  * Builds a peer
- *
+ * <p>
  * Set the key and type before calling build
  */
 public class PeerBuilder {
@@ -39,10 +39,9 @@ public class PeerBuilder {
 
         blockchain = new Blockchain(
                 injector.getInstance(Key.get(LevelDbDataSourceImpl.class, Names.named("block"))),
-                        ByteArray.toHexString(wallet.getAddress()),
-                        this.type
-                );
-        blockchain.setClient(injector.getInstance(Client.class));
+                ByteArray.toHexString(wallet.getAddress()),
+                this.type
+        );
     }
 
     private void buildUTXOSet() {
