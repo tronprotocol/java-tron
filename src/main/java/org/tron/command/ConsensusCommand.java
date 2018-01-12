@@ -51,7 +51,7 @@ public class ConsensusCommand extends Command {
     }
 
     public void getClient(Peer peer) {
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+        if (peer.getType().equals(PeerType.PEER_SERVER)) {
             client.getMessage(peer, MessageType.TRANSACTION);
             client.getMessage(peer, MessageType.BLOCK);
         } else {

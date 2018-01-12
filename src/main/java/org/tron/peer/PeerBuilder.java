@@ -1,6 +1,7 @@
 package org.tron.peer;
 
 import com.google.inject.Injector;
+import org.tron.consensus.client.BlockchainClientListener;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.tron.consensus.client.Client;
@@ -74,6 +75,7 @@ public class PeerBuilder {
         buildUTXOSet();
         Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
         peer.setClient(injector.getInstance(Client.class));
+        blockchain.addListener(new BlockchainClientListener(injector.getInstance(Client.class), peer));
         return peer;
     }
 }
