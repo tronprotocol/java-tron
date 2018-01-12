@@ -20,15 +20,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.config.Configer;
-import org.tron.consensus.client.Client;
+import org.tron.core.events.BlockchainListener;
 import org.tron.crypto.ECKey;
-import org.tron.example.Tron;
 import org.tron.overlay.Net;
-import org.tron.overlay.message.Message;
-import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
-import org.tron.peer.PeerType;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -37,49 +32,38 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.*;
 
-import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
 
 public class Blockchain {
 
     public static final String GENESIS_COINBASE_DATA = "0x10";
-    public static String parentName=Constant.NORMAL;
+    public static String parentName = Constant.NORMAL;
 
     public static final Logger logger = LoggerFactory.getLogger("BlockChain");
-    private LevelDbDataSourceImpl blockDB = null;
+    private LevelDbDataSourceImpl blockDB;
     private PendingState pendingState = new PendingStateImpl();
 
     private byte[] lastHash;
     private byte[] currentHash;
 
-    private Client client;
+    private List<BlockchainListener> listeners = new ArrayList<>();
 
     /**
      * create new blockchain
      *
+     * @param blockDB block database
      * @param address wallet address
+     * @param type    peer type
      */
-    public Blockchain(String address, String type) {
-        if (dbExists()) {
-            blockDB = new LevelDbDataSourceImpl(parentName,BLOCK_DB_NAME);
-            blockDB.initDB();
+    public Blockchain(LevelDbDataSourceImpl blockDB, String address, String type) {
+        this.blockDB = blockDB;
+        this.lastHash = blockDB.getData(LAST_HASH);
 
-            this.lastHash = blockDB.getData(LAST_HASH);
-            this.currentHash = this.lastHash;
-
-            logger.info("load blockchain");
-        } else {
-            blockDB = new LevelDbDataSourceImpl(Constant.NORMAL,BLOCK_DB_NAME);
-            blockDB.initDB();
-
+        if (this.lastHash == null) {
             InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
             String json = null;
             try {
@@ -115,36 +99,15 @@ public class Blockchain {
                     .toByteArray();
             blockDB.putData(LAST_HASH, lastHash);
 
-            // put message to consensus
-            if (type.equals(PeerType.PEER_SERVER) && client != null) {
-                String value = ByteArray.toHexString(genesisBlock.toByteArray());
-                Message message = new Message(value, Type.BLOCK);
-                client.putMessage1(message); // consensus: put message GenesisBlock
-                //Merely for the placeholders, no real meaning
-                Message time = new Message(value, Type.TRANSACTION);
-                client.putMessage1(time);
-
+            for (BlockchainListener listener : listeners) {
+                listener.addGenesisBlock(genesisBlock);
             }
+
             logger.info("new blockchain");
+        } else {
+            this.currentHash = this.lastHash;
+            logger.info("load blockchain");
         }
-    }
-
-    /**
-     * create blockchain by db source
-     */
-    @Inject
-    public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
-        if (!dbExists()) {
-            logger.info("no existing blockchain found. please create one first");
-            throw new IllegalStateException("No existing blockchain found. please create one first");
-        }
-
-        blockDB = blockDb;
-
-        this.lastHash = blockDB.getData(LAST_HASH);
-        this.currentHash = this.lastHash;
-
-        logger.info("load blockchain");
     }
 
     /**
@@ -235,23 +198,6 @@ public class Blockchain {
     }
 
     /**
-     * Checks if the database file exists
-     *
-     * @return boolean
-     */
-    public static boolean dbExists() {
-        if (Constant.NORMAL==parentName){
-            parentName= Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
-        }else {
-            parentName=Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-
-        }
-        File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());
-        return file.exists();
-    }
-
-
-    /**
      * add a block into database
      *
      * @param block
@@ -309,11 +255,8 @@ public class Blockchain {
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
                 number);
 
-        String value = ByteArray.toHexString(block.toByteArray());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
-            Message message = new Message(value, Type.BLOCK);
-            net.broadcast(message);
+        for (BlockchainListener listener : listeners) {
+            listener.addBlockNet(block, net);
         }
     }
 
@@ -325,17 +268,10 @@ public class Blockchain {
         long number = BlockUtils.getIncreaseNumber(this);
         // get difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-                number);
+        Block block = BlockUtils.newBlock(transactions, parentHash, difficulty, number);
 
-        String value = ByteArray.toHexString(block.toByteArray());
-        // View the type of peer
-        //System.out.println(Tron.getPeer().getType());
-
-        if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER) && client != null) {
-            Message message = new Message(value, Type.BLOCK);
-            //net.broadcast(message);
-            client.putMessage1(message); // consensus: put message
+        for (BlockchainListener listener : listeners) {
+            listener.addBlock(block);
         }
     }
 
@@ -373,6 +309,10 @@ public class Blockchain {
         utxoSet.reindex();
     }
 
+    public void addListener(BlockchainListener listener) {
+        this.listeners.add(listener);
+    }
+
     public LevelDbDataSourceImpl getBlockDB() {
         return blockDB;
     }
@@ -403,9 +343,5 @@ public class Blockchain {
 
     public void setCurrentHash(byte[] currentHash) {
         this.currentHash = currentHash;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
     }
 }
