@@ -32,6 +32,8 @@ import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -56,10 +58,8 @@ public class Blockchain {
      * create new blockchain
      *
      * @param blockDB block database
-     * @param address wallet address
-     * @param type    peer type
      */
-    public Blockchain(LevelDbDataSourceImpl blockDB, String address, String type) {
+    public Blockchain(@Named("block") LevelDbDataSourceImpl blockDB) {
         this.blockDB = blockDB;
         this.lastHash = blockDB.getData(LAST_HASH);
 

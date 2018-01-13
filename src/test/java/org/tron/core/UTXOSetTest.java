@@ -8,7 +8,6 @@ import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
 import java.util.HashMap;
-import java.util.UUID;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -32,8 +31,7 @@ public class UTXOSetTest {
 
         LevelDbDataSourceImpl mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
 
-        UTXOSet utxoSet = new UTXOSet(mockTransactionDb);
-        utxoSet.setBlockchain(mockBlockchain);
+        UTXOSet utxoSet = new UTXOSet(mockTransactionDb, mockBlockchain);
 
         utxoSet.reindex();
         Mockito.verify(mockTransactionDb, times(1)).resetDB();
