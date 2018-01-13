@@ -4,7 +4,50 @@
 package org.tron.protos.core;
 
 public final class TronBlock {
-  private TronBlock() {}
+  private static final com.google.protobuf.Descriptors.Descriptor
+      internal_static_protos_Block_descriptor;
+  private static final
+  com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_protos_Block_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.FileDescriptor
+      descriptor;
+
+  static {
+    java.lang.String[] descriptorData = {
+        "\n\024core/TronBlock.proto\022\006protos\032\032core/Tro" +
+            "nTransaction.proto\032\032core/TronBlockHeader" +
+            ".proto\"\\\n\005Block\022)\n\014transactions\030\001 \003(\0132\023." +
+            "protos.Transaction\022(\n\013blockHeader\030\002 \001(\0132" +
+            "\023.protos.BlockHeaderB!\n\024org.tron.protos." +
+            "coreB\tTronBlockb\006proto3"
+    };
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+        new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalBuildGeneratedFileFrom(descriptorData,
+            new com.google.protobuf.Descriptors.FileDescriptor[] {
+                org.tron.protos.core.TronTransaction.getDescriptor(),
+                org.tron.protos.core.TronBlockHeader.getDescriptor(),
+            }, assigner);
+    internal_static_protos_Block_descriptor =
+        getDescriptor().getMessageTypes().get(0);
+    internal_static_protos_Block_fieldAccessorTable = new
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_protos_Block_descriptor,
+        new java.lang.String[] {"Transactions", "BlockHeader",});
+    org.tron.protos.core.TronTransaction.getDescriptor();
+    org.tron.protos.core.TronBlockHeader.getDescriptor();
+  }
+
+  private TronBlock() {
+  }
+
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistryLite registry) {
   }
@@ -14,6 +57,12 @@ public final class TronBlock {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+
+  public static com.google.protobuf.Descriptors.FileDescriptor
+  getDescriptor() {
+    return descriptor;
+  }
+
   public interface BlockOrBuilder extends
       // @@protoc_insertion_point(interface_extends:protos.Block)
       com.google.protobuf.MessageOrBuilder {
@@ -21,21 +70,25 @@ public final class TronBlock {
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
-    java.util.List<org.tron.protos.core.TronTransaction.Transaction> 
-        getTransactionsList();
+    java.util.List<org.tron.protos.core.TronTransaction.Transaction>
+    getTransactionsList();
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
     org.tron.protos.core.TronTransaction.Transaction getTransactions(int index);
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
     int getTransactionsCount();
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
-    java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder> 
-        getTransactionsOrBuilderList();
+    java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder>
+    getTransactionsOrBuilderList();
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
@@ -46,36 +99,58 @@ public final class TronBlock {
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     boolean hasBlockHeader();
+
     /**
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     org.tron.protos.core.TronBlockHeader.BlockHeader getBlockHeader();
+
     /**
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder getBlockHeaderOrBuilder();
   }
+
   /**
    * Protobuf type {@code protos.Block}
    */
-  public  static final class Block extends
+  public static final class Block extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:protos.Block)
       BlockOrBuilder {
-  private static final long serialVersionUID = 0L;
+    public static final int TRANSACTIONS_FIELD_NUMBER = 1;
+    public static final int BLOCKHEADER_FIELD_NUMBER = 2;
+    private static final long serialVersionUID = 0L;
+    // @@protoc_insertion_point(class_scope:protos.Block)
+    private static final org.tron.protos.core.TronBlock.Block DEFAULT_INSTANCE;
+    private static final com.google.protobuf.Parser<Block>
+        PARSER = new com.google.protobuf.AbstractParser<Block>() {
+      public Block parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Block(input, extensionRegistry);
+      }
+    };
+
+    static {
+      DEFAULT_INSTANCE = new org.tron.protos.core.TronBlock.Block();
+    }
+
+    private int bitField0_;
+    private java.util.List<org.tron.protos.core.TronTransaction.Transaction> transactions_;
+    private org.tron.protos.core.TronBlockHeader.BlockHeader blockHeader_;
+    private byte memoizedIsInitialized = -1;
+
     // Use Block.newBuilder() to construct.
     private Block(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
+
     private Block() {
       transactions_ = java.util.Collections.emptyList();
     }
 
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
     private Block(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -136,46 +211,151 @@ public final class TronBlock {
         makeExtensionsImmutable();
       }
     }
+
     public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
+    getDescriptor() {
       return org.tron.protos.core.TronBlock.internal_static_protos_Block_descriptor;
     }
 
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+
+    public static Builder newBuilder(org.tron.protos.core.TronBlock.Block prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+
+    public static org.tron.protos.core.TronBlock.Block getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public static com.google.protobuf.Parser<Block> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
+    internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronBlock.internal_static_protos_Block_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.tron.protos.core.TronBlock.Block.class, org.tron.protos.core.TronBlock.Block.Builder.class);
     }
 
-    private int bitField0_;
-    public static final int TRANSACTIONS_FIELD_NUMBER = 1;
-    private java.util.List<org.tron.protos.core.TronTransaction.Transaction> transactions_;
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
     public java.util.List<org.tron.protos.core.TronTransaction.Transaction> getTransactionsList() {
       return transactions_;
     }
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
-    public java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder> 
-        getTransactionsOrBuilderList() {
+    public java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder>
+    getTransactionsOrBuilderList() {
       return transactions_;
     }
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
     public int getTransactionsCount() {
       return transactions_.size();
     }
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
     public org.tron.protos.core.TronTransaction.Transaction getTransactions(int index) {
       return transactions_.get(index);
     }
+
     /**
      * <code>repeated .protos.Transaction transactions = 1;</code>
      */
@@ -184,20 +364,20 @@ public final class TronBlock {
       return transactions_.get(index);
     }
 
-    public static final int BLOCKHEADER_FIELD_NUMBER = 2;
-    private org.tron.protos.core.TronBlockHeader.BlockHeader blockHeader_;
     /**
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     public boolean hasBlockHeader() {
       return blockHeader_ != null;
     }
+
     /**
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     public org.tron.protos.core.TronBlockHeader.BlockHeader getBlockHeader() {
       return blockHeader_ == null ? org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance() : blockHeader_;
     }
+
     /**
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
@@ -205,18 +385,21 @@ public final class TronBlock {
       return getBlockHeader();
     }
 
-    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
+      if (isInitialized == 1) {
+        return true;
+      }
+      if (isInitialized == 0) {
+        return false;
+      }
 
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+        throws java.io.IOException {
       for (int i = 0; i < transactions_.size(); i++) {
         output.writeMessage(1, transactions_.get(i));
       }
@@ -228,16 +411,18 @@ public final class TronBlock {
 
     public int getSerializedSize() {
       int size = memoizedSize;
-      if (size != -1) return size;
+      if (size != -1) {
+        return size;
+      }
 
       size = 0;
       for (int i = 0; i < transactions_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, transactions_.get(i));
+            .computeMessageSize(1, transactions_.get(i));
       }
       if (blockHeader_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, getBlockHeader());
+            .computeMessageSize(2, getBlockHeader());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -247,7 +432,7 @@ public final class TronBlock {
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
-       return true;
+        return true;
       }
       if (!(obj instanceof org.tron.protos.core.TronBlock.Block)) {
         return super.equals(obj);
@@ -286,83 +471,10 @@ public final class TronBlock {
       return hash;
     }
 
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlock.Block parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
+    public Builder newBuilderForType() {
+      return newBuilder();
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(org.tron.protos.core.TronBlock.Block prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -374,6 +486,16 @@ public final class TronBlock {
       Builder builder = new Builder(parent);
       return builder;
     }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Block> getParserForType() {
+      return PARSER;
+    }
+
+    public org.tron.protos.core.TronBlock.Block getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
     /**
      * Protobuf type {@code protos.Block}
      */
@@ -381,17 +503,14 @@ public final class TronBlock {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:protos.Block)
         org.tron.protos.core.TronBlock.BlockOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.tron.protos.core.TronBlock.internal_static_protos_Block_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.tron.protos.core.TronBlock.internal_static_protos_Block_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronBlock.Block.class, org.tron.protos.core.TronBlock.Block.Builder.class);
-      }
+      private int bitField0_;
+      private java.util.List<org.tron.protos.core.TronTransaction.Transaction> transactions_ =
+          java.util.Collections.emptyList();
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          org.tron.protos.core.TronTransaction.Transaction, org.tron.protos.core.TronTransaction.Transaction.Builder, org.tron.protos.core.TronTransaction.TransactionOrBuilder> transactionsBuilder_;
+      private org.tron.protos.core.TronBlockHeader.BlockHeader blockHeader_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.tron.protos.core.TronBlockHeader.BlockHeader, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder, org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder> blockHeaderBuilder_;
 
       // Construct using org.tron.protos.core.TronBlock.Block.newBuilder()
       private Builder() {
@@ -403,12 +522,26 @@ public final class TronBlock {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+      getDescriptor() {
+        return org.tron.protos.core.TronBlock.internal_static_protos_Block_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+        return org.tron.protos.core.TronBlock.internal_static_protos_Block_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.tron.protos.core.TronBlock.Block.class, org.tron.protos.core.TronBlock.Block.Builder.class);
+      }
+
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+            .alwaysUseFieldBuilders) {
           getTransactionsFieldBuilder();
         }
       }
+
       public Builder clear() {
         super.clear();
         if (transactionsBuilder_ == null) {
@@ -427,7 +560,7 @@ public final class TronBlock {
       }
 
       public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
+      getDescriptorForType() {
         return org.tron.protos.core.TronBlock.internal_static_protos_Block_descriptor;
       }
 
@@ -469,32 +602,38 @@ public final class TronBlock {
       public Builder clone() {
         return (Builder) super.clone();
       }
+
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.tron.protos.core.TronBlock.Block) {
-          return mergeFrom((org.tron.protos.core.TronBlock.Block)other);
+          return mergeFrom((org.tron.protos.core.TronBlock.Block) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -502,7 +641,9 @@ public final class TronBlock {
       }
 
       public Builder mergeFrom(org.tron.protos.core.TronBlock.Block other) {
-        if (other == org.tron.protos.core.TronBlock.Block.getDefaultInstance()) return this;
+        if (other == org.tron.protos.core.TronBlock.Block.getDefaultInstance()) {
+          return this;
+        }
         if (transactionsBuilder_ == null) {
           if (!other.transactions_.isEmpty()) {
             if (transactions_.isEmpty()) {
@@ -521,9 +662,9 @@ public final class TronBlock {
               transactionsBuilder_ = null;
               transactions_ = other.transactions_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              transactionsBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getTransactionsFieldBuilder() : null;
+              transactionsBuilder_ =
+                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                      getTransactionsFieldBuilder() : null;
             } else {
               transactionsBuilder_.addAllMessages(other.transactions_);
             }
@@ -558,19 +699,13 @@ public final class TronBlock {
         }
         return this;
       }
-      private int bitField0_;
 
-      private java.util.List<org.tron.protos.core.TronTransaction.Transaction> transactions_ =
-        java.util.Collections.emptyList();
       private void ensureTransactionsIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
           transactions_ = new java.util.ArrayList<org.tron.protos.core.TronTransaction.Transaction>(transactions_);
           bitField0_ |= 0x00000001;
-         }
+        }
       }
-
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTransaction.Transaction, org.tron.protos.core.TronTransaction.Transaction.Builder, org.tron.protos.core.TronTransaction.TransactionOrBuilder> transactionsBuilder_;
 
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
@@ -582,6 +717,7 @@ public final class TronBlock {
           return transactionsBuilder_.getMessageList();
         }
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -592,6 +728,7 @@ public final class TronBlock {
           return transactionsBuilder_.getCount();
         }
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -602,6 +739,7 @@ public final class TronBlock {
           return transactionsBuilder_.getMessage(index);
         }
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -619,6 +757,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -633,6 +772,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -649,6 +789,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -666,6 +807,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -680,6 +822,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -694,6 +837,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -709,6 +853,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -722,6 +867,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -735,6 +881,7 @@ public final class TronBlock {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -742,27 +889,31 @@ public final class TronBlock {
           int index) {
         return getTransactionsFieldBuilder().getBuilder(index);
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
       public org.tron.protos.core.TronTransaction.TransactionOrBuilder getTransactionsOrBuilder(
           int index) {
         if (transactionsBuilder_ == null) {
-          return transactions_.get(index);  } else {
+          return transactions_.get(index);
+        } else {
           return transactionsBuilder_.getMessageOrBuilder(index);
         }
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
-      public java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder> 
-           getTransactionsOrBuilderList() {
+      public java.util.List<? extends org.tron.protos.core.TronTransaction.TransactionOrBuilder>
+      getTransactionsOrBuilderList() {
         if (transactionsBuilder_ != null) {
           return transactionsBuilder_.getMessageOrBuilderList();
         } else {
           return java.util.Collections.unmodifiableList(transactions_);
         }
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -770,6 +921,7 @@ public final class TronBlock {
         return getTransactionsFieldBuilder().addBuilder(
             org.tron.protos.core.TronTransaction.Transaction.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
@@ -778,37 +930,37 @@ public final class TronBlock {
         return getTransactionsFieldBuilder().addBuilder(
             index, org.tron.protos.core.TronTransaction.Transaction.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.Transaction transactions = 1;</code>
        */
-      public java.util.List<org.tron.protos.core.TronTransaction.Transaction.Builder> 
-           getTransactionsBuilderList() {
+      public java.util.List<org.tron.protos.core.TronTransaction.Transaction.Builder>
+      getTransactionsBuilderList() {
         return getTransactionsFieldBuilder().getBuilderList();
       }
+
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTransaction.Transaction, org.tron.protos.core.TronTransaction.Transaction.Builder, org.tron.protos.core.TronTransaction.TransactionOrBuilder> 
-          getTransactionsFieldBuilder() {
+          org.tron.protos.core.TronTransaction.Transaction, org.tron.protos.core.TronTransaction.Transaction.Builder, org.tron.protos.core.TronTransaction.TransactionOrBuilder>
+      getTransactionsFieldBuilder() {
         if (transactionsBuilder_ == null) {
           transactionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.tron.protos.core.TronTransaction.Transaction, org.tron.protos.core.TronTransaction.Transaction.Builder, org.tron.protos.core.TronTransaction.TransactionOrBuilder>(
-                  transactions_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
+              transactions_,
+              ((bitField0_ & 0x00000001) == 0x00000001),
+              getParentForChildren(),
+              isClean());
           transactions_ = null;
         }
         return transactionsBuilder_;
       }
 
-      private org.tron.protos.core.TronBlockHeader.BlockHeader blockHeader_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          org.tron.protos.core.TronBlockHeader.BlockHeader, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder, org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder> blockHeaderBuilder_;
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
       public boolean hasBlockHeader() {
         return blockHeaderBuilder_ != null || blockHeader_ != null;
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -819,6 +971,7 @@ public final class TronBlock {
           return blockHeaderBuilder_.getMessage();
         }
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -835,6 +988,7 @@ public final class TronBlock {
 
         return this;
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -849,6 +1003,7 @@ public final class TronBlock {
 
         return this;
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -856,7 +1011,7 @@ public final class TronBlock {
         if (blockHeaderBuilder_ == null) {
           if (blockHeader_ != null) {
             blockHeader_ =
-              org.tron.protos.core.TronBlockHeader.BlockHeader.newBuilder(blockHeader_).mergeFrom(value).buildPartial();
+                org.tron.protos.core.TronBlockHeader.BlockHeader.newBuilder(blockHeader_).mergeFrom(value).buildPartial();
           } else {
             blockHeader_ = value;
           }
@@ -867,6 +1022,7 @@ public final class TronBlock {
 
         return this;
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -881,14 +1037,16 @@ public final class TronBlock {
 
         return this;
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
       public org.tron.protos.core.TronBlockHeader.BlockHeader.Builder getBlockHeaderBuilder() {
-        
+
         onChanged();
         return getBlockHeaderFieldBuilder().getBuilder();
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
@@ -900,22 +1058,24 @@ public final class TronBlock {
               org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance() : blockHeader_;
         }
       }
+
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          org.tron.protos.core.TronBlockHeader.BlockHeader, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder, org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder> 
-          getBlockHeaderFieldBuilder() {
+          org.tron.protos.core.TronBlockHeader.BlockHeader, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder, org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder>
+      getBlockHeaderFieldBuilder() {
         if (blockHeaderBuilder_ == null) {
           blockHeaderBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               org.tron.protos.core.TronBlockHeader.BlockHeader, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder, org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder>(
-                  getBlockHeader(),
-                  getParentForChildren(),
-                  isClean());
+              getBlockHeader(),
+              getParentForChildren(),
+              isClean());
           blockHeader_ = null;
         }
         return blockHeaderBuilder_;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFieldsProto3(unknownFields);
@@ -930,84 +1090,6 @@ public final class TronBlock {
       // @@protoc_insertion_point(builder_scope:protos.Block)
     }
 
-    // @@protoc_insertion_point(class_scope:protos.Block)
-    private static final org.tron.protos.core.TronBlock.Block DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new org.tron.protos.core.TronBlock.Block();
-    }
-
-    public static org.tron.protos.core.TronBlock.Block getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<Block>
-        PARSER = new com.google.protobuf.AbstractParser<Block>() {
-      public Block parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Block(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Block> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Block> getParserForType() {
-      return PARSER;
-    }
-
-    public org.tron.protos.core.TronBlock.Block getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_protos_Block_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_protos_Block_fieldAccessorTable;
-
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\024core/TronBlock.proto\022\006protos\032\032core/Tro" +
-      "nTransaction.proto\032\032core/TronBlockHeader" +
-      ".proto\"\\\n\005Block\022)\n\014transactions\030\001 \003(\0132\023." +
-      "protos.Transaction\022(\n\013blockHeader\030\002 \001(\0132" +
-      "\023.protos.BlockHeaderB!\n\024org.tron.protos." +
-      "coreB\tTronBlockb\006proto3"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-          org.tron.protos.core.TronTransaction.getDescriptor(),
-          org.tron.protos.core.TronBlockHeader.getDescriptor(),
-        }, assigner);
-    internal_static_protos_Block_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_protos_Block_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_protos_Block_descriptor,
-        new java.lang.String[] { "Transactions", "BlockHeader", });
-    org.tron.protos.core.TronTransaction.getDescriptor();
-    org.tron.protos.core.TronBlockHeader.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)
