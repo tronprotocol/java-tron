@@ -62,7 +62,7 @@ public class UTXOSet {
             String key = entry.getKey();
             TXOutputs value = entry.getValue();
 
-            for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
+            for (TronTXOutput.TXOutput ignored : value.getOutputsList()) {
                 txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
             }
         }
