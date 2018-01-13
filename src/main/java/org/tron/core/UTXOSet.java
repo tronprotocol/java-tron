@@ -32,7 +32,7 @@ public class UTXOSet {
     private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
     private Blockchain blockchain;
-    private LevelDbDataSourceImpl txDB = null;
+    private LevelDbDataSourceImpl txDB;
 
     @Inject
     public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
