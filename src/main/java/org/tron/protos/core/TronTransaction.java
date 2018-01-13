@@ -4,7 +4,50 @@
 package org.tron.protos.core;
 
 public final class TronTransaction {
-  private TronTransaction() {}
+  private static final com.google.protobuf.Descriptors.Descriptor
+      internal_static_protos_Transaction_descriptor;
+  private static final
+  com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_protos_Transaction_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.FileDescriptor
+      descriptor;
+
+  static {
+    java.lang.String[] descriptorData = {
+        "\n\032core/TronTransaction.proto\022\006protos\032\026co" +
+            "re/TronTXInput.proto\032\027core/TronTXOutput." +
+            "proto\"W\n\013Transaction\022\n\n\002id\030\001 \001(\014\022\034\n\003vin\030" +
+            "\002 \003(\0132\017.protos.TXInput\022\036\n\004vout\030\003 \003(\0132\020.p" +
+            "rotos.TXOutputB\'\n\024org.tron.protos.coreB\017" +
+            "TronTransactionb\006proto3"
+    };
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+        new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalBuildGeneratedFileFrom(descriptorData,
+            new com.google.protobuf.Descriptors.FileDescriptor[] {
+                org.tron.protos.core.TronTXInput.getDescriptor(),
+                org.tron.protos.core.TronTXOutput.getDescriptor(),
+            }, assigner);
+    internal_static_protos_Transaction_descriptor =
+        getDescriptor().getMessageTypes().get(0);
+    internal_static_protos_Transaction_fieldAccessorTable = new
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_protos_Transaction_descriptor,
+        new java.lang.String[] {"Id", "Vin", "Vout",});
+    org.tron.protos.core.TronTXInput.getDescriptor();
+    org.tron.protos.core.TronTXOutput.getDescriptor();
+  }
+
+  private TronTransaction() {
+  }
+
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistryLite registry) {
   }
@@ -14,6 +57,12 @@ public final class TronTransaction {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+
+  public static com.google.protobuf.Descriptors.FileDescriptor
+  getDescriptor() {
+    return descriptor;
+  }
+
   public interface TransactionOrBuilder extends
       // @@protoc_insertion_point(interface_extends:protos.Transaction)
       com.google.protobuf.MessageOrBuilder {
@@ -26,21 +75,25 @@ public final class TronTransaction {
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
-    java.util.List<org.tron.protos.core.TronTXInput.TXInput> 
-        getVinList();
+    java.util.List<org.tron.protos.core.TronTXInput.TXInput>
+    getVinList();
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
     org.tron.protos.core.TronTXInput.TXInput getVin(int index);
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
     int getVinCount();
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
-    java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder> 
-        getVinOrBuilderList();
+    java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder>
+    getVinOrBuilderList();
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
@@ -50,50 +103,76 @@ public final class TronTransaction {
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
-    java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> 
-        getVoutList();
+    java.util.List<org.tron.protos.core.TronTXOutput.TXOutput>
+    getVoutList();
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     org.tron.protos.core.TronTXOutput.TXOutput getVout(int index);
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     int getVoutCount();
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
-    java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> 
-        getVoutOrBuilderList();
+    java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder>
+    getVoutOrBuilderList();
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     org.tron.protos.core.TronTXOutput.TXOutputOrBuilder getVoutOrBuilder(
         int index);
   }
+
   /**
    * Protobuf type {@code protos.Transaction}
    */
-  public  static final class Transaction extends
+  public static final class Transaction extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:protos.Transaction)
       TransactionOrBuilder {
-  private static final long serialVersionUID = 0L;
+    public static final int ID_FIELD_NUMBER = 1;
+    public static final int VIN_FIELD_NUMBER = 2;
+    public static final int VOUT_FIELD_NUMBER = 3;
+    private static final long serialVersionUID = 0L;
+    // @@protoc_insertion_point(class_scope:protos.Transaction)
+    private static final org.tron.protos.core.TronTransaction.Transaction DEFAULT_INSTANCE;
+    private static final com.google.protobuf.Parser<Transaction>
+        PARSER = new com.google.protobuf.AbstractParser<Transaction>() {
+      public Transaction parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Transaction(input, extensionRegistry);
+      }
+    };
+
+    static {
+      DEFAULT_INSTANCE = new org.tron.protos.core.TronTransaction.Transaction();
+    }
+
+    private int bitField0_;
+    private com.google.protobuf.ByteString id_;
+    private java.util.List<org.tron.protos.core.TronTXInput.TXInput> vin_;
+    private java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> vout_;
+    private byte memoizedIsInitialized = -1;
+
     // Use Transaction.newBuilder() to construct.
     private Transaction(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
+
     private Transaction() {
       id_ = com.google.protobuf.ByteString.EMPTY;
       vin_ = java.util.Collections.emptyList();
       vout_ = java.util.Collections.emptyList();
     }
 
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
     private Transaction(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -158,21 +237,122 @@ public final class TronTransaction {
         makeExtensionsImmutable();
       }
     }
+
     public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
+    getDescriptor() {
       return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_descriptor;
     }
 
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+
+    public static Builder newBuilder(org.tron.protos.core.TronTransaction.Transaction prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+
+    public static org.tron.protos.core.TronTransaction.Transaction getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public static com.google.protobuf.Parser<Transaction> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
+    internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.tron.protos.core.TronTransaction.Transaction.class, org.tron.protos.core.TronTransaction.Transaction.Builder.class);
     }
 
-    private int bitField0_;
-    public static final int ID_FIELD_NUMBER = 1;
-    private com.google.protobuf.ByteString id_;
     /**
      * <code>bytes id = 1;</code>
      */
@@ -180,33 +360,35 @@ public final class TronTransaction {
       return id_;
     }
 
-    public static final int VIN_FIELD_NUMBER = 2;
-    private java.util.List<org.tron.protos.core.TronTXInput.TXInput> vin_;
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
     public java.util.List<org.tron.protos.core.TronTXInput.TXInput> getVinList() {
       return vin_;
     }
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
-    public java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder> 
-        getVinOrBuilderList() {
+    public java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder>
+    getVinOrBuilderList() {
       return vin_;
     }
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
     public int getVinCount() {
       return vin_.size();
     }
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
     public org.tron.protos.core.TronTXInput.TXInput getVin(int index) {
       return vin_.get(index);
     }
+
     /**
      * <code>repeated .protos.TXInput vin = 2;</code>
      */
@@ -215,33 +397,35 @@ public final class TronTransaction {
       return vin_.get(index);
     }
 
-    public static final int VOUT_FIELD_NUMBER = 3;
-    private java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> vout_;
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     public java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> getVoutList() {
       return vout_;
     }
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
-    public java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> 
-        getVoutOrBuilderList() {
+    public java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder>
+    getVoutOrBuilderList() {
       return vout_;
     }
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     public int getVoutCount() {
       return vout_.size();
     }
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
     public org.tron.protos.core.TronTXOutput.TXOutput getVout(int index) {
       return vout_.get(index);
     }
+
     /**
      * <code>repeated .protos.TXOutput vout = 3;</code>
      */
@@ -250,18 +434,21 @@ public final class TronTransaction {
       return vout_.get(index);
     }
 
-    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
+      if (isInitialized == 1) {
+        return true;
+      }
+      if (isInitialized == 0) {
+        return false;
+      }
 
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+        throws java.io.IOException {
       if (!id_.isEmpty()) {
         output.writeBytes(1, id_);
       }
@@ -276,20 +463,22 @@ public final class TronTransaction {
 
     public int getSerializedSize() {
       int size = memoizedSize;
-      if (size != -1) return size;
+      if (size != -1) {
+        return size;
+      }
 
       size = 0;
       if (!id_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, id_);
+            .computeBytesSize(1, id_);
       }
       for (int i = 0; i < vin_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, vin_.get(i));
+            .computeMessageSize(2, vin_.get(i));
       }
       for (int i = 0; i < vout_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, vout_.get(i));
+            .computeMessageSize(3, vout_.get(i));
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -299,7 +488,7 @@ public final class TronTransaction {
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
-       return true;
+        return true;
       }
       if (!(obj instanceof org.tron.protos.core.TronTransaction.Transaction)) {
         return super.equals(obj);
@@ -339,83 +528,10 @@ public final class TronTransaction {
       return hash;
     }
 
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
+    public Builder newBuilderForType() {
+      return newBuilder();
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(org.tron.protos.core.TronTransaction.Transaction prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -427,6 +543,16 @@ public final class TronTransaction {
       Builder builder = new Builder(parent);
       return builder;
     }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Transaction> getParserForType() {
+      return PARSER;
+    }
+
+    public org.tron.protos.core.TronTransaction.Transaction getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
     /**
      * Protobuf type {@code protos.Transaction}
      */
@@ -434,17 +560,16 @@ public final class TronTransaction {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:protos.Transaction)
         org.tron.protos.core.TronTransaction.TransactionOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronTransaction.Transaction.class, org.tron.protos.core.TronTransaction.Transaction.Builder.class);
-      }
+      private int bitField0_;
+      private com.google.protobuf.ByteString id_ = com.google.protobuf.ByteString.EMPTY;
+      private java.util.List<org.tron.protos.core.TronTXInput.TXInput> vin_ =
+          java.util.Collections.emptyList();
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          org.tron.protos.core.TronTXInput.TXInput, org.tron.protos.core.TronTXInput.TXInput.Builder, org.tron.protos.core.TronTXInput.TXInputOrBuilder> vinBuilder_;
+      private java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> vout_ =
+          java.util.Collections.emptyList();
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          org.tron.protos.core.TronTXOutput.TXOutput, org.tron.protos.core.TronTXOutput.TXOutput.Builder, org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> voutBuilder_;
 
       // Construct using org.tron.protos.core.TronTransaction.Transaction.newBuilder()
       private Builder() {
@@ -456,13 +581,27 @@ public final class TronTransaction {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+      getDescriptor() {
+        return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+        return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.tron.protos.core.TronTransaction.Transaction.class, org.tron.protos.core.TronTransaction.Transaction.Builder.class);
+      }
+
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+            .alwaysUseFieldBuilders) {
           getVinFieldBuilder();
           getVoutFieldBuilder();
         }
       }
+
       public Builder clear() {
         super.clear();
         id_ = com.google.protobuf.ByteString.EMPTY;
@@ -483,7 +622,7 @@ public final class TronTransaction {
       }
 
       public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
+      getDescriptorForType() {
         return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_descriptor;
       }
 
@@ -530,32 +669,38 @@ public final class TronTransaction {
       public Builder clone() {
         return (Builder) super.clone();
       }
+
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.tron.protos.core.TronTransaction.Transaction) {
-          return mergeFrom((org.tron.protos.core.TronTransaction.Transaction)other);
+          return mergeFrom((org.tron.protos.core.TronTransaction.Transaction) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -563,7 +708,9 @@ public final class TronTransaction {
       }
 
       public Builder mergeFrom(org.tron.protos.core.TronTransaction.Transaction other) {
-        if (other == org.tron.protos.core.TronTransaction.Transaction.getDefaultInstance()) return this;
+        if (other == org.tron.protos.core.TronTransaction.Transaction.getDefaultInstance()) {
+          return this;
+        }
         if (other.getId() != com.google.protobuf.ByteString.EMPTY) {
           setId(other.getId());
         }
@@ -585,9 +732,9 @@ public final class TronTransaction {
               vinBuilder_ = null;
               vin_ = other.vin_;
               bitField0_ = (bitField0_ & ~0x00000002);
-              vinBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getVinFieldBuilder() : null;
+              vinBuilder_ =
+                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                      getVinFieldBuilder() : null;
             } else {
               vinBuilder_.addAllMessages(other.vin_);
             }
@@ -611,9 +758,9 @@ public final class TronTransaction {
               voutBuilder_ = null;
               vout_ = other.vout_;
               bitField0_ = (bitField0_ & ~0x00000004);
-              voutBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getVoutFieldBuilder() : null;
+              voutBuilder_ =
+                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                      getVoutFieldBuilder() : null;
             } else {
               voutBuilder_.addAllMessages(other.vout_);
             }
@@ -645,48 +792,43 @@ public final class TronTransaction {
         }
         return this;
       }
-      private int bitField0_;
 
-      private com.google.protobuf.ByteString id_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes id = 1;</code>
        */
       public com.google.protobuf.ByteString getId() {
         return id_;
       }
+
       /**
        * <code>bytes id = 1;</code>
        */
       public Builder setId(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         id_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes id = 1;</code>
        */
       public Builder clearId() {
-        
+
         id_ = getDefaultInstance().getId();
         onChanged();
         return this;
       }
 
-      private java.util.List<org.tron.protos.core.TronTXInput.TXInput> vin_ =
-        java.util.Collections.emptyList();
       private void ensureVinIsMutable() {
         if (!((bitField0_ & 0x00000002) == 0x00000002)) {
           vin_ = new java.util.ArrayList<org.tron.protos.core.TronTXInput.TXInput>(vin_);
           bitField0_ |= 0x00000002;
-         }
+        }
       }
-
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTXInput.TXInput, org.tron.protos.core.TronTXInput.TXInput.Builder, org.tron.protos.core.TronTXInput.TXInputOrBuilder> vinBuilder_;
 
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
@@ -698,6 +840,7 @@ public final class TronTransaction {
           return vinBuilder_.getMessageList();
         }
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -708,6 +851,7 @@ public final class TronTransaction {
           return vinBuilder_.getCount();
         }
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -718,6 +862,7 @@ public final class TronTransaction {
           return vinBuilder_.getMessage(index);
         }
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -735,6 +880,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -749,6 +895,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -765,6 +912,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -782,6 +930,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -796,6 +945,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -810,6 +960,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -825,6 +976,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -838,6 +990,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -851,6 +1004,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -858,27 +1012,31 @@ public final class TronTransaction {
           int index) {
         return getVinFieldBuilder().getBuilder(index);
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
       public org.tron.protos.core.TronTXInput.TXInputOrBuilder getVinOrBuilder(
           int index) {
         if (vinBuilder_ == null) {
-          return vin_.get(index);  } else {
+          return vin_.get(index);
+        } else {
           return vinBuilder_.getMessageOrBuilder(index);
         }
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
-      public java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder> 
-           getVinOrBuilderList() {
+      public java.util.List<? extends org.tron.protos.core.TronTXInput.TXInputOrBuilder>
+      getVinOrBuilderList() {
         if (vinBuilder_ != null) {
           return vinBuilder_.getMessageOrBuilderList();
         } else {
           return java.util.Collections.unmodifiableList(vin_);
         }
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -886,6 +1044,7 @@ public final class TronTransaction {
         return getVinFieldBuilder().addBuilder(
             org.tron.protos.core.TronTXInput.TXInput.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
@@ -894,39 +1053,36 @@ public final class TronTransaction {
         return getVinFieldBuilder().addBuilder(
             index, org.tron.protos.core.TronTXInput.TXInput.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.TXInput vin = 2;</code>
        */
-      public java.util.List<org.tron.protos.core.TronTXInput.TXInput.Builder> 
-           getVinBuilderList() {
+      public java.util.List<org.tron.protos.core.TronTXInput.TXInput.Builder>
+      getVinBuilderList() {
         return getVinFieldBuilder().getBuilderList();
       }
+
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTXInput.TXInput, org.tron.protos.core.TronTXInput.TXInput.Builder, org.tron.protos.core.TronTXInput.TXInputOrBuilder> 
-          getVinFieldBuilder() {
+          org.tron.protos.core.TronTXInput.TXInput, org.tron.protos.core.TronTXInput.TXInput.Builder, org.tron.protos.core.TronTXInput.TXInputOrBuilder>
+      getVinFieldBuilder() {
         if (vinBuilder_ == null) {
           vinBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.tron.protos.core.TronTXInput.TXInput, org.tron.protos.core.TronTXInput.TXInput.Builder, org.tron.protos.core.TronTXInput.TXInputOrBuilder>(
-                  vin_,
-                  ((bitField0_ & 0x00000002) == 0x00000002),
-                  getParentForChildren(),
-                  isClean());
+              vin_,
+              ((bitField0_ & 0x00000002) == 0x00000002),
+              getParentForChildren(),
+              isClean());
           vin_ = null;
         }
         return vinBuilder_;
       }
 
-      private java.util.List<org.tron.protos.core.TronTXOutput.TXOutput> vout_ =
-        java.util.Collections.emptyList();
       private void ensureVoutIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           vout_ = new java.util.ArrayList<org.tron.protos.core.TronTXOutput.TXOutput>(vout_);
           bitField0_ |= 0x00000004;
-         }
+        }
       }
-
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTXOutput.TXOutput, org.tron.protos.core.TronTXOutput.TXOutput.Builder, org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> voutBuilder_;
 
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
@@ -938,6 +1094,7 @@ public final class TronTransaction {
           return voutBuilder_.getMessageList();
         }
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -948,6 +1105,7 @@ public final class TronTransaction {
           return voutBuilder_.getCount();
         }
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -958,6 +1116,7 @@ public final class TronTransaction {
           return voutBuilder_.getMessage(index);
         }
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -975,6 +1134,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -989,6 +1149,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1005,6 +1166,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1022,6 +1184,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1036,6 +1199,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1050,6 +1214,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1065,6 +1230,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1078,6 +1244,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1091,6 +1258,7 @@ public final class TronTransaction {
         }
         return this;
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1098,27 +1266,31 @@ public final class TronTransaction {
           int index) {
         return getVoutFieldBuilder().getBuilder(index);
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
       public org.tron.protos.core.TronTXOutput.TXOutputOrBuilder getVoutOrBuilder(
           int index) {
         if (voutBuilder_ == null) {
-          return vout_.get(index);  } else {
+          return vout_.get(index);
+        } else {
           return voutBuilder_.getMessageOrBuilder(index);
         }
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
-      public java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> 
-           getVoutOrBuilderList() {
+      public java.util.List<? extends org.tron.protos.core.TronTXOutput.TXOutputOrBuilder>
+      getVoutOrBuilderList() {
         if (voutBuilder_ != null) {
           return voutBuilder_.getMessageOrBuilderList();
         } else {
           return java.util.Collections.unmodifiableList(vout_);
         }
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1126,6 +1298,7 @@ public final class TronTransaction {
         return getVoutFieldBuilder().addBuilder(
             org.tron.protos.core.TronTXOutput.TXOutput.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
@@ -1134,27 +1307,30 @@ public final class TronTransaction {
         return getVoutFieldBuilder().addBuilder(
             index, org.tron.protos.core.TronTXOutput.TXOutput.getDefaultInstance());
       }
+
       /**
        * <code>repeated .protos.TXOutput vout = 3;</code>
        */
-      public java.util.List<org.tron.protos.core.TronTXOutput.TXOutput.Builder> 
-           getVoutBuilderList() {
+      public java.util.List<org.tron.protos.core.TronTXOutput.TXOutput.Builder>
+      getVoutBuilderList() {
         return getVoutFieldBuilder().getBuilderList();
       }
+
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.tron.protos.core.TronTXOutput.TXOutput, org.tron.protos.core.TronTXOutput.TXOutput.Builder, org.tron.protos.core.TronTXOutput.TXOutputOrBuilder> 
-          getVoutFieldBuilder() {
+          org.tron.protos.core.TronTXOutput.TXOutput, org.tron.protos.core.TronTXOutput.TXOutput.Builder, org.tron.protos.core.TronTXOutput.TXOutputOrBuilder>
+      getVoutFieldBuilder() {
         if (voutBuilder_ == null) {
           voutBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.tron.protos.core.TronTXOutput.TXOutput, org.tron.protos.core.TronTXOutput.TXOutput.Builder, org.tron.protos.core.TronTXOutput.TXOutputOrBuilder>(
-                  vout_,
-                  ((bitField0_ & 0x00000004) == 0x00000004),
-                  getParentForChildren(),
-                  isClean());
+              vout_,
+              ((bitField0_ & 0x00000004) == 0x00000004),
+              getParentForChildren(),
+              isClean());
           vout_ = null;
         }
         return voutBuilder_;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFieldsProto3(unknownFields);
@@ -1169,84 +1345,6 @@ public final class TronTransaction {
       // @@protoc_insertion_point(builder_scope:protos.Transaction)
     }
 
-    // @@protoc_insertion_point(class_scope:protos.Transaction)
-    private static final org.tron.protos.core.TronTransaction.Transaction DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new org.tron.protos.core.TronTransaction.Transaction();
-    }
-
-    public static org.tron.protos.core.TronTransaction.Transaction getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<Transaction>
-        PARSER = new com.google.protobuf.AbstractParser<Transaction>() {
-      public Transaction parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Transaction(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Transaction> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Transaction> getParserForType() {
-      return PARSER;
-    }
-
-    public org.tron.protos.core.TronTransaction.Transaction getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_protos_Transaction_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_protos_Transaction_fieldAccessorTable;
-
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\032core/TronTransaction.proto\022\006protos\032\026co" +
-      "re/TronTXInput.proto\032\027core/TronTXOutput." +
-      "proto\"W\n\013Transaction\022\n\n\002id\030\001 \001(\014\022\034\n\003vin\030" +
-      "\002 \003(\0132\017.protos.TXInput\022\036\n\004vout\030\003 \003(\0132\020.p" +
-      "rotos.TXOutputB\'\n\024org.tron.protos.coreB\017" +
-      "TronTransactionb\006proto3"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-          org.tron.protos.core.TronTXInput.getDescriptor(),
-          org.tron.protos.core.TronTXOutput.getDescriptor(),
-        }, assigner);
-    internal_static_protos_Transaction_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_protos_Transaction_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_protos_Transaction_descriptor,
-        new java.lang.String[] { "Id", "Vin", "Vout", });
-    org.tron.protos.core.TronTXInput.getDescriptor();
-    org.tron.protos.core.TronTXOutput.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

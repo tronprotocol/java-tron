@@ -26,7 +26,6 @@ import org.tron.consensus.client.Client;
 import org.tron.consensus.client.MessageType;
 import org.tron.consensus.server.Server;
 import org.tron.core.TransactionUtils;
-import org.tron.example.Tron;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
@@ -51,7 +50,7 @@ public class ConsensusCommand extends Command {
   }
 
   public void getClient(Peer peer) {
-    if (Tron.getPeer().getType().equals(PeerType.PEER_SERVER)) {
+    if (peer.getType().equals(PeerType.PEER_SERVER)) {
       client.getMessage(peer, MessageType.TRANSACTION);
       client.getMessage(peer, MessageType.BLOCK);
     } else {
