@@ -49,10 +49,7 @@ public class BlockchainTest {
     Mockito.when(mockBlockDB.getData(eq(LAST_HASH))).thenReturn(null);
     Mockito.when(mockBlockDB.getData(any())).thenReturn(ByteArray.fromString(""));
     blockchain = new Blockchain(
-        mockBlockDB,
-
-        "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
-        "normal"
+        mockBlockDB
     );
   }
 

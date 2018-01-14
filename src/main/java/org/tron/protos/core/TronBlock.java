@@ -984,21 +984,6 @@ public final class TronBlock {
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
-      public Builder setBlockHeader(
-          org.tron.protos.core.TronBlockHeader.BlockHeader.Builder builderForValue) {
-        if (blockHeaderBuilder_ == null) {
-          blockHeader_ = builderForValue.build();
-          onChanged();
-        } else {
-          blockHeaderBuilder_.setMessage(builderForValue.build());
-        }
-
-        return this;
-      }
-
-      /**
-       * <code>.protos.BlockHeader blockHeader = 2;</code>
-       */
       public Builder setBlockHeader(org.tron.protos.core.TronBlockHeader.BlockHeader value) {
         if (blockHeaderBuilder_ == null) {
           if (value == null) {
@@ -1008,6 +993,21 @@ public final class TronBlock {
           onChanged();
         } else {
           blockHeaderBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+
+      /**
+       * <code>.protos.BlockHeader blockHeader = 2;</code>
+       */
+      public Builder setBlockHeader(
+          org.tron.protos.core.TronBlockHeader.BlockHeader.Builder builderForValue) {
+        if (blockHeaderBuilder_ == null) {
+          blockHeader_ = builderForValue.build();
+          onChanged();
+        } else {
+          blockHeaderBuilder_.setMessage(builderForValue.build());
         }
 
         return this;
