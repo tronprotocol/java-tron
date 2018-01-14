@@ -18,23 +18,21 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.ECKey;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
+import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.utils.ByteArray;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
 
-import static org.tron.core.Constant.TRANSACTION_DB_NAME;
-
 public class UTXOSet {
     private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
     private Blockchain blockchain;
-    private LevelDbDataSourceImpl txDB = null;
+    private LevelDbDataSourceImpl txDB;
 
     @Inject
     public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
@@ -62,7 +60,7 @@ public class UTXOSet {
             String key = entry.getKey();
             TXOutputs value = entry.getValue();
 
-            for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
+            for (TronTXOutput.TXOutput ignored : value.getOutputsList()) {
                 txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
             }
         }
