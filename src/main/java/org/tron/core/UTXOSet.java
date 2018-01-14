@@ -35,16 +35,13 @@ public class UTXOSet {
     private LevelDbDataSourceImpl txDB;
 
     @Inject
-    public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
-        txDB = txDb;
+    public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb, Blockchain blockchain) {
+        this.txDB = txDb;
+        this.blockchain = blockchain;
     }
 
     public Blockchain getBlockchain() {
         return blockchain;
-    }
-
-    public void setBlockchain(Blockchain blockchain) {
-        this.blockchain = blockchain;
     }
 
     public void reindex() {
