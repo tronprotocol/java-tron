@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.tron.storage.DbSourceInter;
 import org.tron.utils.ALock;
 import org.tron.utils.ByteArrayMap;

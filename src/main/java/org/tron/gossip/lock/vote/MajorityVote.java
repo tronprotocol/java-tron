@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.tron.gossip.crdt.Crdt;
 
 /**
@@ -68,7 +67,7 @@ public class MajorityVote implements Crdt<Map<String, VoteCandidate>, MajorityVo
 
   // Merge different votes for same candidate
   private VoteCandidate mergeCandidate(VoteCandidate firstCandidate,
-                                       VoteCandidate secondCandidate) {
+      VoteCandidate secondCandidate) {
     VoteCandidate mergeResult = new VoteCandidate(firstCandidate.getCandidateNodeId(),
         firstCandidate.getVotingKey(), new ConcurrentHashMap<>());
     Set<String> firstKeySet = firstCandidate.getVotes().keySet();

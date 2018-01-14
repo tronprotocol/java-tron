@@ -7,7 +7,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import javax.inject.Named;
-
 import org.tron.consensus.client.Client;
 import org.tron.consensus.server.Server;
 import org.tron.core.Constant;

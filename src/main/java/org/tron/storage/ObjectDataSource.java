@@ -7,7 +7,8 @@ public class ObjectDataSource<V> extends SourceChainBox<byte[], V, byte[], byte[
   SourceCodec<byte[], V, byte[], byte[]> codec;
   SourceInter<byte[], byte[]> byteSourceInter;
 
-  public ObjectDataSource(SourceInter<byte[], byte[]> byteSourceInter, Serializer<V, byte[]> serializer, int readCacheEntries) {
+  public ObjectDataSource(SourceInter<byte[], byte[]> byteSourceInter,
+      Serializer<V, byte[]> serializer, int readCacheEntries) {
     super(byteSourceInter);
     this.byteSourceInter = byteSourceInter;
     add(codec = new SourceCodec<>(byteSourceInter, new Serializers.Identity<byte[]>(), serializer));

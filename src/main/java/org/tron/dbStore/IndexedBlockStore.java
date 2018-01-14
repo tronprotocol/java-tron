@@ -18,7 +18,6 @@ package org.tron.dbStore;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.List;
-
 import org.tron.protos.core.TronBlock;
 import org.tron.storage.DataSourceArray;
 import org.tron.storage.ObjectDataSource;

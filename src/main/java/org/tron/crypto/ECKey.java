@@ -67,7 +67,6 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
-
 import org.tron.crypto.jce.ECKeyAgreement;
 import org.tron.crypto.jce.ECKeyFactory;
 import org.tron.crypto.jce.ECKeyPairGenerator;
@@ -311,7 +310,7 @@ public class ECKey implements Serializable {
    * @return -
    */
   public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv,
-                                                        ECPoint pub) {
+      ECPoint pub) {
     return new ECKey(priv, pub);
   }
 
@@ -445,7 +444,7 @@ public class ECKey implements Serializable {
   }
 
   public static byte[] signatureToKeyBytes(byte[] messageHash,
-                                           ECDSASignature sig) throws
+      ECDSASignature sig) throws
       SignatureException {
     check(messageHash.length == 32, "messageHash argument has length " +
         messageHash.length);
@@ -491,7 +490,7 @@ public class ECKey implements Serializable {
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
-                                          ECDSASignature sig) throws
+      ECDSASignature sig) throws
       SignatureException {
     return computeAddress(signatureToKeyBytes(messageHash, sig));
   }
@@ -537,7 +536,7 @@ public class ECKey implements Serializable {
    * @return -
    */
   public static boolean verify(byte[] data, ECDSASignature signature,
-                               byte[] pub) {
+      byte[] pub) {
     ECDSASigner signer = new ECDSASigner();
     ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE
         .getCurve().decodePoint(pub), CURVE);
@@ -615,8 +614,8 @@ public class ECKey implements Serializable {
    */
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
-                                                    ECDSASignature sig,
-                                                    byte[] messageHash) {
+      ECDSASignature sig,
+      byte[] messageHash) {
     check(recId >= 0, "recId must be positive");
     check(sig.r.signum() >= 0, "r must be positive");
     check(sig.s.signum() >= 0, "s must be positive");
@@ -693,8 +692,8 @@ public class ECKey implements Serializable {
    */
   @Nullable
   public static byte[] recoverAddressFromSignature(int recId,
-                                                   ECDSASignature sig,
-                                                   byte[] messageHash) {
+      ECDSASignature sig,
+      byte[] messageHash) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
         messageHash);
     if (pubBytes == null) {
@@ -712,7 +711,7 @@ public class ECKey implements Serializable {
    */
   @Nullable
   public static ECKey recoverFromSignature(int recId, ECDSASignature sig,
-                                           byte[] messageHash) {
+      byte[] messageHash) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
         messageHash);
     if (pubBytes == null) {
@@ -1150,7 +1149,7 @@ public class ECKey implements Serializable {
     }
 
     public static boolean validateComponents(BigInteger r, BigInteger s,
-                                             byte v) {
+        byte v) {
 
       if (v != 27 && v != 28) {
         return false;

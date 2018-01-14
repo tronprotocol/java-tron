@@ -163,7 +163,8 @@ public class Value {
 
   public boolean isList() {
 //        decode();
-    return value != null && value.getClass().isArray() && !value.getClass().getComponentType().isPrimitive();
+    return value != null && value.getClass().isArray() && !value.getClass().getComponentType()
+        .isPrimitive();
   }
 
   public boolean isString() {

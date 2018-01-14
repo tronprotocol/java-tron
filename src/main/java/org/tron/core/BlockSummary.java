@@ -18,7 +18,6 @@ package org.tron.core;
 
 import java.math.BigInteger;
 import java.util.Map;
-
 import org.tron.protos.core.TronBlock;
 
 public class BlockSummary {

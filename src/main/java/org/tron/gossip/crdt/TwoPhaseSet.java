@@ -37,7 +37,8 @@ import java.util.stream.Stream;
   DataTest - integration test with 2 nodes, TwoPhaseSet was serialized/deserialized, sent between nodes, merged
 */
 
-public class TwoPhaseSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<ElementType>, TwoPhaseSet<ElementType>> {
+public class TwoPhaseSet<ElementType> implements
+    CrdtAddRemoveSet<ElementType, Set<ElementType>, TwoPhaseSet<ElementType>> {
   private final Set<ElementType> added;
   private final Set<ElementType> removed;
 
@@ -111,6 +112,7 @@ public class TwoPhaseSet<ElementType> implements CrdtAddRemoveSet<ElementType, S
 
   @Override
   public boolean equals(Object obj) {
-    return this == obj || (obj != null && getClass() == obj.getClass() && value().equals(((TwoPhaseSet) obj).value()));
+    return this == obj || (obj != null && getClass() == obj.getClass() && value()
+        .equals(((TwoPhaseSet) obj).value()));
   }
 }

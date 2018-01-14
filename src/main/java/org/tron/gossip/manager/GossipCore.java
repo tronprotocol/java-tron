@@ -29,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
-
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.Member;
 import org.tron.gossip.RemoteMember;
@@ -55,6 +54,7 @@ public class GossipCore implements GossipCoreConstants {
   private final Meter transmissionSuccess;
   private final DataEventManager eventManager;
   private ConcurrentHashMap<String, LatchAndBase> requests;
+
   public GossipCore(GossipManager manager, MetricRegistry metrics) {
     this.gossipManager = manager;
     requests = new ConcurrentHashMap<>();
@@ -97,7 +97,8 @@ public class GossipCore implements GossipCoreConstants {
         if (previous.getTimestamp() < message.getTimestamp()) {
           boolean result = sharedData.replace(message.getKey(), previous, message);
           if (result) {
-            eventManager.notifySharedData(message.getKey(), message.getPayload(), previous.getPayload());
+            eventManager
+                .notifySharedData(message.getKey(), message.getPayload(), previous.getPayload());
             return;
           }
         } else {
@@ -115,16 +116,19 @@ public class GossipCore implements GossipCoreConstants {
       PerNodeDataMessage current = nodeMap.get(message.getKey());
       if (current == null) {
         nodeMap.putIfAbsent(message.getKey(), message);
-        eventManager.notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(), null);
+        eventManager
+            .notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(), null);
       } else {
         if (current.getTimestamp() < message.getTimestamp()) {
           nodeMap.replace(message.getKey(), current, message);
-          eventManager.notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(),
-              current.getPayload());
+          eventManager
+              .notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(),
+                  current.getPayload());
         }
       }
     } else {
-      eventManager.notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(), null);
+      eventManager
+          .notifyPerNodeData(message.getNodeId(), message.getKey(), message.getPayload(), null);
     }
   }
 
@@ -239,7 +243,8 @@ public class GossipCore implements GossipCoreConstants {
     }
     for (LocalMember i : gossipManager.getDeadMembers()) {
       if (i.getId().equals(senderMember.getId())) {
-        LOGGER.debug(gossipManager.getMyself() + " contacted by dead member " + senderMember.getUri());
+        LOGGER.debug(
+            gossipManager.getMyself() + " contacted by dead member " + senderMember.getUri());
         i.recordHeartbeat(senderMember.getHeartbeat());
         i.setHeartbeat(senderMember.getHeartbeat());
         //TODO consider forcing an UP here
@@ -275,7 +280,7 @@ public class GossipCore implements GossipCoreConstants {
   }
 
   private void debugState(RemoteMember senderMember,
-                          List<Member> remoteList) {
+      List<Member> remoteList) {
     LOGGER.warn(
         "-----------------------\n" +
             "Me " + gossipManager.getMyself() + "\n" +

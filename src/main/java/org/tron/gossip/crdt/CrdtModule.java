@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.lock.vote.MajorityVote;
 import org.tron.gossip.lock.vote.Vote;
@@ -39,7 +38,8 @@ import org.tron.gossip.replication.WhiteListReplicable;
 
 abstract class OrSetMixin<E> {
   @JsonCreator
-  OrSetMixin(@JsonProperty("elements") Map<E, Set<UUID>> w, @JsonProperty("tombstones") Map<E, Set<UUID>> h) {
+  OrSetMixin(@JsonProperty("elements") Map<E, Set<UUID>> w,
+      @JsonProperty("tombstones") Map<E, Set<UUID>> h) {
   }
 
   @JsonProperty("elements")
@@ -63,7 +63,8 @@ abstract class LWWSetMixin<ElementType> {
 
 abstract class LWWSetTimestampsMixin {
   @JsonCreator
-  LWWSetTimestampsMixin(@JsonProperty("add") long latestAdd, @JsonProperty("remove") long latestRemove) {
+  LWWSetTimestampsMixin(@JsonProperty("add") long latestAdd,
+      @JsonProperty("remove") long latestRemove) {
   }
 
   @JsonProperty("add")
@@ -117,7 +118,8 @@ abstract class GrowOnlyCounterMixin {
 
 abstract class PNCounterMixin {
   @JsonCreator
-  PNCounterMixin(@JsonProperty("p-counters") Map<String, Long> up, @JsonProperty("n-counters") Map<String, Long> down) {
+  PNCounterMixin(@JsonProperty("p-counters") Map<String, Long> up,
+      @JsonProperty("n-counters") Map<String, Long> down) {
   }
 
   @JsonProperty("p-counters")

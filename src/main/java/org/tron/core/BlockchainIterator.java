@@ -19,7 +19,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
-
 import org.tron.protos.core.TronBlock;
 
 public class BlockchainIterator implements Iterator {

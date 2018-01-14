@@ -31,7 +31,7 @@ public class Vote {
   private Boolean voteExchange;
 
   public Vote(String votingNode, Boolean voteValue, Boolean voteExchange, List<String> liveMembers,
-              List<String> deadMembers) {
+      List<String> deadMembers) {
     this.votingNode = votingNode;
     this.voteValue = voteValue;
     this.voteExchange = voteExchange;

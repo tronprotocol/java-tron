@@ -17,7 +17,6 @@ package org.tron.command;
 
 import java.util.Arrays;
 import java.util.Scanner;
-
 import org.tron.application.CliApplication;
 
 public class Cli {

@@ -17,7 +17,6 @@ package org.tron.dbStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
 public class BlockStores {

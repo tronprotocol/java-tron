@@ -215,7 +215,8 @@ public final class TronTXOutput {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
@@ -270,7 +271,8 @@ public final class TronTXOutput {
     internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronTXOutput.TXOutput.class, org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
+              org.tron.protos.core.TronTXOutput.TXOutput.class,
+              org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
     }
 
     /**
@@ -422,7 +424,8 @@ public final class TronTXOutput {
       internalGetFieldAccessorTable() {
         return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronTXOutput.TXOutput.class, org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
+                org.tron.protos.core.TronTXOutput.TXOutput.class,
+                org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
       }
 
       private void maybeForceBuilderInitialization() {
@@ -458,7 +461,8 @@ public final class TronTXOutput {
       }
 
       public org.tron.protos.core.TronTXOutput.TXOutput buildPartial() {
-        org.tron.protos.core.TronTXOutput.TXOutput result = new org.tron.protos.core.TronTXOutput.TXOutput(this);
+        org.tron.protos.core.TronTXOutput.TXOutput result = new org.tron.protos.core.TronTXOutput.TXOutput(
+            this);
         result.value_ = value_;
         result.pubKeyHash_ = pubKeyHash_;
         onBuilt();

@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.tron.gossip.manager.Clock;
 import org.tron.gossip.manager.SystemClock;
 
@@ -45,7 +44,8 @@ import org.tron.gossip.manager.SystemClock;
   DataTest - integration test with 2 nodes, LWWSet was serialized/deserialized, sent between nodes, merged
 */
 
-public class LwwSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<ElementType>, LwwSet<ElementType>> {
+public class LwwSet<ElementType> implements
+    CrdtAddRemoveSet<ElementType, Set<ElementType>, LwwSet<ElementType>> {
   static private Clock clock = new SystemClock();
 
   private final Map<ElementType, Timestamps> struct;
@@ -123,7 +123,8 @@ public class LwwSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<El
 
   @Override
   public boolean equals(Object obj) {
-    return this == obj || (obj != null && getClass() == obj.getClass() && value().equals(((LwwSet) obj).value()));
+    return this == obj || (obj != null && getClass() == obj.getClass() && value()
+        .equals(((LwwSet) obj).value()));
   }
 
   static class Timestamps {
@@ -165,7 +166,8 @@ public class LwwSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<El
       if (other == null) {
         return this;
       }
-      return new Timestamps(Math.max(latestAdd, other.latestAdd), Math.max(latestRemove, other.latestRemove));
+      return new Timestamps(Math.max(latestAdd, other.latestAdd),
+          Math.max(latestRemove, other.latestRemove));
     }
   }
 }

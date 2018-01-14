@@ -16,7 +16,6 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.utils.ByteArray;
 

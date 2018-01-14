@@ -20,7 +20,6 @@ import static org.tron.crypto.Hash.sha3;
 import java.math.BigInteger;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
-
 import org.tron.core.BlockUtils;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.utils.FastByteComparisons;

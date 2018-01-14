@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
-
 import org.tron.overlay.Net;
 import org.tron.protos.core.TronTransaction.Transaction;
 
@@ -69,7 +68,7 @@ public class PendingStateImpl implements PendingState {
   date:2017/12/26
   */
   public synchronized void addPendingTransaction(Blockchain blockchain,
-                                                 Transaction tx) {
+      Transaction tx) {
     pendingTransactions.add(tx);
     if (pendingTransactions.size() == 1) {
       System.out.println("pending...");

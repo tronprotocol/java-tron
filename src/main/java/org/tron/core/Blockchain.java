@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.config.Configer;
 import org.tron.core.events.BlockchainListener;
 import org.tron.crypto.ECKey;
@@ -94,7 +93,8 @@ public class Blockchain {
         String key = (String) entry.getKey();
         Integer value = (Integer) entry.getValue();
 
-        Transaction transaction = TransactionUtils.newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
+        Transaction transaction = TransactionUtils
+            .newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
         transactions.add(transaction);
       }
 
@@ -244,7 +244,8 @@ public class Blockchain {
     try {
       Block lastBlock = Block.parseFrom(lastBlockData);
       if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
-        blockDB.putData(ByteArray.fromString("lashHash"), block.getBlockHeader().getHash().toByteArray());
+        blockDB.putData(ByteArray.fromString("lashHash"),
+            block.getBlockHeader().getHash().toByteArray());
         this.lastHash = block.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
       }
@@ -315,8 +316,9 @@ public class Blockchain {
     byte[] lastHashKey = LAST_HASH;
     byte[] lastHash = blockDB.getData(lastHashKey);
 
-    if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray()).equals(ByteArray.toHexString
-        (lastHash))) {
+    if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray())
+        .equals(ByteArray.toHexString
+            (lastHash))) {
       return;
     }
 

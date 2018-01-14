@@ -19,7 +19,6 @@ import static org.tron.overlay.kafka.Kafka.KAFKA_HOST;
 import static org.tron.overlay.kafka.Kafka.KAFKA_PORT;
 
 import com.typesafe.config.Config;
-
 import org.tron.config.Configer;
 
 public class ConsumerProperty {

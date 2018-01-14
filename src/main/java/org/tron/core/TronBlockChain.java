@@ -17,7 +17,6 @@ package org.tron.core;
 
 
 import java.math.BigInteger;
-
 import org.tron.dbStore.BlockStoreInput;
 import org.tron.protos.core.TronBlock;
 

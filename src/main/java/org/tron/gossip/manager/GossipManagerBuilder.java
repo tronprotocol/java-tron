@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.Member;
 import org.tron.gossip.StartupSettings;
@@ -134,7 +133,8 @@ public class GossipManagerBuilder {
       if (messageHandler == null) {
         messageHandler = MessageHandlerFactory.defaultHandler();
       }
-      return new GossipManager(cluster, uri, id, properties, settings, gossipMembers, listener, registry, messageHandler) {
+      return new GossipManager(cluster, uri, id, properties, settings, gossipMembers, listener,
+          registry, messageHandler) {
       };
     }
   }

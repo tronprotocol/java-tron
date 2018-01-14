@@ -19,7 +19,6 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.application.CliApplication;
 import org.tron.core.TransactionUtils;
 import org.tron.overlay.message.Message;
@@ -41,11 +40,13 @@ public class SendCommand extends Command {
     if (check(parameters)) {
       String to = parameters[0];
       long amount = Long.parseLong(parameters[1]);
-      TronTransaction.Transaction transaction = TransactionUtils.newTransaction(peer.getWallet(), to, amount,
-          peer.getUTXOSet());
+      TronTransaction.Transaction transaction = TransactionUtils
+          .newTransaction(peer.getWallet(), to, amount,
+              peer.getUTXOSet());
 
       if (transaction != null) {
-        Message message = new Message(ByteArray.toHexString(transaction.toByteArray()), Type.TRANSACTION);
+        Message message = new Message(ByteArray.toHexString(transaction.toByteArray()),
+            Type.TRANSACTION);
         peer.getNet().broadcast(message);
       }
     }

@@ -46,7 +46,7 @@ public class LockManagerSettings {
    * @param resultCalculationDelay     Wait time between vote result calculation
    */
   public LockManagerSettings(int voteUpdateInterval, VoteSelector voteSelector, int numberOfNodes,
-                             int deadlockDetectionThreshold, int resultCalculationDelay) {
+      int deadlockDetectionThreshold, int resultCalculationDelay) {
     this.voteUpdateInterval = voteUpdateInterval;
     this.voteSelector = voteSelector;
     this.numberOfNodes = numberOfNodes;

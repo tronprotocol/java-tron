@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.PutCommand;
 import org.tron.overlay.message.Message;

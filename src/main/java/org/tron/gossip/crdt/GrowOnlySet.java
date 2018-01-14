@@ -25,7 +25,8 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class GrowOnlySet<ElementType> implements CrdtSet<ElementType, Set<ElementType>, GrowOnlySet<ElementType>> {
+public class GrowOnlySet<ElementType> implements
+    CrdtSet<ElementType, Set<ElementType>, GrowOnlySet<ElementType>> {
 
   private final Set<ElementType> hidden = new LinkedHashSet<>();
 

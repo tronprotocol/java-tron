@@ -28,7 +28,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.LoggerFactory;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.model.ActiveGossipOk;
@@ -48,7 +47,8 @@ import org.tron.gossip.udp.UdpSharedDataMessage;
  */
 public abstract class AbstractActiveGossiper {
 
-  protected static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger("AbstractActiveGossiper");
+  protected static final org.slf4j.Logger LOGGER = LoggerFactory
+      .getLogger("AbstractActiveGossiper");
 
   protected final GossipManager gossipManager;
   protected final GossipCore gossipCore;
@@ -58,12 +58,16 @@ public abstract class AbstractActiveGossiper {
   private final Random random;
   private final GossipSettings gossipSettings;
 
-  public AbstractActiveGossiper(GossipManager gossipManager, GossipCore gossipCore, MetricRegistry registry) {
+  public AbstractActiveGossiper(GossipManager gossipManager, GossipCore gossipCore,
+      MetricRegistry registry) {
     this.gossipManager = gossipManager;
     this.gossipCore = gossipCore;
-    sharedDataHistogram = registry.histogram(name(AbstractActiveGossiper.class, "sharedDataHistogram-time"));
-    sendPerNodeDataHistogram = registry.histogram(name(AbstractActiveGossiper.class, "sendPerNodeDataHistogram-time"));
-    sendMembershipHistogram = registry.histogram(name(AbstractActiveGossiper.class, "sendMembershipHistogram-time"));
+    sharedDataHistogram = registry
+        .histogram(name(AbstractActiveGossiper.class, "sharedDataHistogram-time"));
+    sendPerNodeDataHistogram = registry
+        .histogram(name(AbstractActiveGossiper.class, "sendPerNodeDataHistogram-time"));
+    sendMembershipHistogram = registry
+        .histogram(name(AbstractActiveGossiper.class, "sendMembershipHistogram-time"));
     random = new Random();
     gossipSettings = gossipManager.getSettings();
   }
@@ -169,7 +173,8 @@ public abstract class AbstractActiveGossiper {
    * Send per node data one entry at a time.
    */
   private void sendPerNodeDataInternal(LocalMember me, LocalMember member) {
-    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> entry : gossipCore.getPerNodeData().entrySet()) {
+    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> entry : gossipCore
+        .getPerNodeData().entrySet()) {
       for (Entry<String, PerNodeDataMessage> innerEntry : entry.getValue().entrySet()) {
         if (innerEntry.getValue().getReplicable() != null && !innerEntry.getValue().getReplicable()
             .shouldReplicate(me, member, innerEntry.getValue())) {
@@ -189,7 +194,8 @@ public abstract class AbstractActiveGossiper {
    * Send per node data by batching together several entries.
    */
   private void sendPerNodeDataInBulkInternal(LocalMember me, LocalMember member) {
-    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> entry : gossipCore.getPerNodeData().entrySet()) {
+    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> entry : gossipCore
+        .getPerNodeData().entrySet()) {
       UdpPerNodeDataBulkMessage udpMessage = new UdpPerNodeDataBulkMessage();
       udpMessage.setUuid(UUID.randomUUID().toString());
       udpMessage.setUriFrom(me.getId());

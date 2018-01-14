@@ -17,7 +17,6 @@ package org.tron.wallet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.crypto.ECKey;
 import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;

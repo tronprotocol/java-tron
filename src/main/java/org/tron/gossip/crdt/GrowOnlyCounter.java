@@ -20,7 +20,6 @@ package org.tron.gossip.crdt;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.tron.gossip.manager.GossipManager;
 
 public class GrowOnlyCounter implements CrdtCounter<Long, GrowOnlyCounter> {

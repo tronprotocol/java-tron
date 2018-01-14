@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.crypto.ECKey;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -59,15 +58,17 @@ public class TransactionUtils {
       long[] outs = entry.getValue();
 
       for (long out : outs) {
-        TXInput txInput = TXInputUtils.newTXInput(ByteArray.fromHexString(txID), out, new byte[0], pubKeyHash);
+        TXInput txInput = TXInputUtils
+            .newTXInput(ByteArray.fromHexString(txID), out, new byte[0], pubKeyHash);
         txInputs.add(txInput);
       }
     }
 
     txOutputs.add(TXOutputUtils.newTXOutput(amount, to));
     if (spendableOutputs.getAmount() > amount) {
-      txOutputs.add(TXOutputUtils.newTXOutput(spendableOutputs.getAmount() - amount, ByteArray.toHexString
-          (wallet.getAddress())));
+      txOutputs.add(
+          TXOutputUtils.newTXOutput(spendableOutputs.getAmount() - amount, ByteArray.toHexString
+              (wallet.getAddress())));
     }
 
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
@@ -198,7 +199,7 @@ public class TransactionUtils {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey,
-                                 HashMap<String, Transaction> prevTXs) {
+      HashMap<String, Transaction> prevTXs) {
     if (TransactionUtils.isCoinbaseTransaction(transaction)) {
       return null;
     }
@@ -233,7 +234,8 @@ public class TransactionUtils {
               (transactionCopyBuilder.getId().toByteArray())
               .toByteArray())).build());
 
-      transactionBuilder.setId(ByteString.copyFrom(TransactionUtils.getHash(transactionBuilder.build())));
+      transactionBuilder
+          .setId(ByteString.copyFrom(TransactionUtils.getHash(transactionBuilder.build())));
 
       transaction = transactionBuilder.build();
     }
@@ -242,7 +244,7 @@ public class TransactionUtils {
   }
 
   public static boolean verify(ECKey myKey, Transaction transaction,
-                               HashMap<String, Transaction> prevTXs) {
+      HashMap<String, Transaction> prevTXs) {
     if (TransactionUtils.isCoinbaseTransaction(transaction)) {
       return true;
     }

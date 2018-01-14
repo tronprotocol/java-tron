@@ -21,7 +21,6 @@ package org.tron.gossip.model;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import org.tron.gossip.udp.UdpActiveGossipMessage;
 import org.tron.gossip.udp.UdpActiveGossipOk;
 import org.tron.gossip.udp.UdpNotAMemberFault;

@@ -4,7 +4,6 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import javax.inject.Inject;
-
 import org.tron.consensus.client.BlockchainClientListener;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
@@ -41,7 +40,9 @@ public class PeerBuilder {
       throw new IllegalStateException("Type must be set before building the blockchain");
     }
 
-    blockchain = new Blockchain(injector.getInstance(Key.get(LevelDbDataSourceImpl.class, Names.named("block"))), ByteArray.toHexString(wallet.getAddress()), this.type
+    blockchain = new Blockchain(
+        injector.getInstance(Key.get(LevelDbDataSourceImpl.class, Names.named("block"))),
+        ByteArray.toHexString(wallet.getAddress()), this.type
     );
   }
 

@@ -17,7 +17,6 @@ package org.tron.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-
 import org.tron.application.ApplicationFactory;
 import org.tron.application.CliApplication;
 import org.tron.command.Cli;

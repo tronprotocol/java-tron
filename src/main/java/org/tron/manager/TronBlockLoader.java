@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.tron.config.SystemProperties;
 import org.tron.core.TransactionUtils;
 import org.tron.core.TronBlockChainImpl;
@@ -43,18 +42,19 @@ public class TronBlockLoader {
 
   public void loadBlocks() {
 
-    exce1 = new ExecutorPipeline(8, 1000, true, (Function<TronBlock.Block, TronBlock.Block>) block -> {
-      if (block.getBlockHeader().getNumber() >= blockchain
-          .getBlockStoreInter().getBestBlock().getBlockHeader()
-          .getNumber()) {
-        for (TronTransaction.Transaction tx : block
-            .getTransactionsList()) {
-          TransactionUtils.getSender(tx);
+    exce1 = new ExecutorPipeline(8, 1000, true,
+        (Function<TronBlock.Block, TronBlock.Block>) block -> {
+          if (block.getBlockHeader().getNumber() >= blockchain
+              .getBlockStoreInter().getBestBlock().getBlockHeader()
+              .getNumber()) {
+            for (TronTransaction.Transaction tx : block
+                .getTransactionsList()) {
+              TransactionUtils.getSender(tx);
 
-        }
-      }
-      return block;
-    }, throwable -> logger.error("Unhandled exception: ", throwable));
+            }
+          }
+          return block;
+        }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     exce2 = exce1.add(1, 1000, block -> {
       try {

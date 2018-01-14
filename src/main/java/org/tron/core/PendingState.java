@@ -16,7 +16,6 @@
 package org.tron.core;
 
 import java.util.List;
-
 import org.tron.protos.core.TronTransaction.Transaction;
 
 

@@ -42,7 +42,7 @@ public abstract class FastByteComparisons {
    * @return int
    */
   public static int compareTo(byte[] b1, int s1, int l1, byte[] b2, int s2,
-                              int l2) {
+      int l2) {
     return LexicographicalComparerHolder.BEST_COMPARER.compareTo(
         b1, s1, l1, b2, s2, l2);
   }
@@ -53,7 +53,7 @@ public abstract class FastByteComparisons {
 
   private interface Comparer<T> {
     int compareTo(T buffer1, int offset1, int length1,
-                  T buffer2, int offset2, int length2);
+        T buffer2, int offset2, int length2);
   }
 
   /**
@@ -90,7 +90,7 @@ public abstract class FastByteComparisons {
 
       @Override
       public int compareTo(byte[] buffer1, int offset1, int length1,
-                           byte[] buffer2, int offset2, int length2) {
+          byte[] buffer2, int offset2, int length2) {
         // Short circuit equal case
         if (buffer1 == buffer2 &&
             offset1 == offset2 &&

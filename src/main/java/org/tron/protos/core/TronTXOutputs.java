@@ -158,7 +158,8 @@ public final class TronTXOutputs {
                 mutable_bitField0_ |= 0x00000001;
               }
               outputs_.add(
-                  input.readMessage(org.tron.protos.core.TronTXOutput.TXOutput.parser(), extensionRegistry));
+                  input.readMessage(org.tron.protos.core.TronTXOutput.TXOutput.parser(),
+                      extensionRegistry));
               break;
             }
           }
@@ -234,7 +235,8 @@ public final class TronTXOutputs {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronTXOutputs.TXOutputs parseDelimitedFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronTXOutputs.TXOutputs parseDelimitedFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
@@ -289,7 +291,8 @@ public final class TronTXOutputs {
     internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronTXOutputs.internal_static_protos_TXOutputs_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronTXOutputs.TXOutputs.class, org.tron.protos.core.TronTXOutputs.TXOutputs.Builder.class);
+              org.tron.protos.core.TronTXOutputs.TXOutputs.class,
+              org.tron.protos.core.TronTXOutputs.TXOutputs.Builder.class);
     }
 
     /**
@@ -457,7 +460,8 @@ public final class TronTXOutputs {
       internalGetFieldAccessorTable() {
         return org.tron.protos.core.TronTXOutputs.internal_static_protos_TXOutputs_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronTXOutputs.TXOutputs.class, org.tron.protos.core.TronTXOutputs.TXOutputs.Builder.class);
+                org.tron.protos.core.TronTXOutputs.TXOutputs.class,
+                org.tron.protos.core.TronTXOutputs.TXOutputs.Builder.class);
       }
 
       private void maybeForceBuilderInitialization() {
@@ -496,7 +500,8 @@ public final class TronTXOutputs {
       }
 
       public org.tron.protos.core.TronTXOutputs.TXOutputs buildPartial() {
-        org.tron.protos.core.TronTXOutputs.TXOutputs result = new org.tron.protos.core.TronTXOutputs.TXOutputs(this);
+        org.tron.protos.core.TronTXOutputs.TXOutputs result = new org.tron.protos.core.TronTXOutputs.TXOutputs(
+            this);
         int from_bitField0_ = bitField0_;
         if (outputsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {

@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
@@ -45,7 +44,8 @@ public class BlockUtilsTest {
   @Test
   public void testNewGenesisBlock() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
 
     logger.info("test new genesis block: {}", BlockUtils.toPrintString
@@ -55,15 +55,19 @@ public class BlockUtilsTest {
   @Test
   public void testPrepareData() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     logger.info("test prepare data: {}",
-        "12580a2015f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e120e10ffffffffffffffffff012201001a24080a12200304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b8532022001".equals(ByteArray.toHexString(BlockUtils.prepareData(BlockUtils.newGenesisBlock(coinbase)))));
+        "12580a2015f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e120e10ffffffffffffffffff012201001a24080a12200304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b8532022001"
+            .equals(ByteArray
+                .toHexString(BlockUtils.prepareData(BlockUtils.newGenesisBlock(coinbase)))));
   }
 
   @Test
   public void testIsValidate() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
     logger.info("nonce: {}", ByteArray.toHexString(genesisBlock.getBlockHeader().getNonce
         ().toByteArray()));
@@ -74,7 +78,8 @@ public class BlockUtilsTest {
   @Test
   public void testToPrintString() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     logger.info("test to print string: {}", BlockUtils.toPrintString
         (BlockUtils.newGenesisBlock(coinbase)));
   }
@@ -82,7 +87,8 @@ public class BlockUtilsTest {
   @Test
   public void testGetMineValue() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     logger.info("test get mine value: {}", ByteArray.toHexString
         (BlockUtils.getMineValue(BlockUtils.newGenesisBlock(coinbase)
         )));
@@ -91,7 +97,8 @@ public class BlockUtilsTest {
   @Test
   public void testGetPowBoundary() {
     Transaction coinbase = TransactionUtils.newCoinbaseTransaction
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA, 0);
+        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
+            0);
     logger.info("test get pow boundary: {}", ByteArray.toHexString
         (BlockUtils.getPowBoundary(BlockUtils.newGenesisBlock
             (coinbase))));

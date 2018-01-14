@@ -15,7 +15,8 @@
 
 package org.tron.storage;
 
-public class SourceCodec<Key, Value, SourceKey, SourceValue> extends AbstractChainedSource<Key, Value, SourceKey, SourceValue> {
+public class SourceCodec<Key, Value, SourceKey, SourceValue> extends
+    AbstractChainedSource<Key, Value, SourceKey, SourceValue> {
 
   protected Serializer<Key, SourceKey> keySerializer;
   protected Serializer<Value, SourceValue> valSerializer;
@@ -28,7 +29,8 @@ public class SourceCodec<Key, Value, SourceKey, SourceValue> extends AbstractCha
    * @param keySerializer Key codec Key <=> SourceKey
    * @param valSerializer Value codec Value <=> SourceValue
    */
-  public SourceCodec(SourceInter<SourceKey, SourceValue> src, Serializer<Key, SourceKey> keySerializer, Serializer<Value, SourceValue> valSerializer) {
+  public SourceCodec(SourceInter<SourceKey, SourceValue> src,
+      Serializer<Key, SourceKey> keySerializer, Serializer<Value, SourceValue> valSerializer) {
     super(src);
     this.keySerializer = keySerializer;
     this.valSerializer = valSerializer;
@@ -59,8 +61,10 @@ public class SourceCodec<Key, Value, SourceKey, SourceValue> extends AbstractCha
   /**
    * Shortcut class when only value conversion is required
    */
-  public static class ValueOnly<Key, Value, SourceValue> extends SourceCodec<Key, Value, Key, SourceValue> {
-    public ValueOnly(SourceInter<Key, SourceValue> src, Serializer<Value, SourceValue> valSerializer) {
+  public static class ValueOnly<Key, Value, SourceValue> extends
+      SourceCodec<Key, Value, Key, SourceValue> {
+    public ValueOnly(SourceInter<Key, SourceValue> src,
+        Serializer<Value, SourceValue> valSerializer) {
       super(src, new Serializers.Identity<Key>(), valSerializer);
     }
   }
@@ -69,7 +73,8 @@ public class SourceCodec<Key, Value, SourceKey, SourceValue> extends AbstractCha
    * Shortcut class when only value conversion is required and allKeys are of byte[] type
    */
   public static class BytesKey<Value, SourceValue> extends ValueOnly<byte[], Value, SourceValue> {
-    public BytesKey(SourceInter<byte[], SourceValue> src, Serializer<Value, SourceValue> valSerializer) {
+    public BytesKey(SourceInter<byte[], SourceValue> src,
+        Serializer<Value, SourceValue> valSerializer) {
       super(src, valSerializer);
     }
   }

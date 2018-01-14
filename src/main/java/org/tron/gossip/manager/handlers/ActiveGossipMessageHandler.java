@@ -22,7 +22,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.tron.gossip.Member;
 import org.tron.gossip.RemoteMember;
 import org.tron.gossip.manager.GossipCore;

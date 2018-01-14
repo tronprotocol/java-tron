@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
@@ -137,7 +136,8 @@ public class BlockchainTest {
 
     Block block = BlockUtils.newBlock(null, parentHash,
         difficulty, 0);
-    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.TEST, "blockStore_test");
+    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.TEST,
+        "blockStore_test");
     levelDbDataSource.initDB();
     String lastHash = "lastHash";
     byte[] key = lastHash.getBytes();

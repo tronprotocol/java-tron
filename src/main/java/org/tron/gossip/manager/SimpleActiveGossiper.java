@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.tron.gossip.LocalMember;
 
 /**
@@ -39,7 +38,7 @@ public class SimpleActiveGossiper extends AbstractActiveGossiper {
   private ThreadPoolExecutor threadService;
 
   public SimpleActiveGossiper(GossipManager gossipManager, GossipCore gossipCore,
-                              MetricRegistry registry) {
+      MetricRegistry registry) {
     super(gossipManager, gossipCore, registry);
     scheduledExecutorService = Executors.newScheduledThreadPool(2);
     workQueue = new ArrayBlockingQueue<Runnable>(1024);

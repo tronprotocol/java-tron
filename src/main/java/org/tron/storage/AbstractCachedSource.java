@@ -80,7 +80,8 @@ public abstract class AbstractCachedSource<Key, Value>
   /**
    * Sets the key/value size estimators
    */
-  public AbstractCachedSource<Key, Value> withSizeEstimators(MemSizeEstimator<Key> keySizeEstimator, MemSizeEstimator<Value> valueSizeEstimator) {
+  public AbstractCachedSource<Key, Value> withSizeEstimators(MemSizeEstimator<Key> keySizeEstimator,
+      MemSizeEstimator<Value> valueSizeEstimator) {
     this.keySizeEstimator = keySizeEstimator;
     this.valueSizeEstimator = valueSizeEstimator;
     return this;

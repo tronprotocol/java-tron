@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.crypto.ECKey;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
@@ -87,9 +86,10 @@ public class UTXOSet {
 
         for (int i = 0; i < len; i++) {
           TronTXOutput.TXOutput txOutput = txOutputs.getOutputs(i);
-          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
-              .getPubKeyHash()
-              .toByteArray())) && accumulated < amount) {
+          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
+              .equals(ByteArray.toHexString(txOutput
+                  .getPubKeyHash()
+                  .toByteArray())) && accumulated < amount) {
             accumulated += txOutput.getValue();
 
             long[] v = unspentOutputs.get(ByteArray.toHexString(key));
@@ -125,9 +125,10 @@ public class UTXOSet {
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
         for (TronTXOutput.TXOutput txOutput : txOutputs.getOutputsList()) {
-          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash)).equals(ByteArray.toHexString(txOutput
-              .getPubKeyHash()
-              .toByteArray()))) {
+          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
+              .equals(ByteArray.toHexString(txOutput
+                  .getPubKeyHash()
+                  .toByteArray()))) {
             utxos.add(txOutput);
           }
         }

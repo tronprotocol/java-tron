@@ -64,9 +64,11 @@ public class FailureDetector {
       if (distribution.equals("normal")) {
         double standardDeviation = descriptiveStatistics.getStandardDeviation();
         standardDeviation = standardDeviation < 0.1 ? 0.1 : standardDeviation;
-        probability = new NormalDistributionImpl(descriptiveStatistics.getMean(), standardDeviation).cumulativeProbability(delta);
+        probability = new NormalDistributionImpl(descriptiveStatistics.getMean(), standardDeviation)
+            .cumulativeProbability(delta);
       } else {
-        probability = new ExponentialDistributionImpl(descriptiveStatistics.getMean()).cumulativeProbability(delta);
+        probability = new ExponentialDistributionImpl(descriptiveStatistics.getMean())
+            .cumulativeProbability(delta);
       }
       final double eps = 1e-12;
       if (1 - probability < eps) {

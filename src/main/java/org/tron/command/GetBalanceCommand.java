@@ -18,7 +18,6 @@ package org.tron.command;
 import static org.fusesource.jansi.Ansi.ansi;
 
 import java.util.ArrayList;
-
 import org.tron.application.CliApplication;
 import org.tron.peer.Peer;
 import org.tron.protos.core.TronTXOutput;
