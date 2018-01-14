@@ -36,20 +36,18 @@ public class UTXOSet {
   private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
   private Blockchain blockchain;
-  private LevelDbDataSourceImpl txDB = null;
+  private LevelDbDataSourceImpl txDB;
 
   @Inject
-  public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb) {
-    txDB = txDb;
+  public UTXOSet(@Named("transaction") LevelDbDataSourceImpl txDb, Blockchain blockchain) {
+    this.txDB = txDb;
+    this.blockchain = blockchain;
   }
 
   public Blockchain getBlockchain() {
     return blockchain;
   }
 
-  public void setBlockchain(Blockchain blockchain) {
-    this.blockchain = blockchain;
-  }
 
   public void reindex() {
     logger.info("reindex");
@@ -64,7 +62,7 @@ public class UTXOSet {
       String key = entry.getKey();
       TXOutputs value = entry.getValue();
 
-      for (TronTXOutput.TXOutput txOutput : value.getOutputsList()) {
+      for (TronTXOutput.TXOutput ignored : value.getOutputsList()) {
         txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
       }
     }

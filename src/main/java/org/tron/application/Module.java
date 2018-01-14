@@ -9,6 +9,7 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.server.Server;
+import org.tron.core.Blockchain;
 import org.tron.core.Constant;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
@@ -47,5 +48,11 @@ public class Module extends AbstractModule {
     LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, BLOCK_DB_NAME);
     db.initDB();
     return db;
+  }
+
+  @Provides
+  @Singleton
+  public Blockchain buildBlockchain(@Named("block") LevelDbDataSourceImpl blockDB) {
+    return new Blockchain(blockDB);
   }
 }

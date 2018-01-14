@@ -1,16 +1,11 @@
 package org.tron.peer;
 
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import javax.inject.Inject;
 import org.tron.consensus.client.BlockchainClientListener;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 /**
@@ -25,35 +20,13 @@ public class PeerBuilder {
   private Wallet wallet;
   private ECKey key;
   private String type;
-  private Injector injector;
+  private Client client;
 
   @Inject
-  public PeerBuilder(Injector injector) {
-    this.injector = injector;
-  }
-
-  private void buildBlockchain() {
-    if (wallet == null) {
-      throw new IllegalStateException("Wallet must be set before building the blockchain");
-    }
-    if (type == null) {
-      throw new IllegalStateException("Type must be set before building the blockchain");
-    }
-
-    blockchain = new Blockchain(
-        injector.getInstance(Key.get(LevelDbDataSourceImpl.class, Names.named("block"))),
-        ByteArray.toHexString(wallet.getAddress()), this.type
-    );
-  }
-
-  private void buildUTXOSet() {
-    if (blockchain == null) {
-      throw new IllegalStateException("Blockchain must be set before building the UTXOSet");
-    }
-
-    utxoSet = injector.getInstance(UTXOSet.class);
-    utxoSet.setBlockchain(blockchain);
-    utxoSet.reindex();
+  public PeerBuilder(Blockchain blockchain, UTXOSet utxoSet, Client client) {
+    this.blockchain = blockchain;
+    this.utxoSet = utxoSet;
+    this.client = client;
   }
 
   private void buildWallet() {
@@ -76,11 +49,11 @@ public class PeerBuilder {
 
   public Peer build() {
     buildWallet();
-    buildBlockchain();
-    buildUTXOSet();
+    utxoSet.reindex();
+
     Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
-    peer.setClient(injector.getInstance(Client.class));
-    blockchain.addListener(new BlockchainClientListener(injector.getInstance(Client.class), peer));
+    peer.setClient(client);
+    blockchain.addListener(new BlockchainClientListener(client, peer));
     return peer;
   }
 }
