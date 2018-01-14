@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Optional;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
-
 import org.tron.peer.Validator;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronBlock.Block;

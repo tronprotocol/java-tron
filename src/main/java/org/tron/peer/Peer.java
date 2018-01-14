@@ -16,7 +16,6 @@
 package org.tron.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.tron.command.ConsensusCommand;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;

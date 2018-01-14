@@ -34,7 +34,6 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.crdt.CrdtModule;
 import org.tron.gossip.manager.PassiveGossipConstants;

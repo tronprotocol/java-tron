@@ -35,7 +35,6 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.config.Configer;
 import org.tron.core.Constant;
 import org.tron.storage.DbSourceInter;

@@ -16,8 +16,10 @@ public final class TronBlockHeader {
     java.lang.String[] descriptorData = {
         "\n\032core/TronBlockHeader.proto\022\006protos\"\211\001\n" +
             "\013BlockHeader\022\021\n\ttimestamp\030\001 \001(\003\022\022\n\ntxTri" +
-            "eRoot\030\002 \001(\014\022\022\n\nparentHash\030\003 \001(\014\022\014\n\004hash\030" +
-            "\004 \001(\014\022\r\n\005nonce\030\005 \001(\014\022\022\n\ndifficulty\030\006 \001(\014" +
+            "eRoot\030\002 \001(\014\022\022\n\nparentHash\030\003 \001(\014\022\014\n\004hash\030"
+            +
+            "\004 \001(\014\022\r\n\005nonce\030\005 \001(\014\022\022\n\ndifficulty\030\006 \001(\014"
+            +
             "\022\016\n\006number\030\007 \001(\003B\'\n\024org.tron.protos.core" +
             "B\017TronBlockHeaderb\006proto3"
     };
@@ -38,7 +40,8 @@ public final class TronBlockHeader {
     internal_static_protos_BlockHeader_fieldAccessorTable = new
         com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_protos_BlockHeader_descriptor,
-        new java.lang.String[] {"Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce", "Difficulty", "Number",});
+        new java.lang.String[] {"Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce",
+            "Difficulty", "Number",});
   }
 
   private TronBlockHeader() {
@@ -268,7 +271,8 @@ public final class TronBlockHeader {
       return PARSER.parseFrom(data, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
@@ -282,7 +286,8 @@ public final class TronBlockHeader {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
@@ -337,7 +342,8 @@ public final class TronBlockHeader {
     internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronBlockHeader.BlockHeader.class, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
+              org.tron.protos.core.TronBlockHeader.BlockHeader.class,
+              org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
     }
 
     /**
@@ -585,7 +591,8 @@ public final class TronBlockHeader {
       internalGetFieldAccessorTable() {
         return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronBlockHeader.BlockHeader.class, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
+                org.tron.protos.core.TronBlockHeader.BlockHeader.class,
+                org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
       }
 
       private void maybeForceBuilderInitialization() {
@@ -631,7 +638,8 @@ public final class TronBlockHeader {
       }
 
       public org.tron.protos.core.TronBlockHeader.BlockHeader buildPartial() {
-        org.tron.protos.core.TronBlockHeader.BlockHeader result = new org.tron.protos.core.TronBlockHeader.BlockHeader(this);
+        org.tron.protos.core.TronBlockHeader.BlockHeader result = new org.tron.protos.core.TronBlockHeader.BlockHeader(
+            this);
         result.timestamp_ = timestamp_;
         result.txTrieRoot_ = txTrieRoot_;
         result.parentHash_ = parentHash_;
@@ -726,7 +734,8 @@ public final class TronBlockHeader {
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.tron.protos.core.TronBlockHeader.BlockHeader) e.getUnfinishedMessage();
+          parsedMessage = (org.tron.protos.core.TronBlockHeader.BlockHeader) e
+              .getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {

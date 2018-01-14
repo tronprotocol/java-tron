@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.tron.gossip.example.StandNode;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;

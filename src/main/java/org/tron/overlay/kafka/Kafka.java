@@ -30,7 +30,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-
 import org.tron.overlay.Net;
 import org.tron.overlay.listener.ReceiveSource;
 import org.tron.overlay.message.Message;
@@ -123,8 +122,9 @@ public class Kafka implements Net {
   }
 
   private void consumerExecute(int workerNum) {
-    executors = new ThreadPoolExecutor(workerNum, workerNum, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>
-        (1000), new ThreadPoolExecutor.CallerRunsPolicy());
+    executors = new ThreadPoolExecutor(workerNum, workerNum, 0L, TimeUnit.MILLISECONDS,
+        new ArrayBlockingQueue<>
+            (1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
     Thread thread = new Thread(() -> {
       while (true) {

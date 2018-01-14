@@ -19,7 +19,6 @@
 package org.tron.gossip.crdt;
 
 import java.util.Map;
-
 import org.tron.gossip.manager.GossipManager;
 
 public class PNCounter implements CrdtCounter<Long, PNCounter> {

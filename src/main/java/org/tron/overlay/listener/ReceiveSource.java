@@ -17,7 +17,6 @@ package org.tron.overlay.listener;
 
 import java.util.Enumeration;
 import java.util.Vector;
-
 import org.tron.overlay.message.Message;
 
 public class ReceiveSource {

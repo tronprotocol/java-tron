@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.Member;
@@ -84,9 +83,9 @@ public abstract class GossipManager {
   private ProtocolManager protocolManager;
 
   public GossipManager(String cluster,
-                       URI uri, String id, Map<String, String> properties, GossipSettings settings,
-                       List<Member> gossipMembers, GossipListener listener, MetricRegistry registry,
-                       MessageHandler messageHandler) {
+      URI uri, String id, Map<String, String> properties, GossipSettings settings,
+      List<Member> gossipMembers, GossipListener listener, MetricRegistry registry,
+      MessageHandler messageHandler) {
     this.settings = settings;
     this.messageHandler = messageHandler;
 
@@ -115,14 +114,16 @@ public abstract class GossipManager {
         gossipCore,
         GossipManager.buildPerNodeDataPath(this),
         GossipManager.buildSharedDataPath(this));
-    this.memberStateRefresher = new GossipMemberStateRefresher(members, settings, listener, this::findPerNodeGossipData);
+    this.memberStateRefresher = new GossipMemberStateRefresher(members, settings, listener,
+        this::findPerNodeGossipData);
     readSavedRingState();
     readSavedDataState();
   }
 
   public static File buildRingStatePath(GossipManager manager) {
-    return new File(manager.getSettings().getPathToRingState(), "ringstate." + manager.getMyself().getClusterName() + "."
-        + manager.getMyself().getId() + ".json");
+    return new File(manager.getSettings().getPathToRingState(),
+        "ringstate." + manager.getMyself().getClusterName() + "."
+            + manager.getMyself().getId() + ".json");
   }
 
   public static File buildSharedDataPath(GossipManager manager) {
@@ -223,7 +224,8 @@ public abstract class GossipManager {
 
   private void readSavedDataState() {
     if (settings.isPersistDataState()) {
-      for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> l : userDataState.readPerNodeFromDisk().entrySet()) {
+      for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> l : userDataState
+          .readPerNodeFromDisk().entrySet()) {
         for (Entry<String, PerNodeDataMessage> j : l.getValue().entrySet()) {
           gossipCore.addPerNodeData(j.getValue());
         }

@@ -19,7 +19,6 @@ package org.tron.dbStore;
 import java.io.Serializable;
 import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-
 import org.tron.utils.FastByteComparisons;
 
 

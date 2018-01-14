@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SourceChainBox<Key, Value, SourceKey, SourceValue> extends AbstractChainedSource<Key, Value, SourceKey,
-    SourceValue> {
+public class SourceChainBox<Key, Value, SourceKey, SourceValue> extends
+    AbstractChainedSource<Key, Value, SourceKey,
+        SourceValue> {
 
 
   List<SourceInter> chain = new ArrayList<SourceInter>();

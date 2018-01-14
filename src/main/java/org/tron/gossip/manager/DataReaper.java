@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import org.tron.gossip.model.PerNodeDataMessage;
 import org.tron.gossip.model.SharedDataMessage;
 
@@ -62,7 +61,8 @@ public class DataReaper {
   }
 
   void runPerNodeOnce() {
-    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> node : gossipCore.getPerNodeData().entrySet()) {
+    for (Entry<String, ConcurrentHashMap<String, PerNodeDataMessage>> node : gossipCore
+        .getPerNodeData().entrySet()) {
       reapData(node.getValue());
     }
   }

@@ -70,7 +70,7 @@ public class DataEventManager {
   }
 
   public void notifyPerNodeData(final String nodeId, final String key, final Object newValue,
-                                final Object oldValue) {
+      final Object oldValue) {
     perNodeDataHandlers.forEach(handler -> perNodeDataEventExecutor
         .execute(() -> handler.onUpdate(nodeId, key, oldValue, newValue)));
   }

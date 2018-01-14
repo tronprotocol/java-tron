@@ -31,7 +31,8 @@ public class PeerType implements IParameterValidator {
   public void validate(String name, String value) throws ParameterException {
     if (!isValid(value)) {
       throw new ParameterException(
-          "parameter " + name + " should be '" + PEER_NORMAL + "' or '" + PEER_SERVER + "' (found " + value + ")");
+          "parameter " + name + " should be '" + PEER_NORMAL + "' or '" + PEER_SERVER + "' (found "
+              + value + ")");
     }
   }
 }

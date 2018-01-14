@@ -20,7 +20,6 @@ import static org.fusesource.jansi.Ansi.ansi;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.tron.application.CliApplication;
 import org.tron.consensus.client.Client;
 import org.tron.consensus.client.MessageType;

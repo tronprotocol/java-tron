@@ -24,7 +24,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
-
 import org.tron.application.Service;
 import org.tron.consensus.common.GetQuery;
 import org.tron.consensus.common.MapstateMachine;

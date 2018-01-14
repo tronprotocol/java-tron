@@ -34,7 +34,8 @@ public class RemoteMember extends Member {
    * @param uri       A URI object containing IP/hostname and port
    * @param heartbeat The current heartbeat
    */
-  public RemoteMember(String clusterName, URI uri, String id, long heartbeat, Map<String, String> properties) {
+  public RemoteMember(String clusterName, URI uri, String id, long heartbeat,
+      Map<String, String> properties) {
     super(clusterName, uri, id, heartbeat, properties);
   }
 

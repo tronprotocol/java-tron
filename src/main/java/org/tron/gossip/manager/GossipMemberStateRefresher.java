@@ -31,7 +31,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import org.apache.log4j.Logger;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.event.GossipListener;
@@ -52,8 +51,8 @@ public class GossipMemberStateRefresher {
   private final BlockingQueue<Runnable> workQueue;
 
   public GossipMemberStateRefresher(Map<LocalMember, GossipState> members, GossipSettings settings,
-                                    GossipListener listener,
-                                    BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData) {
+      GossipListener listener,
+      BiFunction<String, String, PerNodeDataMessage> findPerNodeGossipData) {
     this.members = members;
     this.settings = settings;
     listeners.add(listener);
@@ -129,7 +128,8 @@ public class GossipMemberStateRefresher {
    * @return true if node forced down
    */
   public boolean processOptimisticShutdown(Entry<LocalMember, GossipState> l) {
-    PerNodeDataMessage m = findPerNodeGossipData.apply(l.getKey().getId(), ShutdownMessage.PER_NODE_KEY);
+    PerNodeDataMessage m = findPerNodeGossipData
+        .apply(l.getKey().getId(), ShutdownMessage.PER_NODE_KEY);
     if (m == null) {
       return false;
     }

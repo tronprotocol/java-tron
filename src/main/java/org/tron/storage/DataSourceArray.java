@@ -18,7 +18,6 @@ package org.tron.storage;
 
 import java.util.AbstractList;
 import org.spongycastle.util.encoders.Hex;
-
 import org.tron.utils.ByteUtil;
 
 public class DataSourceArray<V> extends AbstractList<V> {

@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
 import org.apache.log4j.Logger;
-
 import org.tron.gossip.LocalMember;
 
 public class RingStatePersister implements Runnable {

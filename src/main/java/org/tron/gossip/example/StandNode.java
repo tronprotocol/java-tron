@@ -21,7 +21,6 @@ import static org.tron.core.Constant.TOPIC_TRANSACTION;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-
 import org.tron.gossip.GossipSettings;
 import org.tron.gossip.Member;
 import org.tron.gossip.RemoteMember;
@@ -91,7 +90,8 @@ public class StandNode implements Net {
   }
 
   private List<Member> getGossipMembers() {
-    return Collections.singletonList(new RemoteMember(cluster, URI.create("udp://localhost:10000"), "0"));
+    return Collections
+        .singletonList(new RemoteMember(cluster, URI.create("udp://localhost:10000"), "0"));
   }
 
   public String getCluster() {

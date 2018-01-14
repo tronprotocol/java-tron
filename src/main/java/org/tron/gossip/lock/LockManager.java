@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
-
 import org.tron.gossip.Member;
 import org.tron.gossip.lock.exceptions.VoteFailedException;
 import org.tron.gossip.lock.vote.MajorityVote;
@@ -59,7 +58,7 @@ public class LockManager {
   private final Timer lockTimeMetric;
 
   public LockManager(GossipManager gossipManager, final LockManagerSettings lockManagerSettings,
-                     MetricRegistry metrics) {
+      MetricRegistry metrics) {
     this.gossipManager = gossipManager;
     this.lockSettings = lockManagerSettings;
     this.numberOfNodes = new AtomicInteger(lockSettings.getNumberOfNodes());
@@ -172,7 +171,8 @@ public class LockManager {
       String myVoteCandidate = getVotedCandidateNodeId(myNodeId, voteCandidateMap);
 
       if (myVoteCandidate == null) {
-        myVoteCandidate = lockSettings.getVoteSelector().getVoteCandidateId(voteCandidateMap.keySet());
+        myVoteCandidate = lockSettings.getVoteSelector()
+            .getVoteCandidateId(voteCandidateMap.keySet());
       }
       for (VoteCandidate voteCandidate : voteCandidateMap.values()) {
         if (voteCandidate.getCandidateNodeId().equals(myNodeId)) {
@@ -257,7 +257,7 @@ public class LockManager {
   }
 
   private String getVotedCandidateNodeId(String nodeId,
-                                         final Map<String, VoteCandidate> voteCandidates) {
+      final Map<String, VoteCandidate> voteCandidates) {
     for (VoteCandidate voteCandidate : voteCandidates.values()) {
       Vote vote = voteCandidate.getVotes().get(nodeId);
       if (vote != null && vote.getVoteValue()) {

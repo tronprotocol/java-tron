@@ -38,7 +38,8 @@ import java.util.stream.Stream;
   DataTest - integration test with 2 nodes, MaxChangeSet was serialized/deserialized, sent between nodes, merged
 */
 
-public class MaxChangeSet<ElementType> implements CrdtAddRemoveSet<ElementType, Set<ElementType>, MaxChangeSet<ElementType>> {
+public class MaxChangeSet<ElementType> implements
+    CrdtAddRemoveSet<ElementType, Set<ElementType>, MaxChangeSet<ElementType>> {
   private final Map<ElementType, Integer> struct;
 
   public MaxChangeSet() {
@@ -113,6 +114,7 @@ public class MaxChangeSet<ElementType> implements CrdtAddRemoveSet<ElementType, 
 
   @Override
   public boolean equals(Object obj) {
-    return this == obj || (obj != null && getClass() == obj.getClass() && value().equals(((MaxChangeSet) obj).value()));
+    return this == obj || (obj != null && getClass() == obj.getClass() && value()
+        .equals(((MaxChangeSet) obj).value()));
   }
 }

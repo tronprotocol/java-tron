@@ -24,7 +24,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-
 import org.tron.storage.NoDeleteSource;
 import org.tron.storage.Serializer;
 import org.tron.storage.SourceCodec;
@@ -71,8 +70,9 @@ public class TrieTest {
     trie.putData("dog", "puppy");
     trie.putData("shaman", "");
 
-    assertEquals("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", Hex.toHexString(trie
-        .getRootHash()));
+    assertEquals("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84",
+        Hex.toHexString(trie
+            .getRootHash()));
   }
 
   @Test

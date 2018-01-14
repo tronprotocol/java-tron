@@ -52,7 +52,8 @@ public abstract class Member implements Comparable<Member> {
    * @param heartbeat   The current heartbeat
    * @param id          An id that may be replaced after contact
    */
-  public Member(String clusterName, URI uri, String id, long heartbeat, Map<String, String> properties) {
+  public Member(String clusterName, URI uri, String id, long heartbeat,
+      Map<String, String> properties) {
     this.clusterName = clusterName;
     this.id = id;
     this.heartbeat = heartbeat;
@@ -127,8 +128,9 @@ public abstract class Member implements Comparable<Member> {
     final int prime = 31;
     int result = 1;
     String address = computeAddress();
-    result = prime * result + ((address == null) ? 0 : address.hashCode()) + (clusterName == null ? 0
-        : clusterName.hashCode());
+    result =
+        prime * result + ((address == null) ? 0 : address.hashCode()) + (clusterName == null ? 0
+            : clusterName.hashCode());
     return result;
   }
 

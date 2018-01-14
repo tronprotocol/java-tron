@@ -19,7 +19,6 @@
 package org.tron.gossip.protocol;
 
 import java.io.IOException;
-
 import org.tron.gossip.model.Base;
 
 /**

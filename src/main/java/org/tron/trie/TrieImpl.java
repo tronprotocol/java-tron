@@ -34,7 +34,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.spongycastle.util.encoders.Hex;
-
 import org.tron.crypto.Hash;
 import org.tron.storage.SourceInter;
 import org.tron.storage.inmem.HashMapDB;
@@ -203,7 +202,8 @@ public class TrieImpl implements Trie<byte[]> {
         pos += len + 1;
       } else if (prefix < OFFSET_SHORT_LIST) {  // [0xb8, 0xbf]
         int lenlen = prefix - OFFSET_LONG_ITEM; // length of length the encoded bytes
-        int lenbytes = byteArrayToInt(copyOfRange(data, pos + 1, pos + 1 + lenlen)); // length of encoded
+        int lenbytes = byteArrayToInt(
+            copyOfRange(data, pos + 1, pos + 1 + lenlen)); // length of encoded
         // bytes
         ret.add(pos + 1 + lenlen, lenbytes, false);
         pos += 1 + lenlen + lenbytes;
@@ -213,11 +213,13 @@ public class TrieImpl implements Trie<byte[]> {
         pos += 1 + len;
       } else if (prefix <= 0xFF) {  // [0xf8, 0xff]
         int lenlen = prefix - OFFSET_LONG_LIST; // length of length the encoded list
-        int lenlist = byteArrayToInt(copyOfRange(data, pos + 1, pos + 1 + lenlen)); // length of encoded bytes
+        int lenlist = byteArrayToInt(
+            copyOfRange(data, pos + 1, pos + 1 + lenlen)); // length of encoded bytes
         ret.add(pos + 1 + lenlen, lenlist, true);
         pos += 1 + lenlen + lenlist; // start at position of first element in list
       } else {
-        throw new RuntimeException("Only byte values between 0x00 and 0xFF are supported, but got: " + prefix);
+        throw new RuntimeException(
+            "Only byte values between 0x00 and 0xFF are supported, but got: " + prefix);
       }
     }
     return ret;
@@ -516,7 +518,8 @@ public class TrieImpl implements Trie<byte[]> {
     } else if (node.getType() == NodeType.KVNodeNode) {
       scanTree(node.kvNodeGetChildNode(), k.concat(node.kvNodeGetKey()), scanAction);
     } else {
-      scanAction.doOnValue(node.hash, node, k.concat(node.kvNodeGetKey()).toNormal(), node.kvNodeGetValue());
+      scanAction.doOnValue(node.hash, node, k.concat(node.kvNodeGetKey()).toNormal(),
+          node.kvNodeGetValue());
     }
   }
 
@@ -629,7 +632,8 @@ public class TrieImpl implements Trie<byte[]> {
 
     private void resolve() {
       if (!resolveCheck()) {
-        throw new RuntimeException("Invalid Trie state, can't resolve hash " + Hex.toHexString(hash));
+        throw new RuntimeException(
+            "Invalid Trie state, can't resolve hash " + Hex.toHexString(hash));
       }
     }
 
@@ -686,15 +690,17 @@ public class TrieImpl implements Trie<byte[]> {
             byte[][] encoded = new byte[17][];
             for (int i = 0; i < 16; i++) {
               Node child = branchNodeGetChild(i);
-              encoded[i] = child == null ? EMPTY_ELEMENT_SERIALIZABLE : child.encode(depth + 1, false);
+              encoded[i] =
+                  child == null ? EMPTY_ELEMENT_SERIALIZABLE : child.encode(depth + 1, false);
             }
             byte[] value = branchNodeGetValue();
             encoded[16] = encodeElement(value);
             ret = encodeList(encoded);
           }
         } else if (type == NodeType.KVNodeNode) {
-          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()), kvNodeGetChildNode().encode(depth + 1,
-              false));
+          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
+              kvNodeGetChildNode().encode(depth + 1,
+                  false));
         } else {
           byte[] value = kvNodeGetValue();
           ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
@@ -716,7 +722,8 @@ public class TrieImpl implements Trie<byte[]> {
     }
 
     @SafeVarargs
-    private final byte[] encodeSerListFutures(Object... list) throws ExecutionException, InterruptedException {
+    private final byte[] encodeSerListFutures(Object... list)
+        throws ExecutionException, InterruptedException {
       byte[][] vals = new byte[list.length][];
       for (int i = 0; i < list.length; i++) {
         if (list[i] instanceof Future) {
@@ -960,7 +967,8 @@ public class TrieImpl implements Trie<byte[]> {
 
     @Override
     public String toString() {
-      return getType() + (dirty ? " *" : "") + (hash == null ? "" : "(hash: " + Hex.toHexString(hash) + " )");
+      return getType() + (dirty ? " *" : "") + (hash == null ? ""
+          : "(hash: " + Hex.toHexString(hash) + " )");
     }
   }
 }

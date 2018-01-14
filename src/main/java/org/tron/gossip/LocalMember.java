@@ -20,7 +20,6 @@ package org.tron.gossip;
 
 import java.net.URI;
 import java.util.Map;
-
 import org.tron.gossip.accrual.FailureDetector;
 
 /**
@@ -39,7 +38,8 @@ public class LocalMember extends Member {
    * @param heartbeat The current heartbeat
    */
   public LocalMember(String clusterName, URI uri, String id,
-                     long heartbeat, Map<String, String> properties, int windowSize, int minSamples, String distribution) {
+      long heartbeat, Map<String, String> properties, int windowSize, int minSamples,
+      String distribution) {
     super(clusterName, uri, id, heartbeat, properties);
     detector = new FailureDetector(minSamples, windowSize, distribution);
   }

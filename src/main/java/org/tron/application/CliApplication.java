@@ -1,7 +1,6 @@
 package org.tron.application;
 
 import com.google.inject.Injector;
-
 import org.tron.peer.Peer;
 
 public class CliApplication extends Application {

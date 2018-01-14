@@ -207,7 +207,8 @@ public final class TronTransaction {
                 mutable_bitField0_ |= 0x00000002;
               }
               vin_.add(
-                  input.readMessage(org.tron.protos.core.TronTXInput.TXInput.parser(), extensionRegistry));
+                  input.readMessage(org.tron.protos.core.TronTXInput.TXInput.parser(),
+                      extensionRegistry));
               break;
             }
             case 26: {
@@ -216,7 +217,8 @@ public final class TronTransaction {
                 mutable_bitField0_ |= 0x00000004;
               }
               vout_.add(
-                  input.readMessage(org.tron.protos.core.TronTXOutput.TXOutput.parser(), extensionRegistry));
+                  input.readMessage(org.tron.protos.core.TronTXOutput.TXOutput.parser(),
+                      extensionRegistry));
               break;
             }
           }
@@ -281,7 +283,8 @@ public final class TronTransaction {
       return PARSER.parseFrom(data, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronTransaction.Transaction parseFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
@@ -295,7 +298,8 @@ public final class TronTransaction {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(java.io.InputStream input)
+    public static org.tron.protos.core.TronTransaction.Transaction parseDelimitedFrom(
+        java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
@@ -350,7 +354,8 @@ public final class TronTransaction {
     internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronTransaction.Transaction.class, org.tron.protos.core.TronTransaction.Transaction.Builder.class);
+              org.tron.protos.core.TronTransaction.Transaction.class,
+              org.tron.protos.core.TronTransaction.Transaction.Builder.class);
     }
 
     /**
@@ -591,7 +596,8 @@ public final class TronTransaction {
       internalGetFieldAccessorTable() {
         return org.tron.protos.core.TronTransaction.internal_static_protos_Transaction_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronTransaction.Transaction.class, org.tron.protos.core.TronTransaction.Transaction.Builder.class);
+                org.tron.protos.core.TronTransaction.Transaction.class,
+                org.tron.protos.core.TronTransaction.Transaction.Builder.class);
       }
 
       private void maybeForceBuilderInitialization() {
@@ -639,7 +645,8 @@ public final class TronTransaction {
       }
 
       public org.tron.protos.core.TronTransaction.Transaction buildPartial() {
-        org.tron.protos.core.TronTransaction.Transaction result = new org.tron.protos.core.TronTransaction.Transaction(this);
+        org.tron.protos.core.TronTransaction.Transaction result = new org.tron.protos.core.TronTransaction.Transaction(
+            this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.id_ = id_;
@@ -783,7 +790,8 @@ public final class TronTransaction {
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.tron.protos.core.TronTransaction.Transaction) e.getUnfinishedMessage();
+          parsedMessage = (org.tron.protos.core.TronTransaction.Transaction) e
+              .getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {

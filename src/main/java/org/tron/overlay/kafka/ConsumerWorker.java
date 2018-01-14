@@ -18,7 +18,6 @@ package org.tron.overlay.kafka;
 import static org.tron.core.Constant.TOPIC_BLOCK;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 

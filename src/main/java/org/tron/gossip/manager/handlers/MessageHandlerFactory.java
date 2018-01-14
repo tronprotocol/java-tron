@@ -19,7 +19,6 @@
 package org.tron.gossip.manager.handlers;
 
 import java.util.Arrays;
-
 import org.tron.gossip.manager.GossipCore;
 import org.tron.gossip.manager.GossipManager;
 import org.tron.gossip.model.ActiveGossipMessage;
@@ -55,7 +54,7 @@ public class MessageHandlerFactory {
     return new MessageHandler() {
       @Override
       public boolean invoke(GossipCore gossipCore, GossipManager gossipManager,
-                            Base base) {
+          Base base) {
         // return true if at least one of the component handlers return true.
         return Arrays.asList(handlers).stream()
             .filter((mi) -> mi.invoke(gossipCore, gossipManager, base)).count() > 0;

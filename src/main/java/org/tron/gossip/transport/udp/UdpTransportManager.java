@@ -28,7 +28,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.LoggerFactory;
-
 import org.tron.gossip.manager.GossipCore;
 import org.tron.gossip.manager.GossipManager;
 import org.tron.gossip.model.Base;
@@ -59,7 +58,8 @@ public class UdpTransportManager extends AbstractTransportManager implements Run
     super(gossipManager, gossipCore);
     soTimeout = gossipManager.getSettings().getGossipInterval() * 2;
     try {
-      SocketAddress socketAddress = new InetSocketAddress(gossipManager.getMyself().getUri().getHost(),
+      SocketAddress socketAddress = new InetSocketAddress(
+          gossipManager.getMyself().getUri().getHost(),
           gossipManager.getMyself().getUri().getPort());
       server = new DatagramSocket(socketAddress);
     } catch (SocketException ex) {

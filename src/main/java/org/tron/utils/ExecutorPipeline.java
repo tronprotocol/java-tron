@@ -44,10 +44,12 @@ public class ExecutorPipeline<In, Out> {
   private Map<Long, Out> orderMap = new HashMap<>();
   private AtomicInteger threadNumber = new AtomicInteger(1);
 
-  public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder, Function<In, Out> processor,
-                          Consumer<Throwable> exceptionHandler) {
+  public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder,
+      Function<In, Out> processor,
+      Consumer<Throwable> exceptionHandler) {
     queue = new LimitedQueue<>(queueSize);
-    exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
+    exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue,
+        r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
     this.preserveOrder = preserveOrder;
     this.processor = processor;
     this.exceptionHandler = exceptionHandler;
@@ -61,9 +63,11 @@ public class ExecutorPipeline<In, Out> {
     });
   }
 
-  public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize, boolean preserveOrder,
-                                                      Function<Out, NextOut> processor) {
-    ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder, processor,
+  public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize,
+      boolean preserveOrder,
+      Function<Out, NextOut> processor) {
+    ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder,
+        processor,
         exceptionHandler);
     next = ret;
     return ret;

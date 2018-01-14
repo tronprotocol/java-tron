@@ -180,7 +180,8 @@ public final class TronBlock {
                 mutable_bitField0_ |= 0x00000001;
               }
               transactions_.add(
-                  input.readMessage(org.tron.protos.core.TronTransaction.Transaction.parser(), extensionRegistry));
+                  input.readMessage(org.tron.protos.core.TronTransaction.Transaction.parser(),
+                      extensionRegistry));
               break;
             }
             case 18: {
@@ -188,7 +189,9 @@ public final class TronBlock {
               if (blockHeader_ != null) {
                 subBuilder = blockHeader_.toBuilder();
               }
-              blockHeader_ = input.readMessage(org.tron.protos.core.TronBlockHeader.BlockHeader.parser(), extensionRegistry);
+              blockHeader_ = input
+                  .readMessage(org.tron.protos.core.TronBlockHeader.BlockHeader.parser(),
+                      extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(blockHeader_);
                 blockHeader_ = subBuilder.buildPartial();
@@ -324,7 +327,8 @@ public final class TronBlock {
     internalGetFieldAccessorTable() {
       return org.tron.protos.core.TronBlock.internal_static_protos_Block_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronBlock.Block.class, org.tron.protos.core.TronBlock.Block.Builder.class);
+              org.tron.protos.core.TronBlock.Block.class,
+              org.tron.protos.core.TronBlock.Block.Builder.class);
     }
 
     /**
@@ -375,7 +379,8 @@ public final class TronBlock {
      * <code>.protos.BlockHeader blockHeader = 2;</code>
      */
     public org.tron.protos.core.TronBlockHeader.BlockHeader getBlockHeader() {
-      return blockHeader_ == null ? org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance() : blockHeader_;
+      return blockHeader_ == null ? org.tron.protos.core.TronBlockHeader.BlockHeader
+          .getDefaultInstance() : blockHeader_;
     }
 
     /**
@@ -532,7 +537,8 @@ public final class TronBlock {
       internalGetFieldAccessorTable() {
         return org.tron.protos.core.TronBlock.internal_static_protos_Block_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronBlock.Block.class, org.tron.protos.core.TronBlock.Block.Builder.class);
+                org.tron.protos.core.TronBlock.Block.class,
+                org.tron.protos.core.TronBlock.Block.Builder.class);
       }
 
       private void maybeForceBuilderInitialization() {
@@ -577,7 +583,8 @@ public final class TronBlock {
       }
 
       public org.tron.protos.core.TronBlock.Block buildPartial() {
-        org.tron.protos.core.TronBlock.Block result = new org.tron.protos.core.TronBlock.Block(this);
+        org.tron.protos.core.TronBlock.Block result = new org.tron.protos.core.TronBlock.Block(
+            this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (transactionsBuilder_ == null) {
@@ -702,7 +709,8 @@ public final class TronBlock {
 
       private void ensureTransactionsIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          transactions_ = new java.util.ArrayList<org.tron.protos.core.TronTransaction.Transaction>(transactions_);
+          transactions_ = new java.util.ArrayList<org.tron.protos.core.TronTransaction.Transaction>(
+              transactions_);
           bitField0_ |= 0x00000001;
         }
       }
@@ -966,10 +974,26 @@ public final class TronBlock {
        */
       public org.tron.protos.core.TronBlockHeader.BlockHeader getBlockHeader() {
         if (blockHeaderBuilder_ == null) {
-          return blockHeader_ == null ? org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance() : blockHeader_;
+          return blockHeader_ == null ? org.tron.protos.core.TronBlockHeader.BlockHeader
+              .getDefaultInstance() : blockHeader_;
         } else {
           return blockHeaderBuilder_.getMessage();
         }
+      }
+
+      /**
+       * <code>.protos.BlockHeader blockHeader = 2;</code>
+       */
+      public Builder setBlockHeader(
+          org.tron.protos.core.TronBlockHeader.BlockHeader.Builder builderForValue) {
+        if (blockHeaderBuilder_ == null) {
+          blockHeader_ = builderForValue.build();
+          onChanged();
+        } else {
+          blockHeaderBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
       }
 
       /**
@@ -992,26 +1016,12 @@ public final class TronBlock {
       /**
        * <code>.protos.BlockHeader blockHeader = 2;</code>
        */
-      public Builder setBlockHeader(
-          org.tron.protos.core.TronBlockHeader.BlockHeader.Builder builderForValue) {
-        if (blockHeaderBuilder_ == null) {
-          blockHeader_ = builderForValue.build();
-          onChanged();
-        } else {
-          blockHeaderBuilder_.setMessage(builderForValue.build());
-        }
-
-        return this;
-      }
-
-      /**
-       * <code>.protos.BlockHeader blockHeader = 2;</code>
-       */
       public Builder mergeBlockHeader(org.tron.protos.core.TronBlockHeader.BlockHeader value) {
         if (blockHeaderBuilder_ == null) {
           if (blockHeader_ != null) {
             blockHeader_ =
-                org.tron.protos.core.TronBlockHeader.BlockHeader.newBuilder(blockHeader_).mergeFrom(value).buildPartial();
+                org.tron.protos.core.TronBlockHeader.BlockHeader.newBuilder(blockHeader_)
+                    .mergeFrom(value).buildPartial();
           } else {
             blockHeader_ = value;
           }

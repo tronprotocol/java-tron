@@ -20,7 +20,6 @@ package org.tron.gossip.replication;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.tron.gossip.LocalMember;
 import org.tron.gossip.model.Base;
 

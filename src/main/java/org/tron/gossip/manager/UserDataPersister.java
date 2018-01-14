@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.LoggerFactory;
-
 import org.tron.gossip.model.PerNodeDataMessage;
 import org.tron.gossip.model.SharedDataMessage;
 

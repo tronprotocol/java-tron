@@ -42,7 +42,8 @@ public final class TrieKey {
   }
 
   public static TrieKey fromPacked(byte[] key) {
-    return new TrieKey(key, ((key[0] >> 4) & ODD_OFFSET_FLAG) != 0 ? 1 : 2, ((key[0] >> 4) & TERMINATOR_FLAG) != 0);
+    return new TrieKey(key, ((key[0] >> 4) & ODD_OFFSET_FLAG) != 0 ? 1 : 2,
+        ((key[0] >> 4) & TERMINATOR_FLAG) != 0);
   }
 
   public static TrieKey empty(boolean terminal) {
@@ -92,7 +93,8 @@ public final class TrieKey {
     int prefixLen = 0;
     int thisLenght = getLength();
     int kLength = k.getLength();
-    while (prefixLen < thisLenght && prefixLen < kLength && getHex(prefixLen) == k.getHex(prefixLen)) {
+    while (prefixLen < thisLenght && prefixLen < kLength && getHex(prefixLen) == k
+        .getHex(prefixLen)) {
       prefixLen++;
     }
     byte[] prefixKey = new byte[(prefixLen + 1) >> 1];

@@ -28,7 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.tron.gossip.LocalMember;
 
 /**
@@ -50,7 +49,7 @@ public class DatacenterRackAwareActiveGossiper extends AbstractActiveGossiper {
   private ThreadPoolExecutor threadService;
 
   public DatacenterRackAwareActiveGossiper(GossipManager gossipManager, GossipCore gossipCore,
-                                           MetricRegistry registry) {
+      MetricRegistry registry) {
     super(gossipManager, gossipCore, registry);
     scheduledExecutorService = Executors.newScheduledThreadPool(2);
     workQueue = new ArrayBlockingQueue<Runnable>(1024);
@@ -154,7 +153,8 @@ public class DatacenterRackAwareActiveGossiper extends AbstractActiveGossiper {
     }
     List<LocalMember> notMyDc = new ArrayList<LocalMember>(10);
     for (LocalMember i : gossipManager.getLiveMembers()) {
-      if (myDc.equals(i.getProperties().get(DATACENTER)) && !rack.equals(i.getProperties().get(RACK))) {
+      if (myDc.equals(i.getProperties().get(DATACENTER)) && !rack
+          .equals(i.getProperties().get(RACK))) {
         notMyDc.add(i);
       }
     }

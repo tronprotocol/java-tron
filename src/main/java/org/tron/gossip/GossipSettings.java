@@ -20,7 +20,6 @@ package org.tron.gossip;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.tron.gossip.lock.LockManagerSettings;
 
 /**
@@ -95,7 +94,7 @@ public class GossipSettings {
    * @param cleanupInterval The cleanup interval in ms.
    */
   public GossipSettings(int gossipInterval, int cleanupInterval, int windowSize, int minimumSamples,
-                        double convictThreshold, String distribution, boolean bulkTransfer) {
+      double convictThreshold, String distribution, boolean bulkTransfer) {
     this.gossipInterval = gossipInterval;
     this.cleanupInterval = cleanupInterval;
     this.windowSize = windowSize;
