@@ -12,19 +12,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.consensus.common;
 
 import io.atomix.copycat.Query;
 
 public class GetQuery implements Query<Object> {
 
-    private final Object key;
+  private final Object key;
 
-    public GetQuery(Object key) {
-        this.key = key;
-    }
+  public GetQuery(Object key) {
+    this.key = key;
+  }
 
-    public Object key() {
-        return key;
-    }
+  public Object key() {
+    return key;
+  }
 }

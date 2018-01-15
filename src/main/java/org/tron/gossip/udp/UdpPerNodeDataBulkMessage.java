@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 import org.tron.gossip.model.PerNodeDataBulkMessage;
@@ -23,19 +24,19 @@ public class UdpPerNodeDataBulkMessage extends PerNodeDataBulkMessage implements
 
   private String uriFrom;
   private String uuid;
-  
+
   public String getUriFrom() {
     return uriFrom;
   }
-  
+
   public void setUriFrom(String uriFrom) {
     this.uriFrom = uriFrom;
   }
-  
+
   public String getUuid() {
     return uuid;
   }
-  
+
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
@@ -43,7 +44,7 @@ public class UdpPerNodeDataBulkMessage extends PerNodeDataBulkMessage implements
   @Override
   public String toString() {
     return "UdpGossipDataMessage [uriFrom=" + uriFrom + ", uuid=" + uuid
-            + ", messages=[" + super.toString() + "] ]";
+        + ", messages=[" + super.toString() + "] ]";
   }
 
 }

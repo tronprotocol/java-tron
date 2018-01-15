@@ -12,14 +12,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.peer;
 
 public class ValidationRuleFactory {
-    public static ValidationRule create(String type) {
-        if (type.equals("Validation")) {
-            return new Validation();
-        }
-
-        return null;
+  public static ValidationRule create(String type) {
+    if (type.equals("Validation")) {
+      return new Validation();
     }
+
+    return null;
+  }
 }

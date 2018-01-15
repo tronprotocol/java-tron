@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager.handlers;
 
 import org.tron.gossip.manager.GossipCore;
@@ -34,9 +35,9 @@ public class TypedMessageHandler implements MessageHandler {
   }
 
   /**
-   * @param gossipCore context.
+   * @param gossipCore    context.
    * @param gossipManager context.
-   * @param base message reference.
+   * @param base          message reference.
    * @return true if types match, false otherwise.
    */
   @Override

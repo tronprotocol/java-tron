@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.replication;
 
 import org.tron.gossip.LocalMember;
@@ -27,7 +28,7 @@ import org.tron.gossip.model.Base;
  * @see Replicable
  */
 public class NotReplicable<T extends Base> implements Replicable<T> {
-  
+
   @Override
   public boolean shouldReplicate(LocalMember me, LocalMember destination, T message) {
     return false;

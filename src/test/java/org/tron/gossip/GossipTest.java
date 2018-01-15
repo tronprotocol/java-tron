@@ -12,8 +12,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.gossip;
 
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,31 +24,28 @@ import org.tron.gossip.example.StandNode;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
 public class GossipTest {
-    private static StandNode standNode = null;
-    private final static String CLUSTER = "mycluster";
-    private Semaphore lock = new Semaphore(0);
-    private Object sharedData = null;
+  private final static String CLUSTER = "mycluster";
+  private static StandNode standNode = null;
+  private Semaphore lock = new Semaphore(0);
+  private Object sharedData = null;
 
-    @BeforeClass
-    public static void init() {
-        standNode = new StandNode(CLUSTER, "udp://localhost:10000", "0");
-    }
+  @BeforeClass
+  public static void init() {
+    standNode = new StandNode(CLUSTER, "udp://localhost:10000", "0");
+  }
 
-    @Test
-    public void testGossipBroadcast() throws InterruptedException {
-        standNode.getGossipManager().registerSharedDataSubscriber((key, oldValue, newValue) -> {
-            if (key.equals("block")) {
-                sharedData = newValue;
-            }
-        });
+  @Test
+  public void testGossipBroadcast() throws InterruptedException {
+    standNode.getGossipManager().registerSharedDataSubscriber((key, oldValue, newValue) -> {
+      if (key.equals("block")) {
+        sharedData = newValue;
+      }
+    });
 
-        Message message = new Message("test", Type.BLOCK);
-        standNode.broadcast(message);
-        lock.tryAcquire(10, TimeUnit.SECONDS);
-        Assert.assertEquals("test", sharedData);
-    }
+    Message message = new Message("test", Type.BLOCK);
+    standNode.broadcast(message);
+    lock.tryAcquire(10, TimeUnit.SECONDS);
+    Assert.assertEquals("test", sharedData);
+  }
 }

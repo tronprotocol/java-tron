@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager;
 
 public interface GossipCoreConstants {
-  String PER_NODE_DATA_SIZE = "gossip.core.pernodedata.size"; 
+  String PER_NODE_DATA_SIZE = "gossip.core.pernodedata.size";
   String SHARED_DATA_SIZE = "gossip.core.shareddata.size";
   String REQUEST_SIZE = "gossip.core.requests.size";
   String THREADPOOL_ACTIVE = "gossip.core.threadpool.active";

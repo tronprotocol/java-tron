@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.crdt;
 
 import java.util.Map;
-
 import org.tron.gossip.manager.GossipManager;
 
 public class PNCounter implements CrdtCounter<Long, PNCounter> {
@@ -75,8 +75,9 @@ public class PNCounter implements CrdtCounter<Long, PNCounter> {
 
   @Override
   public boolean equals(Object obj) {
-    if (getClass() != obj.getClass())
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     PNCounter other = (PNCounter) obj;
     return value().longValue() == other.value().longValue();
   }
@@ -120,7 +121,7 @@ public class PNCounter implements CrdtCounter<Long, PNCounter> {
 
     public org.tron.gossip.crdt.GrowOnlyCounter.Builder makeGrowOnlyCounterBuilder(long value) {
       org.tron.gossip.crdt.GrowOnlyCounter.Builder ret = new org.tron.gossip.crdt.GrowOnlyCounter.Builder(
-              myManager);
+          myManager);
       ret.increment(value);
       return ret;
     }

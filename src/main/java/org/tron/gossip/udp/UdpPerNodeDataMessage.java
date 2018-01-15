@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 import org.tron.gossip.model.PerNodeDataMessage;
@@ -23,19 +24,19 @@ public class UdpPerNodeDataMessage extends PerNodeDataMessage implements Trackab
 
   private String uriFrom;
   private String uuid;
-  
+
   public String getUriFrom() {
     return uriFrom;
   }
-  
+
   public void setUriFrom(String uriFrom) {
     this.uriFrom = uriFrom;
   }
-  
+
   public String getUuid() {
     return uuid;
   }
-  
+
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
@@ -43,7 +44,7 @@ public class UdpPerNodeDataMessage extends PerNodeDataMessage implements Trackab
   @Override
   public String toString() {
     return "UdpGossipDataMessage [uriFrom=" + uriFrom + ", uuid=" + uuid
-            + ", getReplicable()=" + getReplicable() + "]";
+        + ", getReplicable()=" + getReplicable() + "]";
   }
 
 }

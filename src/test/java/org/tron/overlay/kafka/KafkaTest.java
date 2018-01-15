@@ -12,26 +12,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.overlay.kafka;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.overlay.Net;
-import org.tron.overlay.listener.ReceiveSource;
-import org.tron.overlay.message.Message;
-import org.tron.overlay.message.Type;
-
-import java.util.Arrays;
-
-import static org.tron.core.Constant.TOPIC_BLOCK;
-import static org.tron.core.Constant.TOPIC_TRANSACTION;
 
 public class KafkaTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testKafka() {
+  @Test
+  public void testKafka() {
 //        ReceiveSource source = new ReceiveSource();
 //        source.addReceiveListener((Message message) -> {
 //            if (message.getType() == Type.BLOCK) {
@@ -56,5 +48,5 @@ public class KafkaTest {
 //        while (endTime - startTime < 50000) {
 //            endTime = System.currentTimeMillis();
 //        }
-    }
+  }
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
 import java.util.ArrayList;
@@ -32,8 +33,9 @@ public class PerNodeDataBulkMessage extends Base {
     return messages;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "GossipDataBulkMessage[" + messages.stream().map(Object::toString)
-            .collect(Collectors.joining(",")) + "]";
+        .collect(Collectors.joining(",")) + "]";
   }
 }

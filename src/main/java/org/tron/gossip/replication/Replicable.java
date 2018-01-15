@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.replication;
 
 import org.tron.gossip.LocalMember;
@@ -29,9 +30,10 @@ import org.tron.gossip.model.Base;
 public interface Replicable<T extends Base> {
   /**
    * Test for a given data item needs to be replicated.
-   * @param me node that the data item is going to transmit from.
+   *
+   * @param me          node that the data item is going to transmit from.
    * @param destination target node to replicate.
-   * @param message this parameter is currently ignored
+   * @param message     this parameter is currently ignored
    * @return true if the data item needs to be replicated to the destination. Otherwise false.
    */
   boolean shouldReplicate(LocalMember me, LocalMember destination, T message);

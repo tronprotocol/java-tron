@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.lock.vote;
 
 import java.util.Map;
@@ -59,13 +60,15 @@ public class VoteCandidate {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof VoteCandidate))
+    if (!(obj instanceof VoteCandidate)) {
       return false;
-    if (obj == this)
+    }
+    if (obj == this) {
       return true;
+    }
     VoteCandidate other = (VoteCandidate) obj;
     return this.candidateNodeId.equals(other.candidateNodeId) && this.votingKey
-            .equals(other.votingKey);
+        .equals(other.votingKey);
   }
 
   @Override

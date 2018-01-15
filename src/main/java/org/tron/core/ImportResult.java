@@ -12,17 +12,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 public enum ImportResult {
-    IMPORTED_BEST,
-    IMPORTED_NOT_BEST,
-    EXIST,
-    NO_PARENT,
-    INVALID_BLOCK,
-    CONSENSUS_BREAK;
+  IMPORTED_BEST,
+  IMPORTED_NOT_BEST,
+  EXIST,
+  NO_PARENT,
+  INVALID_BLOCK,
+  CONSENSUS_BREAK;
 
-    public boolean isSuccessful() {
-        return equals(IMPORTED_BEST) || equals(IMPORTED_NOT_BEST);
-    }
+  public boolean isSuccessful() {
+    return equals(IMPORTED_BEST) || equals(IMPORTED_NOT_BEST);
+  }
 }
