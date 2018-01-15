@@ -1,16 +1,19 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.crypto.cryptohash;
 
@@ -91,12 +94,12 @@ abstract class KeccakCore extends DigestEngine {
         long t, kt;
         long c0, c1, c2, c3, c4, bnn;
 
-		/*
-		 * Unrolling four rounds kills performance big time
-		 * on Intel x86 Core2, in both 32-bit and 64-bit modes
-		 * (less than 1 MB/s instead of 55 MB/s on x86-64).
-		 * Unrolling two rounds appears to be fine.
-		 */
+        /*
+         * Unrolling four rounds kills performance big time
+         * on Intel x86 Core2, in both 32-bit and 64-bit modes
+         * (less than 1 MB/s instead of 55 MB/s on x86-64).
+         * Unrolling two rounds appears to be fine.
+         */
         for (int j = 0; j < 24; j += 2) {
 
             tt0 = A[1] ^ A[6];
