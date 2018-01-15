@@ -30,7 +30,8 @@ public class UTXOStore {
     uTXODataSource.initDB();
   }
 
-  public void reset() {
+
+  public void reSet() {
     uTXODataSource.resetDB();
   }
 
