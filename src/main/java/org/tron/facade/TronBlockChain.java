@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.facade;
 
 
@@ -19,8 +20,8 @@ import org.tron.protos.core.TronBlock;
 
 public interface TronBlockChain {
 
-    /**
-     * @return - last added block from blockchain
-     */
-    TronBlock.Block getBestBlock();
+  /**
+   * @return - last added block from blockchain
+   */
+  TronBlock.Block getBestBlock();
 }

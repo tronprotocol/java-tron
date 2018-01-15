@@ -12,48 +12,48 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.dbStore;
 
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 
-import java.util.Set;
+public class UTXOStore {
 
-import static org.tron.core.Constant.TRANSACTION_DB_NAME;
+  public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
+  private LevelDbDataSourceImpl uTXODataSource;
 
-public class UTXOStore   {
+  public UTXOStore(String parentName, String childName) {
+    uTXODataSource = new LevelDbDataSourceImpl(parentName, childName);
+    uTXODataSource.initDB();
+  }
 
-    public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
-    private LevelDbDataSourceImpl uTXODataSource;
+  public void reset() {
+    uTXODataSource.resetDB();
+  }
 
-    public UTXOStore( ) {
-        uTXODataSource=new LevelDbDataSourceImpl(TRANSACTION_DB_NAME);
-        uTXODataSource.initDB();
-    }
-
-    public void reset(){
-        uTXODataSource.resetDB();
-    }
-
-    public byte[] find(byte[] key){
-        return uTXODataSource.getData(key);
-    }
+  public byte[] find(byte[] key) {
+    return uTXODataSource.getData(key);
+  }
 
 
-    public Set<byte[]> getKeys(){
-        return uTXODataSource.allKeys();
-    }
-    /**
-     * save  utxo
-     * @param utxoKey
-     * @param utxoData
-     */
-    public void saveUTXO(byte[] utxoKey, byte[]utxoData){
-        uTXODataSource.putData(utxoKey,utxoData);
-    }
+  public Set<byte[]> getKeys() {
+    return uTXODataSource.allKeys();
+  }
 
-    public void close(){
-        uTXODataSource.closeDB();
-    }
+  /**
+   * save  utxo
+   *
+   * @param utxoKey
+   * @param utxoData
+   */
+  public void saveUTXO(byte[] utxoKey, byte[] utxoData) {
+    uTXODataSource.putData(utxoKey, utxoData);
+  }
+
+  public void close() {
+    uTXODataSource.closeDB();
+  }
 }

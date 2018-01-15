@@ -12,52 +12,55 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
-
-import org.tron.peer.Peer;
-import org.tron.protos.core.TronTXOutput;
-
-import java.util.ArrayList;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
+import java.util.ArrayList;
+import org.tron.application.CliApplication;
+import org.tron.peer.Peer;
+import org.tron.protos.core.TronTXOutput;
+
 public class GetBalanceCommand extends Command {
-    public GetBalanceCommand() {
+  public GetBalanceCommand() {
+  }
+
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    Peer peer = app.getPeer();
+
+    byte[] pubKeyHash = peer.getWallet().getEcKey().getPubKey();
+    ArrayList<TronTXOutput.TXOutput> utxos = peer.getUTXOSet().findUTXO(pubKeyHash);
+
+    long balance = 0;
+
+    for (TronTXOutput.TXOutput txOutput : utxos) {
+      balance += txOutput.getValue();
     }
 
-    @Override
-    public void execute(Peer peer, String[] parameters) {
-        byte[] pubKeyHash = peer.getWallet().getEcKey().getPubKey();
-        ArrayList<TronTXOutput.TXOutput> utxos = peer.getUTXOSet().findUTXO(pubKeyHash);
+    System.out.println(balance);
+  }
 
-        long balance = 0;
+  @Override
+  public void usage() {
+    System.out.println("");
 
-        for (TronTXOutput.TXOutput txOutput : utxos) {
-            balance += txOutput.getValue();
-        }
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold getbalance|@"
+    ));
 
-        System.out.println(balance);
-    }
+    System.out.println("");
 
-    @Override
-    public void usage() {
-        System.out.println("");
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'getbalance' get your balance.|@"
+    ));
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold getbalance|@"
-        ) );
+    System.out.println("");
+  }
 
-        System.out.println("");
-
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'getbalance' get your balance.|@"
-        ) );
-
-        System.out.println("");
-    }
-
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

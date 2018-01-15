@@ -44,14 +44,6 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 **Update the configuration**
 
-File path: `<your workspace>/java-tron/src/main/resources/tron.conf`
-
-```yml
-nodeip {
-    host = "127.0.0.1"  # your leader-node host
-    port = ":5000"      # your leader-node port
-}
-```
 
 **Starting program**
 
@@ -107,14 +99,6 @@ or simply from terminal:
 
 ![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send1.gif)
 
-**listen**
-
-| Description | Example | Extra attention |
-| --- | --- |---|
-|get transaction and block| listen| Enter the command once |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/listen.gif)
- 
 **printblockchain**
 
 | Description | Example |

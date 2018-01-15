@@ -4,6 +4,7 @@ version '1.0.0'
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
+apply plugin: 'checkstyle'
 
 sourceCompatibility = 1.8
 mainClassName = 'org.tron.example.Tron'
@@ -19,6 +20,19 @@ buildscript {
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
     }
+}
+
+def versions = [
+        checkstyle: '8.7',
+]
+
+configurations {
+    checkstyleConfig
+
+}
+
+configurations.getByName('checkstyleConfig') {
+    transitive = false
 }
 
 dependencies {
@@ -78,7 +92,37 @@ dependencies {
 
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'
     compile group: 'com.alibaba', name: 'fastjson', version: '1.2.44'
+
+    compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
+    compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
+
+    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
+
+    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
+
 }
+
+task lint(type: Checkstyle) {
+    // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
+    delete fileTree(dir: "${project.rootDir}/app/build/reports")
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+    // empty classpath
+    classpath = files()
+    //Failing the build
+    ignoreFailures = false
+}
+
+checkstyle {
+    toolVersion = "${versions.checkstyle}"
+    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+}
+
+
 
 tasks.matching { it instanceof Test }.all {
     testLogging.events = ["failed", "passed", "skipped"]

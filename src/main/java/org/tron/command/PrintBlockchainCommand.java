@@ -12,49 +12,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
+import org.tron.application.CliApplication;
 import org.tron.core.BlockUtils;
 import org.tron.core.Blockchain;
 import org.tron.core.BlockchainIterator;
 import org.tron.peer.Peer;
 import org.tron.protos.core.TronBlock;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 public class PrintBlockchainCommand extends Command {
-    public PrintBlockchainCommand() {
+  public PrintBlockchainCommand() {
+  }
+
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    Peer peer = app.getPeer();
+    Blockchain blockchain = peer.getUTXOSet().getBlockchain();
+    BlockchainIterator bi = new BlockchainIterator(blockchain);
+    while (bi.hasNext()) {
+      TronBlock.Block block = (TronBlock.Block) bi.next();
+      System.out.println(BlockUtils.toPrintString(block));
     }
+  }
 
-    @Override
-    public void execute(Peer peer, String[] parameters) {
-        Blockchain blockchain = peer.getUTXOSet().getBlockchain();
-        BlockchainIterator bi = new BlockchainIterator(blockchain);
-        while (bi.hasNext()) {
-            TronBlock.Block block = (TronBlock.Block) bi.next();
-            System.out.println(BlockUtils.toPrintString(block));
-        }
-    }
+  @Override
+  public void usage() {
+    System.out.println("");
 
-    @Override
-    public void usage() {
-        System.out.println("");
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold printblockchain|@"
+    ));
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold USAGE|@\n\t@|bold printblockchain|@"
-        ) );
+    System.out.println("");
 
-        System.out.println("");
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'printblockchain' print blockchain.|@"
+    ));
 
-        System.out.println( ansi().eraseScreen().render(
-                "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'printblockchain' print blockchain.|@"
-        ) );
+    System.out.println("");
+  }
 
-        System.out.println("");
-    }
-
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

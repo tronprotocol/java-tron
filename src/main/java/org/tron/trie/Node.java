@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.trie;
 
 
@@ -20,36 +21,36 @@ import org.tron.utils.Value;
 public class Node {
 
 
-    private final Value value;
-    private boolean dirty;
+  private final Value value;
+  private boolean dirty;
 
-    public Node(Value val) {
-        this(val, false);
-    }
+  public Node(Value val) {
+    this(val, false);
+  }
 
-    public Node(Value val, boolean dirty) {
-        this.value = val;
-        this.dirty = dirty;
-    }
+  public Node(Value val, boolean dirty) {
+    this.value = val;
+    this.dirty = dirty;
+  }
 
-    public Node copy() {
-        return new Node(this.value, this.dirty);
-    }
+  public Node copy() {
+    return new Node(this.value, this.dirty);
+  }
 
-    public boolean isDirty() {
-        return dirty;
-    }
+  public boolean isDirty() {
+    return dirty;
+  }
 
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
+  public void setDirty(boolean dirty) {
+    this.dirty = dirty;
+  }
 
-    public Value getValue() {
-        return value;
-    }
+  public Value getValue() {
+    return value;
+  }
 
-    @Override
-    public String toString() {
-        return "[" + dirty + ", " + value + "]";
-    }
+  @Override
+  public String toString() {
+    return "[" + dirty + ", " + value + "]";
+  }
 }

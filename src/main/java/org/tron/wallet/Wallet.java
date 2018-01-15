@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.wallet;
 
 import org.slf4j.Logger;
@@ -21,45 +22,34 @@ import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;
 
 public class Wallet {
-    private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-    private ECKey ecKey;
-    private byte[] address;
+  private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-    /**
-     * getData a new wallet key
-     */
-    public void init() {
-        this.ecKey = new ECKey(Utils.getRandom());
-        address = this.ecKey.getAddress();
-    }
+  private final ECKey ecKey;
 
-    /**
-     * getData a wallet by the key
-     *
-     * @param ecKey keypair
-     */
-    public void init(ECKey ecKey) {
-        this.ecKey = ecKey;
-        address = this.ecKey.getAddress();
+  /**
+   * Creates a new Wallet with a random ECKey.
+   */
+  public Wallet() {
+    this.ecKey = new ECKey(Utils.getRandom());
+  }
 
-        logger.info("wallet address: {}", ByteArray.toHexString(address));
-    }
+  /**
+   * Creates a Wallet with an existing ECKey.
+   *
+   * @param ECKey ecKey Existing Key
+   */
+  public Wallet(final ECKey ecKey) {
+    this.ecKey = ecKey;
+    logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  }
 
-    public ECKey getEcKey() {
-        return ecKey;
-    }
+  public ECKey getEcKey() {
+    return ecKey;
+  }
 
-    public void setEcKey(ECKey ecKey) {
-        this.ecKey = ecKey;
-    }
-
-    public byte[] getAddress() {
-        return address;
-    }
-
-    public void setAddress(byte[] address) {
-        this.address = address;
-    }
+  public byte[] getAddress() {
+    return ecKey.getAddress();
+  }
 
 }
