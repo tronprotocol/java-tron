@@ -79,26 +79,13 @@ public class BlockchainTest {
     }
   }
 
-  @Test
-  public void testIterator() {
-    Block info = null;
-    BlockchainIterator bi = new BlockchainIterator(blockchain);
-    while (bi.hasNext()) {
-      info = (Block) bi.next();
-      logger.info("blockParentHash:{},number:{}", toHexString(info
-          .getBlockHeader()
-          .getParentHash().toByteArray()), info.getBlockHeader()
-          .getNumber());
+    @Test
+    public void testFindTransaction() {
+        Transaction transaction = blockchain.findTransaction(ByteString
+                .copyFrom(ByteArray.fromHexString
+                        ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
+        logger.info("{}", TransactionUtils.toPrintString(transaction));
     }
-  }
-
-  @Test
-  public void testFindTransaction() {
-    Transaction transaction = blockchain.findTransaction(ByteString
-        .copyFrom(ByteArray.fromHexString
-            ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
-    logger.info("{}", TransactionUtils.toPrintString(transaction));
-  }
 
   @Test
   public void testFindUTXO() {
