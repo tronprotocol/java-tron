@@ -16,14 +16,13 @@ package org.tron.core;
 
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.iq80.leveldb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.config.SystemProperties;
-import org.tron.dbStore.BlockStoreInput;
+import org.tron.dbStore.BlockStorage;
 import org.tron.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.core.TronBlock;
 
@@ -43,12 +42,12 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.facade.TronB
     SystemProperties config = SystemProperties.getDefault();
 
     @Autowired
-    protected BlockStoreInput blockStoreInter;
+    protected BlockStorage blockStoreInter;
 
     private BigInteger totalDifficulty = BigInteger.ZERO;
 
     @Override
-    public BlockStoreInput getBlockStoreInter() {
+    public BlockStorage getBlockStoreInter() {
         return blockStoreInter;
     }
 

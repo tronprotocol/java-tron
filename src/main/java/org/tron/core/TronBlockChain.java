@@ -15,14 +15,14 @@
 package org.tron.core;
 
 
-import org.tron.dbStore.BlockStoreInput;
+import org.tron.dbStore.BlockStorage;
 import org.tron.protos.core.TronBlock;
 
 import java.math.BigInteger;
 
 public interface TronBlockChain {
 
-    BlockStoreInput getBlockStoreInter();
+    BlockStorage getBlockStoreInter();
 
     /**
      * @return - last added block from blockchain
