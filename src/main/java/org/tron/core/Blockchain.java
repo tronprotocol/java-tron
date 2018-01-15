@@ -303,12 +303,15 @@ public class Blockchain {
     }
 
     public void addBlock(List<Transaction> transactions) {
+
         // get lastHash
         byte[] lastHash = blockDB.getData(LAST_HASH);
         ByteString parentHash = ByteString.copyFrom(lastHash);
+
         // get number
         long number = BlockUtils.getIncreaseNumber(Tron.getPeer()
                 .getBlockchain());
+
         // get difficulty
         ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
         Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,

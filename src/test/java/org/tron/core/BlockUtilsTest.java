@@ -105,4 +105,5 @@ public class BlockUtilsTest {
         logger.info("test getData increase number: {}", BlockUtils
                 .getIncreaseNumber(mockBlockchain));
     }
+
 }

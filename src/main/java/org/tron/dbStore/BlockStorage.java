@@ -13,17 +13,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.dbStore;
-import org.tron.protos.core.TronBlock;
 
-public interface BlockStoreInput {
+import org.tron.protos.core.TronBlock.Block;
 
-    TronBlock.Block getBestBlock();
+public interface BlockStorage {
+
+    Block getBestBlock();
 
     long getMaxNumber();
 
-    TronBlock.Block getChainBlockByNumber(long blockNumber);
+    Block getChainBlockByNumber(long blockNumber);
 
     boolean isBlockExist(byte[] hash);
-    TronBlock.Block getBlockByHash(byte[] hash);
+
+    Block getBlockByHash(byte[] hash);
 
 }
