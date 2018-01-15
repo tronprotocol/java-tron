@@ -16,20 +16,25 @@
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.function.Consumer;
 import org.tron.protos.core.TronBlock;
 
-public class BlockchainIterator implements Iterator {
+import javax.annotation.Nonnull;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class BlockchainIterator implements Iterator<TronBlock.Block> {
+
   private Blockchain blockchain;
   private byte[] index;
 
   public BlockchainIterator(Blockchain blockchain) {
     this.blockchain = blockchain;
-    index = new byte[blockchain.getCurrentHash().length];
-    index = Arrays.copyOf(blockchain.getCurrentHash(), blockchain
-        .getCurrentHash().length);
+
+    final byte[] currentHash = blockchain.getCurrentHash();
+
+    index = new byte[currentHash.length];
+    index = Arrays.copyOf(currentHash, currentHash.length);
   }
 
   @Override
@@ -37,30 +42,20 @@ public class BlockchainIterator implements Iterator {
     return !(index == null || index.length == 0);
   }
 
+  @Nonnull
   @Override
-  public Object next() {
-    TronBlock.Block block = null;
-    if (hasNext()) {
-      byte[] value = blockchain.getBlockDB().getData(index);
-      try {
-        block = TronBlock.Block.parseFrom(value);
-        index = block.getBlockHeader().getParentHash()
-            .toByteArray();
-      } catch (InvalidProtocolBufferException e) {
-        e.printStackTrace();
-      }
+  public TronBlock.Block next() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
     }
 
-    return block;
-  }
-
-  @Override
-  public void remove() {
-
-  }
-
-  @Override
-  public void forEachRemaining(Consumer action) {
-
+    byte[] value = blockchain.getBlockDB().getData(index);
+    try {
+      TronBlock.Block block = TronBlock.Block.parseFrom(value);
+      index = block.getBlockHeader().getParentHash().toByteArray();
+      return block;
+    } catch (InvalidProtocolBufferException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
