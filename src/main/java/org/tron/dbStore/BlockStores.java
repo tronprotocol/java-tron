@@ -62,7 +62,7 @@ public class BlockStores {
   /***
    * resetDB the database
    */
-  public void reset() {
+  public void reSet() {
     blockDbDataSource.resetDB();
   }
 
