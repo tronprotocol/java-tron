@@ -65,19 +65,19 @@ public class HelpCommand extends Command {
 
     @Override
     public void usage() {
-        //System.out.println("");
+        System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
                 "@|magenta,bold USAGE|@\n\t@|bold help [arguments]|@"
         ) );
 
-        //System.out.println("");
+        System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
                 "@|magenta,bold AVAILABLE COMMANDS|@"
         ) );
 
-        //System.out.println("");
+        System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
                 String.format("\t@|bold %-20s\tPrint the current java-tron version|@", "version")
@@ -116,13 +116,13 @@ public class HelpCommand extends Command {
                 String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
         ) );
 
-        //System.out.println("");
+        System.out.println("");
 
         System.out.println( ansi().eraseScreen().render(
                 "Use @|bold help [topic] for more information about that topic.|@"
         ) );
 
-        //System.out.println("");
+        System.out.println("");
     }
 
     @Override
