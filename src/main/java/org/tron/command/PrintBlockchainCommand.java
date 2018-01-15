@@ -28,16 +28,16 @@ public class PrintBlockchainCommand extends Command {
   public PrintBlockchainCommand() {
   }
 
-  @Override
-  public void execute(CliApplication app, String[] parameters) {
-    Peer peer = app.getPeer();
-    Blockchain blockchain = peer.getUTXOSet().getBlockchain();
-    BlockchainIterator bi = new BlockchainIterator(blockchain);
-    while (bi.hasNext()) {
-      TronBlock.Block block = (TronBlock.Block) bi.next();
-      System.out.println(BlockUtils.toPrintString(block));
+    @Override
+    public void execute(CliApplication app, String[] parameters) {
+        Peer peer = app.getPeer();
+        Blockchain blockchain = peer.getUTXOSet().getBlockchain();
+        BlockchainIterator bi = new BlockchainIterator(blockchain);
+        while (bi.hasNext()) {
+            TronBlock.Block block = bi.next();
+            System.out.println(BlockUtils.toPrintString(block));
+        }
     }
-  }
 
   @Override
   public void usage() {
