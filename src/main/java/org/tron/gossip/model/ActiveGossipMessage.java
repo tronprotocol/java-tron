@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
 import java.util.ArrayList;
@@ -23,9 +24,9 @@ import java.util.List;
 public class ActiveGossipMessage extends Base {
 
   private List<Member> members = new ArrayList<>();
-  
-  public ActiveGossipMessage(){
-    
+
+  public ActiveGossipMessage() {
+
   }
 
   public List<Member> getMembers() {
@@ -35,5 +36,5 @@ public class ActiveGossipMessage extends Base {
   public void setMembers(List<Member> members) {
     this.members = members;
   }
-  
+
 }

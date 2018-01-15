@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tron.gossip.replication;
 
-import org.tron.gossip.LocalMember;
-import org.tron.gossip.model.Base;
+package org.tron.gossip.replication;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.gossip.LocalMember;
+import org.tron.gossip.model.Base;
 
 /**
  * Replicable implementation which replicates data to given set of nodes.
@@ -30,9 +30,9 @@ import java.util.List;
  * @see Replicable
  */
 public class WhiteListReplicable<T extends Base> implements Replicable<T> {
-  
+
   private final List<LocalMember> whiteListMembers;
-  
+
   public WhiteListReplicable(List<LocalMember> whiteListMembers) {
     if (whiteListMembers == null) {
       this.whiteListMembers = new ArrayList<>();

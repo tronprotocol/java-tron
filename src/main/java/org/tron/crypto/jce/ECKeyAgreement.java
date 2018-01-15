@@ -15,45 +15,46 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.crypto.jce;
 
-import javax.crypto.KeyAgreement;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Provider;
+import javax.crypto.KeyAgreement;
 
 public final class ECKeyAgreement {
 
-    public static final String ALGORITHM = "ECDH";
+  public static final String ALGORITHM = "ECDH";
 
-    private static final String algorithmAssertionMsg =
-            "Assumed the JRE supports EC key agreement";
+  private static final String algorithmAssertionMsg =
+      "Assumed the JRE supports EC key agreement";
 
-    private ECKeyAgreement() {
+  private ECKeyAgreement() {
+  }
+
+  public static KeyAgreement getInstance() {
+    try {
+      return KeyAgreement.getInstance(ALGORITHM);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new AssertionError(algorithmAssertionMsg, ex);
     }
+  }
 
-    public static KeyAgreement getInstance() {
-        try {
-            return KeyAgreement.getInstance(ALGORITHM);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new AssertionError(algorithmAssertionMsg, ex);
-        }
+  public static KeyAgreement getInstance(final String provider) throws
+      NoSuchProviderException {
+    try {
+      return KeyAgreement.getInstance(ALGORITHM, provider);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new AssertionError(algorithmAssertionMsg, ex);
     }
+  }
 
-    public static KeyAgreement getInstance(final String provider) throws
-            NoSuchProviderException {
-        try {
-            return KeyAgreement.getInstance(ALGORITHM, provider);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new AssertionError(algorithmAssertionMsg, ex);
-        }
+  public static KeyAgreement getInstance(final Provider provider) {
+    try {
+      return KeyAgreement.getInstance(ALGORITHM, provider);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new AssertionError(algorithmAssertionMsg, ex);
     }
-
-    public static KeyAgreement getInstance(final Provider provider) {
-        try {
-            return KeyAgreement.getInstance(ALGORITHM, provider);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new AssertionError(algorithmAssertionMsg, ex);
-        }
-    }
+  }
 }

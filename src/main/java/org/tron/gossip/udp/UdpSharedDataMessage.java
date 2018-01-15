@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 import org.tron.gossip.model.SharedDataMessage;
@@ -23,19 +24,19 @@ public class UdpSharedDataMessage extends SharedDataMessage implements Trackable
 
   private String uriFrom;
   private String uuid;
-  
+
   public String getUriFrom() {
     return uriFrom;
   }
-  
+
   public void setUriFrom(String uriFrom) {
     this.uriFrom = uriFrom;
   }
-  
+
   public String getUuid() {
     return uuid;
   }
-  
+
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
@@ -43,9 +44,9 @@ public class UdpSharedDataMessage extends SharedDataMessage implements Trackable
   @Override
   public String toString() {
     return "UdpSharedGossipDataMessage [uriFrom=" + uriFrom + ", uuid=" + uuid + ", getNodeId()="
-            + getNodeId() + ", getKey()=" + getKey() + ", getPayload()=" + getPayload()
-            + ", getTimestamp()=" + getTimestamp() + ", getExpireAt()=" + getExpireAt()
-            + ", getReplicable()=" + getReplicable() + "]";
+        + getNodeId() + ", getKey()=" + getKey() + ", getPayload()=" + getPayload()
+        + ", getTimestamp()=" + getTimestamp() + ", getExpireAt()=" + getExpireAt()
+        + ", getReplicable()=" + getReplicable() + "]";
   }
 
 }

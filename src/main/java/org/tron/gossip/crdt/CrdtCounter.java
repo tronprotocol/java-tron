@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.crdt;
 
 public interface CrdtCounter<ValueType extends Number, R extends CrdtCounter<ValueType, R>>
-        extends Crdt<ValueType, R> {
-  
+    extends Crdt<ValueType, R> {
+
 }
 

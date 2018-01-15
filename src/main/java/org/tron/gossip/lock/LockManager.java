@@ -15,20 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.lock;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import org.tron.gossip.Member;
-import org.tron.gossip.lock.exceptions.VoteFailedException;
-import org.tron.gossip.lock.vote.MajorityVote;
-import org.tron.gossip.lock.vote.Vote;
-import org.tron.gossip.lock.vote.VoteCandidate;
-import org.tron.gossip.manager.GossipManager;
-import org.tron.gossip.model.SharedDataMessage;
-import org.apache.log4j.Logger;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,23 +35,30 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.apache.log4j.Logger;
+import org.tron.gossip.Member;
+import org.tron.gossip.lock.exceptions.VoteFailedException;
+import org.tron.gossip.lock.vote.MajorityVote;
+import org.tron.gossip.lock.vote.Vote;
+import org.tron.gossip.lock.vote.VoteCandidate;
+import org.tron.gossip.manager.GossipManager;
+import org.tron.gossip.model.SharedDataMessage;
 
 public class LockManager {
 
   public static final Logger LOGGER = Logger.getLogger(LockManager.class);
-
+  // For MetricRegistry
+  public static final String LOCK_KEY_SET_SIZE = "gossip.lock.key_set_size";
+  public static final String LOCK_TIME = "gossip.lock.time";
   private final GossipManager gossipManager;
   private final LockManagerSettings lockSettings;
   private final ScheduledExecutorService voteService;
   private final AtomicInteger numberOfNodes;
   private final Set<String> lockKeys;
-  // For MetricRegistry
-  public static final String LOCK_KEY_SET_SIZE = "gossip.lock.key_set_size";
-  public static final String LOCK_TIME = "gossip.lock.time";
   private final Timer lockTimeMetric;
 
   public LockManager(GossipManager gossipManager, final LockManagerSettings lockManagerSettings,
-          MetricRegistry metrics) {
+      MetricRegistry metrics) {
     this.gossipManager = gossipManager;
     this.lockSettings = lockManagerSettings;
     this.numberOfNodes = new AtomicInteger(lockSettings.getNumberOfNodes());
@@ -74,7 +73,7 @@ public class LockManager {
     });
     voteService = Executors.newScheduledThreadPool(2);
     voteService.scheduleAtFixedRate(this::updateVotes, 0, lockSettings.getVoteUpdateInterval(),
-            TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS);
   }
 
   public void acquireSharedDataLock(String key) throws VoteFailedException {
@@ -91,13 +90,13 @@ public class LockManager {
       final Map<String, Boolean> voteResultMap = new HashMap<>();
       // Store the vote result for each vote candidate nodes
       voteCandidatesMap.forEach((candidateId, voteCandidate) -> voteResultMap
-              .put(candidateId, isVoteSuccess(voteCandidate)));
+          .put(candidateId, isVoteSuccess(voteCandidate)));
 
       long passedCandidates = voteResultMap.values().stream().filter(aBoolean -> aBoolean).count();
       String myNodeId = gossipManager.getMyself().getId();
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("NodeId=" + myNodeId + ", VoteMap=" + voteResultMap + ", WinnerCount="
-                + passedCandidates);
+            + passedCandidates);
       }
       // Check for possible dead lock when no candidates were won
       if (passedCandidates == 0) {
@@ -107,7 +106,7 @@ public class LockManager {
           if (deadlockDetectCount >= lockSettings.getDeadlockDetectionThreshold()) {
             if (LOGGER.isDebugEnabled()) {
               LOGGER.debug("Deadlock detected from node " + myNodeId + ". VoteCandidatesMap="
-                      + voteCandidatesMap);
+                  + voteCandidatesMap);
             }
             preventDeadLock(voteCandidatesMap);
           }
@@ -139,11 +138,11 @@ public class LockManager {
   // Generate Crdt lock message for voting
   private SharedDataMessage generateLockMessage(String key) {
     VoteCandidate voteCandidate = new VoteCandidate(gossipManager.getMyself().getId(), key,
-            new ConcurrentHashMap<>());
+        new ConcurrentHashMap<>());
     voteCandidate.addVote(new Vote(gossipManager.getMyself().getId(), true, false,
-            gossipManager.getLiveMembers().stream().map(Member::getId).collect(Collectors.toList()),
-            gossipManager.getDeadMembers().stream().map(Member::getId)
-                    .collect(Collectors.toList())));
+        gossipManager.getLiveMembers().stream().map(Member::getId).collect(Collectors.toList()),
+        gossipManager.getDeadMembers().stream().map(Member::getId)
+            .collect(Collectors.toList())));
     Map<String, VoteCandidate> voteCandidateMap = new ConcurrentHashMap<>();
     voteCandidateMap.put(voteCandidate.getCandidateNodeId(), voteCandidate);
     MajorityVote majorityVote = new MajorityVote(voteCandidateMap);
@@ -172,7 +171,8 @@ public class LockManager {
       String myVoteCandidate = getVotedCandidateNodeId(myNodeId, voteCandidateMap);
 
       if (myVoteCandidate == null) {
-        myVoteCandidate = lockSettings.getVoteSelector().getVoteCandidateId(voteCandidateMap.keySet());
+        myVoteCandidate = lockSettings.getVoteSelector()
+            .getVoteCandidateId(voteCandidateMap.keySet());
       }
       for (VoteCandidate voteCandidate : voteCandidateMap.values()) {
         if (voteCandidate.getCandidateNodeId().equals(myNodeId)) {
@@ -181,10 +181,10 @@ public class LockManager {
         // Vote for selected candidate
         boolean voteResult = voteCandidate.getCandidateNodeId().equals(myVoteCandidate);
         voteCandidate.addVote(new Vote(gossipManager.getMyself().getId(), voteResult, false,
-                gossipManager.getLiveMembers().stream().map(Member::getId)
-                        .collect(Collectors.toList()),
-                gossipManager.getDeadMembers().stream().map(Member::getId)
-                        .collect(Collectors.toList())));
+            gossipManager.getLiveMembers().stream().map(Member::getId)
+                .collect(Collectors.toList()),
+            gossipManager.getDeadMembers().stream().map(Member::getId)
+                .collect(Collectors.toList())));
       }
     }
   }
@@ -209,8 +209,8 @@ public class LockManager {
     } else {
       // numberOfNodes is not set by the user, therefore calculate it.
       Set<String> liveNodes = voteCandidates.values().stream()
-              .map(voteCandidate -> voteCandidate.getVotes().values()).flatMap(Collection::stream)
-              .map(Vote::getLiveMembers).flatMap(List::stream).collect(Collectors.toSet());
+          .map(voteCandidate -> voteCandidate.getVotes().values()).flatMap(Collection::stream)
+          .map(Vote::getLiveMembers).flatMap(List::stream).collect(Collectors.toSet());
       numberOfLiveNodes = liveNodes.size();
     }
     for (VoteCandidate voteCandidate : voteCandidates.values()) {
@@ -228,14 +228,14 @@ public class LockManager {
     }
     // Set of nodes that is going to receive this nodes votes
     List<String> donateCandidateIds = voteCandidates.keySet().stream()
-            .filter(s -> s.compareTo(myNodeId) < 0).collect(Collectors.toList());
+        .filter(s -> s.compareTo(myNodeId) < 0).collect(Collectors.toList());
     if (donateCandidateIds.size() == 0) {
       return;
     }
     // Select a random node to donate
     Random randomizer = new Random();
     String selectedCandidateId = donateCandidateIds
-            .get(randomizer.nextInt(donateCandidateIds.size()));
+        .get(randomizer.nextInt(donateCandidateIds.size()));
     VoteCandidate selectedCandidate = voteCandidates.get(selectedCandidateId);
 
     Set<Vote> myVotes = new HashSet<>(myResults.getVotes().values());
@@ -257,7 +257,7 @@ public class LockManager {
   }
 
   private String getVotedCandidateNodeId(String nodeId,
-          final Map<String, VoteCandidate> voteCandidates) {
+      final Map<String, VoteCandidate> voteCandidates) {
     for (VoteCandidate voteCandidate : voteCandidates.values()) {
       Vote vote = voteCandidate.getVotes().get(nodeId);
       if (vote != null && vote.getVoteValue()) {
@@ -286,15 +286,17 @@ public class LockManager {
     return numberOfLiveNodes > 0 && voteCount >= (numberOfLiveNodes / 2 + 1);
   }
 
-  private String generateLockKey(String key){
+  private String generateLockKey(String key) {
     return "lock/" + key;
   }
 
-  public void shutdown(){
+  public void shutdown() {
     voteService.shutdown();
   }
+
   /**
    * Get the voted node id from this node for a given key
+   *
    * @param key key of the data object
    * @return Voted node id
    */
@@ -309,6 +311,7 @@ public class LockManager {
 
   /**
    * Set the number of live nodes. If this value is negative, live nodes will be calculated
+   *
    * @param numberOfNodes live node count or negative to calculate.
    */
   public void setNumberOfNodes(int numberOfNodes) {

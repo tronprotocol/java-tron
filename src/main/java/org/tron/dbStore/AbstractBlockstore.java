@@ -1,5 +1,5 @@
 package org.tron.dbStore;
 
-public abstract class AbstractBlockstore implements BlockStoreInput {
+public abstract class AbstractBlockstore implements BlockStorage {
 
 }

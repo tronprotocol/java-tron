@@ -15,40 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.crdt;
 
 import java.util.function.BiFunction;
 
 @SuppressWarnings("rawtypes")
-public class CrdtBiFunctionMerge implements BiFunction<Crdt,Crdt,Crdt> {
+public class CrdtBiFunctionMerge implements BiFunction<Crdt, Crdt, Crdt> {
 
   @SuppressWarnings("unchecked")
-  @Override
-  public Crdt apply(Crdt t, Crdt u) {
-    if (t == null && u == null){
+  public static Crdt applyStatic(Crdt t, Crdt u) {
+    if (t == null && u == null) {
       return null;
-    } else if (t == null){
+    } else if (t == null) {
       return u;
-    } else if (u == null){
+    } else if (u == null) {
       return t;
     }
-    if (! u.getClass().equals(t.getClass())){
-      throw new IllegalArgumentException( "Can not merge " + t.getClass() + " "+ u.getClass());
+    if (!u.getClass().equals(t.getClass())) {
+      throw new IllegalArgumentException("Can not merge " + t.getClass() + " " + u.getClass());
     }
     return t.merge(u);
   }
 
   @SuppressWarnings("unchecked")
-  public static Crdt applyStatic(Crdt t, Crdt u){
-    if (t == null && u == null){
+  @Override
+  public Crdt apply(Crdt t, Crdt u) {
+    if (t == null && u == null) {
       return null;
-    } else if (t == null){
+    } else if (t == null) {
       return u;
-    } else if (u == null){
+    } else if (u == null) {
       return t;
     }
-    if (! u.getClass().equals(t.getClass())){
-      throw new IllegalArgumentException( "Can not merge " + t.getClass() + " "+ u.getClass());
+    if (!u.getClass().equals(t.getClass())) {
+      throw new IllegalArgumentException("Can not merge " + t.getClass() + " " + u.getClass());
     }
     return t.merge(u);
   }
