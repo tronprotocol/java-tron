@@ -12,40 +12,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.consensus.client;
 
 
-import java.io.File;
-import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ReadIP {
-    public String ReadFile(String Path){
-        BufferedReader reader = null;
-        String laststr = "";
-        try{
-            FileInputStream fileInputStream = new FileInputStream(Path);
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
-            reader = new BufferedReader(inputStreamReader);
-            String tempString = null;
-            while((tempString = reader.readLine()) != null){
-                laststr += tempString;
-            }
-            reader.close();
-        }catch(IOException e){
-            e.printStackTrace();
-        }finally{
-            if(reader != null){
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+  public String ReadFile(String Path) {
+    BufferedReader reader = null;
+    String laststr = "";
+    try {
+      FileInputStream fileInputStream = new FileInputStream(Path);
+      InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+      reader = new BufferedReader(inputStreamReader);
+      String tempString = null;
+      while ((tempString = reader.readLine()) != null) {
+        laststr += tempString;
+      }
+      reader.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
-        return laststr;
+      }
     }
+    return laststr;
+  }
 
 }

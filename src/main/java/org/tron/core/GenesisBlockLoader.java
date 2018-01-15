@@ -12,84 +12,83 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class GenesisBlockLoader {
-    private long timestamp;
-    private byte[] txTrieRoot;
-    private byte[] parentHash;
-    private byte[] hash;
-    private byte[] nonce;
-    private byte[] difficulty;
-    private long number;
-    private Map<String, Integer> transaction = new HashMap<>();
+  private long timestamp;
+  private byte[] txTrieRoot;
+  private byte[] parentHash;
+  private byte[] hash;
+  private byte[] nonce;
+  private byte[] difficulty;
+  private long number;
+  private Map<String, Integer> transaction = new HashMap<>();
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+  }
 
-    public byte[] getTxTrieRoot() {
-        return txTrieRoot;
-    }
+  public byte[] getTxTrieRoot() {
+    return txTrieRoot;
+  }
 
-    public void setTxTrieRoot(byte[] txTrieRoot) {
-        this.txTrieRoot = txTrieRoot;
-    }
+  public void setTxTrieRoot(byte[] txTrieRoot) {
+    this.txTrieRoot = txTrieRoot;
+  }
 
-    public byte[] getParentHash() {
-        return parentHash;
-    }
+  public byte[] getParentHash() {
+    return parentHash;
+  }
 
-    public void setParentHash(byte[] parentHash) {
-        this.parentHash = parentHash;
-    }
+  public void setParentHash(byte[] parentHash) {
+    this.parentHash = parentHash;
+  }
 
-    public byte[] getHash() {
-        return hash;
-    }
+  public byte[] getHash() {
+    return hash;
+  }
 
-    public void setHash(byte[] hash) {
-        this.hash = hash;
-    }
+  public void setHash(byte[] hash) {
+    this.hash = hash;
+  }
 
-    public byte[] getNonce() {
-        return nonce;
-    }
+  public byte[] getNonce() {
+    return nonce;
+  }
 
-    public void setNonce(byte[] nonce) {
-        this.nonce = nonce;
-    }
+  public void setNonce(byte[] nonce) {
+    this.nonce = nonce;
+  }
 
-    public byte[] getDifficulty() {
-        return difficulty;
-    }
+  public byte[] getDifficulty() {
+    return difficulty;
+  }
 
-    public void setDifficulty(byte[] difficulty) {
-        this.difficulty = difficulty;
-    }
+  public void setDifficulty(byte[] difficulty) {
+    this.difficulty = difficulty;
+  }
 
-    public long getNumber() {
-        return number;
-    }
+  public long getNumber() {
+    return number;
+  }
 
-    public void setNumber(long number) {
-        this.number = number;
-    }
+  public void setNumber(long number) {
+    this.number = number;
+  }
 
-    public Map<String, Integer> getTransaction() {
-        return transaction;
-    }
+  public Map<String, Integer> getTransaction() {
+    return transaction;
+  }
 
-    public void setTransaction(Map<String, Integer> transaction) {
-        this.transaction = transaction;
-    }
+  public void setTransaction(Map<String, Integer> transaction) {
+    this.transaction = transaction;
+  }
 }

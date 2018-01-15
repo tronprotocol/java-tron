@@ -15,18 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.transport.udp;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.URI;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.LoggerFactory;
 import org.tron.gossip.manager.GossipCore;
 import org.tron.gossip.manager.GossipManager;
 import org.tron.gossip.model.Base;
 import org.tron.gossip.transport.AbstractTransportManager;
-import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.net.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is constructed by reflection in GossipManager.
@@ -35,22 +40,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class UdpTransportManager extends AbstractTransportManager implements Runnable {
 
   public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger("UdpTransportManager");
-  /** The socket used for the passive thread of the gossip service. */
+  /**
+   * The socket used for the passive thread of the gossip service.
+   */
   private final DatagramSocket server;
-  
+
   private final int soTimeout;
-  
+
   private final Thread me;
-  
+
   private final AtomicBoolean keepRunning = new AtomicBoolean(true);
-  
-  /** required for reflection to work! */
+
+  /**
+   * required for reflection to work!
+   */
   public UdpTransportManager(GossipManager gossipManager, GossipCore gossipCore) {
     super(gossipManager, gossipCore);
     soTimeout = gossipManager.getSettings().getGossipInterval() * 2;
     try {
-      SocketAddress socketAddress = new InetSocketAddress(gossipManager.getMyself().getUri().getHost(),
-              gossipManager.getMyself().getUri().getPort());
+      SocketAddress socketAddress = new InetSocketAddress(
+          gossipManager.getMyself().getUri().getHost(),
+          gossipManager.getMyself().getUri().getPort());
       server = new DatagramSocket(socketAddress);
     } catch (SocketException ex) {
       LOGGER.warn(ex.toString());
@@ -81,7 +91,7 @@ public class UdpTransportManager extends AbstractTransportManager implements Run
       }
     }
   }
-  
+
   @Override
   public void shutdown() {
     keepRunning.set(false);
@@ -92,6 +102,7 @@ public class UdpTransportManager extends AbstractTransportManager implements Run
 
   /**
    * blocking read a message.
+   *
    * @return buffer of message contents.
    * @throws IOException
    */
@@ -106,16 +117,16 @@ public class UdpTransportManager extends AbstractTransportManager implements Run
   @Override
   public void send(URI endpoint, byte[] buf) throws IOException {
     // todo: investigate UDP socket reuse. It would save a little setup/teardown time wrt to the local socket.
-    try (DatagramSocket socket = new DatagramSocket()){
+    try (DatagramSocket socket = new DatagramSocket()) {
       socket.setSoTimeout(soTimeout);
       InetAddress dest = InetAddress.getByName(endpoint.getHost());
       DatagramPacket payload = new DatagramPacket(buf, buf.length, dest, endpoint.getPort());
       socket.send(payload);
     }
   }
-  
+
   private void debug(byte[] jsonBytes) {
-    if (LOGGER.isDebugEnabled()){
+    if (LOGGER.isDebugEnabled()) {
       String receivedMessage = new String(jsonBytes);
       LOGGER.debug("Received message ( bytes): " + receivedMessage);
     }
@@ -125,5 +136,5 @@ public class UdpTransportManager extends AbstractTransportManager implements Run
   public void startEndpoint() {
     me.start();
   }
-  
+
 }

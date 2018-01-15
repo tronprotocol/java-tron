@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.lock;
 
 import org.tron.gossip.lock.vote.RandomVoteSelector;
@@ -36,13 +37,6 @@ public class LockManagerSettings {
   private final int resultCalculationDelay;
 
   /**
-   * Construct LockManagerSettings with default settings.
-   */
-  public static LockManagerSettings getLockManagerDefaultSettings() {
-    return new LockManagerSettings(1000, new RandomVoteSelector(), -1, 3, 1000);
-  }
-
-  /**
    * Construct a custom LockManagerSettings
    *
    * @param voteUpdateInterval         Time between vote updates in milliseconds.
@@ -52,13 +46,20 @@ public class LockManagerSettings {
    * @param resultCalculationDelay     Wait time between vote result calculation
    */
   public LockManagerSettings(int voteUpdateInterval, VoteSelector voteSelector, int numberOfNodes,
-          int deadlockDetectionThreshold, int resultCalculationDelay) {
+      int deadlockDetectionThreshold, int resultCalculationDelay) {
     this.voteUpdateInterval = voteUpdateInterval;
     this.voteSelector = voteSelector;
     this.numberOfNodes = numberOfNodes;
     this.deadlockDetectionThreshold = deadlockDetectionThreshold;
     this.resultCalculationDelay = resultCalculationDelay;
 
+  }
+
+  /**
+   * Construct LockManagerSettings with default settings.
+   */
+  public static LockManagerSettings getLockManagerDefaultSettings() {
+    return new LockManagerSettings(1000, new RandomVoteSelector(), -1, 3, 1000);
   }
 
   public int getVoteUpdateInterval() {

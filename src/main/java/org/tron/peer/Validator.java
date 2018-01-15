@@ -12,23 +12,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.peer;
 
 import org.tron.protos.core.TronBlock.Block;
 
 public class Validator {
-    public static ValidationRule validationRule = ValidationRuleFactory
-            .create("Validation");
+  public static ValidationRule validationRule = ValidationRuleFactory
+      .create("Validation");
 
-    public static byte[] start(Block block) {
-        return validationRule.start(block);
-    }
+  public static byte[] start(Block block) {
+    return validationRule.start(block);
+  }
 
-    public static void stop() {
-        validationRule.stop();
-    }
+  public static void stop() {
+    validationRule.stop();
+  }
 
-    public static boolean validate(Block block) {
-        return validationRule.validate(block);
-    }
+  public static boolean validate(Block block) {
+    return validationRule.validate(block);
+  }
 }

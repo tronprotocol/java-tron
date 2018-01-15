@@ -12,17 +12,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.storage;
 
 public interface Serializer<T, S> {
-    /**
-     * Converts T ==> S
-     * Should correctly handle null parameter
-     */
-    S serialize(T object);
-    /**
-     * Converts S ==> T
-     * Should correctly handle null parameter
-     */
-    T deserialize(S stream);
+  /**
+   * Converts T ==> S
+   * Should correctly handle null parameter
+   */
+  S serialize(T object);
+
+  /**
+   * Converts S ==> T
+   * Should correctly handle null parameter
+   */
+  T deserialize(S stream);
 }

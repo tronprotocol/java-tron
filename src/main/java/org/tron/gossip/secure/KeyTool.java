@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.secure;
 
 import java.io.File;
@@ -30,8 +31,8 @@ import java.security.SecureRandom;
 
 public class KeyTool {
 
-  public static void generatePubandPrivateKeyFiles(String path, String id) 
-          throws NoSuchAlgorithmException, NoSuchProviderException, IOException{
+  public static void generatePubandPrivateKeyFiles(String path, String id)
+      throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
     SecureRandom r = new SecureRandom();
     KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
     keyGen.initialize(1024, r);
@@ -49,9 +50,9 @@ public class KeyTool {
       sigfos.close();
     }
   }
-  
-  public static void main (String [] args) throws 
-    NoSuchAlgorithmException, NoSuchProviderException, IOException{
+
+  public static void main(String[] args) throws
+      NoSuchAlgorithmException, NoSuchProviderException, IOException {
     generatePubandPrivateKeyFiles(args[0], args[1]);
   }
 }

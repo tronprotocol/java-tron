@@ -12,42 +12,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.command;
 
-import org.tron.application.CliApplication;
-import org.tron.peer.Peer;
-import org.tron.utils.ByteArray;
+package org.tron.command;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
+import org.tron.application.CliApplication;
+import org.tron.utils.ByteArray;
+
 public class AccountCommand extends Command {
-    public AccountCommand() {
-    }
+  public AccountCommand() {
+  }
 
-    @Override
-    public void execute(CliApplication app, String[] parameters) {
-        System.out.println(ByteArray.toHexString(app.getPeer().getMyKey().getAddress()));
-    }
+  @Override
+  public void execute(CliApplication app, String[] parameters) {
+    System.out.println(ByteArray.toHexString(app.getPeer().getMyKey().getAddress()));
+  }
 
-    @Override
-    public void usage() {
-        System.out.println("");
+  @Override
+  public void usage() {
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-            "@|magenta,bold USAGE|@\n\t@|bold account|@"
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold USAGE|@\n\t@|bold account|@"
+    ));
 
-        System.out.println("");
+    System.out.println("");
 
-        System.out.println(ansi().eraseScreen().render(
-            "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
-        ));
+    System.out.println(ansi().eraseScreen().render(
+        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
+    ));
 
-        System.out.println("");
-    }
+    System.out.println("");
+  }
 
-    @Override
-    public boolean check(String[] parameters) {
-        return true;
-    }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

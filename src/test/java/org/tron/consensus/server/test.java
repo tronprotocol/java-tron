@@ -12,36 +12,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.consensus.server;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
 
 public class test {
-    public static void main (String[] args) throws UnknownHostException {
-        try{
-            Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();
-            InetAddress ip = null;
-            while(allNetInterfaces.hasMoreElements())
+  public static void main(String[] args) {
+    try {
+      Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();
+      InetAddress ip = null;
+      while (allNetInterfaces.hasMoreElements())
 
-            {
-                NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
-                System.out.println(netInterface.getName());
-                Enumeration addresses = netInterface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    ip = (InetAddress) addresses.nextElement();
-                    if (ip != null && ip instanceof Inet4Address) {
-                        System.out.println("本机的IP = " + ip.getHostAddress());
-                    }
-                }
-            }
-        }catch (Exception e){
-            e.printStackTrace();
+      {
+        NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
+        System.out.println(netInterface.getName());
+        Enumeration addresses = netInterface.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          ip = (InetAddress) addresses.nextElement();
+          if (ip != null && ip instanceof Inet4Address) {
+            System.out.println("本机的IP = " + ip.getHostAddress());
+          }
         }
-
-
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+
+
+  }
 }

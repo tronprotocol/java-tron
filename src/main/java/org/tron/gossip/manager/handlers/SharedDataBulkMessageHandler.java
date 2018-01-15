@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager.handlers;
 
 import org.tron.gossip.manager.GossipCore;
@@ -23,19 +24,20 @@ import org.tron.gossip.model.Base;
 import org.tron.gossip.model.SharedDataMessage;
 import org.tron.gossip.udp.UdpSharedDataBulkMessage;
 
-public class SharedDataBulkMessageHandler implements MessageHandler{
-  
+public class SharedDataBulkMessageHandler implements MessageHandler {
+
   /**
-   * @param gossipCore context.
+   * @param gossipCore    context.
    * @param gossipManager context.
-   * @param base message reference.
+   * @param base          message reference.
    * @return boolean indicating success.
    */
   @Override
   public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
     UdpSharedDataBulkMessage udpMessage = (UdpSharedDataBulkMessage) base;
-    for (SharedDataMessage dataMsg: udpMessage.getMessages())
+    for (SharedDataMessage dataMsg : udpMessage.getMessages()) {
       gossipCore.addSharedData(dataMsg);
+    }
     return true;
   }
 }

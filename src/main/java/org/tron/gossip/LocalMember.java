@@ -15,45 +15,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip;
 
 import java.net.URI;
 import java.util.Map;
-
 import org.tron.gossip.accrual.FailureDetector;
 
 /**
  * This object represent a gossip member with the properties known locally. These objects are stored
  * in the local list of gossip members.
- * 
  */
 public class LocalMember extends Member {
-  /** The failure detector for this member */
+  /**
+   * The failure detector for this member
+   */
   private transient FailureDetector detector;
 
   /**
-   * 
-   * @param uri
-   *          The uri of the member
-   * @param id
-   *          id of the node
-   * @param heartbeat
-   *          The current heartbeat
+   * @param uri       The uri of the member
+   * @param id        id of the node
+   * @param heartbeat The current heartbeat
    */
   public LocalMember(String clusterName, URI uri, String id,
-          long heartbeat, Map<String,String> properties, int windowSize, int minSamples, String distribution) {
-    super(clusterName, uri, id, heartbeat, properties );
+      long heartbeat, Map<String, String> properties, int windowSize, int minSamples,
+      String distribution) {
+    super(clusterName, uri, id, heartbeat, properties);
     detector = new FailureDetector(minSamples, windowSize, distribution);
   }
 
-  protected LocalMember(){
-    
+  protected LocalMember() {
+
   }
-  
-  public void recordHeartbeat(long now){
+
+  public void recordHeartbeat(long now) {
     detector.recordHeartbeat(now);
   }
-  
+
   public Double detect(long now) {
     return detector.computePhiMeasure(now);
   }
@@ -63,9 +61,10 @@ public class LocalMember extends Member {
     Double d = null;
     try {
       d = detect(System.nanoTime());
-    } catch (RuntimeException ex) {}
+    } catch (RuntimeException ex) {
+    }
     return "LocalGossipMember [uri=" + uri + ", heartbeat=" + heartbeat + ", clusterName="
-            + clusterName + ", id=" + id + ", currentdetect=" + d  +" ]";
+        + clusterName + ", id=" + id + ", currentdetect=" + d + " ]";
   }
 
 }

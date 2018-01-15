@@ -15,15 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
 public class NotAMemberFault extends Fault {
 
-  public NotAMemberFault(){
-    
+  public NotAMemberFault() {
+
   }
-  
-  public NotAMemberFault(String message){
+
+  public NotAMemberFault(String message) {
     this.setException(message);
   }
 }

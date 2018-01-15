@@ -12,41 +12,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.wallet;
 
-import org.junit.Test;
 import static org.junit.Assert.*;
+
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.utils.ByteArray;
-import org.tron.wallet.Wallet;
 import org.tron.crypto.ECKey;
+import org.tron.utils.ByteArray;
 import org.tron.utils.Utils;
+import org.tron.wallet.Wallet;
 
 public class WalletTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testWallet() {
-        Wallet wallet = new Wallet();
-        Wallet wallet2 = new Wallet();
-        logger.info("wallet address = {}", ByteArray.toHexString(wallet
-                .getAddress()));
-        assertFalse(wallet.getAddress().equals(wallet2.getAddress()));
-    }
+  @Test
+  public void testWallet() {
+    Wallet wallet = new Wallet();
+    Wallet wallet2 = new Wallet();
+    logger.info("wallet address = {}", ByteArray.toHexString(wallet
+        .getAddress()));
+    assertFalse(wallet.getAddress().equals(wallet2.getAddress()));
+  }
 
-    @Test
-    public void testGetAddress() {
-        ECKey ecKey = new ECKey(Utils.getRandom());
-        Wallet wallet = new Wallet(ecKey);
-        assertArrayEquals(wallet.getAddress(), ecKey.getAddress());
-    }
+  @Test
+  public void testGetAddress() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    Wallet wallet = new Wallet(ecKey);
+    assertArrayEquals(wallet.getAddress(), ecKey.getAddress());
+  }
 
-    @Test
-    public void testGetECKey() {
-        ECKey ecKey = new ECKey(Utils.getRandom());
-        ECKey ecKey2 = new ECKey(Utils.getRandom());
-        Wallet wallet = new Wallet(ecKey);
-        assertEquals("Wallet ECKey should match provided ECKey", wallet.getEcKey(), ecKey);
-    }
+  @Test
+  public void testGetECKey() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    Wallet wallet = new Wallet(ecKey);
+    assertEquals("Wallet ECKey should match provided ECKey", wallet.getEcKey(), ecKey);
+  }
 }

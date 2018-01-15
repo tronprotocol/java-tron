@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager.handlers;
 
 import org.tron.gossip.manager.GossipCore;
@@ -25,9 +26,9 @@ import org.tron.gossip.udp.UdpPerNodeDataMessage;
 public class PerNodeDataMessageHandler implements MessageHandler {
 
   /**
-   * @param gossipCore context.
+   * @param gossipCore    context.
    * @param gossipManager context.
-   * @param base message reference.
+   * @param base          message reference.
    * @return boolean indicating success.
    */
   @Override
