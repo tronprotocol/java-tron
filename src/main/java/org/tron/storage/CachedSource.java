@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.storage;
 
 
@@ -22,33 +23,33 @@ import java.util.Collection;
  */
 public interface CachedSource<Key, Value> extends SourceInter<Key, Value> {
 
-    /**
-     * @return The underlying SourceInter
-     */
-    SourceInter<Key, Value> getSource();
+  /**
+   * @return The underlying SourceInter
+   */
+  SourceInter<Key, Value> getSource();
 
-    /**
-     * @return Modified entry allKeys if this is a write cache
-     */
-    Collection<Key> getModified();
+  /**
+   * @return Modified entry allKeys if this is a write cache
+   */
+  Collection<Key> getModified();
 
-    /**
-     * @return indicates the cache has modified entries
-     */
-    boolean hasModified();
+  /**
+   * @return indicates the cache has modified entries
+   */
+  boolean hasModified();
 
 
-    /**
-     * Estimates the size of cached entries in bytes.
-     * This value shouldn't be precise size of Java objects
-     *
-     * @return cache size in bytes
-     */
-    long estimateCacheSize();
+  /**
+   * Estimates the size of cached entries in bytes.
+   * This value shouldn't be precise size of Java objects
+   *
+   * @return cache size in bytes
+   */
+  long estimateCacheSize();
 
-    /**
-     * Just a convenient shortcut to the most popular Sources with byte[] key
-     */
-    interface BytesKey<Value> extends CachedSource<byte[], Value> {
-    }
+  /**
+   * Just a convenient shortcut to the most popular Sources with byte[] key
+   */
+  interface BytesKey<Value> extends CachedSource<byte[], Value> {
+  }
 }

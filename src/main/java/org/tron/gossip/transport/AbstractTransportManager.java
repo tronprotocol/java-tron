@@ -15,41 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.transport;
 
 import com.codahale.metrics.MetricRegistry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.apache.log4j.Logger;
 import org.tron.gossip.manager.AbstractActiveGossiper;
 import org.tron.gossip.manager.GossipCore;
 import org.tron.gossip.manager.GossipManager;
 import org.tron.gossip.utils.ReflectionUtils;
-import org.apache.log4j.Logger;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manage the protcol threads (active and passive gossipers).
  */
 public abstract class AbstractTransportManager implements TransportManager {
-  
+
   public static final Logger LOGGER = Logger.getLogger(AbstractTransportManager.class);
-  
-  private final ExecutorService gossipThreadExecutor;
-  private final AbstractActiveGossiper activeGossipThread;
   protected final GossipManager gossipManager;
   protected final GossipCore gossipCore;
-  
+  private final ExecutorService gossipThreadExecutor;
+  private final AbstractActiveGossiper activeGossipThread;
+
   public AbstractTransportManager(GossipManager gossipManager, GossipCore gossipCore) {
     this.gossipManager = gossipManager;
     this.gossipCore = gossipCore;
     gossipThreadExecutor = Executors.newCachedThreadPool();
     activeGossipThread = ReflectionUtils.constructWithReflection(
-      gossipManager.getSettings().getActiveGossipClass(),
-        new Class<?>[]{
+        gossipManager.getSettings().getActiveGossipClass(),
+        new Class<?>[] {
             GossipManager.class, GossipCore.class, MetricRegistry.class
         },
-        new Object[]{
+        new Object[] {
             gossipManager, gossipCore, gossipManager.getRegistry()
         });
   }

@@ -15,9 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tron.gossip.lock.vote;
 
-import org.tron.gossip.crdt.Crdt;
+package org.tron.gossip.lock.vote;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.tron.gossip.crdt.Crdt;
 
 /**
  * CRDT which used for distribute a votes for a given key.
@@ -55,10 +55,10 @@ public class MajorityVote implements Crdt<Map<String, VoteCandidate>, MajorityVo
     // Merge votes for the same candidate
     for (String sameCandidateId : sameCandidatesSet) {
       if (this.voteCandidates.containsKey(sameCandidateId) && other.voteCandidates
-              .containsKey(sameCandidateId)) {
+          .containsKey(sameCandidateId)) {
         mergedCandidates.put(sameCandidateId,
-                mergeCandidate(this.voteCandidates.get(sameCandidateId),
-                        other.voteCandidates.get(sameCandidateId)));
+            mergeCandidate(this.voteCandidates.get(sameCandidateId),
+                other.voteCandidates.get(sameCandidateId)));
       }
     }
 
@@ -67,9 +67,9 @@ public class MajorityVote implements Crdt<Map<String, VoteCandidate>, MajorityVo
 
   // Merge different votes for same candidate
   private VoteCandidate mergeCandidate(VoteCandidate firstCandidate,
-          VoteCandidate secondCandidate) {
+      VoteCandidate secondCandidate) {
     VoteCandidate mergeResult = new VoteCandidate(firstCandidate.getCandidateNodeId(),
-            firstCandidate.getVotingKey(), new ConcurrentHashMap<>());
+        firstCandidate.getVotingKey(), new ConcurrentHashMap<>());
     Set<String> firstKeySet = firstCandidate.getVotes().keySet();
     Set<String> secondKeySet = secondCandidate.getVotes().keySet();
     Set<String> sameVoteNodeSet = getIntersection(firstKeySet, secondKeySet);
@@ -78,19 +78,19 @@ public class MajorityVote implements Crdt<Map<String, VoteCandidate>, MajorityVo
     for (String differentCandidateId : differentVoteNodeSet) {
       if (firstCandidate.getVotes().containsKey(differentCandidateId)) {
         mergeResult.getVotes()
-                .put(differentCandidateId, firstCandidate.getVotes().get(differentCandidateId));
+            .put(differentCandidateId, firstCandidate.getVotes().get(differentCandidateId));
       } else if (secondCandidate.getVotes().containsKey(differentCandidateId)) {
         mergeResult.getVotes()
-                .put(differentCandidateId, secondCandidate.getVotes().get(differentCandidateId));
+            .put(differentCandidateId, secondCandidate.getVotes().get(differentCandidateId));
       }
     }
     // Merge vote for same voter
     for (String sameVoteNodeId : sameVoteNodeSet) {
       if (firstCandidate.getVotes().containsKey(sameVoteNodeId) && secondCandidate.getVotes()
-              .containsKey(sameVoteNodeId)) {
+          .containsKey(sameVoteNodeId)) {
         mergeResult.getVotes().put(sameVoteNodeId,
-                mergeVote(firstCandidate.getVotes().get(sameVoteNodeId),
-                        secondCandidate.getVotes().get(sameVoteNodeId)));
+            mergeVote(firstCandidate.getVotes().get(sameVoteNodeId),
+                secondCandidate.getVotes().get(sameVoteNodeId)));
       }
     }
 
@@ -142,12 +142,15 @@ public class MajorityVote implements Crdt<Map<String, VoteCandidate>, MajorityVo
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == null)
+    if (obj == null) {
       return false;
-    if (obj == this)
+    }
+    if (obj == this) {
       return true;
-    if (!(obj instanceof MajorityVote))
+    }
+    if (!(obj instanceof MajorityVote)) {
       return false;
+    }
     MajorityVote other = (MajorityVote) obj;
     return Objects.equals(voteCandidates, other.voteCandidates);
   }

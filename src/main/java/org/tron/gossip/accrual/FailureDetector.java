@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.accrual;
 
 import org.apache.commons.math.MathException;
@@ -28,8 +29,8 @@ public class FailureDetector {
   public static final Logger LOGGER = Logger.getLogger(FailureDetector.class);
   private final DescriptiveStatistics descriptiveStatistics;
   private final long minimumSamples;
-  private volatile long latestHeartbeatMs = -1;
   private final String distribution;
+  private volatile long latestHeartbeatMs = -1;
 
   public FailureDetector(long minimumSamples, int windowSize, String distribution) {
     descriptiveStatistics = new DescriptiveStatistics(windowSize);
@@ -63,9 +64,11 @@ public class FailureDetector {
       if (distribution.equals("normal")) {
         double standardDeviation = descriptiveStatistics.getStandardDeviation();
         standardDeviation = standardDeviation < 0.1 ? 0.1 : standardDeviation;
-        probability = new NormalDistributionImpl(descriptiveStatistics.getMean(), standardDeviation).cumulativeProbability(delta);
+        probability = new NormalDistributionImpl(descriptiveStatistics.getMean(), standardDeviation)
+            .cumulativeProbability(delta);
       } else {
-        probability = new ExponentialDistributionImpl(descriptiveStatistics.getMean()).cumulativeProbability(delta);
+        probability = new ExponentialDistributionImpl(descriptiveStatistics.getMean())
+            .cumulativeProbability(delta);
       }
       final double eps = 1e-12;
       if (1 - probability < eps) {

@@ -11,43 +11,43 @@ import org.tron.utils.ByteArray;
 
 public class BlockchainClientListener implements BlockchainListener {
 
-    private Client client;
-    private Peer peer;
+  private Client client;
+  private Peer peer;
 
-    public BlockchainClientListener(Client client, Peer peer) {
-        this.client = client;
-        this.peer = peer;
+  public BlockchainClientListener(Client client, Peer peer) {
+    this.client = client;
+    this.peer = peer;
+  }
+
+  @Override
+  public void addBlock(TronBlock.Block block) {
+    String value = ByteArray.toHexString(block.toByteArray());
+
+    if (peer.getType().equals(PeerType.PEER_SERVER)) {
+      Message message = new Message(value, Type.BLOCK);
+      //net.broadcast(message);
+      client.putMessage1(message); // consensus: put message
     }
+  }
 
-    @Override
-    public void addBlock(TronBlock.Block block) {
-        String value = ByteArray.toHexString(block.toByteArray());
-
-        if (peer.getType().equals(PeerType.PEER_SERVER)) {
-            Message message = new Message(value, Type.BLOCK);
-            //net.broadcast(message);
-            client.putMessage1(message); // consensus: put message
-        }
+  @Override
+  public void addBlockNet(TronBlock.Block block, Net net) {
+    if (peer.getType().equals(PeerType.PEER_SERVER)) {
+      String value = ByteArray.toHexString(block.toByteArray());
+      Message message = new Message(value, Type.BLOCK);
+      net.broadcast(message);
     }
+  }
 
-    @Override
-    public void addBlockNet(TronBlock.Block block, Net net) {
-        if (peer.getType().equals(PeerType.PEER_SERVER)) {
-            String value = ByteArray.toHexString(block.toByteArray());
-            Message message = new Message(value, Type.BLOCK);
-            net.broadcast(message);
-        }
+  @Override
+  public void addGenesisBlock(TronBlock.Block block) {
+    if (peer.getType().equals(PeerType.PEER_SERVER)) {
+      String value = ByteArray.toHexString(block.toByteArray());
+      Message message = new Message(value, Type.BLOCK);
+      client.putMessage1(message); // consensus: put message GenesisBlock
+      //Merely for the placeholders, no real meaning
+      Message time = new Message(value, Type.TRANSACTION);
+      client.putMessage1(time);
     }
-
-    @Override
-    public void addGenesisBlock(TronBlock.Block block) {
-        if (peer.getType().equals(PeerType.PEER_SERVER)) {
-            String value = ByteArray.toHexString(block.toByteArray());
-            Message message = new Message(value, Type.BLOCK);
-            client.putMessage1(message); // consensus: put message GenesisBlock
-            //Merely for the placeholders, no real meaning
-            Message time = new Message(value, Type.TRANSACTION);
-            client.putMessage1(time);
-        }
-    }
+  }
 }

@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.storage;
 
 import java.util.Set;
@@ -20,19 +21,18 @@ import java.util.Set;
 public interface DbSourceInter<V> extends BatchSourceInter<byte[], V> {
 
 
-    void setDBName(String name);
+  String getDBName();
+
+  void setDBName(String name);
+
+  void initDB();
 
 
-    String getDBName();
-
-    void initDB();
+  boolean isAlive();
 
 
-    boolean isAlive();
+  void closeDB();
 
 
-    void closeDB();
-
-
-    Set<byte[]> allKeys() throws RuntimeException;
+  Set<byte[]> allKeys() throws RuntimeException;
 }

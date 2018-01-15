@@ -4,7 +4,44 @@
 package org.tron.protos.core;
 
 public final class TronTXOutput {
-  private TronTXOutput() {}
+  private static final com.google.protobuf.Descriptors.Descriptor
+      internal_static_protos_TXOutput_descriptor;
+  private static final
+  com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_protos_TXOutput_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.FileDescriptor
+      descriptor;
+
+  static {
+    java.lang.String[] descriptorData = {
+        "\n\027core/TronTXOutput.proto\022\006protos\"-\n\010TXO" +
+            "utput\022\r\n\005value\030\001 \001(\003\022\022\n\npubKeyHash\030\002 \001(\014" +
+            "B$\n\024org.tron.protos.coreB\014TronTXOutputb\006" +
+            "proto3"
+    };
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+        new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalBuildGeneratedFileFrom(descriptorData,
+            new com.google.protobuf.Descriptors.FileDescriptor[] {
+            }, assigner);
+    internal_static_protos_TXOutput_descriptor =
+        getDescriptor().getMessageTypes().get(0);
+    internal_static_protos_TXOutput_fieldAccessorTable = new
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_protos_TXOutput_descriptor,
+        new java.lang.String[] {"Value", "PubKeyHash",});
+  }
+
+  private TronTXOutput() {
+  }
+
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistryLite registry) {
   }
@@ -14,6 +51,12 @@ public final class TronTXOutput {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+
+  public static com.google.protobuf.Descriptors.FileDescriptor
+  getDescriptor() {
+    return descriptor;
+  }
+
   public interface TXOutputOrBuilder extends
       // @@protoc_insertion_point(interface_extends:protos.TXOutput)
       com.google.protobuf.MessageOrBuilder {
@@ -28,28 +71,47 @@ public final class TronTXOutput {
      */
     com.google.protobuf.ByteString getPubKeyHash();
   }
+
   /**
    * Protobuf type {@code protos.TXOutput}
    */
-  public  static final class TXOutput extends
+  public static final class TXOutput extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:protos.TXOutput)
       TXOutputOrBuilder {
-  private static final long serialVersionUID = 0L;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    public static final int PUBKEYHASH_FIELD_NUMBER = 2;
+    private static final long serialVersionUID = 0L;
+    // @@protoc_insertion_point(class_scope:protos.TXOutput)
+    private static final org.tron.protos.core.TronTXOutput.TXOutput DEFAULT_INSTANCE;
+    private static final com.google.protobuf.Parser<TXOutput>
+        PARSER = new com.google.protobuf.AbstractParser<TXOutput>() {
+      public TXOutput parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TXOutput(input, extensionRegistry);
+      }
+    };
+
+    static {
+      DEFAULT_INSTANCE = new org.tron.protos.core.TronTXOutput.TXOutput();
+    }
+
+    private long value_;
+    private com.google.protobuf.ByteString pubKeyHash_;
+    private byte memoizedIsInitialized = -1;
+
     // Use TXOutput.newBuilder() to construct.
     private TXOutput(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
+
     private TXOutput() {
       value_ = 0L;
       pubKeyHash_ = com.google.protobuf.ByteString.EMPTY;
     }
 
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
     private TXOutput(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -95,20 +157,124 @@ public final class TronTXOutput {
         makeExtensionsImmutable();
       }
     }
+
     public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
+    getDescriptor() {
       return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronTXOutput.TXOutput.class, org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
     }
 
-    public static final int VALUE_FIELD_NUMBER = 1;
-    private long value_;
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(
+        java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+
+    public static Builder newBuilder(org.tron.protos.core.TronTXOutput.TXOutput prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+
+    public static org.tron.protos.core.TronTXOutput.TXOutput getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public static com.google.protobuf.Parser<TXOutput> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    internalGetFieldAccessorTable() {
+      return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.tron.protos.core.TronTXOutput.TXOutput.class,
+              org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
+    }
+
     /**
      * <code>int64 value = 1;</code>
      */
@@ -116,8 +282,6 @@ public final class TronTXOutput {
       return value_;
     }
 
-    public static final int PUBKEYHASH_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString pubKeyHash_;
     /**
      * <code>bytes pubKeyHash = 2;</code>
      */
@@ -125,18 +289,21 @@ public final class TronTXOutput {
       return pubKeyHash_;
     }
 
-    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
+      if (isInitialized == 1) {
+        return true;
+      }
+      if (isInitialized == 0) {
+        return false;
+      }
 
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+        throws java.io.IOException {
       if (value_ != 0L) {
         output.writeInt64(1, value_);
       }
@@ -148,16 +315,18 @@ public final class TronTXOutput {
 
     public int getSerializedSize() {
       int size = memoizedSize;
-      if (size != -1) return size;
+      if (size != -1) {
+        return size;
+      }
 
       size = 0;
       if (value_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(1, value_);
+            .computeInt64Size(1, value_);
       }
       if (!pubKeyHash_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, pubKeyHash_);
+            .computeBytesSize(2, pubKeyHash_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -167,7 +336,7 @@ public final class TronTXOutput {
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
-       return true;
+        return true;
       }
       if (!(obj instanceof org.tron.protos.core.TronTXOutput.TXOutput)) {
         return super.equals(obj);
@@ -200,83 +369,10 @@ public final class TronTXOutput {
       return hash;
     }
 
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronTXOutput.TXOutput parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
+    public Builder newBuilderForType() {
+      return newBuilder();
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(org.tron.protos.core.TronTXOutput.TXOutput prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -288,6 +384,16 @@ public final class TronTXOutput {
       Builder builder = new Builder(parent);
       return builder;
     }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TXOutput> getParserForType() {
+      return PARSER;
+    }
+
+    public org.tron.protos.core.TronTXOutput.TXOutput getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
     /**
      * Protobuf type {@code protos.TXOutput}
      */
@@ -295,17 +401,8 @@ public final class TronTXOutput {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:protos.TXOutput)
         org.tron.protos.core.TronTXOutput.TXOutputOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronTXOutput.TXOutput.class, org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
-      }
+      private long value_;
+      private com.google.protobuf.ByteString pubKeyHash_ = com.google.protobuf.ByteString.EMPTY;
 
       // Construct using org.tron.protos.core.TronTXOutput.TXOutput.newBuilder()
       private Builder() {
@@ -317,11 +414,26 @@ public final class TronTXOutput {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+      getDescriptor() {
+        return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+        return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.tron.protos.core.TronTXOutput.TXOutput.class,
+                org.tron.protos.core.TronTXOutput.TXOutput.Builder.class);
+      }
+
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+            .alwaysUseFieldBuilders) {
         }
       }
+
       public Builder clear() {
         super.clear();
         value_ = 0L;
@@ -332,7 +444,7 @@ public final class TronTXOutput {
       }
 
       public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
+      getDescriptorForType() {
         return org.tron.protos.core.TronTXOutput.internal_static_protos_TXOutput_descriptor;
       }
 
@@ -349,7 +461,8 @@ public final class TronTXOutput {
       }
 
       public org.tron.protos.core.TronTXOutput.TXOutput buildPartial() {
-        org.tron.protos.core.TronTXOutput.TXOutput result = new org.tron.protos.core.TronTXOutput.TXOutput(this);
+        org.tron.protos.core.TronTXOutput.TXOutput result = new org.tron.protos.core.TronTXOutput.TXOutput(
+            this);
         result.value_ = value_;
         result.pubKeyHash_ = pubKeyHash_;
         onBuilt();
@@ -359,32 +472,38 @@ public final class TronTXOutput {
       public Builder clone() {
         return (Builder) super.clone();
       }
+
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.tron.protos.core.TronTXOutput.TXOutput) {
-          return mergeFrom((org.tron.protos.core.TronTXOutput.TXOutput)other);
+          return mergeFrom((org.tron.protos.core.TronTXOutput.TXOutput) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -392,7 +511,9 @@ public final class TronTXOutput {
       }
 
       public Builder mergeFrom(org.tron.protos.core.TronTXOutput.TXOutput other) {
-        if (other == org.tron.protos.core.TronTXOutput.TXOutput.getDefaultInstance()) return this;
+        if (other == org.tron.protos.core.TronTXOutput.TXOutput.getDefaultInstance()) {
+          return this;
+        }
         if (other.getValue() != 0L) {
           setValue(other.getValue());
         }
@@ -426,60 +547,63 @@ public final class TronTXOutput {
         return this;
       }
 
-      private long value_ ;
       /**
        * <code>int64 value = 1;</code>
        */
       public long getValue() {
         return value_;
       }
+
       /**
        * <code>int64 value = 1;</code>
        */
       public Builder setValue(long value) {
-        
+
         value_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>int64 value = 1;</code>
        */
       public Builder clearValue() {
-        
+
         value_ = 0L;
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString pubKeyHash_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes pubKeyHash = 2;</code>
        */
       public com.google.protobuf.ByteString getPubKeyHash() {
         return pubKeyHash_;
       }
+
       /**
        * <code>bytes pubKeyHash = 2;</code>
        */
       public Builder setPubKeyHash(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         pubKeyHash_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes pubKeyHash = 2;</code>
        */
       public Builder clearPubKeyHash() {
-        
+
         pubKeyHash_ = getDefaultInstance().getPubKeyHash();
         onChanged();
         return this;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFieldsProto3(unknownFields);
@@ -494,78 +618,6 @@ public final class TronTXOutput {
       // @@protoc_insertion_point(builder_scope:protos.TXOutput)
     }
 
-    // @@protoc_insertion_point(class_scope:protos.TXOutput)
-    private static final org.tron.protos.core.TronTXOutput.TXOutput DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new org.tron.protos.core.TronTXOutput.TXOutput();
-    }
-
-    public static org.tron.protos.core.TronTXOutput.TXOutput getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<TXOutput>
-        PARSER = new com.google.protobuf.AbstractParser<TXOutput>() {
-      public TXOutput parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new TXOutput(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<TXOutput> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<TXOutput> getParserForType() {
-      return PARSER;
-    }
-
-    public org.tron.protos.core.TronTXOutput.TXOutput getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_protos_TXOutput_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_protos_TXOutput_fieldAccessorTable;
-
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\027core/TronTXOutput.proto\022\006protos\"-\n\010TXO" +
-      "utput\022\r\n\005value\030\001 \001(\003\022\022\n\npubKeyHash\030\002 \001(\014" +
-      "B$\n\024org.tron.protos.coreB\014TronTXOutputb\006" +
-      "proto3"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
-    internal_static_protos_TXOutput_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_protos_TXOutput_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_protos_TXOutput_descriptor,
-        new java.lang.String[] { "Value", "PubKeyHash", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

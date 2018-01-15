@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.utils;
 
 import org.junit.Test;
@@ -19,13 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoggerTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testLogger() {
-        logger.debug("test debug: {}", "success");
-        logger.info("test info: {}", "success");
-        logger.warn("test warn: {}", "success");
-        logger.error("test error: {}", "success");
-    }
+  @Test
+  public void testLogger() {
+    logger.debug("test debug: {}", "success");
+    logger.info("test info: {}", "success");
+    logger.warn("test warn: {}", "success");
+    logger.error("test error: {}", "success");
+  }
 }

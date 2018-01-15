@@ -12,13 +12,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CliTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
 //    @Test
 //    public void testCli() {

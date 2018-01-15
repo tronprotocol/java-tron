@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
 public class ShutdownMessage extends Message {
@@ -22,9 +23,9 @@ public class ShutdownMessage extends Message {
   public static final String PER_NODE_KEY = "gossipcore.shutdowmessage";
   private long shutdownAtNanos;
   private String nodeId;
-  
-  public ShutdownMessage(){
-    
+
+  public ShutdownMessage() {
+
   }
 
   public String getNodeId() {
@@ -47,5 +48,5 @@ public class ShutdownMessage extends Message {
   public String toString() {
     return "ShutdownMessage [shutdownAtNanos=" + shutdownAtNanos + ", nodeId=" + nodeId + "]";
   }
-  
+
 }

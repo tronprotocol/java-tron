@@ -15,16 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.protocol;
 
+import java.io.IOException;
 import org.tron.gossip.model.Base;
 
-import java.io.IOException;
-
-/** interface for managing message marshaling. */
+/**
+ * interface for managing message marshaling.
+ */
 public interface ProtocolManager {
 
-  /** serialize a message
+  /**
+   * serialize a message
+   *
    * @param message
    * @return serialized message.
    * @throws IOException
@@ -33,6 +37,7 @@ public interface ProtocolManager {
 
   /**
    * Reads the next message from a byte source.
+   *
    * @param buf
    * @return a gossip message.
    * @throws IOException

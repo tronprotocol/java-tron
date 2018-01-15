@@ -15,20 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.event.data;
 
 public class DataEventConstants {
-  
+
   // MetricRegistry
   public static final String PER_NODE_DATA_SUBSCRIBERS_SIZE
-          = "gossip.event.data.pernode.subscribers.size";
+      = "gossip.event.data.pernode.subscribers.size";
   public static final String PER_NODE_DATA_SUBSCRIBERS_QUEUE_SIZE
-          = "gossip.event.data.pernode.subscribers.queue.size";
+      = "gossip.event.data.pernode.subscribers.queue.size";
   public static final String SHARED_DATA_SUBSCRIBERS_SIZE
-          = "gossip.event.data.shared.subscribers.size";
+      = "gossip.event.data.shared.subscribers.size";
   public static final String SHARED_DATA_SUBSCRIBERS_QUEUE_SIZE
-          = "gossip.event.data.shared.subscribers.queue.size";
-  
+      = "gossip.event.data.shared.subscribers.queue.size";
+
   // Thread pool
   public static final int PER_NODE_DATA_QUEUE_SIZE = 64;
   public static final int PER_NODE_DATA_CORE_POOL_SIZE = 1;
@@ -38,5 +39,5 @@ public class DataEventConstants {
   public static final int SHARED_DATA_CORE_POOL_SIZE = 1;
   public static final int SHARED_DATA_MAX_POOL_SIZE = 30;
   public static final int SHARED_DATA_KEEP_ALIVE_TIME_SECONDS = 1;
-  
+
 }

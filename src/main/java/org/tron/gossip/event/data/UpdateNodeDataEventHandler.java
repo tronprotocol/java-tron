@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.event.data;
 
 /**
@@ -22,7 +23,7 @@ package org.tron.gossip.event.data;
  * Classes which implement this interface get notifications when per node data item get changed.
  */
 public interface UpdateNodeDataEventHandler {
-  
+
   /**
    * This method get called when a per node datum get changed.
    *
@@ -33,5 +34,5 @@ public interface UpdateNodeDataEventHandler {
    * @param newValue updated value of the datum
    */
   void onUpdate(String nodeId, String key, Object oldValue, Object newValue);
-  
+
 }

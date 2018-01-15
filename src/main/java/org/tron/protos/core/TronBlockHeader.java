@@ -4,7 +4,49 @@
 package org.tron.protos.core;
 
 public final class TronBlockHeader {
-  private TronBlockHeader() {}
+  private static final com.google.protobuf.Descriptors.Descriptor
+      internal_static_protos_BlockHeader_descriptor;
+  private static final
+  com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_protos_BlockHeader_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.FileDescriptor
+      descriptor;
+
+  static {
+    java.lang.String[] descriptorData = {
+        "\n\032core/TronBlockHeader.proto\022\006protos\"\211\001\n" +
+            "\013BlockHeader\022\021\n\ttimestamp\030\001 \001(\003\022\022\n\ntxTri" +
+            "eRoot\030\002 \001(\014\022\022\n\nparentHash\030\003 \001(\014\022\014\n\004hash\030"
+            +
+            "\004 \001(\014\022\r\n\005nonce\030\005 \001(\014\022\022\n\ndifficulty\030\006 \001(\014"
+            +
+            "\022\016\n\006number\030\007 \001(\003B\'\n\024org.tron.protos.core" +
+            "B\017TronBlockHeaderb\006proto3"
+    };
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+        new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalBuildGeneratedFileFrom(descriptorData,
+            new com.google.protobuf.Descriptors.FileDescriptor[] {
+            }, assigner);
+    internal_static_protos_BlockHeader_descriptor =
+        getDescriptor().getMessageTypes().get(0);
+    internal_static_protos_BlockHeader_fieldAccessorTable = new
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_protos_BlockHeader_descriptor,
+        new java.lang.String[] {"Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce",
+            "Difficulty", "Number",});
+  }
+
+  private TronBlockHeader() {
+  }
+
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistryLite registry) {
   }
@@ -14,6 +56,12 @@ public final class TronBlockHeader {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+
+  public static com.google.protobuf.Descriptors.FileDescriptor
+  getDescriptor() {
+    return descriptor;
+  }
+
   public interface BlockHeaderOrBuilder extends
       // @@protoc_insertion_point(interface_extends:protos.BlockHeader)
       com.google.protobuf.MessageOrBuilder {
@@ -53,18 +101,52 @@ public final class TronBlockHeader {
      */
     long getNumber();
   }
+
   /**
    * Protobuf type {@code protos.BlockHeader}
    */
-  public  static final class BlockHeader extends
+  public static final class BlockHeader extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:protos.BlockHeader)
       BlockHeaderOrBuilder {
-  private static final long serialVersionUID = 0L;
+    public static final int TIMESTAMP_FIELD_NUMBER = 1;
+    public static final int TXTRIEROOT_FIELD_NUMBER = 2;
+    public static final int PARENTHASH_FIELD_NUMBER = 3;
+    public static final int HASH_FIELD_NUMBER = 4;
+    public static final int NONCE_FIELD_NUMBER = 5;
+    public static final int DIFFICULTY_FIELD_NUMBER = 6;
+    public static final int NUMBER_FIELD_NUMBER = 7;
+    private static final long serialVersionUID = 0L;
+    // @@protoc_insertion_point(class_scope:protos.BlockHeader)
+    private static final org.tron.protos.core.TronBlockHeader.BlockHeader DEFAULT_INSTANCE;
+    private static final com.google.protobuf.Parser<BlockHeader>
+        PARSER = new com.google.protobuf.AbstractParser<BlockHeader>() {
+      public BlockHeader parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new BlockHeader(input, extensionRegistry);
+      }
+    };
+
+    static {
+      DEFAULT_INSTANCE = new org.tron.protos.core.TronBlockHeader.BlockHeader();
+    }
+
+    private long timestamp_;
+    private com.google.protobuf.ByteString txTrieRoot_;
+    private com.google.protobuf.ByteString parentHash_;
+    private com.google.protobuf.ByteString hash_;
+    private com.google.protobuf.ByteString nonce_;
+    private com.google.protobuf.ByteString difficulty_;
+    private long number_;
+    private byte memoizedIsInitialized = -1;
+
     // Use BlockHeader.newBuilder() to construct.
     private BlockHeader(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
+
     private BlockHeader() {
       timestamp_ = 0L;
       txTrieRoot_ = com.google.protobuf.ByteString.EMPTY;
@@ -75,11 +157,6 @@ public final class TronBlockHeader {
       number_ = 0L;
     }
 
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
     private BlockHeader(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -150,20 +227,125 @@ public final class TronBlockHeader {
         makeExtensionsImmutable();
       }
     }
+
     public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
+    getDescriptor() {
       return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              org.tron.protos.core.TronBlockHeader.BlockHeader.class, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
     }
 
-    public static final int TIMESTAMP_FIELD_NUMBER = 1;
-    private long timestamp_;
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(
+        java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+
+    public static Builder newBuilder(org.tron.protos.core.TronBlockHeader.BlockHeader prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+
+    public static org.tron.protos.core.TronBlockHeader.BlockHeader getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public static com.google.protobuf.Parser<BlockHeader> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    internalGetFieldAccessorTable() {
+      return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.tron.protos.core.TronBlockHeader.BlockHeader.class,
+              org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
+    }
+
     /**
      * <code>int64 timestamp = 1;</code>
      */
@@ -171,8 +353,6 @@ public final class TronBlockHeader {
       return timestamp_;
     }
 
-    public static final int TXTRIEROOT_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString txTrieRoot_;
     /**
      * <code>bytes txTrieRoot = 2;</code>
      */
@@ -180,8 +360,6 @@ public final class TronBlockHeader {
       return txTrieRoot_;
     }
 
-    public static final int PARENTHASH_FIELD_NUMBER = 3;
-    private com.google.protobuf.ByteString parentHash_;
     /**
      * <code>bytes parentHash = 3;</code>
      */
@@ -189,8 +367,6 @@ public final class TronBlockHeader {
       return parentHash_;
     }
 
-    public static final int HASH_FIELD_NUMBER = 4;
-    private com.google.protobuf.ByteString hash_;
     /**
      * <code>bytes hash = 4;</code>
      */
@@ -198,8 +374,6 @@ public final class TronBlockHeader {
       return hash_;
     }
 
-    public static final int NONCE_FIELD_NUMBER = 5;
-    private com.google.protobuf.ByteString nonce_;
     /**
      * <code>bytes nonce = 5;</code>
      */
@@ -207,8 +381,6 @@ public final class TronBlockHeader {
       return nonce_;
     }
 
-    public static final int DIFFICULTY_FIELD_NUMBER = 6;
-    private com.google.protobuf.ByteString difficulty_;
     /**
      * <code>bytes difficulty = 6;</code>
      */
@@ -216,8 +388,6 @@ public final class TronBlockHeader {
       return difficulty_;
     }
 
-    public static final int NUMBER_FIELD_NUMBER = 7;
-    private long number_;
     /**
      * <code>int64 number = 7;</code>
      */
@@ -225,18 +395,21 @@ public final class TronBlockHeader {
       return number_;
     }
 
-    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
+      if (isInitialized == 1) {
+        return true;
+      }
+      if (isInitialized == 0) {
+        return false;
+      }
 
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+        throws java.io.IOException {
       if (timestamp_ != 0L) {
         output.writeInt64(1, timestamp_);
       }
@@ -263,36 +436,38 @@ public final class TronBlockHeader {
 
     public int getSerializedSize() {
       int size = memoizedSize;
-      if (size != -1) return size;
+      if (size != -1) {
+        return size;
+      }
 
       size = 0;
       if (timestamp_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(1, timestamp_);
+            .computeInt64Size(1, timestamp_);
       }
       if (!txTrieRoot_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, txTrieRoot_);
+            .computeBytesSize(2, txTrieRoot_);
       }
       if (!parentHash_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, parentHash_);
+            .computeBytesSize(3, parentHash_);
       }
       if (!hash_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(4, hash_);
+            .computeBytesSize(4, hash_);
       }
       if (!nonce_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(5, nonce_);
+            .computeBytesSize(5, nonce_);
       }
       if (!difficulty_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(6, difficulty_);
+            .computeBytesSize(6, difficulty_);
       }
       if (number_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(7, number_);
+            .computeInt64Size(7, number_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -302,7 +477,7 @@ public final class TronBlockHeader {
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
-       return true;
+        return true;
       }
       if (!(obj instanceof org.tron.protos.core.TronBlockHeader.BlockHeader)) {
         return super.equals(obj);
@@ -356,83 +531,10 @@ public final class TronBlockHeader {
       return hash;
     }
 
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
+    public Builder newBuilderForType() {
+      return newBuilder();
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(org.tron.protos.core.TronBlockHeader.BlockHeader prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -444,6 +546,16 @@ public final class TronBlockHeader {
       Builder builder = new Builder(parent);
       return builder;
     }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<BlockHeader> getParserForType() {
+      return PARSER;
+    }
+
+    public org.tron.protos.core.TronBlockHeader.BlockHeader getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
     /**
      * Protobuf type {@code protos.BlockHeader}
      */
@@ -451,17 +563,13 @@ public final class TronBlockHeader {
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:protos.BlockHeader)
         org.tron.protos.core.TronBlockHeader.BlockHeaderOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.tron.protos.core.TronBlockHeader.BlockHeader.class, org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
-      }
+      private long timestamp_;
+      private com.google.protobuf.ByteString txTrieRoot_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString parentHash_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString hash_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString nonce_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString difficulty_ = com.google.protobuf.ByteString.EMPTY;
+      private long number_;
 
       // Construct using org.tron.protos.core.TronBlockHeader.BlockHeader.newBuilder()
       private Builder() {
@@ -473,11 +581,26 @@ public final class TronBlockHeader {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+      getDescriptor() {
+        return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+        return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.tron.protos.core.TronBlockHeader.BlockHeader.class,
+                org.tron.protos.core.TronBlockHeader.BlockHeader.Builder.class);
+      }
+
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+            .alwaysUseFieldBuilders) {
         }
       }
+
       public Builder clear() {
         super.clear();
         timestamp_ = 0L;
@@ -498,7 +621,7 @@ public final class TronBlockHeader {
       }
 
       public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
+      getDescriptorForType() {
         return org.tron.protos.core.TronBlockHeader.internal_static_protos_BlockHeader_descriptor;
       }
 
@@ -515,7 +638,8 @@ public final class TronBlockHeader {
       }
 
       public org.tron.protos.core.TronBlockHeader.BlockHeader buildPartial() {
-        org.tron.protos.core.TronBlockHeader.BlockHeader result = new org.tron.protos.core.TronBlockHeader.BlockHeader(this);
+        org.tron.protos.core.TronBlockHeader.BlockHeader result = new org.tron.protos.core.TronBlockHeader.BlockHeader(
+            this);
         result.timestamp_ = timestamp_;
         result.txTrieRoot_ = txTrieRoot_;
         result.parentHash_ = parentHash_;
@@ -530,32 +654,38 @@ public final class TronBlockHeader {
       public Builder clone() {
         return (Builder) super.clone();
       }
+
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
           java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.tron.protos.core.TronBlockHeader.BlockHeader) {
-          return mergeFrom((org.tron.protos.core.TronBlockHeader.BlockHeader)other);
+          return mergeFrom((org.tron.protos.core.TronBlockHeader.BlockHeader) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -563,7 +693,9 @@ public final class TronBlockHeader {
       }
 
       public Builder mergeFrom(org.tron.protos.core.TronBlockHeader.BlockHeader other) {
-        if (other == org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance()) return this;
+        if (other == org.tron.protos.core.TronBlockHeader.BlockHeader.getDefaultInstance()) {
+          return this;
+        }
         if (other.getTimestamp() != 0L) {
           setTimestamp(other.getTimestamp());
         }
@@ -602,7 +734,8 @@ public final class TronBlockHeader {
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.tron.protos.core.TronBlockHeader.BlockHeader) e.getUnfinishedMessage();
+          parsedMessage = (org.tron.protos.core.TronBlockHeader.BlockHeader) e
+              .getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -612,202 +745,210 @@ public final class TronBlockHeader {
         return this;
       }
 
-      private long timestamp_ ;
       /**
        * <code>int64 timestamp = 1;</code>
        */
       public long getTimestamp() {
         return timestamp_;
       }
+
       /**
        * <code>int64 timestamp = 1;</code>
        */
       public Builder setTimestamp(long value) {
-        
+
         timestamp_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>int64 timestamp = 1;</code>
        */
       public Builder clearTimestamp() {
-        
+
         timestamp_ = 0L;
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString txTrieRoot_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes txTrieRoot = 2;</code>
        */
       public com.google.protobuf.ByteString getTxTrieRoot() {
         return txTrieRoot_;
       }
+
       /**
        * <code>bytes txTrieRoot = 2;</code>
        */
       public Builder setTxTrieRoot(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         txTrieRoot_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes txTrieRoot = 2;</code>
        */
       public Builder clearTxTrieRoot() {
-        
+
         txTrieRoot_ = getDefaultInstance().getTxTrieRoot();
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString parentHash_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes parentHash = 3;</code>
        */
       public com.google.protobuf.ByteString getParentHash() {
         return parentHash_;
       }
+
       /**
        * <code>bytes parentHash = 3;</code>
        */
       public Builder setParentHash(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         parentHash_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes parentHash = 3;</code>
        */
       public Builder clearParentHash() {
-        
+
         parentHash_ = getDefaultInstance().getParentHash();
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString hash_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes hash = 4;</code>
        */
       public com.google.protobuf.ByteString getHash() {
         return hash_;
       }
+
       /**
        * <code>bytes hash = 4;</code>
        */
       public Builder setHash(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         hash_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes hash = 4;</code>
        */
       public Builder clearHash() {
-        
+
         hash_ = getDefaultInstance().getHash();
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString nonce_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes nonce = 5;</code>
        */
       public com.google.protobuf.ByteString getNonce() {
         return nonce_;
       }
+
       /**
        * <code>bytes nonce = 5;</code>
        */
       public Builder setNonce(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         nonce_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes nonce = 5;</code>
        */
       public Builder clearNonce() {
-        
+
         nonce_ = getDefaultInstance().getNonce();
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString difficulty_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>bytes difficulty = 6;</code>
        */
       public com.google.protobuf.ByteString getDifficulty() {
         return difficulty_;
       }
+
       /**
        * <code>bytes difficulty = 6;</code>
        */
       public Builder setDifficulty(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  
+          throw new NullPointerException();
+        }
+
         difficulty_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>bytes difficulty = 6;</code>
        */
       public Builder clearDifficulty() {
-        
+
         difficulty_ = getDefaultInstance().getDifficulty();
         onChanged();
         return this;
       }
 
-      private long number_ ;
       /**
        * <code>int64 number = 7;</code>
        */
       public long getNumber() {
         return number_;
       }
+
       /**
        * <code>int64 number = 7;</code>
        */
       public Builder setNumber(long value) {
-        
+
         number_ = value;
         onChanged();
         return this;
       }
+
       /**
        * <code>int64 number = 7;</code>
        */
       public Builder clearNumber() {
-        
+
         number_ = 0L;
         onChanged();
         return this;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFieldsProto3(unknownFields);
@@ -822,80 +963,6 @@ public final class TronBlockHeader {
       // @@protoc_insertion_point(builder_scope:protos.BlockHeader)
     }
 
-    // @@protoc_insertion_point(class_scope:protos.BlockHeader)
-    private static final org.tron.protos.core.TronBlockHeader.BlockHeader DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new org.tron.protos.core.TronBlockHeader.BlockHeader();
-    }
-
-    public static org.tron.protos.core.TronBlockHeader.BlockHeader getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<BlockHeader>
-        PARSER = new com.google.protobuf.AbstractParser<BlockHeader>() {
-      public BlockHeader parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new BlockHeader(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<BlockHeader> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<BlockHeader> getParserForType() {
-      return PARSER;
-    }
-
-    public org.tron.protos.core.TronBlockHeader.BlockHeader getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_protos_BlockHeader_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_protos_BlockHeader_fieldAccessorTable;
-
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\032core/TronBlockHeader.proto\022\006protos\"\211\001\n" +
-      "\013BlockHeader\022\021\n\ttimestamp\030\001 \001(\003\022\022\n\ntxTri" +
-      "eRoot\030\002 \001(\014\022\022\n\nparentHash\030\003 \001(\014\022\014\n\004hash\030" +
-      "\004 \001(\014\022\r\n\005nonce\030\005 \001(\014\022\022\n\ndifficulty\030\006 \001(\014" +
-      "\022\016\n\006number\030\007 \001(\003B\'\n\024org.tron.protos.core" +
-      "B\017TronBlockHeaderb\006proto3"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
-    internal_static_protos_BlockHeader_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_protos_BlockHeader_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_protos_BlockHeader_descriptor,
-        new java.lang.String[] { "Timestamp", "TxTrieRoot", "ParentHash", "Hash", "Nonce", "Difficulty", "Number", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

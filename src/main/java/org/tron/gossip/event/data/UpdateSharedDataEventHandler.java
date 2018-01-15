@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.event.data;
 
 /**
@@ -30,5 +31,5 @@ public interface UpdateSharedDataEventHandler {
    * @param newValue updated value of the data item
    */
   void onUpdate(String key, Object oldValue, Object newValue);
-  
+
 }
