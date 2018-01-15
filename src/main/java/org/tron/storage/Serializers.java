@@ -12,24 +12,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.storage;
 
 public class Serializers {
 
-    /**
-     * No conversion
-     */
-    public static class Identity<T> implements Serializer<T, T> {
-        @Override
-        public T serialize(T object) {
-            return object;
-        }
-
-        @Override
-        public T deserialize(T stream) {
-            return stream;
-        }
+  /**
+   * No conversion
+   */
+  public static class Identity<T> implements Serializer<T, T> {
+    @Override
+    public T serialize(T object) {
+      return object;
     }
+
+    @Override
+    public T deserialize(T stream) {
+      return stream;
+    }
+  }
 
 
 }

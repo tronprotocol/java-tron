@@ -15,8 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager.handlers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import org.tron.gossip.Member;
 import org.tron.gossip.RemoteMember;
 import org.tron.gossip.manager.GossipCore;
@@ -26,17 +31,12 @@ import org.tron.gossip.udp.UdpActiveGossipMessage;
 import org.tron.gossip.udp.UdpActiveGossipOk;
 import org.tron.gossip.udp.UdpNotAMemberFault;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ActiveGossipMessageHandler implements MessageHandler {
-  
+
   /**
-   * @param gossipCore context.
+   * @param gossipCore    context.
    * @param gossipManager context.
-   * @param base message reference.
+   * @param base          message reference.
    * @return boolean indicating success.
    */
   @Override
@@ -53,11 +53,11 @@ public class ActiveGossipMessageHandler implements MessageHandler {
         continue;
       }
       RemoteMember member = new RemoteMember(
-              activeGossipMessage.getMembers().get(i).getCluster(),
-              u,
-              activeGossipMessage.getMembers().get(i).getId(),
-              activeGossipMessage.getMembers().get(i).getHeartbeat(),
-              activeGossipMessage.getMembers().get(i).getProperties());
+          activeGossipMessage.getMembers().get(i).getCluster(),
+          u,
+          activeGossipMessage.getMembers().get(i).getId(),
+          activeGossipMessage.getMembers().get(i).getHeartbeat(),
+          activeGossipMessage.getMembers().get(i).getProperties());
       if (i == 0) {
         senderMember = member;
       }

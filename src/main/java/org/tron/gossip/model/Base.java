@@ -15,35 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
-import org.tron.gossip.udp.UdpActiveGossipMessage;
-import org.tron.gossip.udp.UdpActiveGossipOk;
-import org.tron.gossip.udp.UdpPerNodeDataBulkMessage;
-import org.tron.gossip.udp.UdpNotAMemberFault;
-import org.tron.gossip.udp.UdpSharedDataBulkMessage;
-
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.tron.gossip.udp.UdpActiveGossipMessage;
+import org.tron.gossip.udp.UdpActiveGossipOk;
+import org.tron.gossip.udp.UdpNotAMemberFault;
+import org.tron.gossip.udp.UdpPerNodeDataBulkMessage;
+import org.tron.gossip.udp.UdpSharedDataBulkMessage;
 
 
-@JsonTypeInfo(  
-        use = JsonTypeInfo.Id.CLASS,  
-        include = JsonTypeInfo.As.PROPERTY,  
-        property = "type") 
-@JsonSubTypes({
-        @Type(value = ActiveGossipMessage.class, name = "ActiveGossipMessage"),
-        @Type(value = Fault.class, name = "Fault"),
-        @Type(value = ActiveGossipOk.class, name = "ActiveGossipOk"),
-        @Type(value = UdpActiveGossipOk.class, name = "UdpActiveGossipOk"),
-        @Type(value = UdpActiveGossipMessage.class, name = "UdpActiveGossipMessage"),
-        @Type(value = UdpNotAMemberFault.class, name = "UdpNotAMemberFault"),
-        @Type(value = PerNodeDataMessage.class, name = "PerNodeDataMessage"),
-        @Type(value = UdpPerNodeDataBulkMessage.class, name = "UdpPerNodeDataMessage"),
-        @Type(value = SharedDataMessage.class, name = "SharedDataMessage"),
-        @Type(value = UdpSharedDataBulkMessage.class, name = "UdpSharedDataMessage")
-        })
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.CLASS,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type")
+@JsonSubTypes( {
+    @Type(value = ActiveGossipMessage.class, name = "ActiveGossipMessage"),
+    @Type(value = Fault.class, name = "Fault"),
+    @Type(value = ActiveGossipOk.class, name = "ActiveGossipOk"),
+    @Type(value = UdpActiveGossipOk.class, name = "UdpActiveGossipOk"),
+    @Type(value = UdpActiveGossipMessage.class, name = "UdpActiveGossipMessage"),
+    @Type(value = UdpNotAMemberFault.class, name = "UdpNotAMemberFault"),
+    @Type(value = PerNodeDataMessage.class, name = "PerNodeDataMessage"),
+    @Type(value = UdpPerNodeDataBulkMessage.class, name = "UdpPerNodeDataMessage"),
+    @Type(value = SharedDataMessage.class, name = "SharedDataMessage"),
+    @Type(value = UdpSharedDataBulkMessage.class, name = "UdpSharedDataMessage")
+})
 public class Base {
 
 }

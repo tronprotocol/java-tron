@@ -19,12 +19,12 @@ import org.tron.storage.SourceInter;
 
 public interface Trie<V> extends SourceInter<byte[], V> {
 
-    byte[] getRootHash();
+  byte[] getRootHash();
 
-    void setRoot(byte[] root);
+  void setRoot(byte[] root);
 
-    /**
-     * Recursively deleteData all nodes from root
-     */
-    void clear();
+  /**
+   * Recursively deleteData all nodes from root
+   */
+  void clear();
 }

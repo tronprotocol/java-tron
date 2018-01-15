@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tron.gossip.replication;
 
-import org.tron.gossip.LocalMember;
-import org.tron.gossip.model.Base;
+package org.tron.gossip.replication;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.gossip.LocalMember;
+import org.tron.gossip.model.Base;
 
 /**
  * Replicable implementation which does not replicate data to given set of nodes.
@@ -30,9 +30,9 @@ import java.util.List;
  * @see Replicable
  */
 public class BlackListReplicable<T extends Base> implements Replicable<T> {
-  
+
   private final List<LocalMember> blackListMembers;
-  
+
   public BlackListReplicable(List<LocalMember> blackListMembers) {
     if (blackListMembers == null) {
       this.blackListMembers = new ArrayList<>();

@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 public interface Trackable {
 
   String getUriFrom();
-  
+
   void setUriFrom(String uriFrom);
-  
+
   String getUuid();
-  
+
   void setUuid(String uuid);
-  
+
 }

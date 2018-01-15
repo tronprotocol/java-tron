@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 import org.tron.gossip.model.ActiveGossipOk;
@@ -24,19 +25,19 @@ public class UdpActiveGossipOk extends ActiveGossipOk implements Trackable {
 
   private String uriFrom;
   private String uuid;
-  
+
   public String getUriFrom() {
     return uriFrom;
   }
-  
+
   public void setUriFrom(String uriFrom) {
     this.uriFrom = uriFrom;
   }
-  
+
   public String getUuid() {
     return uuid;
   }
-  
+
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }

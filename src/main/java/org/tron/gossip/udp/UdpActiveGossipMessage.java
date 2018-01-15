@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.udp;
 
 import org.tron.gossip.model.ActiveGossipMessage;
@@ -23,19 +24,19 @@ public class UdpActiveGossipMessage extends ActiveGossipMessage implements Track
 
   private String uriFrom;
   private String uuid;
-  
+
   public String getUriFrom() {
     return uriFrom;
   }
-  
+
   public void setUriFrom(String uriFrom) {
     this.uriFrom = uriFrom;
   }
-  
+
   public String getUuid() {
     return uuid;
   }
-  
+
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
@@ -43,7 +44,7 @@ public class UdpActiveGossipMessage extends ActiveGossipMessage implements Track
   @Override
   public String toString() {
     return "UdpActiveGossipMessage [uriFrom=" + uriFrom + ", uuid=" + uuid + ", getMembers()="
-            + getMembers() + "]";
+        + getMembers() + "]";
   }
 
 }

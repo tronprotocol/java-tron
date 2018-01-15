@@ -12,9 +12,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.consensus.client;
 
 public class MessageType {
-    public final static String TRANSACTION = "transaction";
-    public final static String BLOCK = "block";
+  public static final String TRANSACTION = "transaction";
+  public static final String BLOCK = "block";
 }

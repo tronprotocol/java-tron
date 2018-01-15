@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.model;
 
 import java.util.Map;
@@ -25,13 +26,13 @@ public class Member {
   private String uri;
   private String id;
   private Long heartbeat;
-  private Map<String,String> properties;
-  
-  public Member(){
-    
+  private Map<String, String> properties;
+
+  public Member() {
+
   }
-  
-  public Member(String cluster, String uri, String id, Long heartbeat){
+
+  public Member(String cluster, String uri, String id, Long heartbeat) {
     this.cluster = cluster;
     this.uri = uri;
     this.id = id;
@@ -81,7 +82,7 @@ public class Member {
   @Override
   public String toString() {
     return "Member [cluster=" + cluster + ", uri=" + uri + ", id=" + id + ", heartbeat="
-            + heartbeat + ", properties=" + properties + "]";
+        + heartbeat + ", properties=" + properties + "]";
   }
-  
+
 }

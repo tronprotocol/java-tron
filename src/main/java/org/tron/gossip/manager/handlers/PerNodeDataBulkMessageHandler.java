@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.manager.handlers;
 
 import org.tron.gossip.manager.GossipCore;
@@ -24,18 +25,19 @@ import org.tron.gossip.model.PerNodeDataMessage;
 import org.tron.gossip.udp.UdpPerNodeDataBulkMessage;
 
 public class PerNodeDataBulkMessageHandler implements MessageHandler {
-  
+
   /**
-   * @param gossipCore context.
+   * @param gossipCore    context.
    * @param gossipManager context.
-   * @param base message reference.
+   * @param base          message reference.
    * @return boolean indicating success.
    */
   @Override
   public boolean invoke(GossipCore gossipCore, GossipManager gossipManager, Base base) {
     UdpPerNodeDataBulkMessage udpMessage = (UdpPerNodeDataBulkMessage) base;
-    for (PerNodeDataMessage dataMsg: udpMessage.getMessages())
+    for (PerNodeDataMessage dataMsg : udpMessage.getMessages()) {
       gossipCore.addPerNodeData(dataMsg);
+    }
     return true;
   }
 }

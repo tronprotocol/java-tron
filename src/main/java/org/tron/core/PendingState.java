@@ -15,17 +15,16 @@
 
 package org.tron.core;
 
-import org.tron.protos.core.TronTransaction.Transaction;
-
 import java.util.List;
+import org.tron.protos.core.TronTransaction.Transaction;
 
 
 public interface PendingState {
 
-    List<Transaction> addPendingTransactions(List<Transaction> transactions);
+  List<Transaction> addPendingTransactions(List<Transaction> transactions);
 
-    void addPendingTransaction(Transaction tx);
+  void addPendingTransaction(Transaction tx);
 
-    List<Transaction> getPendingTransactions();
+  List<Transaction> getPendingTransactions();
 
 }

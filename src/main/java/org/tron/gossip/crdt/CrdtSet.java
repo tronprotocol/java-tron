@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tron.gossip.crdt;
 
 import java.util.Set;
 
 public interface CrdtSet<ElementType, SetType extends Set<ElementType>, R extends CrdtSet<ElementType, SetType, R>>
-extends Crdt<SetType, R> {
+    extends Crdt<SetType, R> {
 
 }
 

@@ -12,33 +12,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.overlay.message;
 
 public class Message {
-    private String message;
-    private Type type;
+  private String message;
+  private Type type;
 
-    public Message() {
-    }
+  public Message() {
+  }
 
-    public Message(String message, Type type) {
-        this.message = message;
-        this.type = type;
-    }
+  public Message(String message, Type type) {
+    this.message = message;
+    this.type = type;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public String getMessage() {
+    return message;
+  }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
+  public void setMessage(String message) {
+    this.message = message;
+  }
 
-    public Type getType() {
-        return type;
-    }
+  public Type getType() {
+    return type;
+  }
 
-    public void setType(Type type) {
-        this.type = type;
-    }
+  public void setType(Type type) {
+    this.type = type;
+  }
 }
