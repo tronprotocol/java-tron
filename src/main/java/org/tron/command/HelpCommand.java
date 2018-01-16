@@ -100,19 +100,6 @@ public class HelpCommand extends Command {
         String.format("\t@|bold %-20s\tPrint blockchain|@", "printblockchain")
     ));
 
-        /*System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tCreate a server|@", "consensus")
-        ) );
-
-        System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tlisten consensus message|@", "listen")
-        ) );
-
-        System.out.println( ansi().eraseScreen().render(
-                String.format("\t@|bold %-20s\tsend a transaction|@",
-                        "send")
-        ) );*/
-
     System.out.println(ansi().eraseScreen().render(
         String.format("\t@|bold %-20s\tExit java-tron application|@", "exit")
     ));
