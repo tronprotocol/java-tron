@@ -49,6 +49,12 @@ public class Client {
     client.serializer().register(PutCommand.class);
     client.serializer().register(GetQuery.class);
 
+    /*Collection<Address> cluster = Arrays.asList(
+            new Address("192.168.0.102", 5000)
+    );
+    CompletableFuture<CopycatClient> future = client.connect(cluster);
+    future.join();*/
+
     InetAddress localhost = null;
     try {
       localhost = InetAddress.getLocalHost();
@@ -201,7 +207,7 @@ public class Client {
   }
 
   public void loadBlock(Peer peer) {
-    int i = 2;
+    int i = 1;
     final boolean[] f = {true};
 
     while (f[0]) {
