@@ -115,7 +115,15 @@ public class Client {
   public void getMessage(Peer peer, String key) {
     final String[] preMessage = {null};
     final String[] preTime = {null};
-    preTime[0] = client.submit(new GetQuery("time")).join().toString();
+    //preTime[0] = client.submit(new GetQuery("time")).join().toString();
+    Object pretime = client.submit(new GetQuery("time")).join();
+    try {
+      if (!(pretime == null)){
+        preTime[0] = pretime.toString();
+      }
+    }catch (NullPointerException e) {
+      e.printStackTrace();
+    }
     if (key.equals("transaction")) {
       Thread thread = new Thread(() -> {
         while (true) {

@@ -17,6 +17,7 @@ package org.tron.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.command.ConsensusCommand;
+import org.tron.consensus.client.BlockchainClientListener;
 import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.PendingStateImpl;
@@ -88,6 +89,7 @@ public class Peer {
   }
 
   private void init() {
+    blockchain.addListener(new BlockchainClientListener(client, this));
     initLoadBlock();
     if (client != null) {
       new ConsensusCommand(client).listen(this, this.type);

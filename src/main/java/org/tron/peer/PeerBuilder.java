@@ -6,6 +6,7 @@ import org.tron.consensus.client.Client;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.crypto.ECKey;
+import org.tron.utils.ByteArray;
 import org.tron.wallet.Wallet;
 
 /**
@@ -53,7 +54,7 @@ public class PeerBuilder {
 
     Peer peer = new Peer(type, blockchain, utxoSet, wallet, client, key);
     //peer.setClient(client);
-    blockchain.addListener(new BlockchainClientListener(client, peer));
+    //blockchain.addListener(new BlockchainClientListener(client, peer));
     return peer;
   }
 }
