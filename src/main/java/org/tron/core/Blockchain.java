@@ -36,10 +36,15 @@ import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.config.Configer;
+import org.tron.consensus.client.Client;
 import org.tron.core.events.BlockchainListener;
 import org.tron.crypto.ECKey;
 import org.tron.overlay.Net;
+import org.tron.overlay.message.Message;
+import org.tron.overlay.message.Type;
 import org.tron.peer.Peer;
+import org.tron.peer.PeerType;
+import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
@@ -111,7 +116,6 @@ public class Blockchain {
       for (BlockchainListener listener : listeners) {
         listener.addGenesisBlock(genesisBlock);
       }
-
       logger.info("new blockchain");
     } else {
       this.currentHash = this.lastHash;

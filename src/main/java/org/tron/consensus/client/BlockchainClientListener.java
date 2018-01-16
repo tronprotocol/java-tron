@@ -46,6 +46,7 @@ public class BlockchainClientListener implements BlockchainListener {
       Message message = new Message(value, Type.BLOCK);
       client.putMessage1(message); // consensus: put message GenesisBlock
       //Merely for the placeholders, no real meaning
+      //client.getMessage1("block");
       Message time = new Message(value, Type.TRANSACTION);
       client.putMessage1(time);
     }
