@@ -46,6 +46,7 @@ public class Peer {
       Blockchain blockchain,
       UTXOSet utxoSet,
       Wallet wallet,
+      Client client,
       ECKey key) {
 
     this();
@@ -53,6 +54,7 @@ public class Peer {
     this.setBlockchain(blockchain);
     this.setUTXOSet(utxoSet);
     this.setWallet(wallet);
+    this.setClient(client);
     this.myKey = key;
     init();
   }
