@@ -1,17 +1,21 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.crypto.jce;
 
 import java.security.KeyFactory;
@@ -27,18 +31,6 @@ public final class ECKeyFactory {
             "Assumed the JRE supports EC key factories";
 
     private ECKeyFactory() {
-    }
-
-    private static class Holder {
-        private static final KeyFactory INSTANCE;
-
-        static {
-            try {
-                INSTANCE = KeyFactory.getInstance(ALGORITHM);
-            } catch (NoSuchAlgorithmException ex) {
-                throw new AssertionError(algorithmAssertionMsg, ex);
-            }
-        }
     }
 
     public static KeyFactory getInstance() {
@@ -59,6 +51,18 @@ public final class ECKeyFactory {
             return KeyFactory.getInstance(ALGORITHM, provider);
         } catch (NoSuchAlgorithmException ex) {
             throw new AssertionError(algorithmAssertionMsg, ex);
+        }
+    }
+
+    private static class Holder {
+        private static final KeyFactory INSTANCE;
+
+        static {
+            try {
+                INSTANCE = KeyFactory.getInstance(ALGORITHM);
+            } catch (NoSuchAlgorithmException ex) {
+                throw new AssertionError(algorithmAssertionMsg, ex);
+            }
         }
     }
 }

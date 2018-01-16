@@ -1,17 +1,21 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.crypto.jce;
 
 import java.security.*;
@@ -32,21 +36,6 @@ public final class ECKeyPairGenerator {
             = new ECGenParameterSpec(CURVE_NAME);
 
     private ECKeyPairGenerator() {
-    }
-
-    private static class Holder {
-        private static final KeyPairGenerator INSTANCE;
-
-        static {
-            try {
-                INSTANCE = KeyPairGenerator.getInstance(ALGORITHM);
-                INSTANCE.initialize(SECP256K1_CURVE);
-            } catch (NoSuchAlgorithmException ex) {
-                throw new AssertionError(algorithmAssertionMsg, ex);
-            } catch (InvalidAlgorithmParameterException ex) {
-                throw new AssertionError(keySpecAssertionMsg, ex);
-            }
-        }
     }
 
     public static KeyPair generateKeyPair() {
@@ -78,6 +67,21 @@ public final class ECKeyPairGenerator {
             throw new AssertionError(algorithmAssertionMsg, ex);
         } catch (InvalidAlgorithmParameterException ex) {
             throw new AssertionError(keySpecAssertionMsg, ex);
+        }
+    }
+
+    private static class Holder {
+        private static final KeyPairGenerator INSTANCE;
+
+        static {
+            try {
+                INSTANCE = KeyPairGenerator.getInstance(ALGORITHM);
+                INSTANCE.initialize(SECP256K1_CURVE);
+            } catch (NoSuchAlgorithmException ex) {
+                throw new AssertionError(algorithmAssertionMsg, ex);
+            } catch (InvalidAlgorithmParameterException ex) {
+                throw new AssertionError(keySpecAssertionMsg, ex);
+            }
         }
     }
 }

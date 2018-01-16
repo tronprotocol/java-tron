@@ -12,60 +12,61 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.command;
 
-import org.tron.peer.Peer;
 import java.util.Arrays;
 import java.util.Scanner;
+import org.tron.application.CliApplication;
 
 public class Cli {
 
-    public Cli() {
+  public Cli() {
 
+  }
+
+  public void run(CliApplication app) {
+    Scanner in = new Scanner(System.in);
+
+    while (true) {
+      String cmd = in.nextLine().trim();
+
+      String[] cmdArray = cmd.split("\\s+");
+      // split on trim() string will always return at the minimum: [""]
+      if ("".equals(cmdArray[0])) {
+        continue;
+      }
+
+      String[] cmdParameters = Arrays.copyOfRange(cmdArray, 1, cmdArray.length);
+
+      switch (cmdArray[0]) {
+        case "version":
+          new VersionCommand().execute(app, cmdParameters);
+          break;
+        case "account":
+          new AccountCommand().execute(app, cmdParameters);
+          break;
+        case "getbalance":
+          new GetBalanceCommand().execute(app, cmdParameters);
+          break;
+        case "send":
+          app.getInjector().getInstance(ConsensusCommand.class).execute(app, cmdParameters);
+          break;
+        case "printblockchain":
+          new PrintBlockchainCommand().execute(app, cmdParameters);
+          break;
+        case "listen":
+          //new ConsensusCommand().getClient(peer);
+          break;
+        case "exit":
+        case "quit":
+        case "bye":
+          new ExitCommand().execute(app, cmdParameters);
+        case "help":
+        default:
+          new HelpCommand().execute(app, cmdParameters);
+          break;
+      }
     }
-
-    public void run(Peer peer) {
-        Scanner in = new Scanner(System.in);
-
-        while (true) {
-            String cmd = in.nextLine().trim();
-
-            String[] cmdArray = cmd.split("\\s+");
-            // split on trim() string will always return at the minimum: [""]
-            if ("".equals(cmdArray[0])) {
-                continue;
-            }
-
-            String[] cmdParameters = Arrays.copyOfRange(cmdArray, 1, cmdArray.length);
-
-            switch (cmdArray[0]) {
-                case "version":
-                    new VersionCommand().execute(peer, cmdParameters);
-                    break;
-                case "account":
-                    new AccountCommand().execute(peer, cmdParameters);
-                    break;
-                case "getbalance":
-                    new GetBalanceCommand().execute(peer, cmdParameters);
-                    break;
-                case "send":
-                    new ConsensusCommand().execute(peer,cmdParameters);
-                    break;
-                case "printblockchain":
-                    new PrintBlockchainCommand().execute(peer, cmdParameters);
-                    break;
-                case "listen":
-                    //new ConsensusCommand().getClient(peer);
-                    break;
-                case "exit":
-                case "quit":
-                case "bye":
-                    new ExitCommand().execute(peer, cmdParameters);
-                case "help":
-                default:
-                    new HelpCommand().execute(peer, cmdParameters);
-                    break;
-            }
-        }
-    }
+  }
 }

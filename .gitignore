@@ -23,3 +23,8 @@ database
 
 # doc
 doc
+
+# gossip
+pernodedata.*
+ringstate.*
+shareddata.*

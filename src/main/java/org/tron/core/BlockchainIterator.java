@@ -12,55 +12,50 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.protos.core.TronBlock;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.function.Consumer;
+import java.util.NoSuchElementException;
 
-public class BlockchainIterator implements Iterator {
-    private Blockchain blockchain;
-    private byte[] index;
+public class BlockchainIterator implements Iterator<TronBlock.Block> {
 
-    public BlockchainIterator(Blockchain blockchain) {
-        this.blockchain = blockchain;
-        index = new byte[blockchain.getCurrentHash().length];
-        index = Arrays.copyOf(blockchain.getCurrentHash(), blockchain
-                .getCurrentHash().length);
+  private Blockchain blockchain;
+  private byte[] index;
+
+  public BlockchainIterator(Blockchain blockchain) {
+    this.blockchain = blockchain;
+
+    final byte[] currentHash = blockchain.getCurrentHash();
+
+    index = new byte[currentHash.length];
+    index = Arrays.copyOf(currentHash, currentHash.length);
+  }
+
+  @Override
+  public boolean hasNext() {
+    return !(index == null || index.length == 0);
+  }
+
+  @Nonnull
+  @Override
+  public TronBlock.Block next() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
     }
 
-    @Override
-    public boolean hasNext() {
-        return !(index == null || index.length == 0);
+    byte[] value = blockchain.getBlockDB().getData(index);
+    try {
+      TronBlock.Block block = TronBlock.Block.parseFrom(value);
+      index = block.getBlockHeader().getParentHash().toByteArray();
+      return block;
+    } catch (InvalidProtocolBufferException e) {
+      throw new RuntimeException(e);
     }
-
-    @Override
-    public Object next() {
-        TronBlock.Block block = null;
-        if (hasNext()) {
-            byte[] value = blockchain.getBlockDB().getData(index);
-            try {
-                block = TronBlock.Block.parseFrom(value);
-                index = block.getBlockHeader().getParentHash()
-                        .toByteArray();
-            } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return block;
-    }
-
-    @Override
-    public void remove() {
-
-    }
-
-    @Override
-    public void forEachRemaining(Consumer action) {
-
-    }
+  }
 }

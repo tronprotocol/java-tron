@@ -12,43 +12,56 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.tron.application.ApplicationFactory;
+import org.tron.application.CliApplication;
 import org.tron.command.Cli;
 import org.tron.config.Configer;
+import org.tron.consensus.server.Server;
 import org.tron.peer.Peer;
 import org.tron.peer.PeerBuilder;
 import org.tron.peer.PeerType;
 
 public class Tron {
 
-    @Parameter(names = {"--type", "-t"}, validateWith = PeerType.class)
-    private String type = "normal";
+  private static Peer peer;
+  @Parameter(names = {"--type", "-t"}, validateWith = PeerType.class)
+  private String type = "normal";
 
-    private static Peer peer;
 
-    public static void main(String[] args) {
-        Tron tron = new Tron();
-        JCommander.newBuilder()
-                .addObject(tron)
-                .build()
-                .parse(args);
-        tron.run();
-    }
+  public static void main(String[] args) {
+    Tron tron = new Tron();
+    JCommander.newBuilder()
+        .addObject(tron)
+        .build()
+        .parse(args);
+    tron.run();
+  }
 
-    public void run() {
-        peer = new PeerBuilder()
-                .setKey(Configer.getMyKey())
-                .setType(type)
-                .build();
+  public static Peer getPeer() {
+    return peer;
+  }
 
-        Cli cli = new Cli();
-        cli.run(peer);
-    }
+  public void run() {
 
-    public static Peer getPeer() {
-        return peer;
-    }
+    CliApplication app = new ApplicationFactory()
+        .buildCli();
+
+    app.addService(new Server());
+    app.run();
+
+    Peer peer = app.getInjector().getInstance(PeerBuilder.class)
+        .setKey(Configer.getMyKey())
+        .setType(type)
+        .build();
+
+    app.setPeer(peer);
+
+    Cli cli = new Cli();
+    cli.run(app);
+  }
 }
