@@ -14,28 +14,32 @@
  */
 
 package org.tron.dbStore;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.core.Constant;
 import org.tron.utils.ByteArray;
 
 @Ignore
 public class UTXOStoreTest {
 
-    /**
-     * save utxo
-     */
-    @Test
-    public void saveUTXO() {
-        UTXOStore utxoStore = new UTXOStore();
-        utxoStore.saveUTXO("00012546".getBytes(),"300".getBytes());
-        utxoStore.close();
-    }
+  /**
+   * save utxo
+   */
+  @Test
+  public void saveUTXO() {
+    UTXOStore utxoStore = new UTXOStore(Constant.TEST, BLOCK_DB_NAME);
+    utxoStore.saveUTXO("00012546".getBytes(), "300".getBytes());
+    utxoStore.close();
+  }
 
-    @Test
-    public void find() {
-        UTXOStore utxoStore = new UTXOStore();
-        byte[] bytes = utxoStore.find("00012546".getBytes());
-        utxoStore.close();
-        System.out.println(ByteArray.toStr(bytes));
-    }
+  @Test
+  public void find() {
+    UTXOStore utxoStore = new UTXOStore(Constant.TEST, BLOCK_DB_NAME);
+    byte[] bytes = utxoStore.find("00012546".getBytes());
+    utxoStore.close();
+    System.out.println(ByteArray.toStr(bytes));
+  }
 }

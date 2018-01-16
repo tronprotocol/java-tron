@@ -12,25 +12,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class NodeIP {
-    private String IP1;
+  private String IP1;
 
-    public String getIP1() {
-        return IP1;
-    }
+  public String getIP1() {
+    return IP1;
+  }
 
-    public void setIP1(String ip1){
-        this.IP1 = ip1;
-    }
-    @Override
-    public String toString() {
-        return super.toString();
-    }
+  public void setIP1(String ip1) {
+    this.IP1 = ip1;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString();
+  }
 }

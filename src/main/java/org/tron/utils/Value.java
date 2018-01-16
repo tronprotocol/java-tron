@@ -1,18 +1,20 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.tron.utils;
 
 import com.cedarsoftware.util.DeepEquals;
@@ -33,6 +35,23 @@ public class Value {
 
     private boolean decoded = false;
 
+    public Value() {
+    }
+
+    public Value(Object obj) {
+
+        this.decoded = true;
+        if (obj == null) {
+            return;
+        }
+
+        if (obj instanceof Value) {
+            this.value = ((Value) obj).asObj();
+        } else {
+            this.value = obj;
+        }
+    }
+
     public static Value fromSerEncoded(byte[] data) {
 
         if (data != null && data.length != 0) {
@@ -43,23 +62,8 @@ public class Value {
         return null;
     }
 
-    public Value() {
-    }
-
     public void init(byte[] serializable) {
         this.serializable = serializable;
-    }
-
-    public Value(Object obj) {
-
-        this.decoded = true;
-        if (obj == null) return;
-
-        if (obj instanceof Value) {
-            this.value = ((Value) obj).asObj();
-        } else {
-            this.value = obj;
-        }
     }
 
     public Value withHash(byte[] hash) {
@@ -67,9 +71,9 @@ public class Value {
         return this;
     }
 
-    /* *****************
-     *      Convert
-     * *****************/
+  /* *****************
+   *      Convert
+   * *****************/
 
     public Object asObj() {
         // decode();
@@ -147,22 +151,23 @@ public class Value {
         return new Value(null);
     }
 
-    /* *****************
-     *      Utility
-     * *****************/
+  /* *****************
+   *      Utility
+   * *****************/
 
 
     public boolean cmp(Value o) {
         return DeepEquals.deepEquals(this, o);
     }
 
-    /* *****************
-     *      Checks
-     * *****************/
+  /* *****************
+   *      Checks
+   * *****************/
 
     public boolean isList() {
 //        decode();
-        return value != null && value.getClass().isArray() && !value.getClass().getComponentType().isPrimitive();
+        return value != null && value.getClass().isArray() && !value.getClass().getComponentType()
+                .isPrimitive();
     }
 
     public boolean isString() {
@@ -202,7 +207,9 @@ public class Value {
         }
 
         for (byte aData : data) {
-            if (aData > 32 && aData < 126) ++readableChars;
+            if (aData > 32 && aData < 126) {
+                ++readableChars;
+            }
         }
 
         return (double) readableChars / (double) data.length > 0.55;
@@ -218,8 +225,9 @@ public class Value {
         for (byte aData : data) {
 
             if ((aData >= 48 && aData <= 57)
-                    || (aData >= 97 && aData <= 102))
+                    || (aData >= 97 && aData <= 102)) {
                 ++hexChars;
+            }
         }
 
         return (double) hexChars / (double) data.length > 0.9;
@@ -237,12 +245,17 @@ public class Value {
 
     public boolean isEmpty() {
         // decode();
-        if (isNull()) return true;
-        if (isBytes() && asBytes().length == 0) return true;
-        if (isList() && asList().isEmpty()) return true;
-        if (isString() && asString().equals("")) return true;
+        if (isNull()) {
+            return true;
+        }
+        if (isBytes() && asBytes().length == 0) {
+            return true;
+        }
+        if (isList() && asList().isEmpty()) {
+            return true;
+        }
+        return isString() && asString().equals("");
 
-        return false;
     }
 
     public int length() {
@@ -294,8 +307,9 @@ public class Value {
                 } else {
                     stringBuilder.append(val.toString());
                 }
-                if (i < list.length - 1)
+                if (i < list.length - 1) {
                     stringBuilder.append(", ");
+                }
             }
             stringBuilder.append("] ");
 

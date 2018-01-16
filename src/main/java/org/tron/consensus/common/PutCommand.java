@@ -12,26 +12,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.consensus.common;
 
 import io.atomix.copycat.Command;
 
 public class PutCommand implements Command<Object> {
 
-    private final Object key;
-    private final Object value;
+  private final Object key;
+  private final Object value;
 
-    public PutCommand(Object key, Object value) {
-        this.key = key;
-        this.value = value;
-    }
+  public PutCommand(Object key, Object value) {
+    this.key = key;
+    this.value = value;
+  }
 
-    public Object key() {
-        return key;
-    }
+  public Object key() {
+    return key;
+  }
 
-    public Object value() {
-        return value;
-    }
+  public Object value() {
+    return value;
+  }
 
 }

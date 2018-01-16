@@ -12,30 +12,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.overlay.kafka;
+
+import static org.tron.core.Constant.TOPIC_BLOCK;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.tron.overlay.message.Message;
 import org.tron.overlay.message.Type;
 
-import static org.tron.core.Constant.TOPIC_BLOCK;
-
 public class ConsumerWorker implements Runnable {
 
-    private ConsumerRecord<String, String> record;
-    private Kafka kafka;
+  private ConsumerRecord<String, String> record;
+  private Kafka kafka;
 
-    public ConsumerWorker(ConsumerRecord<String, String> record, Kafka kafka) {
-        this.record = record;
-        this.kafka = kafka;
-    }
+  public ConsumerWorker(ConsumerRecord<String, String> record, Kafka kafka) {
+    this.record = record;
+    this.kafka = kafka;
+  }
 
-    @Override
-    public void run() {
-        Message message = new Message();
-        message.setType(record.topic().equals(TOPIC_BLOCK) ? Type.BLOCK : Type.TRANSACTION);
-        message.setMessage(record.value());
+  @Override
+  public void run() {
+    Message message = new Message();
+    message.setType(record.topic().equals(TOPIC_BLOCK) ? Type.BLOCK : Type.TRANSACTION);
+    message.setMessage(record.value());
 
-        kafka.deliver(message);
-    }
+    kafka.deliver(message);
+  }
 }

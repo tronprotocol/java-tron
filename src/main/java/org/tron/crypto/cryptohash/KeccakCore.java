@@ -1,27 +1,24 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.crypto.cryptohash;
 
 abstract class KeccakCore extends DigestEngine {
-
-    KeccakCore(String alg) {
-        super(alg);
-    }
-
-    private long[] A;
-    private byte[] tmpOut;
 
     private static final long[] RC = {
             0x0000000000000001L, 0x0000000000008082L,
@@ -37,6 +34,12 @@ abstract class KeccakCore extends DigestEngine {
             0x8000000080008081L, 0x8000000000008080L,
             0x0000000080000001L, 0x8000000080008008L
     };
+    private long[] A;
+    private byte[] tmpOut;
+
+    KeccakCore(String alg) {
+        super(alg);
+    }
 
     /**
      * Encode the 64-bit word {@code val} into the array
@@ -83,20 +86,21 @@ abstract class KeccakCore extends DigestEngine {
 
     protected void processBlock(byte[] data) {
         /* Input block */
-        for (int i = 0; i < data.length; i += 8)
+        for (int i = 0; i < data.length; i += 8) {
             A[i >>> 3] ^= decodeLELong(data, i);
+        }
 
         long t0, t1, t2, t3, t4;
         long tt0, tt1, tt2, tt3, tt4;
         long t, kt;
         long c0, c1, c2, c3, c4, bnn;
 
-		/*
-		 * Unrolling four rounds kills performance big time
-		 * on Intel x86 Core2, in both 32-bit and 64-bit modes
-		 * (less than 1 MB/s instead of 55 MB/s on x86-64).
-		 * Unrolling two rounds appears to be fine.
-		 */
+        /*
+         * Unrolling four rounds kills performance big time
+         * on Intel x86 Core2, in both 32-bit and 64-bit modes
+         * (less than 1 MB/s instead of 55 MB/s on x86-64).
+         * Unrolling two rounds appears to be fine.
+         */
         for (int j = 0; j < 24; j += 2) {
 
             tt0 = A[1] ^ A[6];
@@ -496,8 +500,9 @@ abstract class KeccakCore extends DigestEngine {
             buf[ptr] = (byte) 0x81;
         } else {
             buf[ptr] = (byte) 0x01;
-            for (int i = ptr + 1; i < (buf.length - 1); i++)
+            for (int i = ptr + 1; i < (buf.length - 1); i++) {
                 buf[i] = 0;
+            }
             buf[buf.length - 1] = (byte) 0x80;
         }
         processBlock(buf);
@@ -508,8 +513,9 @@ abstract class KeccakCore extends DigestEngine {
         A[17] = ~A[17];
         A[20] = ~A[20];
         int dlen = engineGetDigestLength();
-        for (int i = 0; i < dlen; i += 8)
+        for (int i = 0; i < dlen; i += 8) {
             encodeLELong(A[i >>> 3], tmpOut, i);
+        }
         System.arraycopy(tmpOut, 0, out, off, dlen);
     }
 
@@ -524,8 +530,9 @@ abstract class KeccakCore extends DigestEngine {
     }
 
     private final void doReset() {
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i < 25; i++) {
             A[i] = 0;
+        }
         A[1] = 0xFFFFFFFFFFFFFFFFL;
         A[2] = 0xFFFFFFFFFFFFFFFFL;
         A[8] = 0xFFFFFFFFFFFFFFFFL;

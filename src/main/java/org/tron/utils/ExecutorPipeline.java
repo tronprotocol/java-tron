@@ -1,23 +1,30 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.utils;
 
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,6 +33,7 @@ import java.util.function.Function;
 
 public class ExecutorPipeline<In, Out> {
 
+    private static AtomicInteger pipeNumber = new AtomicInteger(1);
     private BlockingQueue<Runnable> queue;
     private ThreadPoolExecutor exce;
     private boolean preserveOrder = false;
@@ -34,41 +42,21 @@ public class ExecutorPipeline<In, Out> {
     private Consumer<Throwable> exceptionHandler;
     private String threadPoolName;
     private AtomicLong orderCounter = new AtomicLong();
-
     private ReentrantLock lock = new ReentrantLock();
     private long nextOutTaskNumber = 0;
     private Map<Long, Out> orderMap = new HashMap<>();
-
-
-    private static AtomicInteger pipeNumber = new AtomicInteger(1);
     private AtomicInteger threadNumber = new AtomicInteger(1);
 
-    public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder, Function<In, Out> processor,
+    public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder,
+                            Function<In, Out> processor,
                             Consumer<Throwable> exceptionHandler) {
         queue = new LimitedQueue<>(queueSize);
-        exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
+        exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue,
+                r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
         this.preserveOrder = preserveOrder;
         this.processor = processor;
         this.exceptionHandler = exceptionHandler;
         this.threadPoolName = "pipe-" + pipeNumber.getAndIncrement();
-    }
-
-    private static class LimitedQueue<E> extends LinkedBlockingQueue<E> {
-        public LimitedQueue(int maxSize) {
-            super(maxSize);
-        }
-
-        @Override
-        public boolean offer(E e) {
-            // turn offer() and add() into a blocking calls (unless interrupted)
-            try {
-                put(e);
-                return true;
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
-            return false;
-        }
     }
 
     public ExecutorPipeline<Out, Void> add(int threads, int queueSize, final Consumer<Out> consumer) {
@@ -78,9 +66,11 @@ public class ExecutorPipeline<In, Out> {
         });
     }
 
-    public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize, boolean preserveOrder,
+    public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize,
+                                                        boolean preserveOrder,
                                                         Function<Out, NextOut> processor) {
-        ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder, processor,
+        ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder,
+                processor,
                 exceptionHandler);
         next = ret;
         return ret;
@@ -98,7 +88,9 @@ public class ExecutorPipeline<In, Out> {
                         while (true) {
                             nextOutTaskNumber++;
                             Out out = orderMap.remove(nextOutTaskNumber);
-                            if (out == null) break;
+                            if (out == null) {
+                                break;
+                            }
                             next.push(out);
                         }
                     } else {
@@ -123,6 +115,24 @@ public class ExecutorPipeline<In, Out> {
                 }
             }
         });
+    }
+
+    private static class LimitedQueue<E> extends LinkedBlockingQueue<E> {
+        public LimitedQueue(int maxSize) {
+            super(maxSize);
+        }
+
+        @Override
+        public boolean offer(E e) {
+            // turn offer() and add() into a blocking calls (unless interrupted)
+            try {
+                put(e);
+                return true;
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            return false;
+        }
     }
 
 

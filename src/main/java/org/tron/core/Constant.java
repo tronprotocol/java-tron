@@ -12,27 +12,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import org.tron.utils.ByteArray;
 
 public class Constant {
 
-    // whole
-    public final static byte[] LAST_HASH = ByteArray.fromString("lastHash");
-    public final static String DIFFICULTY = "2001";
+  // whole
+  public static final byte[] LAST_HASH = ByteArray.fromString("lastHash");
+  public static final String DIFFICULTY = "2001";
 
-    // DB
-    public final static String BLOCK_DB_NAME = "block_data";
-    public final static String TRANSACTION_DB_NAME = "transaction_data";
+  // DB
+  public static final String BLOCK_DB_NAME = "block_data";
+  public static final String TRANSACTION_DB_NAME = "transaction_data";
 
-    // kafka
-    public final static String TOPIC_BLOCK = "block";
-    public final static String TOPIC_TRANSACTION = "transaction";
-    public final static Integer PARTITION = 0;
+  // kafka
+  public static final String TOPIC_BLOCK = "block";
+  public static final String TOPIC_TRANSACTION = "transaction";
+  public static final Integer PARTITION = 0;
 
-    //config
-    public final static String NORMAL_CONF = "tron.conf";
-    public final static String TEST_CONF = "tron-test.conf";
-    public final static String DATABASE_DIR = "database.directory";
+  //config
+  public static final String NORMAL = "normal";
+  public static final String TEST = "test";
+  public static final String NORMAL_CONF = "tron.conf";
+  public static final String TEST_CONF = "tron-test.conf";
+  public static final String DATABASE_DIR = "database.directory";
+
 }

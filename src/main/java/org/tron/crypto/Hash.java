@@ -1,23 +1,26 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * Copyright (c) [2016] [ <ether.camp> ]
+ * This file is part of the ethereumJ library.
+ *
+ * The ethereumJ library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
+ * The ethereumJ library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.crypto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.jce.TronCastleProvider;
-import org.tron.trie.TrieImpl;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -30,9 +33,6 @@ import static org.tron.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 public class Hash {
 
     private static final Logger LOG = LoggerFactory.getLogger(Hash.class);
-
-    public static final byte[] EMPTY_TRIE_HASH;
-
     private static final Provider CRYPTO_PROVIDER;
 
     private static final String HASH_256_ALGORITHM_NAME;
@@ -52,8 +52,6 @@ public class Hash {
             throw new RuntimeException(e); // Can't happen.
         }
 
-        TrieImpl impl = new TrieImpl();
-        EMPTY_TRIE_HASH = sha3(impl.encodeElement(EMPTY_BYTE_ARRAY));
     }
 
     /**
