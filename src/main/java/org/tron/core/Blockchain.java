@@ -145,9 +145,9 @@ public class Blockchain {
   public Transaction findTransaction(ByteString id) {
     Transaction transaction = Transaction.newBuilder().build();
 
-    BlockchainIterator bi = new BlockchainIterator(this);
-    while (bi.hasNext()) {
-      Block block = (Block) bi.next();
+        BlockchainIterator bi = new BlockchainIterator(this);
+        while (bi.hasNext()) {
+            Block block = bi.next();
 
       for (Transaction tx : block.getTransactionsList()) {
         String txID = ByteArray.toHexString(tx.getId().toByteArray());
@@ -170,13 +170,12 @@ public class Blockchain {
     HashMap<String, TXOutputs> utxo = new HashMap<>();
     HashMap<String, long[]> spenttxos = new HashMap<>();
 
-    BlockchainIterator bi = new BlockchainIterator(this);
-    while (bi.hasNext()) {
-      Block block = (Block) bi.next();
+        BlockchainIterator bi = new BlockchainIterator(this);
+        while (bi.hasNext()) {
+            Block block = bi.next();
 
-      for (Transaction transaction : block.getTransactionsList()) {
-        String txid = ByteArray.toHexString(transaction.getId()
-            .toByteArray());
+            for (Transaction transaction : block.getTransactionsList()) {
+                String txid = ByteArray.toHexString(transaction.getId().toByteArray());
 
         output:
         for (int outIdx = 0; outIdx < transaction.getVoutList().size
