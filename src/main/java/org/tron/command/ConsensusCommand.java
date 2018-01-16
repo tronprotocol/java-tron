@@ -58,7 +58,6 @@ public class ConsensusCommand extends Command {
   }
 
   public void listen(Peer peer, String type) {
-    //Client.getMessage(args[0]);
     if (type.equals(PeerType.PEER_SERVER)) {
       client.getMessage(peer, MessageType.TRANSACTION);
       client.getMessage(peer, MessageType.BLOCK);

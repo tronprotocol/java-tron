@@ -51,8 +51,8 @@ public class PeerBuilder {
     buildWallet();
     utxoSet.reindex();
 
-    Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
-    peer.setClient(client);
+    Peer peer = new Peer(type, blockchain, utxoSet, wallet, client, key);
+    //peer.setClient(client);
     blockchain.addListener(new BlockchainClientListener(client, peer));
     return peer;
   }
