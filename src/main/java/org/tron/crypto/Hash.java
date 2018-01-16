@@ -21,7 +21,6 @@ package org.tron.crypto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.crypto.jce.TronCastleProvider;
-import org.tron.trie.TrieImpl;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,7 +32,6 @@ import static org.tron.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 public class Hash {
 
-    public static final byte[] EMPTY_TRIE_HASH;
     private static final Logger LOG = LoggerFactory.getLogger(Hash.class);
     private static final Provider CRYPTO_PROVIDER;
 
@@ -54,8 +52,6 @@ public class Hash {
             throw new RuntimeException(e); // Can't happen.
         }
 
-        TrieImpl impl = new TrieImpl();
-        EMPTY_TRIE_HASH = sha3(impl.encodeElement(EMPTY_BYTE_ARRAY));
     }
 
     /**
