@@ -19,6 +19,7 @@
 package org.tron.gossip.example;
 
 import org.tron.gossip.GossipSettings;
+import org.tron.gossip.LocalMember;
 import org.tron.gossip.Member;
 import org.tron.gossip.RemoteMember;
 import org.tron.gossip.crdt.OrSet;
@@ -36,7 +37,7 @@ import java.util.List;
 import static org.tron.core.Constant.TOPIC_BLOCK;
 import static org.tron.core.Constant.TOPIC_TRANSACTION;
 
-public class StandNode implements Net {
+public class LocalNode implements Net {
     public static final String INDEX_KEY_FOR_SET = "block";
 
     // is the name of the cluster
@@ -51,7 +52,7 @@ public class StandNode implements Net {
 
     private GossipManager gossipManager = null;
 
-    public StandNode(String cluster, String uri, String id) {
+    public LocalNode(String cluster, String uri, String id) {
         setCluster(cluster);
         setUri(uri);
         setId(id);
@@ -93,9 +94,34 @@ public class StandNode implements Net {
         gossipManager.init();
     }
 
+    public void printLiveMembers() {
+        List<LocalMember> members = gossipManager.getLiveMembers();
+        if (members.isEmpty()) {
+            System.out.println("Live: (none)");
+            return;
+        }
+        System.out.println("Live: " + members.get(0));
+        for (int i = 1; i < members.size(); i++) {
+            System.out.println("    : " + members.get(i));
+        }
+    }
+
+    public void printDeadMambers() {
+        List<LocalMember> members = gossipManager.getDeadMembers();
+        if (members.isEmpty()) {
+            System.out.println("Dead: (none)");
+            return;
+        }
+        System.out.println("Dead: " + members.get(0));
+        for (int i = 1; i < members.size(); i++) {
+            System.out.println("    : " + members.get(i));
+        }
+    }
+
     private List<Member> getGossipMembers() {
         return Collections
-                .singletonList(new RemoteMember(cluster, URI.create("udp://localhost:10000"), "0"));
+                .singletonList(new RemoteMember(cluster, URI.create("udp://192.168.0.102:10000"),
+                        "192.168.0.102:10000"));
     }
 
     public String getCluster() {
@@ -141,7 +167,7 @@ public class StandNode implements Net {
             topic = TOPIC_TRANSACTION;
         }
 
-        getGossipManager().gossipSharedData(StandNode.sharedNodeData(topic, value));
+        getGossipManager().gossipSharedData(LocalNode.sharedNodeData(topic, value));
     }
 
     @Override
