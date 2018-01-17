@@ -37,14 +37,14 @@ import org.tron.core.Wallet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -57,6 +57,25 @@ public class UTXOSetTest {
     private Wallet testWallet;
     private TronTXOutput.TXOutput.Builder outputBuilder;
     private TronTXOutputs.TXOutputs.Builder outputsBuilder;
+    private Set<byte[]> keySet;
+
+    private Supplier<byte[]> generateKeyAndAddToMockKeySet = () -> {
+        byte[] key = RandomUtils.nextBytes(20);
+        keySet.add(key);
+        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
+
+        return key;
+    };
+
+    private Function<Wallet, Map<byte[], TronTXOutput.TXOutput>> addMockUTXO = (Wallet wallet) -> {
+        HashMap<byte[], TronTXOutput.TXOutput> mockUTXO = new HashMap<>();
+        TronTXOutput.TXOutput output = outputBuilder.setPubKeyHash(ByteString.copyFrom(wallet.getAddress())).build();
+        byte[] key = generateKeyAndAddToMockKeySet.get();
+        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.clearOutputs().addOutputs(output).build().toByteArray());
+        mockUTXO.put(key, output);
+
+        return mockUTXO;
+    };
 
     @Before
     public void setup() {
@@ -67,6 +86,7 @@ public class UTXOSetTest {
         testWallet = new Wallet();
         outputBuilder = TronTXOutput.TXOutput.newBuilder();
         outputsBuilder = TronTXOutputs.TXOutputs.newBuilder();
+        keySet = new HashSet<>();
     }
 
     @Test
@@ -78,7 +98,6 @@ public class UTXOSetTest {
 
         HashMap<String, TronTXOutputs.TXOutputs> testUTXO = new HashMap<>();
         testUTXO.put(key, outputsBuilder.build());
-
         when(mockBlockchain.findUTXO()).thenReturn(testUTXO);
 
         utxoSet.reindex();
@@ -96,16 +115,8 @@ public class UTXOSetTest {
 
     @Test
     public void testMatchingSpendableOutputWhenOutputForFullAmountMatchesWalletPublicKey() {
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(testWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(testWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
 
@@ -116,16 +127,8 @@ public class UTXOSetTest {
     @Test
     public void testReturnAvailableSpendableOutputWhenInsufficientToCoverTheAmount() {
         long testAmount = 100;
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(testWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(testWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
 
@@ -136,18 +139,9 @@ public class UTXOSetTest {
     @Test
     public void testFindMultipleSpendableOutputsWhenRequiredToCoverTheAmount() {
         long testAmount = 20L;
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(testWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        byte[] key2 = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        keySet.add(key2);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key2)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(testWallet);
+        addMockUTXO.apply(testWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
 
@@ -158,18 +152,9 @@ public class UTXOSetTest {
     @Test
     public void testReturnFullAmountOfSpendableOutputsRequiredToCoverTheAmount() {
         long testAmount = 17L;
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(testWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        byte[] key2 = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        keySet.add(key2);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key2)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(testWallet);
+        addMockUTXO.apply(testWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
 
@@ -180,42 +165,22 @@ public class UTXOSetTest {
     @Test
     public void testOnlyReturnFullSpendableOutputsRequiredToCoverTheAmountWhenMoreSpendableOutputAvailable() {
         long testAmount = 17L;
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(testWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        byte[] key2 = RandomUtils.nextBytes(20);
-        byte[] key3 = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        keySet.add(key2);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key2)).thenReturn(outputsBuilder.build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key3)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(testWallet);
+        addMockUTXO.apply(testWallet);
+        addMockUTXO.apply(testWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
 
         assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
-        assertTrue(result.getUnspentOutputs().containsKey(ByteArray.toHexString(key)));
-        assertTrue(result.getUnspentOutputs().containsKey(ByteArray.toHexString(key2)));
-        assertFalse(result.getUnspentOutputs().containsKey(ByteArray.toHexString(key3)));
+        assertEquals(2, result.getUnspentOutputs().size());
     }
 
     @Test
     public void testNoSpendableOutputWhenNoOutputMatchesWalletPublicKey(){
         Wallet aDifferentWallet = new Wallet();
-        outputBuilder.setValue(10).setPubKeyHash(ByteString.copyFrom(aDifferentWallet.getAddress()));
-
-        outputsBuilder.addOutputs(outputBuilder.build());
-
-        byte[] key = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.build().toByteArray());
+        outputBuilder.setValue(10);
+        addMockUTXO.apply(aDifferentWallet);
 
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
 
@@ -229,7 +194,6 @@ public class UTXOSetTest {
         System.setErr(new PrintStream(outContent));
 
         byte[] key = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
         keySet.add(key);
         Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
 
@@ -242,29 +206,26 @@ public class UTXOSetTest {
 
     @Test
     public void testFindUTXOFindsAllUTXOForTheSuppliedWallet() {
-        Wallet aDifferentWallet = new Wallet();
-
-        TronTXOutput.TXOutput output1 = outputBuilder.setPubKeyHash(ByteString.copyFrom(testWallet.getAddress())).build();
-        TronTXOutput.TXOutput output2 = outputBuilder.setPubKeyHash(ByteString.copyFrom(testWallet.getAddress())).build();
-        TronTXOutput.TXOutput output3 = outputBuilder.setPubKeyHash(ByteString.copyFrom(aDifferentWallet.getAddress())).build();
-
-        byte[] key = RandomUtils.nextBytes(20);
-        byte[] key2 = RandomUtils.nextBytes(20);
-        byte[] key3 = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        keySet.add(key2);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.addOutputs(output1).build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key2)).thenReturn(outputsBuilder.addOutputs(output2).build().toByteArray());
-        Mockito.when(mockTransactionDb.getData(key3)).thenReturn(outputsBuilder.addOutputs(output3).build().toByteArray());
-
+        TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
+        TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
+        TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
 
         ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
 
+        assertEquals(3, result.size());
         assertTrue(result.contains(output1));
         assertTrue(result.contains(output2));
-        assertFalse(result.contains(output3));
+        assertTrue(result.contains(output3));
+    }
+
+    @Test
+    public void testFindUTXODoesNotFindUTXOForADifferentWallet() {
+        Wallet aDifferentWallet = new Wallet();
+
+        addMockUTXO.apply(aDifferentWallet);
+
+        ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -272,12 +233,8 @@ public class UTXOSetTest {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(outContent));
 
-        byte[] key = RandomUtils.nextBytes(20);
-        Set<byte[]> keySet = new HashSet<>();
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(new byte[20]);
+        generateKeyAndAddToMockKeySet.get();
+        Mockito.when(mockTransactionDb.getData(any())).thenReturn(new byte[20]);
 
         utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
 
