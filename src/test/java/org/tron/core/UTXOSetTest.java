@@ -42,7 +42,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
@@ -82,7 +81,6 @@ public class UTXOSetTest {
         mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
         mockBlockchain = Mockito.mock(Blockchain.class);
         utxoSet = new UTXOSet(mockTransactionDb, mockBlockchain);
-
         testWallet = new Wallet();
         outputBuilder = TronTXOutput.TXOutput.newBuilder();
         outputsBuilder = TronTXOutputs.TXOutputs.newBuilder();
@@ -117,9 +115,7 @@ public class UTXOSetTest {
     public void testMatchingSpendableOutputWhenOutputForFullAmountMatchesWalletPublicKey() {
         outputBuilder.setValue(10);
         addMockUTXO.apply(testWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-
         assertEquals(outputBuilder.build().getValue(), result.getAmount());
         assertEquals(1, result.getUnspentOutputs().size());
     }
@@ -129,9 +125,7 @@ public class UTXOSetTest {
         long testAmount = 100;
         outputBuilder.setValue(10);
         addMockUTXO.apply(testWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-
         assertEquals(outputBuilder.build().getValue(), result.getAmount());
         assertEquals(1, result.getUnspentOutputs().size());
     }
@@ -142,9 +136,7 @@ public class UTXOSetTest {
         outputBuilder.setValue(10);
         addMockUTXO.apply(testWallet);
         addMockUTXO.apply(testWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-
         assertEquals(testAmount, result.getAmount());
         assertEquals(2, result.getUnspentOutputs().size());
     }
@@ -155,9 +147,7 @@ public class UTXOSetTest {
         outputBuilder.setValue(10);
         addMockUTXO.apply(testWallet);
         addMockUTXO.apply(testWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-
         assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
         assertEquals(2, result.getUnspentOutputs().size());
     }
@@ -169,9 +159,7 @@ public class UTXOSetTest {
         addMockUTXO.apply(testWallet);
         addMockUTXO.apply(testWallet);
         addMockUTXO.apply(testWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-
         assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
         assertEquals(2, result.getUnspentOutputs().size());
     }
@@ -181,9 +169,7 @@ public class UTXOSetTest {
         Wallet aDifferentWallet = new Wallet();
         outputBuilder.setValue(10);
         addMockUTXO.apply(aDifferentWallet);
-
         SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-
         assertEquals(0, result.getAmount());
         assertTrue(result.getUnspentOutputs().isEmpty());
     }
@@ -192,15 +178,11 @@ public class UTXOSetTest {
     public void testInvalidProtocolBufferExceptionInFindSpendableOutput() {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(outContent));
-
         byte[] key = RandomUtils.nextBytes(20);
         keySet.add(key);
         Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-
         Mockito.when(mockTransactionDb.getData(key)).thenReturn(new byte[20]);
-
         utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-
         assertTrue(outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
     }
 
@@ -209,9 +191,7 @@ public class UTXOSetTest {
         TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
         TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
         TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
-
         ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
-
         assertEquals(3, result.size());
         assertTrue(result.contains(output1));
         assertTrue(result.contains(output2));
@@ -221,9 +201,7 @@ public class UTXOSetTest {
     @Test
     public void testFindUTXODoesNotFindUTXOForADifferentWallet() {
         Wallet aDifferentWallet = new Wallet();
-
         addMockUTXO.apply(aDifferentWallet);
-
         ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
         assertEquals(0, result.size());
     }
@@ -232,12 +210,9 @@ public class UTXOSetTest {
     public void testInvalidProtocolBufferExceptionInFindUTXO() {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(outContent));
-
         generateKeyAndAddToMockKeySet.get();
         Mockito.when(mockTransactionDb.getData(any())).thenReturn(new byte[20]);
-
         utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
-
         assertTrue(outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
     }
 }
