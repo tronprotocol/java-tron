@@ -15,6 +15,7 @@
 
 package org.tron.utils;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,38 +25,70 @@ public class ByteArrayTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testToHexString() {
-    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString
-        (new byte[] {16}));
+  public void testHexToString() {
+    String hexString1 = ByteArray.toHexString(new byte[] {'a'});
+    String hexString2 = ByteArray.toHexString(new byte[] {16});
+
+    Assert.assertEquals(hexString1, "61");
+    Assert.assertEquals(hexString2, "10");
+
+    logger.info("Byte: byte a to hex string = {}", hexString1);
+    logger.info("Byte: byte 16 to hex string = {}", hexString2);
+  }
+
+  @Test
+  public void test2HexToString() {
+    byte[] byteArrayExpected = new byte[] {16};
+    String stringActual1 = ByteArray.toHexString(byteArrayExpected);
+    String stringActual2 = Hex.toHexString(byteArrayExpected);
+
+    Assert.assertEquals(stringActual1, stringActual2);
+
+    logger.info("utils.ByteArray.toHexString: {}", stringActual1);
+    logger.info("Hex.toHexString: {}", stringActual2);
   }
 
   @Test
   public void testHexStringToByte() {
-    logger.info("Byte: hex string 0x11 to byte = {}", ByteArray
-        .fromHexString("0x11"));
-    logger.info("Byte: hex string 10 to byte = {}", ByteArray
-        .fromHexString("10"));
-    logger.info("Byte: hex string 1 to byte = {}", ByteArray
-        .fromHexString("1"));
+    byte[] byteArrayExpected1 = new byte[] {17};
+    byte[] byteArrayExpected2 = new byte[] {16};
+    byte[] byteArrayExpected3 = new byte[] {1};
+
+    byte[] byteArrayActual1 = ByteArray
+            .fromHexString("0x11");
+    byte[] byteArrayActual2 = ByteArray
+            .fromHexString("10");
+    byte[] byteArrayActual3 = ByteArray
+            .fromHexString("1");
+
+    Assert.assertArrayEquals(byteArrayExpected1, byteArrayActual1);
+    Assert.assertArrayEquals(byteArrayExpected2, byteArrayActual2);
+    Assert.assertArrayEquals(byteArrayExpected3, byteArrayActual3);
+
+    logger.info("Byte: hex string 0x11 to byte = {}", byteArrayActual1);
+    logger.info("Byte: hex string 10 to byte = {}", byteArrayActual2);
+    logger.info("Byte: hex string 1 to byte = {}", byteArrayActual3);
   }
 
   @Test
-  public void testToLong() {
-    logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
-        byte[] {13}));
+  public void testByteToLong() {
+    long longExpected = 13;
+
+    long longActual = ByteArray.toLong(new
+          byte[]{13});
+
+    Assert.assertEquals(longExpected, longActual);
+
+    logger.info("Byte: byte 13 to long = {}", longActual);
   }
 
   @Test
-  public void testFromLong() {
-    logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
-  }
+  public void testLongToByte() {
+    byte[] byteArrayExpected = new byte[] {0, 0, 0, 0, 0, 0, 0, 127};
+    byte[] byteArrayActual = ByteArray.fromLong(127L);
 
-  @Test
-  public void test2ToHexString() {
-    byte[] bs = new byte[] {};
+    Assert.assertArrayEquals(byteArrayExpected, byteArrayActual);
 
-    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString
-        (bs));
-    logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
+    logger.info("Byte: long 127L to byte = {}", byteArrayActual);
   }
 }
