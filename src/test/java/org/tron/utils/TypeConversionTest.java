@@ -15,48 +15,53 @@
 
 package org.tron.utils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.tron.common.utils.TypeConversion.bytesToHexString;
-import static org.tron.common.utils.TypeConversion.bytesToLong;
-import static org.tron.common.utils.TypeConversion.hexStringToBytes;
-import static org.tron.common.utils.TypeConversion.longToBytes;
+import static org.tron.utils.TypeConversion.bytesToHexString;
+import static org.tron.utils.TypeConversion.bytesToLong;
+import static org.tron.utils.TypeConversion.hexStringToBytes;
+import static org.tron.utils.TypeConversion.longToBytes;
 
-import java.util.Arrays;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class TypeConversionTest {
-
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
   public void testLongToBytes() {
-    byte[] result = longToBytes(123L);
-    assertTrue(Arrays.equals(new byte[]{0, 0, 0, 0, 0, 0, 0, 123}, result));
-    logger.info("long 123 to bytes is: {}", result);
+    byte[] byteArrayExpected = new byte[] {0, 0, 0, 0, 0, 0, 0, 123};
+    byte[] byteArrayActual = longToBytes(123L);
+
+    Assert.assertArrayEquals(byteArrayExpected, byteArrayActual);
+    logger.info("long 123 to bytes is: {}", byteArrayActual);
   }
 
   @Test
   public void testBytesToLong() {
-    long result = bytesToLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 124});
-    assertEquals(124L, result);
-    logger.info("bytes 124 to long is: {}", result);
+    long longExpected = 124L;
+    long longActual = bytesToLong(new byte[] {0, 0, 0, 0, 0, 0, 0, 124});
+
+    Assert.assertEquals(longExpected, longActual);
+    logger.info("bytes 124 to long is: {}", longActual);
   }
 
   @Test
   public void testBytesToHexString() {
-    String result = bytesToHexString(new byte[]{0, 0, 0, 0, 0, 0, 0, 125});
-    assertEquals("000000000000007d", result);
-    logger.info("bytes 125 to hex string is: {}", result);
+    String stringExpected = "000000000000007d";
+    String stringActual = bytesToHexString(new byte[] {0, 0, 0, 0, 0, 0, 0, 125});
+
+    Assert.assertEquals(stringExpected, stringActual);
+    logger.info("bytes 125 to hex string is: {}", stringActual);
   }
 
   @Test
   public void testHexStringToBytes() {
-    byte[] result = hexStringToBytes("7f");
-    assertTrue(Arrays.equals(new byte[]{127}, result));
-    logger.info("hex string 7f to bytes is: {}", result);
+    byte[] byteArrayExpected = new byte[] {127};
+    byte[] byteArrayActual = hexStringToBytes("7f");
+
+    Assert.assertArrayEquals(byteArrayExpected, byteArrayActual);
+    logger.info("hex string 7f to bytes is: {}", byteArrayActual);
   }
 }
