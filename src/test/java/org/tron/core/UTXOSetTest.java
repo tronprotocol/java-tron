@@ -50,167 +50,175 @@ import static org.mockito.Mockito.when;
 
 public class UTXOSetTest {
 
-    private LevelDbDataSourceImpl mockTransactionDb;
-    private Blockchain mockBlockchain;
-    private UTXOSet utxoSet;
-    private Wallet testWallet;
-    private TronTXOutput.TXOutput.Builder outputBuilder;
-    private TronTXOutputs.TXOutputs.Builder outputsBuilder;
-    private Set<byte[]> keySet;
+  private LevelDbDataSourceImpl mockTransactionDb;
+  private Blockchain mockBlockchain;
+  private UTXOSet utxoSet;
+  private Wallet testWallet;
+  private TronTXOutput.TXOutput.Builder outputBuilder;
+  private TronTXOutputs.TXOutputs.Builder outputsBuilder;
+  private Set<byte[]> keySet;
 
-    private Supplier<byte[]> generateKeyAndAddToMockKeySet = () -> {
-        byte[] key = RandomUtils.nextBytes(20);
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
+  private Supplier<byte[]> generateKeyAndAddToMockKeySet = () -> {
+    byte[] key = RandomUtils.nextBytes(20);
+    keySet.add(key);
+    Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
 
-        return key;
-    };
+    return key;
+  };
 
-    private Function<Wallet, TronTXOutput.TXOutput> addMockUTXO = (Wallet wallet) -> {
-        TronTXOutput.TXOutput output = outputBuilder.setPubKeyHash(ByteString.copyFrom(wallet.getAddress())).build();
-        byte[] key = generateKeyAndAddToMockKeySet.get();
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.clearOutputs().addOutputs(output).build().toByteArray());
+  private Function<Wallet, TronTXOutput.TXOutput> addMockUTXO = (Wallet wallet) -> {
+    TronTXOutput.TXOutput output = outputBuilder
+        .setPubKeyHash(ByteString.copyFrom(wallet.getAddress())).build();
+    byte[] key = generateKeyAndAddToMockKeySet.get();
+    Mockito.when(mockTransactionDb.getData(key))
+        .thenReturn(outputsBuilder.clearOutputs().addOutputs(output).build().toByteArray());
 
-        return output;
-    };
+    return output;
+  };
 
-    @Before
-    public void setup() {
-        mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
-        mockBlockchain = Mockito.mock(Blockchain.class);
-        utxoSet = new UTXOSet(mockTransactionDb, mockBlockchain);
-        testWallet = new Wallet();
-        outputBuilder = TronTXOutput.TXOutput.newBuilder();
-        outputsBuilder = TronTXOutputs.TXOutputs.newBuilder();
-        keySet = new HashSet<>();
-    }
+  @Before
+  public void setup() {
+    mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
+    mockBlockchain = Mockito.mock(Blockchain.class);
+    utxoSet = new UTXOSet(mockTransactionDb, mockBlockchain);
+    testWallet = new Wallet();
+    outputBuilder = TronTXOutput.TXOutput.newBuilder();
+    outputsBuilder = TronTXOutputs.TXOutputs.newBuilder();
+    keySet = new HashSet<>();
+  }
 
-    @Test
-    public void testReindex() {
-        String key = "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e";
-        TronTXOutputs.TXOutputs testOutputs = outputsBuilder
-                .addOutputs(outputBuilder.build())
-                .build();
+  @Test
+  public void testReindex() {
+    String key = "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e";
+    TronTXOutputs.TXOutputs testOutputs = outputsBuilder
+        .addOutputs(outputBuilder.build())
+        .build();
 
-        HashMap<String, TronTXOutputs.TXOutputs> testUTXO = new HashMap<>();
-        testUTXO.put(key, outputsBuilder.build());
-        when(mockBlockchain.findUTXO()).thenReturn(testUTXO);
+    HashMap<String, TronTXOutputs.TXOutputs> testUTXO = new HashMap<>();
+    testUTXO.put(key, outputsBuilder.build());
+    when(mockBlockchain.findUTXO()).thenReturn(testUTXO);
 
-        utxoSet.reindex();
-        Mockito.verify(mockTransactionDb, times(1)).resetDB();
-        Mockito.verify(mockTransactionDb, times(1))
-                .putData(eq(ByteArray.fromHexString(key)), eq(testOutputs.toByteArray()));
-    }
+    utxoSet.reindex();
+    Mockito.verify(mockTransactionDb, times(1)).resetDB();
+    Mockito.verify(mockTransactionDb, times(1))
+        .putData(eq(ByteArray.fromHexString(key)), eq(testOutputs.toByteArray()));
+  }
 
-    @Test
-    public void testNoSpendableOutputsWhenNoTransactions() {
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-        assertEquals(0, result.getAmount());
-        assertTrue(result.getUnspentOutputs().isEmpty());
-    }
+  @Test
+  public void testNoSpendableOutputsWhenNoTransactions() {
+    SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
+    assertEquals(0, result.getAmount());
+    assertTrue(result.getUnspentOutputs().isEmpty());
+  }
 
-    @Test
-    public void testMatchingSpendableOutputWhenOutputForFullAmountMatchesWalletPublicKey() {
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(testWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-        assertEquals(outputBuilder.build().getValue(), result.getAmount());
-        assertEquals(1, result.getUnspentOutputs().size());
-    }
+  @Test
+  public void testMatchingSpendableOutputWhenOutputForFullAmountMatchesWalletPublicKey() {
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(testWallet);
+    SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
+    assertEquals(outputBuilder.build().getValue(), result.getAmount());
+    assertEquals(1, result.getUnspentOutputs().size());
+  }
 
-    @Test
-    public void testReturnAvailableSpendableOutputWhenInsufficientToCoverTheAmount() {
-        long testAmount = 100;
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(testWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-        assertEquals(outputBuilder.build().getValue(), result.getAmount());
-        assertEquals(1, result.getUnspentOutputs().size());
-    }
+  @Test
+  public void testReturnAvailableSpendableOutputWhenInsufficientToCoverTheAmount() {
+    long testAmount = 100;
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(testWallet);
+    SpendableOutputs result = utxoSet
+        .findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
+    assertEquals(outputBuilder.build().getValue(), result.getAmount());
+    assertEquals(1, result.getUnspentOutputs().size());
+  }
 
-    @Test
-    public void testFindMultipleSpendableOutputsWhenRequiredToCoverTheAmount() {
-        long testAmount = 20L;
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(testWallet);
-        addMockUTXO.apply(testWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-        assertEquals(testAmount, result.getAmount());
-        assertEquals(2, result.getUnspentOutputs().size());
-    }
+  @Test
+  public void testFindMultipleSpendableOutputsWhenRequiredToCoverTheAmount() {
+    long testAmount = 20L;
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(testWallet);
+    addMockUTXO.apply(testWallet);
+    SpendableOutputs result = utxoSet
+        .findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
+    assertEquals(testAmount, result.getAmount());
+    assertEquals(2, result.getUnspentOutputs().size());
+  }
 
-    @Test
-    public void testReturnFullAmountOfSpendableOutputsRequiredToCoverTheAmount() {
-        long testAmount = 17L;
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(testWallet);
-        addMockUTXO.apply(testWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-        assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
-        assertEquals(2, result.getUnspentOutputs().size());
-    }
+  @Test
+  public void testReturnFullAmountOfSpendableOutputsRequiredToCoverTheAmount() {
+    long testAmount = 17L;
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(testWallet);
+    addMockUTXO.apply(testWallet);
+    SpendableOutputs result = utxoSet
+        .findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
+    assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
+    assertEquals(2, result.getUnspentOutputs().size());
+  }
 
-    @Test
-    public void testOnlyReturnFullSpendableOutputsRequiredToCoverTheAmountWhenMoreSpendableOutputAvailable() {
-        long testAmount = 17L;
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(testWallet);
-        addMockUTXO.apply(testWallet);
-        addMockUTXO.apply(testWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
-        assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
-        assertEquals(2, result.getUnspentOutputs().size());
-    }
+  @Test
+  public void testOnlyReturnFullSpendableOutputsRequiredToCoverTheAmountWhenMoreSpendableOutputAvailable() {
+    long testAmount = 17L;
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(testWallet);
+    addMockUTXO.apply(testWallet);
+    addMockUTXO.apply(testWallet);
+    SpendableOutputs result = utxoSet
+        .findSpendableOutputs(testWallet.getEcKey().getPubKey(), testAmount);
+    assertEquals(outputBuilder.build().getValue() * 2, result.getAmount());
+    assertEquals(2, result.getUnspentOutputs().size());
+  }
 
-    @Test
-    public void testNoSpendableOutputWhenNoOutputMatchesWalletPublicKey(){
-        Wallet aDifferentWallet = new Wallet();
-        outputBuilder.setValue(10);
-        addMockUTXO.apply(aDifferentWallet);
-        SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-        assertEquals(0, result.getAmount());
-        assertTrue(result.getUnspentOutputs().isEmpty());
-    }
+  @Test
+  public void testNoSpendableOutputWhenNoOutputMatchesWalletPublicKey() {
+    Wallet aDifferentWallet = new Wallet();
+    outputBuilder.setValue(10);
+    addMockUTXO.apply(aDifferentWallet);
+    SpendableOutputs result = utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
+    assertEquals(0, result.getAmount());
+    assertTrue(result.getUnspentOutputs().isEmpty());
+  }
 
-    @Test
-    public void testInvalidProtocolBufferExceptionInFindSpendableOutput() {
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(outContent));
-        byte[] key = RandomUtils.nextBytes(20);
-        keySet.add(key);
-        Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
-        Mockito.when(mockTransactionDb.getData(key)).thenReturn(new byte[20]);
-        utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
-        assertTrue(outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
-    }
+  @Test
+  public void testInvalidProtocolBufferExceptionInFindSpendableOutput() {
+    ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(outContent));
+    byte[] key = RandomUtils.nextBytes(20);
+    keySet.add(key);
+    Mockito.when(mockTransactionDb.allKeys()).thenReturn(keySet);
+    Mockito.when(mockTransactionDb.getData(key)).thenReturn(new byte[20]);
+    utxoSet.findSpendableOutputs(testWallet.getEcKey().getPubKey(), 10);
+    assertTrue(
+        outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
+  }
 
-    @Test
-    public void testFindUTXOFindsAllUTXOForTheSuppliedWallet() {
-        TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet);
-        TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet);
-        TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet);
-        ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
-        assertEquals(3, result.size());
-        assertTrue(result.contains(output1));
-        assertTrue(result.contains(output2));
-        assertTrue(result.contains(output3));
-    }
+  @Test
+  public void testFindUTXOFindsAllUTXOForTheSuppliedWallet() {
+    TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet);
+    TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet);
+    TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet);
+    ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
+    assertEquals(3, result.size());
+    assertTrue(result.contains(output1));
+    assertTrue(result.contains(output2));
+    assertTrue(result.contains(output3));
+  }
 
-    @Test
-    public void testFindUTXODoesNotFindUTXOForADifferentWallet() {
-        Wallet aDifferentWallet = new Wallet();
-        addMockUTXO.apply(aDifferentWallet);
-        ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
-        assertEquals(0, result.size());
-    }
+  @Test
+  public void testFindUTXODoesNotFindUTXOForADifferentWallet() {
+    Wallet aDifferentWallet = new Wallet();
+    addMockUTXO.apply(aDifferentWallet);
+    ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
+    assertEquals(0, result.size());
+  }
 
-    @Test
-    public void testInvalidProtocolBufferExceptionInFindUTXO() {
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(outContent));
-        generateKeyAndAddToMockKeySet.get();
-        Mockito.when(mockTransactionDb.getData(any())).thenReturn(new byte[20]);
-        utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
-        assertTrue(outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
-    }
+  @Test
+  public void testInvalidProtocolBufferExceptionInFindUTXO() {
+    ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(outContent));
+    generateKeyAndAddToMockKeySet.get();
+    Mockito.when(mockTransactionDb.getData(any())).thenReturn(new byte[20]);
+    utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
+    assertTrue(
+        outContent.toString().contains("com.google.protobuf.InvalidProtocolBufferException"));
+  }
 }
