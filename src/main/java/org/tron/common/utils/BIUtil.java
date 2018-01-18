@@ -15,19 +15,26 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-
-package org.tron.common.utils;
+package org.tron.utils;
 
 import java.math.BigInteger;
 
 public class BIUtil {
 
-  /**
-   * @param valueA - not null
-   * @param valueB - not null
-   * @return true - if the valueA is less than valueB is zero
-   */
-  public static boolean isLessThan(BigInteger valueA, BigInteger valueB) {
-    return valueA.compareTo(valueB) < 0;
-  }
+    /**
+     * @param valueA - not null
+     * @param valueB - not null
+     * @return true - if the valueA is less than valueB is zero
+     */
+    public static boolean isLessThan(BigInteger valueA, BigInteger valueB) {
+        return valueA.compareTo(valueB) < 0;
+    }
+
+    public static boolean isGreaterThan(BigInteger valueA, BigInteger valueB) {
+        return valueA.compareTo(valueB) > 0;
+    }
+
+    public static boolean isEqualTo(BigInteger valueA, BigInteger valueB) {
+        return valueA.compareTo(valueB) == 0;
+    }
 }
