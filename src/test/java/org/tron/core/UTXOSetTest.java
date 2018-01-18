@@ -66,14 +66,12 @@ public class UTXOSetTest {
         return key;
     };
 
-    private Function<Wallet, Map<byte[], TronTXOutput.TXOutput>> addMockUTXO = (Wallet wallet) -> {
-        HashMap<byte[], TronTXOutput.TXOutput> mockUTXO = new HashMap<>();
+    private Function<Wallet, TronTXOutput.TXOutput> addMockUTXO = (Wallet wallet) -> {
         TronTXOutput.TXOutput output = outputBuilder.setPubKeyHash(ByteString.copyFrom(wallet.getAddress())).build();
         byte[] key = generateKeyAndAddToMockKeySet.get();
         Mockito.when(mockTransactionDb.getData(key)).thenReturn(outputsBuilder.clearOutputs().addOutputs(output).build().toByteArray());
-        mockUTXO.put(key, output);
 
-        return mockUTXO;
+        return output;
     };
 
     @Before
@@ -188,9 +186,9 @@ public class UTXOSetTest {
 
     @Test
     public void testFindUTXOFindsAllUTXOForTheSuppliedWallet() {
-        TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
-        TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
-        TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet).values().stream().findFirst().get();
+        TronTXOutput.TXOutput output1 = addMockUTXO.apply(testWallet);
+        TronTXOutput.TXOutput output2 = addMockUTXO.apply(testWallet);
+        TronTXOutput.TXOutput output3 = addMockUTXO.apply(testWallet);
         ArrayList<TronTXOutput.TXOutput> result = utxoSet.findUTXO(testWallet.getEcKey().getPubKey());
         assertEquals(3, result.size());
         assertTrue(result.contains(output1));
