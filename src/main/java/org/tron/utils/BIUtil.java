@@ -29,4 +29,12 @@ public class BIUtil {
     public static boolean isLessThan(BigInteger valueA, BigInteger valueB) {
         return valueA.compareTo(valueB) < 0;
     }
+
+    public static boolean isGreaterThan(BigInteger valueA, BigInteger valueB) {
+        return valueA.compareTo(valueB) > 0;
+    }
+
+    public static boolean isEqualTo(BigInteger valueA, BigInteger valueB) {
+        return valueA.compareTo(valueB) == 0;
+    }
 }

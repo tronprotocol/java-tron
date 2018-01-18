@@ -200,7 +200,6 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
         @Override
         public void clear() {
             throw new RuntimeException("Not implemented");
-
         }
     }
 }
