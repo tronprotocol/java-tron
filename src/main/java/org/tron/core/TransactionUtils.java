@@ -15,8 +15,8 @@
 
 package org.tron.core;
 
-import static org.tron.crypto.Hash.sha256;
-import static org.tron.utils.Utils.getRandom;
+import static org.tron.common.crypto.Hash.sha256;
+import static org.tron.common.utils.Utils.getRandom;
 
 import com.google.protobuf.ByteString;
 import java.security.SecureRandom;
@@ -27,12 +27,11 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.crypto.ECKey;
+import org.tron.common.crypto.ECKey;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.utils.ByteArray;
-import org.tron.wallet.Wallet;
+import org.tron.common.utils.ByteArray;
 
 public class TransactionUtils {
   private static final Logger logger = LoggerFactory.getLogger("Transaction");

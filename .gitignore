@@ -28,3 +28,6 @@ doc
 pernodedata.*
 ringstate.*
 shareddata.*
+
+# svn
+.svn

@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
-import org.tron.overlay.Net;
+import org.tron.common.overlay.Net;
 import org.tron.protos.core.TronTransaction.Transaction;
 
 public class PendingStateImpl implements PendingState {

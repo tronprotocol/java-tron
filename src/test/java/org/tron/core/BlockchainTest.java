@@ -18,7 +18,6 @@ package org.tron.core;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.tron.core.Constant.LAST_HASH;
-import static org.tron.utils.ByteArray.toHexString;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -31,13 +30,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.config.Configer;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
-import org.tron.wallet.Wallet;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 
 public class BlockchainTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");

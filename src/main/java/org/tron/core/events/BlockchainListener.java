@@ -14,7 +14,7 @@
  */
 package org.tron.core.events;
 
-import org.tron.overlay.Net;
+import org.tron.common.overlay.Net;
 import org.tron.protos.core.TronBlock;
 
 public interface BlockchainListener {

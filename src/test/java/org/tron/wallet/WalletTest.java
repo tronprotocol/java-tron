@@ -23,10 +23,10 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.crypto.ECKey;
-import org.tron.utils.ByteArray;
-import org.tron.utils.Utils;
-import org.tron.wallet.Wallet;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 
 public class WalletTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");

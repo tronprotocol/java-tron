@@ -22,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 
 import static org.tron.core.Blockchain.GENESIS_COINBASE_DATA;
 
