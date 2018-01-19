@@ -17,26 +17,27 @@ package org.tron.dbStore;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.utils.ByteArray;
+import org.tron.core.dbStore.BlockStores;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 @Ignore
 public class BlockStoresTest {
 
-  @Test
-  public void saveBlock() {
-    BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
-    blockStores.saveBlock("0001245".getBytes(), "xxdfrgds".getBytes());
-    blockStores.close();
-  }
+    @Test
+    public void saveBlock() {
+        BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
+        blockStores.saveBlock("0001245".getBytes(), "xxdfrgds".getBytes());
+        blockStores.close();
+    }
 
-  @Test
-  public void findBlockByHash() {
-    BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
-    byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
-    blockStores.close();
-    System.out.println(ByteArray.toStr(blockByHash));
-  }
+    @Test
+    public void findBlockByHash() {
+        BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
+        byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
+        blockStores.close();
+        System.out.println(ByteArray.toStr(blockByHash));
+    }
 }

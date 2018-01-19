@@ -18,16 +18,17 @@ package org.tron.config;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.crypto.ECKey;
-import org.tron.utils.ByteArray;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.config.Configer;
 
 public class ConfigerTest {
-  private static final Logger logger = LoggerFactory.getLogger("Test");
+    private static final Logger logger = LoggerFactory.getLogger("Test");
 
-  @Test
-  public void testGetECKey() {
-    ECKey key = Configer.getMyKey();
+    @Test
+    public void testGetECKey() {
+        ECKey key = Configer.getMyKey();
 
-    logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
-  }
+        logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
+    }
 }
