@@ -241,10 +241,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   @Override
   public void closeDB() {
     resetDbLock.writeLock().lock();
-    if (!isAlive()) {
-      return;
-    }
+
     try {
+
+      if (!isAlive()) return;
+
       database.close();
       alive = false;
     } catch (IOException e) {
