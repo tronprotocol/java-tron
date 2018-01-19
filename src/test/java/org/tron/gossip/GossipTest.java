@@ -18,9 +18,9 @@ package org.tron.gossip;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.gossip.example.LocalNode;
-import org.tron.overlay.message.Message;
-import org.tron.overlay.message.Type;
+import org.tron.common.overlay.example.LocalNode;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.Type;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;

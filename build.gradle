@@ -7,7 +7,7 @@ apply plugin: 'application'
 apply plugin: 'checkstyle'
 
 sourceCompatibility = 1.8
-mainClassName = 'org.tron.example.Tron'
+mainClassName = 'org.tron.program.example.Tron'
 
 repositories {
     mavenCentral()
@@ -36,6 +36,9 @@ configurations.getByName('checkstyleConfig') {
 }
 
 dependencies {
+    //local libraries
+    compile fileTree(dir: 'libs', include: '*.jar')
+    // end local libraries
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
@@ -103,6 +106,13 @@ dependencies {
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
 
     checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
+    // google grpc
+    compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
+    // end google grpc
+
+
 
 }
 
@@ -134,26 +144,39 @@ if (project.hasProperty("mainClass")) {
 }
 
 sourceSets {
-    src {
-        main {
-            proto {
-                srcDir 'src/main/proto'
+    main {
+
+
+        proto {
+                srcDir 'src/proto'
             }
         }
-    }
+
 }
 
-protobuf.protoc {
-    artifact = 'com.google.protobuf:protoc:3.4.0'
-}
+//protobuf.protoc {
+//    artifact = 'com.google.protobuf:protoc:3.4.0'
+//}
 
 protobuf {
-    generatedFilesBaseDir = "$projectDir/src"
-
+    generatedFilesBaseDir = "$projectDir/src/"
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.5.1-1"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+        }
+    }
     generateProtoTasks {
         all().each { task ->
             task.builtins {
-                java {}
+                java {outputSubDir = "gen"}
+            }
+        }
+        all()*.plugins {
+            grpc {
+                outputSubDir = "gen"
             }
         }
     }

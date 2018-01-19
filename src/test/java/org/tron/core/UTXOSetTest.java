@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 
 public class UTXOSetTest {
   @Test

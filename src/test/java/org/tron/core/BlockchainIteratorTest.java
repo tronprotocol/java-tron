@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronBlockHeader.BlockHeader;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
-import static org.tron.utils.ByteArray.toHexString;
+import static org.tron.common.utils.ByteArray.toHexString;
 
 public class BlockchainIteratorTest {
   private static final Logger LOGGER = LoggerFactory.getLogger("Test");

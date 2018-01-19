@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 	Licensed to the Apache Software Foundation (ASF) under one or more
+ 	contributor license agreements.  See the NOTICE file distributed with
+ 	this work for additional information regarding copyright ownership.
+ 	The ASF licenses this file to You under the Apache License, Version 2.0
+ 	(the "License"); you may not use this file except in compliance with
+ 	the License.  You may obtain a copy of the License at
+ 	
+ 		http://www.apache.org/licenses/LICENSE-2.0
+ 	
+ 	Unless required by applicable law or agreed to in writing, software
+ 	distributed under the License is distributed on an "AS IS" BASIS,
+ 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ 	
+ 	See the License for the specific language governing permissions and
+ 	limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+		
+		<!-- dependency versions -->
+		<jackson.version>2.8.5</jackson.version>
+		<metrics.version>3.1.2</metrics.version>
+		<commons-math.version>1.2</commons-math.version>
+		<junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
+		<junit.platform.version>1.0.0-M2</junit.platform.version>
+		<junit.vintage.version>4.12.0-M2</junit.vintage.version>
+		<log4j.version>1.2.17</log4j.version>
+		<tunit.version>0.0.0</tunit.version>
+		<mockito.version>2.8.9</mockito.version>
+
+		<!-- plugins versions -->
+		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+		<maven-eclipse-plugin.version>2.10</maven-eclipse-plugin.version>
+		<maven-jar-plugin.version>3.0.0</maven-jar-plugin.version>
+		<maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+		<maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+	</properties>
+	
+	<parent>
+		<groupId>org.apache</groupId>
+		<artifactId>apache</artifactId>
+		<version>RELEASE</version>
+	</parent>
+  
+  <name>Gossip Parent</name>
+  <groupId>org.apache.gossip</groupId>
+	<artifactId>gossip-parent</artifactId>
+	<version>0.1.3-incubating-SNAPSHOT</version>
+	
+	<packaging>pom</packaging>
+	
+	<modules>
+		<module>gossip-base</module>
+		<module>gossip-transport-udp</module>
+		<module>gossip-protocol-jackson</module>
+		<module>gossip-itest</module>
+		<module>gossip-examples</module>
+	</modules>
+	
+	<description>A peer to peer cluster discovery service</description>
+	<url>http://gossip.incubator.apache.org/</url>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	
+	<scm>
+		<connection>scm:git:git@github.com:apache/incubator-gossip.git</connection>
+		<developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-gossip.git</developerConnection>
+		<url>scm:git:git@github.com:apache/incubator-gossip.git</url>
+	  <tag>HEAD</tag>
+  </scm>
+	
+	<issueManagement>
+		<system>JIRA</system>
+		<url>https://issues.apache.org/jira/browse/GOSSIP</url>
+	</issueManagement>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<version>${junit.vintage.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-runner</artifactId>
+			<version>${junit.platform.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.teknek</groupId>
+			<artifactId>tunit</artifactId>
+			<version>${tunit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!-- we need to tweak the maven-release-plugin for GIT -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>2.5.1</version>
+					<configuration>
+						<pushChanges>false</pushChanges>
+						<localCheckout>true</localCheckout>
+						<autoVersionSubmodules>true</autoVersionSubmodules>
+
+						<releaseProfiles>distribution</releaseProfiles>
+						<preparationGoals>clean install</preparationGoals>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>${maven-jar-plugin.version}</version>
+					<configuration>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>test-jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler-plugin.version}</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+						<showWarnings>true</showWarnings>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>${maven-dependency-plugin.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.19.1</version>
+				<configuration>
+					<systemPropertyVariables>
+						<java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+					</systemPropertyVariables>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.junit.platform</groupId>
+						<artifactId>junit-platform-surefire-provider</artifactId>
+						<version>${junit.platform.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.rat</groupId>
+				<artifactId>apache-rat-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/README.md</exclude>
+						<exclude>eclipse_template.xml</exclude>
+						<!--  files generated by running the examples in gossip-examples  -->
+						<exclued>**/*.mycluster.*.json</exclued>
+						<!-- e.g.npm-debug.log -->
+						<exclued>**/*.log</exclued>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<repositories>
+		<repository>
+			<id>central</id>
+			<name>Maven Repository</name>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+	
+	<developers>
+		<developer>
+			<id>ecapriolo</id>
+			<name>Edward Capriolo</name>
+			<email>edlinuxguru@gmail.com</email>
+			<url>https://github.com/edwardcapriolo</url>
+			<organization>Apache Software Foundation</organization>
+			<organizationUrl>http://gossip.incubator.apache.org/</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+	
+	<mailingLists>
+		<mailingList>
+			<name>Dev Mailing List</name>
+			<post>dev@gossip.incubator.apache.org</post>
+			<subscribe>dev-subscribe@gossip.incubator.apache.org</subscribe>
+			<unsubscribe>dev-unsubscribe@gossip.incubator.apache.org</unsubscribe>
+		</mailingList>
+		<mailingList>
+			<name>Commits Mailing List</name>
+			<post>commits@gossip.incubator.apache.org</post>
+			<subscribe>commits-subscribe@gossip.incubator.apache.org</subscribe>
+			<unsubscribe>commits-unsubscribe@gossip.incubator.apache.org</unsubscribe>
+		</mailingList>
+	</mailingLists>
+	
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>${maven-gpg-plugin.version}</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>

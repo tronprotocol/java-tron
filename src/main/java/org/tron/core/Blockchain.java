@@ -35,23 +35,18 @@ import java.util.Map;
 import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.config.Configer;
-import org.tron.consensus.client.Client;
+import org.tron.core.config.Configer;
 import org.tron.core.events.BlockchainListener;
-import org.tron.crypto.ECKey;
-import org.tron.overlay.Net;
-import org.tron.overlay.message.Message;
-import org.tron.overlay.message.Type;
-import org.tron.peer.Peer;
-import org.tron.peer.PeerType;
-import org.tron.protos.core.TronBlock;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.Net;
+import org.tron.core.peer.Peer;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.utils.ByteArray;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 
 public class Blockchain {
 
@@ -270,7 +265,7 @@ public class Blockchain {
   }
 
   /**
-   * {@see org.tron.overlay.kafka.KafkaTest#testKafka()}
+   * {@see org.tron.common.overlay.kafka.KafkaTest#testKafka()}
    *
    * @param transactions transactions
    */

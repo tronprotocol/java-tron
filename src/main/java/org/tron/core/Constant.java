@@ -15,7 +15,7 @@
 
 package org.tron.core;
 
-import org.tron.utils.ByteArray;
+import org.tron.common.utils.ByteArray;
 
 public class Constant {
 

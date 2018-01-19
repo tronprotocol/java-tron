@@ -17,7 +17,7 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import org.tron.protos.core.TronTXInput.TXInput;
-import org.tron.utils.ByteArray;
+import org.tron.common.utils.ByteArray;
 
 public class TXInputUtils {
 
