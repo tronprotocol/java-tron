@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ReadIP {
+
   public String ReadFile(String Path) {
     BufferedReader reader = null;
     String laststr = "";

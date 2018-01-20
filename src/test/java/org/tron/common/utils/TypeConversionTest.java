@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 
 public class TypeConversionTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
@@ -36,13 +37,13 @@ public class TypeConversionTest {
 
   @Test
   public void testBytesToLong() {
-    long result = bytesToLong(new byte[] {0, 0, 0, 0, 0, 0, 0, 124});
+    long result = bytesToLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 124});
     logger.info("bytes 124 to long is: {}", result);
   }
 
   @Test
   public void testBytesToHexString() {
-    String result = bytesToHexString(new byte[] {0, 0, 0, 0, 0, 0, 0, 125});
+    String result = bytesToHexString(new byte[]{0, 0, 0, 0, 0, 0, 0, 125});
     logger.info("bytes 125 to hex string is: {}", result);
   }
 

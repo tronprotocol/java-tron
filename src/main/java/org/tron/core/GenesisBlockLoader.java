@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GenesisBlockLoader {
+
   private long timestamp;
   private byte[] txTrieRoot;
   private byte[] parentHash;

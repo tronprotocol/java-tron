@@ -20,6 +20,7 @@ import java.util.Vector;
 import org.tron.common.overlay.message.Message;
 
 public class ReceiveSource {
+
   private Vector repository = new Vector();
 
   public ReceiveSource() {

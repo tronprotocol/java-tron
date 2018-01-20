@@ -18,5 +18,6 @@ package org.tron.common.overlay.listener;
 import org.tron.common.overlay.message.Message;
 
 public interface ReceiveListener {
+
   void handleReceive(Message message);
 }

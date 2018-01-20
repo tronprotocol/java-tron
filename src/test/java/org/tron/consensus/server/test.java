@@ -21,6 +21,7 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 
 public class test {
+
   public static void main(String[] args) {
     try {
       Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();

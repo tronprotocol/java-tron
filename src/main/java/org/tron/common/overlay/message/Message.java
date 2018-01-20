@@ -16,6 +16,7 @@
 package org.tron.common.overlay.message;
 
 public class Message {
+
   private String message;
   private Type type;
 

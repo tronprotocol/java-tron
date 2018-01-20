@@ -15,17 +15,14 @@
 package org.tron.core.peer;
 
 import javax.inject.Inject;
-
-import org.tron.core.consensus.client.Client;
+import org.tron.common.crypto.ECKey;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
-import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
+import org.tron.core.consensus.client.Client;
 
 /**
- * Builds a peer
- * <p>
- * Set the key and type before calling build
+ * Builds a peer <p> Set the key and type before calling build
  */
 public class PeerBuilder {
 

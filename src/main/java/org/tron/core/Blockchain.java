@@ -35,18 +35,18 @@ import java.util.Map;
 import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.config.Configer;
-import org.tron.core.events.BlockchainListener;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.Net;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.config.Configer;
+import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
 
 public class Blockchain {
 
@@ -144,9 +144,9 @@ public class Blockchain {
   public Transaction findTransaction(ByteString id) {
     Transaction transaction = Transaction.newBuilder().build();
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = bi.next();
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = bi.next();
 
       for (Transaction tx : block.getTransactionsList()) {
         String txID = ByteArray.toHexString(tx.getId().toByteArray());
@@ -169,12 +169,12 @@ public class Blockchain {
     HashMap<String, TXOutputs> utxo = new HashMap<>();
     HashMap<String, long[]> spenttxos = new HashMap<>();
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = bi.next();
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = bi.next();
 
-            for (Transaction transaction : block.getTransactionsList()) {
-                String txid = ByteArray.toHexString(transaction.getId().toByteArray());
+      for (Transaction transaction : block.getTransactionsList()) {
+        String txid = ByteArray.toHexString(transaction.getId().toByteArray());
 
         output:
         for (int outIdx = 0; outIdx < transaction.getVoutList().size
@@ -223,8 +223,6 @@ public class Blockchain {
 
   /**
    * add a block into database
-   *
-   * @param block
    */
   public void addBlock(Block block) {
     byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
@@ -304,7 +302,7 @@ public class Blockchain {
   /**
    * receive a block and save it into database,update caching at the same time.
    *
-   * @param block   block
+   * @param block block
    * @param utxoSet utxoSet
    */
   public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {

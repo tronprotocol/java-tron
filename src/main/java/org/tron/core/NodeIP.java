@@ -16,6 +16,7 @@
 package org.tron.core;
 
 public class NodeIP {
+
   private String IP1;
 
   public String getIP1() {

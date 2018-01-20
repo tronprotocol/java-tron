@@ -23,18 +23,18 @@ import java.util.Set;
 public interface DbSourceInter<V> extends BatchSourceInter<byte[], V> {
 
 
-    String getDBName();
+  String getDBName();
 
-    void setDBName(String name);
+  void setDBName(String name);
 
-    void initDB();
-
-
-    boolean isAlive();
+  void initDB();
 
 
-    void closeDB();
+  boolean isAlive();
 
 
-    Set<byte[]> allKeys() throws RuntimeException;
+  void closeDB();
+
+
+  Set<byte[]> allKeys() throws RuntimeException;
 }

@@ -18,6 +18,7 @@ package org.tron.common.command;
 import org.tron.common.application.CliApplication;
 
 public abstract class Command {
+
   public abstract void execute(CliApplication app, String[] parameters);
 
   public abstract void usage();

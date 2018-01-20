@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 
 public class BlockStores {
+
   public static final Logger logger = LoggerFactory.getLogger("BlockStores");
   private LevelDbDataSourceImpl blockDbDataSource;
 
@@ -31,9 +32,6 @@ public class BlockStores {
 
   /**
    * save a block
-   *
-   * @param blockHash
-   * @param blockData
    */
   public void saveBlock(byte[] blockHash, byte[] blockData) {
     blockDbDataSource.putData(blockHash, blockData);
@@ -42,9 +40,6 @@ public class BlockStores {
 
   /**
    * find a block by it's hash
-   *
-   * @param blockHash
-   * @return
    */
   public byte[] findBlockByHash(byte[] blockHash) {
     return blockDbDataSource.getData(blockHash);
@@ -52,8 +47,6 @@ public class BlockStores {
 
   /**
    * deleteData a block
-   *
-   * @param blockHash
    */
   public void deleteBlock(byte[] blockHash) {
     blockDbDataSource.deleteData(blockHash);

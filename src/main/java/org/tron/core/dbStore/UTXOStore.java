@@ -15,11 +15,10 @@
 
 package org.tron.core.dbStore;
 
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-
-import java.util.Set;
 
 public class UTXOStore {
 
@@ -47,9 +46,6 @@ public class UTXOStore {
 
   /**
    * save  utxo
-   *
-   * @param utxoKey
-   * @param utxoData
    */
   public void saveUTXO(byte[] utxoKey, byte[] utxoData) {
     uTXODataSource.putData(utxoKey, utxoData);

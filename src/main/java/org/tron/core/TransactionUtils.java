@@ -28,12 +28,13 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.common.utils.ByteArray;
 
 public class TransactionUtils {
+
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
   private final static int RESERVE_BALANCE = 10;
 
@@ -89,7 +90,7 @@ public class TransactionUtils {
   /**
    * new coinbase transaction
    *
-   * @param to   String to sender's address
+   * @param to String to sender's address
    * @param data String transaction data
    * @return {@link Transaction}
    */
@@ -101,7 +102,7 @@ public class TransactionUtils {
       data = "" + ByteArray.toHexString(randBytes);
     }
 
-    TXInput txi = TXInputUtils.newTXInput(new byte[] {}, -1, new byte[] {},
+    TXInput txi = TXInputUtils.newTXInput(new byte[]{}, -1, new byte[]{},
         ByteArray.fromHexString(data));
     TXOutput txo = TXOutputUtils.newTXOutput(RESERVE_BALANCE, to);
 
@@ -144,7 +145,6 @@ public class TransactionUtils {
         .toByteArray()) + "\n" +
         "\tvin=[\n");
 
-
     for (int i = 0, vinCount = transaction.getVinCount(); i < vinCount; i++) {
       TXInput vin = transaction.getVin(i);
 
@@ -165,7 +165,6 @@ public class TransactionUtils {
     }
 
     sb.append("\t],\n\tvout=[\n");
-
 
     for (int i = 0, voutCount = transaction.getVoutCount(); i < voutCount; i++) {
       TXOutput vout = transaction.getVout(i);
@@ -216,7 +215,6 @@ public class TransactionUtils {
       Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
           .getTxID().toByteArray()));
 
-
       Transaction.Builder transactionCopyBuilder = transaction
           .toBuilder();
       TXInput.Builder vinBuilder = vin.toBuilder();
@@ -259,7 +257,6 @@ public class TransactionUtils {
       TXInput vin = transaction.getVin(i);
       Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
           .getTxID().toByteArray()));
-
 
       Transaction.Builder transactionCopyBuilder = transaction
           .toBuilder();

@@ -18,7 +18,9 @@
 
 package org.tron.wallet;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 
 public class WalletTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test

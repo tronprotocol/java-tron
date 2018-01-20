@@ -86,9 +86,9 @@
     <module name="FallThrough"/>
     <module name="UpperEll"/>
     <module name="ModifierOrder"/>
-    <!--<module name="EmptyLineSeparator">-->
-      <!--<property name="allowNoEmptyLineBetweenFields" value="true"/>-->
-    <!--</module>-->
+    <module name="EmptyLineSeparator">
+      <property name="allowNoEmptyLineBetweenFields" value="true"/>
+    </module>
     <module name="SeparatorWrap">
       <property name="id" value="SeparatorWrapDot"/>
       <property name="tokens" value="DOT"/>
@@ -116,11 +116,11 @@
       <property name="tokens" value="METHOD_REF"/>
       <property name="option" value="nl"/>
     </module>
-    <!--<module name="PackageName">-->
-      <!--<property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>-->
-      <!--<message key="name.invalidPattern"-->
-        <!--value="Package name ''{0}'' must match pattern ''{1}''."/>-->
-    <!--</module>-->
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+      <message key="name.invalidPattern"
+        value="Package name ''{0}'' must match pattern ''{1}''."/>
+    </module>
     <module name="TypeName">
       <message key="name.invalidPattern"
         value="Type name ''{0}'' must match pattern ''{1}''."/>
@@ -146,21 +146,21 @@
       <message key="name.invalidPattern"
         value="Local variable name ''{0}'' must match pattern ''{1}''."/>
     </module>
-    <!--<module name="ClassTypeParameterName">-->
-      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
-      <!--<message key="name.invalidPattern"-->
-        <!--value="Class type name ''{0}'' must match pattern ''{1}''."/>-->
-    <!--</module>-->
-    <!--<module name="MethodTypeParameterName">-->
-      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
-      <!--<message key="name.invalidPattern"-->
-        <!--value="Method type name ''{0}'' must match pattern ''{1}''."/>-->
-    <!--</module>-->
-    <!--<module name="InterfaceTypeParameterName">-->
-      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
-      <!--<message key="name.invalidPattern"-->
-        <!--value="Interface type name ''{0}'' must match pattern ''{1}''."/>-->
-    <!--</module>-->
+    <module name="ClassTypeParameterName">
+      <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+      <message key="name.invalidPattern"
+        value="Class type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="MethodTypeParameterName">
+      <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+      <message key="name.invalidPattern"
+        value="Method type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="InterfaceTypeParameterName">
+      <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+      <message key="name.invalidPattern"
+        value="Interface type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
     <module name="NoFinalizer"/>
     <module name="GenericWhitespace">
       <message key="ws.followed"
@@ -173,6 +173,7 @@
         value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
     </module>
     <module name="Indentation">
+      <property name="severity" value="error"/>
       <property name="basicOffset" value="2"/>
       <property name="braceAdjustment" value="0"/>
       <property name="caseIndent" value="2"/>
@@ -180,10 +181,10 @@
       <property name="lineWrappingIndentation" value="4"/>
       <property name="arrayInitIndent" value="2"/>
     </module>
-    <!--<module name="AbbreviationAsWordInName">-->
-      <!--<property name="ignoreFinal" value="false"/>-->
-      <!--<property name="allowedAbbreviationLength" value="1"/>-->
-    <!--</module>-->
+    <module name="AbbreviationAsWordInName">
+      <property name="ignoreFinal" value="false"/>
+      <property name="allowedAbbreviationLength" value="1"/>
+    </module>
     <module name="OverloadMethodsDeclarationOrder"/>
     <module name="VariableDeclarationUsageDistance"/>
     <module name="CustomImportOrder">
@@ -213,25 +214,25 @@
     </module>
     <module name="NonEmptyAtclauseDescription"/>
     <module name="JavadocTagContinuationIndentation"/>
-    <!--<module name="SummaryJavadoc">-->
-      <!--<property name="forbiddenSummaryFragments"-->
-        <!--value="^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )"/>-->
-    <!--</module>-->
+    <module name="SummaryJavadoc">
+      <property name="forbiddenSummaryFragments"
+        value="^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )"/>
+    </module>
     <module name="JavadocParagraph"/>
     <module name="AtclauseOrder">
       <property name="tagOrder" value="@param, @return, @throws, @deprecated"/>
       <property name="target"
         value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
     </module>
-    <!--<module name="JavadocMethod">-->
-      <!--<property name="scope" value="public"/>-->
-      <!--<property name="allowMissingParamTags" value="true"/>-->
-      <!--<property name="allowMissingThrowsTags" value="true"/>-->
-      <!--<property name="allowMissingReturnTag" value="true"/>-->
-      <!--<property name="minLineCount" value="2"/>-->
-      <!--<property name="allowedAnnotations" value="Override, Test"/>-->
-      <!--<property name="allowThrowsTagsForSubclasses" value="true"/>-->
-    <!--</module>-->
+    <module name="JavadocMethod">
+      <property name="scope" value="public"/>
+      <property name="allowMissingParamTags" value="true"/>
+      <property name="allowMissingThrowsTags" value="true"/>
+      <property name="allowMissingReturnTag" value="true"/>
+      <property name="minLineCount" value="2"/>
+      <property name="allowedAnnotations" value="Override, Test"/>
+      <property name="allowThrowsTagsForSubclasses" value="true"/>
+    </module>
     <module name="MethodName">
       <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9_]*$"/>
       <message key="name.invalidPattern"

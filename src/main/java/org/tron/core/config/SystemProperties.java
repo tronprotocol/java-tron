@@ -64,5 +64,6 @@ public class SystemProperties {
   }
 
   private @interface ValidateMe {
+
   }
 }

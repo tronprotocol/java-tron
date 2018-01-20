@@ -31,8 +31,6 @@ public class ApplicationFactory {
 
   /**
    * Build a new application
-   *
-   * @return
    */
   public Application build() {
     return new Application(buildGuice());
@@ -40,8 +38,6 @@ public class ApplicationFactory {
 
   /**
    * Build a new cli application
-   *
-   * @return
    */
   public CliApplication buildCli() {
     return new CliApplication(buildGuice());

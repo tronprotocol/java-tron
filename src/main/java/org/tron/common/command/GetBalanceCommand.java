@@ -23,6 +23,7 @@ import org.tron.core.peer.Peer;
 import org.tron.protos.core.TronTXOutput;
 
 public class GetBalanceCommand extends Command {
+
   public GetBalanceCommand() {
   }
 

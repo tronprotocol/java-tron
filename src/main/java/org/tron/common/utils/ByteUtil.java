@@ -18,24 +18,21 @@
 
 package org.tron.common.utils;
 
-import org.spongycastle.util.encoders.Hex;
-
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
 
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-  public static final byte[] ZERO_BYTE_ARRAY = new byte[] {0};
+  public static final byte[] ZERO_BYTE_ARRAY = new byte[]{0};
 
   /**
-   * The regular {@link java.math.BigInteger#toByteArray()} method isn't
-   * quite what we often need:
-   * it appends a leading zero to indicate that the number is positive and
-   * may need padding.
+   * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
+   * it appends a leading zero to indicate that the number is positive and may need padding.
    *
-   * @param b        the integer to format into a byte array
+   * @param b the integer to format into a byte array
    * @param numBytes the desired size of the resulting byte array
    * @return numBytes byte long array.
    */
@@ -52,17 +49,11 @@ public class ByteUtil {
   }
 
   /**
-   * Omitting sign indication byte.
-   * <br><br>
-   * Instead of
-   * {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
-   * <br>we use this custom method to avoid an empty array in case of
-   * BigInteger.ZERO
+   * Omitting sign indication byte. <br><br> Instead of {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
+   * <br>we use this custom method to avoid an empty array in case of BigInteger.ZERO
    *
-   * @param value - any big integer number. A <code>null</code>-value will
-   *              return <code>null</code>
-   * @return A byte array without a leading zero byte if present in the
-   * signed encoding.
+   * @param value - any big integer number. A <code>null</code>-value will return <code>null</code>
+   * @return A byte array without a leading zero byte if present in the signed encoding.
    * BigInteger.ZERO will return an array with length 1 and byte-value 0.
    */
   public static byte[] bigIntegerToBytes(BigInteger value) {
@@ -112,12 +103,10 @@ public class ByteUtil {
   }
 
   /**
-   * Turn nibbles to a pretty looking output string
-   * <p>
-   * Example. [ 1, 2, 3, 4, 5 ] becomes '\x11\x23\x45'
+   * Turn nibbles to a pretty looking output string <p> Example. [ 1, 2, 3, 4, 5 ] becomes
+   * '\x11\x23\x45'
    *
-   * @param nibbles - getting byte of data [ 04 ] and turning
-   *                it to a '\x04' representation
+   * @param nibbles - getting byte of data [ 04 ] and turning it to a '\x04' representation
    * @return pretty string of nibbles
    */
   public static String nibblesToPrettyString(byte[] nibbles) {
@@ -138,13 +127,12 @@ public class ByteUtil {
   }
 
   /**
-   * Convert a byte-array into a hex String.<br>
-   * Works similar to {@link Hex#toHexString}
-   * but allows for <code>null</code>
+   * Convert a byte-array into a hex String.<br> Works similar to {@link Hex#toHexString} but allows
+   * for <code>null</code>
    *
    * @param data - byte-array to convert to a hex-string
-   * @return hex representation of the data.<br>
-   * Returns an empty String if the input is <code>null</code>
+   * @return hex representation of the data.<br> Returns an empty String if the input is
+   * <code>null</code>
    * @see Hex#toHexString
    */
   public static String toHexString(byte[] data) {
@@ -152,9 +140,7 @@ public class ByteUtil {
   }
 
   /**
-   * Cast hex encoded value from byte[] to int
-   * <p>
-   * Limited to Integer.MAX_VALUE: 2^32-1 (4 bytes)
+   * Cast hex encoded value from byte[] to int <p> Limited to Integer.MAX_VALUE: 2^32-1 (4 bytes)
    *
    * @param b array contains the values
    * @return unsigned positive int value.

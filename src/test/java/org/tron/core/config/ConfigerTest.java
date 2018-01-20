@@ -22,6 +22,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 
 public class ConfigerTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test

@@ -16,6 +16,7 @@
 package org.tron.core.consensus.client;
 
 public class MessageType {
+
   public static final String TRANSACTION = "transaction";
   public static final String BLOCK = "block";
 }

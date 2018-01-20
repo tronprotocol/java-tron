@@ -21,11 +21,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import javax.inject.Named;
-import org.tron.core.consensus.client.Client;
-import org.tron.core.consensus.server.Server;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.Blockchain;
 import org.tron.core.Constant;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.consensus.client.Client;
+import org.tron.core.consensus.server.Server;
 
 public class Module extends AbstractModule {
 

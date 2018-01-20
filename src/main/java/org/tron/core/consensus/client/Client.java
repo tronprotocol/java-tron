@@ -24,10 +24,10 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import org.tron.core.consensus.common.GetQuery;
-import org.tron.core.consensus.common.PutCommand;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
+import org.tron.core.consensus.common.GetQuery;
+import org.tron.core.consensus.common.PutCommand;
 import org.tron.core.peer.Peer;
 
 public class Client {
@@ -124,10 +124,10 @@ public class Client {
     //preTime[0] = client.submit(new GetQuery("time")).join().toString();
     Object pretime = client.submit(new GetQuery("time")).join();
     try {
-      if (!(pretime == null)){
+      if (!(pretime == null)) {
         preTime[0] = pretime.toString();
       }
-    }catch (NullPointerException e) {
+    } catch (NullPointerException e) {
       e.printStackTrace();
     }
     if (key.equals("transaction")) {
@@ -184,17 +184,14 @@ public class Client {
 
           i = i - 1;
           String finalBlock_key = "block" + i;
-          client.submit(new GetQuery(finalBlock_key)).thenAccept
-              ((Object block) -> {
-                        /*System.out.println("Consensus " + key + " is: " +
-                        block);*/
-                if (!String.valueOf(block).equals(preMessage[0])) {
-                  peer.addReceiveBlock(String.valueOf(block));
-                  preMessage[0] = String.valueOf(block);
-                } else {
-                  preMessage[0] = preMessage[0];
-                }
-              });
+          client.submit(new GetQuery(finalBlock_key)).thenAccept((Object block) -> {
+            if (!String.valueOf(block).equals(preMessage[0])) {
+              peer.addReceiveBlock(String.valueOf(block));
+              preMessage[0] = String.valueOf(block);
+            } else {
+              preMessage[0] = preMessage[0];
+            }
+          });
           try {
             Thread.sleep(3000);
           } catch (Exception e) {

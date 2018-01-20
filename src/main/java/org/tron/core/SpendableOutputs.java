@@ -18,6 +18,7 @@ package org.tron.core;
 import java.util.HashMap;
 
 public class SpendableOutputs {
+
   private long amount;
   private HashMap<String, long[]> unspentOutputs = null;
 

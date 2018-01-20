@@ -16,12 +16,11 @@
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.protos.core.TronBlock;
-
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import javax.annotation.Nonnull;
+import org.tron.protos.core.TronBlock;
 
 public class BlockchainIterator implements Iterator<TronBlock.Block> {
 
