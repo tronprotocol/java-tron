@@ -32,4 +32,4 @@ shareddata.*
 -# svn
 -.svn
 
-src/main/gen/
+generated
