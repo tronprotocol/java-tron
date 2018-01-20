@@ -5,6 +5,7 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
+apply plugin: 'idea'
 
 sourceCompatibility = 1.8
 mainClassName = 'org.tron.program.example.Tron'
@@ -26,22 +27,12 @@ def versions = [
         checkstyle: '8.7',
 ]
 
-configurations {
-    checkstyleConfig
-
-}
-
-configurations.getByName('checkstyleConfig') {
-    transitive = false
-}
-
 dependencies {
-    //local libraries
-    compile fileTree(dir: 'libs', include: '*.jar')
-    // end local libraries
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
+
+    compile fileTree(dir: 'libs', include: '*.jar')
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
@@ -105,38 +96,36 @@ dependencies {
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
 
-    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
-    // google grpc
     compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
     compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
-    // end google grpc
-
-
-
 }
 
-task lint(type: Checkstyle) {
-    // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
-    delete fileTree(dir: "${project.rootDir}/app/build/reports")
-    source 'src'
-    include '**/*.java'
-    exclude '**/gen/**'
-    // empty classpath
-    classpath = files()
-    //Failing the build
-    ignoreFailures = false
+task('lint') {
+    dependsOn checkstyleMain
+    dependsOn checkstyleTest
+}
+
+task('cleanGenerated', type: Delete) {
+    delete "${projectDir}/src/main/generated"
 }
 
 checkstyle {
     toolVersion = "${versions.checkstyle}"
-    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+    config = resources.text.fromFile("${projectDir}/google_checks.xml")
 }
 
+tasks.withType(Checkstyle) {
+    exclude "**/protos/**", "**/api/**"
+}
 
-
-tasks.matching { it instanceof Test }.all {
+test {
     testLogging.events = ["failed", "passed", "skipped"]
+    dependsOn lint
+}
+
+clean {
+    dependsOn cleanGenerated
 }
 
 if (project.hasProperty("mainClass")) {
@@ -145,38 +134,44 @@ if (project.hasProperty("mainClass")) {
 
 sourceSets {
     main {
-
-
         proto {
-                srcDir 'src/proto'
-            }
+            srcDir "${projectDir}/src/main/generated"
         }
 
+        java {
+            srcDirs += file("${projectDir}/src/main/generated")
+        }
+    }
 }
 
-//protobuf.protoc {
-//    artifact = 'com.google.protobuf:protoc:3.4.0'
-//}
+idea {
+    module {
+        generatedSourceDirs += file("${projectDir}/src/main/generated")
+    }
+}
 
 protobuf {
-    generatedFilesBaseDir = "$projectDir/src/"
+    generatedFilesBaseDir = "${projectDir}/src/"
+
     protoc {
         artifact = "com.google.protobuf:protoc:3.5.1-1"
     }
+
     plugins {
         grpc {
             artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
         }
     }
+
     generateProtoTasks {
         all().each { task ->
             task.builtins {
-                java {outputSubDir = "gen"}
+                java { outputSubDir = "generated" }
             }
         }
         all()*.plugins {
             grpc {
-                outputSubDir = "gen"
+                outputSubDir = "generated"
             }
         }
     }
