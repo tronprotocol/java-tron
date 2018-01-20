@@ -89,7 +89,6 @@ public class PendingStateImpl implements PendingState {
       txs.add(tx);
     }
 
-
     return txs;
   }
 }

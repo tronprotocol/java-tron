@@ -19,52 +19,53 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Node {
-    private final static String CLUSTER = "mycluster";
-    private final static String PORT = ":10000";
 
-    public static void main(String[] args) {
-        String uri = "";
-        String id = "";
-        try {
-            String ip = InetAddress.getLocalHost().getHostAddress();
-            uri = "udp://" + ip + PORT;
-            id = ip + PORT;
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+  private final static String CLUSTER = "mycluster";
+  private final static String PORT = ":10000";
 
-        System.out.println("start node: " + uri);
-        System.out.println("id: " + id);
-        LocalNode standNode = new LocalNode(CLUSTER, uri, id);
-
-        standNode.getGossipManager().registerSharedDataSubscriber((key, oldValue, newValue) -> {
-            System.out.println("new message: " + newValue);
-        });
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("enter your message:");
-        while (true) {
-            String v = scanner.nextLine();
-
-            String[] inputStrings = v.trim().split("\\s+", 2);
-
-            switch (inputStrings[0]) {
-                case "send":
-                    if (inputStrings.length > 1) {
-                        standNode.getGossipManager().gossipSharedData(LocalNode.sharedNodeData("test",
-                                inputStrings[1]));
-                    }
-                    break;
-                case "live":
-                    standNode.printLiveMembers();
-                    break;
-                case "dead":
-                    standNode.printDeadMambers();
-                    break;
-                default:
-                    break;
-            }
-
-        }
+  public static void main(String[] args) {
+    String uri = "";
+    String id = "";
+    try {
+      String ip = InetAddress.getLocalHost().getHostAddress();
+      uri = "udp://" + ip + PORT;
+      id = ip + PORT;
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
     }
+
+    System.out.println("start node: " + uri);
+    System.out.println("id: " + id);
+    LocalNode standNode = new LocalNode(CLUSTER, uri, id);
+
+    standNode.getGossipManager().registerSharedDataSubscriber((key, oldValue, newValue) -> {
+      System.out.println("new message: " + newValue);
+    });
+
+    Scanner scanner = new Scanner(System.in);
+    System.out.println("enter your message:");
+    while (true) {
+      String v = scanner.nextLine();
+
+      String[] inputStrings = v.trim().split("\\s+", 2);
+
+      switch (inputStrings[0]) {
+        case "send":
+          if (inputStrings.length > 1) {
+            standNode.getGossipManager().gossipSharedData(LocalNode.sharedNodeData("test",
+                inputStrings[1]));
+          }
+          break;
+        case "live":
+          standNode.printLiveMembers();
+          break;
+        case "dead":
+          standNode.printDeadMambers();
+          break;
+        default:
+          break;
+      }
+
+    }
+  }
 }

@@ -33,107 +33,108 @@ import java.util.function.Function;
 
 public class ExecutorPipeline<In, Out> {
 
-    private static AtomicInteger pipeNumber = new AtomicInteger(1);
-    private BlockingQueue<Runnable> queue;
-    private ThreadPoolExecutor exce;
-    private boolean preserveOrder = false;
-    private Function<In, Out> processor;
-    private ExecutorPipeline<Out, ?> next;
-    private Consumer<Throwable> exceptionHandler;
-    private String threadPoolName;
-    private AtomicLong orderCounter = new AtomicLong();
-    private ReentrantLock lock = new ReentrantLock();
-    private long nextOutTaskNumber = 0;
-    private Map<Long, Out> orderMap = new HashMap<>();
-    private AtomicInteger threadNumber = new AtomicInteger(1);
+  private static AtomicInteger pipeNumber = new AtomicInteger(1);
+  private BlockingQueue<Runnable> queue;
+  private ThreadPoolExecutor exce;
+  private boolean preserveOrder = false;
+  private Function<In, Out> processor;
+  private ExecutorPipeline<Out, ?> next;
+  private Consumer<Throwable> exceptionHandler;
+  private String threadPoolName;
+  private AtomicLong orderCounter = new AtomicLong();
+  private ReentrantLock lock = new ReentrantLock();
+  private long nextOutTaskNumber = 0;
+  private Map<Long, Out> orderMap = new HashMap<>();
+  private AtomicInteger threadNumber = new AtomicInteger(1);
 
-    public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder,
-                            Function<In, Out> processor,
-                            Consumer<Throwable> exceptionHandler) {
-        queue = new LimitedQueue<>(queueSize);
-        exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue,
-                r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
-        this.preserveOrder = preserveOrder;
-        this.processor = processor;
-        this.exceptionHandler = exceptionHandler;
-        this.threadPoolName = "pipe-" + pipeNumber.getAndIncrement();
-    }
+  public ExecutorPipeline(int threads, int queueSize, boolean preserveOrder,
+      Function<In, Out> processor,
+      Consumer<Throwable> exceptionHandler) {
+    queue = new LimitedQueue<>(queueSize);
+    exce = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue,
+        r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement()));
+    this.preserveOrder = preserveOrder;
+    this.processor = processor;
+    this.exceptionHandler = exceptionHandler;
+    this.threadPoolName = "pipe-" + pipeNumber.getAndIncrement();
+  }
 
-    public ExecutorPipeline<Out, Void> add(int threads, int queueSize, final Consumer<Out> consumer) {
-        return add(threads, queueSize, false, out -> {
-            consumer.accept(out);
-            return null;
-        });
-    }
+  public ExecutorPipeline<Out, Void> add(int threads, int queueSize, final Consumer<Out> consumer) {
+    return add(threads, queueSize, false, out -> {
+      consumer.accept(out);
+      return null;
+    });
+  }
 
-    public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize,
-                                                        boolean preserveOrder,
-                                                        Function<Out, NextOut> processor) {
-        ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder,
-                processor,
-                exceptionHandler);
-        next = ret;
-        return ret;
-    }
+  public <NextOut> ExecutorPipeline<Out, NextOut> add(int threads, int queueSize,
+      boolean preserveOrder,
+      Function<Out, NextOut> processor) {
+    ExecutorPipeline<Out, NextOut> ret = new ExecutorPipeline<>(threads, queueSize, preserveOrder,
+        processor,
+        exceptionHandler);
+    next = ret;
+    return ret;
+  }
 
-    private void pushNext(long order, Out res) {
-        if (next != null) {
-            if (!preserveOrder) {
-                next.push(res);
-            } else {
-                lock.lock();
-                try {
-                    if (order == nextOutTaskNumber) {
-                        next.push(res);
-                        while (true) {
-                            nextOutTaskNumber++;
-                            Out out = orderMap.remove(nextOutTaskNumber);
-                            if (out == null) {
-                                break;
-                            }
-                            next.push(out);
-                        }
-                    } else {
-                        orderMap.put(order, res);
-                    }
-                } finally {
-                    lock.unlock();
-                }
+  private void pushNext(long order, Out res) {
+    if (next != null) {
+      if (!preserveOrder) {
+        next.push(res);
+      } else {
+        lock.lock();
+        try {
+          if (order == nextOutTaskNumber) {
+            next.push(res);
+            while (true) {
+              nextOutTaskNumber++;
+              Out out = orderMap.remove(nextOutTaskNumber);
+              if (out == null) {
+                break;
+              }
+              next.push(out);
             }
+          } else {
+            orderMap.put(order, res);
+          }
+        } finally {
+          lock.unlock();
         }
+      }
+    }
+  }
+
+  public void push(final In in) {
+    final long order = orderCounter.getAndIncrement();
+    exce.execute(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          pushNext(order, processor.apply(in));
+        } catch (Throwable e) {
+          exceptionHandler.accept(e);
+        }
+      }
+    });
+  }
+
+  private static class LimitedQueue<E> extends LinkedBlockingQueue<E> {
+
+    public LimitedQueue(int maxSize) {
+      super(maxSize);
     }
 
-    public void push(final In in) {
-        final long order = orderCounter.getAndIncrement();
-        exce.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    pushNext(order, processor.apply(in));
-                } catch (Throwable e) {
-                    exceptionHandler.accept(e);
-                }
-            }
-        });
+    @Override
+    public boolean offer(E e) {
+      // turn offer() and add() into a blocking calls (unless interrupted)
+      try {
+        put(e);
+        return true;
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
+      return false;
     }
-
-    private static class LimitedQueue<E> extends LinkedBlockingQueue<E> {
-        public LimitedQueue(int maxSize) {
-            super(maxSize);
-        }
-
-        @Override
-        public boolean offer(E e) {
-            // turn offer() and add() into a blocking calls (unless interrupted)
-            try {
-                put(e);
-                return true;
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
-            return false;
-        }
-    }
+  }
 
 
 }

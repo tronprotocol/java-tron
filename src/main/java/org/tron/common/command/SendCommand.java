@@ -20,14 +20,15 @@ import static org.fusesource.jansi.Ansi.ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.CliApplication;
-import org.tron.core.TransactionUtils;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.TransactionUtils;
 import org.tron.core.peer.Peer;
 import org.tron.protos.core.TronTransaction;
-import org.tron.common.utils.ByteArray;
 
 public class SendCommand extends Command {
+
   private static final Logger logger = LoggerFactory.getLogger("Command");
 
   public SendCommand() {
@@ -93,7 +94,6 @@ public class SendCommand extends Command {
       logger.error("address invalid");
       return false;
     }
-
 
     long amount = 0;
     try {

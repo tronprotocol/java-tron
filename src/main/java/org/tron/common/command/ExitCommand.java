@@ -20,6 +20,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 import org.tron.common.application.CliApplication;
 
 public class ExitCommand extends Command {
+
   public ExitCommand() {
   }
 

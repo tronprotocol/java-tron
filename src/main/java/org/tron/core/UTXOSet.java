@@ -26,13 +26,14 @@ import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.core.TronTXOutput;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
 
 public class UTXOSet {
+
   private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
   private Blockchain blockchain;

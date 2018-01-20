@@ -19,11 +19,10 @@
 package org.tron.core.dbStore;
 
 
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.FastByteComparisons;
-
 import java.io.Serializable;
 import java.util.Arrays;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.FastByteComparisons;
 
 
 public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializable {

@@ -23,6 +23,7 @@ import java.io.InputStream;
 import org.junit.Test;
 
 public class GenesisBlockLoaderTest {
+
   @Test
   public void testGenesisBlockLoader() {
     try {

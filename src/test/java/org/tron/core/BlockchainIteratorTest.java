@@ -14,30 +14,30 @@
  */
 package org.tron.core;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.ByteString;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.protos.core.TronBlock.Block;
-import org.tron.protos.core.TronBlockHeader.BlockHeader;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.tron.common.utils.ByteArray.toHexString;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.protos.core.TronBlock.Block;
+import org.tron.protos.core.TronBlockHeader.BlockHeader;
+
 public class BlockchainIteratorTest {
+
   private static final Logger LOGGER = LoggerFactory.getLogger("Test");
 
   private Blockchain mockBlockchain;
@@ -98,7 +98,8 @@ public class BlockchainIteratorTest {
                     .build()
             )
             .build())
-        .forEach((key, value) -> Mockito.when(mockDataSource.getData(key)).thenReturn(value.toByteArray()));
+        .forEach((key, value) -> Mockito.when(mockDataSource.getData(key))
+            .thenReturn(value.toByteArray()));
 
     blockchainIterator = new BlockchainIterator(mockBlockchain);
   }

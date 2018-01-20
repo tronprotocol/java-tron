@@ -36,6 +36,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
 
 public class Kafka implements Net {
+
   public static final String KAFKA_HOST = "kafka.host";
   public static final String KAFKA_PORT = "kafka.port";
 
@@ -123,8 +124,7 @@ public class Kafka implements Net {
 
   private void consumerExecute(int workerNum) {
     executors = new ThreadPoolExecutor(workerNum, workerNum, 0L, TimeUnit.MILLISECONDS,
-        new ArrayBlockingQueue<>
-            (1000), new ThreadPoolExecutor.CallerRunsPolicy());
+        new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
     Thread thread = new Thread(() -> {
       while (true) {

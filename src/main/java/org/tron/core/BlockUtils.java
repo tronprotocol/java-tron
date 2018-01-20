@@ -15,8 +15,8 @@
 
 package org.tron.core;
 
-import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.core.Constant.LAST_HASH;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.Optional;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.peer.Validator;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronBlockHeader.BlockHeader;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.common.utils.ByteArray;
 
 public class BlockUtils {
 
@@ -83,7 +83,6 @@ public class BlockUtils {
    * @return {@link Block} block
    */
   public static Block newGenesisBlock(Transaction coinbase) {
-
 
     Block.Builder genesisBlock = Block.newBuilder();
     genesisBlock.addTransactions(coinbase);

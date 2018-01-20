@@ -22,6 +22,7 @@ import com.typesafe.config.Config;
 import org.tron.core.config.Configer;
 
 public class ConsumerProperty {
+
   private final static String DEFAULT_GROUP_ID = Configer.getGNPK();
   private final static String DEFAULT_ENABLE_AUTO_COMMIT = "true";
   private final static String DEFAULT_AUTO_COMMIT_INTERVAL_MS = "1000";

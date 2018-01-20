@@ -21,12 +21,13 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.protos.core.TronTXOutput;
-import org.tron.protos.core.TronTXOutputs;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.core.TronTXOutput;
+import org.tron.protos.core.TronTXOutputs;
 
 public class UTXOSetTest {
+
   @Test
   public void testReindex() {
     String key = "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e";

@@ -21,6 +21,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 import org.tron.common.application.CliApplication;
 
 public class VersionCommand extends Command {
+
   public VersionCommand() {
   }
 

@@ -18,6 +18,7 @@ package org.tron.common.overlay;
 import org.tron.common.overlay.message.Message;
 
 public interface Net {
+
   void broadcast(Message message);
 
   void deliver(Message message);

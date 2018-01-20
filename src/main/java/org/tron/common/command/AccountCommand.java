@@ -21,6 +21,7 @@ import org.tron.common.application.CliApplication;
 import org.tron.common.utils.ByteArray;
 
 public class AccountCommand extends Command {
+
   public AccountCommand() {
   }
 

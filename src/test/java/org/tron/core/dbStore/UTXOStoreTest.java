@@ -19,8 +19,8 @@ import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.core.Constant;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 
 @Ignore
 public class UTXOStoreTest {

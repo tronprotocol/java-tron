@@ -25,8 +25,7 @@ public interface BlockchainListener {
   void addBlock(TronBlock.Block block);
 
   /**
-   * New block added to blockchain
-   * includes net reference
+   * New block added to blockchain includes net reference
    */
   void addBlockNet(TronBlock.Block block, Net net);
 

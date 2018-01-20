@@ -22,6 +22,7 @@ import com.typesafe.config.Config;
 import org.tron.core.config.Configer;
 
 public class ProducerProperty {
+
   private final static String DEFAULT_BOOTSTRAP_SERVERS = "127.0.0.1:9092";
   private final static String DEFAULT_ACKS = "all";
   private final static String DEFAULT_RETRIES = "0";

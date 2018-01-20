@@ -25,12 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.core.config.SystemProperties;
+import org.tron.common.utils.ExecutorPipeline;
 import org.tron.core.TransactionUtils;
 import org.tron.core.TronBlockChainImpl;
+import org.tron.core.config.SystemProperties;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
-import org.tron.common.utils.ExecutorPipeline;
 
 public class TronBlockLoader {
 

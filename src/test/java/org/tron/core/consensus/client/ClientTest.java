@@ -27,6 +27,7 @@ import org.tron.core.consensus.common.GetQuery;
 import org.tron.core.consensus.common.PutCommand;
 
 public class ClientTest {
+
   public static void main(String[] args) {
     CopycatClient.Builder builder = CopycatClient.builder();
 

@@ -23,12 +23,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.config.Configer;
 
 public class ConfigerTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testGetECKey() {
-        ECKey key = Configer.getMyKey();
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-        logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
-    }
+  @Test
+  public void testGetECKey() {
+    ECKey key = Configer.getMyKey();
+
+    logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
+  }
 }

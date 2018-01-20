@@ -19,10 +19,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.core.TronTransaction.Transaction;
 
 public class TransactionUtilsTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test

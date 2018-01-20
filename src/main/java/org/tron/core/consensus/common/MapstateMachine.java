@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MapstateMachine extends StateMachine implements Snapshottable, SessionListener {
+
   private Map<Object, Object> map = new HashMap<>();
   private Set<ServerSession> sessions = new HashSet<>();
   private Set<ServerSession> listeners = new HashSet<>();

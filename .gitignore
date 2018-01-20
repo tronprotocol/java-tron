@@ -29,5 +29,7 @@ pernodedata.*
 ringstate.*
 shareddata.*
 
-# svn
-.svn
+-# svn
+-.svn
+
+generated

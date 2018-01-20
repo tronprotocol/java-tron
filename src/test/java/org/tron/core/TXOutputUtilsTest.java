@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TXOutputUtilsTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
