@@ -25,11 +25,13 @@ public class TypeConversion {
   private static ByteBuffer buffer = ByteBuffer.allocate(8);
 
   public static byte[] longToBytes(long x) {
+    buffer.clear();
     buffer.putLong(0, x);
     return buffer.array();
   }
 
   public static long bytesToLong(byte[] bytes) {
+    buffer.clear();
     buffer.put(bytes, 0, bytes.length);
     buffer.flip();
     return buffer.getLong();
