@@ -15,37 +15,48 @@
 
 package org.tron.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.tron.common.utils.TypeConversion.bytesToHexString;
+import static org.tron.common.utils.TypeConversion.bytesToLong;
+import static org.tron.common.utils.TypeConversion.hexStringToBytes;
+import static org.tron.common.utils.TypeConversion.longToBytes;
+
+import java.util.Arrays;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.tron.common.utils.TypeConversion.*;
-
 
 public class TypeConversionTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testLongToBytes() {
-        byte[] result = longToBytes(123L);
-        logger.info("long 123 to bytes is: {}", result);
-    }
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testBytesToLong() {
-        long result = bytesToLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 124});
-        logger.info("bytes 124 to long is: {}", result);
-    }
+  @Test
+  public void testLongToBytes() {
+    byte[] result = longToBytes(123L);
+    assertTrue(Arrays.equals(new byte[]{0, 0, 0, 0, 0, 0, 0, 123}, result));
+    logger.info("long 123 to bytes is: {}", result);
+  }
 
-    @Test
-    public void testBytesToHexString() {
-        String result = bytesToHexString(new byte[]{0, 0, 0, 0, 0, 0, 0, 125});
-        logger.info("bytes 125 to hex string is: {}", result);
-    }
+  @Test
+  public void testBytesToLong() {
+    long result = bytesToLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 124});
+    assertEquals(124L, result);
+    logger.info("bytes 124 to long is: {}", result);
+  }
 
-    @Test
-    public void testHexStringToBytes() {
-        byte[] result = hexStringToBytes("7f");
-        logger.info("hex string 7f to bytes is: {}", result);
-    }
+  @Test
+  public void testBytesToHexString() {
+    String result = bytesToHexString(new byte[]{0, 0, 0, 0, 0, 0, 0, 125});
+    assertEquals("000000000000007d", result);
+    logger.info("bytes 125 to hex string is: {}", result);
+  }
+
+  @Test
+  public void testHexStringToBytes() {
+    byte[] result = hexStringToBytes("7f");
+    assertTrue(Arrays.equals(new byte[]{127}, result));
+    logger.info("hex string 7f to bytes is: {}", result);
+  }
 }
