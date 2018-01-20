@@ -15,11 +15,13 @@
 
 package org.tron.utils;
 
+import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.TypeConversion.bytesToHexString;
 import static org.tron.common.utils.TypeConversion.bytesToLong;
 import static org.tron.common.utils.TypeConversion.hexStringToBytes;
 import static org.tron.common.utils.TypeConversion.longToBytes;
 
+import java.util.Arrays;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,7 @@ public class TypeConversionTest {
   @Test
   public void testLongToBytes() {
     byte[] result = longToBytes(123L);
+    assertTrue(Arrays.equals(result, new byte[]{0, 0, 0, 0, 0, 0, 0, 123}));
     logger.info("long 123 to bytes is: {}", result);
   }
 
