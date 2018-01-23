@@ -32,18 +32,20 @@ public class Application {
 
   public Application(Injector injector) {
     this.injector = injector;
-    this.services = new ServiceContainer();
+
   }
 
-  public Application() {}
+  public Application() {
+    this.services = new ServiceContainer();
+    p2pnode = new NodeImpl();
+  }
 
   public Injector getInjector() {
     return injector;
   }
 
   public void addService(Service service) {
-
-      this.services.add(service);
+    this.services.add(service);
   }
 
   public BlockStore getBlockStoreS() {
