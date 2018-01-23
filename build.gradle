@@ -7,7 +7,7 @@ apply plugin: 'application'
 apply plugin: 'checkstyle'
 
 sourceCompatibility = 1.8
-mainClassName = 'org.tron.program.example.Tron'
+mainClassName = 'org.tron.program.FullNode'
 
 repositories {
     mavenCentral()
