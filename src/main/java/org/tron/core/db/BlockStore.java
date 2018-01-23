@@ -28,6 +28,9 @@ public class BlockStore {
   private LevelDbDataSourceImpl unSpendCache;
   private Vector<TronTransaction.Transaction> pendingTrans;
 
+  public BlockStore() {
+  }
+
   public BlockStore(String parentName, String childName) {
     blockDbDataSource = new LevelDbDataSourceImpl(parentName, childName);
     blockDbDataSource.initDB();

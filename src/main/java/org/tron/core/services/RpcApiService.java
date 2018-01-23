@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 public class RpcApiService implements Service {
-    private static final Logger logger = Logger.getLogger(RpcApiServiceRpcApiService.class.getName());
+    private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
     private int port = 50051;
     private Server ApiServer;
     private Application app;
