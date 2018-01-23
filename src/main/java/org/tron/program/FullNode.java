@@ -9,9 +9,7 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
 public class FullNode {
-
     public static void main(String args[]) {
-        //simple impl
         Application tApp = ApplicationFactory.create();
         tApp.addService(new RpcApiService(tApp));
         tApp.addService(new WitnessService());
