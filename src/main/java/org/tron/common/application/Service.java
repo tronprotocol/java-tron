@@ -17,6 +17,5 @@ package org.tron.common.application;
 public interface Service {
 
   void start();
-
   void stop();
 }
