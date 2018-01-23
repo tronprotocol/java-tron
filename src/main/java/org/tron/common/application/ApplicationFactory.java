@@ -46,4 +46,8 @@ public class ApplicationFactory {
   public CliApplication buildCli() {
     return new CliApplication(buildGuice());
   }
+
+  public static  Application create() {
+    return new Application();
+  }
 }

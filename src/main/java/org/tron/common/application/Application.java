@@ -17,11 +17,17 @@ package org.tron.common.application;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.db.BlockStore;
+import org.tron.core.net.node.Node;
+import org.tron.core.net.node.NodeImpl;
 
 public class Application {
 
   private static final Logger logger = LoggerFactory.getLogger("Application");
   private Injector injector;
+
+  private NodeImpl p2pnode;
+
   private ServiceContainer services;
 
   public Application(Injector injector) {
@@ -29,21 +35,34 @@ public class Application {
     this.services = new ServiceContainer();
   }
 
+  public Application() {}
+
   public Injector getInjector() {
     return injector;
   }
 
   public void addService(Service service) {
-    this.services.add(service);
+
+      this.services.add(service);
   }
 
+  public BlockStore getBlockStoreS() {
+    return p2pnode.getBlockdb();
+  }
+
+  public Node getP2pNode() {
+    return p2pnode.getP2pNode();
+  }
   public void run() {
+    p2pnode.start();
     this.services.start();
   }
+
 
   public void shutdown() {
     logger.info("shutting down");
     this.services.stop();
     System.exit(0);
   }
+
 }
