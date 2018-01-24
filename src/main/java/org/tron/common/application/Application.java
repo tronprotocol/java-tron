@@ -32,7 +32,8 @@ public class Application {
 
   public Application(Injector injector) {
     this.injector = injector;
-
+    this.services = new ServiceContainer();
+    p2pnode = new NodeImpl();
   }
 
   public Application() {

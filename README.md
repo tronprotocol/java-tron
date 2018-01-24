@@ -49,7 +49,7 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 IDEA: 
 - [Edit Configurations...] -> [Add New Configuration] -> [Application]
-- [Edit Configurations...] -> [Main Class]: `org.tron.example.Tron`
+- [Edit Configurations...] -> [Main Class]: `org.tron.program.example.Tron`
 - [Edit Configurations...] -> [Use classpath of module]: `java-tron_main`
 - [Edit Configurations...] -> [Program arguments]: `--type server`
 - Run
