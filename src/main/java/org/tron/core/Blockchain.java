@@ -39,7 +39,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
@@ -68,51 +72,61 @@ public class Blockchain {
 
     if (this.lastHash == null) {
 
-      InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
-      String json = null;
-      try {
-        json = new String(ByteStreams.toByteArray(is));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      GenesisBlockLoader genesisBlockLoader = buildGenesisBlockLoader();
 
-      GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
-
-      Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
-
-      List<Transaction> transactions = new ArrayList<>();
-
-      while (iterator.hasNext()) {
-        Map.Entry entry = (Map.Entry) iterator.next();
-        String key = (String) entry.getKey();
-        Integer value = (Integer) entry.getValue();
-
-        Transaction transaction = TransactionUtils
-            .newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
-        transactions.add(transaction);
-      }
+      List<Transaction> transactions = buildTransactionsFrom(genesisBlockLoader);
 
       Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
 
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
 
-      blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-          genesisBlock.toByteArray());
-      byte[] lastHash = genesisBlock.getBlockHeader()
-          .getHash()
-          .toByteArray();
-      blockDB.putData(LAST_HASH, lastHash);
+      persistGenesisBlockToDB(blockDB, genesisBlock);
+      persistLastHash(blockDB, genesisBlock);
 
-      for (BlockchainListener listener : listeners) {
-        listener.addGenesisBlock(genesisBlock);
-      }
+      addGenesisBlockToListeners(genesisBlock);
       logger.info("new blockchain");
     } else {
       this.currentHash = this.lastHash;
 
       logger.info("load blockchain");
     }
+  }
+
+  private void addGenesisBlockToListeners(Block genesisBlock) {
+    listeners.stream().forEach(l -> l.addGenesisBlock(genesisBlock));
+  }
+
+  private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
+    byte[] lastHash = genesisBlock.getBlockHeader()
+            .getHash()
+            .toByteArray();
+    blockDB.putData(LAST_HASH, lastHash);
+  }
+
+  private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
+    blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+            genesisBlock.toByteArray());
+  }
+
+  private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
+    return genesisBlockLoader.getTransaction().entrySet().stream()
+            .map(e ->
+                    TransactionUtils
+                            .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
+            ).collect(Collectors.toList());
+  }
+
+  private GenesisBlockLoader buildGenesisBlockLoader() {
+    InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+    String json = null;
+    try {
+      json = new String(ByteStreams.toByteArray(is));
+    } catch (IOException e) {
+      logger.warn("Fail to load genesis.json, error: {}", e);
+    }
+
+    return JSON.parseObject(json, GenesisBlockLoader.class);
   }
 
   /**
@@ -140,9 +154,9 @@ public class Blockchain {
   public Transaction findTransaction(ByteString id) {
     Transaction transaction = Transaction.newBuilder().build();
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = bi.next();
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = bi.next();
 
       for (Transaction tx : block.getTransactionsList()) {
         String txID = ByteArray.toHexString(tx.getId().toByteArray());
@@ -165,16 +179,16 @@ public class Blockchain {
     HashMap<String, TXOutputs> utxo = new HashMap<>();
     HashMap<String, long[]> spenttxos = new HashMap<>();
 
-        BlockchainIterator bi = new BlockchainIterator(this);
-        while (bi.hasNext()) {
-            Block block = bi.next();
+    BlockchainIterator bi = new BlockchainIterator(this);
+    while (bi.hasNext()) {
+      Block block = bi.next();
 
-            for (Transaction transaction : block.getTransactionsList()) {
-                String txid = ByteArray.toHexString(transaction.getId().toByteArray());
+      for (Transaction transaction : block.getTransactionsList()) {
+        String txid = ByteArray.toHexString(transaction.getId().toByteArray());
 
         output:
         for (int outIdx = 0; outIdx < transaction.getVoutList().size
-            (); outIdx++) {
+                (); outIdx++) {
           TXOutput out = transaction.getVout(outIdx);
           if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
             for (int i = 0; i < spenttxos.get(txid).length; i++) {
@@ -197,7 +211,7 @@ public class Blockchain {
         if (!TransactionUtils.isCoinbaseTransaction(transaction)) {
           for (TXInput in : transaction.getVinList()) {
             String inTxid = ByteArray.toHexString(in.getTxID()
-                .toByteArray());
+                    .toByteArray());
             long[] vindexs = spenttxos.get(inTxid);
 
             if (vindexs == null) {
@@ -229,7 +243,7 @@ public class Blockchain {
       return;
     }
 
-    blockDB.putData(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
+    persistGenesisBlockToDB(blockDB, block);
 
     byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
     byte[] lastBlockData = blockDB.getData(lastHash);
@@ -237,7 +251,7 @@ public class Blockchain {
       Block lastBlock = Block.parseFrom(lastBlockData);
       if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
         blockDB.putData(ByteArray.fromString("lashHash"),
-            block.getBlockHeader().getHash().toByteArray());
+                block.getBlockHeader().getHash().toByteArray());
         this.lastHash = block.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
       }
@@ -274,7 +288,7 @@ public class Blockchain {
     // getData difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
     Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-        number);
+            number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlockNet(block, net);
@@ -290,7 +304,7 @@ public class Blockchain {
     // get difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
     Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-        number);
+            number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlock(block);
@@ -309,8 +323,8 @@ public class Blockchain {
     byte[] lastHash = blockDB.getData(lastHashKey);
 
     if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray())
-        .equals(ByteArray.toHexString
-            (lastHash))) {
+            .equals(ByteArray.toHexString
+                    (lastHash))) {
       return;
     }
 
