@@ -19,6 +19,9 @@ TRON is a block chain-based decentralized smart protocol and an application deve
 
 TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
+# Wiki
+More information on TRON can be found on the [Wiki](http://wiki.tron.network).
+
 # Quick Start
 
 > Note: This repository is a IDEA project which you can simply download and import.
