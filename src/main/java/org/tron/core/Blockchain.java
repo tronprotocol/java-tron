@@ -29,9 +29,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,51 +71,62 @@ public class Blockchain {
 
     if (this.lastHash == null) {
 
-      InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
-      String json = null;
-      try {
-        json = new String(ByteStreams.toByteArray(is));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      GenesisBlockLoader genesisBlockLoader = buildGenesisBlockLoader();
 
-      GenesisBlockLoader genesisBlockLoader = JSON.parseObject(json, GenesisBlockLoader.class);
-
-      Iterator iterator = genesisBlockLoader.getTransaction().entrySet().iterator();
-
-      List<Transaction> transactions = new ArrayList<>();
-
-      while (iterator.hasNext()) {
-        Map.Entry entry = (Map.Entry) iterator.next();
-        String key = (String) entry.getKey();
-        Integer value = (Integer) entry.getValue();
-
-        Transaction transaction = TransactionUtils
-            .newCoinbaseTransaction(key, GENESIS_COINBASE_DATA, value);
-        transactions.add(transaction);
-      }
+      List<Transaction> transactions = buildTransactionsFrom(genesisBlockLoader);
 
       Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
 
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
 
-      blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-          genesisBlock.toByteArray());
-      byte[] lastHash = genesisBlock.getBlockHeader()
-          .getHash()
-          .toByteArray();
-      blockDB.putData(LAST_HASH, lastHash);
+      persistGenesisBlockToDB(blockDB, genesisBlock);
+      persistLastHash(blockDB, genesisBlock);
 
-      for (BlockchainListener listener : listeners) {
-        listener.addGenesisBlock(genesisBlock);
-      }
+      addGenesisBlockToListeners(genesisBlock);
       logger.info("new blockchain");
     } else {
       this.currentHash = this.lastHash;
 
       logger.info("load blockchain");
     }
+  }
+
+  private void addGenesisBlockToListeners(Block genesisBlock) {
+    listeners.stream().forEach(l -> l.addGenesisBlock(genesisBlock));
+  }
+
+  private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
+    byte[] lastHash = genesisBlock.getBlockHeader()
+        .getHash()
+        .toByteArray();
+    blockDB.putData(LAST_HASH, lastHash);
+  }
+
+  private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB,
+      Block genesisBlock) {
+    blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+        genesisBlock.toByteArray());
+  }
+
+  private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
+    return genesisBlockLoader.getTransaction().entrySet().stream()
+        .map(e ->
+            TransactionUtils
+                .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
+        ).collect(Collectors.toList());
+  }
+
+  private GenesisBlockLoader buildGenesisBlockLoader() {
+    InputStream is = getClass().getClassLoader().getResourceAsStream("genesis.json");
+    String json = null;
+    try {
+      json = new String(ByteStreams.toByteArray(is));
+    } catch (IOException e) {
+      logger.warn("Fail to load genesis.json, error: {}", e);
+    }
+
+    return JSON.parseObject(json, GenesisBlockLoader.class);
   }
 
   /**
@@ -231,7 +241,7 @@ public class Blockchain {
       return;
     }
 
-    blockDB.putData(block.getBlockHeader().getHash().toByteArray(), block.toByteArray());
+    persistGenesisBlockToDB(blockDB, block);
 
     byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
     byte[] lastBlockData = blockDB.getData(lastHash);
