@@ -18,17 +18,32 @@
 
 package org.tron.core;
 
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.db.BlockStore;
+import org.tron.core.db.UTXOStore;
+import org.tron.core.net.message.Message;
+import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.node.Node;
+import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.core.TronTXOutput.TXOutput;
+
 
 public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
+  private static BlockStore db;
   private final ECKey ecKey;
+  private UTXOStore utxoStore;
+  private Application app;
+  private Node p2pnode;
+  private UTXOSet utxoSet;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -37,11 +52,17 @@ public class Wallet {
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
+  public Wallet(Application app) {
+    this.app = app;
+    this.p2pnode = app.getP2pNode();
+    this.db = app.getBlockStoreS();
+    this.ecKey = new ECKey(Utils.getRandom());
+  }
+
   /**
    * Creates a Wallet with an existing ECKey.
-   *
-   * @param ECKey ecKey Existing Key
    */
+
   public Wallet(final ECKey ecKey) {
     this.ecKey = ecKey;
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
@@ -54,5 +75,89 @@ public class Wallet {
   public byte[] getAddress() {
     return ecKey.getAddress();
   }
+
+  /**
+   * Get balance by address
+   */
+  public long getBalance(byte[] address) {
+
+    ArrayList<TXOutput> utxos = utxoStore.findUTXO(address);
+    long balance = 0;
+
+    for (TXOutput txOutput : utxos) {
+      balance += txOutput.getValue();
+    }
+
+    logger.info("balance = {}", balance);
+    return balance;
+  }
+
+//  /**
+//   * Build a transaction
+//   */
+//  public Transaction buildTransaction(List<TXInput> txInputs, List<TXOutput> txOutputs) {
+//    Transaction.Builder transactionBuilder = Transaction.newBuilder();
+//
+//    for (int i = 0; i < txInputs.size(); i++) {
+//      transactionBuilder.addVin(txInputs.get(i));
+//    }
+//
+//    for (int i = 0; i < txOutputs.size(); i++) {
+//      transactionBuilder.addVout(txOutputs.get(i));
+//    }
+//
+//    Transaction transaction = transactionBuilder.build();
+//    return transaction;
+//  }
+
+  /**
+   * Create a transaction
+   */
+
+  public Transaction createTransaction(byte[] address, String to, long amount) {
+    Transaction transaction = null;
+
+    if (check(address, to, amount)) {
+      transaction = Transaction.newBuilder().build();
+      logger.info("Transaction create succeeded！");
+    } else {
+      logger.error("Transaction create failed！");
+    }
+
+    return transaction;
+  }
+
+  /**
+   * Broadcast a transaction
+   */
+  public boolean broadcastTransaction(Transaction signaturedTransaction) {
+    if (signaturedTransaction != null) {
+      Message message = new TransactionMessage(signaturedTransaction);
+      p2pnode.broadcast(message);
+      return true;
+    }
+    return false;
+  }
+
+  public boolean check(byte[] address, String to, long amount) {
+
+    if (to.length() != 40) {
+      logger.error("address invalid");
+      return false;
+    }
+
+    if (amount <= 0) {
+      logger.error("amount required a positive number");
+      return false;
+    }
+
+    if (amount > getBalance(address)) {
+      logger.error("don't have enough money");
+      return false;
+    }
+
+    return true;
+  }
+
 
 }

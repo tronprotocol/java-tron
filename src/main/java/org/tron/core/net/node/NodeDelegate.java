@@ -1,37 +1,34 @@
 package org.tron.core.net.node;
 
+import java.util.ArrayList;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
-import org.tron.core.net.message.TransationMessage;
-
-import java.util.ArrayList;
+import org.tron.core.net.message.TransactionMessage;
+import org.tron.protos.Protocal.Inventory;
 
 public interface NodeDelegate {
 
-    void reset();
+  void handleBlock(BlockMessage blkMsg);
 
-    void start();
+  void handleTransation(TransactionMessage trxMsg);
 
-    void stop();
+  boolean isIncludedBlock(byte[] hash);
 
-    void handleBlock(BlockMessage blkMsg);
+  Inventory getBlockIds(Inventory inv);
 
-    void handleTransation(TransationMessage trxMsg);
 
-    void handleMsg(Message msg);
+  ArrayList<byte[]> getBlockChainSynopsis(byte[] refPoint, int num);
 
-    boolean isIncludedBlock(int blkId);
+  Message getData(byte[] hash);
 
-    ArrayList<Integer> getBlockIds(ArrayList<Integer> blockChainSynopsis);
+  void syncToCli();
 
-    ArrayList<Integer> getBlockChainSynopsis(int refPoint, int num);
+  void getBlockNum(byte[] hash);
 
-    void sync();
+  void getBlockTime(byte[] hash);
 
-    void getBlockNum(int blkId);
+  byte[] getHeadBlockId();
 
-    void getBlockTime(int blkId);
-
-    void getHeadBlockId();
+  boolean hasItem(byte[] hash);
 
 }

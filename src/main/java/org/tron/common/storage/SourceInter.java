@@ -21,15 +21,15 @@ package org.tron.common.storage;
 public interface SourceInter<K, V> {
 
 
-    void putData(K key, V val);
+  void putData(K key, V val);
 
 
-    V getData(K key);
+  V getData(K key);
 
 
-    void deleteData(K key);
+  void deleteData(K key);
 
 
-    boolean flush();
+  boolean flush();
 
 }

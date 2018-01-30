@@ -19,7 +19,7 @@ package org.tron.core;
 
 
 import java.math.BigInteger;
-import org.tron.core.dbStore.BlockStoreInput;
+import org.tron.core.dbstore.BlockStoreInput;
 import org.tron.protos.core.TronBlock;
 
 public interface TronBlockChain {

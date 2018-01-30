@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.dbStore;
+package org.tron.core.dbstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

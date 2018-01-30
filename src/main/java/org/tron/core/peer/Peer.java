@@ -17,18 +17,18 @@ package org.tron.core.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.command.ConsensusCommand;
-import org.tron.core.consensus.client.BlockchainClientListener;
-import org.tron.core.consensus.client.Client;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.Net;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
 import org.tron.core.PendingStateImpl;
 import org.tron.core.TransactionUtils;
 import org.tron.core.UTXOSet;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.Net;
+import org.tron.core.Wallet;
+import org.tron.core.consensus.client.BlockchainClientListener;
+import org.tron.core.consensus.client.Client;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronTransaction;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
 
 public class Peer {
 

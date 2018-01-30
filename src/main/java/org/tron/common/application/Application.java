@@ -12,59 +12,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.application;
 
-import com.google.inject.Injector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.core.db.BlockStore;
 import org.tron.core.net.node.Node;
-import org.tron.core.net.node.NodeImpl;
+import org.tron.program.Args;
 
-public class Application {
+public interface Application {
 
-  private static final Logger logger = LoggerFactory.getLogger("Application");
-  private Injector injector;
+  void setOptions(Args args);
 
-  private NodeImpl p2pnode;
+  void init(String path, Args args);
 
-  private ServiceContainer services;
+  void initServices(Args args);
 
-  public Application(Injector injector) {
-    this.injector = injector;
+  void startup();
 
-  }
+  void shutdown();
 
-  public Application() {
-    this.services = new ServiceContainer();
-    p2pnode = new NodeImpl();
-  }
+  void startServies();
 
-  public Injector getInjector() {
-    return injector;
-  }
+  void shutdownServices();
 
-  public void addService(Service service) {
-    this.services.add(service);
-  }
+  Node getP2pNode();
 
-  public BlockStore getBlockStoreS() {
-    return p2pnode.getBlockdb();
-  }
+  BlockStore getBlockStoreS();
 
-  public Node getP2pNode() {
-    return p2pnode.getP2pNode();
-  }
-  public void run() {
-    p2pnode.start();
-    this.services.start();
-  }
-
-
-  public void shutdown() {
-    logger.info("shutting down");
-    this.services.stop();
-    System.exit(0);
-  }
-
+  void addService(Service service);
 }

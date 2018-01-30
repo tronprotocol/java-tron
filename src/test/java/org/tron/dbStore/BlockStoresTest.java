@@ -13,31 +13,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.dbStore;
+package org.tron.dbstore;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.core.dbStore.BlockStores;
-
-import static org.tron.core.Constant.BLOCK_DB_NAME;
+import org.tron.core.dbstore.BlockStores;
 
 @Ignore
 public class BlockStoresTest {
 
-    @Test
-    public void saveBlock() {
-        BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
-        blockStores.saveBlock("0001245".getBytes(), "xxdfrgds".getBytes());
-        blockStores.close();
-    }
+  @Test
+  public void saveBlock() {
+    BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
+    blockStores.saveBlock("0001245".getBytes(), "xxdfrgds".getBytes());
+    blockStores.close();
+  }
 
-    @Test
-    public void findBlockByHash() {
-        BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
-        byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
-        blockStores.close();
-        System.out.println(ByteArray.toStr(blockByHash));
-    }
+  @Test
+  public void findBlockByHash() {
+    BlockStores blockStores = new BlockStores(Constant.TEST, BLOCK_DB_NAME);
+    byte[] blockByHash = blockStores.findBlockByHash("0001245".getBytes());
+    blockStores.close();
+    System.out.println(ByteArray.toStr(blockByHash));
+  }
 }

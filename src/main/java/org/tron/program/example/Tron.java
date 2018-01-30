@@ -17,14 +17,11 @@ package org.tron.program.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.CliApplication;
-import org.tron.common.command.Cli;
-import org.tron.core.config.Configer;
-import org.tron.core.consensus.server.Server;
+import org.tron.common.application.ApplicationImpl;
+import org.tron.common.application.Application;
 import org.tron.core.peer.Peer;
-import org.tron.core.peer.PeerBuilder;
 import org.tron.core.peer.PeerType;
+import org.tron.program.Args;
 
 public class Tron {
 
@@ -48,20 +45,25 @@ public class Tron {
 
   public void run() {
 
-    CliApplication app = new ApplicationFactory()
-        .buildCli();
+//    CliApplication app = new ApplicationFactory()
+//        .buildCli();
+    Application app = new ApplicationImpl();
+    app.initServices(new Args());
+    app.startServies();
+    app.startup();
 
-    app.addService(new Server());
-    app.run();
+//    app.(new Server());
+//    app.
+//    app.r
 
-    Peer peer = app.getInjector().getInstance(PeerBuilder.class)
-        .setKey(Configer.getMyKey())
-        .setType(type)
-        .build();
+//    Peer peer = app.getInjector().getInstance(PeerBuilder.class)
+//        .setKey(Configer.getMyKey())
+//        .setType(type)
+//        .build();
 
-    app.setPeer(peer);
+    // app.setPeer(peer);
 
-    Cli cli = new Cli();
-    cli.run(app);
+//    Cli cli = new Cli();
+//    cli.run(app);
   }
 }

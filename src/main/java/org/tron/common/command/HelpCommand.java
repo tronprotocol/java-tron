@@ -15,9 +15,9 @@
 
 package org.tron.common.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import org.tron.common.application.CliApplication;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 public class HelpCommand extends Command {
 
@@ -50,7 +50,7 @@ public class HelpCommand extends Command {
         break;
       case "consensus":
       case "listen":
-        app.getInjector().getInstance(ConsensusCommand.class).usage();
+        //app.getInjector().getInstance(ConsensusCommand.class).usage();
         break;
       case "exit":
       case "quit":

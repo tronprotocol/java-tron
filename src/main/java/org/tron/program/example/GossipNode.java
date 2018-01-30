@@ -14,70 +14,50 @@
  */
 package org.tron.program.example;
 
-import org.apache.gossip.LocalMember;
-import org.tron.common.overlay.gossip.LocalNode;
-
-import java.util.List;
+import io.scalecube.cluster.Member;
+import io.scalecube.transport.Message;
+import java.util.Collection;
 import java.util.Scanner;
+import org.tron.common.overlay.node.GossipLocalNode;
 
 public class GossipNode {
-    private static LocalNode localNode = LocalNode.getInstance();
 
-    public static void main(String[] args) {
-        localNode.getGossipManager().registerSharedDataSubscriber((key, oldValue, newValue) -> {
-            System.out.println("new message: " + newValue);
-        });
+  private static GossipLocalNode localNode = GossipLocalNode.getInstance();
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("enter your message:");
-        while (true) {
-            String v = scanner.nextLine();
+  public static void main(String[] args) {
+    localNode.getCluster().listen().subscribe(msg -> {
+      System.out.println(msg);
+    });
 
-            String[] inputStrings = v.trim().split("\\s+", 2);
+    Scanner scanner = new Scanner(System.in);
+    System.out.println("enter your message:");
+    while (true) {
+      String v = scanner.nextLine();
 
-            switch (inputStrings[0]) {
-                case "send":
-                    if (inputStrings.length > 1) {
-                    }
-                    break;
-                case "live":
-                    printLiveMembers();
-                    break;
-                case "dead":
-                    printDeadMembers();
-                    break;
-                default:
-                    break;
-            }
+      String[] inputStrings = v.trim().split("\\s+", 2);
 
-        }
+      switch (inputStrings[0]) {
+        case "send":
+          if (inputStrings.length > 1) {
+            localNode.getCluster().otherMembers().forEach(member -> {
+              localNode.getCluster().send(member, Message.fromData(inputStrings[1]));
+            });
+          }
+          break;
+        case "members":
+          Collection<Member> memberList = localNode.getMembers();
+          for (Member m : memberList) {
+            System.out.println(m);
+          }
+          break;
+        case "shutdown":
+          localNode.getCluster().shutdown();
+          System.exit(0);
+          break;
+        default:
+          break;
+      }
+
     }
-
-    public static void printLiveMembers() {
-        List<LocalMember> memberList = localNode.getLiveMembers();
-
-        if (memberList.isEmpty()) {
-            System.out.println("live none");
-            return;
-        }
-
-        for (LocalMember member :
-                memberList) {
-            System.out.println(member);
-        }
-    }
-
-    public static void printDeadMembers() {
-        List<LocalMember> memberList = localNode.getDeadMembers();
-
-        if (memberList.isEmpty()) {
-            System.out.println("dead none");
-            return;
-        }
-
-        for (LocalMember member :
-                memberList) {
-            System.out.println(member);
-        }
-    }
+  }
 }
