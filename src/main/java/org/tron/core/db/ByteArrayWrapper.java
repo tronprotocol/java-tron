@@ -18,12 +18,10 @@
 
 package org.tron.core.db;
 
-
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.FastByteComparisons;
-
 import java.io.Serializable;
 import java.util.Arrays;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.FastByteComparisons;
 
 
 public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializable {
@@ -31,6 +29,9 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
   private final byte[] data;
   private int hashCode = 0;
 
+  /**
+   * construcor.
+   */
   public ByteArrayWrapper(byte[] data) {
     if (data == null) {
       throw new NullPointerException("Data must not be null");
@@ -39,6 +40,12 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
     this.hashCode = Arrays.hashCode(data);
   }
 
+
+  /**
+   * equals
+   * @param other
+   * @return
+   */
   public boolean equals(Object other) {
     if (!(other instanceof ByteArrayWrapper)) {
       return false;

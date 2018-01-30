@@ -30,13 +30,13 @@ import org.tron.core.Blockchain;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 
-public class UTXOStore extends Database {
+public class UtxoStore extends Database {
 
   public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
   private Blockchain blockchain;
-  private LevelDbDataSourceImpl uTXODataSource;
+  private LevelDbDataSourceImpl utxoDataSource;
 
-  private UTXOStore(String dbName) {
+  private UtxoStore(String dbName) {
     super(dbName);
   }
 
@@ -55,18 +55,18 @@ public class UTXOStore extends Database {
 
   }
 
-  private static UTXOStore instance;
+  private static UtxoStore instance;
 
   /**
+   * create fun.
    *
-   * @param dbName
-   * @return
+   * @param dbName the name of database
    */
-  public static UTXOStore Create(String dbName) {
+  public static UtxoStore create(String dbName) {
     if (instance == null) {
-      synchronized (UTXOStore.class) {
+      synchronized (UtxoStore.class) {
         if (instance == null) {
-          instance = new UTXOStore(dbName);
+          instance = new UtxoStore(dbName);
         }
       }
     }
@@ -88,20 +88,20 @@ public class UTXOStore extends Database {
   }
 
   /**
-   * save  utxo
+   * save  utxo.
    */
-  public void saveUTXO(byte[] utxoKey, byte[] utxoData) {
+  public void saveUtxo(byte[] utxoKey, byte[] utxoData) {
     dbSource.putData(utxoKey, utxoData);
   }
 
   /**
-   * store and find related utxos
+   * store and find related utxos.
    */
 
-  public void storeUTXO() {
+  public void storeUtxo() {
     logger.info("storeUTXO");
 
-    uTXODataSource.resetDB();
+    utxoDataSource.resetDB();
 
     HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
 
@@ -112,21 +112,21 @@ public class UTXOStore extends Database {
       TXOutputs value = entry.getValue();
 
       for (TXOutput ignored : value.getOutputsList()) {
-        uTXODataSource.putData(ByteArray.fromHexString(key), value.toByteArray());
+        utxoDataSource.putData(ByteArray.fromHexString(key), value.toByteArray());
       }
     }
   }
 
   /**
-   * Find UTXO
+   * Find Utxo.
    */
-  public ArrayList<TXOutput> findUTXO(byte[] address) {
+  public ArrayList<TXOutput> findUtxo(byte[] address) {
     ArrayList<TXOutput> utxos = new ArrayList<>();
 
-    Set<byte[]> keySet = uTXODataSource.allKeys();
+    Set<byte[]> keySet = utxoDataSource.allKeys();
 
     for (byte[] key : keySet) {
-      byte[] txData = uTXODataSource.getData(key);
+      byte[] txData = utxoDataSource.getData(key);
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
         for (TXOutput txOutput : txOutputs.getOutputsList()) {
@@ -144,6 +144,7 @@ public class UTXOStore extends Database {
 
     return utxos;
   }
+
 
   public void close() {
     dbSource.closeDB();
