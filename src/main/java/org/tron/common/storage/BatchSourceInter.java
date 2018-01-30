@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.storage;
 
 import java.util.Map;
@@ -23,5 +24,5 @@ import java.util.Map;
 public interface BatchSourceInter<K, V> extends SourceInter<K, V> {
 
 
-    void updateByBatch(Map<K, V> rows);
+  void updateByBatch(Map<K, V> rows);
 }

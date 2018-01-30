@@ -13,49 +13,139 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 package org.tron.core.db;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Blockchain;
+import org.tron.protos.core.TronTXOutput.TXOutput;
+import org.tron.protos.core.TronTXOutputs.TXOutputs;
 
-import java.util.Set;
-
-public class UTXOStore {
+public class UTXOStore extends Database {
 
   public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
+  private Blockchain blockchain;
   private LevelDbDataSourceImpl uTXODataSource;
 
-  public UTXOStore(String parentName, String childName) {
-    uTXODataSource = new LevelDbDataSourceImpl(parentName, childName);
-    uTXODataSource.initDB();
+  private UTXOStore(String dbName) {
+    super(dbName);
+  }
+
+  @Override
+  void add() {
+
+  }
+
+  @Override
+  void del() {
+
+  }
+
+  @Override
+  void fetch() {
+
+  }
+
+  private static UTXOStore instance;
+
+  /**
+   *
+   * @param dbName
+   * @return
+   */
+  public static UTXOStore Create(String dbName) {
+    if (instance == null) {
+      synchronized (UTXOStore.class) {
+        if (instance == null) {
+          instance = new UTXOStore(dbName);
+        }
+      }
+    }
+    return instance;
   }
 
 
   public void reSet() {
-    uTXODataSource.resetDB();
+    this.dbSource.resetDB();
   }
 
   public byte[] find(byte[] key) {
-    return uTXODataSource.getData(key);
+    return dbSource.getData(key);
   }
 
 
   public Set<byte[]> getKeys() {
-    return uTXODataSource.allKeys();
+    return dbSource.allKeys();
   }
 
   /**
    * save  utxo
-   *
-   * @param utxoKey
-   * @param utxoData
    */
   public void saveUTXO(byte[] utxoKey, byte[] utxoData) {
-    uTXODataSource.putData(utxoKey, utxoData);
+    dbSource.putData(utxoKey, utxoData);
+  }
+
+  /**
+   * store and find related utxos
+   */
+
+  public void storeUTXO() {
+    logger.info("storeUTXO");
+
+    uTXODataSource.resetDB();
+
+    HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
+
+    Set<Entry<String, TXOutputs>> entrySet = utxo.entrySet();
+
+    for (Entry<String, TXOutputs> entry : entrySet) {
+      String key = entry.getKey();
+      TXOutputs value = entry.getValue();
+
+      for (TXOutput ignored : value.getOutputsList()) {
+        uTXODataSource.putData(ByteArray.fromHexString(key), value.toByteArray());
+      }
+    }
+  }
+
+  /**
+   * Find UTXO
+   */
+  public ArrayList<TXOutput> findUTXO(byte[] address) {
+    ArrayList<TXOutput> utxos = new ArrayList<>();
+
+    Set<byte[]> keySet = uTXODataSource.allKeys();
+
+    for (byte[] key : keySet) {
+      byte[] txData = uTXODataSource.getData(key);
+      try {
+        TXOutputs txOutputs = TXOutputs.parseFrom(txData);
+        for (TXOutput txOutput : txOutputs.getOutputsList()) {
+          if (ByteArray.toHexString(ECKey.computeAddress(address))
+              .equals(ByteArray.toHexString(txOutput
+                  .getPubKeyHash()
+                  .toByteArray()))) {
+            utxos.add(txOutput);
+          }
+        }
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return utxos;
   }
 
   public void close() {
-    uTXODataSource.closeDB();
+    dbSource.closeDB();
   }
 }

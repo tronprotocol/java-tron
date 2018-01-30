@@ -19,101 +19,15 @@ TRON is a block chain-based decentralized smart protocol and an application deve
 
 TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
+ 
+
 # Quick Start
 
-> Note: This repository is a IDEA project which you can simply download and import.
+Read the [Quick Srart](http://wiki.tron.network/en/latest/quick_start.html).
 
-**Download and build**
-
-```shell
-> git clone https://github.com/tronprotocol/java-tron.git
-> cd java-tron
-> gradle build
-```
-
-**Import project to IDEA**
-
-- [File] -> [New] -> [Project from Existing Sources...]
-- Select java-tron/build.gradle
-- Dialog [Import Project from Gradle], confirm [Use auto-import] and [Use gradle wrapper task configuration] have been
- selected，then select Gradle JVM（JDK 1.8）and click [OK]
-
-# Testing
-
-**Install Kafka and create two topics (block and transaction)**
-
-**Update the configuration**
-
-
-**Starting program**
-
-IDEA: 
-- [Edit Configurations...] -> [Add New Configuration] -> [Application]
-- [Edit Configurations...] -> [Main Class]: `org.tron.example.Tron`
-- [Edit Configurations...] -> [Use classpath of module]: `java-tron_main`
-- [Edit Configurations...] -> [Program arguments]: `--type server`
-- Run
-
-![run](https://github.com/tronprotocol/wiki/blob/master/images/commands/default-set.gif)
-
-or simply from terminal:
-- ./gradlew run -Pserver=true
-
-**Complete process**
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/process.gif)
-
-**Other nodes to join need to modify the connection ip**
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/node-ip.gif)
 
 # Commands
-**help**
-
-| Description | Example |
-| --- | --- |
-| Help tips | `help` |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/help.gif)
-
-**account**
-
-| Description | Example |
-| --- | --- |
-| Get address | `account` |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/account.gif)
-
-**getbalance**
-
-| Description | Example |
-| --- | --- |
-| Get balance | `getbalance` |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/getbalance.gif)
-
-**send [to] [balance]**
-
-| Description | Example |
-| --- | --- |
-| Send balance to address | `send 2cddf5707aefefb199cb16430fb0f6220d460dfe 2` |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/send1.gif)
-
-**printblockchain**
-
-| Description | Example |
-| --- | --- | 
-| Print blockchain | `printblockchain`|
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/printblockchain.gif)
-
-**exit**
-
-| Description | Example |
-| --- | --- |
-| Exit | `exit` |
-
-![help](https://github.com/tronprotocol/wiki/blob/master/images/commands/exit.gif)
+Read the [Commands](http://wiki.tron.network/en/latest/quick_start.html#commands).
 
 # Contact
 

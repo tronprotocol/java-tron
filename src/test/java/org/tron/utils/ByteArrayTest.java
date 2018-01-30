@@ -22,41 +22,42 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 
 public class ByteArrayTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testToHexString() {
-        logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString
-                (new byte[]{16}));
-    }
+  private static final Logger logger = LoggerFactory.getLogger("Test");
 
-    @Test
-    public void testHexStringToByte() {
-        logger.info("Byte: hex string 0x11 to byte = {}", ByteArray
-                .fromHexString("0x11"));
-        logger.info("Byte: hex string 10 to byte = {}", ByteArray
-                .fromHexString("10"));
-        logger.info("Byte: hex string 1 to byte = {}", ByteArray
-                .fromHexString("1"));
-    }
+  @Test
+  public void testToHexString() {
+    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString
+        (new byte[]{16}));
+  }
 
-    @Test
-    public void testToLong() {
-        logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
-                byte[]{13}));
-    }
+  @Test
+  public void testHexStringToByte() {
+    logger.info("Byte: hex string 0x11 to byte = {}", ByteArray
+        .fromHexString("0x11"));
+    logger.info("Byte: hex string 10 to byte = {}", ByteArray
+        .fromHexString("10"));
+    logger.info("Byte: hex string 1 to byte = {}", ByteArray
+        .fromHexString("1"));
+  }
 
-    @Test
-    public void testFromLong() {
-        logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
-    }
+  @Test
+  public void testToLong() {
+    logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
+        byte[]{13}));
+  }
 
-    @Test
-    public void test2ToHexString() {
-        byte[] bs = new byte[]{};
+  @Test
+  public void testFromLong() {
+    logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
+  }
 
-        logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString
-                (bs));
-        logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
-    }
+  @Test
+  public void test2ToHexString() {
+    byte[] bs = new byte[]{};
+
+    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString
+        (bs));
+    logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
+  }
 }

@@ -20,18 +20,24 @@ import io.atomix.catalyst.transport.netty.NettyTransport;
 import io.atomix.copycat.server.CopycatServer;
 import io.atomix.copycat.server.storage.Storage;
 import io.atomix.copycat.server.storage.StorageLevel;
-import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.CompletableFuture;
 import org.tron.common.application.Service;
 import org.tron.core.consensus.common.GetQuery;
 import org.tron.core.consensus.common.MapstateMachine;
 import org.tron.core.consensus.common.PutCommand;
 
+import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.CompletableFuture;
+
 public class Server implements Service {
 
   private CopycatServer server;
+
+  @Override
+  public void init() {
+
+  }
 
   @Override
   public void start() {
