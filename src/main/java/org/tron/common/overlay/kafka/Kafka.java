@@ -36,6 +36,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
 
 public class Kafka implements Net {
+
   public static final String KAFKA_HOST = "kafka.host";
   public static final String KAFKA_PORT = "kafka.port";
 

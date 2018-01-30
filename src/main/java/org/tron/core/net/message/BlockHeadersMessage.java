@@ -1,16 +1,21 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.protos.Protocal.Items;
+import org.tron.protos.Protocal.BlockHeader;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BlockHeadersMessage extends Message {
 
-    private org.tron.protos.core.Tron.BlockHeaders blockHeaders;
+    private List<BlockHeader> blockHeaders = new ArrayList<>();
 
     public BlockHeadersMessage(byte[] packed) {
         super(packed);
     }
 
-    public BlockHeadersMessage(org.tron.protos.core.Tron.BlockHeaders blockHeaders) {
+    public BlockHeadersMessage(List<BlockHeader> blockHeaders) {
         this.blockHeaders = blockHeaders;
         unpacked = true;
     }
@@ -31,10 +36,18 @@ public class BlockHeadersMessage extends Message {
         return data;
     }
 
+    public List<BlockHeader> getBlockHeaders() {
+        unPack();
+        return blockHeaders;
+    }
+
     private synchronized void unPack() {
         if (unpacked) return;
         try {
-            this.blockHeaders = org.tron.protos.core.Tron.BlockHeaders.parseFrom(data);
+            Items items = Items.parseFrom(data);
+            if (items.getType() == Items.ItemType.BLOCKHEADER) {
+                blockHeaders = items.getBlockHeadersList();
+            }
         } catch (InvalidProtocolBufferException e) {
             logger.debug(e.getMessage());
         }
@@ -42,7 +55,10 @@ public class BlockHeadersMessage extends Message {
     }
 
     private void pack() {
-        this.data = this.blockHeaders.toByteArray();
+        Items.Builder itemsBuilder =  Items.newBuilder();
+        itemsBuilder.setType(Items.ItemType.BLOCKHEADER);
+        itemsBuilder.addAllBlockHeaders(this.blockHeaders);
+        this.data = itemsBuilder.build().toByteArray();
     }
 
 }

@@ -15,57 +15,88 @@
 
 package org.tron.core.db;
 
+import java.util.List;
+import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.protos.Protocal;
 import org.tron.protos.core.TronTransaction;
 
-import java.util.Vector;
+public class BlockStore extends Database {
 
-public class BlockStore {
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
   private Vector<TronTransaction.Transaction> pendingTrans;
 
-  public BlockStore() {
+  private BlockStore(String dbName) {
+    super(dbName);
   }
 
-  public BlockStore(String parentName, String childName) {
-    blockDbDataSource = new LevelDbDataSourceImpl(parentName, childName);
-    blockDbDataSource.initDB();
+  private static BlockStore instance;
+
+  public static BlockStore Create(String dbName) {
+    if (instance == null) {
+      synchronized (AccountStore.class) {
+        if (instance == null) {
+          instance = new BlockStore(dbName);
+        }
+      }
+    }
+    return instance;
   }
 
-  public void initBlockDbSource(String parentName, String childName) {
-    blockDbDataSource = new LevelDbDataSourceImpl(parentName, childName);
-    blockDbDataSource.initDB();
+
+  public byte[] getHeadBlockHash() {
+    return "".getBytes();
   }
 
-  public void initUnspendDbSource(String parentName, String childName) {
-    unSpendCache = new LevelDbDataSourceImpl(parentName, childName);
-    unSpendCache.initDB();
+  public boolean hasItem(byte[] hash, String type) {
+    if (type == "trx") {
+      return hasTranscation(hash);
+    } else if (type == "block") {
+      return hasBlock(hash);
+    }
+    return false;
+  }
+
+  public boolean hasBlock(byte[] blockHash) {
+    return false;
+  }
+
+  public boolean hasTranscation(byte[] trxHash) {
+    return false;
+  }
+
+  public boolean isIncludeBlock(byte[] hash) {
+    return false;
   }
 
   /**
    *
    */
 
-  public void pushTransactions(TronTransaction.Transaction trx)  {
-    pendingTrans.add(trx);
+  public void pushTransactions(Protocal.Transaction trx) {
+    //pendingTrans.add(trx);
   }
 
   /**
    * Generate Block
    */
-  public void generateBlock() {
+  //public void generateBlock() {
 
+  //}
+
+  /**
+   * Generate Block return Block
+   */
+  public Protocal.Block generateBlock(List<Protocal.Transaction> transactions) {
+    return null;
   }
 
   /**
    * save a block
-   *
-   * @param blockHash
-   * @param blockData
    */
   public void saveBlock(byte[] blockHash, byte[] blockData) {
     blockDbDataSource.putData(blockHash, blockData);
@@ -74,18 +105,17 @@ public class BlockStore {
 
   /**
    * find a block by it's hash
-   *
-   * @param blockHash
-   * @return
    */
   public byte[] findBlockByHash(byte[] blockHash) {
     return blockDbDataSource.getData(blockHash);
   }
 
+  public byte[] findTrasactionByHash(byte[] trxHash) {
+    return "".getBytes();
+  }
+
   /**
    * deleteData a block
-   *
-   * @param blockHash
    */
   public void deleteBlock(byte[] blockHash) {
     blockDbDataSource.deleteData(blockHash);
@@ -95,6 +125,7 @@ public class BlockStore {
   public void getUnspend(byte[] key) {
 
   }
+
 
   /***
    * resetDB the database
@@ -109,4 +140,18 @@ public class BlockStore {
     blockDbDataSource.closeDB();
   }
 
+  @Override
+  void add() {
+
+  }
+
+  @Override
+  void del() {
+
+  }
+
+  @Override
+  void fetch() {
+
+  }
 }

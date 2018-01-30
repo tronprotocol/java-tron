@@ -16,11 +16,12 @@
 package org.tron.core.peer;
 
 public class ValidationRuleFactory {
-    public static ValidationRule create(String type) {
-        if (type.equals("Validation")) {
-            return null;
-        }
 
-        return null;
+  public static ValidationRule create(String type) {
+    if (type.equals("Validation")) {
+      return null;
     }
+
+    return null;
+  }
 }

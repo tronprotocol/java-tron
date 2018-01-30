@@ -15,8 +15,8 @@
 
 package org.tron.core;
 
-import static org.tron.core.Constant.LAST_HASH;
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.core.Constant.LAST_HASH;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.Optional;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.peer.Validator;
 import org.tron.protos.core.TronBlock;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronBlockHeader.BlockHeader;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.common.utils.ByteArray;
 
 public class BlockUtils {
 
@@ -41,7 +41,7 @@ public class BlockUtils {
   private byte[] serializEncode;
 
   /**
-   * getData a new block
+   * getData a new block.
    *
    * @return {@link Block} block
    */
@@ -55,11 +55,6 @@ public class BlockUtils {
           block.addTransactions(index, transaction)
       );
     }
-
-    //Chain programming
-//        BlockHeader.Builder builder = BlockHeader.newBuilder()
-// .setParentHash(parentHash).setDifficulty(difficulty)
-//                .setNumber(number).setTimestamp(System.currentTimeMillis());
 
     BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder();
 
@@ -78,12 +73,11 @@ public class BlockUtils {
   }
 
   /**
-   * new genesis block
+   * new genesis block.
    *
    * @return {@link Block} block
    */
   public static Block newGenesisBlock(Transaction coinbase) {
-
 
     Block.Builder genesisBlock = Block.newBuilder();
     genesisBlock.addTransactions(coinbase);
@@ -125,7 +119,7 @@ public class BlockUtils {
   }
 
   /**
-   * getData prepare data of the block
+   * getData prepare data of the block.
    *
    * @param block {@link Block} block
    * @return byte[] data
@@ -143,7 +137,7 @@ public class BlockUtils {
   }
 
   /**
-   * the proof block
+   * the proof block.
    *
    * @param block {@link Block} block
    * @return boolean is it the proof block
@@ -153,7 +147,7 @@ public class BlockUtils {
   }
 
   /**
-   * getData print string of the block
+   * getData print string of the block.
    *
    * @param block {@link Block} block
    * @return String format string of the block

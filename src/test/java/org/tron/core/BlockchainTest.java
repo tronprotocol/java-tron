@@ -30,13 +30,14 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.core.TronBlock.Block;
 import org.tron.protos.core.TronTXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
 
 public class BlockchainTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Blockchain blockchain;
   private static LevelDbDataSourceImpl mockBlockDB;
@@ -77,13 +78,13 @@ public class BlockchainTest {
     }
   }
 
-    @Test
-    public void testFindTransaction() {
-        Transaction transaction = blockchain.findTransaction(ByteString
-                .copyFrom(ByteArray.fromHexString
-                        ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
-        logger.info("{}", TransactionUtils.toPrintString(transaction));
-    }
+  @Test
+  public void testFindTransaction() {
+    Transaction transaction = blockchain.findTransaction(ByteString
+        .copyFrom(ByteArray.fromHexString
+            ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
+    logger.info("{}", TransactionUtils.toPrintString(transaction));
+  }
 
   @Test
   public void testFindUTXO() {
@@ -102,8 +103,8 @@ public class BlockchainTest {
     List<Transaction> transactions = new ArrayList<>();
     transactions.add(transaction);
     blockchain.addBlock(BlockUtils.newBlock(transactions, ByteString
-        .copyFrom(new byte[] {1}), ByteString
-        .copyFrom(new byte[] {1}), 1));
+        .copyFrom(new byte[]{1}), ByteString
+        .copyFrom(new byte[]{1}), 1));
     HashMap<String, TronTXOutputs.TXOutputs> utxo = blockchain.findUTXO();
   }
 

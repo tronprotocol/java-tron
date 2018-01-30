@@ -14,16 +14,67 @@
  */
 package org.tron.common.application;
 
-import com.google.inject.Injector;
+import org.tron.core.db.BlockStore;
+import org.tron.core.net.node.Node;
 import org.tron.core.peer.Peer;
+import org.tron.program.Args;
 
-public class CliApplication extends Application {
+public class CliApplication implements Application {
+  @Override
+  public void setOptions(Args args) {
+
+  }
+
+  @Override
+  public void init(String path, Args args) {
+
+  }
+
+  @Override
+  public void initServices(Args args) {
+
+  }
+
+  @Override
+  public void startup() {
+
+  }
+
+  @Override
+  public void shutdown() {
+
+  }
+
+  @Override
+  public void startServies() {
+
+  }
+
+  @Override
+  public void shutdownServices() {
+
+  }
+
+  @Override
+  public Node getP2pNode() {
+    return null;
+  }
+
+  @Override
+  public BlockStore getBlockStoreS() {
+    return null;
+  }
+
+  @Override
+  public void addService(Service service) {
+
+  }
 
   private Peer peer;
 
-  public CliApplication(Injector injector) {
-    super(injector);
-  }
+//  public CliApplication(Injector injector) {
+//    super(injector);
+//  }
 
   public Peer getPeer() {
     return peer;
