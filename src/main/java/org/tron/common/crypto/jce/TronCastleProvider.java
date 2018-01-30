@@ -18,29 +18,29 @@
 
 package org.tron.common.crypto.jce;
 
-import org.spongycastle.jce.provider.BouncyCastleProvider;
-
 import java.security.Provider;
 import java.security.Security;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 public final class TronCastleProvider {
 
-    public static Provider getInstance() {
-        return Holder.INSTANCE;
+  public static Provider getInstance() {
+    return Holder.INSTANCE;
+  }
+
+  private static class Holder {
+
+    private static final Provider INSTANCE;
+
+    static {
+      Provider p = Security.getProvider("SC");
+
+      INSTANCE = (p != null) ? p : new BouncyCastleProvider();
+
+      INSTANCE.put("MessageDigest.TRON-KECCAK-256", "org.tron.common.crypto" +
+          ".cryptohash.Keccak256");
+      INSTANCE.put("MessageDigest.TRON-KECCAK-512", "org.tron.common.crypto" +
+          ".cryptohash.Keccak512");
     }
-
-    private static class Holder {
-        private static final Provider INSTANCE;
-
-        static {
-            Provider p = Security.getProvider("SC");
-
-            INSTANCE = (p != null) ? p : new BouncyCastleProvider();
-
-            INSTANCE.put("MessageDigest.TRON-KECCAK-256", "org.tron.common.crypto" +
-                    ".cryptohash.Keccak256");
-            INSTANCE.put("MessageDigest.TRON-KECCAK-512", "org.tron.common.crypto" +
-                    ".cryptohash.Keccak512");
-        }
-    }
+  }
 }

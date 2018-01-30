@@ -112,8 +112,9 @@ dependencies {
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
     // end google grpc
 
-
-
+    compile group: 'io.scalecube', name: 'scalecube-services', version: '1.0.7'
+    compile group: 'io.scalecube', name: 'scalecube-cluster', version: '1.0.7'
+    compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
 }
 
 task lint(type: Checkstyle) {
@@ -148,9 +149,9 @@ sourceSets {
 
 
         proto {
-                srcDir 'src/proto'
-            }
+            srcDir 'src/proto'
         }
+    }
 
 }
 
@@ -171,7 +172,7 @@ protobuf {
     generateProtoTasks {
         all().each { task ->
             task.builtins {
-                java {outputSubDir = "gen"}
+                java { outputSubDir = "gen" }
             }
         }
         all()*.plugins {

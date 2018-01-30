@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.dbStore;
+package org.tron.core.dbstore;
 
 import org.tron.protos.core.TronBlock;
 

@@ -22,12 +22,10 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * AutoClosable Lock wrapper. Use case:
- * <p>
- * try (ALock l = wLock.lock()) {
- * // do smth under lock
- * }
+ * try (ALock l = wLock.lock()) { // do smth under lock }
  */
 public final class ALock implements AutoCloseable {
+
   private final Lock lock;
 
   public ALock(Lock l) {

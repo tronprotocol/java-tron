@@ -5,26 +5,26 @@ import org.slf4j.LoggerFactory;
 
 public abstract class Message {
 
-    protected static final Logger logger = LoggerFactory.getLogger("net");
+  protected static final Logger logger = LoggerFactory.getLogger("net");
 
-    protected boolean unpacked;
-    protected byte[] data;
-    protected byte type;
+  protected boolean unpacked;
+  protected byte[] data;
+  protected byte type;
 
-    public Message() {
-    }
+  public Message() {
+  }
 
-    public Message(byte[] packed) {
-        this.data = packed;
-        unpacked = false;
-    }
+  public Message(byte[] packed) {
+    this.data = packed;
+    unpacked = false;
+  }
 
-    public abstract byte[] getData();
+  public abstract byte[] getData();
 
-    public abstract String toString();
+  public abstract String toString();
 
-    //public byte getCode() { return type; }
+  //public byte getCode() { return type; }
 
-    public abstract MessageTypes getType();
+  public abstract MessageTypes getType();
 
 }

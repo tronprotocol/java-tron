@@ -14,14 +14,14 @@
  */
 package org.tron.core.consensus.client;
 
-import org.tron.core.events.BlockchainListener;
 import org.tron.common.overlay.Net;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
 import org.tron.core.peer.PeerType;
 import org.tron.protos.core.TronBlock;
-import org.tron.common.utils.ByteArray;
 
 public class BlockchainClientListener implements BlockchainListener {
 

@@ -15,10 +15,23 @@
 
 package org.tron.core;
 
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.LAST_HASH;
+
 import com.alibaba.fastjson.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -33,20 +46,6 @@ import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.protos.core.TronTransaction.Transaction;
-
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.LAST_HASH;
 
 public class Blockchain {
 
@@ -99,22 +98,23 @@ public class Blockchain {
 
   private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
     byte[] lastHash = genesisBlock.getBlockHeader()
-            .getHash()
-            .toByteArray();
+        .getHash()
+        .toByteArray();
     blockDB.putData(LAST_HASH, lastHash);
   }
 
-  private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
+  private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB,
+      Block genesisBlock) {
     blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
-            genesisBlock.toByteArray());
+        genesisBlock.toByteArray());
   }
 
   private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
     return genesisBlockLoader.getTransaction().entrySet().stream()
-            .map(e ->
-                    TransactionUtils
-                            .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
-            ).collect(Collectors.toList());
+        .map(e ->
+            TransactionUtils
+                .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
+        ).collect(Collectors.toList());
   }
 
   private GenesisBlockLoader buildGenesisBlockLoader() {
@@ -188,7 +188,7 @@ public class Blockchain {
 
         output:
         for (int outIdx = 0; outIdx < transaction.getVoutList().size
-                (); outIdx++) {
+            (); outIdx++) {
           TXOutput out = transaction.getVout(outIdx);
           if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
             for (int i = 0; i < spenttxos.get(txid).length; i++) {
@@ -211,7 +211,7 @@ public class Blockchain {
         if (!TransactionUtils.isCoinbaseTransaction(transaction)) {
           for (TXInput in : transaction.getVinList()) {
             String inTxid = ByteArray.toHexString(in.getTxID()
-                    .toByteArray());
+                .toByteArray());
             long[] vindexs = spenttxos.get(inTxid);
 
             if (vindexs == null) {
@@ -233,8 +233,6 @@ public class Blockchain {
 
   /**
    * add a block into database
-   *
-   * @param block
    */
   public void addBlock(Block block) {
     byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
@@ -251,7 +249,7 @@ public class Blockchain {
       Block lastBlock = Block.parseFrom(lastBlockData);
       if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
         blockDB.putData(ByteArray.fromString("lashHash"),
-                block.getBlockHeader().getHash().toByteArray());
+            block.getBlockHeader().getHash().toByteArray());
         this.lastHash = block.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
       }
@@ -288,7 +286,7 @@ public class Blockchain {
     // getData difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
     Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-            number);
+        number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlockNet(block, net);
@@ -304,7 +302,7 @@ public class Blockchain {
     // get difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
     Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
-            number);
+        number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlock(block);
@@ -314,7 +312,7 @@ public class Blockchain {
   /**
    * receive a block and save it into database,update caching at the same time.
    *
-   * @param block   block
+   * @param block block
    * @param utxoSet utxoSet
    */
   public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
@@ -323,8 +321,8 @@ public class Blockchain {
     byte[] lastHash = blockDB.getData(lastHashKey);
 
     if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray())
-            .equals(ByteArray.toHexString
-                    (lastHash))) {
+        .equals(ByteArray.toHexString
+            (lastHash))) {
       return;
     }
 

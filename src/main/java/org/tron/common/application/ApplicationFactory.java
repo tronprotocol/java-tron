@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.application;
 
 import com.google.inject.Guice;
@@ -20,7 +21,7 @@ import com.google.inject.Injector;
 public class ApplicationFactory {
 
   /**
-   * Build a Guice instance
+   * Build a Guice instance.
    *
    * @return Guice
    */
@@ -30,24 +31,19 @@ public class ApplicationFactory {
   }
 
   /**
-   * Build a new application
-   *
-   * @return
+   * Build a new application.
    */
   public Application build() {
-    return new Application(buildGuice());
+    return new ApplicationImpl();
   }
 
   /**
-   * Build a new cli application
-   *
-   * @return
+   * Build a new cli application.
    */
-  public CliApplication buildCli() {
-    return new CliApplication(buildGuice());
-  }
-
-  public static  Application create() {
-    return new Application();
+  //public CliApplication buildCli() {
+  //  return new CliApplication(buildGuice());
+  //}
+  public static Application create() {
+    return new ApplicationImpl();
   }
 }

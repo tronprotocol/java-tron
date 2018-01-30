@@ -15,9 +15,10 @@
 
 package org.tron.common.command;
 
+import org.tron.common.application.CliApplication;
+
 import java.util.Arrays;
 import java.util.Scanner;
-import org.tron.common.application.CliApplication;
 
 public class Cli {
 
@@ -50,7 +51,7 @@ public class Cli {
           new GetBalanceCommand().execute(app, cmdParameters);
           break;
         case "send":
-          app.getInjector().getInstance(ConsensusCommand.class).execute(app, cmdParameters);
+          //app.getInjector().getInstance(ConsensusCommand.class).execute(app, cmdParameters);
           break;
         case "printblockchain":
           new PrintBlockchainCommand().execute(app, cmdParameters);

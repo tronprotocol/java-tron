@@ -13,14 +13,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.dbStore;
+package org.tron.core.dbstore;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.core.Constant;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 
 @Ignore
 public class UTXOStoreTest {

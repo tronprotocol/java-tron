@@ -89,7 +89,7 @@ public class TransactionUtils {
   /**
    * new coinbase transaction
    *
-   * @param to   String to sender's address
+   * @param to String to sender's address
    * @param data String transaction data
    * @return {@link Transaction}
    */
@@ -101,7 +101,7 @@ public class TransactionUtils {
       data = "" + ByteArray.toHexString(randBytes);
     }
 
-    TXInput txi = TXInputUtils.newTXInput(new byte[] {}, -1, new byte[] {},
+    TXInput txi = TXInputUtils.newTXInput(new byte[]{}, -1, new byte[]{},
         ByteArray.fromHexString(data));
     TXOutput txo = TXOutputUtils.newTXOutput(RESERVE_BALANCE, to);
 
@@ -144,7 +144,6 @@ public class TransactionUtils {
         .toByteArray()) + "\n" +
         "\tvin=[\n");
 
-
     for (int i = 0, vinCount = transaction.getVinCount(); i < vinCount; i++) {
       TXInput vin = transaction.getVin(i);
 
@@ -165,7 +164,6 @@ public class TransactionUtils {
     }
 
     sb.append("\t],\n\tvout=[\n");
-
 
     for (int i = 0, voutCount = transaction.getVoutCount(); i < voutCount; i++) {
       TXOutput vout = transaction.getVout(i);
@@ -198,6 +196,46 @@ public class TransactionUtils {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey,
+      List<ByteString> pubKeyHashList) {
+    if (TransactionUtils.isCoinbaseTransaction(transaction)) {
+      return null;
+    }
+
+    for (int i = 0; i < transaction.getVinList().size(); i++) {
+      TXInput vin = transaction.getVin(i);
+      ByteString prevTxPubKeyHash = pubKeyHashList.get(i);
+      if (prevTxPubKeyHash == null || prevTxPubKeyHash.isEmpty()) {
+        logger
+            .error(
+                "ERROR: Previous transaction is not correct, the " + i + "PubKeyHash is empty !!!");
+        return null;
+      }
+      Transaction.Builder transactionCopyBuilder = transaction
+          .toBuilder();
+      TXInput.Builder vinBuilder = vin.toBuilder();
+      vinBuilder.clearSignature();
+      vinBuilder.setPubKey(prevTxPubKeyHash);
+      transactionCopyBuilder.setVin(i, vinBuilder.build());
+      transactionCopyBuilder.setId(ByteString.copyFrom(TransactionUtils
+          .getHash(transactionCopyBuilder.build())));
+      vinBuilder.clearPubKey();
+      transactionCopyBuilder.setVin(i, vinBuilder.build());
+
+      Transaction.Builder transactionBuilder = transaction.toBuilder().setVin(i, vin.toBuilder()
+          .setSignature(ByteString.copyFrom(myKey.sign
+              (transactionCopyBuilder.getId().toByteArray())
+              .toByteArray())).build());
+
+      transactionBuilder
+          .setId(ByteString.copyFrom(TransactionUtils.getHash(transactionBuilder.build())));
+
+      transaction = transactionBuilder.build();
+    }
+
+    return transaction;
+  }
+
+  public static Transaction sign(Transaction transaction, ECKey myKey,
       HashMap<String, Transaction> prevTXs) {
     if (TransactionUtils.isCoinbaseTransaction(transaction)) {
       return null;
@@ -215,7 +253,6 @@ public class TransactionUtils {
       TXInput vin = transaction.getVin(i);
       Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
           .getTxID().toByteArray()));
-
 
       Transaction.Builder transactionCopyBuilder = transaction
           .toBuilder();
@@ -259,7 +296,6 @@ public class TransactionUtils {
       TXInput vin = transaction.getVin(i);
       Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
           .getTxID().toByteArray()));
-
 
       Transaction.Builder transactionCopyBuilder = transaction
           .toBuilder();
