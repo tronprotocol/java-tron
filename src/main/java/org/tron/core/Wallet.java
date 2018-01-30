@@ -26,7 +26,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.UTXOStore;
+import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -40,7 +40,7 @@ public class Wallet {
 
   private static BlockStore db;
   private final ECKey ecKey;
-  private UTXOStore utxoStore;
+  private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
   private UTXOSet utxoSet;
@@ -52,6 +52,10 @@ public class Wallet {
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
+
+  /**
+   * constructor.
+   */
   public Wallet(Application app) {
     this.app = app;
     this.p2pnode = app.getP2pNode();
@@ -77,11 +81,11 @@ public class Wallet {
   }
 
   /**
-   * Get balance by address
+   * Get balance by address.
    */
   public long getBalance(byte[] address) {
 
-    ArrayList<TXOutput> utxos = utxoStore.findUTXO(address);
+    ArrayList<TXOutput> utxos = utxoStore.findUtxo(address);
     long balance = 0;
 
     for (TXOutput txOutput : utxos) {
@@ -92,28 +96,10 @@ public class Wallet {
     return balance;
   }
 
-//  /**
-//   * Build a transaction
-//   */
-//  public Transaction buildTransaction(List<TXInput> txInputs, List<TXOutput> txOutputs) {
-//    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-//
-//    for (int i = 0; i < txInputs.size(); i++) {
-//      transactionBuilder.addVin(txInputs.get(i));
-//    }
-//
-//    for (int i = 0; i < txOutputs.size(); i++) {
-//      transactionBuilder.addVout(txOutputs.get(i));
-//    }
-//
-//    Transaction transaction = transactionBuilder.build();
-//    return transaction;
-//  }
 
   /**
-   * Create a transaction
+   * create transaction.
    */
-
   public Transaction createTransaction(byte[] address, String to, long amount) {
     Transaction transaction = null;
 
