@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.SystemProperties;
-import org.tron.core.dbstore.BlockStoreInput;
+import org.tron.core.db.BlockStoreInput;
 import org.tron.protos.core.TronBlock;
 
 @Component
@@ -123,12 +123,6 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
 
       fw = new FileWriter(dumpFile.getAbsoluteFile(), true);
       bw = new BufferedWriter(fw);
-
-//            if (bestBlock.isGenesis()) {
-//                bw.write(Hex.toHexString(bestBlock.toByteArray()));
-//                bw.write("\n");
-//            }
-
       bw.write(Hex.toHexString(block.toByteArray()));
       bw.write("\n");
 

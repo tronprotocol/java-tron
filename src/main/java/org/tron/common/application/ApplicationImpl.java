@@ -2,6 +2,7 @@ package org.tron.common.application;
 
 import java.util.ArrayList;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
@@ -15,7 +16,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   public Node p2pNode;
 
-  public BlockStore db;
+  public BlockStore blockStoreDb;
 
   public ServiceContainer services;
 
@@ -33,7 +34,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   private void resetP2PNode() {
     p2pNode.listenOn("endpoint");
     p2pNode.connectToP2PNetWork();
-    p2pNode.syncFrom(db.getHeadBlockHash());
+    p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
   }
 
   private void resetRpcServer() {
@@ -52,24 +53,24 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public void handleBlock(BlockMessage blkMsg) {
-    db.saveBlock("".getBytes(), blkMsg.getData());
+    blockStoreDb.saveBlock("".getBytes(), blkMsg.getData());
   }
 
   @Override
   public void handleTransation(TransactionMessage trxMsg) {
-    db.pushTransactions(trxMsg.getTransaction());
+    blockStoreDb.pushTransactions(trxMsg.getTransaction());
   }
 
   @Override
   public boolean isIncludedBlock(byte[] hash) {
-    return db.isIncludeBlock(hash);
+    return blockStoreDb.isIncludeBlock(hash);
   }
 
 
   @Override
   public Message getData(byte[] hash) {
     //Block
-    return new BlockMessage(db.findBlockByHash(hash));
+    return new BlockMessage(blockStoreDb.findBlockByHash(hash));
     //todo
     //Trx
   }
@@ -108,7 +109,9 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void init(String path, Args args) {
     p2pNode = new NodeImpl();
-    db = BlockStore.Create("db");
+    Manager dbManager = new Manager();
+    dbManager.init();
+    blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
 
@@ -154,7 +157,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public BlockStore getBlockStoreS() {
-    return db;
+    return blockStoreDb;
   }
 
 

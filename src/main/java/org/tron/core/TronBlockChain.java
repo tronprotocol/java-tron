@@ -15,11 +15,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
-
 import java.math.BigInteger;
-import org.tron.core.dbstore.BlockStoreInput;
+import org.tron.core.db.BlockStoreInput;
 import org.tron.protos.core.TronBlock;
 
 public interface TronBlockChain {
@@ -27,6 +27,8 @@ public interface TronBlockChain {
   BlockStoreInput getBlockStoreInter();
 
   /**
+   * retrun block.
+   *
    * @return - last added block from blockchain
    */
   TronBlock.Block getBestBlock();
