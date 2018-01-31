@@ -19,7 +19,7 @@
 package org.tron.core;
 
 import java.util.List;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Transaction;
 
 
 public interface PendingState {

@@ -18,16 +18,16 @@
 
 package org.tron.core.db;
 
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
 
 public interface BlockStoreInput {
 
-  TronBlock.Block getBestBlock();
+  Block getBestBlock();
 
-  TronBlock.Block getChainBlockByNumber(long blockNumber);
+  Block getChainBlockByNumber(long blockNumber);
 
   boolean isBlockExist(byte[] hash);
 
-  TronBlock.Block getBlockByHash(byte[] hash);
+  Block getBlockByHash(byte[] hash);
 
 }

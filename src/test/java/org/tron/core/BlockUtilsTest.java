@@ -24,8 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.core.TronBlock.Block;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class BlockUtilsTest {
 

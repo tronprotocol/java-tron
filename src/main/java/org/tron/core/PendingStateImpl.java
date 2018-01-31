@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
 import org.tron.common.overlay.Net;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class PendingStateImpl implements PendingState {
 
@@ -88,7 +89,6 @@ public class PendingStateImpl implements PendingState {
     for (Transaction tx : pendingTransactions) {
       txs.add(tx);
     }
-
 
     return txs;
   }

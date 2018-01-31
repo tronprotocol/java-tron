@@ -27,8 +27,9 @@ import org.tron.core.UTXOSet;
 import org.tron.core.Wallet;
 import org.tron.core.consensus.client.BlockchainClientListener;
 import org.tron.core.consensus.client.Client;
-import org.tron.protos.core.TronBlock;
-import org.tron.protos.core.TronTransaction;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class Peer {
 
@@ -66,8 +67,7 @@ public class Peer {
 
   public void addReceiveTransaction(String message) {
     try {
-      TronTransaction.Transaction transaction = TronTransaction
-          .Transaction.parseFrom(ByteArray.fromHexString(message));
+      Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(message));
       System.out.println(TransactionUtils.toPrintString
           (transaction));
       PendingStateImpl pendingState = new PendingStateImpl();
@@ -78,9 +78,9 @@ public class Peer {
   }
 
   public void addReceiveBlock(String message) {
-    TronBlock.Block block = null;
+    Block block = null;
     try {
-      block = TronBlock.Block.parseFrom(ByteArray.fromHexString(message
+      block = Block.parseFrom(ByteArray.fromHexString(message
       ));
       blockchain.receiveBlock(block, utxoSet, this);
     } catch (InvalidProtocolBufferException e) {

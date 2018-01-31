@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.SystemProperties;
 import org.tron.core.db.BlockStoreInput;
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
 
 @Component
 public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.TronBlockChain {
@@ -67,13 +67,13 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
   }
 
   @Override
-  public synchronized TronBlock.Block getBestBlock() {
-    TronBlock.Block bestBlock = null;
+  public synchronized Block getBestBlock() {
+    Block bestBlock = null;
     LevelDbDataSourceImpl levelDbDataSource = initBD();
     byte[] lastHash = levelDbDataSource.getData(LAST_HASH);
     byte[] value = levelDbDataSource.getData(lastHash);
     try {
-      bestBlock = TronBlock.Block.parseFrom(value)
+      bestBlock = Block.parseFrom(value)
           .toBuilder()
           .build();
     } catch (InvalidProtocolBufferException e) {
@@ -82,8 +82,8 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     return bestBlock;
   }
 
-  public synchronized void addBlockToChain(TronBlock.Block block) {
-    TronBlock.Block bestBlock = getBestBlock();
+  public synchronized void addBlockToChain(Block block) {
+    Block bestBlock = getBestBlock();
 
     if (bestBlock.getBlockHeader().getHash() == block.getBlockHeader()
         .getHash()) {
@@ -103,7 +103,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     }
   }
 
-  private void recordBlock(TronBlock.Block block) {
+  private void recordBlock(Block block) {
     if (!config.recordBlocks()) {
       return;
     }

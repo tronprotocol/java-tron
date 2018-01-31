@@ -30,10 +30,10 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.peer.Validator;
-import org.tron.protos.core.TronBlock;
-import org.tron.protos.core.TronBlock.Block;
-import org.tron.protos.core.TronBlockHeader.BlockHeader;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.BlockHeader;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class BlockUtils {
 
@@ -237,7 +237,7 @@ public class BlockUtils {
 
   // Whether the hash of the judge block is equal to the hash of the parent
   // block
-  public static boolean isParentOf(TronBlock.Block block1, TronBlock.Block
+  public static boolean isParentOf(Block block1, Block
       block2) {
 
     return (block1.getBlockHeader().getParentHash() == block2.getBlockHeader

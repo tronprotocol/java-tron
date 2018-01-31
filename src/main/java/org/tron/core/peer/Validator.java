@@ -15,9 +15,11 @@
 
 package org.tron.core.peer;
 
-import org.tron.protos.core.TronBlock.Block;
+
+import org.tron.protos.Protocal.Block;
 
 public class Validator {
+
   public static ValidationRule validationRule = ValidationRuleFactory
       .create("Validation");
 

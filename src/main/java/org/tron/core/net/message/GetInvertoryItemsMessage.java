@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 public class GetInvertoryItemsMessage extends Message {
 
-  private org.tron.protos.core.TronInventoryItems.InventoryItems items;
+  private org.tron.protos.TronInventoryItems.InventoryItems items;
 
   public GetInvertoryItemsMessage() {
     super();
@@ -15,7 +15,7 @@ public class GetInvertoryItemsMessage extends Message {
     super(packed);
   }
 
-  public GetInvertoryItemsMessage(org.tron.protos.core.TronInventoryItems.InventoryItems items) {
+  public GetInvertoryItemsMessage(org.tron.protos.TronInventoryItems.InventoryItems items) {
     this.items = items;
     unpacked = true;
   }
@@ -44,7 +44,7 @@ public class GetInvertoryItemsMessage extends Message {
     }
 
     try {
-      this.items = org.tron.protos.core.TronInventoryItems.InventoryItems.parseFrom(data);
+      this.items = org.tron.protos.TronInventoryItems.InventoryItems.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }

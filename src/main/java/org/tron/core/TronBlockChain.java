@@ -20,7 +20,7 @@ package org.tron.core;
 
 import java.math.BigInteger;
 import org.tron.core.db.BlockStoreInput;
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
 
 public interface TronBlockChain {
 
@@ -31,7 +31,7 @@ public interface TronBlockChain {
    *
    * @return - last added block from blockchain
    */
-  TronBlock.Block getBestBlock();
+  Block getBestBlock();
 
 
   BigInteger getTotalDifficulty();
