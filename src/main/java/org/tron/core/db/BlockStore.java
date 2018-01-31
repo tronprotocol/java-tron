@@ -21,14 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.Protocal;
-import org.tron.protos.core.TronTransaction;
+import org.tron.protos.Protocal.Transaction;
 
 public class BlockStore extends Database {
 
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
-  private Vector<TronTransaction.Transaction> pendingTrans;
+  private Vector<Transaction> pendingTrans;
 
   private BlockStore(String dbName) {
     super(dbName);
@@ -89,6 +89,7 @@ public class BlockStore extends Database {
    */
 
   public void pushTransactions(Protocal.Transaction trx) {
+    logger.info("push transaction");
     //pendingTrans.add(trx);
   }
 
@@ -101,9 +102,10 @@ public class BlockStore extends Database {
   }
 
   /**
-   * save a block
+   * save a block.
    */
   public void saveBlock(byte[] blockHash, byte[] blockData) {
+    logger.info("save block");
     blockDbDataSource.putData(blockHash, blockData);
 
   }
@@ -120,7 +122,7 @@ public class BlockStore extends Database {
   }
 
   /**
-   * deleteData a block
+   * deleteData a block.
    */
   public void deleteBlock(byte[] blockHash) {
     blockDbDataSource.deleteData(blockHash);
@@ -134,8 +136,6 @@ public class BlockStore extends Database {
   /***
    * resetDB the database.
    */
-
-
   public void reset() {
     blockDbDataSource.resetDB();
   }
