@@ -19,6 +19,10 @@
 package org.tron.core;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
@@ -30,8 +34,9 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Protocal.TXInput;
+import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.core.TronTXOutput.TXOutput;
 
 
 public class Wallet {
@@ -60,6 +65,7 @@ public class Wallet {
     this.app = app;
     this.p2pnode = app.getP2pNode();
     this.db = app.getBlockStoreS();
+    utxoStore = app.getDbManager().getUtxoStore();
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
@@ -96,25 +102,59 @@ public class Wallet {
     return balance;
   }
 
-
   /**
-   * create transaction.
+   * Build a transaction.
    */
-  public Transaction createTransaction(byte[] address, String to, long amount) {
-    Transaction transaction = null;
+  public Transaction buildTransaction(List<TXInput> txInputs, List<TXOutput> txOutputs) {
+    Transaction.Builder transactionBuilder = Transaction.newBuilder();
 
-    if (check(address, to, amount)) {
-      transaction = Transaction.newBuilder().build();
-      logger.info("Transaction create succeeded！");
-    } else {
-      logger.error("Transaction create failed！");
+    for (int i = 0; i < txInputs.size(); i++) {
+      transactionBuilder.addVin(txInputs.get(i));
     }
 
+    for (int i = 0; i < txOutputs.size(); i++) {
+      transactionBuilder.addVout(txOutputs.get(i));
+    }
+
+    Transaction transaction = transactionBuilder.build();
     return transaction;
   }
 
   /**
-   * Broadcast a transaction
+   * Create a transaction.
+   */
+
+  public Transaction createTransaction(byte[] address, String to, long amount) {
+    Transaction transaction = null;
+    List<TXInput> txInputs = new ArrayList<>();
+    List<TXOutput> txOutputs = new ArrayList<>();
+    long spendableOutputs = getBalance(address);
+
+    Set<Entry<String, long[]>> entrySet = utxoSet.findSpendableOutputs(address, amount)
+        .getUnspentOutputs().entrySet();
+    for (Map.Entry<String, long[]> entry : entrySet) {
+      String txId = entry.getKey();
+      long[] outs = entry.getValue();
+      for (long out : outs) {
+        TXInput txInput = TXInputUtils
+            .newTXInput(ByteArray.fromHexString(txId), out, null, address);
+        txInputs.add(txInput);
+      }
+    }
+    txOutputs
+        .add(TXOutputUtils.newTXOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+
+    if (check(address, to, amount)) {
+      transaction = buildTransaction(txInputs, txOutputs);
+      logger.info("Transaction create succeeded！");
+    } else {
+      logger.error("Transaction create failed！");
+    }
+    return transaction;
+  }
+
+  /**
+   * Broadcast a transaction.
    */
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     if (signaturedTransaction != null) {
@@ -125,6 +165,10 @@ public class Wallet {
     return false;
   }
 
+
+  /**
+   * cheack balance of the address.
+   */
   public boolean check(byte[] address, String to, long amount) {
 
     if (to.length() != 40) {
