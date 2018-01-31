@@ -58,6 +58,12 @@ public class BlockStore extends Database {
     return "".getBytes();
   }
 
+  /**
+   * judge has item (block or trx).
+   *
+   * @param hash block hash or trx hash.
+   * @param type item type.
+   */
   public boolean hasItem(byte[] hash, String type) {
     if (type == "trx") {
       return hasTranscation(hash);
@@ -68,8 +74,8 @@ public class BlockStore extends Database {
   }
 
   /**
-   *
-   * @param blockHash
+   * judge hash.
+   * @param blockHash blockHash
    * @return
    */
   public boolean hasBlock(byte[] blockHash) {
@@ -83,10 +89,6 @@ public class BlockStore extends Database {
   public boolean isIncludeBlock(byte[] hash) {
     return false;
   }
-
-  /**
-   *
-   */
 
   public void pushTransactions(Protocal.Transaction trx) {
     logger.info("push transaction");
@@ -106,7 +108,7 @@ public class BlockStore extends Database {
    */
   public void saveBlock(byte[] blockHash, byte[] blockData) {
     logger.info("save block");
-    blockDbDataSource.putData(blockHash, blockData);
+    // blockDbDataSource.putData(blockHash, blockData);
 
   }
 
@@ -133,7 +135,7 @@ public class BlockStore extends Database {
 
   }
 
-  /***
+  /**
    * resetDB the database.
    */
   public void reset() {
