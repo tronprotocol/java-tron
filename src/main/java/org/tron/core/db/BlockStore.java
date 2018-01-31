@@ -36,7 +36,10 @@ public class BlockStore extends Database {
 
   private static BlockStore instance;
 
-  public static BlockStore Create(String dbName) {
+  /**
+   * create fun.
+   */
+  public static BlockStore create(String dbName) {
     if (instance == null) {
       synchronized (AccountStore.class) {
         if (instance == null) {
@@ -48,6 +51,9 @@ public class BlockStore extends Database {
   }
 
 
+  /**
+   * to do.
+   */
   public byte[] getHeadBlockHash() {
     return "".getBytes();
   }
@@ -61,6 +67,11 @@ public class BlockStore extends Database {
     return false;
   }
 
+  /**
+   *
+   * @param blockHash
+   * @return
+   */
   public boolean hasBlock(byte[] blockHash) {
     return false;
   }
@@ -81,15 +92,9 @@ public class BlockStore extends Database {
     //pendingTrans.add(trx);
   }
 
-  /**
-   * Generate Block
-   */
-  //public void generateBlock() {
-
-  //}
 
   /**
-   * Generate Block return Block
+   * Generate Block return Block.
    */
   public Protocal.Block generateBlock(List<Protocal.Transaction> transactions) {
     return null;
@@ -104,7 +109,7 @@ public class BlockStore extends Database {
   }
 
   /**
-   * find a block by it's hash
+   * find a block by it's hash.
    */
   public byte[] findBlockByHash(byte[] blockHash) {
     return blockDbDataSource.getData(blockHash);
@@ -126,9 +131,8 @@ public class BlockStore extends Database {
 
   }
 
-
   /***
-   * resetDB the database
+   * resetDB the database.
    */
 
 
