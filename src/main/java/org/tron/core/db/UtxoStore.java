@@ -24,17 +24,16 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
-import org.tron.protos.core.TronTXOutput.TXOutput;
-import org.tron.protos.core.TronTXOutputs.TXOutputs;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.TXOutputs;
+
 
 public class UtxoStore extends Database {
 
   public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
   private Blockchain blockchain;
-  private LevelDbDataSourceImpl utxoDataSource;
 
   private UtxoStore(String dbName) {
     super(dbName);
@@ -54,7 +53,6 @@ public class UtxoStore extends Database {
   void fetch() {
 
   }
-
   private static UtxoStore instance;
 
   /**
@@ -95,15 +93,14 @@ public class UtxoStore extends Database {
   }
 
   /**
-   * store and find related utxos.
+   * Store related UTXOs.
    */
-
-  public void storeUtxo() {
+  public void storeUTXO() {
     logger.info("storeUTXO");
 
-    utxoDataSource.resetDB();
+    getDbSource().resetDB();
 
-    HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
+    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
 
     Set<Entry<String, TXOutputs>> entrySet = utxo.entrySet();
 
@@ -112,21 +109,21 @@ public class UtxoStore extends Database {
       TXOutputs value = entry.getValue();
 
       for (TXOutput ignored : value.getOutputsList()) {
-        utxoDataSource.putData(ByteArray.fromHexString(key), value.toByteArray());
+        getDbSource().putData(ByteArray.fromHexString(key), value.toByteArray());
       }
     }
   }
 
   /**
-   * Find Utxo.
+   * Find related UTXOs.
    */
   public ArrayList<TXOutput> findUtxo(byte[] address) {
     ArrayList<TXOutput> utxos = new ArrayList<>();
 
-    Set<byte[]> keySet = utxoDataSource.allKeys();
+    Set<byte[]> keySet = getDbSource().allKeys();
 
     for (byte[] key : keySet) {
-      byte[] txData = utxoDataSource.getData(key);
+      byte[] txData = getDbSource().getData(key);
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
         for (TXOutput txOutput : txOutputs.getOutputsList()) {
@@ -144,7 +141,6 @@ public class UtxoStore extends Database {
 
     return utxos;
   }
-
 
   public void close() {
     dbSource.closeDB();

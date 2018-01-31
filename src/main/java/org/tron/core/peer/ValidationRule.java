@@ -15,7 +15,8 @@
 
 package org.tron.core.peer;
 
-import org.tron.protos.core.TronBlock.Block;
+
+import org.tron.protos.Protocal.Block;
 
 public interface ValidationRule {
   byte[] start(Block block);

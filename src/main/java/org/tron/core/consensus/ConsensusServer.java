@@ -14,7 +14,7 @@
  */
 package org.tron.core.consensus;
 
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
 
 public class ConsensusServer {
 
@@ -23,7 +23,7 @@ public class ConsensusServer {
   }
 
   // This method is called when p2p receives the block
-  public void receiveBlockFromP2P(TronBlock.Block block) {
+  public void receiveBlockFromP2P(Block block) {
     //Verify the received block, if the verification is passed, add the block to the blockchain
     System.out.println("Add the block to the blockchain");
   }

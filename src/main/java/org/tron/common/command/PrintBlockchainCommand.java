@@ -22,7 +22,8 @@ import org.tron.core.BlockUtils;
 import org.tron.core.Blockchain;
 import org.tron.core.BlockchainIterator;
 import org.tron.core.peer.Peer;
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
+
 
 public class PrintBlockchainCommand extends Command {
 
@@ -35,7 +36,7 @@ public class PrintBlockchainCommand extends Command {
     Blockchain blockchain = peer.getUTXOSet().getBlockchain();
     BlockchainIterator bi = new BlockchainIterator(blockchain);
     while (bi.hasNext()) {
-      TronBlock.Block block = bi.next();
+      Block block = bi.next();
       System.out.println(BlockUtils.toPrintString(block));
     }
   }
