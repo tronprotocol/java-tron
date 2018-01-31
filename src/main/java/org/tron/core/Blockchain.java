@@ -268,7 +268,8 @@ public class Blockchain {
       prevTXs.put(key, prevTX);
     }
 
-    transaction = TransactionUtils.sign(transaction, myKey, prevTXs);
+    //transaction = TransactionUtils.sign(transaction, myKey, prevTXs);
+    transaction = TransactionUtils.sign(transaction, myKey);//Unsupport muilty address, needn't input prevTXs
     return transaction;
   }
 

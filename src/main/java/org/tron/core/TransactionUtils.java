@@ -28,15 +28,24 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.protos.core.TronTXInput.TXInput;
-import org.tron.protos.core.TronTXOutput.TXOutput;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.TXInput;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.Transaction;
 
 public class TransactionUtils {
-  private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private final static int RESERVE_BALANCE = 10;
 
+  private static final Logger logger = LoggerFactory.getLogger("Transaction");
+  private static final int RESERVE_BALANCE = 10;
+
+  /**
+   * Create a new transaction.
+   *
+   * @param wallet From which wallet.
+   * @param to String to sender's address.
+   * @param amount Long transaction amount.
+   */
   public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
@@ -53,12 +62,12 @@ public class TransactionUtils {
     Set<Map.Entry<String, long[]>> entrySet = spendableOutputs.getUnspentOutputs().entrySet();
 
     for (Map.Entry<String, long[]> entry : entrySet) {
-      String txID = entry.getKey();
+      String txId = entry.getKey();
       long[] outs = entry.getValue();
 
       for (long out : outs) {
         TXInput txInput = TXInputUtils
-            .newTXInput(ByteArray.fromHexString(txID), out, new byte[0], pubKeyHash);
+            .newTXInput(ByteArray.fromHexString(txId), out, new byte[0], pubKeyHash);
         txInputs.add(txInput);
       }
     }
@@ -66,17 +75,17 @@ public class TransactionUtils {
     txOutputs.add(TXOutputUtils.newTXOutput(amount, to));
     if (spendableOutputs.getAmount() > amount) {
       txOutputs.add(
-          TXOutputUtils.newTXOutput(spendableOutputs.getAmount() - amount, ByteArray.toHexString
-              (wallet.getAddress())));
+          TXOutputUtils.newTXOutput(spendableOutputs.getAmount() - amount,
+              ByteArray.toHexString(wallet.getAddress())));
     }
 
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    for (int i = 0; i < txInputs.size(); i++) {
-      transactionBuilder.addVin(txInputs.get(i));
+    for (TXInput txInput : txInputs) {
+      transactionBuilder.addVin(txInput);
     }
 
-    for (int i = 0; i < txOutputs.size(); i++) {
-      transactionBuilder.addVout(txOutputs.get(i));
+    for (TXOutput txOutput : txOutputs) {
+      transactionBuilder.addVout(txOutput);
     }
 
     Transaction transaction = transactionBuilder.build();
@@ -87,10 +96,10 @@ public class TransactionUtils {
   }
 
   /**
-   * new coinbase transaction
+   * New coin-base transaction.
    *
-   * @param to String to sender's address
-   * @param data String transaction data
+   * @param to String to sender's address.
+   * @param data String transaction data.
    * @return {@link Transaction}
    */
   public static Transaction newCoinbaseTransaction(String to, String data, long subsidy) {
@@ -108,18 +117,16 @@ public class TransactionUtils {
     Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
         .addVin(txi)
         .addVout(txo);
-
-    coinbaseTransaction.setId(ByteString.copyFrom(getHash
-        (coinbaseTransaction.build())));
+    coinbaseTransaction.setId(ByteString.copyFrom(getHash(coinbaseTransaction.build())));
 
     return coinbaseTransaction.build();
   }
 
   /**
-   * Obtain a data bytes after removing the id and SHA-256(data)
+   * Obtain a data bytes after removing the id and SHA-256(data).
    *
-   * @param transaction {@link Transaction} transaction
-   * @return byte[] the hash of the transaction's data bytes which have no id
+   * @param transaction {@link Transaction} transaction.
+   * @return byte[] the hash of the transaction's data bytes which have no id.
    */
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
@@ -129,33 +136,30 @@ public class TransactionUtils {
   }
 
   /**
-   * getData print string of the transaction
+   * Get data print string of the transaction.
    *
-   * @param transaction {@link Transaction} transaction
-   * @return String format string of the transaction
+   * @param transaction {@link Transaction} transaction.
+   * @return String format string of the transaction.
    */
   public static String toPrintString(Transaction transaction) {
     if (transaction == null) {
       return "";
     }
 
-    StringBuilder sb = new StringBuilder("\nTransaction {\n" +
-        "\tid=" + ByteArray.toHexString(transaction.getId()
-        .toByteArray()) + "\n" +
-        "\tvin=[\n");
+    StringBuilder sb = new StringBuilder("\nTransaction {\n"
+        + "\tid=" + ByteArray.toHexString(transaction.getId()
+        .toByteArray()) + "\n"
+        + "\tvin=[\n");
 
     for (int i = 0, vinCount = transaction.getVinCount(); i < vinCount; i++) {
       TXInput vin = transaction.getVin(i);
 
-      sb.append("\t\t{\n" +
-          "\t\t\ttxID=" + ByteArray.toHexString(vin.getTxID()
-          .toByteArray()) + "\n" +
-          "\t\t\tvout=" + vin.getVout() + "\n" +
-          "\t\t\tsignature=" + ByteArray.toHexString(vin
-          .getSignature().toByteArray()) + "\n" +
-          "\t\t\tpubKey=" + ByteArray.toHexString(vin.getPubKey()
-          .toByteArray()) + "\n" +
-          "\t\t}");
+      sb.append("\t\t{\n" + "\t\t\ttxID=").append(ByteArray.toHexString(vin.getTxID()
+          .toByteArray())).append("\n").append("\t\t\tvout=").append(vin.getVout()).append("\n")
+          .append("\t\t\tsignature=").append(ByteArray.toHexString(vin
+          .getSignature().toByteArray())).append("\n").append("\t\t\tpubKey=")
+          .append(ByteArray.toHexString(vin.getPubKey()
+              .toByteArray())).append("\n").append("\t\t}");
 
       if (i != vinCount - 1) {
         sb.append(",");
@@ -167,11 +171,9 @@ public class TransactionUtils {
 
     for (int i = 0, voutCount = transaction.getVoutCount(); i < voutCount; i++) {
       TXOutput vout = transaction.getVout(i);
-      sb.append("\t\t{\n" +
-          "\t\t\tvalue=" + vout.getValue() + "\n" +
-          "\t\t\tpubKeyHash=" + ByteArray.toHexString(vout
-          .getPubKeyHash().toByteArray()) + "\n" +
-          "\t\t}");
+      sb.append("\t\t{\n" + "\t\t\tvalue=").append(vout.getValue()).append("\n")
+          .append("\t\t\tpubKeyHash=").append(ByteArray
+          .toHexString(vout.getPubKeyHash().toByteArray())).append("\n").append("\t\t}");
 
       if (i != voutCount - 1) {
         sb.append(",");
@@ -185,141 +187,156 @@ public class TransactionUtils {
   }
 
   /**
-   * Determine whether the transaction is a coinbase transaction
+   * Determine whether the transaction is a coin-base transaction.
    *
-   * @param transaction {@link Transaction} transaction
-   * @return boolean true for coinbase, false for not coinbase
+   * @param transaction {@link Transaction} transaction.
+   * @return boolean true for coinbase, false for not coinbase.
    */
   public static boolean isCoinbaseTransaction(Transaction transaction) {
     return transaction.getVinList().size() == 1 && transaction.getVin(0)
         .getTxID().size() == 0 && transaction.getVin(0).getVout() == -1;
   }
 
-  public static Transaction sign(Transaction transaction, ECKey myKey,
-      List<ByteString> pubKeyHashList) {
-    if (TransactionUtils.isCoinbaseTransaction(transaction)) {
-      return null;
-    }
-
-    for (int i = 0; i < transaction.getVinList().size(); i++) {
-      TXInput vin = transaction.getVin(i);
-      ByteString prevTxPubKeyHash = pubKeyHashList.get(i);
-      if (prevTxPubKeyHash == null || prevTxPubKeyHash.isEmpty()) {
-        logger
-            .error(
-                "ERROR: Previous transaction is not correct, the " + i + "PubKeyHash is empty !!!");
-        return null;
-      }
-      Transaction.Builder transactionCopyBuilder = transaction
-          .toBuilder();
-      TXInput.Builder vinBuilder = vin.toBuilder();
-      vinBuilder.clearSignature();
-      vinBuilder.setPubKey(prevTxPubKeyHash);
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
-      transactionCopyBuilder.setId(ByteString.copyFrom(TransactionUtils
-          .getHash(transactionCopyBuilder.build())));
-      vinBuilder.clearPubKey();
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
-
-      Transaction.Builder transactionBuilder = transaction.toBuilder().setVin(i, vin.toBuilder()
-          .setSignature(ByteString.copyFrom(myKey.sign
-              (transactionCopyBuilder.getId().toByteArray())
-              .toByteArray())).build());
-
-      transactionBuilder
-          .setId(ByteString.copyFrom(TransactionUtils.getHash(transactionBuilder.build())));
-
-      transaction = transactionBuilder.build();
-    }
-
-    return transaction;
+  public static boolean checkTxOutUnSpent(TXOutput prevOut){
+    return true;//todo :check prevOut is unspent
   }
 
-  public static Transaction sign(Transaction transaction, ECKey myKey,
-      HashMap<String, Transaction> prevTXs) {
-    if (TransactionUtils.isCoinbaseTransaction(transaction)) {
-      return null;
+  public static boolean checkBalance(long totalBalance, long totalSpent){
+    if ( totalBalance == totalSpent ){
+      return true;    //Unsport fee;
     }
-
-    for (TXInput vin : transaction.getVinList()) {
-      if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
-      )).getId().toByteArray().length == 0) {
-        logger.error("ERROR: Previous transaction is not correct");
-        return null;
-      }
-    }
-
-    for (int i = 0; i < transaction.getVinList().size(); i++) {
-      TXInput vin = transaction.getVin(i);
-      Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
-          .getTxID().toByteArray()));
-
-      Transaction.Builder transactionCopyBuilder = transaction
-          .toBuilder();
-      TXInput.Builder vinBuilder = vin.toBuilder();
-      vinBuilder.clearSignature();
-      vinBuilder.setPubKey(prevTx.getVout((int) vin.getVout()).getPubKeyHash());
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
-      transactionCopyBuilder.setId(ByteString.copyFrom(TransactionUtils
-          .getHash(transactionCopyBuilder.build())));
-      vinBuilder.clearPubKey();
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
-
-      Transaction.Builder transactionBuilder = transaction.toBuilder().setVin(i, vin.toBuilder()
-          .setSignature(ByteString.copyFrom(myKey.sign
-              (transactionCopyBuilder.getId().toByteArray())
-              .toByteArray())).build());
-
-      transactionBuilder
-          .setId(ByteString.copyFrom(TransactionUtils.getHash(transactionBuilder.build())));
-
-      transaction = transactionBuilder.build();
-    }
-
-    return transaction;
+    return false;
   }
 
-  public static boolean verify(ECKey myKey, Transaction transaction,
-      HashMap<String, Transaction> prevTXs) {
-    if (TransactionUtils.isCoinbaseTransaction(transaction)) {
+  /*
+   * 1. check hash
+   * 2. check double spent
+   * 3. check sign
+   * 4. check balance
+   */
+  public static boolean validTransaction(Transaction signedTransaction, Blockchain blockchain) {
+    if (TransactionUtils.isCoinbaseTransaction(signedTransaction)) {
       return true;
     }
-
-    for (TXInput vin : transaction.getVinList()) {
-      if (prevTXs.get(ByteArray.toHexString(vin.getTxID().toByteArray()
-      )).getId().toByteArray().length == 0) {
-        logger.error("ERROR: Previous transaction is not correct");
-      }
+    //1. check hash
+    ByteString idBS = signedTransaction.getId(); //hash
+    byte[] hash = TransactionUtils.getHash(signedTransaction);
+    ByteString hashBS = ByteString.copyFrom(hash);
+    if ( idBS == null || !idBS.equals(idBS)){
+      return false;
     }
+    Transaction.Builder transactionBuilderSigned = signedTransaction.toBuilder();
+    Transaction.Builder transactionBuilderBeforSign = signedTransaction.toBuilder();
 
-    for (int i = 0; i < transaction.getVinList().size(); i++) {
-      TXInput vin = transaction.getVin(i);
-      Transaction prevTx = prevTXs.get(ByteArray.toHexString(vin
-          .getTxID().toByteArray()));
-
-      Transaction.Builder transactionCopyBuilder = transaction
-          .toBuilder();
+    int inSize = signedTransaction.getVinCount();
+    //Clear all vin's signature and pubKey.
+    for (int i = 0; i < inSize; i++) {
+      TXInput vin = transactionBuilderBeforSign.getVin(i);
       TXInput.Builder vinBuilder = vin.toBuilder();
       vinBuilder.clearSignature();
-      vinBuilder.setPubKey(prevTx.getVout((int) vin.getVout()).getPubKeyHash());
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
-      transactionCopyBuilder.setId(ByteString.copyFrom(TransactionUtils
-          .getHash(transactionCopyBuilder.build())));
       vinBuilder.clearPubKey();
-      transactionCopyBuilder.setVin(i, vinBuilder.build());
+      vin = vinBuilder.build();
+      transactionBuilderBeforSign.setVin(i, vin);
+    }
 
-      if (!myKey.verify(transactionCopyBuilder.getId().toByteArray(),
-          vin.getSignature().toByteArray())) {
+    long totalBalance = 0;
+    long totalSpent = 0;
+    Transaction transactionBeforSign = transactionBuilderBeforSign.build();//No sign no pubkey
+    for (int i = 0; i < inSize; i++) {
+      transactionBuilderBeforSign = transactionBeforSign.toBuilder();
+      TXInput vin = transactionBuilderBeforSign.getVin(i);
+      TXInput.Builder vinBuilder = vin.toBuilder();
+      ByteString signBs = signedTransaction.getVin(i).getSignature();
+      byte[] signBA = signBs.toByteArray();
+      ByteString pubKeyBs = signedTransaction.getVin(i).getPubKey();
+      byte[] pubKeyBA = pubKeyBs.toByteArray();
+      ByteString lockSript = ByteString
+          .copyFrom(ECKey.computeAddress(pubKeyBA));
+      if (blockchain != null){
+        //need check lockSript
+        ByteString txID = vin.getTxID();
+        int out = (int)(vin.getVout());
+        Transaction prevTX = blockchain.findTransaction(txID).toBuilder().build();
+        if ( prevTX == null ){
+          return false;
+        }
+        TXOutput prevOut = prevTX.getVout(out);
+        if ( prevOut == null ){
+          return false;
+        }
+        ByteString pubKeyHash = prevOut.getPubKeyHash();
+        if ( pubKeyHash == null || !pubKeyHash.equals(lockSript)){
+          return false;
+        }
+        //2. check double spent
+        if ( !checkTxOutUnSpent(prevOut)){
+          return false;
+        }
+        totalBalance += prevOut.getValue();
+      }
+
+      vinBuilder.setPubKey(lockSript);
+      transactionBuilderBeforSign.setVin(i, vinBuilder.build());
+      hash = getHash(transactionBuilderBeforSign.build());
+      byte[] r = new byte[32];
+      byte[] s = new byte[32];
+
+      if (signBA.length != 65) {
+        return false;
+      }
+      System.arraycopy(signBA, 0, r, 0, 32);
+      System.arraycopy(signBA, 32, s, 0, 32);
+      byte revID = signBA[64];
+      ECDSASignature signature = ECDSASignature.fromComponents(r, s, revID);
+      //3. check sign
+      if (!ECKey.verify(hash, signature, pubKeyBA)) {
         return false;
       }
     }
 
-    return true;
+    int outSize = signedTransaction.getVoutCount();
+    for( int i = 0; i < outSize; i++ ){
+      totalSpent += signedTransaction.getVout(i).getValue();
+    }
+    if (blockchain != null){
+      return checkBalance(totalBalance,totalSpent); //4. check balance
+    }
+    return true; //Can't check balance
   }
 
-  // getData sender
+  public static Transaction sign(Transaction transaction, ECKey myKey) {
+    if (TransactionUtils.isCoinbaseTransaction(transaction)) {
+      return null;
+    }
+    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
+    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+    for (int i = 0; i < transaction.getVinList().size(); i++) {
+      Transaction.Builder transactionBuilderForSign = transaction.toBuilder();
+      TXInput vin = transaction.getVin(i);
+      TXInput.Builder vinBuilder = vin.toBuilder();
+      vinBuilder.clearSignature();
+      vinBuilder.setPubKey(lockSript);
+      transactionBuilderForSign.setVin(i, vinBuilder.build());
+      byte[] hash = TransactionUtils.getHash(transactionBuilderForSign.build());
+      ECDSASignature signature = myKey.sign(hash);
+      byte[] signBA = signature.toByteArray();
+
+      vinBuilder.setPubKey(ByteString.copyFrom(myKey.getPubKey()));
+      vinBuilder.setSignature(ByteString.copyFrom(signBA));
+      transactionBuilderSigned.setVin(i, vinBuilder.build());
+    }
+    byte[] hash = TransactionUtils.getHash(transactionBuilderSigned.build());
+    transactionBuilderSigned.setId(ByteString.copyFrom(hash));
+    transaction = transactionBuilderSigned.build();
+    return transaction;
+  }
+
+  /**
+   * Get sender.
+   */
   public static byte[] getSender(Transaction tx) {
     byte[] pubKey = tx.getVin(0).getPubKey().toByteArray();
     return ECKey.computeAddress(pubKey);
   }
+
 }
