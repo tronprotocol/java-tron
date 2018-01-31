@@ -1,6 +1,6 @@
 package org.tron.core.db;
 
-public class TransactionStore extends Database {
+public class TransactionStore extends TronDatabase {
 
   private TransactionStore(String dbName) {
     super(dbName);
