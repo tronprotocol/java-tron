@@ -26,13 +26,14 @@ import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.protos.core.TronTXOutput;
-import org.tron.protos.core.TronTXOutputs;
-import org.tron.protos.core.TronTXOutputs.TXOutputs;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.TXOutputs;
+
 
 public class UTXOSet {
+
   private static final Logger logger = LoggerFactory.getLogger("UTXOSet");
 
   private Blockchain blockchain;
@@ -54,7 +55,7 @@ public class UTXOSet {
 
     txDB.resetDB();
 
-    HashMap<String, TXOutputs> utxo = blockchain.findUTXO();
+    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
 
     Set<Map.Entry<String, TXOutputs>> entrySet = utxo.entrySet();
 
@@ -62,7 +63,7 @@ public class UTXOSet {
       String key = entry.getKey();
       TXOutputs value = entry.getValue();
 
-      for (TronTXOutput.TXOutput ignored : value.getOutputsList()) {
+      for (TXOutput ignored : value.getOutputsList()) {
         txDB.putData(ByteArray.fromHexString(key), value.toByteArray());
       }
     }
@@ -78,12 +79,12 @@ public class UTXOSet {
     for (byte[] key : keySet) {
       byte[] txOutputsData = txDB.getData(key);
       try {
-        TXOutputs txOutputs = TronTXOutputs.TXOutputs.parseFrom(txOutputsData);
+        TXOutputs txOutputs = TXOutputs.parseFrom(txOutputsData);
 
         int len = txOutputs.getOutputsCount();
 
         for (int i = 0; i < len; i++) {
-          TronTXOutput.TXOutput txOutput = txOutputs.getOutputs(i);
+          TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
               .equals(ByteArray.toHexString(txOutput
                   .getPubKeyHash()
@@ -113,8 +114,8 @@ public class UTXOSet {
     return spendableOutputs;
   }
 
-  public ArrayList<TronTXOutput.TXOutput> findUTXO(byte[] pubKeyHash) {
-    ArrayList<TronTXOutput.TXOutput> utxos = new ArrayList<>();
+  public ArrayList<TXOutput> findUTXO(byte[] pubKeyHash) {
+    ArrayList<TXOutput> utxos = new ArrayList<>();
 
     Set<byte[]> keySet = txDB.allKeys();
     for (byte[] key : keySet) {
@@ -122,7 +123,7 @@ public class UTXOSet {
 
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
-        for (TronTXOutput.TXOutput txOutput : txOutputs.getOutputsList()) {
+        for (TXOutput txOutput : txOutputs.getOutputsList()) {
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
               .equals(ByteArray.toHexString(txOutput
                   .getPubKeyHash()

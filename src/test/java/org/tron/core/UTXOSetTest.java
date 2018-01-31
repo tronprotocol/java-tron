@@ -21,25 +21,26 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.protos.core.TronTXOutput;
-import org.tron.protos.core.TronTXOutputs;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.TXOutputs;
 
 public class UTXOSetTest {
+
   @Test
   public void testReindex() {
     String key = "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e";
-    TronTXOutput.TXOutput testOutput = TronTXOutput.TXOutput.newBuilder().build();
-    TronTXOutputs.TXOutputs testOutputs = TronTXOutputs.TXOutputs.newBuilder()
+    TXOutput testOutput = TXOutput.newBuilder().build();
+    TXOutputs testOutputs = TXOutputs.newBuilder()
         .addOutputs(testOutput)
         .build();
 
-    HashMap<String, TronTXOutputs.TXOutputs> testUTXO = new HashMap<>();
+    HashMap<String, TXOutputs> testUTXO = new HashMap<>();
     testUTXO.put(key, testOutputs);
 
     Blockchain mockBlockchain = Mockito.mock(Blockchain.class);
-    when(mockBlockchain.findUTXO()).thenReturn(testUTXO);
+    when(mockBlockchain.findUtxo()).thenReturn(testUTXO);
 
     LevelDbDataSourceImpl mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
 

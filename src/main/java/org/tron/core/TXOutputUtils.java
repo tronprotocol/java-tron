@@ -16,15 +16,15 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-import org.tron.protos.core.TronTXOutput.TXOutput;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.TXOutput;
 
 public class TXOutputUtils {
 
   /**
    * new transaction output
    *
-   * @param value   int value
+   * @param value int value
    * @param address String address
    * @return {@link TXOutput}
    */
