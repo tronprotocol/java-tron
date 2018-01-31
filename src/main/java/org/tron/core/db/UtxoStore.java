@@ -53,6 +53,7 @@ public class UtxoStore extends Database {
   void fetch() {
 
   }
+
   private static UtxoStore instance;
 
   /**
