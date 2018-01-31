@@ -5,6 +5,7 @@ public class Manager {
   private AccountStore accountStore;
   private TransactionStore transactionStore;
   private BlockStore blockStore;
+  private UtxoStore utxoStore;
 
   /**
    * all db should be init here.
@@ -13,6 +14,7 @@ public class Manager {
     setAccountStore(AccountStore.create("account"));
     setTransactionStore(TransactionStore.create("trans"));
     setBlockStore(BlockStore.create("block"));
+    setUtxoStore(UtxoStore.create("utxo"));
   }
 
   public AccountStore getAccountStore() {
@@ -37,5 +39,13 @@ public class Manager {
 
   private void setBlockStore(BlockStore blockStore) {
     this.blockStore = blockStore;
+  }
+
+  public UtxoStore getUtxoStore() {
+    return utxoStore;
+  }
+
+  private void setUtxoStore(UtxoStore utxoStore) {
+    this.utxoStore = utxoStore;
   }
 }
