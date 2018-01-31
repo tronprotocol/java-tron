@@ -41,18 +41,19 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.config.Configer;
 import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
-import org.tron.protos.core.TronBlock.Block;
-import org.tron.protos.core.TronTXInput.TXInput;
-import org.tron.protos.core.TronTXOutput.TXOutput;
-import org.tron.protos.core.TronTXOutputs.TXOutputs;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.TXInput;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class Blockchain {
 
   public static final String GENESIS_COINBASE_DATA = "0x10";
   public static final Logger logger = LoggerFactory.getLogger("BlockChain");
   public static String parentName = Constant.NORMAL;
-  private LevelDbDataSourceImpl blockDB;
+  private LevelDbDataSourceImpl blockDb;
   private PendingState pendingState = new PendingStateImpl();
 
   private byte[] lastHash;
@@ -61,13 +62,13 @@ public class Blockchain {
   private List<BlockchainListener> listeners = new ArrayList<>();
 
   /**
-   * create new blockchain
+   * create new blockchain.
    *
-   * @param blockDB block database
+   * @param blockDb block database
    */
-  public Blockchain(@Named("block") LevelDbDataSourceImpl blockDB) {
-    this.blockDB = blockDB;
-    this.lastHash = blockDB.getData(LAST_HASH);
+  public Blockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
+    this.blockDb = blockDb;
+    this.lastHash = blockDb.getData(LAST_HASH);
 
     if (this.lastHash == null) {
 
@@ -80,8 +81,8 @@ public class Blockchain {
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
 
-      persistGenesisBlockToDB(blockDB, genesisBlock);
-      persistLastHash(blockDB, genesisBlock);
+      persistGenesisBlockToDB(blockDb, genesisBlock);
+      persistLastHash(blockDb, genesisBlock);
 
       addGenesisBlockToListeners(genesisBlock);
       logger.info("new blockchain");
@@ -96,11 +97,11 @@ public class Blockchain {
     listeners.stream().forEach(l -> l.addGenesisBlock(genesisBlock));
   }
 
-  private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDB, Block genesisBlock) {
+  private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDb, Block genesisBlock) {
     byte[] lastHash = genesisBlock.getBlockHeader()
         .getHash()
         .toByteArray();
-    blockDB.putData(LAST_HASH, lastHash);
+    blockDb.putData(LAST_HASH, lastHash);
   }
 
   private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB,
@@ -159,9 +160,9 @@ public class Blockchain {
       Block block = bi.next();
 
       for (Transaction tx : block.getTransactionsList()) {
-        String txID = ByteArray.toHexString(tx.getId().toByteArray());
+        String txId = ByteArray.toHexString(tx.getId().toByteArray());
         String idStr = ByteArray.toHexString(id.toByteArray());
-        if (txID.equals(idStr)) {
+        if (txId.equals(idStr)) {
           transaction = tx.toBuilder().build();
           return transaction;
         }
@@ -175,7 +176,7 @@ public class Blockchain {
     return transaction;
   }
 
-  public HashMap<String, TXOutputs> findUTXO() {
+  public HashMap<String, TXOutputs> findUtxo() {
     HashMap<String, TXOutputs> utxo = new HashMap<>();
     HashMap<String, long[]> spenttxos = new HashMap<>();
 
@@ -187,8 +188,7 @@ public class Blockchain {
         String txid = ByteArray.toHexString(transaction.getId().toByteArray());
 
         output:
-        for (int outIdx = 0; outIdx < transaction.getVoutList().size
-            (); outIdx++) {
+        for (int outIdx = 0; outIdx < transaction.getVoutList().size(); outIdx++) {
           TXOutput out = transaction.getVout(outIdx);
           if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
             for (int i = 0; i < spenttxos.get(txid).length; i++) {
@@ -235,20 +235,20 @@ public class Blockchain {
    * add a block into database
    */
   public void addBlock(Block block) {
-    byte[] blockInDB = blockDB.getData(block.getBlockHeader().getHash().toByteArray());
+    byte[] blockInDB = blockDb.getData(block.getBlockHeader().getHash().toByteArray());
 
     if (blockInDB == null || blockInDB.length == 0) {
       return;
     }
 
-    persistGenesisBlockToDB(blockDB, block);
+    persistGenesisBlockToDB(blockDb, block);
 
-    byte[] lastHash = blockDB.getData(ByteArray.fromString("lashHash"));
-    byte[] lastBlockData = blockDB.getData(lastHash);
+    byte[] lastHash = blockDb.getData(ByteArray.fromString("lashHash"));
+    byte[] lastBlockData = blockDb.getData(lastHash);
     try {
       Block lastBlock = Block.parseFrom(lastBlockData);
       if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
-        blockDB.putData(ByteArray.fromString("lashHash"),
+        blockDb.putData(ByteArray.fromString("lashHash"),
             block.getBlockHeader().getHash().toByteArray());
         this.lastHash = block.getBlockHeader().getHash().toByteArray();
         this.currentHash = this.lastHash;
@@ -262,9 +262,9 @@ public class Blockchain {
     HashMap<String, Transaction> prevTXs = new HashMap<>();
 
     for (TXInput txInput : transaction.getVinList()) {
-      ByteString txID = txInput.getTxID();
-      Transaction prevTX = this.findTransaction(txID).toBuilder().build();
-      String key = ByteArray.toHexString(txID.toByteArray());
+      ByteString txId = txInput.getTxID();
+      Transaction prevTX = this.findTransaction(txId).toBuilder().build();
+      String key = ByteArray.toHexString(txId.toByteArray());
       prevTXs.put(key, prevTX);
     }
 
@@ -279,7 +279,7 @@ public class Blockchain {
    */
   public void addBlock(List<Transaction> transactions, Net net) {
     // getData lastHash
-    byte[] lastHash = blockDB.getData(LAST_HASH);
+    byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // getData number
     long number = BlockUtils.getIncreaseNumber(this);
@@ -293,9 +293,12 @@ public class Blockchain {
     }
   }
 
+  /**
+   * add a block.
+   */
   public void addBlock(List<Transaction> transactions) {
     // get lastHash
-    byte[] lastHash = blockDB.getData(LAST_HASH);
+    byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // get number
     long number = BlockUtils.getIncreaseNumber(this);
@@ -318,7 +321,7 @@ public class Blockchain {
   public void receiveBlock(Block block, UTXOSet utxoSet, Peer peer) {
 
     byte[] lastHashKey = LAST_HASH;
-    byte[] lastHash = blockDB.getData(lastHashKey);
+    byte[] lastHash = blockDb.getData(lastHashKey);
 
     if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray())
         .equals(ByteArray.toHexString
@@ -329,7 +332,7 @@ public class Blockchain {
     // save the block into the database
     byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
     byte[] blockVal = block.toByteArray();
-    blockDB.putData(blockHashKey, blockVal);
+    blockDb.putData(blockHashKey, blockVal);
 
     byte[] ch = block.getBlockHeader().getHash().toByteArray();
 
@@ -348,11 +351,11 @@ public class Blockchain {
   }
 
   public LevelDbDataSourceImpl getBlockDB() {
-    return blockDB;
+    return blockDb;
   }
 
   public void setBlockDB(LevelDbDataSourceImpl blockDB) {
-    this.blockDB = blockDB;
+    this.blockDb = blockDB;
   }
 
   public PendingState getPendingState() {
