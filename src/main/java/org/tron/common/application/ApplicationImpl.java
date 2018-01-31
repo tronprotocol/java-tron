@@ -1,6 +1,8 @@
 package org.tron.common.application;
 
 import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
@@ -14,11 +16,15 @@ import org.tron.protos.Protocal;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
-  public Node p2pNode;
+  private static final Logger logger = LoggerFactory.getLogger("ApplicationImpl");
 
-  public BlockStore blockStoreDb;
+  private Node p2pNode;
 
-  public ServiceContainer services;
+  private BlockStore blockStoreDb;
+
+  private ServiceContainer services;
+
+  private Manager dbManager;
 
   @Override
   public Protocal.Inventory getBlockIds(Protocal.Inventory inv) {
@@ -53,11 +59,13 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public void handleBlock(BlockMessage blkMsg) {
+    logger.info("handle block");
     blockStoreDb.saveBlock("".getBytes(), blkMsg.getData());
   }
 
   @Override
   public void handleTransation(TransactionMessage trxMsg) {
+    logger.info("handle transaction");
     blockStoreDb.pushTransactions(trxMsg.getTransaction());
   }
 
@@ -109,7 +117,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void init(String path, Args args) {
     p2pNode = new NodeImpl();
-    Manager dbManager = new Manager();
+    dbManager = new Manager();
     dbManager.init();
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
@@ -160,5 +168,9 @@ public class ApplicationImpl implements Application, NodeDelegate {
     return blockStoreDb;
   }
 
+  @Override
+  public Manager getDbManager() {
+    return dbManager;
+  }
 
 }
