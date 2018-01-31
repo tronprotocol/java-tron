@@ -15,11 +15,13 @@
 package org.tron.common.application;
 
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.Manager;
 import org.tron.core.net.node.Node;
 import org.tron.core.peer.Peer;
 import org.tron.program.Args;
 
 public class CliApplication implements Application {
+
   @Override
   public void setOptions(Args args) {
 
@@ -68,6 +70,11 @@ public class CliApplication implements Application {
   @Override
   public void addService(Service service) {
 
+  }
+
+  @Override
+  public Manager getDbManager() {
+    return null;
   }
 
   private Peer peer;
