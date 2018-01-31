@@ -27,6 +27,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.core.config.Configer;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
@@ -34,10 +36,12 @@ import org.tron.core.net.message.FetchBlocksMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionsMessage;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 
 public class GossipLocalNode implements LocalNode {
+
+  private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
 
   private final int PORT = Configer.getConf().getInt("overlay.port");
 
@@ -118,6 +122,7 @@ public class GossipLocalNode implements LocalNode {
             .header("type", type.toString())
             .build();
 
+        logger.info("broadcast other members");
         cluster.send(member, msg);
       } catch (UnsupportedEncodingException e) {
         e.printStackTrace();
@@ -139,6 +144,7 @@ public class GossipLocalNode implements LocalNode {
           .header("type", type.toString())
           .build();
 
+      logger.info("send message to member");
       cluster.send(member, msg);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
@@ -162,6 +168,7 @@ public class GossipLocalNode implements LocalNode {
 
   @Override
   public void start(PeerConnection peer) {
+    logger.info("listener message");
     cluster.listen().subscribe(msg -> {
       byte[] newValueBytes = null;
       String key = "";
@@ -190,7 +197,7 @@ public class GossipLocalNode implements LocalNode {
         message = new BlockMessage(content);
         break;
       case TRX:
-        message = new TransactionsMessage(content);
+        message = new TransactionMessage(content);
         break;
       case SYNC_BLOCK_CHAIN:
         message = new SyncBlockChainMessage(content, member);

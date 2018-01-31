@@ -3,7 +3,6 @@ package org.tron.core.net.node;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
@@ -21,10 +20,7 @@ public class NodeImpl extends PeerConnection implements Node {
 
   private static final Logger logger = LoggerFactory.getLogger("Node");
 
-
   private HashMap<byte[], Message> messageCache = new HashMap<>();
-
-  private List<Message> newInventory = new ArrayList<>();
 
   private NodeDelegate del;
 
@@ -41,21 +37,22 @@ public class NodeImpl extends PeerConnection implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
+    logger.info("on message");
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage((BlockMessage) msg);
         break;
       case TRX:
-        onHandleTranscationMessage((TransactionMessage) msg);
+        onHandleTransactionMessage((TransactionMessage) msg);
         break;
       case SYNC_BLOCK_CHAIN:
-        onHandleSycnBlockChainMessage((SyncBlockChainMessage) msg);
+        onHandleSyncBlockChainMessage((SyncBlockChainMessage) msg);
         break;
       case FETCH_BLOCKS:
         onHandleFetchBlocksMessage((FetchBlocksMessage) msg);
         break;
       case BLOCK_INVENTORY:
-        onHandleBlockInventoryMssage((BlockInventoryMessage) msg);
+        onHandleBlockInventoryMessage((BlockInventoryMessage) msg);
         break;
       default:
         throw new IllegalArgumentException("No such message");
@@ -79,8 +76,13 @@ public class NodeImpl extends PeerConnection implements Node {
    * @param msg msg to bradcast
    */
   public void broadcast(Message msg) {
-    newInventory.add(msg);
-    messageCache.put(msg.getData(), msg);
+
+    if (msg instanceof BlockMessage) {
+      loopAdvertiseBlock.push((BlockMessage) msg);
+    }
+    if (msg instanceof TransactionMessage) {
+      loopAdvertiseTrx.push((TransactionMessage) msg);
+    }
   }
 
   @Override
@@ -92,21 +94,25 @@ public class NodeImpl extends PeerConnection implements Node {
   public void connectToP2PNetWork() {
     gossipNode.start(this);
     loopAdvertiseBlock = new ExecutorLoop<>(8, 10, a -> {
+      logger.info("loop advertise block");
       gossipNode.broadcast(a);
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     loopAdvertiseTrx = new ExecutorLoop<>(2, 100, b -> {
+      logger.info("loop advertise trx");
       gossipNode.broadcast(b);
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     loopFetchBlocks = new ExecutorLoop<>(2, 10, c -> {
+      logger.info("loop fetch blocks");
       gossipNode.sendMessage(c.getPeer(), c);
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
+      logger.info("loop sync block chain");
       gossipNode.sendMessage(d.getPeer(), d);
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
@@ -122,7 +128,7 @@ public class NodeImpl extends PeerConnection implements Node {
     for (byte[] hash :
         hashList) {
       invBuild.setIds(i++, ByteString.copyFrom(hash, 0, 31));
-  }
+    }
 
     if (gossipNode.getMembers().size() == 0) {
       //todo: a loop here to wait the peers to sync blocks.
@@ -134,20 +140,24 @@ public class NodeImpl extends PeerConnection implements Node {
   }
 
   private void onHandleBlockMessage(BlockMessage blkMsg) {
+    logger.info("on handle block message");
     del.handleBlock(blkMsg);
   }
 
-  private void onHandleTranscationMessage(TransactionMessage trxMsg) {
+  private void onHandleTransactionMessage(TransactionMessage trxMsg) {
+    logger.info("on handle transaction message");
     del.handleTransation(trxMsg);
   }
 
-  private void onHandleSycnBlockChainMessage(SyncBlockChainMessage syncMsg) {
+  private void onHandleSyncBlockChainMessage(SyncBlockChainMessage syncMsg) {
+    logger.info("on handle sync block chain message");
     Protocal.Inventory inv = del.getBlockIds(syncMsg.getInventory());
     BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(inv, syncMsg.getPeer());
     gossipNode.sendMessage(blkInvMsg.getPeer(), blkInvMsg);
   }
 
   private void onHandleFetchBlocksMessage(FetchBlocksMessage fetchBlksMsg) {
+    logger.info("on handle fetch block message");
     Protocal.Inventory inv = fetchBlksMsg.getInventory();
     for (ByteString hash :
         inv.getIdsList()) {
@@ -155,7 +165,8 @@ public class NodeImpl extends PeerConnection implements Node {
     }
   }
 
-  private void onHandleBlockInventoryMssage(BlockInventoryMessage msg) {
+  private void onHandleBlockInventoryMessage(BlockInventoryMessage msg) {
+    logger.info("on handle block inventory message");
     Protocal.Inventory inv = del.getBlockIds(msg.getInventory());
     FetchBlocksMessage fetchMsg = new FetchBlocksMessage(inv, msg.getPeer());
     loopFetchBlocks.push(fetchMsg);

@@ -70,6 +70,8 @@
     <logger name="UdpTransportManager" level="INFO"/>
     <logger name="AbstractActiveGossiper" level="INFO"/>
     <logger name="UserDataPersister" level="INFO"/>
+    <logger name="GossipLocalNode" level="INFO"/>
+    <logger name="ApplicationImpl" level="INFO"/>
 
 </configuration>
 
