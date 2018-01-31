@@ -23,7 +23,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Transaction;
 
-public class BlockStore extends Database {
+public class BlockStore extends TronDatabase {
 
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   private LevelDbDataSourceImpl blockDbDataSource;
@@ -75,8 +75,8 @@ public class BlockStore extends Database {
 
   /**
    * judge hash.
+   *
    * @param blockHash blockHash
-   * @return
    */
   public boolean hasBlock(byte[] blockHash) {
     return false;

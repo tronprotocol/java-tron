@@ -1,6 +1,6 @@
 package org.tron.core.db;
 
-public class AccountStore extends Database {
+public class AccountStore extends TronDatabase {
 
   private AccountStore(String dbName) {
     super(dbName);

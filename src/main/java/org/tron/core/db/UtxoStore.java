@@ -30,7 +30,7 @@ import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
 
 
-public class UtxoStore extends Database {
+public class UtxoStore extends TronDatabase {
 
   public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
   private Blockchain blockchain;
