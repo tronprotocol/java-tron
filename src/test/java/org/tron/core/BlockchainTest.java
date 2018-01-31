@@ -32,9 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.core.TronBlock.Block;
-import org.tron.protos.core.TronTXOutputs;
-import org.tron.protos.core.TronTransaction.Transaction;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocal.Transaction;
+
 
 public class BlockchainTest {
 
@@ -70,8 +71,8 @@ public class BlockchainTest {
       Block block = Block.parseFrom(blockBytes);
 
       for (Transaction transaction : block.getTransactionsList()) {
-        logger.info("transaction id = {}", ByteArray.toHexString
-            (transaction.getId().toByteArray()));
+        logger.info("transaction id = {}",
+            ByteArray.toHexString(transaction.getId().toByteArray()));
       }
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
@@ -81,13 +82,14 @@ public class BlockchainTest {
   @Test
   public void testFindTransaction() {
     Transaction transaction = blockchain.findTransaction(ByteString
-        .copyFrom(ByteArray.fromHexString
-            ("15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
+        .copyFrom(
+            ByteArray.fromHexString(
+                "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
     logger.info("{}", TransactionUtils.toPrintString(transaction));
   }
 
   @Test
-  public void testFindUTXO() {
+  public void testFindUtxo() {
     long testAmount = 10;
     Wallet wallet = new Wallet();
     SpendableOutputs spendableOutputs = new SpendableOutputs();
@@ -105,15 +107,14 @@ public class BlockchainTest {
     blockchain.addBlock(BlockUtils.newBlock(transactions, ByteString
         .copyFrom(new byte[]{1}), ByteString
         .copyFrom(new byte[]{1}), 1));
-    HashMap<String, TronTXOutputs.TXOutputs> utxo = blockchain.findUTXO();
+    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
   }
 
   @Test
   public void testAddBlockToChain() {
-    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString
-        ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85"));
-    ByteString difficulty = ByteString.copyFrom(ByteArray.fromHexString
-        ("2001"));
+    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString(
+        "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85"));
+    ByteString difficulty = ByteString.copyFrom(ByteArray.fromHexString("2001"));
 
     Wallet wallet = new Wallet();
 
