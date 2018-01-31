@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core.consensus.client;
 
 import org.tron.common.overlay.Net;
@@ -21,7 +22,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
 import org.tron.core.peer.PeerType;
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocal.Block;
 
 public class BlockchainClientListener implements BlockchainListener {
 
@@ -34,7 +35,7 @@ public class BlockchainClientListener implements BlockchainListener {
   }
 
   @Override
-  public void addBlock(TronBlock.Block block) {
+  public void addBlock(Block block) {
     String value = ByteArray.toHexString(block.toByteArray());
 
     if (peer.getType().equals(PeerType.PEER_SERVER)) {
@@ -45,7 +46,7 @@ public class BlockchainClientListener implements BlockchainListener {
   }
 
   @Override
-  public void addBlockNet(TronBlock.Block block, Net net) {
+  public void addBlockNet(Block block, Net net) {
     if (peer.getType().equals(PeerType.PEER_SERVER)) {
       String value = ByteArray.toHexString(block.toByteArray());
       Message message = new Message(value, Type.BLOCK);
@@ -54,7 +55,7 @@ public class BlockchainClientListener implements BlockchainListener {
   }
 
   @Override
-  public void addGenesisBlock(TronBlock.Block block) {
+  public void addGenesisBlock(Block block) {
     if (peer.getType().equals(PeerType.PEER_SERVER)) {
       String value = ByteArray.toHexString(block.toByteArray());
       Message message = new Message(value, Type.BLOCK);
@@ -65,4 +66,6 @@ public class BlockchainClientListener implements BlockchainListener {
       client.putMessage1(time);
     }
   }
+
+
 }

@@ -16,18 +16,22 @@
 package org.tron.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.protos.core.TronBlock;
-
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import javax.annotation.Nonnull;
+import org.tron.protos.Protocal.Block;
 
-public class BlockchainIterator implements Iterator<TronBlock.Block> {
+public class BlockchainIterator implements Iterator<Block> {
 
   private Blockchain blockchain;
   private byte[] index;
 
+  /**
+   * the iterator of blockchain.
+   *
+   * @param blockchain the blockchain
+   */
   public BlockchainIterator(Blockchain blockchain) {
     this.blockchain = blockchain;
 
@@ -44,14 +48,14 @@ public class BlockchainIterator implements Iterator<TronBlock.Block> {
 
   @Nonnull
   @Override
-  public TronBlock.Block next() {
+  public Block next() {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
 
     byte[] value = blockchain.getBlockDB().getData(index);
     try {
-      TronBlock.Block block = TronBlock.Block.parseFrom(value);
+      Block block = Block.parseFrom(value);
       index = block.getBlockHeader().getParentHash().toByteArray();
       return block;
     } catch (InvalidProtocolBufferException e) {
