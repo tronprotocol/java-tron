@@ -21,16 +21,16 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.CliApplication;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.Type;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.TransactionUtils;
 import org.tron.core.consensus.client.Client;
 import org.tron.core.consensus.client.MessageType;
 import org.tron.core.consensus.server.Server;
-import org.tron.core.TransactionUtils;
-import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.message.Type;
 import org.tron.core.peer.Peer;
 import org.tron.core.peer.PeerType;
-import org.tron.protos.core.TronTransaction;
-import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.Transaction;
 
 public class ConsensusCommand extends Command {
 
@@ -105,7 +105,7 @@ public class ConsensusCommand extends Command {
     if (check(parameters)) {
       String to = parameters[0];
       long amount = Long.valueOf(parameters[1]);
-      TronTransaction.Transaction transaction = TransactionUtils
+      Transaction transaction = TransactionUtils
           .newTransaction(peer.getWallet(), to, amount, peer.getUTXOSet());
 
       if (transaction != null) {
@@ -127,7 +127,6 @@ public class ConsensusCommand extends Command {
       logger.error("address invalid");
       return false;
     }
-
 
     long amount = 0;
     try {
