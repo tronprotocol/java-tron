@@ -19,10 +19,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.protos.core.TronTransaction.Transaction;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.Transaction;
 
 public class TransactionUtilsTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
@@ -38,8 +39,8 @@ public class TransactionUtilsTest {
     Transaction coinbaseTransaction = TransactionUtils
         .newCoinbaseTransaction("12", "", 0);
 
-    logger.info("test getData hash: {}", ByteArray.toHexString
-        (TransactionUtils.getHash(coinbaseTransaction)));
+    logger.info("test getData hash: {}",
+        ByteArray.toHexString(TransactionUtils.getHash(coinbaseTransaction)));
   }
 
   @Test
@@ -63,7 +64,10 @@ public class TransactionUtilsTest {
   @Test
   public void testParseTransaction() {
     String transactionData =
-        "12650a202dbb0466bb1bc2f4b1432e62307160084c14eeab2b093f11969db06c07f3012f22410417017022a990673f2291d73a45621dc4bc754e3313f5a9cea1421b9ea0133d92a3a029c1be7d947b709195ea02370e05712cea4a699edb6efe8fedfe18eb4fcb1a1808011214fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c311a1808091214fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31";
+        "12650a202dbb0466bb1bc2f4b1432e62307160084c14eeab2b093f11969db06c07f3012f2241041701702"
+            + "2a990673f2291d73a45621dc4bc754e3313f5a9cea1421b9ea0133d92a3a029c1be7d947b709195"
+            + "ea02370e05712cea4a699edb6efe8fedfe18eb4fcb1a1808011214fd0f3c8ab4877f0fd96cd156b"
+            + "0ad42ea7aa82c311a1808091214fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31";
     try {
       Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(transactionData));
       System.out.println();

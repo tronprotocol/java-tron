@@ -16,18 +16,18 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-import org.tron.protos.core.TronTXInput.TXInput;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocal.TXInput;
 
 public class TXInputUtils {
 
   /**
    * new transaction input
    *
-   * @param txID      byte[] txID
-   * @param vout      int vout
+   * @param txID byte[] txID
+   * @param vout int vout
    * @param signature byte[] signature
-   * @param pubKey    byte[] pubKey
+   * @param pubKey byte[] pubKey
    * @return {@link TXInput}
    */
   public static TXInput newTXInput(byte[] txID, long vout, byte[]

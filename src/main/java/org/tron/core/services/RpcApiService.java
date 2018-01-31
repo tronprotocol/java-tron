@@ -1,20 +1,16 @@
 package org.tron.core.services;
 
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.logging.Logger;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.core.TronTransactionAndlockSript.TransactionAndlockSript;
-
-import java.io.IOException;
-import java.util.logging.Logger;
 
 public class RpcApiService implements Service {
 
@@ -70,36 +66,37 @@ public class RpcApiService implements Service {
     @Override
     public void getBalance(GrpcAPI.Account req, StreamObserver<GrpcAPI.Account> responseObserver) {
       ByteString addressBS = req.getAddress();
-      if ( addressBS != null ) {
+      if (addressBS != null) {
         byte[] addressBA = addressBS.toByteArray();
         long balance = wallet.getBalance(addressBA);
         GrpcAPI.Account reply = GrpcAPI.Account.newBuilder().setBalance(balance).build();
         responseObserver.onNext(reply);
-      }else{
+      } else {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
     }
+
     @Override
     public void createTransaction(GrpcAPI.Coin req, StreamObserver<Transaction> responseObserver) {
       ByteString fromBS = req.getFrom();
       ByteString toBS = req.getFrom();
       long amount = req.getAmount();
-      if ( fromBS != null && toBS != null &&  amount > 0 ) {
+      if (fromBS != null && toBS != null && amount > 0) {
         byte[] fromBA = fromBS.toByteArray();
         String toBA = toBS.toString();
 
         Transaction trx = wallet.createTransaction(fromBA, toBA, amount);
         responseObserver.onNext(trx);
-      }
-      else {
+      } else {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
     }
 
     @Override
-    public void broadcastTransaction(Transaction req, StreamObserver<GrpcAPI.Return> responseObserver) {
+    public void broadcastTransaction(Transaction req,
+        StreamObserver<GrpcAPI.Return> responseObserver) {
       boolean ret = wallet.broadcastTransaction(req);
       GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
       responseObserver.onNext(retur);
@@ -112,6 +109,9 @@ public class RpcApiService implements Service {
 
   }
 
+  /**
+   *...
+   */
   public void blockUntilShutdown() {
     if (ApiServer != null) {
       try {
