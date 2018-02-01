@@ -12,6 +12,20 @@ public class Manager {
   private TransactionStore transactionStore;
   private BlockStore blockStore;
   private UtxoStore utxoStore;
+  private WitnessStore witnessStore;
+
+  public WitnessStore getWitnessStore() {
+    return witnessStore;
+  }
+
+  public void setWitnessStore(WitnessStore witnessStore) {
+    this.witnessStore = witnessStore;
+  }
+
+  public List<Transaction> getPendingTrxs() {
+    return pendingTrxs;
+  }
+
 
   // transaction cache
   private List<Transaction> pendingTrxs;
@@ -24,6 +38,7 @@ public class Manager {
     setTransactionStore(TransactionStore.create("trans"));
     setBlockStore(BlockStore.create("block"));
     setUtxoStore(UtxoStore.create("utxo"));
+    setWitnessStore(WitnessStore.create("witness"));
 
     pendingTrxs = new ArrayList<>();
 
