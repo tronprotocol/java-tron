@@ -23,7 +23,7 @@ import org.tron.common.application.CliApplication;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.TransactionUtils;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.peer.Peer;
 import org.tron.protos.Protocal.Transaction;
 
@@ -41,7 +41,7 @@ public class SendCommand extends Command {
     if (check(parameters)) {
       String to = parameters[0];
       long amount = Long.parseLong(parameters[1]);
-      Transaction transaction = TransactionUtils
+      Transaction transaction = TransactionCapsule
           .newTransaction(peer.getWallet(), to, amount,
               peer.getUTXOSet());
 

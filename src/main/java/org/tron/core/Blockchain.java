@@ -38,6 +38,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.Net;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Configer;
 import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
@@ -113,7 +114,7 @@ public class Blockchain {
   private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
     return genesisBlockLoader.getTransaction().entrySet().stream()
         .map(e ->
-            TransactionUtils
+            TransactionCapsule
                 .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
         ).collect(Collectors.toList());
   }
@@ -208,7 +209,7 @@ public class Blockchain {
           utxo.put(txid, outs);
         }
 
-        if (!TransactionUtils.isCoinbaseTransaction(transaction)) {
+        if (!TransactionCapsule.isCoinbaseTransaction(transaction)) {
           for (TXInput in : transaction.getVinList()) {
             String inTxid = ByteArray.toHexString(in.getTxID()
                 .toByteArray());
@@ -268,8 +269,9 @@ public class Blockchain {
       prevTXs.put(key, prevTX);
     }
 
-    //transaction = TransactionUtils.sign(transaction, myKey, prevTXs);
-    transaction = TransactionUtils.sign(transaction, myKey);//Unsupport muilty address, needn't input prevTXs
+    //transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
+    transaction = TransactionCapsule
+        .sign(transaction, myKey);//Unsupport muilty address, needn't input prevTXs
     return transaction;
   }
 

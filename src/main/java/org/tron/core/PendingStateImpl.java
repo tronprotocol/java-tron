@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
 import org.tron.common.overlay.Net;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocal.Transaction;
 
 
@@ -33,7 +34,7 @@ public class PendingStateImpl implements PendingState {
   private List<Transaction> pendingTransactions = new ArrayList<>();
 
   private boolean addNewTxIfNotExist(Transaction tx) {
-    return receivedTxs.put(TransactionUtils.getHash(tx), dummyObject) == null;
+    return receivedTxs.put(TransactionCapsule.getHash(tx), dummyObject) == null;
   }
 
   @Override

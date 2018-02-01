@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.Transaction;
 
@@ -45,7 +46,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testNewGenesisBlock() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
@@ -56,7 +57,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testPrepareData() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     logger.info("test prepare data: {}",
@@ -67,7 +68,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testIsValidate() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     Block genesisBlock = BlockUtils.newGenesisBlock(coinbase);
@@ -77,7 +78,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testToPrintString() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     logger.info("test to print string: {}", BlockUtils.toPrintString
@@ -86,7 +87,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testGetMineValue() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     logger.info("test get mine value: {}", ByteArray.toHexString
@@ -96,7 +97,7 @@ public class BlockUtilsTest {
 
   @Test
   public void testGetPowBoundary() {
-    Transaction coinbase = TransactionUtils.newCoinbaseTransaction
+    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction
         ("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
             0);
     logger.info("test get pow boundary: {}", ByteArray.toHexString
