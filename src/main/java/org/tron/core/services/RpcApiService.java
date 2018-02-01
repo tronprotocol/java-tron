@@ -10,6 +10,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
 public class RpcApiService implements Service {
@@ -64,12 +65,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getBalance(GrpcAPI.Account req, StreamObserver<GrpcAPI.Account> responseObserver) {
+    public void getBalance(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBS = req.getAddress();
       if (addressBS != null) {
         byte[] addressBA = addressBS.toByteArray();
         long balance = wallet.getBalance(addressBA);
-        GrpcAPI.Account reply = GrpcAPI.Account.newBuilder().setBalance(balance).build();
+        Account reply = Account.newBuilder().setBalance(balance).build();
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -110,7 +111,7 @@ public class RpcApiService implements Service {
   }
 
   /**
-   *...
+   * ...
    */
   public void blockUntilShutdown() {
     if (ApiServer != null) {
