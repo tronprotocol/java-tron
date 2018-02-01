@@ -1,6 +1,8 @@
 package org.tron.core.net.message;
 
 import io.scalecube.cluster.Member;
+import java.util.List;
+import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal;
 
 public class BlockInventoryMessage extends InventoryOfPeerMessage {
@@ -11,6 +13,10 @@ public class BlockInventoryMessage extends InventoryOfPeerMessage {
 
   public BlockInventoryMessage(Protocal.Inventory inv, Member peer) {
     super(inv, peer);
+  }
+
+  public BlockInventoryMessage(List<Sha256Hash> hashList, Member peer) {
+    super(hashList, peer);
   }
 
   @Override

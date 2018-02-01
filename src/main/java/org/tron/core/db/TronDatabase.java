@@ -4,7 +4,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 
 public abstract class TronDatabase {
 
-  public LevelDbDataSourceImpl dbSource;
+  protected LevelDbDataSourceImpl dbSource;
 
   protected TronDatabase(String dbName) {
     dbSource = new LevelDbDataSourceImpl("database", dbName);
@@ -15,10 +15,18 @@ public abstract class TronDatabase {
     return dbSource;
   }
 
+  public void close() {
+    dbSource.closeDB();
+  }
+
   abstract void add();
 
   abstract void del();
 
   abstract void fetch();
+
+  void addItem(byte[] key, byte[] val) {
+    dbSource.putData(key, val);
+  }
 
 }

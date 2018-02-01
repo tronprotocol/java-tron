@@ -25,7 +25,7 @@ public class MessageFactory {
       case BLOCKHEADERS:
         return new BlockHeadersMessage(packed);
       case INVENTORY:
-        return new InvertoryMessage(packed);
+        return new InventoryMessage(packed);
       default:
         throw new IllegalArgumentException("No such message");
     }

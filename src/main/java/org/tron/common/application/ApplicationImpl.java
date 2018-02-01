@@ -1,6 +1,10 @@
 package org.tron.common.application;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.tron.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.db.BlockStore;
@@ -17,24 +21,80 @@ import org.tron.protos.Protocal;
 public class ApplicationImpl implements Application, NodeDelegate {
 
   private static final Logger logger = LoggerFactory.getLogger("ApplicationImpl");
-
   private Node p2pNode;
-
   private BlockStore blockStoreDb;
-
   private ServiceContainer services;
 
   private Manager dbManager;
 
   @Override
-  public Protocal.Inventory getBlockIds(Protocal.Inventory inv) {
+  public List<Sha256Hash> getBlockIds(List<Sha256Hash> blockChainSummary) {
     //todo: return the blocks it should be have.
-    return inv;
+
+    List<Sha256Hash> retBlockHashes = new ArrayList<>();
+    Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
+
+    if (!blockChainSummary.isEmpty()) {
+      //todo: find a block we all know between the summary and my db.
+      Collections.reverse(blockChainSummary);
+      for (Sha256Hash hash : blockChainSummary) {
+        if (blockStoreDb.isIncludeBlock(hash)) {
+          lastKnownBlkHash = hash;
+          break;
+        }
+      }
+      if (lastKnownBlkHash == Sha256Hash.ZERO_HASH) {
+        //todo: can not find any same block form peer's summary and my db.
+      }
+    }
+
+    for (long num = blockStoreDb.getBlockNumByHash(lastKnownBlkHash);
+        num <= blockStoreDb.getHeadBlockNum(); ++num) {
+      if (num > 0) {
+        retBlockHashes.add(blockStoreDb.getBlockHashByNum(num));
+      }
+    }
+    return retBlockHashes;
   }
 
   @Override
-  public ArrayList<byte[]> getBlockChainSynopsis(byte[] refPoint, int num) {
-    return new ArrayList<>();
+  public List<Sha256Hash> getBlockChainSynopsis(Sha256Hash refPoint, int num) {
+
+    List<Sha256Hash> retSummary = new ArrayList<>();
+    long highBlkNum = 0;
+    long highNoForkBlkNum = 0;
+    long lowBlkNum = 0; //TODO：get this from db.
+
+    List<Sha256Hash> forkList = new ArrayList<>();
+
+    if (refPoint != Sha256Hash.ZERO_HASH) {
+      //todo: get db's head num to check local db's block status.
+      if (blockStoreDb.isIncludeBlock(refPoint)) {
+        highBlkNum = blockStoreDb.getBlockNumByHash(refPoint);
+        highNoForkBlkNum = highBlkNum;
+      } else {
+        //todo: set highNoForkBlkNum and push fork block to fork list.
+      }
+
+    } else {
+      highBlkNum = blockStoreDb.getHeadBlockNum();
+      highNoForkBlkNum = highBlkNum;
+      if (highBlkNum == 0) {
+        return retSummary;
+      }
+    }
+
+    long realHighBlkNum = highBlkNum + num;
+    do {
+      if (lowBlkNum <= highNoForkBlkNum) {
+        retSummary.add(blockStoreDb.getBlockHashByNum(lowBlkNum));
+      } else {
+        retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
+      }
+      lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
+    } while (lowBlkNum <= highBlkNum);
+
+    return retSummary;
   }
 
   private void resetP2PNode() {
@@ -69,10 +129,10 @@ public class ApplicationImpl implements Application, NodeDelegate {
     blockStoreDb.pushTransactions(trxMsg.getTransaction());
   }
 
-  @Override
-  public boolean isIncludedBlock(byte[] hash) {
-    return blockStoreDb.isIncludeBlock(hash);
-  }
+//  @Override
+//  public boolean isIncludedBlock(Sha256Hash hash) {
+//    return blockStoreDb.isIncludeBlock(hash);
+//  }
 
 
   @Override

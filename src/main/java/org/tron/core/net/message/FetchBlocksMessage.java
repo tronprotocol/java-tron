@@ -1,20 +1,25 @@
 package org.tron.core.net.message;
 
 import io.scalecube.cluster.Member;
+import java.util.List;
+import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Inventory;
 
-public class FetchBlocksMessage extends org.tron.core.net.message.InvertoryMessage {
+public class FetchBlocksMessage extends InventoryOfPeerMessage {
 
   private Member peer;
 
+
   public FetchBlocksMessage(byte[] packed, Member peer) {
-    super(packed);
-    this.peer = peer;
+    super(packed, peer);
   }
 
   public FetchBlocksMessage(Inventory inv, Member peer) {
-    super(inv);
-    this.peer = peer;
+    super(inv, peer);
+  }
+
+  public FetchBlocksMessage(List<Sha256Hash> hashList, Member peer) {
+    super(hashList, peer);
   }
 
   public Member getPeer() {

@@ -2,7 +2,7 @@ package org.tron.core.net.message;
 
 import org.tron.protos.Protocal;
 
-public class FetchBlockHeadersMessage extends org.tron.core.net.message.InvertoryMessage {
+public class FetchBlockHeadersMessage extends InventoryMessage {
 
   public FetchBlockHeadersMessage(byte[] packed) {
     super(packed);
