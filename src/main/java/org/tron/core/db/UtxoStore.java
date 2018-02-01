@@ -18,6 +18,7 @@ package org.tron.core.db;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
+import org.tron.core.SpendableOutputs;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
 
@@ -96,7 +98,7 @@ public class UtxoStore extends TronDatabase {
   /**
    * Store related UTXOs.
    */
-  public void storeUTXO() {
+  public void storeUtxo() {
     logger.info("storeUTXO");
 
     getDbSource().resetDB();
@@ -113,6 +115,54 @@ public class UtxoStore extends TronDatabase {
         getDbSource().putData(ByteArray.fromHexString(key), value.toByteArray());
       }
     }
+  }
+
+  /**
+   * Find spendable outputs.
+   */
+  public SpendableOutputs findSpendableOutputs(byte[] pubKeyHash, long amount) {
+    SpendableOutputs spendableOutputs = new SpendableOutputs();
+    HashMap<String, long[]> unspentOutputs = new HashMap<>();
+    long accumulated = 0L;
+
+    Set<byte[]> keySet = getDbSource().allKeys();
+
+    for (byte[] key : keySet) {
+      byte[] txOutputsData = getDbSource().getData(key);
+      try {
+        TXOutputs txOutputs = TXOutputs.parseFrom(txOutputsData);
+
+        int len = txOutputs.getOutputsCount();
+
+        for (int i = 0; i < len; i++) {
+          TXOutput txOutput = txOutputs.getOutputs(i);
+          if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
+              .equals(ByteArray.toHexString(txOutput
+                  .getPubKeyHash()
+                  .toByteArray())) && accumulated < amount) {
+            accumulated += txOutput.getValue();
+
+            long[] v = unspentOutputs.get(ByteArray.toHexString(key));
+
+            if (v == null) {
+              v = new long[0];
+            }
+
+            long[] tmp = Arrays.copyOf(v, v.length + 1);
+            tmp[tmp.length - 1] = i;
+
+            unspentOutputs.put(ByteArray.toHexString(key), tmp);
+          }
+        }
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    }
+
+    spendableOutputs.setAmount(accumulated);
+    spendableOutputs.setUnspentOutputs(unspentOutputs);
+
+    return spendableOutputs;
   }
 
   /**
