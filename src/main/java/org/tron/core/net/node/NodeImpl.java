@@ -3,10 +3,12 @@ package org.tron.core.net.node;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
+import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchBlocksMessage;
@@ -119,15 +121,15 @@ public class NodeImpl extends PeerConnection implements Node {
   }
 
   @Override
-  public void syncFrom(byte[] myHeadBlockHash) {
-    ArrayList<byte[]> hashList = del.getBlockChainSynopsis(myHeadBlockHash, 100);
+  public void syncFrom(Sha256Hash myHeadBlockHash) {
+    List<Sha256Hash> hashList = del.getBlockChainSynopsis(myHeadBlockHash, 100);
 
     Protocal.Inventory.Builder invBuild = Protocal.Inventory.newBuilder();
     invBuild.setType(Protocal.Inventory.InventoryType.BLOCK);
     int i = 0;
-    for (byte[] hash :
+    for (Sha256Hash hash :
         hashList) {
-      invBuild.setIds(i++, ByteString.copyFrom(hash, 0, 31));
+      invBuild.setIds(i++, hash.getByteString());
     }
 
     if (gossipNode.getMembers().size() == 0) {
@@ -138,6 +140,7 @@ public class NodeImpl extends PeerConnection implements Node {
     loopSyncBlockChain.push(new SyncBlockChainMessage(invBuild.build(),
         gossipNode.getMembers().iterator().next()));
   }
+
 
   private void onHandleBlockMessage(BlockMessage blkMsg) {
     logger.info("on handle block message");
@@ -151,8 +154,8 @@ public class NodeImpl extends PeerConnection implements Node {
 
   private void onHandleSyncBlockChainMessage(SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
-    Protocal.Inventory inv = del.getBlockIds(syncMsg.getInventory());
-    BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(inv, syncMsg.getPeer());
+    List<Sha256Hash> blockIds = del.getBlockIds(syncMsg.getHashList());
+    BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds, syncMsg.getPeer());
     gossipNode.sendMessage(blkInvMsg.getPeer(), blkInvMsg);
   }
 
@@ -167,8 +170,8 @@ public class NodeImpl extends PeerConnection implements Node {
 
   private void onHandleBlockInventoryMessage(BlockInventoryMessage msg) {
     logger.info("on handle block inventory message");
-    Protocal.Inventory inv = del.getBlockIds(msg.getInventory());
-    FetchBlocksMessage fetchMsg = new FetchBlocksMessage(inv, msg.getPeer());
+    List<Sha256Hash> blockIds = del.getBlockIds(msg.getHashList());
+    FetchBlocksMessage fetchMsg = new FetchBlocksMessage(blockIds, msg.getPeer());
     loopFetchBlocks.push(fetchMsg);
   }
 }

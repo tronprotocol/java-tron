@@ -16,10 +16,10 @@
 package org.tron.core.db;
 
 import java.util.List;
-import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Transaction;
 
@@ -28,7 +28,6 @@ public class BlockStore extends TronDatabase {
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
-  private Vector<Transaction> pendingTrans;
 
   private BlockStore(String dbName) {
     super(dbName);
@@ -54,23 +53,20 @@ public class BlockStore extends TronDatabase {
   /**
    * to do.
    */
-  public byte[] getHeadBlockHash() {
-    return "".getBytes();
+  public Sha256Hash getHeadBlockHash() {
+    return Sha256Hash.ZERO_HASH;
   }
 
-  /**
-   * judge has item (block or trx).
-   *
-   * @param hash block hash or trx hash.
-   * @param type item type.
-   */
-  public boolean hasItem(byte[] hash, String type) {
-    if (type == "trx") {
-      return hasTranscation(hash);
-    } else if (type == "block") {
-      return hasBlock(hash);
-    }
-    return false;
+  public long getHeadBlockNum() {
+    return 0;
+  }
+
+  public Sha256Hash getBlockHashByNum(long num) {
+    return Sha256Hash.ZERO_HASH;
+  }
+
+  public long getBlockNumByHash(Sha256Hash hash) {
+    return 0;
   }
 
   /**
@@ -78,15 +74,12 @@ public class BlockStore extends TronDatabase {
    *
    * @param blockHash blockHash
    */
-  public boolean hasBlock(byte[] blockHash) {
+  public boolean hasBlock(Sha256Hash blockHash) {
     return false;
   }
 
-  public boolean hasTranscation(byte[] trxHash) {
-    return false;
-  }
 
-  public boolean isIncludeBlock(byte[] hash) {
+  public boolean isIncludeBlock(Sha256Hash hash) {
     return false;
   }
 

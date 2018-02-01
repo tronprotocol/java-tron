@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.Message;
 
 public interface Node {
@@ -12,5 +13,5 @@ public interface Node {
 
   void connectToP2PNetWork();
 
-  void syncFrom(byte[] myHeadBlockHash);
+  void syncFrom(Sha256Hash myHeadBlockHash);
 }
