@@ -43,7 +43,7 @@ public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-  private static BlockStore db;
+  private BlockStore db;
   private final ECKey ecKey;
   private UtxoStore utxoStore;
   private Application app;
@@ -72,7 +72,6 @@ public class Wallet {
   /**
    * Creates a Wallet with an existing ECKey.
    */
-
   public Wallet(final ECKey ecKey) {
     this.ecKey = ecKey;
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
@@ -103,34 +102,15 @@ public class Wallet {
   }
 
   /**
-   * Build a transaction.
-   */
-  public Transaction buildTransaction(List<TXInput> txInputs, List<TXOutput> txOutputs) {
-    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-
-    for (int i = 0; i < txInputs.size(); i++) {
-      transactionBuilder.addVin(txInputs.get(i));
-    }
-
-    for (int i = 0; i < txOutputs.size(); i++) {
-      transactionBuilder.addVout(txOutputs.get(i));
-    }
-
-    Transaction transaction = transactionBuilder.build();
-    return transaction;
-  }
-
-  /**
    * Create a transaction.
    */
-
   public Transaction createTransaction(byte[] address, String to, long amount) {
-    Transaction transaction = null;
+    Transaction.Builder transactionBuilder = Transaction.newBuilder();
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = getBalance(address);
 
-    Set<Entry<String, long[]>> entrySet = utxoSet.findSpendableOutputs(address, amount)
+    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
         .getUnspentOutputs().entrySet();
     for (Map.Entry<String, long[]> entry : entrySet) {
       String txId = entry.getKey();
@@ -141,16 +121,24 @@ public class Wallet {
         txInputs.add(txInput);
       }
     }
+
+    txOutputs.add(TXOutputUtils.newTXOutput(amount, to));
     txOutputs
         .add(TXOutputUtils.newTXOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (check(address, to, amount)) {
-      transaction = buildTransaction(txInputs, txOutputs);
+      for (TXInput txInput : txInputs) {
+        transactionBuilder.addVin(txInput);
+      }
+      for (TXOutput txOutput : txOutputs) {
+        transactionBuilder.addVout(txOutput);
+      }
       logger.info("Transaction create succeeded！");
     } else {
       logger.error("Transaction create failed！");
     }
-    return transaction;
+
+    return transactionBuilder.build();
   }
 
   /**
@@ -188,6 +176,5 @@ public class Wallet {
 
     return true;
   }
-
 
 }
