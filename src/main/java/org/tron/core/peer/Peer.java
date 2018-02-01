@@ -22,9 +22,9 @@ import org.tron.common.overlay.Net;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
 import org.tron.core.PendingStateImpl;
-import org.tron.core.TransactionUtils;
 import org.tron.core.UTXOSet;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.consensus.client.BlockchainClientListener;
 import org.tron.core.consensus.client.Client;
 import org.tron.protos.Protocal.Block;
@@ -68,7 +68,7 @@ public class Peer {
   public void addReceiveTransaction(String message) {
     try {
       Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(message));
-      System.out.println(TransactionUtils.toPrintString
+      System.out.println(TransactionCapsule.toPrintString
           (transaction));
       PendingStateImpl pendingState = new PendingStateImpl();
       pendingState.addPendingTransaction(blockchain, transaction);

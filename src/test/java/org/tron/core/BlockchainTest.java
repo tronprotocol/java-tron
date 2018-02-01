@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.TXOutputs;
 import org.tron.protos.Protocal.Transaction;
@@ -85,7 +86,7 @@ public class BlockchainTest {
         .copyFrom(
             ByteArray.fromHexString(
                 "15f3988aa8d56eab3bfca45144bad77fc60acce50437a0a9d794a03a83c15c5e")));
-    logger.info("{}", TransactionUtils.toPrintString(transaction));
+    logger.info("{}", TransactionCapsule.toPrintString(transaction));
   }
 
   @Test
@@ -100,7 +101,7 @@ public class BlockchainTest {
     ).thenReturn(spendableOutputs);
     Mockito.when(mockUtxoSet.getBlockchain()).thenReturn(blockchain);
 
-    Transaction transaction = TransactionUtils.newTransaction(wallet,
+    Transaction transaction = TransactionCapsule.newTransaction(wallet,
         "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", testAmount, mockUtxoSet);
     List<Transaction> transactions = new ArrayList<>();
     transactions.add(transaction);

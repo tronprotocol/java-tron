@@ -16,12 +16,10 @@ package org.tron.core.net.node;
 
 import org.junit.Test;
 
-import java.util.concurrent.Semaphore;
-
 public class NodeTest {
 
-    @Test
-    public void testNode() throws InterruptedException {
+  @Test
+  public void testNode() throws InterruptedException {
 //        INode node = new NodeImpl();
 //        node.setNodeDelegate(new ApplicationImpl());
 //        node.
@@ -34,10 +32,10 @@ public class NodeTest {
 //        node.broadcast(messageBlock);
 //        lock.tryAcquire(1, TimeUnit.SECONDS);
 //
-//        Message messageTransaction = new TransationMessage(TransactionUtils.newCoinbaseTransaction("12", "", 0));
+//        Message messageTransaction = new TransationMessage(TransactionCapsule.newCoinbaseTransaction("12", "", 0));
 //
 //        node.broadcast(messageTransaction);
 //        lock.tryAcquire(1, TimeUnit.SECONDS);
-    }
+  }
 
 }

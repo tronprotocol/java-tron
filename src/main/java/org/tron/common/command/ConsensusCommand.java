@@ -24,7 +24,7 @@ import org.tron.common.application.CliApplication;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.Type;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.TransactionUtils;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.consensus.client.Client;
 import org.tron.core.consensus.client.MessageType;
 import org.tron.core.consensus.server.Server;
@@ -105,7 +105,7 @@ public class ConsensusCommand extends Command {
     if (check(parameters)) {
       String to = parameters[0];
       long amount = Long.valueOf(parameters[1]);
-      Transaction transaction = TransactionUtils
+      Transaction transaction = TransactionCapsule
           .newTransaction(peer.getWallet(), to, amount, peer.getUTXOSet());
 
       if (transaction != null) {
