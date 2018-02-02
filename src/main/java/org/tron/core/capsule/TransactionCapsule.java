@@ -17,12 +17,14 @@ package org.tron.core.capsule;
 
 import static org.tron.common.crypto.Hash.sha256;
 import static org.tron.common.utils.Utils.getRandom;
+import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
 
 import com.google.protobuf.ByteString;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ import org.tron.core.Blockchain;
 import org.tron.core.SpendableOutputs;
 import org.tron.core.UTXOSet;
 import org.tron.core.Wallet;
+import org.tron.core.db.UtxoStore;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
@@ -42,14 +45,85 @@ public class TransactionCapsule {
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
   private static final int RESERVE_BALANCE = 10;
 
-
   private Transaction transaction;
+  private Wallet wallet;
+  private UtxoStore utxoStore;
 
+  /**
+   * constructor TransactionCapsule.
+   */
+  public TransactionCapsule(Transaction trx) {
+    this.transaction = trx;
+  }
+
+  /**
+   * constructor TransactionCapsule.
+   */
+  public TransactionCapsule(byte[] address, String to, long amount) {
+
+    Transaction.Builder transactionBuilder = Transaction.newBuilder().setType(Transfer);
+
+    List<TXInput> txInputs = new ArrayList<>();
+    List<TXOutput> txOutputs = new ArrayList<>();
+    long spendableOutputs = wallet.getBalance(address);
+
+    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
+        .getUnspentOutputs().entrySet();
+    for (Map.Entry<String, long[]> entry : entrySet) {
+      String txId = entry.getKey();
+      long[] outs = entry.getValue();
+      for (long out : outs) {
+        TXInput txInput = TxInputCapsule
+            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
+        txInputs.add(txInput);
+      }
+    }
+
+    txOutputs.add(TxOutputCapsule.newTxOutput(amount, to));
+    txOutputs
+        .add(
+            TxOutputCapsule.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+
+    if (check(address, to, amount)) {
+      for (TXInput txInput : txInputs) {
+        transactionBuilder.addVin(txInput);
+      }
+      for (TXOutput txOutput : txOutputs) {
+        transactionBuilder.addVout(txOutput);
+      }
+      logger.info("Transaction create succeeded！");
+    } else {
+      logger.error("Transaction create failed！");
+    }
+    transaction = transactionBuilder.build();
+  }
+
+  /**
+   * cheack balance of the address.
+   */
+  public boolean check(byte[] address, String to, long amount) {
+
+    if (to.length() != 40) {
+      logger.error("address invalid");
+      return false;
+    }
+
+    if (amount <= 0) {
+      logger.error("amount required a positive number");
+      return false;
+    }
+
+    if (amount > wallet.getBalance(address)) {
+      logger.error("don't have enough money");
+      return false;
+    }
+
+    return true;
+  }
 
   public Transaction getTransaction() {
     return transaction;
   }
-
 
   /**
    * validate.
@@ -58,7 +132,6 @@ public class TransactionCapsule {
     return true;
   }
 
-
   /**
    * Create a new transaction.
    *
@@ -66,8 +139,6 @@ public class TransactionCapsule {
    * @param to String to sender's address.
    * @param amount Long transaction amount.
    */
-
-
   public static Transaction newTransaction(Wallet wallet, String to, long amount, UTXOSet utxoSet) {
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
@@ -219,18 +290,15 @@ public class TransactionCapsule {
         .getTxID().size() == 0 && transaction.getVin(0).getVout() == -1;
   }
 
-  public static boolean checkTxOutUnSpent(TXOutput prevOut) {
+  private static boolean checkTxOutUnSpent(TXOutput prevOut) {
     return true;//todo :check prevOut is unspent
   }
 
   /**
    * checkBalance.
    */
-  public static boolean checkBalance(long totalBalance, long totalSpent) {
-    if (totalBalance == totalSpent) {
-      return true;    //Unsport fee;
-    }
-    return false;
+  private static boolean checkBalance(long totalBalance, long totalSpent) {
+    return totalBalance == totalSpent;
   }
 
   /**
@@ -244,7 +312,7 @@ public class TransactionCapsule {
     ByteString idByteS = signedTransaction.getId(); //hash
     byte[] hash = TransactionCapsule.getHash(signedTransaction);
     ByteString hashByteS = ByteString.copyFrom(hash);
-    if (idByteS == null || !idByteS.equals(idByteS)) {
+    if (idByteS == null || !hashByteS.equals(idByteS)) {
       return false;
     }
     Transaction.Builder transactionBuilderSigned = signedTransaction.toBuilder();
@@ -321,10 +389,9 @@ public class TransactionCapsule {
     for (int i = 0; i < outSize; i++) {
       totalSpent += signedTransaction.getVout(i).getValue();
     }
-    if (blockchain != null) {
-      return checkBalance(totalBalance, totalSpent); //4. check balance
-    }
-    return true; //Can't check balance
+
+    //4. check balance
+    return blockchain == null || checkBalance(totalBalance, totalSpent);
   }
 
   /**
