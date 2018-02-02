@@ -18,19 +18,22 @@ package org.tron.core;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.TxInputCapsule;
 
-public class TXOutputUtilsTest {
+public class TxInputCapsuleTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testNewTXOutput() {
-    logger.info("test new TXOutput: {}", TXOutputUtils.newTXOutput(1,
-        "12"));
+  public void testNewTXInput() {
+    logger.info("test new TXInput: {}", TxInputCapsule.newTxInput(new
+        byte[]{}, 1, new byte[]{}, new byte[]{}));
   }
 
   @Test
   public void testToPrintString() {
-    logger.info("test to print string: {}", TXOutputUtils.toPrintString
-        (TXOutputUtils.newTXOutput(1, "12")));
+    logger.info("test to print string: {}", TxInputCapsule.toPrintString
+        (TxInputCapsule.newTxInput(new byte[]{}, 1, new byte[]{}, new
+            byte[]{})));
   }
 }
