@@ -1,11 +1,12 @@
 package org.tron.core.db;
 
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.Transaction;
-
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.protos.Protocal;
+import org.tron.protos.Protocal.Transaction;
 
 
 public class Manager {
@@ -20,7 +21,7 @@ public class Manager {
     return witnessStore;
   }
 
-  public void setWitnessStore(WitnessStore witnessStore) {
+  private void setWitnessStore(WitnessStore witnessStore) {
     this.witnessStore = witnessStore;
   }
 
@@ -31,6 +32,37 @@ public class Manager {
 
   // transaction cache
   private List<Transaction> pendingTrxs;
+
+  // witness
+
+  public List<WitnessCapsule> getWitnesses() {
+    List<WitnessCapsule> wits = new ArrayList<WitnessCapsule>();
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x12")));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x11")));
+    return wits;
+  }
+
+  public List<WitnessCapsule> getCurrentShuffledWitnesses() {
+    return getWitnesses();
+  }
+
+
+  public ByteString getScheduledWitness(long slot) {
+    if (slot < 0) {
+      throw new RuntimeException("currentSlot should be positive.");
+    }
+    List<WitnessCapsule> currentShuffledWitnesses = getShuffledWitnesses();
+    if (currentShuffledWitnesses == null || currentShuffledWitnesses.size() == 0) {
+      throw new RuntimeException("ShuffledWitnesses is null.");
+    }
+    int witnessIndex = (int) slot % currentShuffledWitnesses.size();
+    return currentShuffledWitnesses.get(witnessIndex).getAddress();
+  }
+
+  public List<WitnessCapsule> getShuffledWitnesses() {
+    return getWitnesses();
+  }
+
 
   /**
    * all db should be init here.
@@ -55,8 +87,7 @@ public class Manager {
   }
 
   /**
-   *
-   * @param trxCap
+   * Process transaction.
    */
   public void processTrx(TransactionCapsule trxCap) {
 
@@ -75,9 +106,14 @@ public class Manager {
         break;
       case DeployContract:
         break;
+      default:
+        break;
     }
   }
 
+  /**
+   * Generate a block.
+   */
   public Protocal.Block generateBlock() {
 
     for (Transaction trx : pendingTrxs) {
