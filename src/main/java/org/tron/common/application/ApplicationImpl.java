@@ -1,12 +1,11 @@
 package org.tron.common.application;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.tron.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.Sha256Hash;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
@@ -16,7 +15,6 @@ import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.program.Args;
-import org.tron.protos.Protocal;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
@@ -26,6 +24,9 @@ public class ApplicationImpl implements Application, NodeDelegate {
   private ServiceContainer services;
 
   private Manager dbManager;
+
+
+  private boolean isProducer;
 
   @Override
   public List<Sha256Hash> getBlockIds(List<Sha256Hash> blockChainSummary) {
@@ -129,11 +130,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
     blockStoreDb.pushTransactions(trxMsg.getTransaction());
   }
 
-//  @Override
-//  public boolean isIncludedBlock(Sha256Hash hash) {
-//    return blockStoreDb.isIncludeBlock(hash);
-//  }
-
 
   @Override
   public Message getData(byte[] hash) {
@@ -231,6 +227,14 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public Manager getDbManager() {
     return dbManager;
+  }
+
+  public boolean isProducer() {
+    return isProducer;
+  }
+
+  public void setIsProducer(boolean producer) {
+    isProducer = producer;
   }
 
 }
