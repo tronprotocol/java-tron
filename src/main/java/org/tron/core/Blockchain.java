@@ -38,6 +38,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.Net;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Configer;
 import org.tron.core.events.BlockchainListener;
@@ -77,7 +78,7 @@ public class Blockchain {
 
       List<Transaction> transactions = buildTransactionsFrom(genesisBlockLoader);
 
-      Block genesisBlock = BlockUtils.newGenesisBlock(transactions);
+      Block genesisBlock = BlockCapsule.newGenesisBlock(transactions);
 
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
@@ -132,7 +133,7 @@ public class Blockchain {
   }
 
   /**
-   * Checks if the database file exists
+   * Checks if the database file exists.
    *
    * @return boolean
    */
@@ -148,7 +149,7 @@ public class Blockchain {
   }
 
   /**
-   * find transaction by id
+   * find transaction by id.
    *
    * @param id ByteString id
    * @return {@link Transaction}
@@ -233,7 +234,7 @@ public class Blockchain {
   }
 
   /**
-   * add a block into database
+   * add a block into database.
    */
   public void addBlock(Block block) {
     byte[] blockInDB = blockDb.getData(block.getBlockHeader().getHash().toByteArray());
@@ -285,10 +286,10 @@ public class Blockchain {
     byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // getData number
-    long number = BlockUtils.getIncreaseNumber(this);
+    long number = BlockCapsule.getIncreaseNumber(this);
     // getData difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-    Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+    Block block = BlockCapsule.newBlock(transactions, parentHash, difficulty,
         number);
 
     for (BlockchainListener listener : listeners) {
@@ -304,10 +305,10 @@ public class Blockchain {
     byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // get number
-    long number = BlockUtils.getIncreaseNumber(this);
+    long number = BlockCapsule.getIncreaseNumber(this);
     // get difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-    Block block = BlockUtils.newBlock(transactions, parentHash, difficulty,
+    Block block = BlockCapsule.newBlock(transactions, parentHash, difficulty,
         number);
 
     for (BlockchainListener listener : listeners) {
@@ -327,8 +328,7 @@ public class Blockchain {
     byte[] lastHash = blockDb.getData(lastHashKey);
 
     if (!ByteArray.toHexString(block.getBlockHeader().getParentHash().toByteArray())
-        .equals(ByteArray.toHexString
-            (lastHash))) {
+        .equals(ByteArray.toHexString(lastHash))) {
       return;
     }
 
@@ -344,7 +344,7 @@ public class Blockchain {
 
     this.lastHash = ch;
     currentHash = ch;
-    System.out.println(BlockUtils.toPrintString(block));
+    System.out.println(BlockCapsule.toPrintString(block));
     // update UTXO cache
     utxoSet.reindex();
   }
