@@ -19,24 +19,18 @@
 package org.tron.core;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.TxInputCapsule;
-import org.tron.core.capsule.TxOutputCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
-import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 
@@ -107,77 +101,22 @@ public class Wallet {
    * Create a transaction.
    */
   public Transaction createTransaction(byte[] address, String to, long amount) {
-    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    List<TXInput> txInputs = new ArrayList<>();
-    List<TXOutput> txOutputs = new ArrayList<>();
-    long spendableOutputs = getBalance(address);
-
-    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
-        .getUnspentOutputs().entrySet();
-    for (Map.Entry<String, long[]> entry : entrySet) {
-      String txId = entry.getKey();
-      long[] outs = entry.getValue();
-      for (long out : outs) {
-        TXInput txInput = TxInputCapsule
-            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
-        txInputs.add(txInput);
-      }
-    }
-
-    txOutputs.add(TxOutputCapsule.newTxOutput(amount, to));
-    txOutputs
-        .add(
-            TxOutputCapsule.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
-
-    if (check(address, to, amount)) {
-      for (TXInput txInput : txInputs) {
-        transactionBuilder.addVin(txInput);
-      }
-      for (TXOutput txOutput : txOutputs) {
-        transactionBuilder.addVout(txOutput);
-      }
-      logger.info("Transaction create succeeded！");
-    } else {
-      logger.error("Transaction create failed！");
-    }
-
-    return transactionBuilder.build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount);
+    return transactionCapsule.getTransaction();
   }
 
   /**
    * Broadcast a transaction.
    */
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
-    if (signaturedTransaction != null) {
+
+    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    if (trx.validate()) {
       Message message = new TransactionMessage(signaturedTransaction);
       p2pnode.broadcast(message);
       return true;
     }
     return false;
-  }
-
-
-  /**
-   * cheack balance of the address.
-   */
-  public boolean check(byte[] address, String to, long amount) {
-
-    if (to.length() != 40) {
-      logger.error("address invalid");
-      return false;
-    }
-
-    if (amount <= 0) {
-      logger.error("amount required a positive number");
-      return false;
-    }
-
-    if (amount > getBalance(address)) {
-      logger.error("don't have enough money");
-      return false;
-    }
-
-    return true;
   }
 
 }
