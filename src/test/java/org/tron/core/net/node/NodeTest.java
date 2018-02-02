@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core.net.node;
 
 import org.junit.Test;
@@ -20,22 +21,24 @@ public class NodeTest {
 
   @Test
   public void testNode() throws InterruptedException {
-//        INode node = new NodeImpl();
-//        node.setNodeDelegate(new ApplicationImpl());
-//        node.
-//
-//        lock.tryAcquire(1, TimeUnit.SECONDS);
-//        Message messageBlock = new BlockMessage(BlockUtils.newBlock(null, ByteString.copyFrom(new byte[]{1}),
-//                ByteString
-//                        .copyFrom(new byte[]{2}), 3L));
-//
-//        node.broadcast(messageBlock);
-//        lock.tryAcquire(1, TimeUnit.SECONDS);
-//
-//        Message messageTransaction = new TransationMessage(TransactionCapsule.newCoinbaseTransaction("12", "", 0));
-//
-//        node.broadcast(messageTransaction);
-//        lock.tryAcquire(1, TimeUnit.SECONDS);
+    //        INode node = new NodeImpl();
+    //        node.setNodeDelegate(new ApplicationImpl());
+    //        node.
+    //
+    //        lock.tryAcquire(1, TimeUnit.SECONDS);
+    //        Message messageBlock = new BlockMessage(BlockCapsule.newBlock(
+    // null, ByteString.copyFrom(new byte[]{1}),
+    //                ByteString
+    //                        .copyFrom(new byte[]{2}), 3L));
+    //
+    //        node.broadcast(messageBlock);
+    //        lock.tryAcquire(1, TimeUnit.SECONDS);
+    //
+    //        Message messageTransaction = new TransationMessage(
+    // TransactionCapsule.newCoinbaseTransaction("12", "", 0));
+    //
+    //        node.broadcast(messageTransaction);
+    //        lock.tryAcquire(1, TimeUnit.SECONDS);
   }
 
 }
