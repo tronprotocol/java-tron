@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.core.Constant.LAST_HASH;
@@ -29,16 +29,27 @@ import java.util.Optional;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Blockchain;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
 
-public class BlockUtils {
+public class BlockCapsule {
 
-  private static Block.Builder block;
   private byte[] serializEncode;
+
+  private Block block;
+
+  public Block getBlock() {
+    return block;
+  }
+
+  public boolean validate() {
+    return true;
+  }
+
 
   /**
    * getData a new block.
@@ -83,19 +94,20 @@ public class BlockUtils {
     genesisBlock.addTransactions(coinbase);
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString
-        ("2001")));
+    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
 
     genesisBlock.setBlockHeader(builder.build());
 
-    builder.setHash(ByteString.copyFrom(sha3(prepareData
-        (genesisBlock.build()))));
+    builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
 
     genesisBlock.setBlockHeader(builder.build());
 
     return genesisBlock.build();
   }
 
+  /**
+   * create genesis block from transactions.
+   */
   public static Block newGenesisBlock(List<Transaction> transactions) {
 
     Block.Builder genesisBlock = Block.newBuilder();
@@ -105,13 +117,11 @@ public class BlockUtils {
     }
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString
-        ("2001")));
+    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
 
     genesisBlock.setBlockHeader(builder.build());
 
-    builder.setHash(ByteString.copyFrom(sha3(prepareData
-        (genesisBlock.build()))));
+    builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
 
     genesisBlock.setBlockHeader(builder.build());
 
@@ -159,55 +169,53 @@ public class BlockUtils {
 
     DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
-    return "\nBlock {\n" +
-        "\ttimestamp=" + sdf.format(new Timestamp(block
-        .getBlockHeader().getTimestamp
-            ())) +
-        ", \n\tparentHash=" + ByteArray.toHexString(block
+    return "\nBlock {\n"
+        + "\ttimestamp=" + sdf.format(new Timestamp(block
+        .getBlockHeader().getTimestamp()))
+        + ", \n\tparentHash=" + ByteArray.toHexString(block
         .getBlockHeader()
-        .getParentHash().toByteArray()) +
-        ", \n\thash=" + ByteArray.toHexString(block.getBlockHeader()
+        .getParentHash().toByteArray())
+        + ", \n\thash=" + ByteArray.toHexString(block.getBlockHeader()
         .getHash()
-        .toByteArray()) +
-        ", \n\tnonce=" + ByteArray.toHexString(block.getBlockHeader()
+        .toByteArray())
+        + ", \n\tnonce=" + ByteArray.toHexString(block.getBlockHeader()
         .getNonce()
-        .toByteArray()) +
-        ", \n\tdifficulty=" + ByteArray.toHexString(block
+        .toByteArray())
+        + ", \n\tdifficulty=" + ByteArray.toHexString(block
         .getBlockHeader()
-        .getDifficulty().toByteArray()) +
-        ", \n\tnumber=" + block.getBlockHeader().getNumber() +
-        "\n}\n";
+        .getDifficulty().toByteArray())
+        + ", \n\tnumber=" + block.getBlockHeader().getNumber()
+        + "\n}\n";
   }
 
   /**
-   * getData mine value
+   * getData mine value.
    *
    * @param block {@link Block} block
    * @return byte[] mine value
    */
   public static byte[] getMineValue(Block block) {
     byte[] concat = Arrays.concatenate(prepareData(block), block
-        .getBlockHeader().getNonce
-            ().toByteArray());
+        .getBlockHeader().getNonce().toByteArray());
 
     return sha3(concat);
   }
 
   /**
-   * getData Verified boundary
+   * getData Verified boundary.
    *
    * @param block {@link Block} block
    * @return byte[] boundary
    */
   public static byte[] getPowBoundary(Block block) {
-    return BigIntegers.asUnsignedByteArray(32, BigInteger.ONE.shiftLeft
-        (256).divide(new BigInteger(1, block.getBlockHeader()
-        .getDifficulty()
-        .toByteArray())));
+    return BigIntegers.asUnsignedByteArray(32,
+        BigInteger.ONE.shiftLeft(256).divide(new BigInteger(1, block.getBlockHeader()
+            .getDifficulty()
+            .toByteArray())));
   }
 
   /**
-   * getData increase number + 1
+   * getData increase number + 1.
    *
    * @return long number
    */
@@ -240,7 +248,6 @@ public class BlockUtils {
   public static boolean isParentOf(Block block1, Block
       block2) {
 
-    return (block1.getBlockHeader().getParentHash() == block2.getBlockHeader
-        ().getHash());
+    return (block1.getBlockHeader().getParentHash() == block2.getBlockHeader().getHash());
   }
 }

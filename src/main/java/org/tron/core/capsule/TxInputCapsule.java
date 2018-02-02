@@ -13,34 +13,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocal.TXInput;
 
-public class TXInputUtils {
+public class TxInputCapsule {
+
+
+  private TXInput txInput;
+
+  public TXInput getTxInput() {
+    return txInput;
+  }
+
+  public boolean validate() {
+    return true;
+  }
 
   /**
-   * new transaction input
+   * new transaction input.
    *
-   * @param txID byte[] txID
+   * @param txId byte[] txId
    * @param vout int vout
    * @param signature byte[] signature
    * @param pubKey byte[] pubKey
    * @return {@link TXInput}
    */
-  public static TXInput newTXInput(byte[] txID, long vout, byte[]
+  public static TXInput newTxInput(byte[] txId, long vout, byte[]
       signature, byte[] pubKey) {
     return TXInput.newBuilder()
-        .setTxID(ByteString.copyFrom(txID))
+        .setTxID(ByteString.copyFrom(txId))
         .setVout(vout)
         .setSignature(ByteString.copyFrom(signature))
         .setPubKey(ByteString.copyFrom(pubKey)).build();
   }
 
   /**
-   * getData print string of the transaction input
+   * getData print string of the transaction input.
    *
    * @param txi {@link TXInput} txi
    * @return String format string of the transaction input
@@ -50,13 +61,11 @@ public class TXInputUtils {
       return "";
     }
 
-    return "\nTXInput {\n" +
-        "\ttxID=" + ByteArray.toHexString(txi.getTxID().toByteArray()) +
-        ",\n\tvout=" + txi.getVout() +
-        ",\n\tsignature=" + ByteArray.toHexString(txi.getSignature()
-        .toByteArray()) +
-        ",\n\tpubKey=" + ByteArray.toStr(txi.getPubKey().toByteArray
-        ()) +
-        "\n}\n";
+    return "\nTXInput {\n" + "\ttxID=" + ByteArray.toHexString(txi.getTxID().toByteArray())
+        + ",\n\tvout=" + txi.getVout()
+        + ",\n\tsignature=" + ByteArray.toHexString(txi.getSignature()
+        .toByteArray())
+        + ",\n\tpubKey=" + ByteArray.toStr(txi.getPubKey().toByteArray())
+        + "\n}\n";
   }
 }

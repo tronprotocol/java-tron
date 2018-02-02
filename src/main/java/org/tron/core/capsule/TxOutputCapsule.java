@@ -13,22 +13,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocal.TXOutput;
 
-public class TXOutputUtils {
+public class TxOutputCapsule {
+
+
+  private TXOutput txOutput;
+
+  public TXOutput getTxOutput() {
+    return txOutput;
+  }
 
   /**
-   * new transaction output
+   * validate.
+   */
+  public boolean validate() {
+    return true;
+  }
+
+
+  /**
+   * new transaction output.
    *
    * @param value int value
    * @param address String address
    * @return {@link TXOutput}
    */
-  public static TXOutput newTXOutput(long value, String address) {
+  public static TXOutput newTxOutput(long value, String address) {
     return TXOutput.newBuilder()
         .setValue(value)
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
@@ -36,7 +51,7 @@ public class TXOutputUtils {
   }
 
   /**
-   * getData print string of the transaction out
+   * getData print string of the transaction out.
    *
    * @param txo {@link TXOutput} txo
    * @return String format string of the transaction output
@@ -46,10 +61,9 @@ public class TXOutputUtils {
       return "";
     }
 
-    return "\nTXOutput {\n" +
-        "\tvalue=" + txo.getValue() +
-        ",\n\tpubKeyHash=" + ByteArray.toHexString(txo.getPubKeyHash
-        ().toByteArray()) +
-        "\n}\n";
+    return "\nTXOutput {\n"
+        + "\tvalue=" + txo.getValue()
+        + ",\n\tpubKeyHash=" + ByteArray.toHexString(txo.getPubKeyHash().toByteArray())
+        + "\n}\n";
   }
 }

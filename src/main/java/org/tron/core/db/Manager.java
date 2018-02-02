@@ -1,9 +1,11 @@
 package org.tron.core.db;
 
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.protos.Protocal;
+import org.tron.protos.Protocal.Transaction;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocal.Transaction;
 
 
 public class Manager {
@@ -76,11 +78,13 @@ public class Manager {
     }
   }
 
-  public void generateBlock() {
+  public Protocal.Block generateBlock() {
 
     for (Transaction trx : pendingTrxs) {
 
     }
+    //todo
+    return Protocal.Block.getDefaultInstance();
   }
 
   private void setAccountStore(AccountStore accountStore) {
