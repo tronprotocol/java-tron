@@ -29,6 +29,8 @@ import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.TxInputCapsule;
+import org.tron.core.capsule.TxOutputCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
@@ -116,15 +118,16 @@ public class Wallet {
       String txId = entry.getKey();
       long[] outs = entry.getValue();
       for (long out : outs) {
-        TXInput txInput = TXInputUtils
-            .newTXInput(ByteArray.fromHexString(txId), out, null, address);
+        TXInput txInput = TxInputCapsule
+            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
         txInputs.add(txInput);
       }
     }
 
-    txOutputs.add(TXOutputUtils.newTXOutput(amount, to));
+    txOutputs.add(TxOutputCapsule.newTxOutput(amount, to));
     txOutputs
-        .add(TXOutputUtils.newTXOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+        .add(
+            TxOutputCapsule.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (check(address, to, amount)) {
       for (TXInput txInput : txInputs) {

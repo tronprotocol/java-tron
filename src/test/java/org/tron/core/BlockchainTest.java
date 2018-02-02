@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.TXOutputs;
@@ -105,7 +106,7 @@ public class BlockchainTest {
         "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", testAmount, mockUtxoSet);
     List<Transaction> transactions = new ArrayList<>();
     transactions.add(transaction);
-    blockchain.addBlock(BlockUtils.newBlock(transactions, ByteString
+    blockchain.addBlock(BlockCapsule.newBlock(transactions, ByteString
         .copyFrom(new byte[]{1}), ByteString
         .copyFrom(new byte[]{1}), 1));
     HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
@@ -119,7 +120,7 @@ public class BlockchainTest {
 
     Wallet wallet = new Wallet();
 
-    Block block = BlockUtils.newBlock(null, parentHash,
+    Block block = BlockCapsule.newBlock(null, parentHash,
         difficulty, 0);
     LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.TEST,
         "blockStore_test");
