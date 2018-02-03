@@ -13,7 +13,7 @@ public class FullNode {
     RpcApiService rpcApiService = new RpcApiService(tApp);
     tApp.addService(rpcApiService);
     tApp.addService(new WitnessService(tApp));
-    tApp.startServies();
+    tApp.startServices();
     tApp.startup();
     rpcApiService.blockUntilShutdown();
   }

@@ -32,7 +32,7 @@ public interface Application {
 
   void shutdown();
 
-  void startServies();
+  void startServices();
 
   void shutdownServices();
 
