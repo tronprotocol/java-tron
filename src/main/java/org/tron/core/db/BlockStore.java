@@ -15,13 +15,16 @@
 
 package org.tron.core.db;
 
-import java.util.List;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.Sha256Hash;
+import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.Transaction;
+
+import java.util.List;
 
 public class BlockStore extends TronDatabase {
 
@@ -67,6 +70,25 @@ public class BlockStore extends TronDatabase {
 
   public long getBlockNumByHash(Sha256Hash hash) {
     return 0;
+  }
+
+  public long getCurrentHeadBlockNum() {
+    return (getHeadBlockTime().getMillis() - getGenesisTime().getMillis())
+            / WitnessService.LOOP_INTERVAL;
+  }
+
+  public DateTime getHeadBlockTime() {
+    DateTime time = DateTime.now();
+    return time.minus(time.getMillisOfSecond() + 1000); // for test. assume a block generated 1s ago
+  }
+
+  public long currentASlot() {
+    return getCurrentHeadBlockNum(); // assume no missed slot
+  }
+
+  // genesis_time
+  public DateTime getGenesisTime() {
+    return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
   }
 
   /**

@@ -10,11 +10,13 @@ import org.tron.protos.Protocal.Inventory;
 
 public class InventoryMessage extends Message {
 
-  private Inventory inv;
+  protected Inventory inv;
 
   public InventoryMessage(byte[] packed) {
     super(packed);
   }
+
+  public InventoryMessage() {}
 
   public InventoryMessage(Inventory inv) {
     this.inv = inv;
@@ -22,14 +24,14 @@ public class InventoryMessage extends Message {
   }
 
   public InventoryMessage(List<Sha256Hash> hashList) {
-    //Inventory.Builder invBuilder = Inventory.newBuilder();
+    Inventory.Builder invBuilder = Inventory.newBuilder();
 
-//
-//    Items.Builder itemsBuilder = Items.newBuilder();
-//    itemsBuilder.setType(Items.ItemType.BLOCK);
-//    itemsBuilder.addAllBlocks(this.blocks);
-//    this.data = itemsBuilder.build().toByteArray();
+    for (Sha256Hash hash :
+        hashList) {
+      invBuilder.addIds(hash.getByteString());
+    }
 
+    inv = invBuilder.build();
     unpacked = true;
   }
 

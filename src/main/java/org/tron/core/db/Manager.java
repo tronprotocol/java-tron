@@ -1,15 +1,28 @@
 package org.tron.core.db;
 
+import static org.tron.common.crypto.Hash.sha3;
+
+import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.protos.Protocal;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.Block.Builder;
+import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
-
 public class Manager {
+
+  private static final Logger logger = LoggerFactory.getLogger("Manager");
+
+  private final static long BLOCK_INTERVAL_SEC = 1;
+  private final static long TRXS_SIZE = 2_000_000; // < 2MiB
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -37,8 +50,10 @@ public class Manager {
 
   public List<WitnessCapsule> getWitnesses() {
     List<WitnessCapsule> wits = new ArrayList<WitnessCapsule>();
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x12")));
     wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x11")));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x12")));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x13")));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x14")));
     return wits;
   }
 
@@ -48,15 +63,22 @@ public class Manager {
 
 
   public ByteString getScheduledWitness(long slot) {
-    if (slot < 0) {
+    long currentSlot = blockStore.currentASlot() + slot;
+
+    if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
     List<WitnessCapsule> currentShuffledWitnesses = getShuffledWitnesses();
     if (currentShuffledWitnesses == null || currentShuffledWitnesses.size() == 0) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
-    int witnessIndex = (int) slot % currentShuffledWitnesses.size();
-    return currentShuffledWitnesses.get(witnessIndex).getAddress();
+    int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
+
+    ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex).getAddress();
+
+    logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
+
+    return scheduledWitness;
   }
 
   public List<WitnessCapsule> getShuffledWitnesses() {
@@ -89,10 +111,10 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public void processTrx(TransactionCapsule trxCap) {
+  public boolean processTrx(TransactionCapsule trxCap) {
 
     if (!trxCap.validate()) {
-      return;
+      return false;
     }
 
     Transaction trx = trxCap.getTransaction();
@@ -109,18 +131,71 @@ public class Manager {
       default:
         break;
     }
+
+    return true;
   }
 
   /**
    * Generate a block.
    */
-  public Protocal.Block generateBlock() {
+  public Protocal.Block generateBlock(WitnessCapsule witnessCapsule,
+      long when) {
+    long latestBlockNum = witnessCapsule.getLatestBlockNum();
+
+    if (latestBlockNum == 0) {
+      // TODO: return genesis block
+      return Block.getDefaultInstance();
+    }
+
+    byte[] parentBlockHash = blockStore.getBlockHashByNum(latestBlockNum).getBytes();
+    Block parentBlock = null;
+    try {
+      parentBlock = Block.parseFrom(blockStore.findBlockByHash(parentBlockHash));
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    // judge create block time
+    if (when < parentBlock.getBlockHeader().getTimestamp()) {
+      throw new IllegalArgumentException("generate block timestamp is invalid.");
+    }
+
+    long currentTrxSize = 0;
+    long postponedTrxCount = 0;
+    Builder blockBuilder = Block.newBuilder();
 
     for (Transaction trx : pendingTrxs) {
+      currentTrxSize += RamUsageEstimator.sizeOf(trx);
+      // judge block size
+      if (currentTrxSize > TRXS_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
 
+      // apply transaction
+      if (processTrx(new TransactionCapsule(trx))) {
+        // push into block
+        blockBuilder.addTransactions(trx);
+      }
     }
-    //todo
-    return Protocal.Block.getDefaultInstance();
+
+    if (postponedTrxCount > 0) {
+      logger.info("postponed {} transactions due to block size limit", postponedTrxCount);
+    }
+
+    // generate block
+    BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder()
+        .setNumber(parentBlock.getBlockHeader().getNumber() + 1)
+        .setParentHash(parentBlock.getBlockHeader().getHash())
+        .setTimestamp(when)
+        .setWitnessAddress(witnessCapsule.getAddress());
+
+    blockBuilder.setBlockHeader(blockHeaderBuilder.build());
+
+    blockHeaderBuilder.setHash(ByteString.copyFrom(sha3(blockBuilder.build().toByteArray())));
+
+    blockBuilder.setBlockHeader(blockHeaderBuilder.build());
+
+    return blockBuilder.build();
   }
 
   private void setAccountStore(AccountStore accountStore) {

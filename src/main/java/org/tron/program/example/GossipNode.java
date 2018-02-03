@@ -14,10 +14,6 @@
  */
 package org.tron.program.example;
 
-import io.scalecube.cluster.Member;
-import io.scalecube.transport.Message;
-import java.util.Collection;
-import java.util.Scanner;
 import org.tron.common.overlay.node.GossipLocalNode;
 
 public class GossipNode {
@@ -25,39 +21,39 @@ public class GossipNode {
   private static GossipLocalNode localNode = GossipLocalNode.getInstance();
 
   public static void main(String[] args) {
-    localNode.getCluster().listen().subscribe(msg -> {
-      System.out.println(msg);
-    });
-
-    Scanner scanner = new Scanner(System.in);
-    System.out.println("enter your message:");
-    while (true) {
-      String v = scanner.nextLine();
-
-      String[] inputStrings = v.trim().split("\\s+", 2);
-
-      switch (inputStrings[0]) {
-        case "send":
-          if (inputStrings.length > 1) {
-            localNode.getCluster().otherMembers().forEach(member -> {
-              localNode.getCluster().send(member, Message.fromData(inputStrings[1]));
-            });
-          }
-          break;
-        case "members":
-          Collection<Member> memberList = localNode.getMembers();
-          for (Member m : memberList) {
-            System.out.println(m);
-          }
-          break;
-        case "shutdown":
-          localNode.getCluster().shutdown();
-          System.exit(0);
-          break;
-        default:
-          break;
-      }
-
-    }
+//    localNode.getCluster().listen().subscribe(msg -> {
+//      System.out.println(msg);
+//    });
+//
+//    Scanner scanner = new Scanner(System.in);
+//    System.out.println("enter your message:");
+//    while (true) {
+//      String v = scanner.nextLine();
+//
+//      String[] inputStrings = v.trim().split("\\s+", 2);
+//
+//      switch (inputStrings[0]) {
+//        case "send":
+//          if (inputStrings.length > 1) {
+//            localNode.getCluster().otherMembers().forEach(member -> {
+//              localNode.getCluster().send(member, Message.fromData(inputStrings[1]));
+//            });
+//          }
+//          break;
+//        case "members":
+//          Collection<Member> memberList = localNode.getMembers();
+//          for (Member m : memberList) {
+//            System.out.println(m);
+//          }
+//          break;
+//        case "shutdown":
+//          localNode.getCluster().shutdown();
+//          System.exit(0);
+//          break;
+//        default:
+//          break;
+//      }
+//
+//    }break
   }
 }

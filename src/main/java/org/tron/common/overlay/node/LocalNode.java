@@ -14,11 +14,7 @@
  */
 package org.tron.common.overlay.node;
 
-import io.scalecube.cluster.Member;
 import org.tron.core.net.message.Message;
-import org.tron.core.net.peer.PeerConnection;
-
-import java.util.Collection;
 
 public interface LocalNode {
 
@@ -29,12 +25,5 @@ public interface LocalNode {
    */
   void broadcast(Message message);
 
-  /**
-   * Get active cluster members
-   *
-   * @return members
-   */
-  Collection<Member> getMembers();
-
-  void start(PeerConnection node);
+  void start();
 }

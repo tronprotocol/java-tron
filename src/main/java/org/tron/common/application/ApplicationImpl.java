@@ -10,6 +10,7 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
@@ -29,7 +30,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   private boolean isProducer;
 
   @Override
-  public List<Sha256Hash> getBlockIds(List<Sha256Hash> blockChainSummary) {
+  public List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary) {
     //todo: return the blocks it should be have.
 
     List<Sha256Hash> retBlockHashes = new ArrayList<>();
@@ -59,7 +60,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   }
 
   @Override
-  public List<Sha256Hash> getBlockChainSynopsis(Sha256Hash refPoint, int num) {
+  public List<Sha256Hash> getBlockChainSummary(Sha256Hash refPoint, int num) {
 
     List<Sha256Hash> retSummary = new ArrayList<>();
     long highBlkNum = 0;
@@ -99,7 +100,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   }
 
   private void resetP2PNode() {
-    p2pNode.listenOn("endpoint");
+    p2pNode.listen();
     p2pNode.connectToP2PNetWork();
     p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
   }
@@ -132,9 +133,9 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
 
   @Override
-  public Message getData(byte[] hash) {
+  public Message getData(Sha256Hash hash, MessageTypes type) {
     //Block
-    return new BlockMessage(blockStoreDb.findBlockByHash(hash));
+    return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
     //todo
     //Trx
   }

@@ -20,43 +20,116 @@ import com.google.common.io.ByteStreams;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.Member;
+import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.Configer;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.FetchBlocksMessage;
+import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
 
 public class GossipLocalNode implements LocalNode {
 
   private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
 
-  private final int PORT = Configer.getConf().getInt("overlay.port");
+  private final int port = Configer.getConf().getInt("overlay.port");
 
   private Cluster cluster = null;
 
+  private PeerConnectionDelegate peerDel;
+
   private static final GossipLocalNode INSTANCE = new GossipLocalNode();
+
+  public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private GossipLocalNode() {
     ClusterConfig config = ClusterConfig.builder()
         .seedMembers(getAddresses())
         .portAutoIncrement(false)
-        .port(PORT)
+        .port(port)
         .build();
 
     cluster = Cluster.joinAwait(config);
+
+    for (Member member : cluster.otherMembers()) {
+      listPeer.put(member.hashCode(), new PeerConnection(this.cluster, member));
+    }
+
+    cluster.listenMembership()
+        .subscribe(event -> {
+          if (event.type() == Type.REMOVED) {
+            listPeer.remove(event.oldMember().hashCode());
+          } else {
+            listPeer.put(event.newMember().hashCode(),
+                new PeerConnection(this.cluster, event.newMember()));
+          }
+        });
+  }
+
+
+  @Override
+  public void broadcast(Message message) {
+    MessageTypes type = message.getType();
+    byte[] value = message.getData();
+
+    if (cluster == null) {
+      return;
+    }
+
+    cluster.otherMembers().forEach(member -> {
+      try {
+        io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
+            .data(new String(value, "ISO-8859-1"))
+            .header("type", type.toString())
+            .build();
+
+        logger.info("broadcast other members");
+        cluster.send(member, msg);
+      } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  @Override
+  public void start() {
+    logger.info("listener message");
+    cluster.listen().subscribe(msg -> {
+      //todo: Make a thread pool here
+      byte[] newValueBytes = null;
+      String key = "";
+      try {
+        key = msg.header("type");
+        newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
+      } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+      }
+
+      Message message = getMessageByKey(key, newValueBytes);
+      peerDel.onMessage(listPeer.get(cluster.member(msg.sender()).get().hashCode()), message);
+    });
+  }
+
+  public void stop() {
+    cluster.shutdown();
+  }
+
+
+  public void setPeerDel(PeerConnectionDelegate peerDel) {
+    this.peerDel = peerDel;
   }
 
   public static GossipLocalNode getInstance() {
@@ -65,11 +138,6 @@ public class GossipLocalNode implements LocalNode {
 
   private List<Address> getAddresses() {
     List<Address> addresses = loadSeedNode();
-
-    if (addresses.isEmpty()) {
-
-    }
-
     return addresses;
   }
 
@@ -106,90 +174,8 @@ public class GossipLocalNode implements LocalNode {
     return addresses;
   }
 
-  @Override
-  public void broadcast(Message message) {
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
 
-    if (cluster == null) {
-      return;
-    }
-
-    cluster.otherMembers().forEach(member -> {
-      try {
-        io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-            .data(new String(value, "ISO-8859-1"))
-            .header("type", type.toString())
-            .build();
-
-        logger.info("broadcast other members");
-        cluster.send(member, msg);
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-    });
-  }
-
-  public void sendMessage(Member member, Message message) {
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      return;
-    }
-
-    try {
-      io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-          .data(new String(value, "ISO-8859-1"))
-          .header("type", type.toString())
-          .build();
-
-      logger.info("send message to member");
-      cluster.send(member, msg);
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-    }
-
-  }
-
-  public Cluster getCluster() {
-    return cluster;
-  }
-
-  public void setCluster(Cluster cluster) {
-    this.cluster = cluster;
-  }
-
-  @Override
-  public Collection<Member> getMembers() {
-    Collection<Member> members = cluster.otherMembers();
-    return members;
-  }
-
-  @Override
-  public void start(PeerConnection peer) {
-    logger.info("listener message");
-    cluster.listen().subscribe(msg -> {
-      byte[] newValueBytes = null;
-      String key = "";
-      try {
-        key = msg.header("type");
-        newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-
-      //todo
-      //set msg type from key, instance msg object
-      //set a trx msg first here
-      Message message = getMessageByKey(key, newValueBytes, cluster.member(msg.sender()).get());
-
-      peer.onMessage(peer, message);
-
-    });
-  }
-
-  private Message getMessageByKey(String key, byte[] content, Member member) {
+  private Message getMessageByKey(String key, byte[] content) {
     Message message = null;
 
     switch (MessageTypes.valueOf(key)) {
@@ -200,13 +186,13 @@ public class GossipLocalNode implements LocalNode {
         message = new TransactionMessage(content);
         break;
       case SYNC_BLOCK_CHAIN:
-        message = new SyncBlockChainMessage(content, member);
+        message = new SyncBlockChainMessage(content);
         break;
-      case FETCH_BLOCKS:
-        message = new FetchBlocksMessage(content, member);
+      case FETCH_INV_DATA:
+        message = new FetchInvDataMessage(content);
         break;
       case BLOCK_INVENTORY:
-        message = new BlockInventoryMessage(content, member);
+        message = new BlockInventoryMessage(content);
         break;
       default:
         try {

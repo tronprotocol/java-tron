@@ -5,26 +5,31 @@ import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Inventory;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
-public class BlockInventoryMessage extends InventoryMessage {
+public class TransactionInventoryMessage extends InventoryMessage  {
 
-  public BlockInventoryMessage(byte[] packed) {
+  public TransactionInventoryMessage(byte[] packed) {
     super(packed);
   }
 
-  public BlockInventoryMessage(Inventory inv) {
+  public TransactionInventoryMessage(Inventory inv) {
     super(inv);
   }
 
-  public BlockInventoryMessage(List<Sha256Hash> hashList) {
+  public TransactionInventoryMessage(List<Sha256Hash> hashList) {
     Inventory.Builder invBuilder = Inventory.newBuilder();
 
     for (Sha256Hash hash :
         hashList) {
       invBuilder.addIds(hash.getByteString());
     }
-    invBuilder.setType(InventoryType.BLOCK);
+    invBuilder.setType(InventoryType.TRX);
     inv = invBuilder.build();
     unpacked = true;
+  }
+
+  @Override
+  public byte[] getData() {
+    return super.getData();
   }
 
   @Override
@@ -34,8 +39,16 @@ public class BlockInventoryMessage extends InventoryMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_INVENTORY;
+    return MessageTypes.TRX_INVENTORY;
   }
 
+  @Override
+  public Inventory getInventory() {
+    return super.getInventory();
+  }
 
+  @Override
+  public List<Sha256Hash> getHashList() {
+    return super.getHashList();
+  }
 }

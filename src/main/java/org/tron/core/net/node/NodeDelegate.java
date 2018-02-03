@@ -4,6 +4,7 @@ import java.util.List;
 import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
 public interface NodeDelegate {
@@ -12,11 +13,11 @@ public interface NodeDelegate {
 
   void handleTransation(TransactionMessage trxMsg);
 
-  List<Sha256Hash> getBlockIds(List<Sha256Hash> blockChainSummary);
+  List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary);
 
-  List<Sha256Hash> getBlockChainSynopsis(Sha256Hash refPoint, int num);
+  List<Sha256Hash> getBlockChainSummary(Sha256Hash refPoint, int num);
 
-  Message getData(byte[] hash);
+  Message getData(Sha256Hash msgId, MessageTypes type);
 
   void syncToCli();
 

@@ -9,9 +9,11 @@ public interface Node {
 
   void broadcast(Message msg);
 
-  void listenOn(String endPoint);
+  void listen();
 
   void connectToP2PNetWork();
 
   void syncFrom(Sha256Hash myHeadBlockHash);
+
+  void close() throws InterruptedException;
 }

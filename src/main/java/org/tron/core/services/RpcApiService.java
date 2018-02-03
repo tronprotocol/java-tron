@@ -6,6 +6,8 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.logging.Logger;
+
+import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -85,9 +87,9 @@ public class RpcApiService implements Service {
       long amount = req.getAmount();
       if (fromBS != null && toBS != null && amount > 0) {
         byte[] fromBA = fromBS.toByteArray();
-        String toBA = toBS.toString();
-
-        Transaction trx = wallet.createTransaction(fromBA, toBA, amount);
+        byte[] toBA = fromBS.toByteArray();
+        String toHexString = Hex.toHexString(toBA);
+        Transaction trx = wallet.createTransaction(fromBA, toHexString, amount);
         responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
