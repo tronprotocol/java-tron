@@ -23,7 +23,7 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 # Quick Start
 
-Read the [Quick Srart](http://wiki.tron.network/en/latest/quick_start.html).
+Read the [Quick Start](http://wiki.tron.network/en/latest/quick_start.html).
 
 
 # Commands
