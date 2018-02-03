@@ -46,8 +46,6 @@ public class TransactionCapsule {
   private static final int RESERVE_BALANCE = 10;
 
   private Transaction transaction;
-  private Wallet wallet;
-  //private UtxoStore utxoStore;
 
   /**
    * constructor TransactionCapsule.
@@ -59,15 +57,12 @@ public class TransactionCapsule {
   /**
    * constructor TransactionCapsule.
    */
-  public TransactionCapsule(Wallet wallet, byte[] address, String to, long amount) {
+  public TransactionCapsule(byte[] address, String to, long amount, long balance, UtxoStore utxoStore) {
 
     Transaction.Builder transactionBuilder = Transaction.newBuilder().setType(Transfer);
-    this.wallet = wallet;
-    UtxoStore utxoStore = wallet.getUtxoStore();
-
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
-    long spendableOutputs = wallet.getBalance(address);
+    long spendableOutputs = balance;
 
     Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
         .getUnspentOutputs().entrySet();
@@ -86,7 +81,7 @@ public class TransactionCapsule {
         .add(
             TxOutputCapsule.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
-    if (check(address, to, amount)) {
+    if (checkBalance(address, to, amount, balance)) {
       for (TXInput txInput : txInputs) {
         transactionBuilder.addVin(txInput);
       }
@@ -105,7 +100,7 @@ public class TransactionCapsule {
   /**
    * cheack balance of the address.
    */
-  public boolean check(byte[] address, String to, long amount) {
+  public boolean checkBalance(byte[] address, String to, long amount, long Balance) {
 
     if (to.length() != 40) {
       logger.error("address invalid");
@@ -117,7 +112,7 @@ public class TransactionCapsule {
       return false;
     }
 
-    if (amount > wallet.getBalance(address)) {
+    if (amount > Balance) {
       logger.error("don't have enough money");
       return false;
     }
