@@ -48,7 +48,7 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public void startServies() {
+  public void startServices() {
 
   }
 

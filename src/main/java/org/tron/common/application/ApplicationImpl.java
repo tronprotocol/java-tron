@@ -206,7 +206,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   }
 
   @Override
-  public void startServies() {
+  public void startServices() {
     services.start();
   }
 
