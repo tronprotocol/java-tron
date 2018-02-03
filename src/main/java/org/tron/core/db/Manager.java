@@ -186,8 +186,8 @@ public class Manager {
     BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder()
         .setNumber(parentBlock.getBlockHeader().getNumber() + 1)
         .setParentHash(parentBlock.getBlockHeader().getHash())
-        .setTimestamp(when)
-        .setWitnessAddress(witnessCapsule.getAddress());
+        .setTimestamp(when);
+    //    .setWitnessAddress(witnessCapsule.getAddress());
 
     blockBuilder.setBlockHeader(blockHeaderBuilder.build());
 
