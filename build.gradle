@@ -118,6 +118,8 @@ dependencies {
     compile group: 'io.scalecube', name: 'scalecube-services', version: '1.0.7'
     compile group: 'io.scalecube', name: 'scalecube-cluster', version: '1.0.7'
     compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
+
+    compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 }
 
 task lint(type: Checkstyle) {
@@ -150,12 +152,9 @@ if (project.hasProperty("mainClass")) {
 sourceSets {
     main {
 
+
         proto {
-            srcDir 'src/main/protos'
-        }
-        java {
-            srcDir 'src/main/gen'
-            srcDir 'src/main/java'
+            srcDir 'src/protos'
         }
     }
 

@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import org.tron.protos.Protocal.Witness;
 
 public class WitnessCapsule {
-
   private Witness witness;
 
   public WitnessCapsule(Witness witness) {
@@ -19,4 +18,7 @@ public class WitnessCapsule {
     return witness.getAddress();
   }
 
+  public long getLatestBlockNum() {
+    return witness.getLatestBlockNum();
+  }
 }

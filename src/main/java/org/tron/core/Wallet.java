@@ -19,6 +19,8 @@
 package org.tron.core;
 
 import java.util.ArrayList;
+
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
@@ -41,6 +43,7 @@ public class Wallet {
 
   private BlockStore db;
   private final ECKey ecKey;
+  @Getter
   private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
@@ -101,9 +104,7 @@ public class Wallet {
    * Create a transaction.
    */
   public Transaction createTransaction(byte[] address, String to, long amount) {
-    long balance = getBalance(address);
-    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
-        utxoStore);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(this, address, to, amount);
     return transactionCapsule.getTransaction();
   }
 

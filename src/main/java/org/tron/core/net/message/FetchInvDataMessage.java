@@ -5,24 +5,25 @@ import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Inventory;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
-public class BlockInventoryMessage extends InventoryMessage {
+public class FetchInvDataMessage extends InventoryMessage {
 
-  public BlockInventoryMessage(byte[] packed) {
+
+  public FetchInvDataMessage(byte[] packed) {
     super(packed);
   }
 
-  public BlockInventoryMessage(Inventory inv) {
+  public FetchInvDataMessage(Inventory inv) {
     super(inv);
   }
 
-  public BlockInventoryMessage(List<Sha256Hash> hashList) {
+  public FetchInvDataMessage(List<Sha256Hash> hashList, InventoryType type) {
     Inventory.Builder invBuilder = Inventory.newBuilder();
 
     for (Sha256Hash hash :
         hashList) {
       invBuilder.addIds(hash.getByteString());
     }
-    invBuilder.setType(InventoryType.BLOCK);
+    invBuilder.setType(type);
     inv = invBuilder.build();
     unpacked = true;
   }
@@ -33,9 +34,8 @@ public class BlockInventoryMessage extends InventoryMessage {
   }
 
   @Override
-  public MessageTypes getType() {
-    return MessageTypes.BLOCK_INVENTORY;
+  public org.tron.core.net.message.MessageTypes getType() {
+    return MessageTypes.FETCH_INV_DATA;
   }
-
 
 }

@@ -19,7 +19,7 @@ public enum MessageTypes {
 
   INVENTORY(0x06),
 
-  FETCH_BLOCKS(0x07),
+  FETCH_INV_DATA(0x07),
 
   SYNC_BLOCK_CHAIN(0x08),
 
@@ -28,6 +28,8 @@ public enum MessageTypes {
   FETCH_BLOCK_HEADERS(0x10),
 
   BLOCK_INVENTORY(0x11),
+
+  TRX_INVENTORY(0x12),
 
   LAST(0xFF);
 

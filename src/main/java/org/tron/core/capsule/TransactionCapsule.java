@@ -44,7 +44,10 @@ public class TransactionCapsule {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
   private static final int RESERVE_BALANCE = 10;
+
   private Transaction transaction;
+  private Wallet wallet;
+  //private UtxoStore utxoStore;
 
   /**
    * constructor TransactionCapsule.
@@ -56,14 +59,15 @@ public class TransactionCapsule {
   /**
    * constructor TransactionCapsule.
    */
-  public TransactionCapsule(byte[] address, String to, long amount, long balance,
-      UtxoStore utxoStore) {
+  public TransactionCapsule(Wallet wallet, byte[] address, String to, long amount) {
 
     Transaction.Builder transactionBuilder = Transaction.newBuilder().setType(Transfer);
+    this.wallet = wallet;
+    UtxoStore utxoStore = wallet.getUtxoStore();
 
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
-    long spendableOutputs = balance;
+    long spendableOutputs = wallet.getBalance(address);
 
     Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
         .getUnspentOutputs().entrySet();
@@ -82,7 +86,7 @@ public class TransactionCapsule {
         .add(
             TxOutputCapsule.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
-    if (checkBalance(address, to, amount, balance)) {
+    if (check(address, to, amount)) {
       for (TXInput txInput : txInputs) {
         transactionBuilder.addVin(txInput);
       }
@@ -90,16 +94,18 @@ public class TransactionCapsule {
         transactionBuilder.addVout(txOutput);
       }
       logger.info("Transaction create succeeded！");
+      transaction = transactionBuilder.build();
     } else {
       logger.error("Transaction create failed！");
+      transaction = null;
     }
-    transaction = transactionBuilder.build();
+
   }
 
   /**
    * cheack balance of the address.
    */
-  public boolean checkBalance(byte[] address, String to, long amount, long balance) {
+  public boolean check(byte[] address, String to, long amount) {
 
     if (to.length() != 40) {
       logger.error("address invalid");
@@ -111,7 +117,7 @@ public class TransactionCapsule {
       return false;
     }
 
-    if (amount > balance) {
+    if (amount > wallet.getBalance(address)) {
       logger.error("don't have enough money");
       return false;
     }

@@ -1,29 +1,22 @@
 package org.tron.core.net.message;
 
-import io.scalecube.cluster.Member;
 import java.util.List;
 import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal;
+import org.tron.protos.Protocal.Inventory;
 
-public class SyncBlockChainMessage extends InventoryOfPeerMessage {
+public class SyncBlockChainMessage extends InventoryMessage {
 
-  private Member peer;
-
-  public SyncBlockChainMessage(byte[] packed, Member peer) {
-    super(packed, peer);
+  public SyncBlockChainMessage(byte[] packed) {
+    super(packed);
   }
 
-  public SyncBlockChainMessage(Protocal.Inventory inv, Member peer) {
-    super(inv, peer);
+  public SyncBlockChainMessage(Inventory inv) {
+    super(inv);
   }
 
-  public SyncBlockChainMessage(List<Sha256Hash> hashList, Member peer) {
-    super(hashList, peer);
-  }
-
-
-  public Member getPeer() {
-    return this.peer;
+  public SyncBlockChainMessage(List<Sha256Hash> hashList) {
+    super(hashList);
   }
 
   @Override
