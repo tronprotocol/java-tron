@@ -150,9 +150,12 @@ if (project.hasProperty("mainClass")) {
 sourceSets {
     main {
 
-
         proto {
             srcDir 'src/main/protos'
+        }
+        java {
+            srcDir 'src/main/gen'
+            srcDir 'src/main/java'
         }
     }
 
