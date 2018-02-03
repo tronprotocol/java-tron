@@ -49,7 +49,7 @@ public class Tron {
 //        .buildCli();
     Application app = new ApplicationImpl();
     app.initServices(new Args());
-    app.startServies();
+    app.startServices();
     app.startup();
 
 //    app.(new Server());
