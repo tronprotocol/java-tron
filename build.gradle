@@ -152,7 +152,7 @@ sourceSets {
 
 
         proto {
-            srcDir 'src/proto'
+            srcDir 'src/protos'
         }
     }
 
