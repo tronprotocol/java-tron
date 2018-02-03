@@ -104,7 +104,9 @@ public class Wallet {
    * Create a transaction.
    */
   public Transaction createTransaction(byte[] address, String to, long amount) {
-    TransactionCapsule transactionCapsule = new TransactionCapsule(this, address, to, amount);
+    long balance = getBalance(address);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
+                                                                   utxoStore);
     return transactionCapsule.getTransaction();
   }
 
