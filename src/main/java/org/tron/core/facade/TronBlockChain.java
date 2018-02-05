@@ -20,7 +20,7 @@ import org.tron.protos.Protocal.Block;
 public interface TronBlockChain {
 
   /**
-   *  last added block from blockchain.
+   * last added block from blockchain.
    */
   Block getBestBlock();
 }
