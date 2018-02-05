@@ -21,8 +21,8 @@ public class Manager {
 
   private static final Logger logger = LoggerFactory.getLogger("Manager");
 
-  private final static long BLOCK_INTERVAL_SEC = 1;
-  private final static long TRXS_SIZE = 2_000_000; // < 2MiB
+  private static final long BLOCK_INTERVAL_SEC = 1;
+  private static final long TRXS_SIZE = 2_000_000; // < 2MiB
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -48,6 +48,9 @@ public class Manager {
 
   // witness
 
+  /**
+   * get witnessCapsule List.
+   */
   public List<WitnessCapsule> getWitnesses() {
     List<WitnessCapsule> wits = new ArrayList<WitnessCapsule>();
     wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x11")));
@@ -62,6 +65,9 @@ public class Manager {
   }
 
 
+  /**
+   * get ScheduledWitness by slot.
+   */
   public ByteString getScheduledWitness(long slot) {
     long currentSlot = blockStore.currentASlot() + slot;
 
@@ -143,7 +149,8 @@ public class Manager {
     long latestBlockNum = witnessCapsule.getLatestBlockNum();
 
     if (latestBlockNum == 0) {
-      // TODO: return genesis block
+      //throw new IllegalArgumentException("latest block num (" + latestBlockNum + ") is invalid.");
+      //TODO: Handle exception
       return Block.getDefaultInstance();
     }
 
@@ -153,6 +160,7 @@ public class Manager {
       parentBlock = Block.parseFrom(blockStore.findBlockByHash(parentBlockHash));
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
+      return null;
     }
     // judge create block time
     if (when < parentBlock.getBlockHeader().getTimestamp()) {
@@ -186,8 +194,8 @@ public class Manager {
     BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder()
         .setNumber(parentBlock.getBlockHeader().getNumber() + 1)
         .setParentHash(parentBlock.getBlockHeader().getHash())
-        .setTimestamp(when);
-    //    .setWitnessAddress(witnessCapsule.getAddress());
+        .setTimestamp(when)
+        .setWitnessAddress(witnessCapsule.getAddress());
 
     blockBuilder.setBlockHeader(blockHeaderBuilder.build());
 
