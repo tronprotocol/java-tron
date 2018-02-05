@@ -15,6 +15,7 @@
 
 package org.tron.core.db;
 
+import java.util.List;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
@@ -23,8 +24,6 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.Sha256Hash;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocal;
-
-import java.util.List;
 
 public class BlockStore extends TronDatabase {
 
@@ -74,7 +73,7 @@ public class BlockStore extends TronDatabase {
 
   public long getCurrentHeadBlockNum() {
     return (getHeadBlockTime().getMillis() - getGenesisTime().getMillis())
-            / WitnessService.LOOP_INTERVAL;
+        / WitnessService.LOOP_INTERVAL;
   }
 
   public DateTime getHeadBlockTime() {
