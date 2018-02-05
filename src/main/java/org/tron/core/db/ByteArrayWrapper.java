@@ -42,9 +42,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
 
 
   /**
-   * equals
-   * @param other
-   * @return
+   * equals Objects.
    */
   public boolean equals(Object other) {
     if (!(other instanceof ByteArrayWrapper)) {
