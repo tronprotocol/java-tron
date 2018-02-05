@@ -15,13 +15,12 @@
 
 package org.tron.core.facade;
 
-
 import org.tron.protos.Protocal.Block;
 
 public interface TronBlockChain {
 
   /**
-   * @return - last added block from blockchain
+   *  last added block from blockchain.
    */
   Block getBestBlock();
 }
