@@ -21,11 +21,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import javax.inject.Named;
-import org.tron.core.consensus.client.Client;
-import org.tron.core.consensus.server.Server;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.Blockchain;
 import org.tron.core.Constant;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.consensus.client.Client;
+import org.tron.core.consensus.server.Server;
 
 public class Module extends AbstractModule {
 
@@ -50,7 +50,8 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("transaction")
   public LevelDbDataSourceImpl buildTransactionDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, TRANSACTION_DB_NAME);
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR,
+        TRANSACTION_DB_NAME);
     db.initDB();
     return db;
   }
@@ -59,7 +60,8 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("block")
   public LevelDbDataSourceImpl buildBlockDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, BLOCK_DB_NAME);
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR,
+        BLOCK_DB_NAME);
     db.initDB();
     return db;
   }

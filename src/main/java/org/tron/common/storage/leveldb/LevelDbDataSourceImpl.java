@@ -38,10 +38,10 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.config.Configer;
-import org.tron.core.Constant;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
+import org.tron.core.config.Configer;
 
 
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
@@ -56,12 +56,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public LevelDbDataSourceImpl() {
   }
 
-  public LevelDbDataSourceImpl(String parentName, String name) {
-    if (Constant.NORMAL == parentName) {
-      parentName = Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
+  public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
+    if (Constant.NORMAL == cfgType) {
+      parentName += Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
     } else {
-      parentName = Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-
+      parentName += Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
     }
     this.parentName = parentName;
     this.dataBaseName = name;
