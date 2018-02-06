@@ -31,7 +31,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testGet() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST, "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST, Constant.OUTPUT_DIR,
+        "test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
     byte[] key = key1.getBytes();
@@ -43,7 +44,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testPut() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST, "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST, Constant.OUTPUT_DIR,
+        "test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
     byte[] key = key1.getBytes();
@@ -62,7 +64,8 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testRest() {
 
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST_CONF, "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST_CONF,
+        Constant.OUTPUT_DIR, "test");
     dataSource.resetDB();
     dataSource.closeDB();
   }

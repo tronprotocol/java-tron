@@ -17,11 +17,8 @@ package org.tron.program.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.tron.common.application.ApplicationImpl;
-import org.tron.common.application.Application;
 import org.tron.core.peer.Peer;
 import org.tron.core.peer.PeerType;
-import org.tron.program.Args;
 
 public class Tron {
 
@@ -47,10 +44,10 @@ public class Tron {
 
 //    CliApplication app = new ApplicationFactory()
 //        .buildCli();
-    Application app = new ApplicationImpl();
-    app.initServices(new Args());
-    app.startServices();
-    app.startup();
+//buildCli    Application app = new ApplicationImpl();
+//    app.initServices(Args.getInstance(args));
+//    app.startServices();
+//    app.startup();
 
 //    app.(new Server());
 //    app.

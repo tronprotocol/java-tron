@@ -2,77 +2,78 @@
 
 <configuration>
 
-    <!-- Be sure to flush latest logs on exit -->
-    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+  <!-- Be sure to flush latest logs on exit -->
+  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-    </appender>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>INFO</level>
+    </filter>
+  </appender>
 
-    <appender name="FILE"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>./logs/tron.log</file>
-        <rollingPolicy
-                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- rollover hourly -->
-            <fileNamePattern>./logs/tron-%d{yyyy-MM-dd-'h'HH}.log.zip
-            </fileNamePattern>
-            <!-- ~1 month -->
-            <maxHistory>720</maxHistory>
-            <totalSizeCap>50GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>TRACE</level>
-        </filter>
-    </appender>
+  <appender name="FILE"
+    class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>./logs/tron.log</file>
+    <rollingPolicy
+      class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- rollover hourly -->
+      <fileNamePattern>./logs/tron-%d{yyyy-MM-dd-'h'HH}.log.zip
+      </fileNamePattern>
+      <!-- ~1 month -->
+      <maxHistory>720</maxHistory>
+      <totalSizeCap>50GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>TRACE</level>
+    </filter>
+  </appender>
 
-    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
-        <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
-        <discardingThreshold>0</discardingThreshold>
-        <!-- Default is 256 -->
-        <!-- Logger will block incoming events (log calls) until queue will free some space -->
-        <!-- (the smaller value -> flush occurs often) -->
-        <queueSize>100</queueSize>
+  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+    <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
+    <discardingThreshold>0</discardingThreshold>
+    <!-- Default is 256 -->
+    <!-- Logger will block incoming events (log calls) until queue will free some space -->
+    <!-- (the smaller value -> flush occurs often) -->
+    <queueSize>100</queueSize>
 
-        <appender-ref ref="FILE"/>
-    </appender>
+    <appender-ref ref="FILE"/>
+  </appender>
 
-    <root level="DEBUG">
-        <appender-ref ref="STDOUT"/>
-        <appender-ref ref="ASYNC"/>
-    </root>
-
-    <logger name="Configer" level="INFO"/>
-    <logger name="Transaction" level="INFO"/>
-    <logger name="Wallet" level="INFO"/>
-    <logger name="DB" level="INFO"/>
-    <logger name="Command" level="INFO"/>
-    <logger name="UTXOSet" level="INFO"/>
-    <logger name="UTXOStore" level="INFO"/>
-    <logger name="TransactionMessageHandler" level="INFO"/>
-    <logger name="BlockMessageHandler" level="INFO"/>
-    <logger name="BlockStores" level="INFO"/>
-    <logger name="Blockchain" level="INFO"/>
-    <logger name="BlockLoader" level="INFO"/>
-    <logger name="ConsensusCommand" level="INFO"/>
-    <logger name="Application" level="INFO"/>
-    <logger name="Services" level="INFO"/>
-    <logger name="GossipManager" level="INFO"/>
-    <logger name="GossipCore" level="INFO"/>
-    <logger name="UdpTransportManager" level="INFO"/>
-    <logger name="AbstractActiveGossiper" level="INFO"/>
-    <logger name="UserDataPersister" level="INFO"/>
-    <logger name="GossipLocalNode" level="INFO"/>
-    <logger name="ApplicationImpl" level="INFO"/>
-    <logger name="DynamicPropertiesStore" level="INFO"/>
+  <root level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="ASYNC"/>
+  </root>
+  
+  <logger name="Configer" level="INFO"/>
+  <logger name="Transaction" level="INFO"/>
+  <logger name="Wallet" level="INFO"/>
+  <logger name="DB" level="INFO"/>
+  <logger name="Command" level="INFO"/>
+  <logger name="UTXOSet" level="INFO"/>
+  <logger name="UTXOStore" level="INFO"/>
+  <logger name="TransactionMessageHandler" level="INFO"/>
+  <logger name="BlockMessageHandler" level="INFO"/>
+  <logger name="BlockStores" level="INFO"/>
+  <logger name="Blockchain" level="INFO"/>
+  <logger name="BlockLoader" level="INFO"/>
+  <logger name="ConsensusCommand" level="INFO"/>
+  <logger name="Application" level="INFO"/>
+  <logger name="Services" level="INFO"/>
+  <logger name="GossipManager" level="INFO"/>
+  <logger name="GossipCore" level="INFO"/>
+  <logger name="UdpTransportManager" level="INFO"/>
+  <logger name="AbstractActiveGossiper" level="INFO"/>
+  <logger name="UserDataPersister" level="INFO"/>
+  <logger name="GossipLocalNode" level="INFO"/>
+  <logger name="ApplicationImpl" level="INFO"/>
+  <logger name="ApplicationImpl" level="INFO"/>
+  <logger name="FullNode" level="INFO"/>
 
 </configuration>
 

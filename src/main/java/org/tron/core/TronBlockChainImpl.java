@@ -51,7 +51,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
    */
   private static LevelDbDataSourceImpl initBD() {
     LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.NORMAL,
-        "blockStoreInter");
+        Constant.OUTPUT_DIR, "blockStoreInter");
     levelDbDataSource.initDB();
     return levelDbDataSource;
   }

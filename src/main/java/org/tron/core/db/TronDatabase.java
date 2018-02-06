@@ -1,13 +1,14 @@
 package org.tron.core.db;
 
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.Constant;
 
 public abstract class TronDatabase {
 
   protected LevelDbDataSourceImpl dbSource;
 
   protected TronDatabase(String dbName) {
-    dbSource = new LevelDbDataSourceImpl("database", dbName);
+    dbSource = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR, dbName);
     dbSource.initDB();
   }
 
