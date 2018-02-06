@@ -155,9 +155,12 @@ public class Manager {
    */
   public Protocal.Block generateBlock(WitnessCapsule witnessCapsule,
       long when) {
-    long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    ByteString hash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
+
+    final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+
+    final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
+
+    final ByteString hash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
 
     // judge create block time
     if (when < timestamp) {
