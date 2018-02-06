@@ -4,7 +4,6 @@ import static org.tron.common.crypto.Hash.sha3;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,6 +28,7 @@ public class Manager {
   private BlockStore blockStore;
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
+  private DynamicPropertiesStore dynamicPropertiesStore;
 
   public WitnessStore getWitnessStore() {
     return witnessStore;
@@ -36,6 +36,14 @@ public class Manager {
 
   private void setWitnessStore(WitnessStore witnessStore) {
     this.witnessStore = witnessStore;
+  }
+
+  public DynamicPropertiesStore getDynamicPropertiesStore() {
+    return dynamicPropertiesStore;
+  }
+
+  public void setDynamicPropertiesStore(DynamicPropertiesStore dynamicPropertiesStore) {
+    this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
   public List<Transaction> getPendingTrxs() {
@@ -101,6 +109,7 @@ public class Manager {
     setBlockStore(BlockStore.create("block"));
     setUtxoStore(UtxoStore.create("utxo"));
     setWitnessStore(WitnessStore.create("witness"));
+    setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
     pendingTrxs = new ArrayList<>();
 
@@ -146,24 +155,12 @@ public class Manager {
    */
   public Protocal.Block generateBlock(WitnessCapsule witnessCapsule,
       long when) {
-    long latestBlockNum = witnessCapsule.getLatestBlockNum();
+    long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+    long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    ByteString hash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
 
-    if (latestBlockNum == 0) {
-      //throw new IllegalArgumentException("latest block num (" + latestBlockNum + ") is invalid.");
-      //TODO: Handle exception
-      return Block.getDefaultInstance();
-    }
-
-    byte[] parentBlockHash = blockStore.getBlockHashByNum(latestBlockNum).getBytes();
-    Block parentBlock = null;
-    try {
-      parentBlock = Block.parseFrom(blockStore.findBlockByHash(parentBlockHash));
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-      return null;
-    }
     // judge create block time
-    if (when < parentBlock.getBlockHeader().getTimestamp()) {
+    if (when < timestamp) {
       throw new IllegalArgumentException("generate block timestamp is invalid.");
     }
 
@@ -193,8 +190,8 @@ public class Manager {
 
     // generate block
     BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder()
-        .setNumber(parentBlock.getBlockHeader().getNumber() + 1)
-        .setParentHash(parentBlock.getBlockHeader().getHash())
+        .setNumber(number + 1)
+        .setParentHash(hash)
         .setTimestamp(when)
         .setWitnessAddress(witnessCapsule.getAddress());
 
@@ -204,7 +201,13 @@ public class Manager {
 
     blockBuilder.setBlockHeader(blockHeaderBuilder.build());
 
-    return blockBuilder.build();
+    Block block = blockBuilder.build();
+
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockHeader().getHash());
+    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getBlockHeader().getNumber());
+    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getBlockHeader().getTimestamp());
+
+    return block;
   }
 
   private void setAccountStore(AccountStore accountStore) {
