@@ -12,7 +12,10 @@ public class FullNode {
 
   private static final Logger logger = LoggerFactory.getLogger("FullNode");
 
-  public static void main(String args[]) {
+  /**
+   * Start the FullNode.
+   */
+  public static void main(String[] args) {
 
     Args cfgArgs = new Args();
     JCommander.newBuilder()
@@ -23,13 +26,13 @@ public class FullNode {
       logger.info("Here is the help message.");
       return;
     }
-    Application tApp = ApplicationFactory.create();
-    tApp.init(cfgArgs.getOutputDirectory(), new Args());
-    RpcApiService rpcApiService = new RpcApiService(tApp);
-    tApp.addService(rpcApiService);
-    tApp.addService(new WitnessService(tApp));
-    tApp.startServices();
-    tApp.startup();
+    Application appT = ApplicationFactory.create();
+    appT.init(cfgArgs.getOutputDirectory(), new Args());
+    RpcApiService rpcApiService = new RpcApiService(appT);
+    appT.addService(rpcApiService);
+    appT.addService(new WitnessService(appT));
+    appT.startServices();
+    appT.startup();
     rpcApiService.blockUntilShutdown();
   }
 }
