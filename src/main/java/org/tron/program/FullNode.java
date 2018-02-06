@@ -1,6 +1,8 @@
 package org.tron.program;
 
 import com.beust.jcommander.JCommander;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.services.RpcApiService;
@@ -8,6 +10,7 @@ import org.tron.core.services.WitnessService;
 
 public class FullNode {
 
+  private static final Logger logger = LoggerFactory.getLogger("FullNode");
 
   public static void main(String args[]) {
 
@@ -17,11 +20,9 @@ public class FullNode {
         .build()
         .parse(args);
     if (cfgArgs.isHelp()) {
-      System.out.println("help = [" + cfgArgs.isHelp() + "]");
+      logger.info("Here is the help message.");
       return;
     }
-    System.out.println("debug = [" + cfgArgs.getOutputDirectory() + "]");
-
     Application tApp = ApplicationFactory.create();
     tApp.init(cfgArgs.getOutputDirectory(), new Args());
     RpcApiService rpcApiService = new RpcApiService(tApp);
