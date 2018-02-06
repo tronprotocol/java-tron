@@ -183,6 +183,7 @@ public class Manager {
       if (processTrx(new TransactionCapsule(trx))) {
         // push into block
         blockBuilder.addTransactions(trx);
+        pendingTrxs.remove(trx);
       }
     }
 
