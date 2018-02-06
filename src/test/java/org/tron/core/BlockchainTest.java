@@ -123,6 +123,7 @@ public class BlockchainTest {
     Block block = BlockCapsule.newBlock(null, parentHash,
         difficulty, 0);
     LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.TEST,
+        Constant.OUTPUT_DIR,
         "blockStore_test");
     levelDbDataSource.initDB();
     String lastHash = "lastHash";
