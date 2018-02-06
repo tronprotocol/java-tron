@@ -17,9 +17,23 @@ public class DynamicPropertiesStore extends TronDatabase {
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
 
-    this.saveLatestBlockHeaderTimestamp(0);
-    this.saveLatestBlockHeaderNumber(0);
-    this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
+    try {
+      this.getLatestBlockHeaderTimestamp();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestBlockHeaderTimestamp(0);
+    }
+
+    try {
+      this.getLatestBlockHeaderNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestBlockHeaderNumber(0);
+    }
+
+    try {
+      this.getLatestBlockHeaderHash();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
+    }
   }
 
   private static DynamicPropertiesStore instance;
