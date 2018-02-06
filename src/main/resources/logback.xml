@@ -72,7 +72,7 @@
   <logger name="UserDataPersister" level="INFO"/>
   <logger name="GossipLocalNode" level="INFO"/>
   <logger name="ApplicationImpl" level="INFO"/>
-  <logger name="ApplicationImpl" level="INFO"/>
+  <logger name="DynamicPropertiesStore" level="INFO"/>
   <logger name="FullNode" level="INFO"/>
 
 </configuration>
