@@ -49,7 +49,7 @@
     <appender-ref ref="STDOUT"/>
     <appender-ref ref="ASYNC"/>
   </root>
-
+  
   <logger name="Configer" level="INFO"/>
   <logger name="Transaction" level="INFO"/>
   <logger name="Wallet" level="INFO"/>
@@ -71,6 +71,7 @@
   <logger name="AbstractActiveGossiper" level="INFO"/>
   <logger name="UserDataPersister" level="INFO"/>
   <logger name="GossipLocalNode" level="INFO"/>
+  <logger name="ApplicationImpl" level="INFO"/>
   <logger name="ApplicationImpl" level="INFO"/>
   <logger name="FullNode" level="INFO"/>
 
