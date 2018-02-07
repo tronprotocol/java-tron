@@ -126,7 +126,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   }
 
   @Override
-  public void handleTransation(TransactionMessage trxMsg) {
+  public void handleTransaction(TransactionMessage trxMsg) {
     logger.info("handle transaction");
     blockStoreDb.pushTransactions(trxMsg.getTransaction());
   }

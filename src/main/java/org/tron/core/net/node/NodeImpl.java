@@ -221,7 +221,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     logger.info("on handle transaction message");
-    del.handleTransation(trxMsg);
+    del.handleTransaction(trxMsg);
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {

@@ -11,7 +11,7 @@ public interface NodeDelegate {
 
   void handleBlock(BlockMessage blkMsg);
 
-  void handleTransation(TransactionMessage trxMsg);
+  void handleTransaction(TransactionMessage trxMsg);
 
   List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary);
 
