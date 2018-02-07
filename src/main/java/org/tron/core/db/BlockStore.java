@@ -28,7 +28,7 @@ import org.tron.protos.Protocal;
 public class BlockStore extends TronDatabase {
 
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
-  private LevelDbDataSourceImpl blockDbDataSource;
+  //private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
 
   private BlockStore(String dbName) {
@@ -130,18 +130,14 @@ public class BlockStore extends TronDatabase {
    * find a block by it's hash.
    */
   public byte[] findBlockByHash(byte[] blockHash) {
-    return blockDbDataSource.getData(blockHash);
-  }
-
-  public byte[] findTrasactionByHash(byte[] trxHash) {
-    return "".getBytes();
+    return dbSource.getData(blockHash);
   }
 
   /**
    * deleteData a block.
    */
   public void deleteBlock(byte[] blockHash) {
-    blockDbDataSource.deleteData(blockHash);
+    dbSource.deleteData(blockHash);
   }
 
 
@@ -153,11 +149,11 @@ public class BlockStore extends TronDatabase {
    * resetDB the database.
    */
   public void reset() {
-    blockDbDataSource.resetDB();
+    dbSource.resetDB();
   }
 
   public void close() {
-    blockDbDataSource.closeDB();
+    dbSource.closeDB();
   }
 
   @Override
