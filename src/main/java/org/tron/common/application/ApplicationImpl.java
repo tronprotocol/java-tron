@@ -135,9 +135,18 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type) {
     //Block
-    return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
-    //todo
-    //Trx
+    //    //todo
+    //    //Trx
+    switch (type) {
+      case BLOCK:
+        return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
+      case TRX:
+        return new TransactionMessage(
+            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+      default:
+        logger.info("message type not block or trx.");
+        return null;
+    }
   }
 
   @Override
