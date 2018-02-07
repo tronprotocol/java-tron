@@ -121,7 +121,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void connectToP2PNetWork() {
 
-
     //broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
@@ -151,8 +150,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
-
-
 
     Thread advertiseloop = new Thread(() -> {
       while (isAdvertiseCancle) {
@@ -195,10 +192,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       invBuild.setIds(i++, hash.getByteString());
     }
 
-    if (gossipNode.listPeer.values().size() == 0) {
-      //todo: a loop here to wait the peers to sync blocks.
-      logger.debug("other peer is nil, please wait ... ");
-      return;
+    try {
+      while (gossipNode.listPeer.values().size() <= 0) {
+        //todo: a loop here to wait the peers to sync blocks.
+        logger.info("other peer is nil, please wait ... ");
+        Thread.sleep(10000L);
+        //return;
+      }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
 
     loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
