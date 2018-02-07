@@ -23,6 +23,13 @@ public class TransactionStore extends TronDatabase {
     return instance;
   }
 
+  /**
+   * find a transaction  by it's hash.
+   */
+  public byte[] findTransactionByHash(byte[] trxHash) {
+    return dbSource.getData(trxHash);
+  }
+
   @Override
   void add() {
 
