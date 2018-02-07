@@ -28,16 +28,15 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.Configer;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 
@@ -54,6 +53,8 @@ public class GossipLocalNode implements LocalNode {
   private static final GossipLocalNode INSTANCE = new GossipLocalNode();
 
   public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
+
+  private ExecutorService executors;
 
   private GossipLocalNode() {
     ClusterConfig config = ClusterConfig.builder()
@@ -107,19 +108,12 @@ public class GossipLocalNode implements LocalNode {
   @Override
   public void start() {
     logger.info("listener message");
-    cluster.listen().subscribe(msg -> {
-      //todo: Make a thread pool here
-      byte[] newValueBytes = null;
-      String key = "";
-      try {
-        key = msg.header("type");
-        newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
 
-      Message message = getMessageByKey(key, newValueBytes);
-      peerDel.onMessage(listPeer.get(cluster.member(msg.sender()).get().hashCode()), message);
+    executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
+        new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
+
+    cluster.listen().subscribe(msg -> {
+      executors.submit(new StartWorker(msg, peerDel, listPeer, cluster));
     });
   }
 
@@ -172,36 +166,5 @@ public class GossipLocalNode implements LocalNode {
     }
 
     return addresses;
-  }
-
-
-  private Message getMessageByKey(String key, byte[] content) {
-    Message message = null;
-
-    switch (MessageTypes.valueOf(key)) {
-      case BLOCK:
-        message = new BlockMessage(content);
-        break;
-      case TRX:
-        message = new TransactionMessage(content);
-        break;
-      case SYNC_BLOCK_CHAIN:
-        message = new SyncBlockChainMessage(content);
-        break;
-      case FETCH_INV_DATA:
-        message = new FetchInvDataMessage(content);
-        break;
-      case BLOCK_INVENTORY:
-        message = new BlockInventoryMessage(content);
-        break;
-      default:
-        try {
-          throw new IllegalArgumentException("No such message");
-        } catch (IllegalArgumentException e) {
-          e.printStackTrace();
-        }
-    }
-
-    return message;
   }
 }
