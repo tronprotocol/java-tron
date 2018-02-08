@@ -40,6 +40,10 @@ public class PeerConnection {
 //  }
 
   public void sendMessage(Message message) {
+    if (message == null) {
+      return;
+    }
+
     MessageTypes type = message.getType();
     byte[] value = message.getData();
 
