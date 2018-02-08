@@ -134,9 +134,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type) {
-    //Block
-    //    //todo
-    //    //Trx
     switch (type) {
       case BLOCK:
         return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
