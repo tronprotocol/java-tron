@@ -42,21 +42,24 @@ public class Witness {
   private static final Logger logger = LoggerFactory.getLogger(Witness.class);
   private static final int LOOP_INTERVAL = 1000;
 
-  private Application tApp;
+  private Application tronApp;
   @Getter
   protected WitnessCapsule localWitnessState; //  WitnessId;
   @Getter
   protected List<WitnessCapsule> witnessStates;
 
-  private Thread GenerateThread;
+  private Thread generateThread;
   private Manager db;
 
   private volatile boolean isRunning = false;
 
-  public Witness(Application tApp) {
-    this.tApp = tApp;
-    db = tApp.getDbManager();
-    GenerateThread = new Thread(scheduleProductionLoop);
+  /**
+   * Construction method.
+   */
+  public Witness(Application tronApp) {
+    this.tronApp = tronApp;
+    db = tronApp.getDbManager();
+    generateThread = new Thread(scheduleProductionLoop);
     init();
   }
 
@@ -67,12 +70,12 @@ public class Witness {
 
   public void startUp() {
     isRunning = true;
-    GenerateThread.start();
+    generateThread.start();
   }
 
   public void stop() {
     isRunning = false;
-    GenerateThread.interrupt();
+    generateThread.interrupt();
   }
 
   private Runnable scheduleProductionLoop =
@@ -118,11 +121,11 @@ public class Witness {
       return "";
     }
 
-    ByteString scheduled_witness = db.getScheduledWitness(slot);
-    logger.info("scheduled_witness:" + scheduled_witness + ",slot:" + slot);
+    ByteString scheduledWitness = db.getScheduledWitness(slot);
+    logger.info("scheduledWitness:" + scheduledWitness + ",slot:" + slot);
 
-    //            if( !witnesses.contains( scheduled_witness ) == _witnesses.end() ){
-    if (!scheduled_witness.equals(getLocalWitnessState().getClass())) {
+    //            if( !witnesses.contains( scheduledWitness ) == _witnesses.end() ){
+    if (!scheduledWitness.equals(getLocalWitnessState().getClass())) {
 
       logger.info("not tune");
       return "";
@@ -138,7 +141,7 @@ public class Witness {
 
   protected void broadcastBlock(Protocal.Block block) {
     try {
-      tApp.getP2pNode().broadcast(new BlockMessage(block));
+      tronApp.getP2pNode().broadcast(new BlockMessage(block));
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
@@ -146,7 +149,7 @@ public class Witness {
   }
 
   protected Protocal.Block generateBlock(DateTime when) {
-    return tApp.getDbManager().generateBlock(localWitnessState, when.getMillis());
+    return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis());
   }
 
   // shuffle todo
@@ -157,8 +160,8 @@ public class Witness {
   }
 
 
-  private DateTime getSlotTime(long slot_num) {
-    if (slot_num == 0) {
+  private DateTime getSlotTime(long slotNum) {
+    if (slotNum == 0) {
       return DateTime.now();
     }
     long interval = blockInterval();
@@ -167,9 +170,9 @@ public class Witness {
     //            long head_block_abs_slot = head_block_time().sec_since_epoch() / interval;
     //            DateTime head_slot_time = head_block_abs_slot * interval;
 
-    DateTime head_slot_time = head_block_time();
-    head_slot_time.plus(interval * slot_num);
-    return head_slot_time;
+    DateTime headSlotTime = head_block_time();
+    headSlotTime.plus(interval * slotNum);
+    return headSlotTime;
   }
 
   private DateTime head_block_time() {
@@ -177,9 +180,9 @@ public class Witness {
   }
 
   private long getSlotAtTime(DateTime when) {
-    DateTime first_slot_time = getFirstSlotTime();
-    //    if (when.isAfter(first_slot_time)) return 0;
-    return (when.getMillis() - first_slot_time.getMillis()) / blockInterval() + 1;
+    DateTime firstSlotFime = getFirstSlotTime();
+    //    if (when.isAfter(firstSlotFime)) return 0;
+    return (when.getMillis() - firstSlotFime.getMillis()) / blockInterval() + 1;
   }
 
   protected DateTime getFirstSlotTime() {
@@ -190,11 +193,14 @@ public class Witness {
     return LOOP_INTERVAL; // millisecond todo getFromDb
   }
 
+  /**
+   * Main function.
+   */
   public static void main(String[] args) throws Exception {
-    Application tApp = null;
+    Application tronApp = null;
 
     Witness witness =
-        new Witness(tApp) {
+        new Witness(tronApp) {
 
           private long currentSlot = 5;
 
@@ -205,12 +211,12 @@ public class Witness {
             this.localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x12"));
             this.witnessStates = Lists.newArrayList();
 
-            WitnessCapsule aState = new WitnessCapsule(ByteString.copyFromUtf8("0x13"));
-            WitnessCapsule bState = new WitnessCapsule(ByteString.copyFromUtf8("0x14"));
-            WitnessCapsule cState = new WitnessCapsule(ByteString.copyFromUtf8("0x15"));
-            this.witnessStates.add(aState);
-            this.witnessStates.add(bState);
-            this.witnessStates.add(cState);
+            WitnessCapsule firstState = new WitnessCapsule(ByteString.copyFromUtf8("0x13"));
+            WitnessCapsule secondState = new WitnessCapsule(ByteString.copyFromUtf8("0x14"));
+            WitnessCapsule thirdState = new WitnessCapsule(ByteString.copyFromUtf8("0x15"));
+            this.witnessStates.add(firstState);
+            this.witnessStates.add(secondState);
+            this.witnessStates.add(thirdState);
           }
 
           @Override
