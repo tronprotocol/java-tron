@@ -5,12 +5,16 @@ import io.scalecube.cluster.Member;
 import java.io.UnsupportedEncodingException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
 
 public class PeerConnection {
+
+  private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
 //  private PeerConnectionDelegate peerDel;
 
@@ -40,6 +44,11 @@ public class PeerConnection {
 //  }
 
   public void sendMessage(Message message) {
+    if (message == null) {
+      logger.error("send message = null");
+      return;
+    }
+
     MessageTypes type = message.getType();
     byte[] value = message.getData();
 
