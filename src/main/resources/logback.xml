@@ -74,6 +74,7 @@
   <logger name="ApplicationImpl" level="INFO"/>
   <logger name="DynamicPropertiesStore" level="INFO"/>
   <logger name="FullNode" level="INFO"/>
+  <logger name="PeerConnection" level="INFO"/>
 
 </configuration>
 
