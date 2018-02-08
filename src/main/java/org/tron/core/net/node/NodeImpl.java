@@ -194,10 +194,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     try {
       while (gossipNode.listPeer.values().size() <= 0) {
-        //todo: a loop here to wait the peers to sync blocks.
         logger.info("other peer is nil, please wait ... ");
         Thread.sleep(10000L);
-        //return;
       }
     } catch (InterruptedException e) {
       e.printStackTrace();

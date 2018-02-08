@@ -132,7 +132,7 @@ public class Witness {
     }
     // todo add other verification
     DateTime scheduledTime = getSlotTime(slot);
-    // todo verify校验
+    // todo verify
     Protocal.Block block = generateBlock(scheduledTime);
     logger.info("generate block successfully");
     broadcastBlock(block);
