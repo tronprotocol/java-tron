@@ -2,6 +2,7 @@ package org.tron.program;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,13 +11,13 @@ public class Args {
   private final static Args INSTANCE = new Args();
 
 
-  @Parameter(names = {"-d", "--outputDirectory"}, description = "Directory")
+  @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = new String("");
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
 
-  @Parameter(description = "seedNodes")
+  @Parameter(description = "-seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
   private Args() {
@@ -34,8 +35,8 @@ public class Args {
   }
 
   public String getOutputDirectory() {
-    if (outputDirectory != "" && !outputDirectory.endsWith("/")) {
-      return outputDirectory + "/";
+    if (outputDirectory != "" && !outputDirectory.endsWith(File.separator)) {
+      return outputDirectory + File.separator;
     }
     return outputDirectory;
   }

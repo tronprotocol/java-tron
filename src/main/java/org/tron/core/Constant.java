@@ -15,6 +15,7 @@
 
 package org.tron.core;
 
+import java.io.File;
 import org.tron.common.utils.ByteArray;
 
 public class Constant {
@@ -38,6 +39,6 @@ public class Constant {
   public static final String NORMAL_CONF = "tron.conf";
   public static final String TEST_CONF = "tron-test.conf";
   public static final String DATABASE_DIR = "database.directory";
-  public static final String OUTPUT_DIR = "output-directory/";
+  public static final String OUTPUT_DIR = "output-directory" + File.separator;
 
 }
