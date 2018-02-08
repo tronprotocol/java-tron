@@ -83,6 +83,10 @@ public class GossipLocalNode implements LocalNode {
 
   @Override
   public void broadcast(Message message) {
+    if (message == null) {
+      logger.error("message must not null");
+      return;
+    }
     MessageTypes type = message.getType();
     byte[] value = message.getData();
 
