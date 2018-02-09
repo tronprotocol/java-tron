@@ -196,9 +196,6 @@ protobuf {
         }
     }
 }
-build {
-
-}
 
 run {
     if (project.hasProperty('server')) {
