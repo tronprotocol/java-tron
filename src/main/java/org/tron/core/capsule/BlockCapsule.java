@@ -30,6 +30,7 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
+import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
@@ -42,6 +43,8 @@ public class BlockCapsule {
 
   private Block block;
 
+  private Sha256Hash hash;
+
   public Block getBlock() {
     return block;
   }
@@ -49,6 +52,25 @@ public class BlockCapsule {
   public boolean validate() {
     return true;
   }
+
+
+  public BlockCapsule(Block blk) {
+    this.block = blk;
+    this.hash = Sha256Hash.of(this.block.toByteArray());
+  }
+
+  public Sha256Hash getParentHash() {
+    return Sha256Hash.wrap(this.block.getBlockHeader().getParentHash());
+  }
+
+  public Sha256Hash getHash() {
+    return hash;
+  }
+
+  public long getNum() {
+    return this.block.getBlockHeader().getNumber();
+  }
+
 
 
   /**
