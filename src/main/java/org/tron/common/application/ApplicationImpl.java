@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
@@ -16,6 +17,7 @@ import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.program.Args;
+import org.tron.protos.Protocal.Block;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
@@ -123,6 +125,14 @@ public class ApplicationImpl implements Application, NodeDelegate {
   public void handleBlock(BlockMessage blkMsg) {
     logger.info("handle block");
     blockStoreDb.saveBlock("".getBytes(), blkMsg.getData());
+
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+
+    Block block = blkMsg.getBlock();
+
+    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getBlockHeader().getTimestamp());
+    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getBlockHeader().getNumber());
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockHeader().getHash());
   }
 
   @Override
