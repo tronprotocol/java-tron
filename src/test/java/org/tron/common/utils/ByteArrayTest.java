@@ -21,12 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 public class ByteArrayTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
   public void testToHexString() {
-    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString
-        (new byte[] {16}));
+    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString(new byte[]{16}));
   }
 
   @Test
@@ -42,7 +42,7 @@ public class ByteArrayTest {
   @Test
   public void testToLong() {
     logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
-        byte[] {13}));
+        byte[]{13}));
   }
 
   @Test
@@ -52,10 +52,9 @@ public class ByteArrayTest {
 
   @Test
   public void test2ToHexString() {
-    byte[] bs = new byte[] {};
+    byte[] bs = new byte[]{};
 
-    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString
-        (bs));
+    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString(bs));
     logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
   }
 }

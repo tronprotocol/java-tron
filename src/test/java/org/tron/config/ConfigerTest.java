@@ -27,7 +27,7 @@ public class ConfigerTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testGetECKey() {
+  public void testGeClientTestEcKey() {
     ECKey key = Configer.getMyKey();
 
     logger.info("address = {}", ByteArray.toHexString(key.getAddress()));

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.storage.leveldb;
 
 import static org.junit.Assert.assertEquals;
@@ -40,6 +41,40 @@ public class LevelDbDataSourceImplTest {
     String s = ByteArray.toStr(value);
     dataSource.closeDB();
     System.out.println(s);
+  }
+
+  @Test
+  public void testGetBlock() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.NORMAL,
+        Constant.OUTPUT_DIR,
+        "properties");
+    dataSource.initDB();
+    String key1 = "latest_block_header_number";
+    byte[] key = key1.getBytes();
+    byte[] value = dataSource.getData(key);
+    Long s = ByteArray.toLong(value);
+    dataSource.closeDB();
+    System.out.println(s);
+  }
+
+  @Test
+  public void testPutBloc() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.NORMAL,
+        Constant.OUTPUT_DIR,
+        "block");
+    dataSource.initDB();
+    String key1 = "latest_block_header_number";
+    byte[] key = key1.getBytes();
+
+    String value1 = "50000";
+    byte[] value = value1.getBytes();
+
+    dataSource.putData(key, value);
+
+    assertNotNull(dataSource.getData(key));
+    assertEquals(1, dataSource.allKeys().size());
+
+    dataSource.closeDB();
   }
 
   @Test

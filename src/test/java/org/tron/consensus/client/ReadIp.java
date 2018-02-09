@@ -15,18 +15,21 @@
 
 package org.tron.consensus.client;
 
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class ReadIP {
-  public String ReadFile(String Path) {
+public class ReadIp {
+
+  /**
+   * read files from path.
+   */
+  public String readFile(String path) {
     BufferedReader reader = null;
     String laststr = "";
     try {
-      FileInputStream fileInputStream = new FileInputStream(Path);
+      FileInputStream fileInputStream = new FileInputStream(path);
       InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
       reader = new BufferedReader(inputStreamReader);
       String tempString = null;

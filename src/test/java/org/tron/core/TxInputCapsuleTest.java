@@ -25,15 +25,15 @@ public class TxInputCapsuleTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testNewTXInput() {
+  public void testNewTxInput() {
     logger.info("test new TXInput: {}", TxInputCapsule.newTxInput(new
         byte[]{}, 1, new byte[]{}, new byte[]{}));
   }
 
   @Test
   public void testToPrintString() {
-    logger.info("test to print string: {}", TxInputCapsule.toPrintString
-        (TxInputCapsule.newTxInput(new byte[]{}, 1, new byte[]{}, new
+    logger.info("test to print string: {}",
+        TxInputCapsule.toPrintString(TxInputCapsule.newTxInput(new byte[]{}, 1, new byte[]{}, new
             byte[]{})));
   }
 }

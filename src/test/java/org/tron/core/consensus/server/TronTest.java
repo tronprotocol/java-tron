@@ -13,21 +13,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.consensus.server;
+package org.tron.core.consensus.server;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
-public class test {
+public class TronTest {
+
+  /**
+   * main of trontest.
+   */
   public static void main(String[] args) {
     try {
       Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();
       InetAddress ip = null;
-      while (allNetInterfaces.hasMoreElements())
-
-      {
+      while (allNetInterfaces.hasMoreElements()) {
         NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
         System.out.println(netInterface.getName());
         Enumeration addresses = netInterface.getInetAddresses();

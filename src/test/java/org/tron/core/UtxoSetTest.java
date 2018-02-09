@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import static org.mockito.Matchers.eq;
@@ -26,7 +27,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
 
-public class UTXOSetTest {
+public class UtxoSetTest {
 
   @Test
   public void testReindex() {
@@ -36,11 +37,11 @@ public class UTXOSetTest {
         .addOutputs(testOutput)
         .build();
 
-    HashMap<String, TXOutputs> testUTXO = new HashMap<>();
-    testUTXO.put(key, testOutputs);
+    HashMap<String, TXOutputs> testUtxo = new HashMap<>();
+    testUtxo.put(key, testOutputs);
 
     Blockchain mockBlockchain = Mockito.mock(Blockchain.class);
-    when(mockBlockchain.findUtxo()).thenReturn(testUTXO);
+    when(mockBlockchain.findUtxo()).thenReturn(testUtxo);
 
     LevelDbDataSourceImpl mockTransactionDb = Mockito.mock(LevelDbDataSourceImpl.class);
 
