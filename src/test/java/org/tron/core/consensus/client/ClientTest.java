@@ -27,6 +27,10 @@ import org.tron.core.consensus.common.GetQuery;
 import org.tron.core.consensus.common.PutCommand;
 
 public class ClientTest {
+
+  /**
+   * start of clientTest.
+   */
   public static void main(String[] args) {
     CopycatClient.Builder builder = CopycatClient.builder();
 
@@ -69,12 +73,10 @@ public class ClientTest {
         } else {
           f = false;
         }
-
       } catch (NullPointerException e) {
         System.out.println("object == null不会导致空指针异常发生");
         f = false;
       }
-
     }
   }
 }

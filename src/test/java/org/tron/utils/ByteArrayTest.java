@@ -27,8 +27,7 @@ public class ByteArrayTest {
 
   @Test
   public void testToHexString() {
-    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString
-        (new byte[]{16}));
+    logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString(new byte[]{16}));
   }
 
   @Test
@@ -56,8 +55,7 @@ public class ByteArrayTest {
   public void test2ToHexString() {
     byte[] bs = new byte[]{};
 
-    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString
-        (bs));
+    logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString(bs));
     logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
   }
 }

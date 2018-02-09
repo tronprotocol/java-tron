@@ -45,6 +45,9 @@ public class BlockchainTest {
   private static Blockchain blockchain;
   private static LevelDbDataSourceImpl mockBlockDB;
 
+  /**
+   * setup fo BlockchainTest.
+   */
   @Before
   public void setup() throws IOException {
     mockBlockDB = Mockito.mock(LevelDbDataSourceImpl.class);

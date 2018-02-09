@@ -25,14 +25,14 @@ public class TxOutputCapsuleTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testNewTXOutput() {
+  public void testNewTxOutput() {
     logger.info("test new TXOutput: {}", TxOutputCapsule.newTxOutput(1,
         "12"));
   }
 
   @Test
   public void testToPrintString() {
-    logger.info("test to print string: {}", TxOutputCapsule.toPrintString
-        (TxOutputCapsule.newTxOutput(1, "12")));
+    logger.info("test to print string: {}",
+        TxOutputCapsule.toPrintString(TxOutputCapsule.newTxOutput(1, "12")));
   }
 }

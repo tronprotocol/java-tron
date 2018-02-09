@@ -51,7 +51,7 @@ public class WalletTest {
   }
 
   @Test
-  public void testGetECKey() {
+  public void testGetEcKey() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     Wallet wallet = new Wallet(ecKey);

@@ -20,33 +20,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KafkaTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
   public void testKafka() {
-//        ReceiveSource source = new ReceiveSource();
-//        source.addReceiveListener((Message message) -> {
-//            if (message.getType() == Type.BLOCK) {
-//                System.out.println(message.getMessage());
-//            }
-//        });
-//
-//        source.addReceiveListener((Message message) -> {
-//            if (message.getType() == Type.TRANSACTION) {
-//                System.out.println(message.getMessage());
-//            }
-//        });
-//
-//        Net net = new Kafka(source, Arrays.asList(TOPIC_BLOCK, TOPIC_TRANSACTION));
-//
-//        net.broadcast(new Message("hello block", Type.BLOCK));
-//        net.broadcast(new Message("hello transaction", Type.TRANSACTION));
-//
-//        long startTime = System.currentTimeMillis();
-//        long endTime = System.currentTimeMillis();
-//
-//        while (endTime - startTime < 50000) {
-//            endTime = System.currentTimeMillis();
-//        }
+    //        ReceiveSource source = new ReceiveSource();
+    //        source.addReceiveListener((Message message) -> {
+    //            if (message.getType() == Type.BLOCK) {
+    //                System.out.println(message.getMessage());
+    //            }
+    //        });
+    //
+    //        source.addReceiveListener((Message message) -> {
+    //            if (message.getType() == Type.TRANSACTION) {
+    //                System.out.println(message.getMessage());
+    //            }
+    //        });
+    //
+    //        Net net = new Kafka(source, Arrays.asList(TOPIC_BLOCK, TOPIC_TRANSACTION));
+    //
+    //        net.broadcast(new Message("hello block", Type.BLOCK));
+    //        net.broadcast(new Message("hello transaction", Type.TRANSACTION));
+    //
+    //        long startTime = System.currentTimeMillis();
+    //        long endTime = System.currentTimeMillis();
+    //
+    //        while (endTime - startTime < 50000) {
+    //            endTime = System.currentTimeMillis();
+    //        }
   }
 }

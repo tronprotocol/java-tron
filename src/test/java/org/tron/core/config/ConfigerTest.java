@@ -22,10 +22,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 
 public class ConfigerTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
-  public void testGetECKey() {
+  public void testGetEcKey() {
     ECKey key = Configer.getMyKey();
 
     logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
