@@ -122,6 +122,20 @@ dependencies {
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 }
 
+check.dependsOn 'lint'
+
+checkstyle {
+    toolVersion = "${versions.checkstyle}"
+    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+
+}
+
+checkstyleMain {
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+}
+
 task lint(type: Checkstyle) {
     // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
@@ -133,13 +147,6 @@ task lint(type: Checkstyle) {
     //Failing the build
     ignoreFailures = false
 }
-
-checkstyle {
-    toolVersion = "${versions.checkstyle}"
-    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-}
-
-
 
 tasks.matching { it instanceof Test }.all {
     testLogging.events = ["failed", "passed", "skipped"]
@@ -188,6 +195,9 @@ protobuf {
             }
         }
     }
+}
+build {
+
 }
 
 run {
