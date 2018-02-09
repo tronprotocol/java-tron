@@ -6,7 +6,6 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.logging.Logger;
-
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
@@ -19,7 +18,7 @@ public class RpcApiService implements Service {
 
   private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
   private int port = 50051;
-  private Server ApiServer;
+  private Server apiServer;
   private Application app;
 
   public RpcApiService(Application app) {
@@ -34,7 +33,7 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      ApiServer = ServerBuilder.forPort(port)
+      apiServer = ServerBuilder.forPort(port)
           .addService(new WalletApi(app))
           .build()
           .start();
@@ -68,10 +67,10 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBalance(Account req, StreamObserver<Account> responseObserver) {
-      ByteString addressBS = req.getAddress();
-      if (addressBS != null) {
-        byte[] addressBA = addressBS.toByteArray();
-        long balance = wallet.getBalance(addressBA);
+      ByteString addressBs = req.getAddress();
+      if (addressBs != null) {
+        byte[] addressBa = addressBs.toByteArray();
+        long balance = wallet.getBalance(addressBa);
         Account reply = Account.newBuilder().setBalance(balance).build();
         responseObserver.onNext(reply);
       } else {
@@ -82,14 +81,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void createTransaction(GrpcAPI.Coin req, StreamObserver<Transaction> responseObserver) {
-      ByteString fromBS = req.getFrom();
-      ByteString toBS = req.getFrom();
+      ByteString fromBs = req.getFrom();
+      ByteString toBs = req.getFrom();
       long amount = req.getAmount();
-      if (fromBS != null && toBS != null && amount > 0) {
-        byte[] fromBA = fromBS.toByteArray();
-        byte[] toBA = fromBS.toByteArray();
-        String toHexString = Hex.toHexString(toBA);
-        Transaction trx = wallet.createTransaction(fromBA, toHexString, amount);
+      if (fromBs != null && toBs != null && amount > 0) {
+        byte[] fromBa = fromBs.toByteArray();
+        byte[] toBa = fromBs.toByteArray();
+        String toHexString = Hex.toHexString(toBa);
+        Transaction trx = wallet.createTransaction(fromBa, toHexString, amount);
         responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
@@ -116,9 +115,9 @@ public class RpcApiService implements Service {
    * ...
    */
   public void blockUntilShutdown() {
-    if (ApiServer != null) {
+    if (apiServer != null) {
       try {
-        ApiServer.awaitTermination();
+        apiServer.awaitTermination();
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
