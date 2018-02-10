@@ -39,15 +39,15 @@ public class KhaosDatabase extends TronDatabase {
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
         new LinkedHashMap<Long, ArrayList<KhaosBlock>>() {
 
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
-        if (size() > maxCapcity) {
-          entry.getValue().forEach(b -> hashKblkMap.remove(b.hash));
-          return true;
-        }
-        return false;
-      }
-    };
+          @Override
+          protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
+            if (size() > maxCapcity) {
+              entry.getValue().forEach(b -> hashKblkMap.remove(b.hash));
+              return true;
+            }
+            return false;
+          }
+        };
 
 
     public void setMaxCapcity(int maxCapcity) {
@@ -133,7 +133,7 @@ public class KhaosDatabase extends TronDatabase {
 
   /**
    * check if the hash is contained in the KhoasDB.
-    */
+   */
   public Boolean containBlock(Sha256Hash hash) {
     if (miniStore.getByHash(hash) != null) {
       return true;
@@ -188,7 +188,6 @@ public class KhaosDatabase extends TronDatabase {
 
   /**
    * pop the head block then remove it.
-   * @return
    */
   public boolean pop() {
     KhaosBlock prev = head.parent;
@@ -200,10 +199,37 @@ public class KhaosDatabase extends TronDatabase {
     return false;
   }
 
-  public Pair<Sha256Hash, Sha256Hash> getBranch(Sha256Hash block1, Sha256Hash block2) {
-    //TODO find two block's first same parent block
-    return new Pair<>(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH);
-  }
+  /**
+   * Find two block's most recent common parent block.
+   */
+  public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(Sha256Hash block1,
+      Sha256Hash block2) {
+    List<BlockCapsule> list1 = new ArrayList<>();
+    List<BlockCapsule> list2 = new ArrayList<>();
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair(list1, list2);
+    KhaosBlock kblk1 = miniStore.getByHash(block1);
+    KhaosBlock kblk2 = miniStore.getByHash(block2);
 
+    if (kblk1 != null && kblk2 != null) {
+      do {
+
+        if (kblk1.num > kblk2.num) {
+          list1.add(kblk1.blk);
+          kblk1 = kblk1.parent;
+          continue;
+        } else if (kblk1.num < kblk2.num) {
+          list2.add(kblk2.blk);
+          kblk2 = kblk2.parent;
+          continue;
+        }
+
+        list1.add(kblk1.blk);
+        list2.add(kblk2.blk);
+        kblk1 = kblk1.parent;
+        kblk2 = kblk2.parent;
+      } while (kblk1 != kblk2);
+    }
+    return ret;
+  }
 
 }

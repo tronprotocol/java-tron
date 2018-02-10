@@ -42,7 +42,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       for (Sha256Hash hash : blockChainSummary) {
-        if (blockStoreDb.isIncludeBlock(hash)) {
+        if (blockStoreDb.containBlock(hash)) {
           lastKnownBlkHash = hash;
           break;
         }
@@ -66,18 +66,20 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
     List<Sha256Hash> retSummary = new ArrayList<>();
     long highBlkNum = 0;
-    long highNoForkBlkNum = 0;
+    long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
 
     List<Sha256Hash> forkList = new ArrayList<>();
 
     if (refPoint != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
-      if (blockStoreDb.isIncludeBlock(refPoint)) {
+      if (blockStoreDb.containBlock(refPoint)) {
         highBlkNum = blockStoreDb.getBlockNumByHash(refPoint);
         highNoForkBlkNum = highBlkNum;
       } else {
         //todo: set highNoForkBlkNum and push fork block to fork list.
+        forkList = blockStoreDb.getBlockChainHashesOnFork(refPoint);
+        highNoForkBlkNum = blockStoreDb.getBlockNumByHash(forkList.get(0));
       }
 
     } else {
@@ -97,7 +99,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= highBlkNum);
-
     return retSummary;
   }
 

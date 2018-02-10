@@ -15,13 +15,16 @@
 
 package org.tron.core.db;
 
+import java.util.ArrayList;
 import java.util.List;
+import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocal;
 
@@ -30,6 +33,10 @@ public class BlockStore extends TronDatabase {
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   //private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
+
+  private KhaosDatabase khaosDB;
+
+  private BlockCapsule head;
 
   private BlockStore(String dbName) {
     super(dbName);
@@ -56,19 +63,29 @@ public class BlockStore extends TronDatabase {
    * to do.
    */
   public Sha256Hash getHeadBlockHash() {
-    return Sha256Hash.ZERO_HASH;
+    //TODO:
+    return head.getHash();
   }
 
   public long getHeadBlockNum() {
-    return 0;
+    return head.getNum();
   }
 
   public Sha256Hash getBlockHashByNum(long num) {
+    //TODO: get it from levelDB
     return Sha256Hash.ZERO_HASH;
   }
 
   public long getBlockNumByHash(Sha256Hash hash) {
-    return 0;
+    //TODO: get it form levelDB
+    return khaosDB.getBlock(hash).getNum();
+  }
+
+  public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
+    ArrayList<Sha256Hash> ret = new ArrayList<>();
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch = khaosDB.getBranch(head.getHash(), forkBlockHash);
+    branch.getValue().forEach( b -> ret.add(b.getHash()));
+    return ret;
   }
 
   public long getCurrentHeadBlockNum() {
@@ -95,13 +112,9 @@ public class BlockStore extends TronDatabase {
    *
    * @param blockHash blockHash
    */
-  public boolean hasBlock(Sha256Hash blockHash) {
-    return false;
-  }
-
-
-  public boolean isIncludeBlock(Sha256Hash hash) {
-    return false;
+  public boolean containBlock(Sha256Hash blockHash) {
+    //TODO: check it from levelDB
+    return khaosDB.containBlock(blockHash);
   }
 
   public void pushTransactions(Protocal.Transaction trx) {
