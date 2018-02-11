@@ -1,28 +1,21 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.SafeMessageMap;
 import org.tron.core.Sha256Hash;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.Message;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionInventoryMessage;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Inventory.InventoryType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
@@ -34,9 +27,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   SafeMessageMap messageMap = new SafeMessageMap();
 
-  private HashMap<Sha256Hash, PeerConnection> syncMap = new HashMap<>();
+  private ConcurrentHashMap<Sha256Hash, PeerConnection> syncMap = new ConcurrentHashMap<>();
 
-  private HashMap<Sha256Hash, PeerConnection> fetchMap = new HashMap<>();
+  private ConcurrentHashMap<Sha256Hash, PeerConnection> fetchMap = new ConcurrentHashMap<>();
 
   private NodeDelegate del;
 
