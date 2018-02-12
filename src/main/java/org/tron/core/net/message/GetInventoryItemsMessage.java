@@ -3,19 +3,19 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 
-public class GetInvertoryItemsMessage extends Message {
+public class GetInventoryItemsMessage extends Message {
 
   private org.tron.protos.TronInventoryItems.InventoryItems items;
 
-  public GetInvertoryItemsMessage() {
+  public GetInventoryItemsMessage() {
     super();
   }
 
-  public GetInvertoryItemsMessage(byte[] packed) {
+  public GetInventoryItemsMessage(byte[] packed) {
     super(packed);
   }
 
-  public GetInvertoryItemsMessage(org.tron.protos.TronInventoryItems.InventoryItems items) {
+  public GetInventoryItemsMessage(org.tron.protos.TronInventoryItems.InventoryItems items) {
     this.items = items;
     unpacked = true;
   }
