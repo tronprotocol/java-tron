@@ -216,12 +216,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
     peer.lastBlockWeKnow = blkMsg.sha256Hash();
-    del.handleBlock(blkMsg);
+    del.handleBlock(blkMsg.getBlockCapsule());
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     logger.info("on handle transaction message");
-    del.handleTransaction(trxMsg);
+    del.handleTransaction(trxMsg.getTransactionCapsule());
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {

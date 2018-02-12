@@ -1,6 +1,7 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocal.Block;
 
 
@@ -38,6 +39,10 @@ public class BlockMessage extends Message {
   public Block getBlock() {
     unPack();
     return block;
+  }
+
+  public BlockCapsule getBlockCapsule() {
+    return new BlockCapsule(getBlock());
   }
 
   private synchronized void unPack() {

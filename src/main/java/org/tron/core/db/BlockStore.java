@@ -34,7 +34,7 @@ public class BlockStore extends TronDatabase {
   //private LevelDbDataSourceImpl blockDbDataSource;
   private LevelDbDataSourceImpl unSpendCache;
 
-  private KhaosDatabase khaosDB;
+  private KhaosDatabase khaosDb;
 
   private BlockCapsule head;
 
@@ -63,11 +63,16 @@ public class BlockStore extends TronDatabase {
    * to do.
    */
   public Sha256Hash getHeadBlockHash() {
-    //TODO:
+    if (head == null) {
+      return Sha256Hash.ZERO_HASH;
+    }
     return head.getHash();
   }
 
   public long getHeadBlockNum() {
+    if (head == null) {
+      return 0;
+    }
     return head.getNum();
   }
 
@@ -78,13 +83,17 @@ public class BlockStore extends TronDatabase {
 
   public long getBlockNumByHash(Sha256Hash hash) {
     //TODO: get it form levelDB
-    return khaosDB.getBlock(hash).getNum();
+    return khaosDb.getBlock(hash).getNum();
   }
 
+  /**
+   * Get the fork branch.
+   */
   public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
     ArrayList<Sha256Hash> ret = new ArrayList<>();
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch = khaosDB.getBranch(head.getHash(), forkBlockHash);
-    branch.getValue().forEach( b -> ret.add(b.getHash()));
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+        khaosDb.getBranch(head.getHash(), forkBlockHash);
+    branch.getValue().forEach(b -> ret.add(b.getHash()));
     return ret;
   }
 
@@ -114,7 +123,7 @@ public class BlockStore extends TronDatabase {
    */
   public boolean containBlock(Sha256Hash blockHash) {
     //TODO: check it from levelDB
-    return khaosDB.containBlock(blockHash);
+    return khaosDb.containBlock(blockHash);
   }
 
   public void pushTransactions(Protocal.Transaction trx) {
@@ -133,8 +142,10 @@ public class BlockStore extends TronDatabase {
   /**
    * save a block.
    */
-  public void saveBlock(byte[] blockHash, byte[] blockData) {
+  public void saveBlock(Sha256Hash hash, BlockCapsule block) {
+    // todo: In some case it need to switch the branch
     logger.info("save block");
+
     // blockDbDataSource.putData(blockHash, blockData);
 
   }

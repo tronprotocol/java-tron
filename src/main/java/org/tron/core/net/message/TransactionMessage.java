@@ -1,6 +1,7 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocal.Transaction;
 
 public class TransactionMessage extends Message {
@@ -37,6 +38,10 @@ public class TransactionMessage extends Message {
   public Transaction getTransaction() {
     unPack();
     return trx;
+  }
+
+  public TransactionCapsule getTransactionCapsule() {
+    return new TransactionCapsule(getTransaction());
   }
 
   private synchronized void unPack() {

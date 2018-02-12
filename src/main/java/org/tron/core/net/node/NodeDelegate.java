@@ -2,16 +2,16 @@ package org.tron.core.net.node;
 
 import java.util.List;
 import org.tron.core.Sha256Hash;
-import org.tron.core.net.message.BlockMessage;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.TransactionMessage;
 
 public interface NodeDelegate {
 
-  void handleBlock(BlockMessage blkMsg);
+  void handleBlock(BlockCapsule block);
 
-  void handleTransaction(TransactionMessage trxMsg);
+  void handleTransaction(TransactionCapsule trx);
 
   List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary);
 
