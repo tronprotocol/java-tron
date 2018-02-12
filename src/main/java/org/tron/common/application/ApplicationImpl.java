@@ -6,6 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -17,7 +19,6 @@ import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.program.Args;
-import org.tron.protos.Protocal.Block;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
@@ -27,7 +28,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
   private ServiceContainer services;
 
   private Manager dbManager;
-
 
   private boolean isProducer;
 
@@ -42,7 +42,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       for (Sha256Hash hash : blockChainSummary) {
-        if (blockStoreDb.isIncludeBlock(hash)) {
+        if (blockStoreDb.containBlock(hash)) {
           lastKnownBlkHash = hash;
           break;
         }
@@ -66,18 +66,20 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
     List<Sha256Hash> retSummary = new ArrayList<>();
     long highBlkNum = 0;
-    long highNoForkBlkNum = 0;
+    long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
 
     List<Sha256Hash> forkList = new ArrayList<>();
 
     if (refPoint != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
-      if (blockStoreDb.isIncludeBlock(refPoint)) {
+      if (blockStoreDb.containBlock(refPoint)) {
         highBlkNum = blockStoreDb.getBlockNumByHash(refPoint);
         highNoForkBlkNum = highBlkNum;
       } else {
-        //todo: set highNoForkBlkNum and push fork block to fork list.
+        forkList = blockStoreDb.getBlockChainHashesOnFork(refPoint);
+        highNoForkBlkNum = blockStoreDb.getBlockNumByHash(forkList.get(forkList.size() - 1));
+        forkList.remove(forkList.get(forkList.size() - 1));
       }
 
     } else {
@@ -97,7 +99,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= highBlkNum);
-
     return retSummary;
   }
 
@@ -122,23 +123,21 @@ public class ApplicationImpl implements Application, NodeDelegate {
   //NodeDelegate
 
   @Override
-  public void handleBlock(BlockMessage blkMsg) {
+  public void handleBlock(BlockCapsule block) {
     logger.info("handle block");
-    blockStoreDb.saveBlock("".getBytes(), blkMsg.getData());
+    blockStoreDb.saveBlock(block.getHash(), block);
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
-    Block block = blkMsg.getBlock();
-
-    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getBlockHeader().getTimestamp());
-    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getBlockHeader().getNumber());
-    dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockHeader().getHash());
+    //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
+    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
   }
 
   @Override
-  public void handleTransaction(TransactionMessage trxMsg) {
+  public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    blockStoreDb.pushTransactions(trxMsg.getTransaction());
+    blockStoreDb.pushTransactions(trx.getTransaction());
   }
 
 

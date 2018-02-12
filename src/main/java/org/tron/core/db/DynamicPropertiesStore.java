@@ -9,6 +9,8 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
 
+
+
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
