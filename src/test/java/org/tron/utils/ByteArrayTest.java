@@ -15,6 +15,9 @@
 
 package org.tron.utils;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,34 +30,46 @@ public class ByteArrayTest {
 
   @Test
   public void testToHexString() {
+    assertEquals("10", ByteArray.toHexString(new byte[]{16}));
     logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString(new byte[]{16}));
+
   }
 
   @Test
   public void testHexStringToByte() {
+    assertArrayEquals(new byte[]{17}, ByteArray
+        .fromHexString("0x11"));
     logger.info("Byte: hex string 0x11 to byte = {}", ByteArray
         .fromHexString("0x11"));
+    assertArrayEquals(new byte[]{16}, ByteArray
+        .fromHexString("10"));
     logger.info("Byte: hex string 10 to byte = {}", ByteArray
         .fromHexString("10"));
+    assertArrayEquals(new byte[]{1}, ByteArray
+        .fromHexString("1"));
     logger.info("Byte: hex string 1 to byte = {}", ByteArray
         .fromHexString("1"));
   }
 
   @Test
   public void testToLong() {
+    assertEquals(13L, ByteArray.toLong(new
+        byte[]{13}));
     logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
         byte[]{13}));
   }
 
   @Test
   public void testFromLong() {
+    assertArrayEquals(new byte[]{0, 0, 0, 0, 0, 0, 0, 127}, ByteArray.fromLong(127L));
     logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
   }
 
   @Test
   public void test2ToHexString() {
-    byte[] bs = new byte[]{};
-
+    byte[] bs = new byte[]{8, 12, 16, 21};
+    assertEquals("080c1015", ByteArray.toHexString(bs));
+    assertEquals("080c1015", Hex.toHexString(bs));
     logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString(bs));
     logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
   }
