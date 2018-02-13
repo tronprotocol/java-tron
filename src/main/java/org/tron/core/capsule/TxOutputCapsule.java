@@ -35,6 +35,19 @@ public class TxOutputCapsule {
     return true;
   }
 
+  /**
+   * constructor TxOutputCapsule.
+   *
+   * @param value int value
+   * @param address String address
+   * @return {@link TXOutput}
+   */
+  public TxOutputCapsule(long value, String address) {
+    txOutput = TXOutput.newBuilder()
+        .setValue(value)
+        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
+        .build();
+  }
 
   /**
    * new transaction output.
