@@ -39,3 +39,12 @@ src/main/java/org/tron/core/bftconsensus
 src/test/java/org/tron/consensus2
 src/main/java/META-INF/
 src/main/resources/META-INF/
+/bin/
+
+# Eclipse IDE specific files and folders
+/.project
+/.classpath
+/.settings/
+
+# output directory
+/output-directory/

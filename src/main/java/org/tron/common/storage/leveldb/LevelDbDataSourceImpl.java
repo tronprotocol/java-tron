@@ -1,25 +1,21 @@
 /*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
+ * Copyright (c) [2016] [ <ether.camp> ] This file is part of the ethereumJ library.
  *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * The ethereumJ library is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Lesser General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
+ * The ethereumJ library is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License along with the ethereumJ
+ * library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,7 +39,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.Configer;
 
-
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
   private static final Logger logger = LoggerFactory.getLogger("dbStore");
@@ -53,8 +48,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   private String parentName;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
-  public LevelDbDataSourceImpl() {
-  }
+  public LevelDbDataSourceImpl() {}
 
   public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
     if (Constant.NORMAL == cfgType) {
@@ -240,10 +234,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   @Override
   public void closeDB() {
     resetDbLock.writeLock().lock();
-    if (!isAlive()) {
-      return;
-    }
     try {
+      if (!isAlive()) {
+        return;
+      }
       database.close();
       alive = false;
     } catch (IOException e) {
