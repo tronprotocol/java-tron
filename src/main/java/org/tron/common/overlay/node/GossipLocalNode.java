@@ -74,8 +74,7 @@ public class GossipLocalNode implements LocalNode {
           if (event.type() == Type.REMOVED) {
             listPeer.remove(event.oldMember().hashCode());
           } else {
-            listPeer.put(event.newMember().hashCode(),
-                new PeerConnection(this.cluster, event.newMember()));
+            listPeer.put(event.newMember().hashCode(), new PeerConnection(this.cluster, event.newMember()));
           }
         });
   }
@@ -83,30 +82,7 @@ public class GossipLocalNode implements LocalNode {
 
   @Override
   public void broadcast(Message message) {
-    if (message == null) {
-      logger.error("message must not null");
-      return;
-    }
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      return;
-    }
-
-    cluster.otherMembers().forEach(member -> {
-      try {
-        io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-            .data(new String(value, "ISO-8859-1"))
-            .header("type", type.toString())
-            .build();
-
-        logger.info("broadcast other members");
-        cluster.send(member, msg);
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-    });
+    listPeer.forEach((id, peer) -> peer.sendMessage(message));
   }
 
   @Override
