@@ -24,6 +24,24 @@ public class TxInputCapsule {
 
   private TXInput txInput;
 
+  /**
+   * constructor TxInputCapsule.
+   *
+   * @param txId byte[] txId
+   * @param vout int vout
+   * @param signature byte[] signature
+   * @param pubKey byte[] pubKey
+   * @return {@link TXInput}
+   */
+  public TxInputCapsule(byte[] txId, long vout, byte[]
+      signature, byte[] pubKey) {
+    this.txInput = TXInput.newBuilder()
+        .setTxID(ByteString.copyFrom(txId))
+        .setVout(vout)
+        .setSignature(ByteString.copyFrom(signature))
+        .setPubKey(ByteString.copyFrom(pubKey)).build();
+  }
+
   public TXInput getTxInput() {
     return txInput;
   }
