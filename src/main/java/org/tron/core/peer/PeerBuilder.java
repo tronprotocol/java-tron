@@ -19,7 +19,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.core.Blockchain;
 import org.tron.core.UTXOSet;
 import org.tron.core.Wallet;
-import org.tron.core.consensus.client.Client;
 
 /**
  * Builds a peer
@@ -33,13 +32,11 @@ public class PeerBuilder {
   private Wallet wallet;
   private ECKey key;
   private String type;
-  private Client client;
 
   @Inject
-  public PeerBuilder(Blockchain blockchain, UTXOSet utxoSet, Client client) {
+  public PeerBuilder(Blockchain blockchain, UTXOSet utxoSet) {
     this.blockchain = blockchain;
     this.utxoSet = utxoSet;
-    this.client = client;
   }
 
   private void buildWallet() {
@@ -64,7 +61,7 @@ public class PeerBuilder {
     buildWallet();
     utxoSet.reindex();
 
-    Peer peer = new Peer(type, blockchain, utxoSet, wallet, client, key);
+    Peer peer = new Peer(type, blockchain, utxoSet, wallet, key);
     //peer.setClient(client);
     //blockchain.addListener(new BlockchainClientListener(client, peer));
     return peer;
