@@ -18,6 +18,7 @@ package org.tron.utils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.ByteArray;
 
 public class ByteArrayTest {
 
