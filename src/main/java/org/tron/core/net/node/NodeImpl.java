@@ -35,9 +35,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private GossipLocalNode gossipNode;
 
-  private boolean isAdvertiseCancle = true;
+  private boolean isAdvertiseActive = true;
 
-  //loop
+  private Thread advertiseLoopThread;
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -107,7 +107,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopFetchBlocks.join();
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();
-    isAdvertiseCancle = false;
+    isAdvertiseActive = false;
+    advertiseLoopThread.join();
   }
 
   @Override
@@ -143,8 +144,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
-    Thread advertiseloop = new Thread(() -> {
-      while (isAdvertiseCancle) {
+    advertiseLoopThread = new Thread(() -> {
+      while (isAdvertiseActive) {
         if (blockToAdvertise.isEmpty() && trxToAdvertise.isEmpty()) {
           try {
             Thread.sleep(1000);
@@ -168,9 +169,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     });
 
-    advertiseloop.start();
-
-
+    advertiseLoopThread.start();
   }
 
   @Override
