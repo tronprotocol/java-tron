@@ -114,34 +114,30 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void connectToP2PNetWork() {
 
-    //broadcast inv
+    // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
-      for (PeerConnection peer :
-          gossipNode.listPeer.values()) {
+      for (PeerConnection peer : gossipNode.listPeer.values()) {
         if (!peer.needSyncFrom) {
           peer.sendMessage(b);
         }
       }
-      return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
-    //fetch blocks
+    // fetch blocks
     loopFetchBlocks = new ExecutorLoop<>(2, 10, c -> {
       logger.info("loop fetch blocks");
       if (fetchMap.containsKey(c.sha256Hash())) {
         fetchMap.get(c.sha256Hash()).sendMessage(c);
       }
-      return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
-    //sync block chain
+    // sync block chain
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
       logger.info("loop sync block chain");
       if (syncMap.containsKey(d.sha256Hash())) {
         syncMap.get(d.sha256Hash()).sendMessage(d);
       }
-      return null;
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     advertiseLoopThread = new Thread(() -> {
@@ -178,8 +174,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     Protocal.Inventory.Builder invBuild = Protocal.Inventory.newBuilder();
     invBuild.setType(Protocal.Inventory.InventoryType.BLOCK);
     int i = 0;
-    for (Sha256Hash hash :
-        hashList) {
+    for (Sha256Hash hash : hashList) {
       invBuild.setIds(i++, hash.getByteString());
     }
 
@@ -225,8 +220,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
     Protocal.Inventory inv = fetchInvDataMsg.getInventory();
-    MessageTypes type =
-        inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
+    MessageTypes type = inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 
     for (ByteString hash : inv.getIdsList()) {
       peer.sendMessage(del.getData(Sha256Hash.wrap(hash.toByteArray()), type));
