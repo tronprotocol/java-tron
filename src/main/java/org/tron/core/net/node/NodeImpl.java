@@ -19,9 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
-  private List<Sha256Hash> trxToAdvertise = new ArrayList<>();
+  private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
-  private List<Sha256Hash> blockToAdvertise = new ArrayList<>();
+  private final List<Sha256Hash> blockToAdvertise = new ArrayList<>();
 
   private static final Logger logger = LoggerFactory.getLogger("Node");
 
@@ -35,7 +35,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private GossipLocalNode gossipNode;
 
-  private boolean isAdvertiseActive = true;
+  private volatile boolean isAdvertiseActive = true;
 
   private Thread advertiseLoopThread;
 
