@@ -106,7 +106,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode.stop();
     loopFetchBlocks.join();
     loopSyncBlockChain.join();
-    loopFetchBlocks.join();
     loopAdvertiseInv.join();
     isAdvertiseCancle = false;
   }
