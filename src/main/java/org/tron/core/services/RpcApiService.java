@@ -82,7 +82,7 @@ public class RpcApiService implements Service {
     @Override
     public void createTransaction(GrpcAPI.Coin req, StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = req.getFrom();
-      ByteString toBs = req.getFrom();
+      ByteString toBs = req.getTo();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
         byte[] fromBa = fromBs.toByteArray();
