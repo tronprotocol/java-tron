@@ -58,35 +58,12 @@ public class GossipLocalNode implements LocalNode {
   public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private ExecutorService executors;
-
+  
   private CompositeSubscription subscriptions = new CompositeSubscription();
 
   @Override
   public void broadcast(Message message) {
-    if (message == null) {
-      logger.error("message must not null");
-      return;
-    }
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      return;
-    }
-
-    cluster.otherMembers().forEach(member -> {
-      try {
-        io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-            .data(new String(value, "ISO-8859-1"))
-            .header("type", type.toString())
-            .build();
-
-        logger.info("broadcast other members");
-        cluster.send(member, msg);
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-    });
+    listPeer.forEach((id, peer) -> peer.sendMessage(message));
   }
 
   @Override

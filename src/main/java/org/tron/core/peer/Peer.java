@@ -16,17 +16,12 @@
 package org.tron.core.peer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.common.command.ConsensusCommand;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.Net;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
-import org.tron.core.PendingStateImpl;
 import org.tron.core.UTXOSet;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.consensus.client.BlockchainClientListener;
-import org.tron.core.consensus.client.Client;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.Transaction;
 
@@ -41,14 +36,11 @@ public class Peer {
 
   private ECKey myKey;
 
-  private Client client;
-
   public Peer(
       String type,
       Blockchain blockchain,
       UTXOSet utxoSet,
       Wallet wallet,
-      Client client,
       ECKey key) {
 
     this();
@@ -56,7 +48,6 @@ public class Peer {
     this.setBlockchain(blockchain);
     this.setUTXOSet(utxoSet);
     this.setWallet(wallet);
-    this.setClient(client);
     this.myKey = key;
     init();
   }
@@ -65,42 +56,7 @@ public class Peer {
 
   }
 
-  public void addReceiveTransaction(String message) {
-    try {
-      Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(message));
-      System.out.println(TransactionCapsule.toPrintString
-          (transaction));
-      PendingStateImpl pendingState = new PendingStateImpl();
-      pendingState.addPendingTransaction(blockchain, transaction);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void addReceiveBlock(String message) {
-    Block block = null;
-    try {
-      block = Block.parseFrom(ByteArray.fromHexString(message
-      ));
-      blockchain.receiveBlock(block, utxoSet, this);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
   private void init() {
-    blockchain.addListener(new BlockchainClientListener(client, this));
-    initLoadBlock();
-    if (client != null) {
-      new ConsensusCommand(client).listen(this, this.type);
-    }
-  }
-
-  private void initLoadBlock() {
-    if (this.type.equals(PeerType.PEER_NORMAL) && client != null) {
-      System.out.println("BlockChain loading  ...");
-      client.loadBlock(this);
-    }
   }
 
   public ECKey getMyKey() {
@@ -142,13 +98,5 @@ public class Peer {
     }
 
     this.type = type;
-  }
-
-  public Net getNet() {
-    return null;
-  }
-
-  public void setClient(Client client) {
-    this.client = client;
   }
 }

@@ -75,14 +75,7 @@ dependencies {
 
     compile "org.apache.commons:commons-lang3:3.4"
 
-    compile(group: 'org.apache.kafka', name: 'kafka_2.12', version: '0.11.0.2') {
-        exclude module: 'slf4j-log4j12'
-    }
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
-
-    compile(group: 'org.apache.kafka', name: 'kafka_2.12', version: '0.11.0.2') {
-        exclude module: 'slf4j-log4j12'
-    }
 
     compile "org.apache.commons:commons-collections4:4.0"
 
@@ -90,9 +83,6 @@ dependencies {
 
     compile group: 'junit', name: 'junit', version: '4.8.1'
 
-    compile group: 'io.atomix.copycat', name: 'copycat-server', version: '1.1.4'
-    compile group: 'io.atomix.copycat', name: 'copycat-client', version: '1.1.4'
-    compile group: 'io.atomix.catalyst', name: 'catalyst-netty', version: '1.1.1'
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'

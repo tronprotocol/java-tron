@@ -15,9 +15,7 @@
 
 package org.tron.core.events;
 
-import org.tron.common.overlay.Net;
 import org.tron.protos.Protocal.Block;
-
 
 public interface BlockchainListener {
 
@@ -25,11 +23,6 @@ public interface BlockchainListener {
    * New block added to blockchain.
    */
   void addBlock(Block block);
-
-  /**
-   * New block added to blockchain includes net reference.
-   */
-  void addBlockNet(Block block, Net net);
 
   /**
    * Genesis block added to blockchain.

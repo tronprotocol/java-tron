@@ -36,7 +36,7 @@ public class TronTest {
         while (addresses.hasMoreElements()) {
           ip = (InetAddress) addresses.nextElement();
           if (ip != null && ip instanceof Inet4Address) {
-            System.out.println("本机的IP = " + ip.getHostAddress());
+            System.out.println("IP = " + ip.getHostAddress());
           }
         }
       }
