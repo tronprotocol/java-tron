@@ -86,7 +86,7 @@ public class RpcApiService implements Service {
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
         byte[] fromBa = fromBs.toByteArray();
-        byte[] toBa = fromBs.toByteArray();
+        byte[] toBa = toBs.toByteArray();
         String toHexString = Hex.toHexString(toBa);
         Transaction trx = wallet.createTransaction(fromBa, toHexString, amount);
         responseObserver.onNext(trx);
