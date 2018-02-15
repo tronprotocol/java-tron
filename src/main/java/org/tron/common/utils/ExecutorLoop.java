@@ -13,19 +13,29 @@ public class ExecutorLoop<In> {
 
   private BlockingQueue<Runnable> queue;
   private ThreadPoolExecutor exec;
-  private Function<In, Void> consumer;
+  private Consumer<In> consumer;
   private Consumer<Throwable> exceptionHandler;
   private String threadPoolName;
 
   private static AtomicInteger loopNum = new AtomicInteger(1);
   private AtomicInteger threadNumber = new AtomicInteger(1);
 
-  public ExecutorLoop(int threads, int queueSize, Function<In, Void> consumer,
+  public ExecutorLoop(
+      int threads,
+      int queueSize,
+      Consumer<In> consumer,
       Consumer<Throwable> exceptionHandler) {
-    queue = new LimitedQueue<>(queueSize);
-    exec = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, r ->
-        new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement())
+
+    this.queue = new LimitedQueue<>(queueSize);
+    this.exec = new ThreadPoolExecutor(
+      threads,
+      threads,
+      0L,
+      TimeUnit.MILLISECONDS,
+      queue,
+      r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement())
     );
+
     this.consumer = consumer;
     this.exceptionHandler = exceptionHandler;
     this.threadPoolName = "loop-" + loopNum.getAndIncrement();
@@ -34,7 +44,7 @@ public class ExecutorLoop<In> {
   public void push(final In in) {
     exec.execute(() -> {
       try {
-        consumer.apply(in);
+        consumer.accept(in);
       } catch (Throwable e) {
         exceptionHandler.accept(e);
       }
