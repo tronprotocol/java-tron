@@ -51,7 +51,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public LevelDbDataSourceImpl() {}
 
   public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
-    if (Constant.NORMAL == cfgType) {
+    if (Constant.NORMAL.equals(cfgType)) {
       parentName += Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
     } else {
       parentName += Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
