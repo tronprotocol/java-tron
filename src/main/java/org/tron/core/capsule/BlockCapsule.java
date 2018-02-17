@@ -50,9 +50,8 @@ public class BlockCapsule {
   }
 
   public boolean validate() {
-    return true;
+    return Validator.validate(block);
   }
-
 
   public BlockCapsule(Block blk) {
     this.block = blk;
@@ -70,8 +69,6 @@ public class BlockCapsule {
   public long getNum() {
     return this.block.getBlockHeader().getNumber();
   }
-
-
 
   /**
    * getData a new block.
@@ -269,7 +266,6 @@ public class BlockCapsule {
   // block
   public static boolean isParentOf(Block block1, Block
       block2) {
-
     return (block1.getBlockHeader().getParentHash() == block2.getBlockHeader().getHash());
   }
 }

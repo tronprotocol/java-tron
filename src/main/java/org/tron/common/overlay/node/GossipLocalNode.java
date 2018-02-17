@@ -32,6 +32,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.Configer;
@@ -39,6 +40,8 @@ import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
 
 public class GossipLocalNode implements LocalNode {
 
@@ -55,13 +58,23 @@ public class GossipLocalNode implements LocalNode {
   public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private ExecutorService executors;
+  
+  private CompositeSubscription subscriptions = new CompositeSubscription();
 
-  private GossipLocalNode() {
+  @Override
+  public void broadcast(Message message) {
+    listPeer.forEach((id, peer) -> peer.sendMessage(message));
+  }
+
+  @Override
+  public void start() {
+    logger.info("listener message");
+
     ClusterConfig config = ClusterConfig.builder()
-        .seedMembers(getAddresses())
-        .portAutoIncrement(false)
-        .port(port)
-        .build();
+            .seedMembers(getAddresses())
+            .portAutoIncrement(false)
+            .port(port)
+            .build();
 
     cluster = Cluster.joinAwait(config);
 
@@ -69,62 +82,35 @@ public class GossipLocalNode implements LocalNode {
       listPeer.put(member.hashCode(), new PeerConnection(this.cluster, member));
     }
 
-    cluster.listenMembership()
-        .subscribe(event -> {
-          if (event.type() == Type.REMOVED) {
-            listPeer.remove(event.oldMember().hashCode());
-          } else {
-            listPeer.put(event.newMember().hashCode(),
-                new PeerConnection(this.cluster, event.newMember()));
-          }
-        });
-  }
-
-
-  @Override
-  public void broadcast(Message message) {
-    if (message == null) {
-      logger.error("message must not null");
-      return;
-    }
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      return;
-    }
-
-    cluster.otherMembers().forEach(member -> {
-      try {
-        io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-            .data(new String(value, "ISO-8859-1"))
-            .header("type", type.toString())
-            .build();
-
-        logger.info("broadcast other members");
-        cluster.send(member, msg);
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-    });
-  }
-
-  @Override
-  public void start() {
-    logger.info("listener message");
+    Subscription membershipListener = cluster
+            .listenMembership()
+            .subscribe(event -> {
+              if (event.type() == Type.REMOVED) {
+                listPeer.remove(event.oldMember().hashCode());
+              } else {
+                listPeer.put(event.newMember().hashCode(), new PeerConnection(this.cluster, event.newMember()));
+              }
+            });
 
     executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
         new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
-    cluster.listen().subscribe(msg -> {
+    Subscription messageSubscription = cluster.listen().subscribe(msg -> {
       executors.submit(new StartWorker(msg, peerDel, listPeer, cluster));
     });
+
+    subscriptions.add(membershipListener);
+    subscriptions.add(messageSubscription);
   }
 
   public void stop() {
     cluster.shutdown();
-  }
+    executors.shutdown();
+    subscriptions.clear();
+    listPeer.clear();
 
+    cluster = null;
+  }
 
   public void setPeerDel(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;

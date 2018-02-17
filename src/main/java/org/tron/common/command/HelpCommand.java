@@ -42,9 +42,6 @@ public class HelpCommand extends Command {
       case "getbalance":
         new GetBalanceCommand().usage();
         break;
-      case "send":
-        new SendCommand().usage();
-        break;
       case "printblockchain":
         new PrintBlockchainCommand().usage();
         break;

@@ -15,13 +15,23 @@
 
 package org.tron.core;
 
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.LAST_HASH;
-
 import com.alibaba.fastjson.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Configer;
+import org.tron.core.events.BlockchainListener;
+import org.tron.core.peer.Peer;
+import org.tron.protos.Protocal.*;
+
+import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,23 +41,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.Net;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Configer;
-import org.tron.core.events.BlockchainListener;
-import org.tron.core.peer.Peer;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.TXInput;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.TXOutputs;
-import org.tron.protos.Protocal.Transaction;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.LAST_HASH;
 
 
 public class Blockchain {
@@ -56,7 +52,6 @@ public class Blockchain {
   public static final Logger logger = LoggerFactory.getLogger("BlockChain");
   public static String parentName = Constant.NORMAL;
   private LevelDbDataSourceImpl blockDb;
-  private PendingState pendingState = new PendingStateImpl();
 
   private byte[] lastHash;
   private byte[] currentHash;
@@ -277,27 +272,6 @@ public class Blockchain {
   }
 
   /**
-   * {@see org.tron.common.overlay.kafka.KafkaTest#testKafka()}
-   *
-   * @param transactions transactions
-   */
-  public void addBlock(List<Transaction> transactions, Net net) {
-    // getData lastHash
-    byte[] lastHash = blockDb.getData(LAST_HASH);
-    ByteString parentHash = ByteString.copyFrom(lastHash);
-    // getData number
-    long number = BlockCapsule.getIncreaseNumber(this);
-    // getData difficulty
-    ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-    Block block = BlockCapsule.newBlock(transactions, parentHash, difficulty,
-        number);
-
-    for (BlockchainListener listener : listeners) {
-      listener.addBlockNet(block, net);
-    }
-  }
-
-  /**
    * add a block.
    */
   public void addBlock(List<Transaction> transactions) {
@@ -361,14 +335,6 @@ public class Blockchain {
     this.blockDb = blockDB;
   }
 
-  public PendingState getPendingState() {
-    return pendingState;
-  }
-
-  public void setPendingState(PendingState pendingState) {
-    this.pendingState = pendingState;
-  }
-
   public byte[] getLastHash() {
     return lastHash;
   }
@@ -384,6 +350,4 @@ public class Blockchain {
   public void setCurrentHash(byte[] currentHash) {
     this.currentHash = currentHash;
   }
-
-
 }
