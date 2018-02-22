@@ -1,21 +1,27 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
-import org.tron.common.utils.SafeMessageMap;
 import org.tron.core.Sha256Hash;
-import org.tron.core.net.message.*;
+import org.tron.core.net.message.BlockInventoryMessage;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
+import org.tron.core.net.message.Message;
+import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.message.TransactionInventoryMessage;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Inventory.InventoryType;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
@@ -24,8 +30,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private final List<Sha256Hash> blockToAdvertise = new ArrayList<>();
 
   private static final Logger logger = LoggerFactory.getLogger("Node");
-
-  SafeMessageMap messageMap = new SafeMessageMap();
 
   private ConcurrentHashMap<Sha256Hash, PeerConnection> syncMap = new ConcurrentHashMap<>();
 
@@ -190,14 +194,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
-  private void broadcastBlk(BlockMessage blkMsg) {
-    blockToAdvertise.add(blkMsg.sha256Hash());
-  }
-
-  private void broadcastTrx(TransactionMessage trxMsg) {
-    trxToAdvertise.add(trxMsg.sha256Hash());
-  }
-
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
@@ -222,8 +218,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     Protocal.Inventory inv = fetchInvDataMsg.getInventory();
     MessageTypes type = inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 
-    for (ByteString hash : inv.getIdsList()) {
-      peer.sendMessage(del.getData(Sha256Hash.wrap(hash.toByteArray()), type));
+    //get data one by one
+    for (ByteString byteHash : inv.getIdsList()) {
+      Sha256Hash hash = Sha256Hash.wrap(byteHash);
+      if (del.contain(hash, type)) {
+        peer.sendMessage(del.getData(hash, type));
+      }
     }
   }
 
