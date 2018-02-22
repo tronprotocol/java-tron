@@ -1,10 +1,10 @@
 package org.tron.program;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 
 public class Args {
 
@@ -20,14 +20,10 @@ public class Args {
   @Parameter(description = "-seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
-  private Args() {
-  }
+  private Args() {}
 
   public static void setParam(String[] args) {
-    JCommander.newBuilder()
-        .addObject(INSTANCE)
-        .build()
-        .parse(args);
+    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
   }
 
   public static Args getInstance() {
@@ -35,7 +31,7 @@ public class Args {
   }
 
   public String getOutputDirectory() {
-    if (outputDirectory != "" && !outputDirectory.endsWith(File.separator)) {
+    if (!outputDirectory.equals("") && !outputDirectory.endsWith(File.separator)) {
       return outputDirectory + File.separator;
     }
     return outputDirectory;
