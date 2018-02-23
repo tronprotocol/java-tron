@@ -14,12 +14,12 @@
  */
 package org.tron.common.application;
 
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.program.Args;
 
-import java.util.ArrayList;
-
-public class ServiceContainer implements Service {
+public class ServiceContainer {
 
   private static final Logger logger = LoggerFactory.getLogger("Services");
   private ArrayList<Service> services;
@@ -32,7 +32,7 @@ public class ServiceContainer implements Service {
     this.services.add(service);
   }
 
-  @Override
+
   public void init() {
     for (Service service : this.services) {
       logger.debug("Initing " + service.getClass().getSimpleName());
@@ -40,7 +40,13 @@ public class ServiceContainer implements Service {
     }
   }
 
-  @Override
+  public void init(Args args) {
+    for (Service service : this.services) {
+      logger.debug("Initing " + service.getClass().getSimpleName());
+      service.init(args);
+    }
+  }
+
   public void start() {
     logger.debug("Starting services");
     for (Service service : this.services) {
@@ -49,7 +55,6 @@ public class ServiceContainer implements Service {
     }
   }
 
-  @Override
   public void stop() {
     for (Service service : this.services) {
       logger.debug("Stopping " + service.getClass().getSimpleName());

@@ -154,7 +154,7 @@ public class Manager {
    * Generate a block.
    */
   public Protocal.Block generateBlock(WitnessCapsule witnessCapsule,
-      long when) {
+      long when, String privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -169,6 +169,7 @@ public class Manager {
 
     long currentTrxSize = 0;
     long postponedTrxCount = 0;
+
     Builder blockBuilder = Block.newBuilder();
 
     for (Transaction trx : pendingTrxs) {

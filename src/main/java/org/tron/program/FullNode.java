@@ -27,6 +27,7 @@ public class FullNode {
     RpcApiService rpcApiService = new RpcApiService(appT);
     appT.addService(rpcApiService);
     appT.addService(new WitnessService(appT));
+    appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
     rpcApiService.blockUntilShutdown();
