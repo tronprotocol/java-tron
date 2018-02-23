@@ -15,16 +15,12 @@
 
 package org.tron.common.overlay.node;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.io.ByteStreams;
+import com.typesafe.config.ConfigObject;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.Member;
 import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,12 +28,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.Configer;
 import org.tron.core.net.message.Message;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import rx.Subscription;
@@ -88,7 +82,10 @@ public class GossipLocalNode implements LocalNode {
               if (event.type() == Type.REMOVED) {
                 listPeer.remove(event.oldMember().hashCode());
               } else {
-                listPeer.put(event.newMember().hashCode(), new PeerConnection(this.cluster, event.newMember()));
+                listPeer.put(
+                    event.newMember().hashCode(),
+                    new PeerConnection(this.cluster,
+                        event.newMember()));
               }
             });
 
@@ -103,6 +100,9 @@ public class GossipLocalNode implements LocalNode {
     subscriptions.add(messageSubscription);
   }
 
+  /**
+   * stop gossip node.
+   */
   public void stop() {
     cluster.shutdown();
     executors.shutdown();
@@ -121,39 +121,15 @@ public class GossipLocalNode implements LocalNode {
   }
 
   private List<Address> getAddresses() {
-    List<Address> addresses = loadSeedNode();
-    return addresses;
-  }
-
-  private List<Address> loadSeedNode() {
     List<Address> addresses = new ArrayList<>();
 
-    String jsonFile = Configer.getConf().getString("seed.directory");
+    List<? extends ConfigObject> cfgs = Configer.getConf().getObjectList("seedNodes");
 
-    if (jsonFile.trim().isEmpty()) {
-      return addresses;
-    }
-
-    InputStream is = getClass().getClassLoader()
-        .getResourceAsStream(jsonFile);
-
-    if (is == null) {
-      return addresses;
-    }
-
-    String json = null;
-
-    try {
-      json = new String(ByteStreams.toByteArray(is));
-
-      SeedNodes seedNodes = JSON.parseObject(json, SeedNodes.class);
-
-      for (SeedNode seedNode : seedNodes.getSeedNodes()) {
-        addresses.add(Address.create(seedNode.getIp(), seedNode.getPort()));
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    cfgs.forEach(c -> {
+      Address address = Address
+          .create(c.get("ip").unwrapped().toString(), (int) c.get("port").unwrapped());
+      addresses.add(address);
+    });
 
     return addresses;
   }
