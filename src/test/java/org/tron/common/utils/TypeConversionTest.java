@@ -28,37 +28,38 @@ import org.slf4j.LoggerFactory;
 
 
 public class TypeConversionTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
   public void testLongToBytes() {
     byte[] result = longToBytes(123L);
     //logger.info("long 123 to bytes is: {}", result);
-    byte[] expected = new byte[]{0, 0, 0, 0, 0, 0, 0, 123} ;
-    assertArrayEquals(expected,result);
+    byte[] expected = new byte[]{0, 0, 0, 0, 0, 0, 0, 123};
+    assertArrayEquals(expected, result);
 
   }
 
   @Test
   public void testBytesToLong() {
-    long result = bytesToLong(new byte[] {0, 0, 0, 0, 0, 0, 0, 124});
+    long result = bytesToLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 124});
     //logger.info("bytes 124 to long is: {}", result);
-    assertEquals(124L,result);
+    assertEquals(124L, result);
 
   }
 
   @Test
   public void testBytesToHexString() {
-    String result = bytesToHexString(new byte[] {0, 0, 0, 0, 0, 0, 0, 125});
+    String result = bytesToHexString(new byte[]{0, 0, 0, 0, 0, 0, 0, 125});
     //logger.info("bytes 125 to hex string is: {}", result);
-    assertEquals("000000000000007d",result);
+    assertEquals("000000000000007d", result);
   }
 
   @Test
   public void testHexStringToBytes() {
     byte[] result = hexStringToBytes("7f");
     //logger.info("hex string 7f to bytes is: {}", result);
-    byte[] expected = new byte[]{127} ;
+    byte[] expected = new byte[]{127};
     assertArrayEquals(expected, result);
 
   }

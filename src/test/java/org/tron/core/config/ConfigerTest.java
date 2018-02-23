@@ -15,13 +15,14 @@
 
 package org.tron.core.config;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 
-import static org.junit.Assert.assertEquals;
 
 public class ConfigerTest {
 
@@ -32,7 +33,9 @@ public class ConfigerTest {
     ECKey key = Configer.getMyKey();
 
     //logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
-    assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0", ByteArray.toHexString(key.getAddress()));
+
+    assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0",
+        ByteArray.toHexString(key.getAddress()));
 
   }
 }

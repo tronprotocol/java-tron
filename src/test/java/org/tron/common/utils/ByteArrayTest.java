@@ -15,13 +15,14 @@
 
 package org.tron.common.utils;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 public class ByteArrayTest {
 
@@ -36,7 +37,7 @@ public class ByteArrayTest {
   @Test
   public void testHexStringToByte() {
     //logger.info("Byte: hex string 0x11 to byte = {}", ByteArray.fromHexString("0x11"));
-    byte[] expectedfirst = new byte[]{17} ;
+    byte[] expectedfirst = new byte[]{17};
     byte[] actualfirst = ByteArray.fromHexString("0x11");
     assertArrayEquals(expectedfirst, actualfirst);
     //logger.info("Byte: hex string 10 to byte = {}", ByteArray.fromHexString("10"));
@@ -52,14 +53,14 @@ public class ByteArrayTest {
   @Test
   public void testToLong() {
     //logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new byte[]{13}));
-    assertEquals("byte to long is wrong",13L, ByteArray.toLong(new byte[]{13}));
+    assertEquals("byte to long is wrong", 13L, ByteArray.toLong(new byte[]{13}));
 
   }
 
   @Test
   public void testFromLong() {
     //logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
-    byte[] expected = new byte[]{0, 0, 0, 0, 0, 0, 0, 127} ;
+    byte[] expected = new byte[]{0, 0, 0, 0, 0, 0, 0, 127};
     byte[] actual = ByteArray.fromLong(127L);
     assertArrayEquals(expected, actual);
 
@@ -70,8 +71,9 @@ public class ByteArrayTest {
     //byte[] bs = new byte[]{};
     //logger.info("utils.ByteArray.toHexString: {}", ByteArray.toHexString(bs));
     //logger.info("Hex.toHexString: {}", Hex.toHexString(bs));
-    byte[] bss = new byte[]{8,9,12,13,14,15,16};
-    assertEquals("ByteArray.toHexString is not equals Hex.toHexString",ByteArray.toHexString(bss), Hex.toHexString(bss));
+    byte[] bss = new byte[]{8, 9, 12, 13, 14, 15, 16};
+    assertEquals("ByteArray.toHexString is not equals Hex.toHexString", ByteArray.toHexString(bss),
+        Hex.toHexString(bss));
 
 
   }
