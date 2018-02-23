@@ -22,6 +22,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.Configer;
 
+import static org.junit.Assert.assertEquals;
+
 public class ConfigerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
@@ -30,6 +32,8 @@ public class ConfigerTest {
   public void testGeClientTestEcKey() {
     ECKey key = Configer.getMyKey();
 
-    logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
+    //logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
+
+    assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0", ByteArray.toHexString(key.getAddress()));
   }
 }
