@@ -83,14 +83,13 @@ public class FileUtil {
   }
 
   public static void saveData(String filePath, String data, boolean append) {
+    File priFile = new File(filePath);
     try {
-      File priFile = new File(filePath);
       priFile.createNewFile();
-      FileWriter fw = new FileWriter(priFile, append);
-      BufferedWriter bw = new BufferedWriter(fw);
-      bw.write(data);
-      bw.flush();
-      bw.close();
+      try (BufferedWriter bw = new BufferedWriter(new FileWriter(priFile, append))) {
+        bw.write(data);
+        bw.flush();
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -98,12 +97,9 @@ public class FileUtil {
 
   public static int readData(String filePath, char[] buf) {
     int len;
-    try {
-      File file = new File(filePath);
-      FileReader fileReader = new FileReader(file);
-      BufferedReader bufRead = new BufferedReader(fileReader);
+    File file = new File(filePath);
+    try (BufferedReader bufRead = new BufferedReader(new FileReader(file))) {
       len = bufRead.read(buf, 0, buf.length);
-      bufRead.close();
     } catch (FileNotFoundException ex) {
       ex.printStackTrace();
       return 0;
