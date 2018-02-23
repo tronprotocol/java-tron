@@ -15,6 +15,9 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
@@ -22,34 +25,71 @@ import org.tron.protos.Protocal.Block;
 
 public class BlockCapsule {
 
-  private byte[] serializEncode;
+  protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
+
+  private byte[] data;
 
   private Block block;
 
   private Sha256Hash hash;
 
-  public Block getBlock() {
-    return block;
+  private boolean unpacked;
+
+  private synchronized void unPack() {
+    if (unpacked) {
+      return;
+    }
+
+    try {
+      this.block = Block.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
+
+    unpacked = true;
+  }
+
+  private void pack() {
+    if (data == null) {
+      this.data = this.block.toByteArray();
+      this.hash = Sha256Hash.of(this.data);
+    }
   }
 
   public boolean validate() {
-    return Validator.validate(block);
+    unPack();
+    return Validator.validate(this.block);
   }
 
-  public BlockCapsule(Block blk) {
-    this.block = blk;
-    this.hash = Sha256Hash.of(this.block.toByteArray());
+  public BlockCapsule(Block block) {
+    this.block = block;
+    unpacked = true;
+  }
+
+  public BlockCapsule(byte[] data) {
+    this.data = data;
+    this.hash = Sha256Hash.of(this.data);
+    unpacked = false;
+  }
+
+  public byte[] getData() {
+    pack();
+    return data;
   }
 
   public Sha256Hash getParentHash() {
+    unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getParentHash());
   }
 
   public Sha256Hash getHash() {
+    pack();
     return hash;
   }
 
   public long getNum() {
+    unPack();
     return this.block.getBlockHeader().getNumber();
   }
+
 }

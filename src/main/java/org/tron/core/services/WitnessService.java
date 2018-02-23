@@ -151,7 +151,7 @@ public class WitnessService implements Service {
     }
     long interval = blockInterval();
     BlockStore blockStore = tronApp.getDbManager().getBlockStore();
-    if (blockStore.getCurrentHeadBlockNum() == 0) {
+    if (blockStore.getHeadBlockNum() == 0) {
       DateTime genesisTime = blockStore.getGenesisTime();
       return genesisTime.plus(slotNum * interval);
     }
@@ -177,7 +177,7 @@ public class WitnessService implements Service {
 
   // shuffle witnesses
   private void updateWitnessSchedule() {
-    if (db.getBlockStore().getCurrentHeadBlockNum() % witnessStates.size() == 0) {
+    if (db.getBlockStore().getHeadBlockNum() % witnessStates.size() == 0) {
       String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
       witnessStates = new RandomGenerator<WitnessCapsule>()
           .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());

@@ -108,18 +108,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
     p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
   }
 
-  private void resetRpcServer() {
-
-  }
-
-  private void resetWebSocket() {
-
-  }
-
-  private void initalConfig(String configPathFile) {
-
-  }
-
   //NodeDelegate
 
   @Override
@@ -145,7 +133,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
+        return new BlockMessage(blockStoreDb.findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(
             dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
@@ -176,8 +164,14 @@ public class ApplicationImpl implements Application, NodeDelegate {
   }
 
   @Override
-  public boolean hasItem(byte[] hash) {
-    return false;
+  public boolean contain(Sha256Hash hash, MessageTypes type) {
+    if (type == MessageTypes.BLOCK) {
+      return blockStoreDb.containBlock(hash);
+    } else if (type == MessageTypes.TRX) {
+      //TODO: check it
+      return false;
+    }
+    return  false;
   }
 
   //IApplication
@@ -211,8 +205,6 @@ public class ApplicationImpl implements Application, NodeDelegate {
   public void startup() {
     p2pNode.setNodeDelegate(this);
     resetP2PNode();
-    resetRpcServer();
-    resetWebSocket();
   }
 
   @Override
