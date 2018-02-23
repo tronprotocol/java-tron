@@ -16,23 +16,25 @@
 package org.tron.core.db;
 
 import java.util.ArrayList;
-import java.util.List;
 import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocal;
 
 public class BlockStore extends TronDatabase {
 
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
   //private LevelDbDataSourceImpl blockDbDataSource;
-  private LevelDbDataSourceImpl unSpendCache;
+  //private LevelDbDataSourceImpl unSpendCache;
+
+  private LevelDbDataSourceImpl numHashCache;
 
   private KhaosDatabase khaosDb;
 
@@ -40,6 +42,9 @@ public class BlockStore extends TronDatabase {
 
   private BlockStore(String dbName) {
     super(dbName);
+    numHashCache = new LevelDbDataSourceImpl(
+        Constant.NORMAL, Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
+    numHashCache.initDB();
   }
 
   private static BlockStore instance;
@@ -69,6 +74,10 @@ public class BlockStore extends TronDatabase {
     return head.getHash();
   }
 
+  /**
+   * Get the head block's number.
+   * @return
+   */
   public long getHeadBlockNum() {
     if (head == null) {
       return 0;
@@ -76,14 +85,33 @@ public class BlockStore extends TronDatabase {
     return head.getNum();
   }
 
+  /**
+   * Get the block hash from the number.
+   */
   public Sha256Hash getBlockHashByNum(long num) {
-    //TODO: get it from levelDB
+    byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
+    if (hash != null) {
+      return Sha256Hash.wrap(hash);
+    }
     return Sha256Hash.ZERO_HASH;
   }
 
+  /**
+   * Get number of block by the block hash.
+   */
   public long getBlockNumByHash(Sha256Hash hash) {
-    //TODO: get it form levelDB
-    return khaosDb.getBlock(hash).getNum();
+    if (khaosDb.containBlock(hash)) {
+      return khaosDb.getBlock(hash).getNum();
+    }
+
+    //TODO: optimize here
+    byte[] blockByte = dbSource.getData(hash.getBytes());
+
+    if (blockByte != null) {
+      return new BlockCapsule(blockByte).getNum();
+    }
+
+    return 0;
   }
 
   /**
@@ -97,18 +125,13 @@ public class BlockStore extends TronDatabase {
     return ret;
   }
 
-  public long getCurrentHeadBlockNum() {
-    return (getHeadBlockTime().getMillis() - getGenesisTime().getMillis())
-        / WitnessService.LOOP_INTERVAL;
-  }
-
   public DateTime getHeadBlockTime() {
     DateTime time = DateTime.now();
     return time.minus(time.getMillisOfSecond() + 1000); // for test. assume a block generated 1s ago
   }
 
   public long currentASlot() {
-    return getCurrentHeadBlockNum(); // assume no missed slot
+    return getHeadBlockNum(); // assume no missed slot
   }
 
   // genesis_time
@@ -123,7 +146,14 @@ public class BlockStore extends TronDatabase {
    */
   public boolean containBlock(Sha256Hash blockHash) {
     //TODO: check it from levelDB
-    return khaosDb.containBlock(blockHash);
+    if (khaosDb.containBlock(blockHash)) {
+      return true;
+    }
+
+    if (dbSource.getData(blockHash.getBytes()) != null) {
+      return true;
+    }
+    return false;
   }
 
   public void pushTransactions(Protocal.Transaction trx) {
@@ -131,42 +161,57 @@ public class BlockStore extends TronDatabase {
     //pendingTrans.add(trx);
   }
 
-
-  /**
-   * Generate Block return Block.
-   */
-  public Protocal.Block generateBlock(List<Protocal.Transaction> transactions) {
-    return null;
-  }
-
   /**
    * save a block.
    */
   public void saveBlock(Sha256Hash hash, BlockCapsule block) {
-    // todo: In some case it need to switch the branch
     logger.info("save block");
 
+    khaosDb.push(block);
+
+    //todo: check block's validity
+    //todo: In some case it need to switch the branch
+    if (block.validate()) {
+      dbSource.putData(block.getHash().getBytes(), block.getData());
+      numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getHash().getBytes());
+    }
+
+    head = khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
-
   }
 
   /**
-   * find a block by it's hash.
+   * find a block packed data by hash.
    */
-  public byte[] findBlockByHash(byte[] blockHash) {
-    return dbSource.getData(blockHash);
+  public byte[] findBlockByHash(Sha256Hash hash) {
+    if (khaosDb.containBlock(hash)) {
+      return khaosDb.getBlock(hash).getData();
+    }
+    return dbSource.getData(hash.getBytes());
   }
 
   /**
-   * deleteData a block.
+   * Get a BlockCapsule by hash.
    */
-  public void deleteBlock(byte[] blockHash) {
-    dbSource.deleteData(blockHash);
+  public BlockCapsule getBlockByHash(Sha256Hash hash) {
+    if (khaosDb.containBlock(hash)) {
+      return khaosDb.getBlock(hash);
+    }
+    return new BlockCapsule(dbSource.getData(hash.getBytes()));
   }
 
+  /**
+   * Delete a block
+   */
+  public void deleteBlock(Sha256Hash blockHash) {
+    BlockCapsule block = getBlockByHash(blockHash);
+    khaosDb.removeBlk(blockHash);
+    dbSource.deleteData(blockHash.getBytes());
+    numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
+    head = khaosDb.getHead();
+  }
 
   public void getUnspend(byte[] key) {
-
   }
 
   /**

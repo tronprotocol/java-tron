@@ -27,6 +27,6 @@ public interface NodeDelegate {
 
   byte[] getHeadBlockId();
 
-  boolean hasItem(byte[] hash);
+  boolean contain(Sha256Hash hash, MessageTypes type);
 
 }
