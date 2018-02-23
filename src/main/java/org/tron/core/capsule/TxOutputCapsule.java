@@ -21,7 +21,6 @@ import org.tron.protos.Protocal.TXOutput;
 
 public class TxOutputCapsule {
 
-
   private TXOutput txOutput;
 
   /**
@@ -29,7 +28,6 @@ public class TxOutputCapsule {
    *
    * @param value int value
    * @param address String address
-   * @return {@link TXOutput}
    */
   public TxOutputCapsule(long value, String address) {
     this.txOutput = TXOutput.newBuilder()
@@ -47,37 +45,5 @@ public class TxOutputCapsule {
    */
   public boolean validate() {
     return true;
-  }
-
-
-  /**
-   * new transaction output.
-   *
-   * @param value int value
-   * @param address String address
-   * @return {@link TXOutput}
-   */
-  public static TXOutput newTxOutput(long value, String address) {
-    return TXOutput.newBuilder()
-        .setValue(value)
-        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
-        .build();
-  }
-
-  /**
-   * getData print string of the transaction out.
-   *
-   * @param txo {@link TXOutput} txo
-   * @return String format string of the transaction output
-   */
-  public static String toPrintString(TXOutput txo) {
-    if (txo == null) {
-      return "";
-    }
-
-    return "\nTXOutput {\n"
-        + "\tvalue=" + txo.getValue()
-        + ",\n\tpubKeyHash=" + ByteArray.toHexString(txo.getPubKeyHash().toByteArray())
-        + "\n}\n";
   }
 }
