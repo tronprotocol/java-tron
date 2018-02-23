@@ -16,6 +16,7 @@
 package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +49,8 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   private String parentName;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
-  public LevelDbDataSourceImpl() {}
+  public LevelDbDataSourceImpl() {
+  }
 
   public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
     if (Constant.NORMAL.equals(cfgType)) {

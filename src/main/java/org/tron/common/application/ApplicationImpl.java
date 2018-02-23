@@ -133,7 +133,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(blockStoreDb.findBlockByHash(hash.getBytes()));
+        return new BlockMessage(blockStoreDb.findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(
             dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
