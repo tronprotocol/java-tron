@@ -40,6 +40,8 @@ public class WalletTest {
     Wallet wallet2 = new Wallet();
     logger.info("wallet address = {}", ByteArray.toHexString(wallet
         .getAddress()));
+    logger.info("wallet2 address = {}", ByteArray.toHexString(wallet2
+            .getAddress()));
     assertFalse(wallet.getAddress().equals(wallet2.getAddress()));
   }
 
@@ -47,6 +49,10 @@ public class WalletTest {
   public void testGetAddress() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     Wallet wallet = new Wallet(ecKey);
+    logger.info("ecKey address = {}", ByteArray.toHexString(ecKey
+            .getAddress()));
+    logger.info("wallet address = {}", ByteArray.toHexString(wallet
+            .getAddress()));
     assertArrayEquals(wallet.getAddress(), ecKey.getAddress());
   }
 
@@ -55,6 +61,10 @@ public class WalletTest {
     ECKey ecKey = new ECKey(Utils.getRandom());
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     Wallet wallet = new Wallet(ecKey);
+    logger.info("ecKey address = {}", ByteArray.toHexString(ecKey
+            .getAddress()));
+    logger.info("wallet address = {}", ByteArray.toHexString(wallet
+            .getAddress()));
     assertEquals("Wallet ECKey should match provided ECKey", wallet.getEcKey(), ecKey);
   }
 }
