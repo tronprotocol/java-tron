@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.Transaction;
 
@@ -39,24 +39,24 @@ public class BlockCapsuleTest {
     ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString(
         "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85"));
     ByteString difficulty = ByteString.copyFrom(ByteArray.fromHexString("2001"));
-    Block block = BlockCapsule.newBlock(null, parentHash, difficulty, 0);
+    Block block = BlockUtil.newBlock(null, parentHash, difficulty, 0);
 
-    logger.info("test new block: {}", BlockCapsule.toPrintString(block));
+    logger.info("test new block: {}", BlockUtil.toPrintString(block));
   }
 
   @Test
   public void testNewGenesisBlock() {
-    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction(
+    Transaction coinbase = TransactionUtil.newCoinbaseTransaction(
         "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
         0);
-    Block genesisBlock = BlockCapsule.newGenesisBlock(coinbase);
+    Block genesisBlock = BlockUtil.newGenesisBlock(coinbase);
 
-    logger.info("test new genesis block: {}", BlockCapsule.toPrintString(genesisBlock));
+    logger.info("test new genesis block: {}", BlockUtil.toPrintString(genesisBlock));
   }
 
   @Test
   public void testPrepareData() {
-    Transaction coinbase = TransactionCapsule.newCoinbaseTransaction(
+    Transaction coinbase = TransactionUtil.newCoinbaseTransaction(
         "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85", GENESIS_COINBASE_DATA,
         0);
     logger.info("test prepare data: {}",
@@ -65,49 +65,49 @@ public class BlockCapsuleTest {
             + "3e0c9214fb4ac7ff9d7d5a937d1f40031f87b8532022001"
             .equals(ByteArray
                 .toHexString(
-                    BlockCapsule.prepareData(BlockCapsule.newGenesisBlock(coinbase)))));
+                    BlockUtil.prepareData(BlockUtil.newGenesisBlock(coinbase)))));
   }
 
   @Test
   public void testIsValidate() {
-    Transaction coinbase = TransactionCapsule
+    Transaction coinbase = TransactionUtil
         .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
             GENESIS_COINBASE_DATA,
             0);
-    Block genesisBlock = BlockCapsule.newGenesisBlock(coinbase);
+    Block genesisBlock = BlockUtil.newGenesisBlock(coinbase);
     logger.info("nonce: {}",
         ByteArray.toHexString(genesisBlock.getBlockHeader().getNonce().toByteArray()));
   }
 
   @Test
   public void testToPrintString() {
-    Transaction coinbase = TransactionCapsule
+    Transaction coinbase = TransactionUtil
         .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
             GENESIS_COINBASE_DATA,
             0);
     logger.info("test to print string: {}",
-        BlockCapsule.toPrintString(BlockCapsule.newGenesisBlock(coinbase)));
+        BlockUtil.toPrintString(BlockUtil.newGenesisBlock(coinbase)));
   }
 
   @Test
   public void testGetMineValue() {
-    Transaction coinbase = TransactionCapsule
+    Transaction coinbase = TransactionUtil
         .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
             GENESIS_COINBASE_DATA,
             0);
     logger.info("test get mine value: {}",
-        ByteArray.toHexString(BlockCapsule.getMineValue(BlockCapsule.newGenesisBlock(coinbase)
+        ByteArray.toHexString(BlockUtil.getMineValue(BlockUtil.newGenesisBlock(coinbase)
         )));
   }
 
   @Test
   public void testGetPowBoundary() {
-    Transaction coinbase = TransactionCapsule
+    Transaction coinbase = TransactionUtil
         .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
             GENESIS_COINBASE_DATA,
             0);
     logger.info("test get pow boundary: {}",
-        ByteArray.toHexString(BlockCapsule.getPowBoundary(BlockCapsule.newGenesisBlock(coinbase))));
+        ByteArray.toHexString(BlockUtil.getPowBoundary(BlockUtil.newGenesisBlock(coinbase))));
   }
 
   @Test
@@ -117,7 +117,7 @@ public class BlockCapsuleTest {
     Blockchain mockBlockchain = Mockito.mock(Blockchain.class);
     Mockito.when(mockBlockchain.getBlockDB()).thenReturn(mockDb);
 
-    logger.info("test getData increase number: {}", BlockCapsule
+    logger.info("test getData increase number: {}", BlockUtil
         .getIncreaseNumber(mockBlockchain));
   }
 }

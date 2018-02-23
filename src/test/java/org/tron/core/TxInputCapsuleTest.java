@@ -18,7 +18,7 @@ package org.tron.core;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.capsule.TxInputCapsule;
+import org.tron.core.capsule.utils.TxInputUtil;
 
 public class TxInputCapsuleTest {
 
@@ -26,14 +26,14 @@ public class TxInputCapsuleTest {
 
   @Test
   public void testNewTxInput() {
-    logger.info("test new TXInput: {}", TxInputCapsule.newTxInput(new
+    logger.info("test new TXInput: {}", TxInputUtil.newTxInput(new
         byte[]{}, 1, new byte[]{}, new byte[]{}));
   }
 
   @Test
   public void testToPrintString() {
     logger.info("test to print string: {}",
-        TxInputCapsule.toPrintString(TxInputCapsule.newTxInput(new byte[]{}, 1, new byte[]{}, new
+        TxInputUtil.toPrintString(TxInputUtil.newTxInput(new byte[]{}, 1, new byte[]{}, new
             byte[]{})));
   }
 }
