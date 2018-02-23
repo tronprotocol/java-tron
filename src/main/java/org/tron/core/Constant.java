@@ -28,11 +28,6 @@ public class Constant {
   public static final String BLOCK_DB_NAME = "block_data";
   public static final String TRANSACTION_DB_NAME = "transaction_data";
 
-  // kafka
-  public static final String TOPIC_BLOCK = "block";
-  public static final String TOPIC_TRANSACTION = "transaction";
-  public static final Integer PARTITION = 0;
-
   //config
   public static final String NORMAL = "normal";
   public static final String TEST = "test";
