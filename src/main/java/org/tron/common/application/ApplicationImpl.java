@@ -202,7 +202,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public void initServices(Args args) {
-    services.init();
+    services.init(args);
   }
 
   /**
