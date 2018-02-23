@@ -75,6 +75,7 @@
   <logger name="DynamicPropertiesStore" level="INFO"/>
   <logger name="FullNode" level="INFO"/>
   <logger name="PeerConnection" level="INFO"/>
+  <logger name="TransactionUtil" level="INFO"/>
 
 </configuration>
 

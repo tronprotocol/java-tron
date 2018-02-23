@@ -18,7 +18,7 @@ package org.tron.core;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.capsule.TxOutputCapsule;
+import org.tron.core.capsule.utils.TxOutputUtil;
 
 public class TxOutputCapsuleTest {
 
@@ -26,13 +26,13 @@ public class TxOutputCapsuleTest {
 
   @Test
   public void testNewTxOutput() {
-    logger.info("test new TXOutput: {}", TxOutputCapsule.newTxOutput(1,
+    logger.info("test new TXOutput: {}", TxOutputUtil.newTxOutput(1,
         "12"));
   }
 
   @Test
   public void testToPrintString() {
     logger.info("test to print string: {}",
-        TxOutputCapsule.toPrintString(TxOutputCapsule.newTxOutput(1, "12")));
+        TxOutputUtil.toPrintString(TxOutputUtil.newTxOutput(1, "12")));
   }
 }

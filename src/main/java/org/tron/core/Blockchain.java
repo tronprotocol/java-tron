@@ -15,6 +15,11 @@ package org.tron.core;
 
 import static org.tron.core.Constant.BLOCK_DB_NAME;
 import static org.tron.core.Constant.LAST_HASH;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.io.ByteStreams;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,8 +35,8 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Configer;
 import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
@@ -40,10 +45,6 @@ import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
 import org.tron.protos.Protocal.Transaction;
-import com.alibaba.fastjson.JSON;
-import com.google.common.io.ByteStreams;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 
 public class Blockchain {
@@ -73,7 +74,7 @@ public class Blockchain {
 
       List<Transaction> transactions = buildTransactionsFrom(genesisBlockLoader);
 
-      Block genesisBlock = BlockCapsule.newGenesisBlock(transactions);
+      Block genesisBlock = BlockUtil.newGenesisBlock(transactions);
 
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
@@ -107,7 +108,7 @@ public class Blockchain {
 
   private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
     return genesisBlockLoader
-        .getTransaction().entrySet().stream().map(e -> TransactionCapsule
+        .getTransaction().entrySet().stream().map(e -> TransactionUtil
             .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue()))
         .collect(Collectors.toList());
   }
@@ -202,7 +203,7 @@ public class Blockchain {
       checkOutput(out, outIdx, txid, utxo, spenttxos);
     }
 
-    if (!TransactionCapsule.isCoinbaseTransaction(transaction)) {
+    if (!TransactionUtil.isCoinbaseTransaction(transaction)) {
       for (TXInput in : transaction.getVinList()) {
         addInputToSpentTxos(in, spenttxos);
       }
@@ -287,7 +288,7 @@ public class Blockchain {
     }
 
     // transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
-    transaction = TransactionCapsule.sign(transaction, myKey);// Unsupport muilty address, needn't
+    transaction = TransactionUtil.sign(transaction, myKey);// Unsupport muilty address, needn't
                                                               // input prevTXs
     return transaction;
   }
@@ -300,10 +301,10 @@ public class Blockchain {
     byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // get number
-    long number = BlockCapsule.getIncreaseNumber(this);
+    long number = BlockUtil.getIncreaseNumber(this);
     // get difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-    Block block = BlockCapsule.newBlock(transactions, parentHash, difficulty, number);
+    Block block = BlockUtil.newBlock(transactions, parentHash, difficulty, number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlock(block);
@@ -338,7 +339,7 @@ public class Blockchain {
 
     this.lastHash = ch;
     currentHash = ch;
-    System.out.println(BlockCapsule.toPrintString(block));
+    System.out.println(BlockUtil.toPrintString(block));
     // update UTXO cache
     utxoSet.reindex();
   }
