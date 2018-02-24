@@ -101,7 +101,7 @@ public class LevelDbDataSourceImplTest {
 
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.TEST_CONF,
         Constant.OUTPUT_DIR, "test");
-    dataSource.resetDB();
+    dataSource.resetDb();
     dataSource.closeDB();
   }
 

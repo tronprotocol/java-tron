@@ -37,7 +37,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.config.Configer;
+import org.tron.core.config.Config;
 import org.tron.core.events.BlockchainListener;
 import org.tron.core.peer.Peer;
 import org.tron.protos.Protocal.Block;
@@ -132,9 +132,9 @@ public class Blockchain {
    */
   public static boolean dbExists() {
     if (Constant.NORMAL == parentName) {
-      parentName = Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
+      parentName = Config.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
     } else {
-      parentName = Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
+      parentName = Config.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
 
     }
     File file = new File(Paths.get(parentName, BLOCK_DB_NAME).toString());

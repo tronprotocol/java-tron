@@ -215,10 +215,10 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * resetDB the database.
+   * resetDb the database.
    */
   public void reset() {
-    dbSource.resetDB();
+    dbSource.resetDb();
   }
 
   public void close() {

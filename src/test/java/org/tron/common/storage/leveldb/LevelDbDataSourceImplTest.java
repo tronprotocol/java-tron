@@ -63,7 +63,7 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testRest() {
-    dataSource.resetDB();
+    dataSource.resetDb();
     dataSource.closeDB();
   }
 

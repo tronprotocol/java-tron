@@ -30,7 +30,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.config.Configer;
+import org.tron.core.config.Config;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -41,7 +41,7 @@ public class GossipLocalNode implements LocalNode {
 
   private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
 
-  private final int port = Configer.getConf().getInt("overlay.port");
+  private final int port = Config.getConf().getInt("overlay.port");
 
   private Cluster cluster = null;
 
@@ -123,7 +123,7 @@ public class GossipLocalNode implements LocalNode {
   private List<Address> getAddresses() {
     List<Address> addresses = new ArrayList<>();
 
-    List<? extends ConfigObject> cfgs = Configer.getConf().getObjectList("seedNodes");
+    List<? extends ConfigObject> cfgs = Config.getConf().getObjectList("seedNodes");
 
     cfgs.forEach(c -> {
       Address address = Address
