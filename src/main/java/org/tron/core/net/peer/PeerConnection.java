@@ -69,4 +69,8 @@ public class PeerConnection {
     }
   }
 
+  @Override
+  public String toString() {
+    return "{" + " peerID: " + member.id() + "peerIP:" + member.address() + " }";
+  }
 }

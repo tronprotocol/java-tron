@@ -39,7 +39,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private GossipLocalNode gossipNode;
 
-  private volatile boolean isAdvertiseActive = true;
+  private volatile boolean isAdvertiseActive;
 
   private Thread advertiseLoopThread;
 
@@ -91,6 +91,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    */
   public void broadcast(Message msg) {
     if (msg instanceof BlockMessage) {
+      logger.info("Ready to broadcast a block, Its hash is " + msg.sha256Hash());
       blockToAdvertise.add(msg.sha256Hash());
     }
     if (msg instanceof TransactionMessage) {
@@ -103,6 +104,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode = GossipLocalNode.getInstance();
     gossipNode.setPeerDel(this);
     gossipNode.start();
+    isAdvertiseActive = true;
   }
 
   @Override
@@ -123,6 +125,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.info("loop advertise inv");
       for (PeerConnection peer : gossipNode.listPeer.values()) {
         if (!peer.needSyncFrom) {
+          logger.info("advertise adverInv to " + peer.toString());
           peer.sendMessage(b);
         }
       }

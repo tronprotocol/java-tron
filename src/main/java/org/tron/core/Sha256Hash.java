@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import org.tron.common.utils.ByteArray;
 
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be
@@ -206,6 +207,11 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       return false;
     }
     return Arrays.equals(bytes, ((Sha256Hash) o).bytes);
+  }
+
+  @Override
+  public String toString() {
+    return ByteArray.toHexString(bytes);
   }
 
   /**

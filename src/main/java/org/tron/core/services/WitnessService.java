@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.utils.RandomGenerator;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -126,6 +127,7 @@ public class WitnessService implements Service {
     DateTime scheduledTime = getSlotTime(slot);
 
     Protocal.Block block = generateBlock(scheduledTime);
+    logger.info("Block is generated successfully, Its hash is " + new BlockCapsule(block).getHash());
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
@@ -136,7 +138,6 @@ public class WitnessService implements Service {
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
-    logger.info("broadcast block successfully");
   }
 
   private Protocal.Block generateBlock(DateTime when) {
