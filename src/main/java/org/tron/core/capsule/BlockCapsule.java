@@ -56,7 +56,18 @@ public class BlockCapsule {
     unpacked = true;
   }
 
-  private void sign(String privateKey) {
+
+  public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
+
+    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder()
+        .setNumber(number + 1)
+        .setParentHash(hash)
+        .setTimestamp(when)
+        .setWitnessAddress(witnessAddress).build();
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  public void sign(String privateKey) {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
     String pubKey = ByteArray.toHexString(ecKey.getPubKey());
@@ -67,23 +78,24 @@ public class BlockCapsule {
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
 
-    this.block.toBuilder().setBlockHeader(blockHeader);
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
 
   }
 
+
   // TODO
-  private boolean validateSigner() {
+  public boolean validateSigner() {
     return true;
   }
 
-  private void hash() {
+  public void hash() {
     this.data = this.block.toByteArray();
     BlockHeader blockHeader = block.getBlockHeader().toBuilder()
         .setHash(Sha256Hash.of(this.data).getByteString()).build();
-    this.block.toBuilder().setBlockHeader(blockHeader).build();
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
   }
 
-  private void calcMerkleRoot() {
+  public void calcMerkleRoot() {
 
   }
 
@@ -107,7 +119,8 @@ public class BlockCapsule {
   public BlockCapsule(byte[] data) {
     this.data = data;
     this.hash = Sha256Hash.of(this.data);
-    unpacked = false;
+    unPack();
+
   }
 
   public byte[] getData() {
@@ -120,15 +133,30 @@ public class BlockCapsule {
     return Sha256Hash.wrap(this.block.getBlockHeader().getParentHash());
   }
 
+  public ByteString getParentHashStr() {
+    unPack();
+    return this.block.getBlockHeader().getParentHash();
+  }
+
   public Sha256Hash getHash() {
     pack();
-    return hash;
+    return Sha256Hash.wrap(this.block.getBlockHeader().getHash());
+  }
+
+  public ByteString getHashStr() {
+    pack();
+    return this.block.getBlockHeader().getHash();
   }
 
 
   public long getNum() {
     unPack();
     return this.block.getBlockHeader().getNumber();
+  }
+
+  public long getTimeStamp() {
+    unPack();
+    return this.block.getBlockHeader().getTimestamp();
   }
 
 }
