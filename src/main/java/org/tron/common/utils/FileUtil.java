@@ -17,7 +17,6 @@ package org.tron.common.utils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -75,11 +74,9 @@ public class FileUtil {
       }
 
       file.setWritable(true);
-      boolean result = file.delete();
-      return result;
-    } else {
-      return false;
+      return file.delete();
     }
+    return false;
   }
 
   public static void saveData(String filePath, String data, boolean append) {
@@ -100,9 +97,6 @@ public class FileUtil {
     File file = new File(filePath);
     try (BufferedReader bufRead = new BufferedReader(new FileReader(file))) {
       len = bufRead.read(buf, 0, buf.length);
-    } catch (FileNotFoundException ex) {
-      ex.printStackTrace();
-      return 0;
     } catch (IOException ex) {
       ex.printStackTrace();
       return 0;
