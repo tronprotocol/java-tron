@@ -15,7 +15,6 @@
 
 package org.tron.common.overlay.node;
 
-import com.typesafe.config.ConfigObject;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.Member;
@@ -123,12 +122,19 @@ public class GossipLocalNode implements LocalNode {
   private List<Address> getAddresses() {
     List<Address> addresses = new ArrayList<>();
 
-    List<? extends ConfigObject> cfgs = Config.getConf().getObjectList("seedNodes");
+    if (!Config.getConf().hasPath("seed.node.ip.list")) {
+      return addresses;
+    }
 
-    cfgs.forEach(c -> {
-      Address address = Address
-          .create(c.get("ip").unwrapped().toString(), (int) c.get("port").unwrapped());
-      addresses.add(address);
+    List<String> ipList = Config.getConf().getStringList("seed.node.ip.list");
+
+    ipList.forEach(ip -> {
+      String[] iSplit = ip.split(":");
+      if (iSplit.length > 1) {
+        Address address = Address
+            .create(iSplit[0], Integer.valueOf(iSplit[1]));
+        addresses.add(address);
+      }
     });
 
     return addresses;
