@@ -25,6 +25,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
@@ -44,6 +45,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Transaction trx) {
     this.transaction = trx;
   }
+
 
   /**
    * constructor TransactionCapsule.
@@ -92,6 +94,12 @@ public class TransactionCapsule {
       transaction = null;
     }
   }
+
+  public Sha256Hash getHash() {
+    byte[] transBytes = this.transaction.toByteArray();
+    return Sha256Hash.of(transBytes);
+  }
+
 
   /**
    * cheack balance of the address.

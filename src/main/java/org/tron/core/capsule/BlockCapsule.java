@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -104,7 +105,43 @@ public class BlockCapsule {
   }
 
   public void calcMerkleRoot() {
-    
+    BlockHeader blockHeader;
+    if (this.block.getTransactionsList().size() == 0) {
+
+      blockHeader = this.block.getBlockHeader().toBuilder()
+          .setTxTrieRoot(Sha256Hash.ZERO_HASH.getByteString()).build();
+      return;
+    }
+
+    for (Transaction trx : this.block.getTransactionsList()) {
+
+    }
+    Vector<Sha256Hash> ids = new Vector<Sha256Hash>();
+    this.block.getTransactionsList().forEach(trx -> {
+      TransactionCapsule transactionCapsule = new TransactionCapsule(trx);
+      ids.add(transactionCapsule.getHash());
+    });
+
+    int hashNum = ids.size();
+
+    while (hashNum > 1) {
+      int max = hashNum - (hashNum & 1);
+      int k = 0;
+      for (int i = 0; i < max; i += 2) {
+        ids.set(k++, Sha256Hash
+            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString())).toByteArray()));
+      }
+
+      if (hashNum % 2 == 1) {
+        ids.set(k++, ids.get(max));
+      }
+    }
+
+    blockHeader = this.block.getBlockHeader().toBuilder()
+        .setTxTrieRoot((ids.firstElement().getByteString())).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+
   }
 
   private void pack() {
