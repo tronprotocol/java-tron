@@ -1,6 +1,6 @@
 package org.tron.core.config.args;
 
-public class Datebase {
+public class Storage {
 
   private String directory;
 

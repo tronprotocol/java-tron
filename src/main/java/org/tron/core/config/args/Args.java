@@ -24,7 +24,7 @@ public class Args {
   private String privateKey = new String("");
 
 
-  private Datebase datebase;
+  private Storage storage;
   private Overlay overlay;
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
@@ -61,5 +61,21 @@ public class Args {
 
   public String getPrivateKey() {
     return privateKey;
+  }
+
+  public Storage getStorage() {
+    return storage;
+  }
+
+  public Overlay getOverlay() {
+    return overlay;
+  }
+
+  public SeedNode getSeedNode() {
+    return seedNode;
+  }
+
+  public GenesisBlock getGenesisBlock() {
+    return genesisBlock;
   }
 }
