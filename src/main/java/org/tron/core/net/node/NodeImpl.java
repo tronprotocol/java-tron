@@ -11,6 +11,7 @@ import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.Message;
@@ -67,6 +68,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case BLOCK_INVENTORY:
         onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
+        break;
+      case BLOCK_CHAIN_INVENTORY:
+        onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
         break;
       default:
         throw new IllegalArgumentException("No such message");
@@ -219,7 +223,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
     Protocal.Inventory inv = fetchInvDataMsg.getInventory();
-    MessageTypes type = inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
+    MessageTypes type =
+        inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 
     //get data one by one
     for (ByteString byteHash : inv.getIdsList()) {
@@ -230,10 +235,24 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle block inventory message");
+  private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
+    logger.info("on handle block chain inventory message");
     List<Sha256Hash> blockIds = del.getBlockHashes(msg.getHashList());
     FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
+    fetchMap.put(fetchMsg.sha256Hash(), peer);
+    loopFetchBlocks.push(fetchMsg);
+  }
+
+  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
+    logger.info("on handle blocks inventory message");
+    //todo: check this peer's advertise history and the history of our request to this peer.
+    //simple implement here first
+    List<Sha256Hash> fetchList = new ArrayList<>();
+    msg.getHashList().forEach(hash -> {
+      //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
+      fetchList.add(hash);
+    });
+    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
     fetchMap.put(fetchMsg.sha256Hash(), peer);
     loopFetchBlocks.push(fetchMsg);
   }

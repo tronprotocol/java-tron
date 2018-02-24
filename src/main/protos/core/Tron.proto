@@ -64,10 +64,12 @@ message Transaction {
   TranscationType type = 2;
   repeated TXInput vin = 3;
   repeated TXOutput vout = 4;
+  bytes hash = 5;
   bytes data = 10;
   repeated google.protobuf.Any parameter = 11;
   bytes scripts = 12;
 }
+
 
 message BlockHeader {
   int64 timestamp = 1;
@@ -79,6 +81,7 @@ message BlockHeader {
   uint64 number = 7;
   uint64 witness_id = 8;
   bytes witness_address = 9;
+  bytes witness_signature = 12;
 }
 
 // block

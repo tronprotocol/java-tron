@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Inventory;
+import org.tron.protos.Protocal.Inventory.InventoryType;
 
 
 public class InventoryMessage extends Message {
@@ -23,14 +24,14 @@ public class InventoryMessage extends Message {
     unpacked = true;
   }
 
-  public InventoryMessage(List<Sha256Hash> hashList) {
+  public InventoryMessage(List<Sha256Hash> hashList, InventoryType type) {
     Inventory.Builder invBuilder = Inventory.newBuilder();
 
     for (Sha256Hash hash :
         hashList) {
       invBuilder.addIds(hash.getByteString());
     }
-
+    invBuilder.setType(type);
     inv = invBuilder.build();
     unpacked = true;
   }

@@ -16,7 +16,7 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
-import org.tron.protos.Protocal;
+import org.tron.program.Args;
 
 
 public class WitnessService implements Service {
@@ -31,6 +31,7 @@ public class WitnessService implements Service {
   private Manager db;
   private volatile boolean isRunning = false;
   public static final int LOOP_INTERVAL = 1000; // millisecond
+  private String privateKey;
 
   /**
    * Construction method.
@@ -126,22 +127,23 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
-    Protocal.Block block = generateBlock(scheduledTime);
-    logger.info("Block is generated successfully, Its hash is " + new BlockCapsule(block).getHash());
+    BlockCapsule block = generateBlock(scheduledTime);
+    logger.info("Block is generated successfully, Its hash is " + block.getHash());
+
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
 
-  private void broadcastBlock(Protocal.Block block) {
+  private void broadcastBlock(BlockCapsule block) {
     try {
-      tronApp.getP2pNode().broadcast(new BlockMessage(block));
+      tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
   }
 
-  private Protocal.Block generateBlock(DateTime when) {
-    return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis());
+  private BlockCapsule generateBlock(DateTime when) {
+    return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
   private DateTime getSlotTime(long slotNum) {
@@ -199,6 +201,13 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
+    localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
+    this.witnessStates = db.getWitnesses();
+  }
+
+  @Override
+  public void init(Args args) {
+    this.privateKey = args.getPrivateKey();
     localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
     this.witnessStates = db.getWitnesses();
   }

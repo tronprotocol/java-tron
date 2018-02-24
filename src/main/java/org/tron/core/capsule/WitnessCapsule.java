@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import org.tron.protos.Protocal.Witness;
 
 public class WitnessCapsule {
+
   private Witness witness;
 
   public WitnessCapsule(Witness witness) {
@@ -20,5 +21,9 @@ public class WitnessCapsule {
 
   public long getLatestBlockNum() {
     return witness.getLatestBlockNum();
+  }
+
+  public void setPubKey(ByteString pubKey) {
+    this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
   }
 }

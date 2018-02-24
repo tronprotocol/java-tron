@@ -11,6 +11,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
+import org.tron.program.Args;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -28,6 +29,11 @@ public class RpcApiService implements Service {
   @Override
   public void init() {
 
+  }
+
+  @Override
+  public void init(Args args) {
+    
   }
 
   @Override

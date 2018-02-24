@@ -1,14 +1,14 @@
 package org.tron.program;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 
 public class Args {
 
-  private final static Args INSTANCE = new Args();
+  private static final Args INSTANCE = new Args();
 
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
@@ -20,7 +20,12 @@ public class Args {
   @Parameter(description = "-seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
-  private Args() {}
+  @Parameter(names = {"-p", "--private-key"}, description = "private-key")
+  private String privateKey = new String("");
+
+  private Args() {
+
+  }
 
   public static void setParam(String[] args) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
@@ -43,5 +48,9 @@ public class Args {
 
   public List<String> getSeedNodes() {
     return seedNodes;
+  }
+
+  public String getPrivateKey() {
+    return privateKey;
   }
 }
