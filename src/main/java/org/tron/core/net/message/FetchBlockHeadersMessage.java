@@ -13,11 +13,6 @@ public class FetchBlockHeadersMessage extends InventoryMessage {
   }
 
   @Override
-  public String toString() {
-    return super.toString();
-  }
-
-  @Override
   public org.tron.core.net.message.MessageTypes getType() {
     return MessageTypes.FETCH_BLOCK_HEADERS;
   }

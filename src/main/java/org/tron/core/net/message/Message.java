@@ -25,7 +25,9 @@ public abstract class Message {
 
   public abstract byte[] getData();
 
-  public abstract String toString();
+  public String toString() {
+    return "[Message Type: " + getType() + ", Message Hash: " + sha256Hash() + "]";
+  }
 
   //public byte getCode() { return type; }
 

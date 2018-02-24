@@ -51,7 +51,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
-    logger.info("on message");
+    logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -125,7 +125,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.info("loop advertise inv");
       for (PeerConnection peer : gossipNode.listPeer.values()) {
         if (!peer.needSyncFrom) {
-          logger.info("advertise adverInv to " + peer.toString());
+          logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
         }
       }

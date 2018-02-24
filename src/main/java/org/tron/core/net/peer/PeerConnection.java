@@ -71,6 +71,6 @@ public class PeerConnection {
 
   @Override
   public String toString() {
-    return "{" + " peerID: " + member.id() + "peerIP:" + member.address() + " }";
+    return "[" + "peer ID: " + member.id() + " peer IP:" + member.address() + "]";
   }
 }

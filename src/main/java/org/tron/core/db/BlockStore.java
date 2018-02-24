@@ -166,7 +166,6 @@ public class BlockStore extends TronDatabase {
    */
   public void saveBlock(Sha256Hash hash, BlockCapsule block) {
     logger.info("save block");
-
     khaosDb.push(block);
 
     //todo: check block's validity
