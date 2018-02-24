@@ -84,16 +84,20 @@ public class ECKey implements Serializable {
    */
   public static final ECDomainParameters CURVE;
   public static final ECParameterSpec CURVE_SPEC;
+
   /**
    * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. ECDSA
    * signatures are mutable in the sense that for a given (R, S) pair, then both (R, S) and (R, N -
-   * S mod N) are valid signatures. Canonical signatures are those where 1 <= S <= N/2 <p> See
-   * https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki #Low_S_values_in_signatures
+   * S mod N) are valid signatures. Canonical signatures are those where 1 <= S <= N/2
+   *
+   * <p>See https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
+   * #Low_S_values_in_signatures
    */
+
   public static final BigInteger HALF_CURVE_ORDER;
   private static final Logger logger = LoggerFactory.getLogger(ECKey.class);
-  private static final BigInteger SECP256K1N = new BigInteger
-      ("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
+  private static final BigInteger SECP256K1N =
+      new BigInteger("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
   private static final SecureRandom secureRandom;
   private static final long serialVersionUID = -728224901792295832L;
 
@@ -123,25 +127,27 @@ public class ECKey implements Serializable {
   private final Provider provider;
 
   // Transient because it's calculated on demand.
-  transient private byte[] pubKeyHash;
-  transient private byte[] nodeId;
+  private transient byte[] pubKeyHash;
+  private transient byte[] nodeId;
 
   /**
-   * Generates an entirely new keypair. <p> BouncyCastle will be used as the Java Security Provider
+   * Generates an entirely new keypair.
+   *
+   * <p>BouncyCastle will be used as the Java Security Provider
    */
   public ECKey() {
     this(secureRandom);
   }
 
   /**
-   * Generate a new keypair using the given Java Security Provider. <p> All private key operations
-   * will use the provider.
+   * Generate a new keypair using the given Java Security Provider.
+   *
+   * <p>All private key operations will use the provider.
    */
   public ECKey(Provider provider, SecureRandom secureRandom) {
     this.provider = provider;
 
-    final KeyPairGenerator keyPairGen = ECKeyPairGenerator.getInstance
-        (provider, secureRandom);
+    final KeyPairGenerator keyPairGen = ECKeyPairGenerator.getInstance(provider, secureRandom);
     final KeyPair keyPair = keyPairGen.generateKeyPair();
 
     this.privKey = keyPair.getPrivate();
@@ -153,9 +159,9 @@ public class ECKey implements Serializable {
       pub = extractPublicKey((ECPublicKey) pubKey);
     } else {
       throw new AssertionError(
-          "Expected Provider " + provider.getName() +
-              " to produce a subtype of ECPublicKey, found " +
-              pubKey.getClass());
+          "Expected Provider " + provider.getName()
+              + " to produce a subtype of ECPublicKey, found "
+              + pubKey.getClass());
     }
   }
 
@@ -170,9 +176,11 @@ public class ECKey implements Serializable {
   }
 
   /**
-   * Pair a private key with a public EC point. <p> All private key operations will use the
-   * provider.
+   * Pair a private key with a public EC point.
+   *
+   * <p>All private key operations will use the provider.
    */
+
   public ECKey(Provider provider, @Nullable PrivateKey privKey, ECPoint pub) {
     this.provider = provider;
 
@@ -181,9 +189,10 @@ public class ECKey implements Serializable {
     } else {
       throw new IllegalArgumentException(
           "Expected EC private key, given a private key object with" +
-              " class " +
-              privKey.getClass().toString() +
-              " and algorithm " + privKey.getAlgorithm());
+              " class "
+              + privKey.getClass().toString() +
+              " and algorithm "
+              + privKey.getAlgorithm());
     }
 
     if (pub == null) {
@@ -564,14 +573,19 @@ public class ECKey implements Serializable {
 
   /**
    * <p>Given the components of a signature and a selector value, recover and return the public key
-   * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p> <p> <p>The
-   * recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is the correct
-   * one. Because the key recovery operation yields multiple potential allKeys, the correct key must
-   * either be stored alongside the signature, or you must be willing to try each recId in turn
-   * until you find one that outputs the key you are expecting.</p> <p> <p>If this method returns
-   * null it means recovery was not possible and recId should be iterated.</p> <p> <p>Given the
-   * above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
-   * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
+   * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
+   *
+   * <p> <p>The recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is the
+   * correct one. Because the key recovery operation yields multiple potential allKeys, the correct
+   * key must either be stored alongside the signature, or you must be willing to try each recId in
+   * turn until you find one that outputs the key you are expecting.</p>
+   *
+   * <p> <p>If this method returns null it means recovery was not possible and recId should be
+   * iterated.</p>
+   *
+   * <p> <p>Given the above two points, a correct usage of this method is inside a for loop from 0
+   * to 3, and if the output is null OR a key that is not the one you expect, you try again with the
+   * next recId.</p>
    *
    * @param recId Which possible key to recover.
    * @param sig the R and S components of the signature, wrapped.
@@ -694,6 +708,7 @@ public class ECKey implements Serializable {
    * @param yBit -
    * @return -
    */
+
   private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
     X9IntegerConverter x9 = new X9IntegerConverter();
     byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE
@@ -1149,6 +1164,7 @@ public class ECKey implements Serializable {
           try {
             decoder.close();
           } catch (IOException x) {
+
           }
         }
       }
