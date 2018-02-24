@@ -15,12 +15,18 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.BlockHeader;
 
 
 public class BlockCapsule {
@@ -32,6 +38,7 @@ public class BlockCapsule {
   private Block block;
 
   private Sha256Hash hash;
+
 
   private boolean unpacked;
 
@@ -47,6 +54,37 @@ public class BlockCapsule {
     }
 
     unpacked = true;
+  }
+
+  private void sign(String privateKey) {
+    // TODO private_key == null
+    ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
+    String pubKey = ByteArray.toHexString(ecKey.getPubKey());
+
+    ECDSASignature signature = ecKey.sign(hash.getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+
+    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
+        .build();
+
+    this.block.toBuilder().setBlockHeader(blockHeader);
+
+  }
+
+  // TODO
+  private boolean validateSigner() {
+    return true;
+  }
+
+  private void hash() {
+    this.data = this.block.toByteArray();
+    BlockHeader blockHeader = block.getBlockHeader().toBuilder()
+        .setHash(Sha256Hash.of(this.data).getByteString()).build();
+    this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  private void calcMerkleRoot() {
+
   }
 
   private void pack() {
@@ -86,6 +124,7 @@ public class BlockCapsule {
     pack();
     return hash;
   }
+
 
   public long getNum() {
     unPack();
