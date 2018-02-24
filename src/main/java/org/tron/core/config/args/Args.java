@@ -1,4 +1,4 @@
-package org.tron.program;
+package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -23,12 +23,21 @@ public class Args {
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = new String("");
 
+
+  private Datebase datebase;
+  private Overlay overlay;
+  private SeedNode seedNode;
+  private GenesisBlock genesisBlock;
+
   private Args() {
 
   }
 
   public static void setParam(String[] args) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    //
+    //
+    //
   }
 
   public static Args getInstance() {
