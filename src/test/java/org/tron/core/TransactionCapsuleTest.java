@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Protocal.Transaction;
 
 public class TransactionCapsuleTest {
@@ -29,7 +29,7 @@ public class TransactionCapsuleTest {
 
   @Test
   public void testNewCoinbaseTransaction() {
-    Transaction coinbaseTransaction = TransactionCapsule
+    Transaction coinbaseTransaction = TransactionUtil
         .newCoinbaseTransaction("12", "", 0);
 
     logger.info("test new coinbase transaction: {}", coinbaseTransaction);
@@ -37,28 +37,28 @@ public class TransactionCapsuleTest {
 
   @Test
   public void testGetHash() {
-    Transaction coinbaseTransaction = TransactionCapsule
+    Transaction coinbaseTransaction = TransactionUtil
         .newCoinbaseTransaction("12", "", 0);
 
     logger.info("test getData hash: {}",
-        ByteArray.toHexString(TransactionCapsule.getHash(coinbaseTransaction)));
+        ByteArray.toHexString(TransactionUtil.getHash(coinbaseTransaction)));
   }
 
   @Test
   public void testToPrintString() {
-    Transaction coinbaseTransaction = TransactionCapsule
+    Transaction coinbaseTransaction = TransactionUtil
         .newCoinbaseTransaction("12", "", 0);
 
-    logger.info("test to print string: {}", TransactionCapsule
+    logger.info("test to print string: {}", TransactionUtil
         .toPrintString(coinbaseTransaction));
   }
 
   @Test
   public void testIsCoinbaseTransaction() {
-    Transaction coinbaseTransaction = TransactionCapsule
+    Transaction coinbaseTransaction = TransactionUtil
         .newCoinbaseTransaction("12", "", 0);
 
-    logger.info("test is coinbase transaction: {}", TransactionCapsule
+    logger.info("test is coinbase transaction: {}", TransactionUtil
         .isCoinbaseTransaction(coinbaseTransaction));
   }
 

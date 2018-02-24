@@ -27,19 +27,7 @@ public class ApplicationImpl implements Application {
     p2pNode.connectToP2PNetWork();
     p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
   }
-
-  private void resetRpcServer() {
-
-  }
-
-  private void resetWebSocket() {
-
-  }
-
-  private void initalConfig(String configPathFile) {
-
-  }
-
+ 
   @Override
   public void setOptions(Args args) {
 
@@ -62,7 +50,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void initServices(Args args) {
-    services.init();
+    services.init(args);
   }
 
   /**
@@ -71,8 +59,6 @@ public class ApplicationImpl implements Application {
   public void startup() {
     p2pNode.setNodeDelegate(nodeDelegate);
     resetP2PNode();
-    resetRpcServer();
-    resetWebSocket();
   }
 
   @Override

@@ -1,37 +1,25 @@
 /*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * java-tron is free software: you can redistribute it and/or modify it under the terms of the GNU
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * java-tron is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * java-tron is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.tron.core;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.LAST_HASH;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Configer;
-import org.tron.core.events.BlockchainListener;
-import org.tron.core.peer.Peer;
-import org.tron.protos.Protocal.*;
-
-import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,9 +29,22 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.LAST_HASH;
+import javax.inject.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Configer;
+import org.tron.core.events.BlockchainListener;
+import org.tron.core.peer.Peer;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.TXInput;
+import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocal.Transaction;
 
 
 public class Blockchain {
@@ -73,7 +74,7 @@ public class Blockchain {
 
       List<Transaction> transactions = buildTransactionsFrom(genesisBlockLoader);
 
-      Block genesisBlock = BlockCapsule.newGenesisBlock(transactions);
+      Block genesisBlock = BlockUtil.newGenesisBlock(transactions);
 
       this.lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
       this.currentHash = this.lastHash;
@@ -95,9 +96,7 @@ public class Blockchain {
   }
 
   private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDb, Block genesisBlock) {
-    byte[] lastHash = genesisBlock.getBlockHeader()
-        .getHash()
-        .toByteArray();
+    byte[] lastHash = genesisBlock.getBlockHeader().getHash().toByteArray();
     blockDb.putData(LAST_HASH, lastHash);
   }
 
@@ -108,11 +107,10 @@ public class Blockchain {
   }
 
   private List<Transaction> buildTransactionsFrom(GenesisBlockLoader genesisBlockLoader) {
-    return genesisBlockLoader.getTransaction().entrySet().stream()
-        .map(e ->
-            TransactionCapsule
-                .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue())
-        ).collect(Collectors.toList());
+    return genesisBlockLoader
+        .getTransaction().entrySet().stream().map(e -> TransactionUtil
+            .newCoinbaseTransaction(e.getKey(), GENESIS_COINBASE_DATA, e.getValue()))
+        .collect(Collectors.toList());
   }
 
   private GenesisBlockLoader buildGenesisBlockLoader() {
@@ -181,51 +179,75 @@ public class Blockchain {
     while (bi.hasNext()) {
       Block block = bi.next();
 
-      for (Transaction transaction : block.getTransactionsList()) {
-        String txid = ByteArray.toHexString(transaction.getId().toByteArray());
-
-        output:
-        for (int outIdx = 0; outIdx < transaction.getVoutList().size(); outIdx++) {
-          TXOutput out = transaction.getVout(outIdx);
-          if (!spenttxos.isEmpty() && spenttxos.containsKey(txid)) {
-            for (int i = 0; i < spenttxos.get(txid).length; i++) {
-              if (spenttxos.get(txid)[i] == outIdx) {
-                continue output;
-              }
-            }
-          }
-
-          TXOutputs outs = utxo.get(txid);
-
-          if (outs == null) {
-            outs = TXOutputs.newBuilder().build();
-          }
-
-          outs = outs.toBuilder().addOutputs(out).build();
-          utxo.put(txid, outs);
-        }
-
-        if (!TransactionCapsule.isCoinbaseTransaction(transaction)) {
-          for (TXInput in : transaction.getVinList()) {
-            String inTxid = ByteArray.toHexString(in.getTxID()
-                .toByteArray());
-            long[] vindexs = spenttxos.get(inTxid);
-
-            if (vindexs == null) {
-              vindexs = new long[0];
-            }
-
-            vindexs = Arrays.copyOf(vindexs, vindexs.length + 1);
-            vindexs[vindexs.length - 1] = in.getVout();
-
-            spenttxos.put(inTxid, vindexs);
-          }
-        }
-      }
-
+      checkBlock(block, utxo, spenttxos);
     }
 
     return utxo;
+  }
+
+  private void checkBlock(Block block, HashMap<String, TXOutputs> utxo,
+      HashMap<String, long[]> spenttxos) {
+
+    for (Transaction transaction : block.getTransactionsList()) {
+      checkTransaction(transaction, utxo, spenttxos);
+    }
+  }
+
+  private void checkTransaction(Transaction transaction, HashMap<String, TXOutputs> utxo,
+      HashMap<String, long[]> spenttxos) {
+
+    String txid = ByteArray.toHexString(transaction.getId().toByteArray());
+
+    for (int outIdx = 0; outIdx < transaction.getVoutList().size(); outIdx++) {
+      TXOutput out = transaction.getVout(outIdx);
+      checkOutput(out, outIdx, txid, utxo, spenttxos);
+    }
+
+    if (!TransactionUtil.isCoinbaseTransaction(transaction)) {
+      for (TXInput in : transaction.getVinList()) {
+        addInputToSpentTxos(in, spenttxos);
+      }
+    }
+  }
+
+
+  private void checkOutput(TXOutput out, int outIdx, String txid, HashMap<String, TXOutputs> utxo,
+      HashMap<String, long[]> spenttxos) {
+    long[] spentTx = spenttxos.get(txid);
+    if (spentTx != null) {
+      for (int i = 0; i < spentTx.length; i++) {
+        if (spentTx[i] == outIdx) {
+          return;
+        }
+      }
+    }
+
+    addOutputToUtxo(out, txid, utxo);
+  }
+
+  private void addOutputToUtxo(TXOutput out, String txid, HashMap<String, TXOutputs> utxo) {
+    TXOutputs outs = utxo.get(txid);
+
+    if (outs == null) {
+      outs = TXOutputs.newBuilder().build();
+    }
+
+    outs = outs.toBuilder().addOutputs(out).build();
+    utxo.put(txid, outs);
+  }
+
+  private void addInputToSpentTxos(TXInput in, HashMap<String, long[]> spenttxos) {
+    String inTxid = ByteArray.toHexString(in.getTxID().toByteArray());
+    long[] vindexs = spenttxos.get(inTxid);
+
+    if (vindexs == null) {
+      vindexs = new long[0];
+    }
+
+    vindexs = Arrays.copyOf(vindexs, vindexs.length + 1);
+    vindexs[vindexs.length - 1] = in.getVout();
+
+    spenttxos.put(inTxid, vindexs);
   }
 
   /**
@@ -265,9 +287,9 @@ public class Blockchain {
       prevTXs.put(key, prevTX);
     }
 
-    //transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
-    transaction = TransactionCapsule
-        .sign(transaction, myKey);//Unsupport muilty address, needn't input prevTXs
+    // transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
+    transaction = TransactionUtil.sign(transaction, myKey);// Unsupport muilty address, needn't
+                                                              // input prevTXs
     return transaction;
   }
 
@@ -279,11 +301,10 @@ public class Blockchain {
     byte[] lastHash = blockDb.getData(LAST_HASH);
     ByteString parentHash = ByteString.copyFrom(lastHash);
     // get number
-    long number = BlockCapsule.getIncreaseNumber(this);
+    long number = BlockUtil.getIncreaseNumber(this);
     // get difficulty
     ByteString difficulty = ByteString.copyFromUtf8(Constant.DIFFICULTY);
-    Block block = BlockCapsule.newBlock(transactions, parentHash, difficulty,
-        number);
+    Block block = BlockUtil.newBlock(transactions, parentHash, difficulty, number);
 
     for (BlockchainListener listener : listeners) {
       listener.addBlock(block);
@@ -318,7 +339,7 @@ public class Blockchain {
 
     this.lastHash = ch;
     currentHash = ch;
-    System.out.println(BlockCapsule.toPrintString(block));
+    System.out.println(BlockUtil.toPrintString(block));
     // update UTXO cache
     utxoSet.reindex();
   }

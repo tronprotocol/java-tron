@@ -20,7 +20,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 import org.tron.common.application.CliApplication;
 import org.tron.core.Blockchain;
 import org.tron.core.BlockchainIterator;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.peer.Peer;
 import org.tron.protos.Protocal.Block;
 
@@ -37,7 +37,7 @@ public class PrintBlockchainCommand extends Command {
     BlockchainIterator bi = new BlockchainIterator(blockchain);
     while (bi.hasNext()) {
       Block block = bi.next();
-      System.out.println(BlockCapsule.toPrintString(block));
+      System.out.println(BlockUtil.toPrintString(block));
     }
   }
 

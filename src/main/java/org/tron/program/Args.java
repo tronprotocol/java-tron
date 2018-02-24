@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Args {
 
-  private final static Args INSTANCE = new Args();
+  private static final Args INSTANCE = new Args();
 
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
@@ -20,14 +20,15 @@ public class Args {
   @Parameter(description = "-seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
+  @Parameter(names = {"-p", "--private-key"}, description = "private-key")
+  private String privateKey = new String("");
+
   private Args() {
+
   }
 
   public static void setParam(String[] args) {
-    JCommander.newBuilder()
-        .addObject(INSTANCE)
-        .build()
-        .parse(args);
+    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
   }
 
   public static Args getInstance() {
@@ -35,7 +36,7 @@ public class Args {
   }
 
   public String getOutputDirectory() {
-    if (outputDirectory != "" && !outputDirectory.endsWith(File.separator)) {
+    if (!outputDirectory.equals("") && !outputDirectory.endsWith(File.separator)) {
       return outputDirectory + File.separator;
     }
     return outputDirectory;
@@ -47,5 +48,9 @@ public class Args {
 
   public List<String> getSeedNodes() {
     return seedNodes;
+  }
+
+  public String getPrivateKey() {
+    return privateKey;
   }
 }

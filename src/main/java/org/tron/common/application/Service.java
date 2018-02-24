@@ -14,9 +14,13 @@
  */
 package org.tron.common.application;
 
+import org.tron.program.Args;
+
 public interface Service {
 
   void init();
+
+  void init(Args args);
 
   void start();
 

@@ -15,257 +15,120 @@
 
 package org.tron.core.capsule;
 
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.core.Constant.LAST_HASH;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigInteger;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Optional;
-import org.spongycastle.util.Arrays;
-import org.spongycastle.util.BigIntegers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Blockchain;
 import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
-import org.tron.protos.Protocal.Transaction;
 
 
 public class BlockCapsule {
 
-  private byte[] serializEncode;
+  protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
+
+  private byte[] data;
 
   private Block block;
 
   private Sha256Hash hash;
 
-  public Block getBlock() {
-    return block;
+
+  private boolean unpacked;
+
+  private synchronized void unPack() {
+    if (unpacked) {
+      return;
+    }
+
+    try {
+      this.block = Block.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
+
+    unpacked = true;
+  }
+
+  private void sign(String privateKey) {
+    // TODO private_key == null
+    ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
+    String pubKey = ByteArray.toHexString(ecKey.getPubKey());
+
+    ECDSASignature signature = ecKey.sign(hash.getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+
+    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
+        .build();
+
+    this.block.toBuilder().setBlockHeader(blockHeader);
+
+  }
+
+  // TODO
+  private boolean validateSigner() {
+    return true;
+  }
+
+  private void hash() {
+    this.data = this.block.toByteArray();
+    BlockHeader blockHeader = block.getBlockHeader().toBuilder()
+        .setHash(Sha256Hash.of(this.data).getByteString()).build();
+    this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  private void calcMerkleRoot() {
+
+  }
+
+  private void pack() {
+    if (data == null) {
+      this.data = this.block.toByteArray();
+      this.hash = Sha256Hash.of(this.data);
+    }
   }
 
   public boolean validate() {
-    return Validator.validate(block);
+    unPack();
+    return Validator.validate(this.block);
   }
 
-  public BlockCapsule(Block blk) {
-    this.block = blk;
-    this.hash = Sha256Hash.of(this.block.toByteArray());
+  public BlockCapsule(Block block) {
+    this.block = block;
+    unpacked = true;
+  }
+
+  public BlockCapsule(byte[] data) {
+    this.data = data;
+    this.hash = Sha256Hash.of(this.data);
+    unpacked = false;
+  }
+
+  public byte[] getData() {
+    pack();
+    return data;
   }
 
   public Sha256Hash getParentHash() {
+    unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getParentHash());
   }
 
   public Sha256Hash getHash() {
+    pack();
     return hash;
   }
 
+
   public long getNum() {
+    unPack();
     return this.block.getBlockHeader().getNumber();
   }
 
-  /**
-   * getData a new block.
-   *
-   * @return {@link Block} block
-   */
-  public static Block newBlock(List<Transaction> transactions, ByteString
-      parentHash, ByteString difficulty, long number) {
-    Block.Builder block = Block.newBuilder();
-
-    for (int i = 0; transactions != null && i < transactions.size(); i++) {
-      final int index = i;
-      Optional.ofNullable(transactions.get(index)).ifPresent((transaction) ->
-          block.addTransactions(index, transaction)
-      );
-    }
-
-    BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder();
-
-    blockHeaderBuilder.setParentHash(parentHash);
-    blockHeaderBuilder.setDifficulty(difficulty);
-    blockHeaderBuilder.setNumber(number);
-    blockHeaderBuilder.setTimestamp(System.currentTimeMillis());
-
-    block.setBlockHeader(blockHeaderBuilder.build());
-
-    blockHeaderBuilder.setHash(ByteString.copyFrom(sha3(prepareData(block
-        .build()))));
-
-    block.setBlockHeader(blockHeaderBuilder.build());
-    return block.build();
-  }
-
-  /**
-   * new genesis block.
-   *
-   * @return {@link Block} block
-   */
-  public static Block newGenesisBlock(Transaction coinbase) {
-
-    Block.Builder genesisBlock = Block.newBuilder();
-    genesisBlock.addTransactions(coinbase);
-
-    BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
-
-    genesisBlock.setBlockHeader(builder.build());
-
-    builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
-
-    genesisBlock.setBlockHeader(builder.build());
-
-    return genesisBlock.build();
-  }
-
-  /**
-   * create genesis block from transactions.
-   */
-  public static Block newGenesisBlock(List<Transaction> transactions) {
-
-    Block.Builder genesisBlock = Block.newBuilder();
-
-    for (Transaction tx : transactions) {
-      genesisBlock.addTransactions(tx);
-    }
-
-    BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
-
-    genesisBlock.setBlockHeader(builder.build());
-
-    builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
-
-    genesisBlock.setBlockHeader(builder.build());
-
-    return genesisBlock.build();
-  }
-
-  /**
-   * getData prepare data of the block.
-   *
-   * @param block {@link Block} block
-   * @return byte[] data
-   */
-  public static byte[] prepareData(Block block) {
-    Block.Builder tmp = block.toBuilder();
-
-    BlockHeader.Builder blockHeader = tmp.getBlockHeaderBuilder();
-    blockHeader.clearHash();
-    blockHeader.clearNonce();
-
-    tmp.setBlockHeader(blockHeader.build());
-
-    return tmp.build().toByteArray();
-  }
-
-  /**
-   * the proof block.
-   *
-   * @param block {@link Block} block
-   * @return boolean is it the proof block
-   */
-  public static boolean isValidate(Block block) {
-    return Validator.validate(block);
-  }
-
-  /**
-   * getData print string of the block.
-   *
-   * @param block {@link Block} block
-   * @return String format string of the block
-   */
-  public static String toPrintString(Block block) {
-    if (block == null) {
-      return "";
-    }
-
-    DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-
-    return "\nBlock {\n"
-        + "\ttimestamp=" + sdf.format(new Timestamp(block
-        .getBlockHeader().getTimestamp()))
-        + ", \n\tparentHash=" + ByteArray.toHexString(block
-        .getBlockHeader()
-        .getParentHash().toByteArray())
-        + ", \n\thash=" + ByteArray.toHexString(block.getBlockHeader()
-        .getHash()
-        .toByteArray())
-        + ", \n\tnonce=" + ByteArray.toHexString(block.getBlockHeader()
-        .getNonce()
-        .toByteArray())
-        + ", \n\tdifficulty=" + ByteArray.toHexString(block
-        .getBlockHeader()
-        .getDifficulty().toByteArray())
-        + ", \n\tnumber=" + block.getBlockHeader().getNumber()
-        + "\n}\n";
-  }
-
-  /**
-   * getData mine value.
-   *
-   * @param block {@link Block} block
-   * @return byte[] mine value
-   */
-  public static byte[] getMineValue(Block block) {
-    byte[] concat = Arrays.concatenate(prepareData(block), block
-        .getBlockHeader().getNonce().toByteArray());
-
-    return sha3(concat);
-  }
-
-  /**
-   * getData Verified boundary.
-   *
-   * @param block {@link Block} block
-   * @return byte[] boundary
-   */
-  public static byte[] getPowBoundary(Block block) {
-    return BigIntegers.asUnsignedByteArray(32,
-        BigInteger.ONE.shiftLeft(256).divide(new BigInteger(1, block.getBlockHeader()
-            .getDifficulty()
-            .toByteArray())));
-  }
-
-  /**
-   * getData increase number + 1.
-   *
-   * @return long number
-   */
-  public static long getIncreaseNumber(Blockchain blockchain) {
-    byte[] lastHash = blockchain.getBlockDB().getData(LAST_HASH);
-    if (lastHash == null) {
-      return 0;
-    }
-
-    byte[] value = blockchain.getBlockDB().getData(lastHash);
-    if (value == null) {
-      return 0;
-    }
-
-    long number = 0;
-    try {
-
-      Block bpRead = Block.parseFrom(value).toBuilder().build();
-      number = bpRead.getBlockHeader().getNumber();
-      number += 1;
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-
-    return number;
-  }
-
-  // Whether the hash of the judge block is equal to the hash of the parent
-  // block
-  public static boolean isParentOf(Block block1, Block
-      block2) {
-    return (block1.getBlockHeader().getParentHash() == block2.getBlockHeader().getHash());
-  }
 }
