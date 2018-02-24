@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.Block.Builder;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -157,7 +155,7 @@ public class Manager {
 
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
 
-    final ByteString hash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
+    final ByteString preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
 
     // judge create block time
     if (when < timestamp) {
@@ -167,7 +165,8 @@ public class Manager {
     long currentTrxSize = 0;
     long postponedTrxCount = 0;
 
-    Builder blockBuilder = Block.newBuilder();
+    BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
+        witnessCapsule.getAddress());
 
     for (Transaction trx : pendingTrxs) {
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
@@ -180,18 +179,16 @@ public class Manager {
       // apply transaction
       if (processTrx(new TransactionCapsule(trx))) {
         // push into block
-        blockBuilder.addTransactions(trx);
+        blockCapsule.addTransaction(trx);
         pendingTrxs.remove(trx);
       }
     }
 
     if (postponedTrxCount > 0) {
-      logger.info("postponed {} transactions due to block size limit", postponedTrxCount);
+      logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
     // generate block
-    BlockCapsule blockCapsule = new BlockCapsule(number + 1, hash, when,
-        witnessCapsule.getAddress());
 
     blockCapsule.calcMerkleRoot();
 

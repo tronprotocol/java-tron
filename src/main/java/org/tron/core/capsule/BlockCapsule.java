@@ -27,6 +27,7 @@ import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
+import org.tron.protos.Protocal.Transaction;
 
 
 public class BlockCapsule {
@@ -59,12 +60,19 @@ public class BlockCapsule {
 
   public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
 
-    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder()
+    Block.Builder blockBuild = Block.newBuilder();
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild
         .setNumber(number + 1)
         .setParentHash(hash)
         .setTimestamp(when)
         .setWitnessAddress(witnessAddress).build();
-    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+    this.block = blockBuild.setBlockHeader(blockHeader).build();
+
+  }
+
+  public void addTransaction(Transaction pendingTrx) {
+    this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
   }
 
   public void sign(String privateKey) {
@@ -72,7 +80,7 @@ public class BlockCapsule {
     ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
     String pubKey = ByteArray.toHexString(ecKey.getPubKey());
 
-    ECDSASignature signature = ecKey.sign(hash.getBytes());
+    ECDSASignature signature = ecKey.sign(getHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
@@ -96,7 +104,7 @@ public class BlockCapsule {
   }
 
   public void calcMerkleRoot() {
-
+    
   }
 
   private void pack() {
