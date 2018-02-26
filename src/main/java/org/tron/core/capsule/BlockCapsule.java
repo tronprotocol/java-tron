@@ -17,16 +17,17 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
+import org.tron.protos.Protocal.Transaction;
 
 
 public class BlockCapsule {
@@ -56,35 +57,96 @@ public class BlockCapsule {
     unpacked = true;
   }
 
-  private void sign(String privateKey) {
+
+  public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
+    // blockheader raw
+    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setNumber(number + 1)
+        .setParentHash(hash)
+        .setTimestamp(when)
+        .setWitnessAddress(witnessAddress).build();
+
+    // block header
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    this.block = blockBuild.setBlockHeader(blockHeader).build();
+
+  }
+
+  public void addTransaction(Transaction pendingTrx) {
+    this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
+  }
+
+  public void sign(String privateKey) {
+
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
-    String pubKey = ByteArray.toHexString(ecKey.getPubKey());
-
-    ECDSASignature signature = ecKey.sign(hash.getBytes());
+    ECDSASignature signature = ecKey.sign(getHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
 
-    this.block.toBuilder().setBlockHeader(blockHeader);
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
 
   }
 
+
   // TODO
-  private boolean validateSigner() {
+  public boolean validateSigner() {
     return true;
   }
 
-  private void hash() {
-    this.data = this.block.toByteArray();
-    BlockHeader blockHeader = block.getBlockHeader().toBuilder()
-        .setHash(Sha256Hash.of(this.data).getByteString()).build();
-    this.block.toBuilder().setBlockHeader(blockHeader).build();
+  public Sha256Hash getHash() {
+    pack();
+    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  private void calcMerkleRoot() {
+  public void calcMerkleRoot() {
+    BlockHeader.raw blockHeaderRaw;
+    if (this.block.getTransactionsList().size() == 0) {
 
+      blockHeaderRaw = this.block.getBlockHeader().getRawData().toBuilder()
+          .setTxTrieRoot(Sha256Hash.ZERO_HASH.getByteString()).build();
+
+      this.block.toBuilder().setBlockHeader(
+          this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
+      return;
+    }
+
+    for (Transaction trx : this.block.getTransactionsList()) {
+
+    }
+    Vector<Sha256Hash> ids = new Vector<Sha256Hash>();
+    this.block.getTransactionsList().forEach(trx -> {
+      TransactionCapsule transactionCapsule = new TransactionCapsule(trx);
+      ids.add(transactionCapsule.getHash());
+    });
+
+    int hashNum = ids.size();
+
+    while (hashNum > 1) {
+      int max = hashNum - (hashNum & 1);
+      int k = 0;
+      for (int i = 0; i < max; i += 2) {
+        ids.set(k++, Sha256Hash
+            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString())).toByteArray()));
+      }
+
+      if (hashNum % 2 == 1) {
+        ids.set(k++, ids.get(max));
+      }
+    }
+
+    blockHeaderRaw = this.block.getBlockHeader().getRawData().toBuilder()
+        .setTxTrieRoot((ids.firstElement().getByteString())).build();
+
+    this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
   }
 
   private void pack() {
@@ -107,7 +169,8 @@ public class BlockCapsule {
   public BlockCapsule(byte[] data) {
     this.data = data;
     this.hash = Sha256Hash.of(this.data);
-    unpacked = false;
+    unPack();
+
   }
 
   public byte[] getData() {
@@ -117,18 +180,29 @@ public class BlockCapsule {
 
   public Sha256Hash getParentHash() {
     unPack();
-    return Sha256Hash.wrap(this.block.getBlockHeader().getParentHash());
+    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }
 
-  public Sha256Hash getHash() {
+  public ByteString getParentHashStr() {
+    unPack();
+    return this.block.getBlockHeader().getRawData().getParentHash();
+  }
+
+
+  public ByteString getHashStr() {
     pack();
-    return hash;
+    return this.getHash().getByteString();
   }
 
 
   public long getNum() {
     unPack();
-    return this.block.getBlockHeader().getNumber();
+    return this.block.getBlockHeader().getRawData().getNumber();
+  }
+
+  public long getTimeStamp() {
+    unPack();
+    return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
 }

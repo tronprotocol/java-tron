@@ -24,6 +24,6 @@ public class WitnessCapsule {
   }
 
   public void setPubKey(ByteString pubKey) {
-    this.witness.toBuilder().setPubKey(pubKey).build();
+    this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
   }
 }

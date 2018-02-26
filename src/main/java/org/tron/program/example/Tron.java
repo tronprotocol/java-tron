@@ -45,7 +45,7 @@ public class Tron {
 //    CliApplication app = new ApplicationFactory()
 //        .buildCli();
 //buildCli    Application app = new ApplicationImpl();
-//    app.initServices(Args.getInstance(args));
+//    app.initServices(args.getInstance(args));
 //    app.startServices();
 //    app.startup();
 

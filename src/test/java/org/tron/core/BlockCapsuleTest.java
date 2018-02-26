@@ -76,7 +76,7 @@ public class BlockCapsuleTest {
             0);
     Block genesisBlock = BlockUtil.newGenesisBlock(coinbase);
     logger.info("nonce: {}",
-        ByteArray.toHexString(genesisBlock.getBlockHeader().getNonce().toByteArray()));
+        ByteArray.toHexString(genesisBlock.getBlockHeader().getRawData().getNonce().toByteArray()));
   }
 
   @Test
@@ -91,23 +91,12 @@ public class BlockCapsuleTest {
 
   @Test
   public void testGetMineValue() {
-    Transaction coinbase = TransactionUtil
-        .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
-            GENESIS_COINBASE_DATA,
-            0);
-    logger.info("test get mine value: {}",
-        ByteArray.toHexString(BlockUtil.getMineValue(BlockUtil.newGenesisBlock(coinbase)
-        )));
+
   }
 
   @Test
   public void testGetPowBoundary() {
-    Transaction coinbase = TransactionUtil
-        .newCoinbaseTransaction("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b85",
-            GENESIS_COINBASE_DATA,
-            0);
-    logger.info("test get pow boundary: {}",
-        ByteArray.toHexString(BlockUtil.getPowBoundary(BlockUtil.newGenesisBlock(coinbase))));
+
   }
 
   @Test

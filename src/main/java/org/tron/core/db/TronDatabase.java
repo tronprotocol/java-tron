@@ -8,7 +8,7 @@ public abstract class TronDatabase {
   protected LevelDbDataSourceImpl dbSource;
 
   protected TronDatabase(String dbName) {
-    dbSource = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR, dbName);
+    dbSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, dbName);
     dbSource.initDB();
   }
 

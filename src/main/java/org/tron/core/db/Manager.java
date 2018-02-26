@@ -1,19 +1,14 @@
 package org.tron.core.db;
 
-import static org.tron.common.crypto.Hash.sha3;
-
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.Block.Builder;
-import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -153,14 +148,14 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public Protocal.Block generateBlock(WitnessCapsule witnessCapsule,
+  public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
       long when, String privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
 
-    final ByteString hash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
+    final ByteString preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
 
     // judge create block time
     if (when < timestamp) {
@@ -170,7 +165,8 @@ public class Manager {
     long currentTrxSize = 0;
     long postponedTrxCount = 0;
 
-    Builder blockBuilder = Block.newBuilder();
+    BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
+        witnessCapsule.getAddress());
 
     for (Transaction trx : pendingTrxs) {
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
@@ -183,35 +179,27 @@ public class Manager {
       // apply transaction
       if (processTrx(new TransactionCapsule(trx))) {
         // push into block
-        blockBuilder.addTransactions(trx);
+        blockCapsule.addTransaction(trx);
         pendingTrxs.remove(trx);
       }
     }
 
     if (postponedTrxCount > 0) {
-      logger.info("postponed {} transactions due to block size limit", postponedTrxCount);
+      logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
     // generate block
-    BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder()
-        .setNumber(number + 1)
-        .setParentHash(hash)
-        .setTimestamp(when)
-        .setWitnessAddress(witnessCapsule.getAddress());
 
-    blockBuilder.setBlockHeader(blockHeaderBuilder.build());
+    blockCapsule.calcMerkleRoot();
 
-    blockHeaderBuilder.setHash(ByteString.copyFrom(sha3(blockBuilder.build().toByteArray())));
+    //blockCapsule.hash();
 
-    blockBuilder.setBlockHeader(blockHeaderBuilder.build());
+    blockCapsule.sign(privateKey);
 
-    Block block = blockBuilder.build();
-
-    dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockHeader().getHash());
-    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getBlockHeader().getNumber());
-    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getBlockHeader().getTimestamp());
-
-    return block;
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getHashStr());
+    dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
+    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
+    return blockCapsule;
   }
 
   private void setAccountStore(AccountStore accountStore) {

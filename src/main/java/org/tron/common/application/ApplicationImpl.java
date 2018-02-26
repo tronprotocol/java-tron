@@ -2,13 +2,13 @@ package org.tron.common.application;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.program.Args;
 
 public class ApplicationImpl implements Application {
 
@@ -27,7 +27,7 @@ public class ApplicationImpl implements Application {
     p2pNode.connectToP2PNetWork();
     p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
   }
- 
+
   @Override
   public void setOptions(Args args) {
 
