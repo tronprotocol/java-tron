@@ -76,7 +76,7 @@ public class UtxoStore extends TronDatabase {
 
 
   public void reSet() {
-    this.dbSource.resetDB();
+    this.dbSource.resetDb();
   }
 
   public byte[] find(byte[] key) {
@@ -101,7 +101,7 @@ public class UtxoStore extends TronDatabase {
   public void storeUtxo() {
     logger.info("storeUTXO");
 
-    getDbSource().resetDB();
+    getDbSource().resetDb();
 
     HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
 

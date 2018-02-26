@@ -24,15 +24,20 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Blockchain;
+import org.tron.core.config.args.Args;
+import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
+import org.tron.protos.Protocal.TXInput;
+import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 
 
@@ -99,13 +104,21 @@ public class BlockUtil {
 
     Block.Builder genesisBlock = Block.newBuilder();
 
-    for (Transaction tx : transactions) {
-      genesisBlock.addTransactions(tx);
-    }
+    Args args = Args.getInstance();
+    GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    List<Transaction> transactionList = new ArrayList<Transaction>();
+    genesisBlockArg.getTransactions().forEach(key ->
+        transactionList
+            .add(newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
-
+    builder.setTimestamp(Long.parseLong(genesisBlockArg.getTimeStamp()))
+        .setParentHash(
+            ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash())))
+        .setNonce(ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getNonce())))
+        .setDifficulty(
+            ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getDifficulty())))
+        .setNumber(Long.parseLong(genesisBlockArg.getNumber()));
     genesisBlock.setBlockHeader(builder.build());
 
     builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
@@ -113,6 +126,29 @@ public class BlockUtil {
     genesisBlock.setBlockHeader(builder.build());
 
     return genesisBlock.build();
+  }
+
+  /**
+   * create Transaction by initialization.
+   */
+  public static Transaction newGenesisTransaction(String key, int value) {
+    TXInput txi = TXInput.newBuilder()
+        .setTxID(ByteString.copyFrom(new byte[]{}))
+        .setVout(-1)
+        .setSignature(ByteString.copyFrom(new byte[]{}))
+        .setPubKey(ByteString.copyFrom(key.getBytes())).build();
+    TXOutput txo = TXOutput.newBuilder()
+        .setValue(value)
+        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .build();
+
+    Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
+        .addVin(txi)
+        .addVout(txo);
+    coinbaseTransaction
+        .setId(ByteString.copyFrom(TransactionUtil.getHash(coinbaseTransaction.build())));
+
+    return coinbaseTransaction.build();
   }
 
   /**

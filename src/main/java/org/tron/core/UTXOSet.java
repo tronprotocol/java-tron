@@ -53,7 +53,7 @@ public class UTXOSet {
   public void reindex() {
     logger.info("reindex");
 
-    txDB.resetDB();
+    txDB.resetDb();
 
     HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
 

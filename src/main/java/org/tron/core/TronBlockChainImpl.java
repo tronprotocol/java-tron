@@ -18,10 +18,7 @@
 
 package org.tron.core;
 
-
 import static org.tron.core.Constant.LAST_HASH;
-
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -36,6 +33,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.SystemProperties;
 import org.tron.core.db.BlockStoreInput;
 import org.tron.protos.Protocal.Block;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 @Component
 public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.TronBlockChain {
@@ -47,11 +45,11 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
   private BigInteger totalDifficulty = BigInteger.ZERO;
 
   /**
-   * initDB level DB blockStoreInter
+   * initDB level DB blockStoreInter.
    */
-  private static LevelDbDataSourceImpl initBD() {
-    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.NORMAL,
-        Constant.OUTPUT_DIR, "blockStoreInter");
+  private static LevelDbDataSourceImpl initBb() {
+    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+        "blockStoreInter");
     levelDbDataSource.initDB();
     return levelDbDataSource;
   }
@@ -69,7 +67,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
   @Override
   public synchronized Block getBestBlock() {
     Block bestBlock = null;
-    LevelDbDataSourceImpl levelDbDataSource = initBD();
+    LevelDbDataSourceImpl levelDbDataSource = initBb();
     byte[] lastHash = levelDbDataSource.getData(LAST_HASH);
     byte[] value = levelDbDataSource.getData(lastHash);
     try {
@@ -82,6 +80,9 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     return bestBlock;
   }
 
+  /**
+   * add block to chain.
+   */
   public synchronized void addBlockToChain(Block block) {
     Block bestBlock = getBestBlock();
 
@@ -89,7 +90,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
         .getHash()) {
       byte[] blockByte = block.toByteArray();
 
-      LevelDbDataSourceImpl levelDbDataSource = initBD();
+      LevelDbDataSourceImpl levelDbDataSource = initBb();
       levelDbDataSource.putData(block.getBlockHeader().getHash()
           .toByteArray(), blockByte);
 
@@ -111,8 +112,6 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     String dumpDir = config.databaseDir() + "/" + config.dumpDir();
 
     File dumpFile = new File(dumpDir + "/blocks-rec.dmp");
-    FileWriter fw = null;
-    BufferedWriter bw = null;
 
     try {
 
@@ -121,24 +120,13 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
         dumpFile.createNewFile();
       }
 
-      fw = new FileWriter(dumpFile.getAbsoluteFile(), true);
-      bw = new BufferedWriter(fw);
+      try (BufferedWriter bw =
+          new BufferedWriter(new FileWriter(dumpFile.getAbsoluteFile(), true))) {
       bw.write(Hex.toHexString(block.toByteArray()));
       bw.write("\n");
-
+      }
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
-    } finally {
-      try {
-        if (bw != null) {
-          bw.close();
-        }
-        if (fw != null) {
-          fw.close();
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
   }
 }

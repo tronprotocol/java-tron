@@ -12,12 +12,11 @@ import org.tron.common.application.Service;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
-import org.tron.program.Args;
-
 
 public class WitnessService implements Service {
 

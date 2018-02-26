@@ -194,7 +194,7 @@ public class Manager {
 
     blockCapsule.hash();
 
-    blockCapsule.sign(privateKey);
+    //blockCapsule.sign(privateKey);
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getHashStr());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());

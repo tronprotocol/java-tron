@@ -15,10 +15,10 @@
 
 package org.tron.common.application;
 
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.node.Node;
-import org.tron.program.Args;
 
 public interface Application {
 

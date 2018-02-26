@@ -17,7 +17,7 @@ package org.tron.common.application;
 import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.program.Args;
+import org.tron.core.config.args.Args;
 
 public class ServiceContainer {
 

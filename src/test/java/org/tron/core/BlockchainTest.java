@@ -34,6 +34,8 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Config;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.TXOutputs;
 import org.tron.protos.Protocal.Transaction;
@@ -50,6 +52,7 @@ public class BlockchainTest {
    */
   @Before
   public void setup() throws IOException {
+    Args.setParam(new String[]{}, Config.getConf(Constant.TEST_CONF));
     mockBlockDB = Mockito.mock(LevelDbDataSourceImpl.class);
     Mockito.when(mockBlockDB.getData(eq(LAST_HASH))).thenReturn(null);
     Mockito.when(mockBlockDB.getData(any())).thenReturn(ByteArray.fromString(""));
@@ -125,8 +128,7 @@ public class BlockchainTest {
 
     Block block = BlockUtil.newBlock(null, parentHash,
         difficulty, 0);
-    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.TEST,
-        Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
         "blockStore_test");
     levelDbDataSource.initDB();
     String lastHash = "lastHash";

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -18,7 +19,6 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.program.Args;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
@@ -171,7 +171,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
       //TODO: check it
       return false;
     }
-    return  false;
+    return false;
   }
 
   //IApplication
