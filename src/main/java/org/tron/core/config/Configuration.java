@@ -18,29 +18,27 @@
 
 package org.tron.core.config;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class Config {
-
-  private static final Logger logger = LoggerFactory.getLogger("Config");
+public class Configuration {
 
   private static com.typesafe.config.Config config;
 
   /**
-   * get config.
+   * Get configuration by a given path.
+   *
+   * @param configurationPath path to configuration file
+   * @return loaded configuration
    */
-  public static com.typesafe.config.Config getConf(String confPath) {
-
-    if (confPath == null || "".equals(confPath)) {
-      logger.error("need config file path");
-
-      return null;
+  public static com.typesafe.config.Config getByPath(final String configurationPath) {
+    if (isBlank(configurationPath)) {
+      throw new IllegalArgumentException("Configuration path is required!");
     }
 
     if (config == null) {
-      config = ConfigFactory.load(confPath);
+      config = ConfigFactory.load(configurationPath);
     }
 
     return config;

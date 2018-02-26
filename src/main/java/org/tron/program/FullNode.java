@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
-import org.tron.core.config.Config;
+import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -18,7 +18,7 @@ public class FullNode {
    * Start the FullNode.
    */
   public static void main(String[] args) {
-    Args.setParam(args, Config.getConf(Constant.NORMAL_CONF));
+    Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
     Args cfgArgs = Args.getInstance();
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
