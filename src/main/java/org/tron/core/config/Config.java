@@ -35,7 +35,7 @@ import org.tron.core.Constant;
 
 public class Config {
 
-  private static final Logger logger = LoggerFactory.getLogger("Configer");
+  private static final Logger logger = LoggerFactory.getLogger("Config");
   private static final String DATABASE_DIRECTORY = Constant.DATABASE_DIR;
   private static String TRON_CONF = Constant.NORMAL_CONF;
   private static String generatedNodePrivateKey;
