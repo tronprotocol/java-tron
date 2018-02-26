@@ -18,7 +18,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.protos.Protocal;
-import org.tron.program.Args;
 
 public class WitnessService implements Service {
 
