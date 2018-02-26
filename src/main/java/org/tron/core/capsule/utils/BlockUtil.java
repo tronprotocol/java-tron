@@ -111,8 +111,14 @@ public class BlockUtil {
         transactionList.add(newGenesisTransaction(key, value)));
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")));
-
+    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")))
+        .setTimestamp(Long.parseLong(genesisBlockArg.getTimeStamp()))
+        .setParentHash(
+            ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash())))
+        .setNonce(ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getNonce())))
+        .setDifficulty(
+            ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getDifficulty())))
+        .setNumber(Long.parseLong(genesisBlockArg.getNumber()));
     genesisBlock.setBlockHeader(builder.build());
 
     builder.setHash(ByteString.copyFrom(sha3(prepareData(genesisBlock.build()))));
@@ -122,19 +128,19 @@ public class BlockUtil {
     return genesisBlock.build();
   }
 
+  /**
+   * create Transaction by initialization
+   */
   public static Transaction newGenesisTransaction(String key, int value) {
     TXInput txi = TXInput.newBuilder()
         .setTxID(ByteString.copyFrom(new byte[]{}))
         .setVout(-1)
         .setSignature(ByteString.copyFrom(new byte[]{}))
         .setPubKey(ByteString.copyFrom(key.getBytes())).build();
-//    TXInput txi = TxInputUtil.newTxInput(new byte[]{}, -1, new byte[]{},
-//        ByteArray.fromHexString(data));
     TXOutput txo = TXOutput.newBuilder()
         .setValue(value)
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
         .build();
-//    TXOutput txo = TxOutputUtil.newTxOutput(RESERVE_BALANCE, to);
 
     Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
         .addVin(txi)
