@@ -12,6 +12,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -71,6 +72,7 @@ public class RpcApiService implements Service {
       this.wallet = new Wallet(this.app);
     }
 
+
     @Override
     public void getBalance(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
@@ -109,6 +111,17 @@ public class RpcApiService implements Service {
       GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
       responseObserver.onNext(retur);
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createAccount(Account request, StreamObserver<Account> responseObserver) {
+      super.createAccount(request, responseObserver);
+    }
+
+    @Override
+    public void createAssetIssue(AssetIssueContract request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      super.createAssetIssue(request, responseObserver);
     }
   }
 
