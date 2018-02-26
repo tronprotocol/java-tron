@@ -95,11 +95,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    */
   public void broadcast(Message msg) {
     if (msg instanceof BlockMessage) {
-      logger.info("Ready to broadcast a block, Its hash is " + msg.sha256Hash());
-      blockToAdvertise.add(msg.sha256Hash());
+      logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
+      blockToAdvertise.add(msg.getMessageId());
     }
     if (msg instanceof TransactionMessage) {
-      trxToAdvertise.add(msg.sha256Hash());
+      trxToAdvertise.add(msg.getMessageId());
     }
   }
 
@@ -138,16 +138,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // fetch blocks
     loopFetchBlocks = new ExecutorLoop<>(2, 10, c -> {
       logger.info("loop fetch blocks");
-      if (fetchMap.containsKey(c.sha256Hash())) {
-        fetchMap.get(c.sha256Hash()).sendMessage(c);
+      if (fetchMap.containsKey(c.getMessageId())) {
+        fetchMap.get(c.getMessageId()).sendMessage(c);
       }
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     // sync block chain
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
       logger.info("loop sync block chain");
-      if (syncMap.containsKey(d.sha256Hash())) {
-        syncMap.get(d.sha256Hash()).sendMessage(d);
+      if (syncMap.containsKey(d.getMessageId())) {
+        syncMap.get(d.getMessageId()).sendMessage(d);
       }
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
@@ -204,7 +204,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.lastBlockWeKnow = blkMsg.sha256Hash();
+    peer.lastBlockWeKnow = blkMsg.getMessageId();
     del.handleBlock(blkMsg.getBlockCapsule());
   }
 
@@ -239,7 +239,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("on handle block chain inventory message");
     List<Sha256Hash> blockIds = del.getBlockHashes(msg.getHashList());
     FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.sha256Hash(), peer);
+    fetchMap.put(fetchMsg.getMessageId(), peer);
     loopFetchBlocks.push(fetchMsg);
   }
 
@@ -254,7 +254,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       fetchList.add(hash);
     });
     FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.sha256Hash(), peer);
+    fetchMap.put(fetchMsg.getMessageId(), peer);
     loopFetchBlocks.push(fetchMsg);
   }
 }

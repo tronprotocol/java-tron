@@ -88,17 +88,17 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
    */
   public synchronized void addBlockToChain(Block block) {
     Block bestBlock = getBestBlock();
-//    if (bestBlock.getBlockHeader().getHash() == block.getBlockHeader()
-//        .getHash()) {
+//    if (bestBlock.getBlockHeader().getBlockId() == block.getBlockHeader()
+//        .getBlockId()) {
 //      byte[] blockByte = block.toByteArray();
 //
 //      LevelDbDataSourceImpl levelDbDataSource = initBb();
-//      levelDbDataSource.putData(block.getBlockHeader().getHash()
+//      levelDbDataSource.putData(block.getBlockHeader().getBlockId()
 //          .toByteArray(), blockByte);
 //
 //      byte[] key = LAST_HASH;
 //
-//      levelDbDataSource.putData(key, block.getBlockHeader().getHash()
+//      levelDbDataSource.putData(key, block.getBlockHeader().getBlockId()
 //          .toByteArray());  // Storage lastHash
 //
 //    } else {

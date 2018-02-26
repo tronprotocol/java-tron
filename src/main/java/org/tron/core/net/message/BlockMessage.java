@@ -1,6 +1,7 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocal.Block;
 
@@ -29,6 +30,11 @@ public class BlockMessage extends Message {
       pack();
     }
     return data;
+  }
+
+  @Override
+  public Sha256Hash getMessageId() {
+    return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
   }
 
   public Block getBlock() {

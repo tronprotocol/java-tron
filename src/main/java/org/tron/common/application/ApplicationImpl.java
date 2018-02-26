@@ -113,13 +113,13 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     logger.info("handle block");
-    blockStoreDb.saveBlock(block.getHash(), block);
+    blockStoreDb.saveBlock(block);
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
+    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId());
   }
 
   @Override
@@ -165,9 +165,9 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public boolean contain(Sha256Hash hash, MessageTypes type) {
-    if (type == MessageTypes.BLOCK) {
+    if (type.equals(MessageTypes.BLOCK)) {
       return blockStoreDb.containBlock(hash);
-    } else if (type == MessageTypes.TRX) {
+    } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
       return false;
     }

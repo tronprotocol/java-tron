@@ -19,14 +19,14 @@ public abstract class Message {
     unpacked = false;
   }
 
-  public Sha256Hash sha256Hash() {
+  public Sha256Hash getMessageId() {
     return Sha256Hash.of(getData());
   }
 
   public abstract byte[] getData();
 
   public String toString() {
-    return "[Message Type: " + getType() + ", Message Hash: " + sha256Hash() + "]";
+    return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";
   }
 
   //public byte getCode() { return type; }

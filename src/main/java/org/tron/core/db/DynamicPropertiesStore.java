@@ -98,13 +98,13 @@ public class DynamicPropertiesStore extends TronDatabase {
   }
 
   /**
-   * get hash of global latest block.
+   * get id of global latest block.
    */
   public ByteString getLatestBlockHeaderHash() {
     byte[] h = this.dbSource.getData(LATEST_BLOCK_HEADER_HASH);
 
     if (h == null || h.length == 0) {
-      throw new IllegalArgumentException("not found latest block header hash");
+      throw new IllegalArgumentException("not found latest block header id");
     }
 
     return ByteString.copyFrom(h);
@@ -127,10 +127,10 @@ public class DynamicPropertiesStore extends TronDatabase {
   }
 
   /**
-   * save hash of global latest block.
+   * save id of global latest block.
    */
   public void saveLatestBlockHeaderHash(ByteString h) {
-    logger.info("update latest block header hash = {}", ByteArray.toHexString(h.toByteArray()));
+    logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.dbSource.putData(LATEST_BLOCK_HEADER_HASH, h.toByteArray());
   }
 }
