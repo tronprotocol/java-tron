@@ -48,7 +48,7 @@ public class UtxoSetTest {
     UTXOSet utxoSet = new UTXOSet(mockTransactionDb, mockBlockchain);
 
     utxoSet.reindex();
-    Mockito.verify(mockTransactionDb, times(1)).resetDB();
+    Mockito.verify(mockTransactionDb, times(1)).resetDb();
     Mockito.verify(mockTransactionDb, times(1))
         .putData(eq(ByteArray.fromHexString(key)), eq(testOutputs.toByteArray()));
   }

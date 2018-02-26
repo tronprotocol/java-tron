@@ -18,7 +18,6 @@
 
 package org.tron.core;
 
-
 import static org.tron.core.Constant.LAST_HASH;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -46,11 +45,11 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
   private BigInteger totalDifficulty = BigInteger.ZERO;
 
   /**
-   * initDB level DB blockStoreInter
+   * initDB level DB blockStoreInter.
    */
-  private static LevelDbDataSourceImpl initBD() {
-    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.NORMAL,
-        Constant.OUTPUT_DIR, "blockStoreInter");
+  private static LevelDbDataSourceImpl initBb() {
+    LevelDbDataSourceImpl levelDbDataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+        "blockStoreInter");
     levelDbDataSource.initDB();
     return levelDbDataSource;
   }
@@ -68,7 +67,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
   @Override
   public synchronized Block getBestBlock() {
     Block bestBlock = null;
-    LevelDbDataSourceImpl levelDbDataSource = initBD();
+    LevelDbDataSourceImpl levelDbDataSource = initBb();
     byte[] lastHash = levelDbDataSource.getData(LAST_HASH);
     byte[] value = levelDbDataSource.getData(lastHash);
     try {
@@ -81,6 +80,9 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     return bestBlock;
   }
 
+  /**
+   * add block to chain.
+   */
   public synchronized void addBlockToChain(Block block) {
     Block bestBlock = getBestBlock();
 
@@ -88,7 +90,7 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
         .getHash()) {
       byte[] blockByte = block.toByteArray();
 
-      LevelDbDataSourceImpl levelDbDataSource = initBD();
+      LevelDbDataSourceImpl levelDbDataSource = initBb();
       levelDbDataSource.putData(block.getBlockHeader().getHash()
           .toByteArray(), blockByte);
 

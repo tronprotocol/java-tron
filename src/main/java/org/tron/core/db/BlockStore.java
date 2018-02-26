@@ -43,7 +43,7 @@ public class BlockStore extends TronDatabase {
   private BlockStore(String dbName) {
     super(dbName);
     numHashCache = new LevelDbDataSourceImpl(
-        Constant.NORMAL, Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
+        Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
     numHashCache.initDB();
   }
 
@@ -76,7 +76,6 @@ public class BlockStore extends TronDatabase {
 
   /**
    * Get the head block's number.
-   * @return
    */
   public long getHeadBlockNum() {
     if (head == null) {
@@ -201,7 +200,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * Delete a block
+   * Delete a block.
    */
   public void deleteBlock(Sha256Hash blockHash) {
     BlockCapsule block = getBlockByHash(blockHash);
@@ -215,10 +214,10 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * resetDB the database.
+   * resetDb the database.
    */
   public void reset() {
-    dbSource.resetDB();
+    dbSource.resetDb();
   }
 
   public void close() {

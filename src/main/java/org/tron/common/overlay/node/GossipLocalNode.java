@@ -15,7 +15,6 @@
 
 package org.tron.common.overlay.node;
 
-import com.typesafe.config.ConfigObject;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.Member;
@@ -30,7 +29,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.config.Configer;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -40,8 +39,6 @@ import rx.subscriptions.CompositeSubscription;
 public class GossipLocalNode implements LocalNode {
 
   private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
-
-  private final int port = Configer.getConf().getInt("overlay.port");
 
   private Cluster cluster = null;
 
@@ -67,7 +64,7 @@ public class GossipLocalNode implements LocalNode {
     ClusterConfig config = ClusterConfig.builder()
             .seedMembers(getAddresses())
             .portAutoIncrement(false)
-            .port(port)
+        .port(Args.getInstance().getOverlay().getPort())
             .build();
 
     cluster = Cluster.joinAwait(config);
@@ -123,12 +120,15 @@ public class GossipLocalNode implements LocalNode {
   private List<Address> getAddresses() {
     List<Address> addresses = new ArrayList<>();
 
-    List<? extends ConfigObject> cfgs = Configer.getConf().getObjectList("seedNodes");
+    List<String> ipList = Args.getInstance().getSeedNode().getIpList();
 
-    cfgs.forEach(c -> {
-      Address address = Address
-          .create(c.get("ip").unwrapped().toString(), (int) c.get("port").unwrapped());
-      addresses.add(address);
+    ipList.forEach(ip -> {
+      String[] ipSplit = ip.split(":");
+      if (ipSplit.length > 1) {
+        Address address = Address
+            .create(ipSplit[0], Integer.valueOf(ipSplit[1]));
+        addresses.add(address);
+      }
     });
 
     return addresses;

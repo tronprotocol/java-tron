@@ -14,7 +14,7 @@
  */
 package org.tron.common.application;
 
-import org.tron.program.Args;
+import org.tron.core.config.args.Args;
 
 public interface Service {
 
