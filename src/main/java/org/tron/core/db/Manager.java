@@ -192,7 +192,7 @@ public class Manager {
 
     blockCapsule.calcMerkleRoot();
 
-    blockCapsule.hash();
+    //blockCapsule.hash();
 
     //blockCapsule.sign(privateKey);
 
