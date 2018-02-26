@@ -26,27 +26,15 @@ public class ReadIp {
    * readFile from path.
    */
   public String readFile(String path) {
-    BufferedReader reader = null;
     String laststr = "";
-    try {
-      FileInputStream fileInputStream = new FileInputStream(path);
-      InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
-      reader = new BufferedReader(inputStreamReader);
+    try (BufferedReader reader =
+        new BufferedReader(new InputStreamReader(new FileInputStream(path), "UTF-8"))) {
       String tempString = null;
       while ((tempString = reader.readLine()) != null) {
         laststr += tempString;
       }
-      reader.close();
     } catch (IOException e) {
       e.printStackTrace();
-    } finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
     }
     return laststr;
   }

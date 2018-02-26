@@ -19,8 +19,6 @@
 package org.tron.core;
 
 import static org.tron.core.Constant.LAST_HASH;
-
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -35,6 +33,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.SystemProperties;
 import org.tron.core.db.BlockStoreInput;
 import org.tron.protos.Protocal.Block;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 @Component
 public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.TronBlockChain {
@@ -113,8 +112,6 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
     String dumpDir = config.databaseDir() + "/" + config.dumpDir();
 
     File dumpFile = new File(dumpDir + "/blocks-rec.dmp");
-    FileWriter fw = null;
-    BufferedWriter bw = null;
 
     try {
 
@@ -123,24 +120,13 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
         dumpFile.createNewFile();
       }
 
-      fw = new FileWriter(dumpFile.getAbsoluteFile(), true);
-      bw = new BufferedWriter(fw);
+      try (BufferedWriter bw =
+          new BufferedWriter(new FileWriter(dumpFile.getAbsoluteFile(), true))) {
       bw.write(Hex.toHexString(block.toByteArray()));
       bw.write("\n");
-
+      }
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
-    } finally {
-      try {
-        if (bw != null) {
-          bw.close();
-        }
-        if (fw != null) {
-          fw.close();
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
   }
 }

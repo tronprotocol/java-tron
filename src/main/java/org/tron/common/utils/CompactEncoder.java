@@ -23,7 +23,6 @@ import static java.util.Arrays.copyOfRange;
 import static org.spongycastle.util.Arrays.concatenate;
 import static org.spongycastle.util.encoders.Hex.encode;
 import static org.tron.common.utils.ByteUtil.appendByte;
-
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -99,7 +98,7 @@ public class CompactEncoder {
     if (base[0] >= 2) {
       base = appendByte(base, TERMINATOR);
     }
-    if (base[0] % 2 == 1) {
+    if (base[0] % 2 != 0) {
       base = copyOfRange(base, 1, base.length);
     } else {
       base = copyOfRange(base, 2, base.length);

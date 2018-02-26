@@ -45,6 +45,8 @@ src/main/resources/META-INF/
 /.project
 /.classpath
 /.settings/
+/.apt_generated/
 
 # output directory
 /output-directory/
+

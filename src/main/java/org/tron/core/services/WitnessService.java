@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.utils.RandomGenerator;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
@@ -17,7 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.protos.Protocal;
-
+import org.tron.program.Args;
 
 public class WitnessService implements Service {
 
@@ -127,21 +128,21 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
-    Protocal.Block block = generateBlock(scheduledTime);
+    BlockCapsule block = generateBlock(scheduledTime);
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
 
-  private void broadcastBlock(Protocal.Block block) {
+  private void broadcastBlock(BlockCapsule block) {
     try {
-      tronApp.getP2pNode().broadcast(new BlockMessage(block));
+      tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
     logger.info("broadcast block successfully");
   }
 
-  private Protocal.Block generateBlock(DateTime when) {
+  private BlockCapsule generateBlock(DateTime when) {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
