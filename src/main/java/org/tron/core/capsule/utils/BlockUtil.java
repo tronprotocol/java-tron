@@ -112,8 +112,7 @@ public class BlockUtil {
             .add(newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
-    builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")))
-        .setTimestamp(Long.parseLong(genesisBlockArg.getTimeStamp()))
+    builder.setTimestamp(Long.parseLong(genesisBlockArg.getTimeStamp()))
         .setParentHash(
             ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash())))
         .setNonce(ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getNonce())))
