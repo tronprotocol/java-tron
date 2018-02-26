@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -238,7 +237,7 @@ public class Blockchain {
   }
 
   private void addInputToSpentTxos(TXInput in, HashMap<String, long[]> spenttxos) {
-    String inTxid = ByteArray.toHexString(in.getTxID().toByteArray());
+    String inTxid = ByteArray.toHexString(in.getRawData().getTxID().toByteArray());
     long[] vindexs = spenttxos.get(inTxid);
 
     if (vindexs == null) {
@@ -246,7 +245,7 @@ public class Blockchain {
     }
 
     vindexs = Arrays.copyOf(vindexs, vindexs.length + 1);
-    vindexs[vindexs.length - 1] = in.getVout();
+    vindexs[vindexs.length - 1] = in.getRawData().getVout();
 
     spenttxos.put(inTxid, vindexs);
   }
@@ -280,21 +279,21 @@ public class Blockchain {
 //    }
   }
 
-  public Transaction signTransaction(Transaction transaction, ECKey myKey) {
-    HashMap<String, Transaction> prevTXs = new HashMap<>();
-
-    for (TXInput txInput : transaction.getVinList()) {
-      ByteString txId = txInput.getTxID();
-      Transaction prevTX = this.findTransaction(txId).toBuilder().build();
-      String key = ByteArray.toHexString(txId.toByteArray());
-      prevTXs.put(key, prevTX);
-    }
-
-    // transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
-    transaction = TransactionUtil.sign(transaction, myKey);// Unsupport muilty address, needn't
-    // input prevTXs
-    return transaction;
-  }
+//  public Transaction signTransaction(Transaction transaction, ECKey myKey) {
+//    HashMap<String, Transaction> prevTXs = new HashMap<>();
+//
+//    for (TXInput txInput : transaction.getVinList()) {
+//      ByteString txId = txInput.getRawData().getTxID();
+//      Transaction prevTX = this.findTransaction(txId).toBuilder().build();
+//      String key = ByteArray.toHexString(txId.toByteArray());
+//      prevTXs.put(key, prevTX);
+//    }
+//
+//    // transaction = TransactionCapsule.sign(transaction, myKey, prevTXs);
+//    transaction = TransactionUtil.sign(transaction, myKey);// Unsupport muilty address, needn't
+//    // input prevTXs
+//    return transaction;
+//  }
 
   /**
    * add a block.

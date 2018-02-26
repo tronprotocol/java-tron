@@ -123,11 +123,15 @@ public class BlockUtil {
    * create Transaction by initialization.
    */
   public static Transaction newGenesisTransaction(String key, int value) {
-    TXInput txi = TXInput.newBuilder()
+
+    TXInput.raw rawData = TXInput.raw.newBuilder()
         .setTxID(ByteString.copyFrom(new byte[]{}))
-        .setVout(-1)
+        .setVout(-1).build();
+
+    TXInput txi = TXInput.newBuilder()
         .setSignature(ByteString.copyFrom(new byte[]{}))
-        .setPubKey(ByteString.copyFrom(key.getBytes())).build();
+        .setRawData(rawData).build();
+
     TXOutput txo = TXOutput.newBuilder()
         .setValue(value)
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))

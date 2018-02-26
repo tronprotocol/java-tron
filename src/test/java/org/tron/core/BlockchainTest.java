@@ -22,9 +22,6 @@ import static org.tron.core.Constant.LAST_HASH;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -37,7 +34,6 @@ import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Config;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.TXOutputs;
 import org.tron.protos.Protocal.Transaction;
 
 
@@ -96,27 +92,27 @@ public class BlockchainTest {
     logger.info("{}", TransactionUtil.toPrintString(transaction));
   }
 
-  @Test
-  public void testFindUtxo() {
-    long testAmount = 10;
-    Wallet wallet = new Wallet();
-    SpendableOutputs spendableOutputs = new SpendableOutputs();
-    spendableOutputs.setAmount(testAmount + 1);
-    spendableOutputs.setUnspentOutputs(new HashMap<>());
-    UTXOSet mockUtxoSet = Mockito.mock(UTXOSet.class);
-    Mockito.when(mockUtxoSet.findSpendableOutputs(wallet.getEcKey().getPubKey(), testAmount)
-    ).thenReturn(spendableOutputs);
-    Mockito.when(mockUtxoSet.getBlockchain()).thenReturn(blockchain);
-
-    Transaction transaction = TransactionUtil.newTransaction(wallet,
-        "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", testAmount, mockUtxoSet);
-    List<Transaction> transactions = new ArrayList<>();
-    transactions.add(transaction);
-    blockchain.addBlock(BlockUtil.newBlock(transactions, ByteString
-        .copyFrom(new byte[]{1}), ByteString
-        .copyFrom(new byte[]{1}), 1));
-    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
-  }
+//  @Test
+//  public void testFindUtxo() {
+//    long testAmount = 10;
+//    Wallet wallet = new Wallet();
+//    SpendableOutputs spendableOutputs = new SpendableOutputs();
+//    spendableOutputs.setAmount(testAmount + 1);
+//    spendableOutputs.setUnspentOutputs(new HashMap<>());
+//    UTXOSet mockUtxoSet = Mockito.mock(UTXOSet.class);
+//    Mockito.when(mockUtxoSet.findSpendableOutputs(wallet.getEcKey().getPubKey(), testAmount)
+//    ).thenReturn(spendableOutputs);
+//    Mockito.when(mockUtxoSet.getBlockchain()).thenReturn(blockchain);
+//
+//    Transaction transaction = TransactionUtil.newTransaction(wallet,
+//        "fd0f3c8ab4877f0fd96cd156b0ad42ea7aa82c31", testAmount, mockUtxoSet);
+//    List<Transaction> transactions = new ArrayList<>();
+//    transactions.add(transaction);
+//    blockchain.addBlock(BlockUtil.newBlock(transactions, ByteString
+//        .copyFrom(new byte[]{1}), ByteString
+//        .copyFrom(new byte[]{1}), 1));
+//    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
+//  }
 
   @Test
   public void testAddBlockToChain() {
