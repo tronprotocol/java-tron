@@ -1,10 +1,10 @@
 package org.tron.core.config.args;
 
-import java.util.HashMap;
+import java.util.List;
 
 public class GenesisBlock {
 
-  private HashMap<String, Integer> transactions;
+  private List<SeedNodeAddress> transactions;
   private String timeStamp;
   private String parentHash;
   private String hash;
@@ -12,11 +12,11 @@ public class GenesisBlock {
   private String difficulty;
   private String number;
 
-  public HashMap<String, Integer> getTransactions() {
+  public List<SeedNodeAddress> getTransactions() {
     return transactions;
   }
 
-  public void setTransactions(HashMap<String, Integer> transactions) {
+  public void setTransactions(List<SeedNodeAddress> transactions) {
     this.transactions = transactions;
   }
 

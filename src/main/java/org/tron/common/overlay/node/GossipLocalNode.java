@@ -29,7 +29,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.config.Config;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -39,8 +39,6 @@ import rx.subscriptions.CompositeSubscription;
 public class GossipLocalNode implements LocalNode {
 
   private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
-
-  private final int port = Config.getConf().getInt("overlay.port");
 
   private Cluster cluster = null;
 
@@ -66,7 +64,7 @@ public class GossipLocalNode implements LocalNode {
     ClusterConfig config = ClusterConfig.builder()
             .seedMembers(getAddresses())
             .portAutoIncrement(false)
-            .port(port)
+        .port(Args.getInstance().getOverlay().getPort())
             .build();
 
     cluster = Cluster.joinAwait(config);
@@ -122,17 +120,13 @@ public class GossipLocalNode implements LocalNode {
   private List<Address> getAddresses() {
     List<Address> addresses = new ArrayList<>();
 
-    if (!Config.getConf().hasPath("seed.node.ip.list")) {
-      return addresses;
-    }
-
-    List<String> ipList = Config.getConf().getStringList("seed.node.ip.list");
+    List<String> ipList = Args.getInstance().getSeedNode().getIpList();
 
     ipList.forEach(ip -> {
-      String[] iSplit = ip.split(":");
-      if (iSplit.length > 1) {
+      String[] ipSplit = ip.split(":");
+      if (ipSplit.length > 1) {
         Address address = Address
-            .create(iSplit[0], Integer.valueOf(iSplit[1]));
+            .create(ipSplit[0], Integer.valueOf(ipSplit[1]));
         addresses.add(address);
       }
     });

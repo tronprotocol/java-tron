@@ -107,8 +107,9 @@ public class BlockUtil {
     Args args = Args.getInstance();
     GenesisBlock genesisBlockArg = args.getGenesisBlock();
     List<Transaction> transactionList = new ArrayList<Transaction>();
-    genesisBlockArg.getTransactions().forEach((key, value) ->
-        transactionList.add(newGenesisTransaction(key, value)));
+    genesisBlockArg.getTransactions().forEach(key ->
+        transactionList
+            .add(newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));
 
     BlockHeader.Builder builder = BlockHeader.newBuilder();
     builder.setDifficulty(ByteString.copyFrom(ByteArray.fromHexString("2001")))
@@ -129,7 +130,7 @@ public class BlockUtil {
   }
 
   /**
-   * create Transaction by initialization
+   * create Transaction by initialization.
    */
   public static Transaction newGenesisTransaction(String key, int value) {
     TXInput txi = TXInput.newBuilder()

@@ -37,8 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
-import org.tron.core.config.Config;
+import org.tron.core.config.args.Args;
 
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
@@ -52,12 +51,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public LevelDbDataSourceImpl() {
   }
 
-  public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
-    if (Constant.NORMAL.equals(cfgType)) {
-      parentName += Config.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
-    } else {
-      parentName += Config.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-    }
+  /**
+   * constructor.
+   */
+  public LevelDbDataSourceImpl(String parentName, String name) {
+    parentName += Args.getInstance().getStorage().getDirectory();
     this.parentName = parentName;
     this.dataBaseName = name;
     logger.debug("New LevelDbDataSourceImpl: " + name);
@@ -115,6 +113,9 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     return Paths.get(parentName, dataBaseName);
   }
 
+  /**
+   * reset database.
+   */
   public void resetDb() {
     closeDB();
     FileUtil.recursiveDelete(getDbPath().toString());
@@ -126,7 +127,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     return alive;
   }
 
-  public void destroyDB(File fileLocation) {
+  /**
+   * destroy database.
+   */
+  public void destroyDb(File fileLocation) {
     resetDbLock.writeLock().lock();
     try {
       logger.debug("Destroying existing database: " + fileLocation);

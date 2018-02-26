@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,17 +34,51 @@ public class Args {
 
   }
 
-  public static void setParam(String[] args) {
+  /**
+   * set parameters.
+   */
+  public static void setParam(String[] args, com.typesafe.config.Config config) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    //
-    //
-    //
+
+    INSTANCE.storage = new Storage();
+    INSTANCE.storage.setDirectory(config.getString("storage.directory"));
+
+    INSTANCE.overlay = new Overlay();
+    INSTANCE.overlay.setPort(config.getInt("overlay.port"));
+
+    INSTANCE.seedNode = new SeedNode();
+    INSTANCE.seedNode.setIpList(config.getStringList("seed.node.ip.list"));
+
+    INSTANCE.genesisBlock = new GenesisBlock();
+    INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+    INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
+    INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
+    INSTANCE.genesisBlock.setNonce(config.getString("genesis.block.nonce"));
+    INSTANCE.genesisBlock.setDifficulty(config.getString("genesis.block.difficulty"));
+    INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
+
+    if (config.hasPath("genesis.block.transactions")) {
+      List<? extends ConfigObject> trx = config.getObjectList("genesis.block.transactions");
+
+      List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
+      trx.forEach(t -> {
+        SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
+        seedNodeAddress.setAddress(t.get("address").toString());
+        seedNodeAddress.setBalance(t.get("balance").toString());
+        seedNodeAddresses.add(seedNodeAddress);
+      });
+
+      INSTANCE.genesisBlock.setTransactions(seedNodeAddresses);
+    }
   }
 
   public static Args getInstance() {
     return INSTANCE;
   }
 
+  /**
+   * get output directory.
+   */
   public String getOutputDirectory() {
     if (!outputDirectory.equals("") && !outputDirectory.endsWith(File.separator)) {
       return outputDirectory + File.separator;

@@ -19,79 +19,30 @@
 package org.tron.core.config;
 
 import com.typesafe.config.ConfigFactory;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 
 public class Config {
 
   private static final Logger logger = LoggerFactory.getLogger("Config");
-  private static final String DATABASE_DIRECTORY = Constant.DATABASE_DIR;
-  private static String TRON_CONF = Constant.NORMAL_CONF;
-  private static String generatedNodePrivateKey;
 
-  static {
-    try {
-      File file = new File(Config.getConf().getString(DATABASE_DIRECTORY), "nodeId.properties");
-      Properties props = new Properties();
-      if (file.canRead()) {
-        try (Reader r = new FileReader(file)) {
-          props.load(r);
-        }
-      } else {
-        ECKey key = new ECKey();
-
-        byte[] privKeyBytes = key.getPrivKeyBytes();
-
-        String nodeIdPrivateKey = ByteArray.toHexString(privKeyBytes);
-
-        props.setProperty("nodeIdPrivateKey", nodeIdPrivateKey);
-        props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
-        file.getParentFile().mkdirs();
-        try (Writer w = new FileWriter(file)) {
-          props.store(w, "Generated NodeID.");
-        }
-        logger.info("New nodeID generated: " + props.getProperty("nodeId"));
-        logger.info("Generated nodeID and its private key stored in " + file);
-      }
-      generatedNodePrivateKey = props.getProperty("nodeIdPrivateKey");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static com.typesafe.config.Config getConf() {
-    return ConfigFactory.load(TRON_CONF);
-  }
+  private static com.typesafe.config.Config config;
 
   /**
    * get config.
    */
-  public static com.typesafe.config.Config getConf(String conf) {
+  public static com.typesafe.config.Config getConf(String confPath) {
 
-    if (conf == null || "".equals(conf)) {
-      return ConfigFactory.load(TRON_CONF);
-    } else {
-      return ConfigFactory.load(conf);
+    if (confPath == null || "".equals(confPath)) {
+      logger.error("need config file path");
+
+      return null;
     }
 
-  }
+    if (config == null) {
+      config = ConfigFactory.load(confPath);
+    }
 
-  public static ECKey getMyKey() {
-    return ECKey.fromPrivate(Hex.decode(generatedNodePrivateKey));
-  }
-
-  public static String getGeneratedNodePrivateKey() {
-    return generatedNodePrivateKey;
+    return config;
   }
 }
