@@ -9,6 +9,7 @@ import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.core.config.args.Args;
 
 public class ApplicationImpl implements Application {
 
