@@ -18,12 +18,17 @@ public class Args {
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
 
-  @Parameter(description = "-seed-nodes")
+  @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = new String("");
 
+  @Parameter(names = {"--storage-directory"}, description = "Storage directory")
+  private String storageDirectory = new String("");
+
+  @Parameter(names = {"--overlay-port"}, description = "Overlay port")
+  private int overlayPort = 0;
 
   private Storage storage;
   private Overlay overlay;
@@ -42,12 +47,21 @@ public class Args {
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDirectory(config.getString("storage.directory"));
+    if (!INSTANCE.storageDirectory.isEmpty()) {
+      INSTANCE.storage.setDirectory(INSTANCE.storageDirectory);
+    }
 
     INSTANCE.overlay = new Overlay();
     INSTANCE.overlay.setPort(config.getInt("overlay.port"));
+    if (INSTANCE.overlayPort != 0) {
+      INSTANCE.overlay.setPort(INSTANCE.overlayPort);
+    }
 
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(config.getStringList("seed.node.ip.list"));
+    if (INSTANCE.seedNodes.size() != 0) {
+      INSTANCE.seedNode.setIpList(INSTANCE.seedNodes);
+    }
 
     INSTANCE.genesisBlock = new GenesisBlock();
     INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
