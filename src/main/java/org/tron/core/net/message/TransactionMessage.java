@@ -23,11 +23,6 @@ public class TransactionMessage extends Message {
   }
 
   @Override
-  public String toString() {
-    return null;
-  }
-
-  @Override
   public byte[] getData() {
     if (data == null) {
       pack();

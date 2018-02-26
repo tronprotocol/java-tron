@@ -250,6 +250,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     List<Sha256Hash> fetchList = new ArrayList<>();
     msg.getHashList().forEach(hash -> {
       //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
+      logger.info("We will fetch " + hash + " from " + peer);
       fetchList.add(hash);
     });
     FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);

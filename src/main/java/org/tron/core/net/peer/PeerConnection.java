@@ -49,6 +49,8 @@ public class PeerConnection {
 //  }
 
   public void sendMessage(Message message) {
+    logger.info("Send message " + message);
+
     if (message == null) {
       logger.error("send message = null");
       return;

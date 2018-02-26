@@ -45,11 +45,6 @@ public class InventoryMessage extends Message {
   }
 
   @Override
-  public String toString() {
-    return null;
-  }
-
-  @Override
   public MessageTypes getType() {
     return MessageTypes.INVENTORY;
   }

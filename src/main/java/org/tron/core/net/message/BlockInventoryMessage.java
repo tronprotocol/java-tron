@@ -20,11 +20,6 @@ public class BlockInventoryMessage extends InventoryMessage {
   }
 
   @Override
-  public String toString() {
-    return super.toString();
-  }
-
-  @Override
   public MessageTypes getType() {
     return MessageTypes.BLOCK_INVENTORY;
   }
