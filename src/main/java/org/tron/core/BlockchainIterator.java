@@ -56,7 +56,7 @@ public class BlockchainIterator implements Iterator<Block> {
     byte[] value = blockchain.getBlockDB().getData(index);
     try {
       Block block = Block.parseFrom(value);
-      index = block.getBlockHeader().getParentHash().toByteArray();
+      index = block.getBlockHeader().getRawData().getParentHash().toByteArray();
       return block;
     } catch (InvalidProtocolBufferException e) {
       throw new RuntimeException(e);
