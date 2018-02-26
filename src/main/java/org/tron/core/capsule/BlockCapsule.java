@@ -24,7 +24,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
-import org.tron.core.peer.Validator;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
@@ -85,14 +84,18 @@ public class BlockCapsule {
 
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
-    ECDSASignature signature = ecKey.sign(getHash().getBytes());
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
 
+  private Sha256Hash getRawHash() {
+    unPack();
+    return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray());
   }
 
 
@@ -101,7 +104,7 @@ public class BlockCapsule {
     return true;
   }
 
-  public Sha256Hash getHash() {
+  public Sha256Hash getBlockId() {
     pack();
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
@@ -158,7 +161,7 @@ public class BlockCapsule {
 
   public boolean validate() {
     unPack();
-    return Validator.validate(this.block);
+    return true;
   }
 
   public BlockCapsule(Block block) {
@@ -188,11 +191,15 @@ public class BlockCapsule {
     return this.block.getBlockHeader().getRawData().getParentHash();
   }
 
+//  public Sha256Hash getBlockId() {
+//    pack();
+//    return Sha256Hash.of(data);
+//  }
 
-  public ByteString getHashStr() {
-    pack();
-    return this.getHash().getByteString();
-  }
+//  public ByteString getHashStr() {
+//    pack();
+//    return this.getBlockId().getByteString();
+//  }
 
 
   public long getNum() {

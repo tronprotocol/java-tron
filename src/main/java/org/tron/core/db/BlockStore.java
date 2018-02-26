@@ -45,6 +45,7 @@ public class BlockStore extends TronDatabase {
     numHashCache = new LevelDbDataSourceImpl(
         Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
     numHashCache.initDB();
+    khaosDb = new KhaosDatabase(dbName + "_KDB");
   }
 
   private static BlockStore instance;
@@ -71,7 +72,7 @@ public class BlockStore extends TronDatabase {
     if (head == null) {
       return Sha256Hash.ZERO_HASH;
     }
-    return head.getHash();
+    return head.getBlockId();
   }
 
   /**
@@ -85,7 +86,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * Get the block hash from the number.
+   * Get the block id from the number.
    */
   public Sha256Hash getBlockHashByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
@@ -96,7 +97,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * Get number of block by the block hash.
+   * Get number of block by the block id.
    */
   public long getBlockNumByHash(Sha256Hash hash) {
     if (khaosDb.containBlock(hash)) {
@@ -119,8 +120,8 @@ public class BlockStore extends TronDatabase {
   public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
     ArrayList<Sha256Hash> ret = new ArrayList<>();
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-        khaosDb.getBranch(head.getHash(), forkBlockHash);
-    branch.getValue().forEach(b -> ret.add(b.getHash()));
+        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+    branch.getValue().forEach(b -> ret.add(b.getBlockId()));
     return ret;
   }
 
@@ -139,7 +140,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * judge hash.
+   * judge id.
    *
    * @param blockHash blockHash
    */
@@ -163,16 +164,15 @@ public class BlockStore extends TronDatabase {
   /**
    * save a block.
    */
-  public void saveBlock(Sha256Hash hash, BlockCapsule block) {
+  public void saveBlock(BlockCapsule block) {
     logger.info("save block");
-
     khaosDb.push(block);
 
     //todo: check block's validity
     //todo: In some case it need to switch the branch
     if (block.validate()) {
-      dbSource.putData(block.getHash().getBytes(), block.getData());
-      numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getHash().getBytes());
+      dbSource.putData(block.getBlockId().getBytes(), block.getData());
+      numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     }
 
     head = khaosDb.getHead();
@@ -180,7 +180,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * find a block packed data by hash.
+   * find a block packed data by id.
    */
   public byte[] findBlockByHash(Sha256Hash hash) {
     if (khaosDb.containBlock(hash)) {
@@ -190,7 +190,7 @@ public class BlockStore extends TronDatabase {
   }
 
   /**
-   * Get a BlockCapsule by hash.
+   * Get a BlockCapsule by id.
    */
   public BlockCapsule getBlockByHash(Sha256Hash hash) {
     if (khaosDb.containBlock(hash)) {

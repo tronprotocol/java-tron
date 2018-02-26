@@ -5,24 +5,22 @@ import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Inventory;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
-public class BlockInventoryMessage extends InventoryMessage {
+public class ChainInventoryMessage extends InventoryMessage {
 
-  public BlockInventoryMessage(byte[] packed) {
+  public ChainInventoryMessage(byte[] packed) {
     super(packed);
   }
 
-  public BlockInventoryMessage(Inventory inv) {
+  public ChainInventoryMessage(Inventory inv) {
     super(inv);
   }
 
-  public BlockInventoryMessage(List<Sha256Hash> hashList) {
+  public ChainInventoryMessage(List<Sha256Hash> hashList) {
     super(hashList, InventoryType.BLOCK);
   }
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_INVENTORY;
+    return MessageTypes.BLOCK_CHAIN_INVENTORY;
   }
-
-
 }

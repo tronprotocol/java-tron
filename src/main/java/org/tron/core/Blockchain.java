@@ -74,7 +74,7 @@ public class Blockchain {
       Block genesisBlock = BlockUtil.newGenesisBlock(transactions);
 
       //this.lastHash = new ByteArray();
-      //genesisBlock.getBlockHeader().getRawData().getHash().toByteArray();
+      //genesisBlock.getBlockHeader().getRawData().getBlockId().toByteArray();
       this.currentHash = this.lastHash;
 
       persistGenesisBlockToDB(blockDb, genesisBlock);
@@ -98,7 +98,7 @@ public class Blockchain {
    * @deprecated
    */
   private void persistLastHash(@Named("block") LevelDbDataSourceImpl blockDb, Block genesisBlock) {
-//    byte[] lastHash = genesisBlock.getBlockHeader().getRawData().getHash().toByteArray();
+//    byte[] lastHash = genesisBlock.getBlockHeader().getRawData().getBlockId().toByteArray();
 //    blockDb.putData(LAST_HASH, lastHash);
   }
 
@@ -107,7 +107,7 @@ public class Blockchain {
    */
   private void persistGenesisBlockToDB(@Named("block") LevelDbDataSourceImpl blockDB,
       Block genesisBlock) {
-//    blockDB.putData(genesisBlock.getBlockHeader().getHash().toByteArray(),
+//    blockDB.putData(genesisBlock.getBlockHeader().getBlockId().toByteArray(),
 //        genesisBlock.toByteArray());
   }
 
@@ -256,7 +256,7 @@ public class Blockchain {
    * @deprecated
    */
   public void addBlock(Block block) {
-//    byte[] blockInDB = blockDb.getData(block.getBlockHeader().getHash().toByteArray());
+//    byte[] blockInDB = blockDb.getData(block.getBlockHeader().getBlockId().toByteArray());
 //
 //    if (blockInDB == null || blockInDB.length == 0) {
 //      return;
@@ -270,8 +270,8 @@ public class Blockchain {
 //      Block lastBlock = Block.parseFrom(lastBlockData);
 //      if (block.getBlockHeader().getNumber() > lastBlock.getBlockHeader().getNumber()) {
 //        blockDb.putData(ByteArray.fromString("lashHash"),
-//            block.getBlockHeader().getHash().toByteArray());
-//        this.lastHash = block.getBlockHeader().getHash().toByteArray();
+//            block.getBlockHeader().getBlockId().toByteArray());
+//        this.lastHash = block.getBlockHeader().getBlockId().toByteArray();
 //        this.currentHash = this.lastHash;
 //      }
 //    } catch (InvalidProtocolBufferException e) {
@@ -331,11 +331,11 @@ public class Blockchain {
 //    }
 //
 //    // save the block into the database
-//    byte[] blockHashKey = block.getBlockHeader().getHash().toByteArray();
+//    byte[] blockHashKey = block.getBlockHeader().getBlockId().toByteArray();
 //    byte[] blockVal = block.toByteArray();
 //    blockDb.putData(blockHashKey, blockVal);
 //
-//    byte[] ch = block.getBlockHeader().getHash().toByteArray();
+//    byte[] ch = block.getBlockHeader().getBlockId().toByteArray();
 //
 //    // update lastHash
 //    peer.getBlockchain().getBlockDB().putData(lastHashKey, ch);
