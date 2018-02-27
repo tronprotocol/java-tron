@@ -20,13 +20,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Blockchain;
 import org.tron.core.SpendableOutputs;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
@@ -35,7 +33,6 @@ import org.tron.protos.Protocal.TXOutputs;
 public class UtxoStore extends TronDatabase {
 
   public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
-  private Blockchain blockchain;
 
   private UtxoStore(String dbName) {
     super(dbName);
@@ -93,28 +90,6 @@ public class UtxoStore extends TronDatabase {
    */
   public void saveUtxo(byte[] utxoKey, byte[] utxoData) {
     dbSource.putData(utxoKey, utxoData);
-  }
-
-  /**
-   * Store related UTXOs.
-   */
-  public void storeUtxo() {
-    logger.info("storeUTXO");
-
-    getDbSource().resetDb();
-
-    HashMap<String, TXOutputs> utxo = blockchain.findUtxo();
-
-    Set<Entry<String, TXOutputs>> entrySet = utxo.entrySet();
-
-    for (Entry<String, TXOutputs> entry : entrySet) {
-      String key = entry.getKey();
-      TXOutputs value = entry.getValue();
-
-      for (TXOutput ignored : value.getOutputsList()) {
-        getDbSource().putData(ByteArray.fromHexString(key), value.toByteArray());
-      }
-    }
   }
 
   /**
