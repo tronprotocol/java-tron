@@ -152,6 +152,11 @@ public class Manager {
 
   private void voteWitessCount(Transaction trx) {
     try {
+      int parameterSize = trx.getParameterList().size();
+      if (parameterSize <= 0) {
+        logger.info("transaction parameter list size is {}", parameterSize);
+        return;
+      }
       Any parameter = trx.getParameterList().get(0);
       if (parameter.is(VoteContract.class)) {
         VoteContract voteContract = parameter.unpack(VoteContract.class);
