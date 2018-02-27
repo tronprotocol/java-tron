@@ -67,8 +67,6 @@ public class Args {
     INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
     INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
     INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-    INSTANCE.genesisBlock.setNonce(config.getString("genesis.block.nonce"));
-    INSTANCE.genesisBlock.setDifficulty(config.getString("genesis.block.difficulty"));
     INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
     if (config.hasPath("genesis.block.transactions")) {
