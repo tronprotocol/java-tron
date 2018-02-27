@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
@@ -100,8 +100,10 @@ public class BlockCapsule {
   }
 
   public void sign(String privateKey) {
-
-    // TODO private_key == null
+    if (privateKey == null) {
+      logger.error("privateKey is null");
+      return;
+    }
     ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
@@ -140,7 +142,7 @@ public class BlockCapsule {
     }
 
     for (Transaction trx : this.block.getTransactionsList()) {
-
+      // TODO
     }
     Vector<Sha256Hash> ids = new Vector<Sha256Hash>();
     this.block.getTransactionsList().forEach(trx -> {

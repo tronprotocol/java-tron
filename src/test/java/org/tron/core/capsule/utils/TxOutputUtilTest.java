@@ -13,14 +13,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule.utils;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.capsule.utils.TxOutputUtil;
 
-public class TxOutputCapsuleTest {
+public class TxOutputUtilTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
 

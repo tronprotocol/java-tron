@@ -72,6 +72,12 @@ public class Manager {
    * get ScheduledWitness by slot.
    */
   public ByteString getScheduledWitness(long slot) {
+
+    if (blockStore == null) {
+      logger.error("blockStore is null");
+      return null;
+    }
+
     long currentSlot = blockStore.currentASlot() + slot;
 
     if (currentSlot < 0) {

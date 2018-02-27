@@ -40,7 +40,7 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testGet() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,"test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
     byte[] key = key1.getBytes();

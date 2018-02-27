@@ -2,7 +2,7 @@ package org.tron.core.net.message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {
 

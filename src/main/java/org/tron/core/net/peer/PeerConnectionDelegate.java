@@ -1,6 +1,6 @@
 package org.tron.core.net.peer;
 
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.Message;
 
 public abstract class PeerConnectionDelegate {

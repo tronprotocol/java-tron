@@ -78,9 +78,10 @@ public class RpcApiService implements Service {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         byte[] addressBa = addressBs.toByteArray();
-        long balance = wallet.getBalance(addressBa);
-        Account reply = Account.newBuilder().setBalance(balance).build();
-        responseObserver.onNext(reply);
+        //TODO
+//        long balance = wallet.getBalance(addressBa);
+//        Account reply = Account.newBuilder().setBalance(balance).build();
+//        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }

@@ -13,12 +13,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockCapsuleTest {
+public class BlockUtilTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
 

@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.core.Constant;
+import org.tron.common.utils.Constant;
 
 public abstract class TronDatabase {
 

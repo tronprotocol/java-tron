@@ -13,13 +13,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule.utils;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionCapsuleTest {
+public class TxInputUtilTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
+  @Test
+  public void testNewTxInput() {
+    logger.info("test new TXInput: {}", TxInputUtil.newTxInput(new
+        byte[]{}, 1, new byte[]{}, new byte[]{}));
+  }
 }
