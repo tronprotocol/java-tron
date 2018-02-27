@@ -16,7 +16,6 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
-import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocal.TXInput;
 
 public class TxInputUtil {
@@ -43,25 +42,5 @@ public class TxInputUtil {
     return TXInput.newBuilder()
         .setSignature(ByteString.copyFrom(signature))
         .setRawData(rawData).build();
-  }
-
-  /**
-   * getData print string of the transaction input.
-   *
-   * @param txi {@link TXInput} txi
-   * @return String format string of the transaction input
-   */
-  public static String toPrintString(TXInput txi) {
-    if (txi == null) {
-      return "";
-    }
-
-    return "\nTXInput {\n" + "\ttxID=" + ByteArray
-        .toHexString(txi.getRawData().getTxID().toByteArray())
-        + ",\n\tvout=" + txi.getRawData().getVout()
-        + ",\n\tsignature=" + ByteArray.toHexString(txi.getSignature()
-        .toByteArray())
-        + ",\n\tpubKey=" + ByteArray.toStr(txi.getRawData().getPubKey().toByteArray())
-        + "\n}\n";
   }
 }

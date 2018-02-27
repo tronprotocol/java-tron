@@ -15,8 +15,10 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.protos.Protocal.Transaction.TranscationType.CreateAccount;
 import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
@@ -46,6 +49,31 @@ public class TransactionCapsule {
     this.transaction = trx;
   }
 
+  public TransactionCapsule(String key, int value) {
+    TXInput.raw rawData = TXInput.raw.newBuilder()
+        .setTxID(ByteString.copyFrom(new byte[]{}))
+        .setVout(-1).build();
+
+    TXInput txi = TXInput.newBuilder()
+        .setSignature(ByteString.copyFrom(new byte[]{}))
+        .setRawData(rawData).build();
+
+    TXOutput txo = TXOutput.newBuilder()
+        .setValue(value)
+        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .build();
+
+    Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
+        .addVin(txi)
+        .addVout(txo);
+
+    this.transaction = coinbaseTransaction.build();
+
+    coinbaseTransaction
+        .setId(ByteString.copyFrom(this.getHash().getBytes()));
+
+    this.transaction = coinbaseTransaction.build();
+  }
 
   /**
    * constructor TransactionCapsule.
@@ -95,6 +123,12 @@ public class TransactionCapsule {
     }
   }
 
+  public TransactionCapsule(byte[] address, Account account) {
+    Transaction.Builder transactionBuilder = Transaction.newBuilder()
+        .setType(CreateAccount);
+    //.setParameter(Any.pack(account));
+  }
+
   public Sha256Hash getHash() {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(transBytes);
@@ -139,11 +173,17 @@ public class TransactionCapsule {
     return true;
   }
 
+
   public Sha256Hash getTransactionId() {
     return Sha256Hash.of(this.transaction.toByteArray());
   }
 
   public byte[] getData() {
     return this.transaction.toByteArray();
+  }
+
+  @Override
+  public String toString() {
+    return this.transaction.toString();
   }
 }

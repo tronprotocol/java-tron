@@ -32,7 +32,6 @@ import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
-
 public class BlockCapsule {
 
   protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
@@ -42,8 +41,6 @@ public class BlockCapsule {
   private Block block;
 
   private boolean unpacked;
-
-  public boolean validated = false;
 
   public boolean generatedByMyself = false;
 
@@ -80,13 +77,36 @@ public class BlockCapsule {
     unpacked = true;
   }
 
+  public BlockCapsule(long timestamp, ByteString parentHash, long number,
+      List<Transaction> transactionList) {
+    // blockheader raw
+    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setTimestamp(timestamp)
+        .setParentHash(parentHash)
+        .setNumber(number)
+        .build();
+
+    // block header
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    transactionList.forEach(trx -> {
+      blockBuild.addTransactions(trx);
+    });
+    this.block = blockBuild.setBlockHeader(blockHeader).build();
+    unpacked = true;
+  }
+
   public void addTransaction(Transaction pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
   }
 
   public List<TransactionCapsule> getTransactions() {
     return this.block.getTransactionsList().stream()
-        .map(trx->new TransactionCapsule(trx))
+        .map(trx -> new TransactionCapsule(trx))
         .collect(Collectors.toList());
   }
 
@@ -100,7 +120,6 @@ public class BlockCapsule {
         .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
-    validated = true;
   }
 
   private Sha256Hash getRawHash() {
@@ -108,12 +127,12 @@ public class BlockCapsule {
     return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray());
   }
 
-
   public boolean validateSignature() {
     try {
-      return Arrays.equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
-          block.getBlockHeader().getWitnessSignature().toString()),
-          block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+      return Arrays
+          .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
+              block.getBlockHeader().getWitnessSignature().toString()),
+              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();
       return false;
@@ -217,4 +236,9 @@ public class BlockCapsule {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
+  @Override
+  public String toString() {
+    unPack();
+    return this.block.toString();
+  }
 }
