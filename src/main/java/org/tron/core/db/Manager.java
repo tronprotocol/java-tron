@@ -184,17 +184,13 @@ public class Manager {
       }
     }
 
+
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    // generate block
-
     blockCapsule.calcMerkleRoot();
-
-    //blockCapsule.id();
-
-    //blockCapsule.sign(privateKey);
+    blockCapsule.sign(privateKey);
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());

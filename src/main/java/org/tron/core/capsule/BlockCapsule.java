@@ -37,10 +37,9 @@ public class BlockCapsule {
 
   private Block block;
 
-  private Sha256Hash hash;
-
-
   private boolean unpacked;
+
+  public boolean validated = false;
 
   private synchronized void unPack() {
     if (unpacked) {
@@ -91,6 +90,7 @@ public class BlockCapsule {
         .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+    validated = true;
   }
 
   private Sha256Hash getRawHash() {
@@ -99,10 +99,17 @@ public class BlockCapsule {
   }
 
 
-  // TODO
-  public boolean validateSigner() {
-    return true;
+  public boolean validateSigner(String publicKey) {
+    if (validated) return validated;
+
+    validated = ECKey.verify(block.getBlockHeader().getRawData().toByteArray(),
+        block.getBlockHeader().getWitnessSignature().toByteArray(),
+        Hex.decode(publicKey));
+
+    return validated;
   }
+
+  public boolean isValidated() { return  validated; }
 
   public Sha256Hash getBlockId() {
     pack();
@@ -155,7 +162,6 @@ public class BlockCapsule {
   private void pack() {
     if (data == null) {
       this.data = this.block.toByteArray();
-      this.hash = Sha256Hash.of(this.data);
     }
   }
 
@@ -171,9 +177,7 @@ public class BlockCapsule {
 
   public BlockCapsule(byte[] data) {
     this.data = data;
-    this.hash = Sha256Hash.of(this.data);
     unPack();
-
   }
 
   public byte[] getData() {
@@ -190,17 +194,6 @@ public class BlockCapsule {
     unPack();
     return this.block.getBlockHeader().getRawData().getParentHash();
   }
-
-//  public Sha256Hash getBlockId() {
-//    pack();
-//    return Sha256Hash.of(data);
-//  }
-
-//  public ByteString getHashStr() {
-//    pack();
-//    return this.getBlockId().getByteString();
-//  }
-
 
   public long getNum() {
     unPack();
