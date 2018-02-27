@@ -13,6 +13,7 @@ import org.tron.common.application.Service;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -88,9 +89,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createTransaction(GrpcAPI.Coin req, StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getFrom();
-      ByteString toBs = req.getTo();
+
+    public void createTransaction(TransferContract req,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = req.getFromAddress();
+      ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
         byte[] fromBa = fromBs.toByteArray();
@@ -114,15 +117,16 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createAccount(Account request, StreamObserver<Account> responseObserver) {
+    public void createAccount(Account request, StreamObserver<Transaction> responseObserver) {
       super.createAccount(request, responseObserver);
     }
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
-        StreamObserver<AssetIssueContract> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       super.createAssetIssue(request, responseObserver);
     }
+
   }
 
   @Override
