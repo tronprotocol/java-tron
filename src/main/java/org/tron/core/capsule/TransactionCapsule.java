@@ -18,7 +18,6 @@ package org.tron.core.capsule;
 import static org.tron.protos.Protocal.Transaction.TranscationType.CreateAccount;
 import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
 
-import com.google.protobuf.Any;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +99,8 @@ public class TransactionCapsule {
 
   public TransactionCapsule(byte[] address, Account account) {
     Transaction.Builder transactionBuilder = Transaction.newBuilder()
-        .setType(CreateAccount)
-        .setParameter(Any.pack(account));
+        .setType(CreateAccount);
+    //.setParameter(Any.pack(account));
   }
 
   public Sha256Hash getHash() {
