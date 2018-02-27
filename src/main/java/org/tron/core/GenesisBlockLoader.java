@@ -23,8 +23,6 @@ public class GenesisBlockLoader {
   private byte[] txTrieRoot;
   private byte[] parentHash;
   private byte[] hash;
-  private byte[] nonce;
-  private byte[] difficulty;
   private long number;
   private Map<String, Integer> transaction = new HashMap<>();
 
@@ -58,22 +56,6 @@ public class GenesisBlockLoader {
 
   public void setHash(byte[] hash) {
     this.hash = hash;
-  }
-
-  public byte[] getNonce() {
-    return nonce;
-  }
-
-  public void setNonce(byte[] nonce) {
-    this.nonce = nonce;
-  }
-
-  public byte[] getDifficulty() {
-    return difficulty;
-  }
-
-  public void setDifficulty(byte[] difficulty) {
-    this.difficulty = difficulty;
   }
 
   public long getNumber() {

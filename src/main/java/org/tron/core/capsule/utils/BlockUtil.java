@@ -194,7 +194,7 @@ public class BlockUtil {
 //        .getBlockHeader()
 //        .getRawData().getParentHash().toByteArray())
 //        + ", \n\thash=" + ByteArray.toHexString(block.getBlockHeader()
-//        .getRawData().getHash()
+//        .getRawData().getBlockId()
 //        .toByteArray())
 //        + ", \n\tnonce=" + ByteArray.toHexString(block.getBlockHeader()
 //        .getNonce()
@@ -268,7 +268,7 @@ public class BlockUtil {
   // TODO use blockcapsule;
   public static boolean isParentOf(Block block1, Block
       block2) {
-    //return (block1.getBlockHeader().getRawData().getParentHash() == block2.getBlockHeader()getHash());
+    //return (block1.getBlockHeader().getRawData().getParentHash() == block2.getBlockHeader()getBlockId());
     return true;
   }
 }

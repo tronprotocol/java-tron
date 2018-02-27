@@ -8,8 +8,6 @@ public class GenesisBlock {
   private String timeStamp;
   private String parentHash;
   private String hash;
-  private String nonce;
-  private String difficulty;
   private String number;
 
   public List<SeedNodeAddress> getTransactions() {
@@ -42,22 +40,6 @@ public class GenesisBlock {
 
   public void setHash(String hash) {
     this.hash = hash;
-  }
-
-  public String getNonce() {
-    return nonce;
-  }
-
-  public void setNonce(String nonce) {
-    this.nonce = nonce;
-  }
-
-  public String getDifficulty() {
-    return difficulty;
-  }
-
-  public void setDifficulty(String difficulty) {
-    this.difficulty = difficulty;
   }
 
   public String getNumber() {

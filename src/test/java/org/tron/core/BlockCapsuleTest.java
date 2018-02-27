@@ -75,8 +75,6 @@ public class BlockCapsuleTest {
             GENESIS_COINBASE_DATA,
             0);
     Block genesisBlock = BlockUtil.newGenesisBlock(coinbase);
-    logger.info("nonce: {}",
-        ByteArray.toHexString(genesisBlock.getBlockHeader().getRawData().getNonce().toByteArray()));
   }
 
   @Test

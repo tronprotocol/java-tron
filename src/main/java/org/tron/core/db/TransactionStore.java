@@ -24,7 +24,7 @@ public class TransactionStore extends TronDatabase {
   }
 
   /**
-   * find a transaction  by it's hash.
+   * find a transaction  by it's id.
    */
   public byte[] findTransactionByHash(byte[] trxHash) {
     return dbSource.getData(trxHash);
