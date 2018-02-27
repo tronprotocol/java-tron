@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,6 @@ import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
-
 public class BlockCapsule {
 
   protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
@@ -38,7 +38,6 @@ public class BlockCapsule {
   private Block block;
 
   private Sha256Hash hash;
-
 
   private boolean unpacked;
 
@@ -56,7 +55,6 @@ public class BlockCapsule {
     unpacked = true;
   }
 
-
   public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
@@ -73,7 +71,28 @@ public class BlockCapsule {
     // block
     Block.Builder blockBuild = Block.newBuilder();
     this.block = blockBuild.setBlockHeader(blockHeader).build();
+  }
 
+  public BlockCapsule(long timestamp, ByteString parentHash, long number,
+      List<Transaction> transactionList) {
+    // blockheader raw
+    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setTimestamp(timestamp)
+        .setParentHash(parentHash)
+        .setNumber(number)
+        .build();
+
+    // block header
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    transactionList.forEach(trx -> {
+      blockBuild.addTransactions(trx);
+    });
+    this.block = blockBuild.setBlockHeader(blockHeader).build();
   }
 
   public void addTransaction(Transaction pendingTrx) {
@@ -97,7 +116,6 @@ public class BlockCapsule {
     unPack();
     return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray());
   }
-
 
   // TODO
   public boolean validateSigner() {
@@ -201,7 +219,6 @@ public class BlockCapsule {
 //    return this.getBlockId().getByteString();
 //  }
 
-
   public long getNum() {
     unPack();
     return this.block.getBlockHeader().getRawData().getNumber();
@@ -212,4 +229,9 @@ public class BlockCapsule {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
+  @Override
+  public String toString() {
+    unPack();
+    return this.block.toString();
+  }
 }

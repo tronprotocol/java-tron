@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,31 @@ public class TransactionCapsule {
     this.transaction = trx;
   }
 
+  public TransactionCapsule(String key, int value) {
+    TXInput.raw rawData = TXInput.raw.newBuilder()
+        .setTxID(ByteString.copyFrom(new byte[]{}))
+        .setVout(-1).build();
+
+    TXInput txi = TXInput.newBuilder()
+        .setSignature(ByteString.copyFrom(new byte[]{}))
+        .setRawData(rawData).build();
+
+    TXOutput txo = TXOutput.newBuilder()
+        .setValue(value)
+        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .build();
+
+    Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
+        .addVin(txi)
+        .addVout(txo);
+
+    this.transaction = coinbaseTransaction.build();
+
+    coinbaseTransaction
+        .setId(ByteString.copyFrom(this.getHash().getBytes()));
+
+    this.transaction = coinbaseTransaction.build();
+  }
 
   /**
    * constructor TransactionCapsule.
@@ -133,5 +159,10 @@ public class TransactionCapsule {
    */
   public boolean validate() {
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return this.transaction.toString();
   }
 }

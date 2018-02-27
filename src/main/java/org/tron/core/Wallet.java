@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import java.util.ArrayList;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,6 @@ import org.tron.core.net.node.Node;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 
-
 public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
@@ -47,7 +45,6 @@ public class Wallet {
   private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
-  private UTXOSet utxoSet;
 
   /**
    * Creates a new Wallet with a random ECKey.
