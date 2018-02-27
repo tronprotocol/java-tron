@@ -129,6 +129,7 @@ public class WitnessService implements Service {
     BlockCapsule block = generateBlock(scheduledTime);
     logger.info("Block is generated successfully, Its hash is " + block.getBlockId());
 
+    db.getBlockStore().pushBlock(block);
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }

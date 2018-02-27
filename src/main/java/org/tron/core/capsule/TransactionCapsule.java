@@ -162,11 +162,24 @@ public class TransactionCapsule {
     return transaction;
   }
 
+  public void sign() {
+
+  }
+
   /**
-   * validate.
+   * validateSignature.
    */
-  public boolean validate() {
+  public boolean validateSignature() {
     return true;
+  }
+
+
+  public Sha256Hash getTransactionId() {
+    return Sha256Hash.of(this.transaction.toByteArray());
+  }
+
+  public byte[] getData() {
+    return this.transaction.toByteArray();
   }
 
   @Override
