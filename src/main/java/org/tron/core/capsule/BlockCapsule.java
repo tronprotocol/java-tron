@@ -122,7 +122,7 @@ public class BlockCapsule {
 
   public Sha256Hash getBlockId() {
     pack();
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+    return Sha256Hash.of(this.block.getBlockHeader().toByteArray());
   }
 
   public Sha256Hash calcMerklerRoot() {
