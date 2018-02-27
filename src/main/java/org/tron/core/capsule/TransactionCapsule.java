@@ -15,8 +15,10 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.protos.Protocal.Transaction.TranscationType.CreateAccount;
 import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
 
+import com.google.protobuf.Any;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
@@ -93,6 +96,12 @@ public class TransactionCapsule {
       logger.error("Transaction create failed！");
       transaction = null;
     }
+  }
+
+  public TransactionCapsule(byte[] address, Account account) {
+    Transaction.Builder transactionBuilder = Transaction.newBuilder()
+        .setType(CreateAccount)
+        .setParameter(Any.pack(account));
   }
 
   public Sha256Hash getHash() {
