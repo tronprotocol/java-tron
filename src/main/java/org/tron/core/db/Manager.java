@@ -189,8 +189,9 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    blockCapsule.calcMerkleRoot();
+    blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());

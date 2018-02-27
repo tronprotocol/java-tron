@@ -113,7 +113,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     logger.info("handle block");
-    blockStoreDb.saveBlock(block);
+    blockStoreDb.pushBlock(block);
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
@@ -125,7 +125,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    blockStoreDb.pushTransactions(trx.getTransaction());
+    blockStoreDb.pushTransactions(trx);
   }
 
 
