@@ -12,7 +12,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.protos.Contract.VoteContract;
+import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -156,8 +156,8 @@ public class Manager {
         return;
       }
       Any parameter = trx.getParameterList().get(0);
-      if (parameter.is(VoteContract.class)) {
-        VoteContract voteContract = parameter.unpack(VoteContract.class);
+      if (parameter.is(VoteWitnessContract.class)) {
+        VoteWitnessContract voteContract = parameter.unpack(VoteWitnessContract.class);
         int voteAdd = voteContract.getCount();
         if (voteAdd > 0) {
           voteContract.getVoteAddressList().forEach(voteAddress -> {
