@@ -32,11 +32,17 @@ public class TxInputUtil {
    */
   public static TXInput newTxInput(byte[] txId, long vout, byte[]
       signature, byte[] pubKey) {
-    return TXInput.newBuilder()
+
+    TXInput.raw.Builder rawBuilder = TXInput.raw.newBuilder();
+
+    TXInput.raw rawData = rawBuilder
         .setTxID(ByteString.copyFrom(txId))
         .setVout(vout)
-        .setSignature(ByteString.copyFrom(signature))
         .setPubKey(ByteString.copyFrom(pubKey)).build();
+
+    return TXInput.newBuilder()
+        .setSignature(ByteString.copyFrom(signature))
+        .setRawData(rawData).build();
   }
 
   /**
@@ -50,11 +56,12 @@ public class TxInputUtil {
       return "";
     }
 
-    return "\nTXInput {\n" + "\ttxID=" + ByteArray.toHexString(txi.getTxID().toByteArray())
-        + ",\n\tvout=" + txi.getVout()
+    return "\nTXInput {\n" + "\ttxID=" + ByteArray
+        .toHexString(txi.getRawData().getTxID().toByteArray())
+        + ",\n\tvout=" + txi.getRawData().getVout()
         + ",\n\tsignature=" + ByteArray.toHexString(txi.getSignature()
         .toByteArray())
-        + ",\n\tpubKey=" + ByteArray.toStr(txi.getPubKey().toByteArray())
+        + ",\n\tpubKey=" + ByteArray.toStr(txi.getRawData().getPubKey().toByteArray())
         + "\n}\n";
   }
 }

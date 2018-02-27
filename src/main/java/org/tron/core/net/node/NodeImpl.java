@@ -11,6 +11,7 @@ import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.Message;
@@ -39,7 +40,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private GossipLocalNode gossipNode;
 
-  private volatile boolean isAdvertiseActive = true;
+  private volatile boolean isAdvertiseActive;
 
   private Thread advertiseLoopThread;
 
@@ -51,7 +52,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
-    logger.info("on message");
+    logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -67,6 +68,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case BLOCK_INVENTORY:
         onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
+        break;
+      case BLOCK_CHAIN_INVENTORY:
+        onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
         break;
       default:
         throw new IllegalArgumentException("No such message");
@@ -91,10 +95,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    */
   public void broadcast(Message msg) {
     if (msg instanceof BlockMessage) {
-      blockToAdvertise.add(msg.sha256Hash());
+      logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
+      blockToAdvertise.add(msg.getMessageId());
     }
     if (msg instanceof TransactionMessage) {
-      trxToAdvertise.add(msg.sha256Hash());
+      trxToAdvertise.add(msg.getMessageId());
     }
   }
 
@@ -103,6 +108,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode = GossipLocalNode.getInstance();
     gossipNode.setPeerDel(this);
     gossipNode.start();
+    isAdvertiseActive = true;
   }
 
   @Override
@@ -123,6 +129,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.info("loop advertise inv");
       for (PeerConnection peer : gossipNode.listPeer.values()) {
         if (!peer.needSyncFrom) {
+          logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
         }
       }
@@ -131,16 +138,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // fetch blocks
     loopFetchBlocks = new ExecutorLoop<>(2, 10, c -> {
       logger.info("loop fetch blocks");
-      if (fetchMap.containsKey(c.sha256Hash())) {
-        fetchMap.get(c.sha256Hash()).sendMessage(c);
+      if (fetchMap.containsKey(c.getMessageId())) {
+        fetchMap.get(c.getMessageId()).sendMessage(c);
       }
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
     // sync block chain
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
       logger.info("loop sync block chain");
-      if (syncMap.containsKey(d.sha256Hash())) {
-        syncMap.get(d.sha256Hash()).sendMessage(d);
+      if (syncMap.containsKey(d.getMessageId())) {
+        syncMap.get(d.getMessageId()).sendMessage(d);
       }
     }, throwable -> logger.error("Unhandled exception: ", throwable));
 
@@ -197,7 +204,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.lastBlockWeKnow = blkMsg.sha256Hash();
+    peer.lastBlockWeKnow = blkMsg.getMessageId();
     del.handleBlock(blkMsg.getBlockCapsule());
   }
 
@@ -216,7 +223,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
     Protocal.Inventory inv = fetchInvDataMsg.getInventory();
-    MessageTypes type = inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
+    MessageTypes type =
+        inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 
     //get data one by one
     for (ByteString byteHash : inv.getIdsList()) {
@@ -227,11 +235,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle block inventory message");
+  private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
+    logger.info("on handle block chain inventory message");
     List<Sha256Hash> blockIds = del.getBlockHashes(msg.getHashList());
     FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.sha256Hash(), peer);
+    fetchMap.put(fetchMsg.getMessageId(), peer);
+    loopFetchBlocks.push(fetchMsg);
+  }
+
+  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
+    logger.info("on handle blocks inventory message");
+    //todo: check this peer's advertise history and the history of our request to this peer.
+    //simple implement here first
+    List<Sha256Hash> fetchList = new ArrayList<>();
+    msg.getHashList().forEach(hash -> {
+      //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
+      logger.info("We will fetch " + hash + " from " + peer);
+      fetchList.add(hash);
+    });
+    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
+    fetchMap.put(fetchMsg.getMessageId(), peer);
     loopFetchBlocks.push(fetchMsg);
   }
 }

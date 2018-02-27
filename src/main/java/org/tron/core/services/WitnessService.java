@@ -17,7 +17,6 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
-import org.tron.protos.Protocal;
 
 public class WitnessService implements Service {
 
@@ -128,6 +127,8 @@ public class WitnessService implements Service {
     DateTime scheduledTime = getSlotTime(slot);
 
     BlockCapsule block = generateBlock(scheduledTime);
+    logger.info("Block is generated successfully, Its hash is " + block.getBlockId());
+
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
@@ -138,7 +139,6 @@ public class WitnessService implements Service {
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
-    logger.info("broadcast block successfully");
   }
 
   private BlockCapsule generateBlock(DateTime when) {

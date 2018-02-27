@@ -228,11 +228,11 @@ public class Manager {
 
     blockCapsule.calcMerkleRoot();
 
-    blockCapsule.hash();
+    //blockCapsule.id();
 
-    blockCapsule.sign(privateKey);
+    //blockCapsule.sign(privateKey);
 
-    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getHashStr());
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
     dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;

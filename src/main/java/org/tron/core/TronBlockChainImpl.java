@@ -19,6 +19,8 @@
 package org.tron.core;
 
 import static org.tron.core.Constant.LAST_HASH;
+
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -33,7 +35,6 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.SystemProperties;
 import org.tron.core.db.BlockStoreInput;
 import org.tron.protos.Protocal.Block;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 @Component
 public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.TronBlockChain {
@@ -82,26 +83,27 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
 
   /**
    * add block to chain.
+   *
+   * @deprecated
    */
   public synchronized void addBlockToChain(Block block) {
     Block bestBlock = getBestBlock();
-
-    if (bestBlock.getBlockHeader().getHash() == block.getBlockHeader()
-        .getHash()) {
-      byte[] blockByte = block.toByteArray();
-
-      LevelDbDataSourceImpl levelDbDataSource = initBb();
-      levelDbDataSource.putData(block.getBlockHeader().getHash()
-          .toByteArray(), blockByte);
-
-      byte[] key = LAST_HASH;
-
-      levelDbDataSource.putData(key, block.getBlockHeader().getHash()
-          .toByteArray());  // Storage lastHash
-
-    } else {
-      System.out.print("lastHash error");
-    }
+//    if (bestBlock.getBlockHeader().getBlockId() == block.getBlockHeader()
+//        .getBlockId()) {
+//      byte[] blockByte = block.toByteArray();
+//
+//      LevelDbDataSourceImpl levelDbDataSource = initBb();
+//      levelDbDataSource.putData(block.getBlockHeader().getBlockId()
+//          .toByteArray(), blockByte);
+//
+//      byte[] key = LAST_HASH;
+//
+//      levelDbDataSource.putData(key, block.getBlockHeader().getBlockId()
+//          .toByteArray());  // Storage lastHash
+//
+//    } else {
+//      System.out.print("lastHash error");
+//    }
   }
 
   private void recordBlock(Block block) {
@@ -122,8 +124,8 @@ public class TronBlockChainImpl implements TronBlockChain, org.tron.core.facade.
 
       try (BufferedWriter bw =
           new BufferedWriter(new FileWriter(dumpFile.getAbsoluteFile(), true))) {
-      bw.write(Hex.toHexString(block.toByteArray()));
-      bw.write("\n");
+        bw.write(Hex.toHexString(block.toByteArray()));
+        bw.write("\n");
       }
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
