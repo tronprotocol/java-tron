@@ -123,7 +123,7 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (!trxCap.validate()) {
+    if (!trxCap.validateSignature()) {
       return false;
     }
 

@@ -158,8 +158,11 @@ public class BlockStore extends TronDatabase {
 
   public boolean pushTransactions(TransactionCapsule trx) {
     logger.info("push transaction");
+    if (!trx.validateSignature()) {
+      return false;
+    }
+    dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
-    //pendingTrans.add(trx);
   }
 
   /**
@@ -187,8 +190,6 @@ public class BlockStore extends TronDatabase {
           return;
         }
       });
-
-
 
       //todo: In some case it need to switch the branch
     }

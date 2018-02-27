@@ -77,7 +77,7 @@ public class BlockCapsule {
     // block
     Block.Builder blockBuild = Block.newBuilder();
     this.block = blockBuild.setBlockHeader(blockHeader).build();
-
+    unpacked = true;
   }
 
   public void addTransaction(Transaction pendingTrx) {
