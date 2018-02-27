@@ -137,7 +137,7 @@ public class Manager {
       case Transfer:
         break;
       case VoteWitess:
-        voteWitessCount(trx);
+        voteWitnessCount(trx);
         break;
       case CreateAccount:
         break;
@@ -150,11 +150,9 @@ public class Manager {
     return true;
   }
 
-  private void voteWitessCount(Transaction trx) {
+  private void voteWitnessCount(Transaction trx) {
     try {
-      int parameterSize = trx.getParameterList().size();
-      if (parameterSize <= 0) {
-        logger.info("transaction parameter list size is {}", parameterSize);
+      if (trx.getParameterList() == null || trx.getParameterList().isEmpty()) {
         return;
       }
       Any parameter = trx.getParameterList().get(0);
@@ -163,7 +161,7 @@ public class Manager {
         int voteAdd = voteContract.getCount();
         if (voteAdd > 0) {
           voteContract.getVoteAddressList().forEach(voteAddress -> {
-            countVoteWitess(voteAddress, voteAdd);
+            countvotewitness(voteAddress, voteAdd);
           });
         }
       }
@@ -172,7 +170,7 @@ public class Manager {
     }
   }
 
-  private void countVoteWitess(ByteString voteAddress, int countAdd) {
+  private void countvotewitness(ByteString voteAddress, int countAdd) {
     logger.info("voteAddress is {},voteAddCount is {}", voteAddress, countAdd);
     int count = 0;
     byte[] value = witnessStore.dbSource.getData(voteAddress.toByteArray());
