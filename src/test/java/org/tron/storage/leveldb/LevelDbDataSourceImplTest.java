@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.core.config.Config;
+import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 @Ignore
@@ -35,13 +35,12 @@ public class LevelDbDataSourceImplTest {
 
   @Before
   public void init() {
-    Args.setParam(new String[]{}, Config.getConf(Constant.TEST_CONF));
+    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
   }
 
   @Test
   public void testGet() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
-        "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,"test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
     byte[] key = key1.getBytes();
