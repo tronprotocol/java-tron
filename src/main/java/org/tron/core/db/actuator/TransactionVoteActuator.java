@@ -28,10 +28,10 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
   }
 
   private boolean voteWitnessCount(Transaction trx) {
-    if (null == trx.getParameterList()) {
+    if (null == trx.getRawData().getParameterList()) {
       return false;
     }
-    trx.getParameterList().forEach(parameter -> {
+    trx.getRawData().getParameterList().forEach(parameter -> {
       try {
         if (parameter.is(VoteWitnessContract.class)) {
           VoteWitnessContract voteContract = parameter.unpack(VoteWitnessContract.class);

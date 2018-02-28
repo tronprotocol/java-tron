@@ -27,7 +27,7 @@ public class ActuatorFactory {
       logger.info("manager is null");
       return null;
     }
-    switch (transactionCapsule.getTransaction().getType()) {
+    switch (transactionCapsule.getTransaction().getRawData().getType()) {
       case Transfer:
         break;
       case VoteWitess:

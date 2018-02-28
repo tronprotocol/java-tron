@@ -93,7 +93,7 @@ public class RpcApiService implements Service {
 
     public void createTransaction(TransferContract req,
         StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getFromAddress();
+      ByteString fromBs = req.getOwnerAddress();
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {

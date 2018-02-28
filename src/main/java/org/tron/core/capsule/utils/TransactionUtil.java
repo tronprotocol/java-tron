@@ -37,8 +37,9 @@ public class TransactionUtil {
    * @return boolean true for coinbase, false for not coinbase.
    */
   public static boolean isCoinbaseTransaction(Transaction transaction) {
-    return transaction.getVinList().size() == 1 && transaction.getVin(0)
-        .getRawData().getTxID().size() == 0 && transaction.getVin(0).getRawData().getVout() == -1;
+    return transaction.getRawData().getVinList().size() == 1 && transaction.getRawData().getVin(0)
+        .getRawData().getTxID().size() == 0
+        && transaction.getRawData().getVin(0).getRawData().getVout() == -1;
   }
 
   private static boolean checkTxOutUnSpent(TXOutput prevOut) {
@@ -56,7 +57,7 @@ public class TransactionUtil {
    * Get sender.
    */
   public static byte[] getSender(Transaction tx) {
-    byte[] pubKey = tx.getVin(0).getRawData().getPubKey().toByteArray();
+    byte[] pubKey = tx.getRawData().getVin(0).getRawData().getPubKey().toByteArray();
     return ECKey.computeAddress(pubKey);
   }
 

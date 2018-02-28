@@ -26,6 +26,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.utils.TxInputUtil;
@@ -63,16 +65,11 @@ public class TransactionCapsule {
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
         .build();
 
-    Transaction.Builder coinbaseTransaction = Transaction.newBuilder()
+    Transaction.raw.Builder rawCoinbaseTransaction = Transaction.raw.newBuilder()
         .addVin(txi)
         .addVout(txo);
+    this.transaction = Transaction.newBuilder().setRawData(rawCoinbaseTransaction.build()).build();
 
-    this.transaction = coinbaseTransaction.build();
-
-    coinbaseTransaction
-        .setId(ByteString.copyFrom(this.getHash().getBytes()));
-
-    this.transaction = coinbaseTransaction.build();
   }
 
   /**
@@ -86,7 +83,7 @@ public class TransactionCapsule {
       UtxoStore utxoStore
   ) {
 
-    Transaction.Builder transactionBuilder = Transaction.newBuilder().setType(Transfer);
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(Transfer);
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
@@ -116,15 +113,16 @@ public class TransactionCapsule {
         transactionBuilder.addVout(txOutput);
       }
       logger.info("Transaction create succeeded！");
-      transaction = transactionBuilder.build();
+      transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
     } else {
       logger.error("Transaction create failed！");
       transaction = null;
     }
   }
 
+  // TODO
   public TransactionCapsule(byte[] address, Account account) {
-    Transaction.Builder transactionBuilder = Transaction.newBuilder()
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder()
         .setType(CreateAccount);
     //.setParameter(Any.pack(account));
   }
@@ -134,6 +132,9 @@ public class TransactionCapsule {
     return Sha256Hash.of(transBytes);
   }
 
+  public Sha256Hash getRawHash() {
+    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+  }
 
   /**
    * cheack balance of the address.
@@ -162,9 +163,13 @@ public class TransactionCapsule {
     return transaction;
   }
 
-  public void sign() {
-
+  public void sign(byte[] privateKey) {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
+
 
   /**
    * validateSignature.
