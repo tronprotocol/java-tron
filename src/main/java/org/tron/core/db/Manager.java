@@ -133,44 +133,11 @@ public class Manager {
       return false;
     }
 
-    ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
+    //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
     Actuator actuator = ActuatorFactory.createActuator(trxCap, this);
     return actuator.execute();
   }
 
-  private void voteWitnessCount(Transaction trx) {
-    try {
-      if (trx.getParameterList() == null || trx.getParameterList().isEmpty()) {
-        return;
-      }
-      Any parameter = trx.getParameterList().get(0);
-      if (parameter.is(VoteWitnessContract.class)) {
-        VoteWitnessContract voteContract = parameter.unpack(VoteWitnessContract.class);
-        int voteAdd = voteContract.getCount();
-        if (voteAdd > 0) {
-          voteContract.getVoteAddressList().forEach(voteAddress -> {
-            countvotewitness(voteAddress, voteAdd);
-          });
-        }
-      }
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void countvotewitness(ByteString voteAddress, int countAdd) {
-    logger.info("voteAddress is {},voteAddCount is {}", voteAddress, countAdd);
-    int count = 0;
-    byte[] value = witnessStore.dbSource.getData(voteAddress.toByteArray());
-    if (null != value) {
-      count = ByteArray.toInt(value);
-    }
-
-    logger.info("voteAddress pre-voteCount is {}", count);
-    count += countAdd;
-    witnessStore.dbSource.putData(voteAddress.toByteArray(), ByteArray.fromInt(count));
-    logger.info("voteAddress after-voteCount is {}", count);
-  }
 
   /**
    * Generate a block.
