@@ -36,7 +36,6 @@ import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 
-
 public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
@@ -47,7 +46,6 @@ public class Wallet {
   private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
-  private UTXOSet utxoSet;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -116,7 +114,7 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
 
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.validate()) {
+    if (trx.validateSignature()) {
       Message message = new TransactionMessage(signaturedTransaction);
       p2pnode.broadcast(message);
       return true;

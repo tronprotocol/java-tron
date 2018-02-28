@@ -129,7 +129,7 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (trxCap == null || !trxCap.validate()) {
+    if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
 
@@ -215,13 +215,9 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    // generate block
-
-    blockCapsule.calcMerkleRoot();
-
-    //blockCapsule.id();
-
-    //blockCapsule.sign(privateKey);
+    blockCapsule.setMerklerRoot();
+    blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
