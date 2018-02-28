@@ -1,6 +1,5 @@
 package org.tron.core.db.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,25 +28,26 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
   }
 
   private boolean voteWitnessCount(Transaction trx) {
-    try {
-      if (null == trx.getParameterList() || trx.getParameterList().isEmpty()) {
-        return false;
-      }
-      Any parameter = trx.getParameterList().get(0);
-      if (parameter.is(VoteWitnessContract.class)) {
-        VoteWitnessContract voteContract = parameter.unpack(VoteWitnessContract.class);
-        int voteAdd = voteContract.getCount();
-        if (voteAdd > 0) {
-          voteContract.getVoteAddressList().forEach(voteAddress -> {
-            if (null != dbManager) {
-              dbManager.getWitnessStore().countvoteWitness(voteAddress, voteAdd);
-            }
-          });
-        }
-      }
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+    if (null == trx.getParameterList()) {
+      return false;
     }
+    trx.getParameterList().forEach(parameter -> {
+      try {
+        if (parameter.is(VoteWitnessContract.class)) {
+          VoteWitnessContract voteContract = parameter.unpack(VoteWitnessContract.class);
+          int voteAdd = voteContract.getCount();
+          if (voteAdd > 0) {
+            voteContract.getVoteAddressList().forEach(voteAddress -> {
+              if (null != dbManager) {
+                dbManager.getWitnessStore().countvoteWitness(voteAddress, voteAdd);
+              }
+            });
+          }
+        }
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    });
     return true;
   }
 
