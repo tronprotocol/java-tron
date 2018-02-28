@@ -22,14 +22,17 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
 
   @Override
   public boolean execute() {
-    //TODO
-    return true;
+    if (null == transactionCapsule || null == transactionCapsule.getTransaction()) {
+      return false;
+    }
+    return voteWitnessCount(transactionCapsule.getTransaction());
+
   }
 
-  private void voteWitnessCount(Transaction trx) {
+  private boolean voteWitnessCount(Transaction trx) {
     try {
-      if (trx.getParameterList() == null || trx.getParameterList().isEmpty()) {
-        return;
+      if (null == trx.getParameterList() || trx.getParameterList().isEmpty()) {
+        return false;
       }
       Any parameter = trx.getParameterList().get(0);
       if (parameter.is(VoteWitnessContract.class)) {
@@ -46,6 +49,7 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
+    return true;
   }
 
 }
