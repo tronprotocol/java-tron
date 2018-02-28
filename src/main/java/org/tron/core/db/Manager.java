@@ -12,6 +12,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.actuator.Actuator;
+import org.tron.core.db.actuator.ActuatorFactory;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocal.Transaction;
 
@@ -127,27 +129,13 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (!trxCap.validate()) {
+    if (trxCap == null || !trxCap.validate()) {
       return false;
     }
 
-    Transaction trx = trxCap.getTransaction();
-
-    switch (trx.getType()) {
-      case Transfer:
-        break;
-      case VoteWitess:
-        voteWitnessCount(trx);
-        break;
-      case CreateAccount:
-        break;
-      case DeployContract:
-        break;
-      default:
-        break;
-    }
-
-    return true;
+    ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
+    Actuator actuator = ActuatorFactory.createActuator(trxCap, this);
+    return actuator.execute();
   }
 
   private void voteWitnessCount(Transaction trx) {
