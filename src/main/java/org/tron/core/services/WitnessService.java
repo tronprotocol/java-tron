@@ -127,9 +127,8 @@ public class WitnessService implements Service {
     DateTime scheduledTime = getSlotTime(slot);
 
     BlockCapsule block = generateBlock(scheduledTime);
-    logger.info("Block is generated successfully, Its hash is " + block.getBlockId());
+    logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
 
-    db.getBlockStore().pushBlock(block);
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }

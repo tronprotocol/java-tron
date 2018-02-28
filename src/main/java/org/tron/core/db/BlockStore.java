@@ -68,7 +68,7 @@ public class BlockStore extends TronDatabase {
   /**
    * to do.
    */
-  public Sha256Hash getHeadBlockHash() {
+  public Sha256Hash getHeadBlockId() {
     if (head == null) {
       return Sha256Hash.ZERO_HASH;
     }
@@ -88,7 +88,7 @@ public class BlockStore extends TronDatabase {
   /**
    * Get the block id from the number.
    */
-  public Sha256Hash getBlockHashByNum(long num) {
+  public Sha256Hash getBlockIdByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
     if (hash != null) {
       return Sha256Hash.wrap(hash);
@@ -99,7 +99,7 @@ public class BlockStore extends TronDatabase {
   /**
    * Get number of block by the block id.
    */
-  public long getBlockNumByHash(Sha256Hash hash) {
+  public long getBlockNumById(Sha256Hash hash) {
     if (khaosDb.containBlock(hash)) {
       return khaosDb.getBlock(hash).getNum();
     }

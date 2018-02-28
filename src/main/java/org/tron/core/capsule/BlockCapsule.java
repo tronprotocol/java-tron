@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
@@ -131,7 +132,7 @@ public class BlockCapsule {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
-              block.getBlockHeader().getWitnessSignature().toString()),
+              ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray())),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();

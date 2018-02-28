@@ -231,6 +231,7 @@ public class Manager {
     blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
+    getBlockStore().pushBlock(blockCapsule);
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
