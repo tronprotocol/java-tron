@@ -162,11 +162,15 @@ public class TransactionCapsule {
     return transaction;
   }
 
-  public void sign() {
 
+  /**
+   * TODO
+   */
+  public void sign() {
   }
 
   /**
+   * TODO
    * validateSignature.
    */
   public boolean validateSignature() {

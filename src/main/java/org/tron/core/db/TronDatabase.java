@@ -20,6 +20,8 @@ public abstract class TronDatabase {
     dbSource.closeDB();
   }
 
+  //TODO: optimize these abstract methods
+
   abstract void add();
 
   abstract void del();
