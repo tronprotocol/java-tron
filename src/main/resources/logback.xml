@@ -76,6 +76,8 @@
   <logger name="FullNode" level="INFO"/>
   <logger name="PeerConnection" level="INFO"/>
   <logger name="TransactionUtil" level="INFO"/>
+  <logger name="TransactionVoteActuator" level="INFO"/>
+  <logger name="WitnessStore" level="INFO"/>
 
 </configuration>
 
