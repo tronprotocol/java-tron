@@ -1,11 +1,19 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
+import org.tron.common.crypto.ECKey;
 import org.tron.protos.Protocal.Witness;
 
 public class WitnessCapsule {
 
   private Witness witness;
+
+  public WitnessCapsule(ByteString pubKey, String url) {
+    this.witness = this.witness.toBuilder()
+        .setPubKey(pubKey)
+        .setAddress(ByteString.copyFrom(ECKey.computeAddress(pubKey.toByteArray())))
+        .setUrl(url).build();
+  }
 
   public WitnessCapsule(Witness witness) {
     this.witness = witness;

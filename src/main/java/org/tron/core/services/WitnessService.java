@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -126,6 +127,7 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
+    //TODO:implement private and public key code, fake code first.
     BlockCapsule block = generateBlock(scheduledTime);
     logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
 
@@ -200,14 +202,19 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
+    localWitnessState = new WitnessCapsule(
+        ByteString.copyFrom(ECKey.fromPrivate("0x11".getBytes()).getPubKey()),
+        "http://torn.org");
     this.witnessStates = db.getWitnesses();
   }
 
   @Override
   public void init(Args args) {
-    this.privateKey = args.getPrivateKey();
-    localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
+    //this.privateKey = args.getPrivateKey();
+    this.privateKey = "0x11";
+    localWitnessState = new WitnessCapsule(
+        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey.getBytes()).getPubKey()),
+        "http://torn.org");
     this.witnessStates = db.getWitnesses();
   }
 

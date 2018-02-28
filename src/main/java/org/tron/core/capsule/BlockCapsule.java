@@ -130,6 +130,12 @@ public class BlockCapsule {
 
   public boolean validateSignature() {
     try {
+//      logger.info(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).toString());
+//      logger.info(ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray()));
+//      //logger.info(Sha256Hash.wrap(block.getBlockHeader().getWitnessSignature()).toString());
+//      logger.info("1:" + ECKey.signatureToAddress(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).getBytes(),
+//          ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray())));
+//      logger.info("2:" +   block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
       return Arrays
           .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
               ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray())),
