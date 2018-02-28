@@ -26,7 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.protos.Protocal;
+import org.tron.core.capsule.TransactionCapsule;
 
 public class BlockStore extends TronDatabase {
 
@@ -156,25 +156,46 @@ public class BlockStore extends TronDatabase {
     return false;
   }
 
-  public void pushTransactions(Protocal.Transaction trx) {
+  public boolean pushTransactions(TransactionCapsule trx) {
     logger.info("push transaction");
-    //pendingTrans.add(trx);
+    if (!trx.validateSignature()) {
+      return false;
+    }
+    dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
+    return true;
   }
 
   /**
    * save a block.
    */
-  public void saveBlock(BlockCapsule block) {
+  public void pushBlock(BlockCapsule block) {
     logger.info("save block");
     khaosDb.push(block);
 
     //todo: check block's validity
-    //todo: In some case it need to switch the branch
-    if (block.validate()) {
-      dbSource.putData(block.getBlockId().getBytes(), block.getData());
-      numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    if (!block.generatedByMyself) {
+      if (!block.validateSignature()) {
+        logger.info("The siganature is not validated.");
+        return;
+      }
+
+      if (!block.calcMerklerRoot().equals(block.getMerklerRoot())) {
+        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerklerRoot()
+            + " , the headers is " + block.getMerklerRoot());
+        return;
+      }
+
+      block.getTransactions().forEach(trx->{
+        if (!pushTransactions(trx)) {
+          return;
+        }
+      });
+
+      //todo: In some case it need to switch the branch
     }
 
+    dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     head = khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }

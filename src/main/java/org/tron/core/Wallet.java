@@ -114,7 +114,7 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
 
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.validate()) {
+    if (trx.validateSignature()) {
       Message message = new TransactionMessage(signaturedTransaction);
       p2pnode.broadcast(message);
       return true;

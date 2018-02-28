@@ -176,7 +176,7 @@ public class KhaosDatabase extends TronDatabase {
 
     miniStore.insert(block);
 
-    if (block == null || block.num > head.num) {
+    if (head == null || block.num > head.num) {
       head = block;
     }
     return head.blk;
