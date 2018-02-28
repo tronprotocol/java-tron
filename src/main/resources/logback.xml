@@ -78,6 +78,7 @@
   <logger name="TransactionUtil" level="INFO"/>
   <logger name="TransactionVoteActuator" level="INFO"/>
   <logger name="WitnessStore" level="INFO"/>
+  <logger name="ActuatorFactory" level="INFO"/>
 
 </configuration>
 

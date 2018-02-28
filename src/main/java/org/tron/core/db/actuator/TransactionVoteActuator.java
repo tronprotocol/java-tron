@@ -5,8 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TronDatabase;
-import org.tron.core.db.WitnessStore;
+import org.tron.core.db.Manager;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocal.Transaction;
 
@@ -15,8 +14,8 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
   private static final Logger logger = LoggerFactory.getLogger("TransactionVoteActuator");
 
   TransactionVoteActuator(TransactionCapsule transactionCapsule,
-      TronDatabase tronDatabase) {
-    super(transactionCapsule, tronDatabase);
+      Manager dbManager) {
+    super(transactionCapsule, dbManager);
   }
 
 
@@ -40,8 +39,8 @@ public class TransactionVoteActuator extends AbstractTransactionActuator {
         int voteAdd = voteContract.getCount();
         if (voteAdd > 0) {
           voteContract.getVoteAddressList().forEach(voteAddress -> {
-            if (tronDatabase instanceof WitnessStore) {
-              ((WitnessStore) tronDatabase).countvoteWitness(voteAddress, voteAdd);
+            if (null != dbManager) {
+              dbManager.getWitnessStore().countvoteWitness(voteAddress, voteAdd);
             }
           });
         }

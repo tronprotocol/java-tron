@@ -1,14 +1,14 @@
 package org.tron.core.db.actuator;
 
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TronDatabase;
+import org.tron.core.db.Manager;
 
 public class TransactionTransferActuator extends AbstractTransactionActuator {
 
 
   TransactionTransferActuator(TransactionCapsule transactionCapsule,
-      TronDatabase tronDatabase) {
-    super(transactionCapsule, tronDatabase);
+      Manager dbManager) {
+    super(transactionCapsule, dbManager);
   }
 
   @Override
