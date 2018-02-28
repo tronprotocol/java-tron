@@ -1,20 +1,16 @@
 package org.tron.core.db;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.actuator.Actuator;
 import org.tron.core.db.actuator.ActuatorFactory;
-import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
