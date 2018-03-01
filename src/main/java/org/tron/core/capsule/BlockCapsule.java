@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
@@ -114,7 +113,7 @@ public class BlockCapsule {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
@@ -129,15 +128,9 @@ public class BlockCapsule {
 
   public boolean validateSignature() {
     try {
-//      logger.info(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).toString());
-//      logger.info(ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray()));
-//      //logger.info(Sha256Hash.wrap(block.getBlockHeader().getWitnessSignature()).toString());
-//      logger.info("1:" + ECKey.signatureToAddress(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).getBytes(),
-//          ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray())));
-//      logger.info("2:" +   block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
       return Arrays
-          .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
-              ByteArray.toHexString(block.getBlockHeader().getWitnessSignature().toByteArray())),
+          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();
