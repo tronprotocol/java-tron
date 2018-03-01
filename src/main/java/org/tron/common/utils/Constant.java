@@ -30,8 +30,8 @@ public class Constant {
   //config
   public static final String NORMAL = "normal";
   public static final String TEST = "test";
-  public static final String NORMAL_CONF = "config.json";
-  public static final String TEST_CONF = "config-test.json";
+  public static final String NORMAL_CONF = "config.conf";
+  public static final String TEST_CONF = "config-test.conf";
   public static final String DATABASE_DIR = "database.directory";
   public static final String OUTPUT_DIR = "output-directory" + File.separator;
 
