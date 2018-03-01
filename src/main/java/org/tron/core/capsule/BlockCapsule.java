@@ -238,4 +238,11 @@ public class BlockCapsule {
     unPack();
     return this.block.toString();
   }
+
+  public List<Transaction> getTransactionList() {
+    unPack();
+    return this.block.getTransactionsList();
+  }
+
+
 }
