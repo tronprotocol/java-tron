@@ -16,6 +16,7 @@
 package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
