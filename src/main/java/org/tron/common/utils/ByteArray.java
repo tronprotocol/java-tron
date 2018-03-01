@@ -37,7 +37,7 @@ public class ByteArray {
     if (data.startsWith("0x")) {
       data = data.substring(2);
     }
-    if (data.length() % 2 == 1) {
+    if (data.length() % 2 != 0) {
       data = "0" + data;
     }
     return Hex.decode(data);

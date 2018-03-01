@@ -18,9 +18,8 @@
 
 package org.tron.core.config;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,6 +32,8 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public class Configer {
 
@@ -43,36 +44,59 @@ public class Configer {
 
   static {
     try {
-      File file = new File(Configer.getConf().getString
-          (DATABASE_DIRECTORY), "nodeId.properties");
-      Properties props = new Properties();
-      if (file.canRead()) {
-        try (Reader r = new FileReader(file)) {
-          props.load(r);
-        }
-      } else {
-        ECKey key = new ECKey();
-
-        byte[] privKeyBytes = key.getPrivKeyBytes();
-
-        String nodeIdPrivateKey = ByteArray.toHexString(privKeyBytes);
-
-        props.setProperty("nodeIdPrivateKey", nodeIdPrivateKey);
-        props.setProperty("nodeId", Hex.toHexString(key.getNodeId
-            ()));
-        file.getParentFile().mkdirs();
-        try (Writer w = new FileWriter(file)) {
-          props.store(w, "Generated NodeID.");
-        }
-        logger.info("New nodeID generated: " + props.getProperty
-            ("nodeId"));
-        logger.info("Generated nodeID and its private key stored " +
-            "in " + file);
-      }
+      Properties props = loadOrCreateProperties();
       generatedNodePrivateKey = props.getProperty("nodeIdPrivateKey");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static Properties loadOrCreateProperties() throws IOException, FileNotFoundException {
+    File file = new File(Configer.getConf().getString
+        (DATABASE_DIRECTORY), "nodeId.properties");
+    if (file.canRead()) {
+      return loadPropertiesFrom(file);
+    }
+    return createAndStorePropertiesTo(file);
+  }
+
+  private static Properties loadPropertiesFrom(File file)
+      throws IOException, FileNotFoundException {
+
+    Properties props = new Properties();
+    try (Reader r = new FileReader(file)) {
+      props.load(r);
+    }
+    return props;
+  }
+
+  private static Properties createAndStorePropertiesTo(File file) throws IOException {
+    Properties props = createProperties();
+    storeProperies(props, file);
+    return props;
+  }
+
+
+  private static Properties createProperties() {
+    Properties props = new Properties();
+    ECKey key = new ECKey();
+
+    byte[] privKeyBytes = key.getPrivKeyBytes();
+
+    String nodeIdPrivateKey = ByteArray.toHexString(privKeyBytes);
+
+    props.setProperty("nodeIdPrivateKey", nodeIdPrivateKey);
+    props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
+    logger.info("New nodeID generated: " + props.getProperty("nodeId"));
+    return props;
+  }
+
+  private static void storeProperies(Properties props, File file) throws IOException {
+    file.getParentFile().mkdirs();
+    try (Writer w = new FileWriter(file)) {
+      props.store(w, "Generated NodeID.");
+    }
+    logger.info("Generated nodeID and its private key stored " + "in " + file);
   }
 
   public static Config getConf() {
