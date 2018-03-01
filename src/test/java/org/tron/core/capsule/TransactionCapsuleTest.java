@@ -35,9 +35,11 @@ public class TransactionCapsuleTest {
 
     Assert.assertTrue(transactionCapsule
         .checkBalance(new byte[]{1, 12, -1, 23}, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4", 1, 2));
+
     Assert.assertFalse(transactionCapsule
         .checkBalance(new byte[]{1, 12, -1, 23},
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", 1, 2));
+
     Assert.assertFalse(transactionCapsule.checkBalance(new byte[]{1, 12, -1, 23}, "", 3, 2));
 
   }

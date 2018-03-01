@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
+import org.tron.common.utils.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 

@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class BlockCapsuleTest {
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
             ByteArray
                 .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
-            .setNumber(1).setTimestamp(System.currentTimeMillis())
+            .setTimestamp(System.currentTimeMillis())
             .build())).build());
 
     blockCapsule.addTransaction(trx.build());
@@ -47,14 +48,26 @@ public class BlockCapsuleTest {
   }
 
 
+  // unit test for correct parameters
   @Test
-  public void testGetTransaction() {
+  public void testGetTransaction1() {
     logger.info("test getTransaction = {}",
         ByteArray.toHexString(blockCapsule.getTransactionList().get(0).getData().toByteArray()));
+
     Assert.assertEquals(1, blockCapsule.getTransactionList().size());
-    Assert.assertNotEquals(2, blockCapsule.getTransactionList().size());
+
   }
 
+  // unit test for error parameters
+  @Ignore
+  @Test
+  public void testGetTransaction2() {
+    logger.info("test getTransaction = {}",
+        ByteArray.toHexString(blockCapsule.getTransactionList().get(0).getData().toByteArray()));
+
+    Assert.assertEquals("[testGetTransaction2] is not expect", 2,
+        blockCapsule.getTransactionList().size());
+  }
 
 
   @Test
