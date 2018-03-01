@@ -15,9 +15,6 @@
 
 package org.tron.core.capsule;
 
-import static org.tron.protos.Protocal.Transaction.TranscationType.CreateAccount;
-import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
-
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +34,7 @@ import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.Transaction.Contract.ContractType;
 
 public class TransactionCapsule {
 
@@ -83,7 +81,8 @@ public class TransactionCapsule {
       UtxoStore utxoStore
   ) {
 
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(Transfer);
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).build());
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
@@ -123,7 +122,8 @@ public class TransactionCapsule {
   // TODO
   public TransactionCapsule(byte[] address, Account account) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder()
-        .setType(CreateAccount);
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).build());
     //.setParameter(Any.pack(account));
   }
 

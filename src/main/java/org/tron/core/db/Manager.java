@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.actuator.Actuator;
-import org.tron.core.db.actuator.ActuatorFactory;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -144,8 +144,9 @@ public class Manager {
     }
 
     //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
-    Actuator actuator = ActuatorFactory.createActuator(trxCap, this);
-    return actuator.execute();
+    List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    actuatorList.forEach(actuator -> actuator.execute());
+    return true;
   }
 
 
