@@ -11,7 +11,10 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
-import org.tron.program.Args;
+import org.tron.core.config.args.Args;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -33,7 +36,7 @@ public class RpcApiService implements Service {
 
   @Override
   public void init(Args args) {
-    
+
   }
 
   @Override
@@ -71,6 +74,7 @@ public class RpcApiService implements Service {
       this.wallet = new Wallet(this.app);
     }
 
+
     @Override
     public void getBalance(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
@@ -86,9 +90,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createTransaction(GrpcAPI.Coin req, StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getFrom();
-      ByteString toBs = req.getTo();
+
+    public void createTransaction(TransferContract req,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = req.getOwnerAddress();
+      ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
         byte[] fromBa = fromBs.toByteArray();
@@ -110,6 +116,20 @@ public class RpcApiService implements Service {
       responseObserver.onNext(retur);
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void createAccount(AccountCreateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      super.createAccount(request, responseObserver);
+    }
+
+
+    @Override
+    public void createAssetIssue(AssetIssueContract request,
+        StreamObserver<Transaction> responseObserver) {
+      super.createAssetIssue(request, responseObserver);
+    }
+
   }
 
   @Override

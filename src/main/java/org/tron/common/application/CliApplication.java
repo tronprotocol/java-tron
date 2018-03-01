@@ -14,11 +14,10 @@
  */
 package org.tron.common.application;
 
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.node.Node;
-import org.tron.core.peer.Peer;
-import org.tron.program.Args;
 
 public class CliApplication implements Application {
 
@@ -75,19 +74,5 @@ public class CliApplication implements Application {
   @Override
   public Manager getDbManager() {
     return null;
-  }
-
-  private Peer peer;
-
-//  public CliApplication(Injector injector) {
-//    super(injector);
-//  }
-
-  public Peer getPeer() {
-    return peer;
-  }
-
-  public void setPeer(Peer peer) {
-    this.peer = peer;
   }
 }

@@ -29,11 +29,4 @@ public class TxInputCapsuleTest {
     logger.info("test new TXInput: {}", TxInputUtil.newTxInput(new
         byte[]{}, 1, new byte[]{}, new byte[]{}));
   }
-
-  @Test
-  public void testToPrintString() {
-    logger.info("test to print string: {}",
-        TxInputUtil.toPrintString(TxInputUtil.newTxInput(new byte[]{}, 1, new byte[]{}, new
-            byte[]{})));
-  }
 }

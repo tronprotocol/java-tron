@@ -2,27 +2,30 @@ syntax = "proto3";
 
 import "google/protobuf/any.proto";
 
-package protocal;
+package protocol;
 
 
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "Protocal"; //Specify the class name of the generated Java file
 
-// Account
-message Account {
-  bytes address = 1;
-  int64 balance = 2;
-  repeated string votes = 3;
-  map<string, int64> asset = 4;
-  int32 type = 5;
+
+enum AccountType {
+  Normal = 0;
+  AssertIssue = 1;
+  Contract = 2;
 }
 
-// Contract
-message Contract {
-  bytes address = 1;
-  bytes scripts = 2;
-  string name = 3;
+// Account
+message Account {
+  bytes accout_name = 1;
+  AccountType type = 2;
+  bytes address = 3;
+  int64 balance = 4;
+  repeated string votes = 5;
+  map<string, int64> asset = 6;
+
 }
+
 
 // Witness
 message Witness {
@@ -42,11 +45,16 @@ message TXOutput {
   bytes pubKeyHash = 2;
 }
 
+
 message TXInput {
-  bytes txID = 1;
-  int64 vout = 2;
-  bytes signature = 3;
-  bytes pubKey = 4;
+  message raw {
+    bytes txID = 1;
+    int64 vout = 2;
+    bytes pubKey = 3;
+  }
+  raw raw_data = 1;
+  bytes signature = 4;
+
 }
 
 message TXOutputs {
@@ -59,42 +67,48 @@ message Transaction {
     DeployContract = 1;
     CreateAccount = 2;
     VoteWitess = 3;
+    AssetIssue = 4;
+    VoteAsset = 5;
   }
-  bytes id = 1;
-  TranscationType type = 2;
-  repeated TXInput vin = 3;
-  repeated TXOutput vout = 4;
-  bytes hash = 5;
-  bytes data = 10;
-  repeated google.protobuf.Any parameter = 11;
-  bytes scripts = 12;
+  message raw {
+    TranscationType type = 2;
+    repeated TXInput vin = 5;
+    repeated TXOutput vout = 7;
+    int64 expiration = 8;
+    bytes data = 10;
+    repeated google.protobuf.Any parameter = 11;
+    bytes scripts = 16;
+  }
+  raw raw_data =1 ;
+  repeated bytes signature = 5;
 }
 
-
 message BlockHeader {
-  int64 timestamp = 1;
-  bytes txTrieRoot = 2;
-  bytes parentHash = 3;
-  bytes hash = 4;
-  bytes nonce = 5;
-  bytes difficulty = 6;
-  uint64 number = 7;
-  uint64 witness_id = 8;
-  bytes witness_address = 9;
-  bytes witness_signature = 12;
+  message raw {
+    int64 timestamp = 1;
+    bytes txTrieRoot = 2;
+    bytes parentHash = 3;
+    //bytes nonce = 5;
+    //bytes difficulty = 6;
+    uint64 number = 7;
+    uint64 witness_id = 8;
+    bytes witness_address = 9;
+  }
+  raw raw_data = 1;
+  bytes witness_signature = 2;
 }
 
 // block
 
 message Block {
   repeated Transaction transactions = 1;
-  BlockHeader blockHeader = 2;
+  BlockHeader block_header = 2;
 }
 
 // Inventory
 
 message Inventory {
-  enum InventoryType //枚举消息类型
+  enum InventoryType
   {
     TRX = 0;
     BLOCK = 1;
@@ -105,9 +119,9 @@ message Inventory {
 
 
 message Items {
-  enum ItemType //枚举消息类型
+  enum ItemType
   {
-    ERR = 0; //proto3版本中，首成员必须为0，成员不应有相同的值
+    ERR = 0;
     TRX = 1;
     BLOCK = 2;
     BLOCKHEADER = 3;
@@ -115,6 +129,6 @@ message Items {
 
   ItemType type = 1;
   repeated Block blocks = 2;
-  repeated BlockHeader blockHeaders = 3;
+  repeated BlockHeader block_headers = 3;
   repeated Transaction transactions = 4;
 }

@@ -50,6 +50,13 @@ public class ByteArray {
     return new BigInteger(1, b).longValue();
   }
 
+  public static int toInt(byte[] b) {
+    if (b == null || b.length == 0) {
+      return 0;
+    }
+    return new BigInteger(1, b).intValue();
+  }
+
   public static byte[] fromString(String str) {
     if (str == null) {
       return null;
@@ -69,4 +76,9 @@ public class ByteArray {
   public static byte[] fromLong(long val) {
     return ByteBuffer.allocate(8).putLong(val).array();
   }
+
+  public static byte[] fromInt(int val) {
+    return ByteBuffer.allocate(8).putInt(val).array();
+  }
+
 }

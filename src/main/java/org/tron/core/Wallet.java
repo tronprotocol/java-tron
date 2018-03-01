@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import java.util.ArrayList;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +32,9 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
-
 
 public class Wallet {
 
@@ -47,7 +46,6 @@ public class Wallet {
   private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
-  private UTXOSet utxoSet;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -106,7 +104,7 @@ public class Wallet {
   public Transaction createTransaction(byte[] address, String to, long amount) {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
-                                                                   utxoStore);
+        utxoStore);
     return transactionCapsule.getTransaction();
   }
 
@@ -116,12 +114,16 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
 
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.validate()) {
+    if (trx.validateSignature()) {
       Message message = new TransactionMessage(signaturedTransaction);
       p2pnode.broadcast(message);
       return true;
     }
     return false;
+  }
+
+  public void createAccount(byte[] address, Account account) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(address, account);
   }
 
 }

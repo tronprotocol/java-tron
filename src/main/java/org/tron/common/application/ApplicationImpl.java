@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -18,7 +19,6 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.program.Args;
 
 public class ApplicationImpl implements Application, NodeDelegate {
 
@@ -113,19 +113,19 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     logger.info("handle block");
-    blockStoreDb.saveBlock(block.getHash(), block);
+    blockStoreDb.pushBlock(block);
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
+    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId());
   }
 
   @Override
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    blockStoreDb.pushTransactions(trx.getTransaction());
+    blockStoreDb.pushTransactions(trx);
   }
 
 
@@ -165,13 +165,13 @@ public class ApplicationImpl implements Application, NodeDelegate {
 
   @Override
   public boolean contain(Sha256Hash hash, MessageTypes type) {
-    if (type == MessageTypes.BLOCK) {
+    if (type.equals(MessageTypes.BLOCK)) {
       return blockStoreDb.containBlock(hash);
-    } else if (type == MessageTypes.TRX) {
+    } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
       return false;
     }
-    return  false;
+    return false;
   }
 
   //IApplication

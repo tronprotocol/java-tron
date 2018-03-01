@@ -36,8 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
-import org.tron.core.config.Configer;
+import org.tron.core.config.args.Args;
 
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
@@ -51,12 +50,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public LevelDbDataSourceImpl() {
   }
 
-  public LevelDbDataSourceImpl(String cfgType, String parentName, String name) {
-    if (Constant.NORMAL.equals(cfgType)) {
-      parentName += Configer.getConf(Constant.NORMAL_CONF).getString(Constant.DATABASE_DIR);
-    } else {
-      parentName += Configer.getConf(Constant.TEST_CONF).getString(Constant.DATABASE_DIR);
-    }
+  /**
+   * constructor.
+   */
+  public LevelDbDataSourceImpl(String parentName, String name) {
+    parentName += Args.getInstance().getStorage().getDirectory();
     this.parentName = parentName;
     this.dataBaseName = name;
     logger.debug("New LevelDbDataSourceImpl: " + name);
@@ -76,7 +74,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      Options dbOptions = createDBOptions();
+      Options dbOptions = createDbOptions();
 
       try {
         openDatabase(dbOptions);
@@ -89,21 +87,8 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     }
   }
 
-  private Options createDBOptions() {
-    Options dbOptions = new Options();
-    dbOptions.createIfMissing(true);
-    dbOptions.compressionType(CompressionType.NONE);
-    dbOptions.blockSize(10 * 1024 * 1024);
-    dbOptions.writeBufferSize(10 * 1024 * 1024);
-    dbOptions.cacheSize(0);
-    dbOptions.paranoidChecks(true);
-    dbOptions.verifyChecksums(true);
-    dbOptions.maxOpenFiles(32);
-    return dbOptions;
-  }
-
   private void openDatabase(Options dbOptions) throws IOException {
-    final Path dbPath = getDBPath();
+    final Path dbPath = getDbPath();
     if (!Files.isSymbolicLink(dbPath.getParent())) {
       Files.createDirectories(dbPath.getParent());
     }
@@ -119,13 +104,29 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     }
   }
 
-  private Path getDBPath() {
+  private Options createDbOptions() {
+    Options dbOptions = new Options();
+    dbOptions.createIfMissing(true);
+    dbOptions.compressionType(CompressionType.NONE);
+    dbOptions.blockSize(10 * 1024 * 1024);
+    dbOptions.writeBufferSize(10 * 1024 * 1024);
+    dbOptions.cacheSize(0);
+    dbOptions.paranoidChecks(true);
+    dbOptions.verifyChecksums(true);
+    dbOptions.maxOpenFiles(32);
+    return dbOptions;
+  }
+
+  private Path getDbPath() {
     return Paths.get(parentName, dataBaseName);
   }
 
-  public void resetDB() {
+  /**
+   * reset database.
+   */
+  public void resetDb() {
     closeDB();
-    FileUtil.recursiveDelete(getDBPath().toString());
+    FileUtil.recursiveDelete(getDbPath().toString());
     initDB();
   }
 
@@ -134,7 +135,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     return alive;
   }
 
-  public void destroyDB(File fileLocation) {
+  /**
+   * destroy database.
+   */
+  public void destroyDb(File fileLocation) {
     resetDbLock.writeLock().lock();
     try {
       logger.debug("Destroying existing database: " + fileLocation);

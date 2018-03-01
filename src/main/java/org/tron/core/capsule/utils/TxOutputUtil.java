@@ -34,21 +34,4 @@ public class TxOutputUtil {
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
         .build();
   }
-
-  /**
-   * getData print string of the transaction out.
-   *
-   * @param txo {@link TXOutput} txo
-   * @return String format string of the transaction output
-   */
-  public static String toPrintString(TXOutput txo) {
-    if (txo == null) {
-      return "";
-    }
-
-    return "\nTXOutput {\n"
-        + "\tvalue=" + txo.getValue()
-        + ",\n\tpubKeyHash=" + ByteArray.toHexString(txo.getPubKeyHash().toByteArray())
-        + "\n}\n";
-  }
 }

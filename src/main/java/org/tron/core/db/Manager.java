@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.actuator.Actuator;
+import org.tron.core.db.actuator.ActuatorFactory;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -123,33 +125,21 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (!trxCap.validate()) {
+    if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
 
-    Transaction trx = trxCap.getTransaction();
-
-    switch (trx.getType()) {
-      case Transfer:
-        break;
-      case VoteWitess:
-        break;
-      case CreateAccount:
-        break;
-      case DeployContract:
-        break;
-      default:
-        break;
-    }
-
-    return true;
+    //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
+    Actuator actuator = ActuatorFactory.createActuator(trxCap, this);
+    return actuator.execute();
   }
+
 
   /**
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, String privateKey) {
+      long when, byte[] privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -188,15 +178,11 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    // generate block
-
-    blockCapsule.calcMerkleRoot();
-
-    blockCapsule.hash();
-
+    blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
 
-    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getHashStr());
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
     dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;

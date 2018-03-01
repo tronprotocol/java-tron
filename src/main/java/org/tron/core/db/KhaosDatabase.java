@@ -19,13 +19,13 @@ public class KhaosDatabase extends TronDatabase {
 
     public KhaosBlock(BlockCapsule blk) {
       this.blk = blk;
-      this.hash = blk.getHash();
+      this.id = blk.getBlockId();
       this.num = blk.getNum();
     }
 
     BlockCapsule blk;
     KhaosBlock parent;
-    Sha256Hash hash;
+    Sha256Hash id;
     Boolean invalid;
     long num;
   }
@@ -42,7 +42,7 @@ public class KhaosDatabase extends TronDatabase {
           @Override
           protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
             if (size() > maxCapcity) {
-              entry.getValue().forEach(b -> hashKblkMap.remove(b.hash));
+              entry.getValue().forEach(b -> hashKblkMap.remove(b.id));
               return true;
             }
             return false;
@@ -55,7 +55,7 @@ public class KhaosDatabase extends TronDatabase {
     }
 
     public void insert(KhaosBlock block) {
-      hashKblkMap.put(block.hash, block);
+      hashKblkMap.put(block.id, block);
       //parentHashKblkMap.put(block.getParentHash(), block);
       ArrayList<KhaosBlock> listBlk = numKblkMap.get(block.num);
       if (listBlk == null) {
@@ -73,7 +73,7 @@ public class KhaosDatabase extends TronDatabase {
         //parentHash = block.getParentHash();
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
-          listBlk.removeIf(b -> b.hash == hash);
+          listBlk.removeIf(b -> b.id == hash);
         }
         this.hashKblkMap.remove(hash);
         return true;
@@ -92,9 +92,9 @@ public class KhaosDatabase extends TronDatabase {
 
   private KhaosBlock head;
 
-  private KhaosStore miniStore;
+  private KhaosStore miniStore = new KhaosStore();
 
-  private KhaosStore miniUnlinkedStore;
+  private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   protected KhaosDatabase(String dbName) {
     super(dbName);
@@ -132,7 +132,7 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   /**
-   * check if the hash is contained in the KhoasDB.
+   * check if the id is contained in the KhoasDB.
    */
   public Boolean containBlock(Sha256Hash hash) {
     if (miniStore.getByHash(hash) != null) {
@@ -176,7 +176,7 @@ public class KhaosDatabase extends TronDatabase {
 
     miniStore.insert(block);
 
-    if (block == null || block.num > head.num) {
+    if (head == null || block.num > head.num) {
       head = block;
     }
     return head.blk;
@@ -191,7 +191,7 @@ public class KhaosDatabase extends TronDatabase {
    */
   public boolean pop() {
     KhaosBlock prev = head.parent;
-    miniStore.remove(head.hash);
+    miniStore.remove(head.id);
     if (prev != null) {
       head = prev;
       return true;

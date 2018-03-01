@@ -12,12 +12,11 @@ import org.tron.common.application.Service;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
-import org.tron.program.Args;
-
 
 public class WitnessService implements Service {
 
@@ -31,7 +30,7 @@ public class WitnessService implements Service {
   private Manager db;
   private volatile boolean isRunning = false;
   public static final int LOOP_INTERVAL = 1000; // millisecond
-  private String privateKey;
+  private byte[] privateKey;
 
   /**
    * Construction method.
@@ -128,6 +127,9 @@ public class WitnessService implements Service {
     DateTime scheduledTime = getSlotTime(slot);
 
     BlockCapsule block = generateBlock(scheduledTime);
+    logger.info("Block is generated successfully, Its hash is " + block.getBlockId());
+
+    db.getBlockStore().pushBlock(block);
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
@@ -138,7 +140,6 @@ public class WitnessService implements Service {
     } catch (Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
-    logger.info("broadcast block successfully");
   }
 
   private BlockCapsule generateBlock(DateTime when) {
@@ -206,7 +207,7 @@ public class WitnessService implements Service {
 
   @Override
   public void init(Args args) {
-    this.privateKey = args.getPrivateKey();
+    this.privateKey = args.getPrivateKey().getBytes();
     localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
     this.witnessStates = db.getWitnesses();
   }

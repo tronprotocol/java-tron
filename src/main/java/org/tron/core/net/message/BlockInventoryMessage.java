@@ -16,20 +16,7 @@ public class BlockInventoryMessage extends InventoryMessage {
   }
 
   public BlockInventoryMessage(List<Sha256Hash> hashList) {
-    Inventory.Builder invBuilder = Inventory.newBuilder();
-
-    for (Sha256Hash hash :
-        hashList) {
-      invBuilder.addIds(hash.getByteString());
-    }
-    invBuilder.setType(InventoryType.BLOCK);
-    inv = invBuilder.build();
-    unpacked = true;
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
+    super(hashList, InventoryType.BLOCK);
   }
 
   @Override

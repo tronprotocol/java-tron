@@ -12,19 +12,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.application;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.core.Blockchain;
-import org.tron.core.Constant;
-
 import javax.inject.Named;
-
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.TRANSACTION_DB_NAME;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.Constant;
 
 public class Module extends AbstractModule {
 
@@ -33,29 +32,29 @@ public class Module extends AbstractModule {
 
   }
 
+  /**
+   * build transaction database.
+   */
   @Provides
   @Singleton
   @Named("transaction")
   public LevelDbDataSourceImpl buildTransactionDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
         TRANSACTION_DB_NAME);
     db.initDB();
     return db;
   }
 
+  /**
+   * build block database.
+   */
   @Provides
   @Singleton
   @Named("block")
   public LevelDbDataSourceImpl buildBlockDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.NORMAL, Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
         BLOCK_DB_NAME);
     db.initDB();
     return db;
-  }
-
-  @Provides
-  @Singleton
-  public Blockchain buildBlockchain(@Named("block") LevelDbDataSourceImpl blockDB) {
-    return new Blockchain(blockDB);
   }
 }

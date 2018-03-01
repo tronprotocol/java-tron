@@ -4,6 +4,7 @@ import java.util.List;
 import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Inventory;
+import org.tron.protos.Protocal.Inventory.InventoryType;
 
 public class SyncBlockChainMessage extends InventoryMessage {
 
@@ -16,7 +17,7 @@ public class SyncBlockChainMessage extends InventoryMessage {
   }
 
   public SyncBlockChainMessage(List<Sha256Hash> hashList) {
-    super(hashList);
+    super(hashList, InventoryType.BLOCK);
   }
 
   @Override

@@ -18,6 +18,10 @@ package org.tron.core;
  */
 
 import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.io.ByteStreams;
+import com.google.common.primitives.Ints;
+import com.google.protobuf.ByteString;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,9 +30,8 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import com.google.common.io.ByteStreams;
-import com.google.common.primitives.Ints;
-import com.google.protobuf.ByteString;
+import org.tron.common.utils.ByteArray;
+
 
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be
@@ -203,6 +206,11 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       return false;
     }
     return Arrays.equals(bytes, ((Sha256Hash) o).bytes);
+  }
+
+  @Override
+  public String toString() {
+    return ByteArray.toHexString(bytes);
   }
 
   /**
