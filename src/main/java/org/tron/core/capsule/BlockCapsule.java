@@ -24,7 +24,6 @@ import java.util.Vector;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -111,9 +110,9 @@ public class BlockCapsule {
         .collect(Collectors.toList());
   }
 
-  public void sign(String privateKey) {
+  public void sign(byte[] privateKey) {
     // TODO private_key == null
-    ECKey ecKey = ECKey.fromPrivate(Hex.decode(privateKey));
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
@@ -125,7 +124,7 @@ public class BlockCapsule {
 
   private Sha256Hash getRawHash() {
     unPack();
-    return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray());
+    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
   public boolean validateSignature() {

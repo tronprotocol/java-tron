@@ -9,7 +9,8 @@ public class WitnessCapsule {
   private Witness witness;
 
   public WitnessCapsule(ByteString pubKey, String url) {
-    this.witness = this.witness.toBuilder()
+    Witness.Builder witnessBuilder = Witness.newBuilder();
+    this.witness = witnessBuilder
         .setPubKey(pubKey)
         .setAddress(ByteString.copyFrom(ECKey.computeAddress(pubKey.toByteArray())))
         .setUrl(url).build();

@@ -12,6 +12,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocal.Account;
@@ -92,7 +93,7 @@ public class RpcApiService implements Service {
 
     public void createTransaction(TransferContract req,
         StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getFromAddress();
+      ByteString fromBs = req.getOwnerAddress();
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
@@ -117,9 +118,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createAccount(Account request, StreamObserver<Transaction> responseObserver) {
+    public void createAccount(AccountCreateContract request,
+        StreamObserver<Transaction> responseObserver) {
       super.createAccount(request, responseObserver);
     }
+
 
     @Override
     public void createAssetIssue(AssetIssueContract request,

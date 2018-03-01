@@ -31,7 +31,7 @@ public class WitnessService implements Service {
   private Manager db;
   private volatile boolean isRunning = false;
   public static final int LOOP_INTERVAL = 1000; // millisecond
-  private String privateKey;
+  private byte[] privateKey;
 
   /**
    * Construction method.
@@ -80,31 +80,31 @@ public class WitnessService implements Service {
 
     switch (result) {
       case PRODUCED:
-        logger.info("");
+        logger.info("Porduced");
         break;
       case NOT_SYNCED:
-        logger.info("");
+        logger.info("not sync");
         break;
       case NOT_MY_TURN:
-        logger.info("");
+        logger.info("It's not my turn");
         break;
       case NOT_TIME_YET:
-        logger.info("");
+        logger.info("not time yet");
         break;
       case NO_PRIVATE_KEY:
-        logger.info("");
+        logger.info("no pri key");
         break;
       case LOW_PARTICIPATION:
-        logger.info("");
+        logger.info("low part");
         break;
       case LAG:
-        logger.info("");
+        logger.info("lag");
         break;
       case CONSECUTIVE:
-        logger.info("");
+        logger.info("consecutive");
         break;
       case EXCEPTION_PRODUCING_BLOCK:
-        logger.info("");
+        logger.info("excpetion");
         break;
       default:
         break;
@@ -114,6 +114,8 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock(String capture) {
 
     long slot = getSlotAtTime(DateTime.now());
+    logger.info("slot:" + slot);
+
     if (slot == 0) {
       // todo capture error message
       return BlockProductionCondition.NOT_TIME_YET;
@@ -202,20 +204,19 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
+    this.privateKey = "0x11".getBytes();
+    tronApp.getDbManager().initalWitnessList();
     localWitnessState = new WitnessCapsule(
-        ByteString.copyFrom(ECKey.fromPrivate("0x11".getBytes()).getPubKey()),
-        "http://torn.org");
+        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
+        "http://tron.org");
+    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 
   @Override
   public void init(Args args) {
     //this.privateKey = args.getPrivateKey();
-    this.privateKey = "0x11";
-    localWitnessState = new WitnessCapsule(
-        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey.getBytes()).getPubKey()),
-        "http://torn.org");
-    this.witnessStates = db.getWitnesses();
+    init();
   }
 
   @Override

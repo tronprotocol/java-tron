@@ -126,8 +126,11 @@ public class BlockStore extends TronDatabase {
   }
 
   public DateTime getHeadBlockTime() {
-    DateTime time = DateTime.now();
-    return time.minus(time.getMillisOfSecond() + 1000); // for test. assume a block generated 1s ago
+    if (head == null) {
+      return getGenesisTime();
+    } else {
+      return new DateTime(head.getTimeStamp());
+    }
   }
 
   public long currentASlot() {
