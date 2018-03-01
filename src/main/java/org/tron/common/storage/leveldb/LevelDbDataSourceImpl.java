@@ -16,7 +16,6 @@
 package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,31 +74,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      Options dbOptions = new Options();
-      dbOptions.createIfMissing(true);
-      dbOptions.compressionType(CompressionType.NONE);
-      dbOptions.blockSize(10 * 1024 * 1024);
-      dbOptions.writeBufferSize(10 * 1024 * 1024);
-      dbOptions.cacheSize(0);
-      dbOptions.paranoidChecks(true);
-      dbOptions.verifyChecksums(true);
-      dbOptions.maxOpenFiles(32);
+      Options dbOptions = createDbOptions();
 
       try {
-        final Path dbPath = getDbPath();
-        if (!Files.isSymbolicLink(dbPath.getParent())) {
-          Files.createDirectories(dbPath.getParent());
-        }
-        try {
-          database = factory.open(dbPath.toFile(), dbOptions);
-        } catch (IOException e) {
-          if (e.getMessage().contains("Corruption:")) {
-            factory.repair(dbPath.toFile(), dbOptions);
-            database = factory.open(dbPath.toFile(), dbOptions);
-          } else {
-            throw e;
-          }
-        }
+        openDatabase(dbOptions);
         alive = true;
       } catch (IOException ioe) {
         throw new RuntimeException("Can't initialize database", ioe);
@@ -107,6 +85,36 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     } finally {
       resetDbLock.writeLock().unlock();
     }
+  }
+
+  private void openDatabase(Options dbOptions) throws IOException {
+    final Path dbPath = getDbPath();
+    if (!Files.isSymbolicLink(dbPath.getParent())) {
+      Files.createDirectories(dbPath.getParent());
+    }
+    try {
+      database = factory.open(dbPath.toFile(), dbOptions);
+    } catch (IOException e) {
+      if (e.getMessage().contains("Corruption:")) {
+        factory.repair(dbPath.toFile(), dbOptions);
+        database = factory.open(dbPath.toFile(), dbOptions);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private Options createDbOptions() {
+    Options dbOptions = new Options();
+    dbOptions.createIfMissing(true);
+    dbOptions.compressionType(CompressionType.NONE);
+    dbOptions.blockSize(10 * 1024 * 1024);
+    dbOptions.writeBufferSize(10 * 1024 * 1024);
+    dbOptions.cacheSize(0);
+    dbOptions.paranoidChecks(true);
+    dbOptions.verifyChecksums(true);
+    dbOptions.maxOpenFiles(32);
+    return dbOptions;
   }
 
   private Path getDbPath() {
