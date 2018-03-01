@@ -15,11 +15,74 @@
 
 package org.tron.core.capsule.utils;
 
+import com.google.protobuf.ByteString;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.Configuration;
+import org.tron.core.config.args.Args;
+import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocal.BlockHeader;
+import org.tron.protos.Protocal.BlockHeader.raw;
 
 public class BlockUtilTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
+  @Before
+  public void initConfiguration() {
+    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+  }
+
+  @Test
+  public void testBlockUtil() {
+
+    BlockCapsule blockCapsule1 = BlockUtil.newGenesisBlockCapsule();
+    Sha256Hash sha256Hash = Sha256Hash.wrap(ByteArray
+        .fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000"));
+
+    logger.info("getTimeStamp()={}", blockCapsule1.getTimeStamp());
+    logger.info("getParentHash()={}", blockCapsule1.getParentHash());
+    logger.info("getNum()={}", blockCapsule1.getNum());
+
+    Assert.assertEquals(0, blockCapsule1.getTimeStamp());
+    Assert.assertEquals(sha256Hash,
+        blockCapsule1.getParentHash());
+    Assert.assertEquals(100000,
+        blockCapsule1.getNum());
+
+    BlockCapsule blockCapsule2 = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray
+                .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
+        )).build());
+
+    System.out.println(blockCapsule2.getBlockId());
+
+    BlockCapsule blockCapsule3 = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray
+                .fromHexString(blockCapsule2.getBlockId().toString())))
+        )).build());
+
+    System.out.println(blockCapsule3.getParentHash());
+    logger.info("BlockUtil.isParentOf(blockCapsule1, blockCapsule2)={}",
+        BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
+
+    Assert.assertEquals(false, BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
+    Assert.assertFalse(BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
+
+    logger.info("BlockUtil.isParentOf(blockCapsule2, blockCapsule3)={}",
+        BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
+
+    Assert.assertEquals(true, BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
+    Assert.assertTrue(BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
+
+  }
 }

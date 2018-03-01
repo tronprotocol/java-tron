@@ -71,6 +71,7 @@ public class BlockCapsule {
     // block
     Block.Builder blockBuild = Block.newBuilder();
     this.block = blockBuild.setBlockHeader(blockHeader).build();
+    this.pack();
   }
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
@@ -93,6 +94,7 @@ public class BlockCapsule {
       blockBuild.addTransactions(trx);
     });
     this.block = blockBuild.setBlockHeader(blockHeader).build();
+    this.pack();
   }
 
   public void addTransaction(Transaction pendingTrx) {
