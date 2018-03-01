@@ -3,10 +3,10 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import org.tron.core.db.Manager;
 
-public class TransactionCreateAccountActuator extends AbstractTransactionActuator {
+public class CreateAccountActuator extends AbstractActuator {
 
 
-  TransactionCreateAccountActuator(Any contract, Manager dbManager) {
+  CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 

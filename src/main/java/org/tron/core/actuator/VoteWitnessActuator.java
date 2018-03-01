@@ -7,11 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.VoteWitnessContract;
 
-public class TransactionVoteActuator extends AbstractTransactionActuator {
+public class VoteWitnessActuator extends AbstractActuator {
 
-  private static final Logger logger = LoggerFactory.getLogger("TransactionVoteActuator");
+  private static final Logger logger = LoggerFactory.getLogger("VoteWitnessActuator");
 
-  TransactionVoteActuator(Any contract, Manager dbManager) {
+  VoteWitnessActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
