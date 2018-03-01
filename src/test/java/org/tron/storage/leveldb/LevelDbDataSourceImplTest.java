@@ -101,6 +101,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.closeDB();
   }
 
+  @Ignore
   @Test
   public void testRest() {
 

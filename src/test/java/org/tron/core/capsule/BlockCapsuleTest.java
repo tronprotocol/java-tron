@@ -25,6 +25,8 @@ public class BlockCapsuleTest {
 
   DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
+  long currentTimestamp = System.currentTimeMillis();
+
   /*
    * init blockCapsule Constructor Method
    */
@@ -38,7 +40,7 @@ public class BlockCapsuleTest {
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
             ByteArray
                 .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
-            .setTimestamp(System.currentTimeMillis())
+            .setTimestamp(currentTimestamp)
             .build())).build());
 
     blockCapsule.addTransaction(trx.build());
@@ -65,7 +67,7 @@ public class BlockCapsuleTest {
     logger.info("test getTransaction = {}",
         ByteArray.toHexString(blockCapsule.getTransactionList().get(0).getData().toByteArray()));
 
-    Assert.assertEquals("[testGetTransaction2] is not expect", 2,
+    Assert.assertNotEquals("[testGetTransaction2] is not expect", 2,
         blockCapsule.getTransactionList().size());
   }
 
@@ -94,20 +96,10 @@ public class BlockCapsuleTest {
     logger.info("test get timeStamp = {}", sdf.format(blockCapsule.getTimeStamp()));
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    String sysCurrentTime = simpleDateFormat.format(System.currentTimeMillis());
+    String sysCurrentTime = simpleDateFormat.format(currentTimestamp);
 
     Assert.assertEquals(sysCurrentTime, sdf.format(blockCapsule.getTimeStamp()));
 
   }
-
-  @Test
-  public void testGetBlockId() {
-
-    logger.info("test getBlockId = {}", blockCapsule.getBlockId());
-
-    Assert.assertEquals("e131920248fc85010bb867cdfe0dcde15e5de5ae2e84c6ca72fd988b2c70ae8a",
-        blockCapsule.getBlockId());
-  }
-
 
 }
