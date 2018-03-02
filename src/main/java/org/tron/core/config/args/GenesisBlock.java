@@ -4,18 +4,18 @@ import java.util.List;
 
 public class GenesisBlock {
 
-  private List<SeedNodeAddress> transactions;
+  private List<SeedNodeAddress> assets;
   private String timeStamp;
   private String parentHash;
   private String hash;
   private String number;
 
-  public List<SeedNodeAddress> getTransactions() {
-    return transactions;
+  public List<SeedNodeAddress> getAssets() {
+    return assets;
   }
 
-  public void setTransactions(List<SeedNodeAddress> transactions) {
-    this.transactions = transactions;
+  public void setAssets(List<SeedNodeAddress> assets) {
+    this.assets = assets;
   }
 
   public String getTimeStamp() {

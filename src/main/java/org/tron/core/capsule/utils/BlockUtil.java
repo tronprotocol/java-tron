@@ -34,7 +34,7 @@ public class BlockUtil {
     Args args = Args.getInstance();
     GenesisBlock genesisBlockArg = args.getGenesisBlock();
     List<Transaction> transactionList = new ArrayList<>();
-    genesisBlockArg.getTransactions().forEach(key ->
+    genesisBlockArg.getAssets().forEach(key ->
         transactionList
             .add(TransactionUtil
                 .newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));

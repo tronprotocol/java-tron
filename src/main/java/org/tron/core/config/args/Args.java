@@ -69,18 +69,18 @@ public class Args {
     INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
     INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
-    if (config.hasPath("genesis.block.transactions")) {
-      List<? extends ConfigObject> trx = config.getObjectList("genesis.block.transactions");
+    if (config.hasPath("genesis.block.assets")) {
+      List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
 
       List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
-      trx.forEach(t -> {
+      assets.forEach(t -> {
         SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
         seedNodeAddress.setAddress(t.get("address").toString());
         seedNodeAddress.setBalance(t.get("balance").toString());
         seedNodeAddresses.add(seedNodeAddress);
       });
 
-      INSTANCE.genesisBlock.setTransactions(seedNodeAddresses);
+      INSTANCE.genesisBlock.setAssets(seedNodeAddresses);
     }
   }
 
