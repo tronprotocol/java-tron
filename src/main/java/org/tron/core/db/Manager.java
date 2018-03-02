@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -57,6 +58,10 @@ public class Manager {
 
   public List<WitnessCapsule> getWitnesses() {
     return wits;
+  }
+
+  public Sha256Hash getHeadBlockId() {
+    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   /**
@@ -122,6 +127,7 @@ public class Manager {
     setWitnessStore(WitnessStore.create("witness"));
     setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
+    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     pendingTrxs = new ArrayList<>();
 
   }

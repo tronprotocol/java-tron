@@ -64,6 +64,9 @@ public class BlockStore extends TronDatabase {
     return instance;
   }
 
+  public void initHeadBlock(Sha256Hash id) {
+    head = getBlockByHash(id);
+  }
 
   /**
    * to do.
