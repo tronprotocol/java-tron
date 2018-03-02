@@ -10,6 +10,18 @@ public class GenesisBlock {
   private String hash;
   private String number;
 
+  /**
+   * return default genesis block.
+   */
+  public static GenesisBlock getDefault() {
+    GenesisBlock genesisBlock = new GenesisBlock();
+    genesisBlock.setNumber("0");
+    genesisBlock.setTimeStamp("0");
+    genesisBlock.setHash("0");
+    genesisBlock.setParentHash("0");
+    return genesisBlock;
+  }
+
   public List<SeedNodeAddress> getAssets() {
     return assets;
   }

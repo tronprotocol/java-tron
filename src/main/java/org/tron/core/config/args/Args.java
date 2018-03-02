@@ -63,25 +63,31 @@ public class Args {
       INSTANCE.seedNode.setIpList(INSTANCE.seedNodes);
     }
 
-    INSTANCE.genesisBlock = new GenesisBlock();
-    INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
-    INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-    INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-    INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
+    if (config.hasPath("genesis.block")) {
+      INSTANCE.genesisBlock = new GenesisBlock();
 
-    if (config.hasPath("genesis.block.assets")) {
-      List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
+      INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+      INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
+      INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
+      INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
-      List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
-      assets.forEach(t -> {
-        SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
-        seedNodeAddress.setAddress(t.get("address").toString());
-        seedNodeAddress.setBalance(t.get("balance").toString());
-        seedNodeAddresses.add(seedNodeAddress);
-      });
+      if (config.hasPath("genesis.block.assets")) {
+        List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
 
-      INSTANCE.genesisBlock.setAssets(seedNodeAddresses);
+        List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
+        assets.forEach(t -> {
+          SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
+          seedNodeAddress.setAddress(t.get("address").toString());
+          seedNodeAddress.setBalance(t.get("balance").toString());
+          seedNodeAddresses.add(seedNodeAddress);
+        });
+
+        INSTANCE.genesisBlock.setAssets(seedNodeAddresses);
+      }
+    } else {
+      INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
+
   }
 
   public static Args getInstance() {
