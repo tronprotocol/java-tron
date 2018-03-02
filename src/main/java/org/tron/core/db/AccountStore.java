@@ -1,6 +1,11 @@
 package org.tron.core.db;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AccountStore extends TronDatabase {
+
+  private static final Logger logger = LoggerFactory.getLogger("AccountStore");
 
   private AccountStore(String dbName) {
     super(dbName);
@@ -38,4 +43,17 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+
+  public boolean createAccount(byte[] address, byte[] account) {
+    dbSource.putData(address,account);
+    logger.info("address is {},account is {}", address, account);
+    return true;
+  }
+
+  public boolean isAccountExist(byte[] address) {
+    byte[] account = dbSource.getData(address);
+    logger.info("address is {},account is {}", address, account);
+    return null != account;
+  }
+
 }
