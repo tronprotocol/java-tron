@@ -4,6 +4,8 @@ import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.actuator.Actuator;
@@ -93,7 +95,7 @@ public class Manager {
       throw new RuntimeException("currentSlot should be positive.");
     }
     List<WitnessCapsule> currentShuffledWitnesses = getShuffledWitnesses();
-    if (currentShuffledWitnesses == null || currentShuffledWitnesses.size() == 0) {
+    if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
     int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
@@ -145,6 +147,7 @@ public class Manager {
 
     //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    assert actuatorList != null;
     actuatorList.forEach(actuator -> actuator.execute());
     return true;
   }
