@@ -172,6 +172,7 @@ public class TransactionCapsule {
 
 
   /**
+   * TODO
    * validateSignature.
    */
   public boolean validateSignature() {

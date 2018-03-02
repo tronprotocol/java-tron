@@ -113,7 +113,7 @@ public class BlockCapsule {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
@@ -129,8 +129,8 @@ public class BlockCapsule {
   public boolean validateSignature() {
     try {
       return Arrays
-          .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
-              block.getBlockHeader().getWitnessSignature().toString()),
+          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();
@@ -144,7 +144,8 @@ public class BlockCapsule {
   }
 
   public Sha256Hash calcMerklerRoot() {
-    if (this.block.getTransactionsList().size() == 0) {
+    if (this.block.getTransactionsList() == null
+        || this.block.getTransactionsList().isEmpty()) {
       return Sha256Hash.ZERO_HASH;
     }
 
