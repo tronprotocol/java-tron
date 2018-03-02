@@ -49,7 +49,7 @@ public class PeerConnection {
 //  }
 
   public void sendMessage(Message message) {
-    logger.info("Send message " + message);
+    logger.info("Send message " + message + ", Peer:" + this);
 
     if (message == null) {
       logger.error("send message = null");
@@ -60,6 +60,7 @@ public class PeerConnection {
     byte[] value = message.getData();
 
     if (cluster == null) {
+      logger.error("cluster is null");
       return;
     }
 

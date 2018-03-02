@@ -172,7 +172,6 @@ public class BlockStore extends TronDatabase {
    * save a block.
    */
   public void pushBlock(BlockCapsule block) {
-    logger.info("save block");
     khaosDb.push(block);
 
     //todo: check block's validity
@@ -198,6 +197,7 @@ public class BlockStore extends TronDatabase {
     }
 
     dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     head = khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);

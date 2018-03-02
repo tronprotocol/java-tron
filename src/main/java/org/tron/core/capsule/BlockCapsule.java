@@ -144,7 +144,8 @@ public class BlockCapsule {
   }
 
   public Sha256Hash calcMerklerRoot() {
-    if (this.block.getTransactionsList().size() == 0) {
+    if (this.block.getTransactionsList() == null
+        || this.block.getTransactionsList().isEmpty()) {
       return Sha256Hash.ZERO_HASH;
     }
 
