@@ -51,18 +51,31 @@ public class Manager {
   // transaction cache
   private List<Transaction> pendingTrxs;
 
+  private List<WitnessCapsule> wits = new ArrayList<>();
+
   // witness
 
-  /**
-   * get witnessCapsule List.
-   */
   public List<WitnessCapsule> getWitnesses() {
-    List<WitnessCapsule> wits = new ArrayList<WitnessCapsule>();
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x11")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x12")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x13")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x14")));
     return wits;
+  }
+
+  /**
+   * TODO: should get this list from Database. get witnessCapsule List.
+   */
+  public void initalWitnessList() {
+    wits.add(new WitnessCapsule(
+        ByteString.copyFromUtf8("0x01"),
+        "http://Loser.org"));
+    wits.add(new WitnessCapsule(
+        ByteString.copyFromUtf8("0x02"),
+        "http://Marcus.org"));
+    wits.add(new WitnessCapsule(
+        ByteString.copyFromUtf8("0x02"),
+        "http://Olivier.org"));
+  }
+
+  public void addWitness(WitnessCapsule witnessCapsule) {
+    this.wits.add(witnessCapsule);
   }
 
   public List<WitnessCapsule> getCurrentShuffledWitnesses() {
@@ -86,14 +99,15 @@ public class Manager {
     int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
 
     ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex).getAddress();
-
-    logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
+    //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
 
     return scheduledWitness;
   }
 
   public List<WitnessCapsule> getShuffledWitnesses() {
-    return getWitnesses();
+    List<WitnessCapsule> shuffleWits = getWitnesses();
+    //Collections.shuffle(shuffleWits);
+    return shuffleWits;
   }
 
 
@@ -182,6 +196,7 @@ public class Manager {
     blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
+    getBlockStore().pushBlock(blockCapsule);
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -79,31 +80,31 @@ public class WitnessService implements Service {
 
     switch (result) {
       case PRODUCED:
-        logger.info("");
+        logger.info("Porduced");
         break;
       case NOT_SYNCED:
-        logger.info("");
+        logger.info("not sync");
         break;
       case NOT_MY_TURN:
-        logger.info("");
+        logger.info("It's not my turn");
         break;
       case NOT_TIME_YET:
-        logger.info("");
+        logger.info("not time yet");
         break;
       case NO_PRIVATE_KEY:
-        logger.info("");
+        logger.info("no pri key");
         break;
       case LOW_PARTICIPATION:
-        logger.info("");
+        logger.info("low part");
         break;
       case LAG:
-        logger.info("");
+        logger.info("lag");
         break;
       case CONSECUTIVE:
-        logger.info("");
+        logger.info("consecutive");
         break;
       case EXCEPTION_PRODUCING_BLOCK:
-        logger.info("");
+        logger.info("excpetion");
         break;
       default:
         break;
@@ -113,6 +114,8 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock(String capture) {
 
     long slot = getSlotAtTime(DateTime.now());
+    logger.info("slot:" + slot);
+
     if (slot == 0) {
       // todo capture error message
       return BlockProductionCondition.NOT_TIME_YET;
@@ -126,10 +129,10 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
+    //TODO:implement private and public key code, fake code first.
     BlockCapsule block = generateBlock(scheduledTime);
-    logger.info("Block is generated successfully, Its hash is " + block.getBlockId());
+    logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
 
-    db.getBlockStore().pushBlock(block);
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
@@ -201,15 +204,19 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
+    this.privateKey = "0x11".getBytes();
+    tronApp.getDbManager().initalWitnessList();
+    localWitnessState = new WitnessCapsule(
+        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
+        "http://tron.org");
+    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 
   @Override
   public void init(Args args) {
-    this.privateKey = args.getPrivateKey().getBytes();
-    localWitnessState = new WitnessCapsule(ByteString.copyFromUtf8("0x11"));
-    this.witnessStates = db.getWitnesses();
+    //this.privateKey = args.getPrivateKey();
+    init();
   }
 
   @Override
