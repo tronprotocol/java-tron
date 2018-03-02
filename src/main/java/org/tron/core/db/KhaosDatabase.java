@@ -204,9 +204,9 @@ public class KhaosDatabase extends TronDatabase {
    */
   public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(Sha256Hash block1,
       Sha256Hash block2) {
-    List<BlockCapsule> list1 = new ArrayList<>();
-    List<BlockCapsule> list2 = new ArrayList<>();
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair(list1, list2);
+    ArrayList<BlockCapsule> list1 = new ArrayList<>();
+    ArrayList<BlockCapsule> list2 = new ArrayList<>();
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
