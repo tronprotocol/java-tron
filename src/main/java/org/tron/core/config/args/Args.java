@@ -74,15 +74,15 @@ public class Args {
       if (config.hasPath("genesis.block.assets")) {
         List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
 
-        List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
+        List<Account> accounts = new ArrayList<>();
         assets.forEach(t -> {
-          SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
-          seedNodeAddress.setAddress(t.get("address").toString());
-          seedNodeAddress.setBalance(t.get("balance").toString());
-          seedNodeAddresses.add(seedNodeAddress);
+          Account account = new Account();
+          account.setAddress(t.get("address").toString());
+          account.setBalance(t.get("balance").toString());
+          accounts.add(account);
         });
 
-        INSTANCE.genesisBlock.setAssets(seedNodeAddresses);
+        INSTANCE.genesisBlock.setAssets(accounts);
       }
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();

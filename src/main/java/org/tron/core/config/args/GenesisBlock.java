@@ -9,7 +9,7 @@ public class GenesisBlock {
   private static final String DEFAULT_HASH = "0";
   private static final String DEFAULT_PARENT_HASH = "0";
 
-  private List<SeedNodeAddress> assets;
+  private List<Account> assets;
   private String timeStamp;
   private String parentHash;
   private String hash;
@@ -27,11 +27,11 @@ public class GenesisBlock {
     return genesisBlock;
   }
 
-  public List<SeedNodeAddress> getAssets() {
+  public List<Account> getAssets() {
     return assets;
   }
 
-  public void setAssets(List<SeedNodeAddress> assets) {
+  public void setAssets(List<Account> assets) {
     this.assets = assets;
   }
 
