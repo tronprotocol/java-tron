@@ -6,11 +6,17 @@ import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.Hash;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Sha256Hash;
 
 public class Args {
 
-  private static final Args INSTANCE = new Args();
+  private static final Logger logger = LoggerFactory.getLogger("Args");
 
+  private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = new String("");
@@ -34,6 +40,7 @@ public class Args {
   private Overlay overlay;
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
+  private String chainId;
 
   private Args() {
 
@@ -88,6 +95,9 @@ public class Args {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
 
+    INSTANCE.chainId = Sha256Hash.wrap(Hash.sha256(ByteArray.fromObject(INSTANCE.genesisBlock)))
+        .toString();
+    logger.info("chain id = {}", INSTANCE.chainId);
   }
 
   public static Args getInstance() {
@@ -130,5 +140,13 @@ public class Args {
 
   public GenesisBlock getGenesisBlock() {
     return genesisBlock;
+  }
+
+  public String getChainId() {
+    return chainId;
+  }
+
+  public void setChainId(String chainId) {
+    this.chainId = chainId;
   }
 }

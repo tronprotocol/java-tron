@@ -1,8 +1,11 @@
 package org.tron.core.config.args;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class GenesisBlock {
+public class GenesisBlock implements Serializable {
+
+  private static final long serialVersionUID = 3559533002594201715L;
 
   private static final String DEFAULT_NUMBER = "0";
   private static final String DEFAULT_TIMESTAMP = "0";
