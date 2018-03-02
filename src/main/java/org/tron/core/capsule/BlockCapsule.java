@@ -92,9 +92,7 @@ public class BlockCapsule {
 
     // block
     Block.Builder blockBuild = Block.newBuilder();
-    transactionList.forEach(trx -> {
-      blockBuild.addTransactions(trx);
-    });
+    transactionList.forEach(trx -> blockBuild.addTransactions(trx));
     this.block = blockBuild.setBlockHeader(blockHeader).build();
     unpacked = true;
   }
@@ -181,7 +179,6 @@ public class BlockCapsule {
 
     this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
-    return;
   }
 
   public Sha256Hash getMerklerRoot() {
