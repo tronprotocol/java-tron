@@ -68,4 +68,16 @@ public class AccountStore extends TronDatabase {
 
   }
 
+  public boolean createAccount(byte[] address, byte[] account) {
+    dbSource.putData(address, account);
+    logger.info("address is {},account is {}", address, account);
+    return true;
+  }
+
+  public boolean isAccountExist(byte[] address) {
+    byte[] account = dbSource.getData(address);
+    logger.info("address is {},account is {}", address, account);
+    return null != account;
+  }
+  
 }

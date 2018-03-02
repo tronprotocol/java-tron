@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocal.Account;
+import org.tron.protos.Protocal.Account.Vote;
 
 public class VoteWitnessActuator extends AbstractActuator {
 
@@ -51,8 +52,9 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     Account accountSource = dbManager.getAccountStore().getAccount(voteAddress);
     logger.info("voteAddress pre-voteCount is {}", accountSource.getVotesList());
-    Account witnessTarget = accountSource.toBuilder()
-        .addVotes(String.valueOf(voteAdd)).build();
+    Account witnessTarget = accountSource.toBuilder().addVotes(
+        Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd)
+            .build()).build();
     logger.info("voteAddress pre-voteCount is {}", witnessTarget.getVotesList());
 
     dbManager.getAccountStore().putAccount(voteAddress, witnessTarget);
