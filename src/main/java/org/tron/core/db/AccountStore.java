@@ -1,6 +1,14 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.protos.Protocal.Account;
+
 public class AccountStore extends TronDatabase {
+
+  private static final Logger logger = LoggerFactory.getLogger("AccountStore");
 
   private AccountStore(String dbName) {
     super(dbName);
@@ -24,6 +32,27 @@ public class AccountStore extends TronDatabase {
     return instance;
   }
 
+  public Account getAccount(ByteString voteAddress) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    try {
+      byte[] value = dbSource.getData(voteAddress.toByteArray());
+      if (null == value) {
+        return null;
+      }
+      return Account.parseFrom(value);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public void putAccount(ByteString voteAddress, Account account) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    dbSource.putData(voteAddress.toByteArray(), account.toByteArray());
+  }
+
   @Override
   void add() {
 
@@ -38,4 +67,5 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+
 }
