@@ -4,6 +4,11 @@ import java.util.List;
 
 public class GenesisBlock {
 
+  private static final String DEFAULT_NUMBER = "0";
+  private static final String DEFAULT_TIMESTAMP = "0";
+  private static final String DEFAULT_HASH = "0";
+  private static final String DEFAULT_PARENT_HASH = "0";
+
   private List<SeedNodeAddress> assets;
   private String timeStamp;
   private String parentHash;
@@ -15,10 +20,10 @@ public class GenesisBlock {
    */
   public static GenesisBlock getDefault() {
     GenesisBlock genesisBlock = new GenesisBlock();
-    genesisBlock.setNumber("0");
-    genesisBlock.setTimeStamp("0");
-    genesisBlock.setHash("0");
-    genesisBlock.setParentHash("0");
+    genesisBlock.setNumber(DEFAULT_NUMBER);
+    genesisBlock.setTimeStamp(DEFAULT_TIMESTAMP);
+    genesisBlock.setHash(DEFAULT_HASH);
+    genesisBlock.setParentHash(DEFAULT_PARENT_HASH);
     return genesisBlock;
   }
 
