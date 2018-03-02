@@ -19,7 +19,7 @@ public class Args {
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
-  private String outputDirectory = new String("");
+  private String outputDirectory = new String("output-directory");
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
