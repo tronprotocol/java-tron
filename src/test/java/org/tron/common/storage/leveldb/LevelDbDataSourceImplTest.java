@@ -33,7 +33,7 @@ public class LevelDbDataSourceImplTest {
   @Before
   public void setup() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-    dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+    dataSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), "test");
   }
 
   @Test

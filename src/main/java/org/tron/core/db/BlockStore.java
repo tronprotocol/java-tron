@@ -23,10 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 
 public class BlockStore extends TronDatabase {
 
@@ -43,7 +43,7 @@ public class BlockStore extends TronDatabase {
   private BlockStore(String dbName) {
     super(dbName);
     numHashCache = new LevelDbDataSourceImpl(
-        Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
+        Args.getInstance().getOutputDirectory(), dbName + "_NUM_HASH");
     numHashCache.initDB();
     khaosDb = new KhaosDatabase(dbName + "_KDB");
   }
@@ -162,6 +162,24 @@ public class BlockStore extends TronDatabase {
     return false;
   }
 
+  /**
+   * judge has blocks.
+   */
+  public boolean hasBlocks() {
+    if (dbSource.allKeys().isEmpty()) {
+      return false;
+    }
+
+    if (khaosDb.hasData()) {
+      return true;
+    }
+
+    return true;
+  }
+
+  /**
+   * push transaction into db.
+   */
   public boolean pushTransactions(TransactionCapsule trx) {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -190,7 +208,7 @@ public class BlockStore extends TronDatabase {
         return;
       }
 
-      block.getTransactions().forEach(trx->{
+      block.getTransactions().forEach(trx -> {
         if (!pushTransactions(trx)) {
           return;
         }

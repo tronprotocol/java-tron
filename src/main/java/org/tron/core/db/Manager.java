@@ -12,6 +12,8 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -130,6 +132,27 @@ public class Manager {
     blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     pendingTrxs = new ArrayList<>();
 
+    initGenesis();
+  }
+
+  /**
+   * init genesis block.
+   */
+  public void initGenesis() {
+    BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
+    if (this.getBlockStore().containBlock(genesisBlockCapsule.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+    } else {
+      if (this.getBlockStore().hasBlocks()) {
+        logger.error("genesis block modify, please delete database directory({}) and restart",
+            Args.getInstance().getOutputDirectory());
+        System.exit(1);
+      } else {
+        logger.info("create genesis block");
+        Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+        this.getBlockStore().pushBlock(genesisBlockCapsule);
+      }
+    }
   }
 
   public AccountStore getAccountStore() {

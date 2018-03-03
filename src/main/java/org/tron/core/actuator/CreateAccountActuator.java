@@ -22,7 +22,7 @@ public class CreateAccountActuator extends AbstractActuator {
       if (contract.is(AccountCreateContract.class)) {
         AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
         ByteString ownerAddress = accountCreateContract.getOwnerAddress();
-        ByteString accountName = accountCreateContract.getAccoutName();
+        ByteString accountName = accountCreateContract.getAccountName();
         AccountType type = accountCreateContract.getType();
         int typeValue = accountCreateContract.getTypeValue();
         if (null != dbManager) {
@@ -30,9 +30,9 @@ public class CreateAccountActuator extends AbstractActuator {
               .isAccountExist(ownerAddress.toByteArray());
           if (null != accountName && !accountExist) {
             Account account = Account.newBuilder().setAddress(ownerAddress)
-                  .setAccoutName(accountName).setType(type).setTypeValue(typeValue).build();
+                .setAccoutName(accountName).setType(type).setTypeValue(typeValue).build();
             AccountStore accountStore = dbManager.getAccountStore();
-            accountStore.createAccount(ownerAddress.toByteArray(),account.toByteArray());
+            accountStore.createAccount(ownerAddress.toByteArray(), account.toByteArray());
           }
         }
       }
