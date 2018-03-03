@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
@@ -39,6 +39,7 @@ public class BlockCapsule {
 
   private Block block;
 
+  private ECDSASignature signature;
   private boolean unpacked;
 
   public boolean generatedByMyself = false;
@@ -112,13 +113,24 @@ public class BlockCapsule {
   public void sign(byte[] privateKey) {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  /**
+   * verify the private key signature
+   *
+   * @param privateKey private key
+   */
+  public boolean verifySign(byte[] privateKey) {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+
+    return ecKey.verify(this.getRawHash().getBytes(), signature);
   }
 
   private Sha256Hash getRawHash() {
