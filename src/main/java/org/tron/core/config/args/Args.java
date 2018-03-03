@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.crypto.Hash;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.Sha256Hash;
 
 public class Args {
 
@@ -84,8 +81,8 @@ public class Args {
         List<Account> accounts = new ArrayList<>();
         assets.forEach(t -> {
           Account account = new Account();
-          account.setAddress(t.get("address").toString());
-          account.setBalance(t.get("balance").toString());
+          account.setAddress(t.get("address").unwrapped().toString());
+          account.setBalance(t.get("balance").unwrapped().toString());
           accounts.add(account);
         });
 
@@ -94,10 +91,6 @@ public class Args {
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
-
-    INSTANCE.chainId = Sha256Hash.wrap(Hash.sha256(ByteArray.fromObject(INSTANCE.genesisBlock)))
-        .toString();
-    logger.info("chain id = {}", INSTANCE.chainId);
   }
 
   public static Args getInstance() {
