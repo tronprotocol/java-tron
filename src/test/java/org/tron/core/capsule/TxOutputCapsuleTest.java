@@ -1,3 +1,18 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.tron.core.capsule;
 
 import org.junit.Assert;
@@ -14,55 +29,34 @@ public class TxOutputCapsuleTest {
   @Test
   public void testTxOutputCapsule() {
     long value = 123456L;
-    String address = "1921681012";
+    String address = "3450dde5007c67a50ec2e09489fa53ec1ff59c61e7ddea9638645e6e5f62e5f5";
     TxOutputCapsule txOutputCapsule = new TxOutputCapsule(value, address);
-    logger.info("value={}", txOutputCapsule.getTxOutput().getValue());
-    logger.info("address={}",
-        ByteArray.toHexString(txOutputCapsule.getTxOutput().getPubKeyHash().toByteArray()));
-    logger.info("validate={}", txOutputCapsule.validate());
+
     Assert.assertEquals(value, txOutputCapsule.getTxOutput().getValue());
     Assert.assertEquals(address,
         ByteArray.toHexString(txOutputCapsule.getTxOutput().getPubKeyHash().toByteArray()));
     Assert.assertTrue(txOutputCapsule.validate());
 
-    long value1 = 98765L;
-    String address1 = "192168101";
-    String address2 = "0" + address1;
-    TxOutputCapsule txOutputCapsule1 = new TxOutputCapsule(value1, address1);
-    logger.info("value1={}", txOutputCapsule1.getTxOutput().getValue());
-    logger.info("address1={}",
-        ByteArray.toHexString(txOutputCapsule1.getTxOutput().getPubKeyHash().toByteArray()));
-    Assert.assertEquals(value1, txOutputCapsule1.getTxOutput().getValue());
-    Assert.assertEquals(address2,
-        ByteArray.toHexString(txOutputCapsule1.getTxOutput().getPubKeyHash().toByteArray()));
-    Assert.assertTrue(txOutputCapsule1.validate());
-    logger.info("validate1={}", txOutputCapsule1.validate());
-
     long value3 = 9852448L;
-    String address3 = "0x1921681011";
-    String address4 = "1921681011";
-    TxOutputCapsule txOutputCapsule2 = new TxOutputCapsule(value1, address1);
-    logger.info("value2={}", txOutputCapsule2.getTxOutput().getValue());
-    logger.info("address2={}",
-        ByteArray.toHexString(txOutputCapsule2.getTxOutput().getPubKeyHash().toByteArray()));
-    Assert.assertEquals(value1, txOutputCapsule2.getTxOutput().getValue());
-    Assert.assertEquals(address2,
+    String address3 = "0xfd1a5decba973b0d31e84e7d8f4a5b10d33ab37ce6533f1ff5a9db2d9db8ef";
+    String address4 = "fd1a5decba973b0d31e84e7d8f4a5b10d33ab37ce6533f1ff5a9db2d9db8ef";
+    TxOutputCapsule txOutputCapsule2 = new TxOutputCapsule(value3, address3);
+
+    Assert.assertEquals(value3, txOutputCapsule2.getTxOutput().getValue());
+    Assert.assertEquals(address4,
         ByteArray.toHexString(txOutputCapsule2.getTxOutput().getPubKeyHash().toByteArray()));
     Assert.assertTrue(txOutputCapsule2.validate());
-    logger.info("validate2={}", txOutputCapsule2.validate());
 
     long value5 = 67549L;
     String address5 = null;
     TxOutputCapsule txOutputCapsule3 = new TxOutputCapsule(value5, address5);
-    logger.info("value5={}", txOutputCapsule3.getTxOutput().getValue());
-    logger.info("address5={}",
-        ByteArray.toHexString(txOutputCapsule3.getTxOutput().getPubKeyHash().toByteArray()));
+
     Assert.assertEquals(value5, txOutputCapsule3.getTxOutput().getValue());
     Assert.assertEquals("",
         ByteArray.toHexString(txOutputCapsule3.getTxOutput().getPubKeyHash().toByteArray()));
     Assert.assertTrue(txOutputCapsule3.validate());
-    logger.info("validate5={}", txOutputCapsule3.validate());
 
   }
 
 }
+

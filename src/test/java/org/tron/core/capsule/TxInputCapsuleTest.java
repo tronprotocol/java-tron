@@ -1,9 +1,25 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.tron.core.capsule;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 
 public class TxInputCapsuleTest {
 
@@ -11,19 +27,15 @@ public class TxInputCapsuleTest {
 
   @Test
   public void testTxOutputCapsule() {
-    byte[] txId = {1, 2, 3, 4, 5, 6};
+    byte[] txId = ByteArray
+        .fromHexString("2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519");
     long vout = 12345L;
-    byte[] signature = {13, 14, 15, 16, 17};
-    byte[] pubkey = {123, 22, 24, 36};
+    byte[] signature = ByteArray
+        .fromHexString("ded9c2181fd7ea468a7a7b1475defe90bb0fc0ca8d0f2096b0617465cea6568c");
+    byte[] pubkey = ByteArray
+        .fromHexString("a0c9d5524c055381fe8b1950e0c3b09d252add57a7aec061ae258aa03ee25822");
 
     TxInputCapsule txInputCapsule = new TxInputCapsule(txId, vout, signature, pubkey);
-    logger.info("txId={}",
-        txInputCapsule.getTxInput().getRawData().getTxID().toByteArray());
-    logger.info("vout={}",
-        txInputCapsule.getTxInput().getRawData().getVout());
-    logger.info("signature={}", txInputCapsule.getTxInput().getSignature().toByteArray());
-    logger.info("pubkey={}",
-        txInputCapsule.getTxInput().getRawData().getPubKey().toByteArray());
 
     Assert
         .assertArrayEquals(txId, txInputCapsule.getTxInput().getRawData().getTxID().toByteArray());
@@ -34,3 +46,4 @@ public class TxInputCapsuleTest {
     Assert.assertTrue(txInputCapsule.validate());
   }
 }
+

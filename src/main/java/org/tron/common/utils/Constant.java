@@ -13,9 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
-
-import org.tron.common.utils.ByteArray;
+package org.tron.common.utils;
 
 public class Constant {
 

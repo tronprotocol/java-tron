@@ -35,16 +35,7 @@ public class TxInputUtilTest {
         .fromHexString("ded9c2181fd7ea468a7a7b1475defe90bb0fc0ca8d0f2096b0617465cea6568c");
     byte[] pubkey = ByteArray
         .fromHexString("a0c9d5524c055381fe8b1950e0c3b09d252add57a7aec061ae258aa03ee25822");
-
     TXInput txInput = TxInputUtil.newTxInput(txId, vout, signature, pubkey);
-
-    logger.info("txId={}",
-        txInput.getRawData().getTxID().toByteArray());
-    logger.info("vout={}",
-        txInput.getRawData().getVout());
-    logger.info("signature={}", txInput.getSignature().toByteArray());
-    logger.info("pubkey={}",
-        txInput.getRawData().getPubKey().toByteArray());
 
     Assert.assertArrayEquals(txId, txInput.getRawData().getTxID().toByteArray());
     Assert.assertEquals(vout, txInput.getRawData().getVout());
