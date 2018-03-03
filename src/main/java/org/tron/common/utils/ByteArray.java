@@ -108,33 +108,15 @@ public class ByteArray {
    */
   public static byte[] fromObject(Object obj) {
     byte[] bytes = null;
-    ByteArrayOutputStream byteArrayOutputStream = null;
-    ObjectOutputStream objectOutputStream = null;
-    try {
-      byteArrayOutputStream = new ByteArrayOutputStream();
-      objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+
       objectOutputStream.writeObject(obj);
       objectOutputStream.flush();
       bytes = byteArrayOutputStream.toByteArray();
 
     } catch (IOException e) {
-      logger.error("objectToByteArray failed, " + e);
-    } finally {
-      if (objectOutputStream != null) {
-        try {
-          objectOutputStream.close();
-        } catch (IOException e) {
-          logger.error("close objectOutputStream failed, " + e);
-        }
-      }
-      if (byteArrayOutputStream != null) {
-        try {
-          byteArrayOutputStream.close();
-        } catch (IOException e) {
-          logger.error("close byteArrayOutputStream failed, " + e);
-        }
-      }
-
+      logger.error("objectToByteArray failed: " + e.getMessage(), e);
     }
     return bytes;
   }
