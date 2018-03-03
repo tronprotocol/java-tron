@@ -16,6 +16,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.CancelException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
@@ -69,8 +70,11 @@ public class WitnessService implements Service {
     String capture = "";
     try {
       result = tryProduceBlock(capture);
+    } catch (CancelException ex) {
+      throw ex;
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error("produce block error,",ex);
+      result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
     if (result == null) {
@@ -212,6 +216,7 @@ public class WitnessService implements Service {
     tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
+
 
   @Override
   public void init(Args args) {
