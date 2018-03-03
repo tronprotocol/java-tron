@@ -30,6 +30,9 @@ public class ByteArray {
     return data == null ? "" : Hex.toHexString(data);
   }
 
+  /**
+   * get bytes data from hex string data.
+   */
   public static byte[] fromHexString(String data) {
     if (data == null) {
       return EMPTY_BYTE_ARRAY;
@@ -37,12 +40,15 @@ public class ByteArray {
     if (data.startsWith("0x")) {
       data = data.substring(2);
     }
-    if (data.length() % 2 == 1) {
+    if (data.length() % 2 != 0) {
       data = "0" + data;
     }
     return Hex.decode(data);
   }
 
+  /**
+   * get long data from bytes data.
+   */
   public static long toLong(byte[] b) {
     if (b == null || b.length == 0) {
       return 0;
@@ -50,6 +56,19 @@ public class ByteArray {
     return new BigInteger(1, b).longValue();
   }
 
+  /**
+   * get int data from bytes data.
+   */
+  public static int toInt(byte[] b) {
+    if (b == null || b.length == 0) {
+      return 0;
+    }
+    return new BigInteger(1, b).intValue();
+  }
+
+  /**
+   * get bytes data from string data.
+   */
   public static byte[] fromString(String str) {
     if (str == null) {
       return null;
@@ -58,6 +77,9 @@ public class ByteArray {
     return str.getBytes();
   }
 
+  /**
+   * get string data from bytes data.
+   */
   public static String toStr(byte[] byteArray) {
     if (byteArray == null) {
       return null;
@@ -69,4 +91,9 @@ public class ByteArray {
   public static byte[] fromLong(long val) {
     return ByteBuffer.allocate(8).putLong(val).array();
   }
+
+  public static byte[] fromInt(int val) {
+    return ByteBuffer.allocate(8).putInt(val).array();
+  }
+
 }

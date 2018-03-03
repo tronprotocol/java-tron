@@ -41,7 +41,7 @@ public class TxOutputCapsule {
   }
 
   /**
-   * validate.
+   * validateSignature.
    */
   public boolean validate() {
     return true;

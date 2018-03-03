@@ -8,15 +8,15 @@ package protocol;
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "Protocal"; //Specify the class name of the generated Java file
 
+
+enum AccountType {
+  Normal = 0;
+  AssertIssue = 1;
+  Contract = 2;
+}
+
 // Account
 message Account {
-
-  enum AccountType {
-    Normal = 0;
-    AssertIssue = 1;
-    Contract = 2;
-  }
-
   bytes accout_name = 1;
   AccountType type = 2;
   bytes address = 3;
@@ -26,12 +26,6 @@ message Account {
 
 }
 
-// Contract
-message Contract {
-  bytes address = 1;
-  bytes scripts = 2;
-  string name = 3;
-}
 
 // Witness
 message Witness {
@@ -56,10 +50,10 @@ message TXInput {
   message raw {
     bytes txID = 1;
     int64 vout = 2;
-    bytes pubKey = 4;
+    bytes pubKey = 3;
   }
   raw raw_data = 1;
-  bytes signature = 3;
+  bytes signature = 4;
 
 }
 
@@ -68,25 +62,36 @@ message TXOutputs {
 }
 
 message Transaction {
-
   enum TranscationType {
-    Transfer = 0;
-    DeployContract = 1;
-    CreateAccount = 2;
-    VoteWitess = 3;
-    AssetIssue = 4;
+    UtxoType = 0;
+    ContractType = 1;
   }
-
-  bytes id = 1;
-  TranscationType type = 2;
-  repeated TXInput vin = 3;
-  repeated TXOutput vout = 4;
-  //bytes hash = 5;
-  bytes data = 10;
-  repeated google.protobuf.Any parameter = 11;
-  bytes scripts = 12;
+  message Contract{
+    enum ContractType{
+      AccountCreateContract = 0;
+      TransferContract = 1;
+      TransferAssertContract = 2;
+      VoteAssetContract = 3;
+      VoteWitnessContract = 4;
+      WitnessCreateContract = 5;
+      AssetIssueContract = 6;
+      DeployContract = 7;
+    }
+    ContractType type = 1;
+    google.protobuf.Any parameter = 11;
+  }
+  message raw {
+    TranscationType type = 2;
+    repeated TXInput vin = 5;
+    repeated TXOutput vout = 7;
+    int64 expiration = 8;
+    bytes data = 10;
+    repeated Contract contract = 11;
+    bytes scripts = 16;
+  }
+  raw raw_data =1 ;
+  repeated bytes signature = 5;
 }
-
 
 message BlockHeader {
   message raw {
@@ -113,7 +118,7 @@ message Block {
 // Inventory
 
 message Inventory {
-  enum InventoryType //枚举消息类型
+  enum InventoryType
   {
     TRX = 0;
     BLOCK = 1;
@@ -124,9 +129,9 @@ message Inventory {
 
 
 message Items {
-  enum ItemType //枚举消息类型
+  enum ItemType
   {
-    ERR = 0; //proto3版本中，首成员必须为0，成员不应有相同的值
+    ERR = 0;
     TRX = 1;
     BLOCK = 2;
     BLOCKHEADER = 3;

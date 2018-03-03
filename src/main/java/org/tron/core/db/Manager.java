@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -129,33 +131,22 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (!trxCap.validate()) {
+    if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
 
-    Transaction trx = trxCap.getTransaction();
-
-    switch (trx.getType()) {
-      case Transfer:
-        break;
-      case VoteWitess:
-        break;
-      case CreateAccount:
-        break;
-      case DeployContract:
-        break;
-      default:
-        break;
-    }
-
+    //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
+    List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    actuatorList.forEach(actuator -> actuator.execute());
     return true;
   }
+
 
   /**
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, String privateKey) {
+      long when, byte[] privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -194,13 +185,9 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    // generate block
-
-    blockCapsule.calcMerkleRoot();
-
-    //blockCapsule.id();
-
-    //blockCapsule.sign(privateKey);
+    blockCapsule.setMerklerRoot();
+    blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
 
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());

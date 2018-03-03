@@ -182,12 +182,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
     List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
-    Protocal.Inventory.Builder invBuild = Protocal.Inventory.newBuilder();
-    invBuild.setType(Protocal.Inventory.InventoryType.BLOCK);
-    int i = 0;
-    for (Sha256Hash hash : hashList) {
-      invBuild.setIds(i++, hash.getByteString());
-    }
 
     try {
       while (gossipNode.listPeer.values().size() <= 0) {
