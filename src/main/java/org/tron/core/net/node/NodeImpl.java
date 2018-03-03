@@ -128,7 +128,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
       for (PeerConnection peer : gossipNode.listPeer.values()) {
-        if (!peer.needSyncFrom) {
+        if (!peer.needSyncFromUs) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
         }
@@ -175,7 +175,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       }
     });
-
     advertiseLoopThread.start();
   }
 

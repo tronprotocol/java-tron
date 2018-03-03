@@ -25,9 +25,9 @@ public class PeerConnection {
 
   public Queue<Sha256Hash> blockToFetch = new LinkedBlockingDeque<>();
 
-  public boolean needToSync = false;
+  public boolean needSyncFromPeer;
 
-  public boolean needSyncFrom = false;
+  public boolean needSyncFromUs;
 
   private Cluster cluster;
 
@@ -38,6 +38,7 @@ public class PeerConnection {
   public PeerConnection(Cluster cluster, Member member) {
     this.cluster = cluster;
     this.member = member;
+    //this.needSyncFromPeer = true;
   }
 
 //  public void onMessage(PeerConnection peerConnection, Message msg) {
