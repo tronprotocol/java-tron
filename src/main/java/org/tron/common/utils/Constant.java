@@ -13,9 +13,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.utils;
+package org.tron.core;
 
-import java.io.File;
+import org.tron.common.utils.ByteArray;
 
 public class Constant {
 
@@ -32,7 +32,5 @@ public class Constant {
   public static final String TEST = "test";
   public static final String NORMAL_CONF = "config.conf";
   public static final String TEST_CONF = "config-test.conf";
-  public static final String DATABASE_DIR = "database.directory";
-  public static final String OUTPUT_DIR = "output-directory" + File.separator;
-
+  public static final String DATABASE_DIR = "storage.directory";
 }

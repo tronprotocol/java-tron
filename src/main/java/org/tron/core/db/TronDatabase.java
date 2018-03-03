@@ -1,14 +1,14 @@
 package org.tron.core.db;
 
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.Constant;
+import org.tron.core.config.args.Args;
 
 public abstract class TronDatabase {
 
   protected LevelDbDataSourceImpl dbSource;
 
   protected TronDatabase(String dbName) {
-    dbSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, dbName);
+    dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), dbName);
     dbSource.initDB();
   }
 
@@ -19,6 +19,8 @@ public abstract class TronDatabase {
   public void close() {
     dbSource.closeDB();
   }
+
+  //TODO: optimize these abstract methods
 
   abstract void add();
 

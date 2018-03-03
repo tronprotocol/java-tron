@@ -52,10 +52,10 @@ public class ApplicationImpl implements Application, NodeDelegate {
       }
     }
 
-    for (long num = blockStoreDb.getBlockNumByHash(lastKnownBlkHash);
+    for (long num = blockStoreDb.getBlockNumById(lastKnownBlkHash);
         num <= blockStoreDb.getHeadBlockNum(); ++num) {
       if (num > 0) {
-        retBlockHashes.add(blockStoreDb.getBlockHashByNum(num));
+        retBlockHashes.add(blockStoreDb.getBlockIdByNum(num));
       }
     }
     return retBlockHashes;
@@ -74,11 +74,11 @@ public class ApplicationImpl implements Application, NodeDelegate {
     if (refPoint != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
       if (blockStoreDb.containBlock(refPoint)) {
-        highBlkNum = blockStoreDb.getBlockNumByHash(refPoint);
+        highBlkNum = blockStoreDb.getBlockNumById(refPoint);
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = blockStoreDb.getBlockChainHashesOnFork(refPoint);
-        highNoForkBlkNum = blockStoreDb.getBlockNumByHash(forkList.get(forkList.size() - 1));
+        highNoForkBlkNum = blockStoreDb.getBlockNumById(forkList.get(forkList.size() - 1));
         forkList.remove(forkList.get(forkList.size() - 1));
       }
 
@@ -93,7 +93,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
     long realHighBlkNum = highBlkNum + num;
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.add(blockStoreDb.getBlockHashByNum(lowBlkNum));
+        retSummary.add(blockStoreDb.getBlockIdByNum(lowBlkNum));
       } else {
         retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       }
@@ -105,7 +105,7 @@ public class ApplicationImpl implements Application, NodeDelegate {
   private void resetP2PNode() {
     p2pNode.listen();
     p2pNode.connectToP2PNetWork();
-    p2pNode.syncFrom(blockStoreDb.getHeadBlockHash());
+    p2pNode.syncFrom(blockStoreDb.getHeadBlockId());
   }
 
   //NodeDelegate

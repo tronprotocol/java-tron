@@ -232,4 +232,7 @@ public class KhaosDatabase extends TronDatabase {
     return ret;
   }
 
+  public boolean hasData() {
+    return !this.miniStore.hashKblkMap.isEmpty();
+  }
 }

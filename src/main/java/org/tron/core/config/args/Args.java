@@ -6,14 +6,17 @@ import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Args {
 
+  private static final Logger logger = LoggerFactory.getLogger("Args");
+
   private static final Args INSTANCE = new Args();
 
-
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
-  private String outputDirectory = new String("");
+  private String outputDirectory = new String("output-directory");
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
@@ -34,6 +37,7 @@ public class Args {
   private Overlay overlay;
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
+  private String chainId;
 
   private Args() {
 
@@ -63,24 +67,29 @@ public class Args {
       INSTANCE.seedNode.setIpList(INSTANCE.seedNodes);
     }
 
-    INSTANCE.genesisBlock = new GenesisBlock();
-    INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
-    INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-    INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-    INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
+    if (config.hasPath("genesis.block")) {
+      INSTANCE.genesisBlock = new GenesisBlock();
 
-    if (config.hasPath("genesis.block.transactions")) {
-      List<? extends ConfigObject> trx = config.getObjectList("genesis.block.transactions");
+      INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+      INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
+      INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
+      INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
-      List<SeedNodeAddress> seedNodeAddresses = new ArrayList<>();
-      trx.forEach(t -> {
-        SeedNodeAddress seedNodeAddress = new SeedNodeAddress();
-        seedNodeAddress.setAddress(t.get("address").toString());
-        seedNodeAddress.setBalance(t.get("balance").toString());
-        seedNodeAddresses.add(seedNodeAddress);
-      });
+      if (config.hasPath("genesis.block.assets")) {
+        List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
 
-      INSTANCE.genesisBlock.setTransactions(seedNodeAddresses);
+        List<Account> accounts = new ArrayList<>();
+        assets.forEach(t -> {
+          Account account = new Account();
+          account.setAddress(t.get("address").unwrapped().toString());
+          account.setBalance(t.get("balance").unwrapped().toString());
+          accounts.add(account);
+        });
+
+        INSTANCE.genesisBlock.setAssets(accounts);
+      }
+    } else {
+      INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
   }
 
@@ -124,5 +133,13 @@ public class Args {
 
   public GenesisBlock getGenesisBlock() {
     return genesisBlock;
+  }
+
+  public String getChainId() {
+    return chainId;
+  }
+
+  public void setChainId(String chainId) {
+    this.chainId = chainId;
   }
 }

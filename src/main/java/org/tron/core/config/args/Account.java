@@ -15,7 +15,7 @@
 
 package org.tron.core.config.args;
 
-public class SeedNodeAddress {
+public class Account {
 
   private String address;
 

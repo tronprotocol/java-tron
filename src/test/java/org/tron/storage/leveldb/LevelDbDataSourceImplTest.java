@@ -26,7 +26,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Constant;
+import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
@@ -40,7 +40,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testGet() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
     byte[] key = key1.getBytes();
@@ -52,7 +53,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testGetBlock() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(),
         "properties");
     dataSource.initDB();
     String key1 = "latest_block_header_number";
@@ -65,7 +67,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testPutBloc() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(),
         "block");
     dataSource.initDB();
     String key1 = "latest_block_header_number";
@@ -84,7 +87,8 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void testPut() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(),
         "test");
     dataSource.initDB();
     String key1 = "000134yyyhy";
@@ -101,11 +105,11 @@ public class LevelDbDataSourceImplTest {
     dataSource.closeDB();
   }
 
-  @Ignore
   @Test
   public void testRest() {
 
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test");
     dataSource.resetDb();
     dataSource.closeDB();
   }

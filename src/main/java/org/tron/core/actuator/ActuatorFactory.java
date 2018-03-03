@@ -45,6 +45,7 @@ public class ActuatorFactory {
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {
     switch (contract.getType()) {
       case AccountCreateContract:
+        new CreateAccountActuator(contract.getParameter(), manager);
         break;
       case TransferContract:
         break;
