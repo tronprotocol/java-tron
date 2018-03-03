@@ -79,6 +79,8 @@
   <logger name="TransactionVoteActuator" level="INFO"/>
   <logger name="WitnessStore" level="INFO"/>
   <logger name="ActuatorFactory" level="INFO"/>
+  <logger name="ByteArray" level="INFO"/>
+  <logger name="Args" level="INFO"/>
 
 </configuration>
 

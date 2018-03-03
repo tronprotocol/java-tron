@@ -18,11 +18,18 @@
 
 package org.tron.common.utils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 public class ByteArray {
+
+  private static final Logger logger = LoggerFactory.getLogger("ByteArray");
 
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -96,4 +103,39 @@ public class ByteArray {
     return ByteBuffer.allocate(8).putInt(val).array();
   }
 
+  /**
+   * get bytes data from object data.
+   */
+  public static byte[] fromObject(Object obj) {
+    byte[] bytes = null;
+    ByteArrayOutputStream byteArrayOutputStream = null;
+    ObjectOutputStream objectOutputStream = null;
+    try {
+      byteArrayOutputStream = new ByteArrayOutputStream();
+      objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+      objectOutputStream.writeObject(obj);
+      objectOutputStream.flush();
+      bytes = byteArrayOutputStream.toByteArray();
+
+    } catch (IOException e) {
+      logger.error("objectToByteArray failed, " + e);
+    } finally {
+      if (objectOutputStream != null) {
+        try {
+          objectOutputStream.close();
+        } catch (IOException e) {
+          logger.error("close objectOutputStream failed, " + e);
+        }
+      }
+      if (byteArrayOutputStream != null) {
+        try {
+          byteArrayOutputStream.close();
+        } catch (IOException e) {
+          logger.error("close byteArrayOutputStream failed, " + e);
+        }
+      }
+
+    }
+    return bytes;
+  }
 }
