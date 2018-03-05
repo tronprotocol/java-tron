@@ -1,9 +1,11 @@
 package org.tron.core.db;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.actuator.Actuator;
@@ -11,7 +13,9 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.Witness;
 
 public class Manager {
 
@@ -230,5 +234,38 @@ public class Manager {
 
   private void setUtxoStore(UtxoStore utxoStore) {
     this.utxoStore = utxoStore;
+  }
+
+  public void processBlock(BlockCapsule block) {
+    block.getTransactions().forEach(transactionCapsule -> {
+      processTrx(transactionCapsule);
+    });
+  }
+
+  public void updateWitness() {
+    //TODO validator maint needed
+    Map<ByteString, Long> countWitness = Maps.newHashMap();
+    List<Account> accountList = accountStore.getAllAccounts();
+    accountList.forEach(account -> {
+      account.getVotesList().forEach(vote -> {
+        //TODO validate witness //active_witness
+        if (countWitness.containsKey(vote.getVoteAddress())) {
+          countWitness.put(vote.getVoteAddress(),
+              countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+        } else {
+          countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+        }
+      });
+    });
+
+    countWitness.forEach((address, voteCount) -> {
+      Witness witnessSource = witnessStore.getWitness(address);
+      if (null == witnessSource) {
+        logger.warn("winessSouece is null.address is {}", address);
+      }
+      Witness witnessTarget = witnessSource.toBuilder().setVoteCount(voteCount).build();
+      witnessStore.putWitness(address, witnessTarget);
+    });
+    //TODO  select final witness from witnessList
   }
 }
