@@ -44,7 +44,6 @@ public class LevelDbDataSourceImplTest {
   public void initDb() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     dataSourceTest = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
-
   }
 
   @Test
