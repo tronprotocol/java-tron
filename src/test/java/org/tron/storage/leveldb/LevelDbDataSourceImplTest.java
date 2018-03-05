@@ -37,47 +37,37 @@ import org.tron.core.config.args.Args;
 public class LevelDbDataSourceImplTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  LevelDbDataSourceImpl dataSource;
+
+  LevelDbDataSourceImpl dataSourceTest;
 
   @Before
   public void initDb() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-    dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+    dataSourceTest = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+
   }
 
   @Test
-  public void testPut() {
-    dataSource.initDB();
-    dataSource.resetDb();
+  public void testPutGet() {
+    //dataSourceTest.resetDb();
     String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
     byte[] key = key1.getBytes();
-
+    dataSourceTest.initDB();
     String value1 = "50000";
     byte[] value = value1.getBytes();
 
-    dataSource.putData(key, value);
+    dataSourceTest.putData(key, value);
 
-    assertNotNull(dataSource.getData(key));
-    assertEquals(1, dataSource.allKeys().size());
+    assertNotNull(dataSourceTest.getData(key));
+    assertEquals(1, dataSourceTest.allKeys().size());
+    assertEquals("50000", ByteArray.toStr(dataSourceTest.getData(key1.getBytes())));
 
-    dataSource.closeDB();
-  }
-
-  @Test
-  public void testGet() {
-    dataSource.initDB();
-    String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
-    byte[] key = key1.getBytes();
-    byte[] value = dataSource.getData(key);
-    String s = ByteArray.toStr(value);
-    dataSource.closeDB();
-    assertEquals("50000", s);
   }
 
   @Test
   public void testRest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test2");
-    dataSource.resetDb();
+    dataSource.initDB();
     assertEquals(0, dataSource.allKeys().size());
     dataSource.closeDB();
   }
