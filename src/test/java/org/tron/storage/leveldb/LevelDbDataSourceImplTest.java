@@ -20,74 +20,36 @@ package org.tron.storage.leveldb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
-@Ignore
 public class LevelDbDataSourceImplTest {
 
+  private static final Logger logger = LoggerFactory.getLogger("Test");
+  LevelDbDataSourceImpl dataSource;
+
   @Before
-  public void init() {
+  public void initDb() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-  }
-
-  @Test
-  public void testGet() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,"test");
-    dataSource.initDB();
-    String key1 = "000134yyyhy";
-    byte[] key = key1.getBytes();
-    byte[] value = dataSource.getData(key);
-    String s = ByteArray.toStr(value);
-    dataSource.closeDB();
-    System.out.println(s);
-  }
-
-  @Test
-  public void testGetBlock() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
-        "properties");
-    dataSource.initDB();
-    String key1 = "latest_block_header_number";
-    byte[] key = key1.getBytes();
-    byte[] value = dataSource.getData(key);
-    Long s = ByteArray.toLong(value);
-    dataSource.closeDB();
-    System.out.println(s);
-  }
-
-  @Test
-  public void testPutBloc() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
-        "block");
-    dataSource.initDB();
-    String key1 = "latest_block_header_number";
-    byte[] key = key1.getBytes();
-
-    String value1 = "50000";
-    byte[] value = value1.getBytes();
-
-    dataSource.putData(key, value);
-
-    assertNotNull(dataSource.getData(key));
-    assertEquals(1, dataSource.allKeys().size());
-
-    dataSource.closeDB();
+    dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
   }
 
   @Test
   public void testPut() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
-        "test");
     dataSource.initDB();
-    String key1 = "000134yyyhy";
+    dataSource.resetDb();
+    String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
     byte[] key = key1.getBytes();
 
     String value1 = "50000";
@@ -102,11 +64,78 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
-  public void testRest() {
+  public void testGet() {
+    dataSource.initDB();
+    String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
+    byte[] key = key1.getBytes();
+    byte[] value = dataSource.getData(key);
+    String s = ByteArray.toStr(value);
+    dataSource.closeDB();
+    assertEquals("50000", s);
+  }
 
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+  @Test
+  public void testRest() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test2");
     dataSource.resetDb();
+    assertEquals(0, dataSource.allKeys().size());
     dataSource.closeDB();
   }
 
+  @Test
+  public void testupdateByBatchInner() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test3");
+    dataSource.initDB();
+    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    String value1 = "50000";
+    String key2 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757351";
+    String value2 = "10000";
+
+    Map<byte[], byte[]> rows = new HashMap<>();
+    rows.put(key1.getBytes(), value1.getBytes());
+    rows.put(key2.getBytes(), value2.getBytes());
+
+    dataSource.updateByBatch(rows);
+
+    assertEquals("50000", ByteArray.toStr(dataSource.getData(key1.getBytes())));
+    assertEquals("10000", ByteArray.toStr(dataSource.getData(key2.getBytes())));
+    assertEquals(2, dataSource.allKeys().size());
+  }
+
+  @Test
+  public void testdeleteData() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test4");
+    dataSource.initDB();
+    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    byte[] key = key1.getBytes();
+    dataSource.deleteData(key);
+    byte[] value = dataSource.getData(key);
+    String s = ByteArray.toStr(value);
+    assertNull(s);
+
+  }
+
+  @Test
+  public void testallKeys() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test5");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757321";
+    byte[] key = key1.getBytes();
+
+    String value1 = "50000";
+    byte[] value = value1.getBytes();
+
+    dataSource.putData(key, value);
+    String key3 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    byte[] key2 = key3.getBytes();
+
+    String value3 = "30000";
+    byte[] value2 = value3.getBytes();
+
+    dataSource.putData(key2, value2);
+    assertEquals(2, dataSource.allKeys().size());
+    dataSource.resetDb();
+  }
 }
