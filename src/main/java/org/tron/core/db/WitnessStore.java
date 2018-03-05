@@ -47,10 +47,10 @@ public class WitnessStore extends TronDatabase {
     return null;
   }
 
-  public void putWitness(ByteString voteAddress, Witness witness) {
-    logger.info("voteAddress is {} ", voteAddress);
+  public void putWitness(Witness witness) {
+    logger.info("voteAddress is {} ", witness.getAddress());
 
-    dbSource.putData(voteAddress.toByteArray(), witness.toByteArray());
+    dbSource.putData(witness.getAddress().toByteArray(), witness.toByteArray());
   }
 
   @Override

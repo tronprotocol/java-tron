@@ -292,7 +292,7 @@ public class Manager {
       }
       Witness witnessTarget = witnessSource.toBuilder().setVoteCount(voteCount).build();
       witnessCapsuleList.add(new WitnessCapsule(witnessTarget));
-      witnessStore.putWitness(address, witnessTarget);
+      witnessStore.putWitness(witnessTarget);
     });
     witnessCapsuleList.sort((a, b) -> {
       return (int) (a.getVoteCount() - b.getVoteCount());
