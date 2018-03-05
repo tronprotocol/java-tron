@@ -128,7 +128,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
       for (PeerConnection peer : gossipNode.listPeer.values()) {
-        if (!peer.needSyncFromUs) {
+        if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
         }
@@ -197,7 +197,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.lastBlockWeKnow = blkMsg.getMessageId();
+    peer.setLastBlockPeerKnow(blkMsg.getMessageId());
     del.handleBlock(blkMsg.getBlockCapsule());
   }
 

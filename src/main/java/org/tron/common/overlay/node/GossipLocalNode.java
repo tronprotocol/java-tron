@@ -52,6 +52,8 @@ public class GossipLocalNode implements LocalNode {
   
   private CompositeSubscription subscriptions = new CompositeSubscription();
 
+
+
   @Override
   public void broadcast(Message message) {
     listPeer.forEach((id, peer) -> peer.sendMessage(message));
@@ -75,7 +77,7 @@ public class GossipLocalNode implements LocalNode {
     for (Member member : cluster.otherMembers()) {
       //init peer
       PeerConnection peer = new PeerConnection(this.cluster, member);
-      peer.needSyncFromPeer = true;
+      peer.setNeedSyncFromPeer(true);
       listPeer.put(member.hashCode(), peer);
     }
 
@@ -88,7 +90,7 @@ public class GossipLocalNode implements LocalNode {
                 //discover new peer
                 PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
                 listPeer.put(event.newMember().hashCode(), peer);
-                peer.needSyncFromPeer = true;
+                peer.setNeedSyncFromPeer(true);
               }
             });
 

@@ -134,7 +134,7 @@ public class Manager {
     blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     pendingTrxs = new ArrayList<>();
 
-    initGenesis();
+    //initGenesis();
   }
 
   /**

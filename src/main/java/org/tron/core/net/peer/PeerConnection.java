@@ -17,23 +17,76 @@ public class PeerConnection {
 
   private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
-//  private PeerConnectionDelegate peerDel;
 
+  //private
   private Member member;
-
-  public Sha256Hash lastBlockWeKnow = Sha256Hash.ZERO_HASH;
-
-  public Queue<Sha256Hash> blockToFetch = new LinkedBlockingDeque<>();
-
-  public boolean needSyncFromPeer;
-
-  public boolean needSyncFromUs;
 
   private Cluster cluster;
 
-  public Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
+  //broadcast
+  private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
-  public Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
+  private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
+
+  //sync chain
+  private Sha256Hash lastBlockPeerKnow = Sha256Hash.ZERO_HASH;
+
+  private Queue<Sha256Hash> chainIdsToFetch = new LinkedBlockingDeque<>();
+
+  //private Queue<Sha256Hash> chainIdsPeerRequest = new LinkedBlockingQueue<>();
+
+  private boolean needSyncFromPeer;
+
+  private boolean needSyncFromUs;
+
+  public Sha256Hash getLastBlockPeerKnow() {
+    return lastBlockPeerKnow;
+  }
+
+  public void setLastBlockPeerKnow(Sha256Hash lastBlockPeerKnow) {
+    this.lastBlockPeerKnow = lastBlockPeerKnow;
+  }
+
+  public Queue<Sha256Hash> getChainIdsToFetch() {
+    return chainIdsToFetch;
+  }
+
+  public void setChainIdsToFetch(Queue<Sha256Hash> chainIdsToFetch) {
+    this.chainIdsToFetch = chainIdsToFetch;
+  }
+
+  public boolean isNeedSyncFromPeer() {
+    return needSyncFromPeer;
+  }
+
+  public void setNeedSyncFromPeer(boolean needSyncFromPeer) {
+    this.needSyncFromPeer = needSyncFromPeer;
+  }
+
+  public boolean isNeedSyncFromUs() {
+    return needSyncFromUs;
+  }
+
+  public void setNeedSyncFromUs(boolean needSyncFromUs) {
+    this.needSyncFromUs = needSyncFromUs;
+  }
+
+  public Queue<Sha256Hash> getInvToUs() {
+    return invToUs;
+  }
+
+  public void setInvToUs(Queue<Sha256Hash> invToUs) {
+    this.invToUs = invToUs;
+  }
+
+  public Queue<Sha256Hash> getInvWeAdv() {
+    return invWeAdv;
+  }
+
+  public void setInvWeAdv(Queue<Sha256Hash> invWeAdv) {
+    this.invWeAdv = invWeAdv;
+  }
+
 
   public PeerConnection(Cluster cluster, Member member) {
     this.cluster = cluster;
@@ -41,13 +94,6 @@ public class PeerConnection {
     //this.needSyncFromPeer = true;
   }
 
-//  public void onMessage(PeerConnection peerConnection, Message msg) {
-//    peerDel.onMessage(peerConnection, msg);
-//  }
-//
-//  public Message getMessage(Sha256Hash msgId) {
-//    return peerDel.getMessage(msgId);
-//  }
 
   public void sendMessage(Message message) {
     logger.info("Send message " + message + ", Peer:" + this);
@@ -78,8 +124,11 @@ public class PeerConnection {
     }
   }
 
+
   @Override
   public String toString() {
-    return "[" + "peer ID: " + member.id() + " peer IP:" + member.address() + "]";
+    return "PeerConnection{" +
+        "member=" + member +
+        '}';
   }
 }
