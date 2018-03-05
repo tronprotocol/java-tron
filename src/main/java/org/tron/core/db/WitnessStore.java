@@ -1,7 +1,10 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.protos.Protocal.Witness;
 
 public class WitnessStore extends TronDatabase {
 
@@ -29,6 +32,26 @@ public class WitnessStore extends TronDatabase {
     return instance;
   }
 
+  public Witness getWitness(ByteString voteAddress) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    try {
+      byte[] value = dbSource.getData(voteAddress.toByteArray());
+      if (null == value) {
+        return null;
+      }
+      return Witness.parseFrom(value);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public void putWitness(ByteString voteAddress, Witness witness) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    dbSource.putData(voteAddress.toByteArray(), witness.toByteArray());
+  }
 
   @Override
   void add() {
