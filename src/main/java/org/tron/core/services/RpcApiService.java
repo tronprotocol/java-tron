@@ -15,6 +15,8 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -130,6 +132,17 @@ public class RpcApiService implements Service {
       super.createAssetIssue(request, responseObserver);
     }
 
+    @Override
+    public void voteWitnessAccount(VoteWitnessContract request,
+        StreamObserver<Transaction> responseObserver) {
+      super.voteWitnessAccount(request, responseObserver);
+    }
+
+    @Override
+    public void createWitness(WitnessCreateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      super.createWitness(request, responseObserver);
+    }
   }
 
   @Override
