@@ -39,7 +39,7 @@ public class ActuatorFactory {
         actuatorList.add(getActuatorByContract(contract, manager));
       });
     }
-    return null;
+    return actuatorList;
   }
 
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {

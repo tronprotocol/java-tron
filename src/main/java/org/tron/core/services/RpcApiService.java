@@ -119,7 +119,13 @@ public class RpcApiService implements Service {
     @Override
     public void createAccount(AccountCreateContract request,
                               StreamObserver<Transaction> responseObserver) {
-      super.createAccount(request, responseObserver);
+      if (request.getType() == null || request.getAccountName() == null || request.getOwnerAddress() == null) {
+        responseObserver.onNext(null);
+      } else {
+        Transaction trx = wallet.createAccount(request);
+        responseObserver.onNext(trx);
+      }
+      responseObserver.onCompleted();
     }
 
 

@@ -15,12 +15,15 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -29,7 +32,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.UtxoStore;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
@@ -125,6 +131,58 @@ public class TransactionCapsule {
         .addContract(
             Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).build());
     //.setParameter(Any.pack(account));
+  }
+
+  public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
+    Account account = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    if (account != null && account.getType() == contract.getType()) {
+      return; // Account isexit
+    }
+
+    Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
+    try {
+      Any any = Any.pack(contract);
+      contractBuilder.setParameter(any);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return;
+    }
+
+    contractBuilder.setType(Transaction.Contract.ContractType.AccountCreateContract);
+    Transaction.Builder transactionBuilder = Transaction.newBuilder();
+    transactionBuilder.getRawDataBuilder().addContract(contractBuilder);
+    transactionBuilder.getRawDataBuilder().setType(Transaction.TranscationType.ContractType);
+
+    transaction = transactionBuilder.build();
+  }
+
+  public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
+    Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
+
+    Account owner = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    if (owner == null || owner.getBalance() < contract.getAmount()) {
+      return; //The balance is not enough
+    }
+
+    Account to = accountStore.getAccount(contract.getToAddress().toByteArray());
+
+    if (to == null) {
+      return; //to is invalid
+    }
+
+    try {
+      Any any = Any.pack(contract);
+      contractBuilder.setParameter(any);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return;
+    }
+
+    contractBuilder.setType(Transaction.Contract.ContractType.TransferContract);
+    Transaction.Builder transactionBuilder = Transaction.newBuilder();
+    transactionBuilder.getRawDataBuilder().addContract(contractBuilder);
+    transactionBuilder.getRawDataBuilder().setType(Transaction.TranscationType.ContractType);
+    transaction = transactionBuilder.build();
   }
 
   public Sha256Hash getHash() {
