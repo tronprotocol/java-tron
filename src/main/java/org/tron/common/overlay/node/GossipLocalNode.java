@@ -65,7 +65,10 @@ public class GossipLocalNode implements LocalNode {
             .seedMembers(getAddresses())
             .portAutoIncrement(false)
         .port(Args.getInstance().getOverlay().getPort())
+        .syncGroup(Args.getInstance().getChainId())
             .build();
+
+    logger.info("sync group = {}", config.getSyncGroup());
 
     cluster = Cluster.joinAwait(config);
 

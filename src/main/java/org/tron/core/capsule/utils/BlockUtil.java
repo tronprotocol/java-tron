@@ -34,7 +34,7 @@ public class BlockUtil {
     Args args = Args.getInstance();
     GenesisBlock genesisBlockArg = args.getGenesisBlock();
     List<Transaction> transactionList = new ArrayList<>();
-    genesisBlockArg.getTransactions().forEach(key ->
+    genesisBlockArg.getAssets().forEach(key ->
         transactionList
             .add(TransactionUtil
                 .newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));
@@ -45,6 +45,10 @@ public class BlockUtil {
     long number = Long.parseLong(genesisBlockArg.getNumber());
 
     BlockCapsule blockCapsule = new BlockCapsule(timestamp, parentHash, number, transactionList);
+
+    blockCapsule.setMerklerRoot();
+    blockCapsule.sign(Args.getInstance().getPrivateKey().getBytes());
+    blockCapsule.generatedByMyself = true;
 
     return blockCapsule;
   }

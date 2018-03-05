@@ -6,6 +6,8 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.actuator.Actuator;
@@ -14,6 +16,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.protos.Protocal.Account;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Witness;
 
@@ -97,7 +101,7 @@ public class Manager {
       throw new RuntimeException("currentSlot should be positive.");
     }
     List<WitnessCapsule> currentShuffledWitnesses = getShuffledWitnesses();
-    if (currentShuffledWitnesses == null || currentShuffledWitnesses.size() == 0) {
+    if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
     int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
@@ -128,6 +132,27 @@ public class Manager {
 
     pendingTrxs = new ArrayList<>();
 
+    initGenesis();
+  }
+
+  /**
+   * init genesis block.
+   */
+  public void initGenesis() {
+    BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
+    if (this.getBlockStore().containBlock(genesisBlockCapsule.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+    } else {
+      if (this.getBlockStore().hasBlocks()) {
+        logger.error("genesis block modify, please delete database directory({}) and restart",
+            Args.getInstance().getOutputDirectory());
+        System.exit(1);
+      } else {
+        logger.info("create genesis block");
+        Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+        this.getBlockStore().pushBlock(genesisBlockCapsule);
+      }
+    }
   }
 
   public AccountStore getAccountStore() {
@@ -149,6 +174,7 @@ public class Manager {
 
     //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    assert actuatorList != null;
     actuatorList.forEach(actuator -> actuator.execute());
     return true;
   }
