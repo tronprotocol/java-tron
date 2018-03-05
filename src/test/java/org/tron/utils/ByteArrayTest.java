@@ -15,14 +15,14 @@
 
 package org.tron.utils;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class ByteArrayTest {
 
@@ -37,32 +37,36 @@ public class ByteArrayTest {
 
   @Test
   public void testHexStringToByte() {
-    assertArrayEquals(new byte[]{17}, ByteArray
-        .fromHexString("0x11"));
-    logger.info("Byte: hex string 0x11 to byte = {}", ByteArray
-        .fromHexString("0x11"));
-    assertArrayEquals(new byte[]{16}, ByteArray
-        .fromHexString("10"));
-    logger.info("Byte: hex string 10 to byte = {}", ByteArray
-        .fromHexString("10"));
-    assertArrayEquals(new byte[]{1}, ByteArray
-        .fromHexString("1"));
-    logger.info("Byte: hex string 1 to byte = {}", ByteArray
-        .fromHexString("1"));
+    assertArrayEquals(new byte[]{17}, ByteArray.fromHexString("0x11"));
+    logger.info("Byte: hex string 0x11 to byte = {}", ByteArray.fromHexString("0x11"));
+    assertArrayEquals(new byte[]{16}, ByteArray.fromHexString("10"));
+    logger.info("Byte: hex string 10 to byte = {}", ByteArray.fromHexString("10"));
+    assertArrayEquals(new byte[]{1}, ByteArray.fromHexString("1"));
+    logger.info("Byte: hex string 1 to byte = {}", ByteArray.fromHexString("1"));
   }
 
   @Test
   public void testToLong() {
-    assertEquals(13L, ByteArray.toLong(new
-        byte[]{13}));
-    logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new
-        byte[]{13}));
+    assertEquals(13L, ByteArray.toLong(new byte[]{13}));
+    logger.info("Byte: byte 13 to long = {}", ByteArray.toLong(new byte[]{13}));
   }
 
   @Test
   public void testFromLong() {
     assertArrayEquals(new byte[]{0, 0, 0, 0, 0, 0, 0, 127}, ByteArray.fromLong(127L));
     logger.info("Byte: long 127L to byte = {}", ByteArray.fromLong(127L));
+  }
+
+  @Test
+  public void testToInt() {
+    assertEquals(17291729, ByteArray.toInt(new byte[]{1, 7, -39, -47}));
+    logger.info("Int: {}", ByteArray.toInt(new byte[]{1, 7, -39, -47}));
+  }
+
+  @Test
+  public void testFromInt() {
+    assertArrayEquals(new byte[]{1, 7, -39, -47}, ByteArray.fromInt(17291729));
+    logger.info("Byte: {}", ByteArray.fromInt(17291729));
   }
 
   @Test
