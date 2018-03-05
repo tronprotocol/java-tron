@@ -187,7 +187,7 @@ public class BlockStore extends TronDatabase {
         return;
       }
 
-      block.getTransactions().forEach(trx->{
+      block.getTransactions().forEach(trx -> {
         if (!pushTransactions(trx)) {
           return;
         }
