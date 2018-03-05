@@ -39,7 +39,6 @@ public class BlockCapsule {
 
   private Block block;
 
-  private ECDSASignature signature;
   private boolean unpacked;
 
   public boolean generatedByMyself = false;
@@ -111,7 +110,7 @@ public class BlockCapsule {
   public void sign(byte[] privateKey) {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
-    signature = ecKey.sign(getRawHash().getBytes());
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
@@ -120,7 +119,7 @@ public class BlockCapsule {
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
   }
 
-  /**
+  /*
    * verify the private key signature
    *
    * @param privateKey private key
@@ -128,12 +127,32 @@ public class BlockCapsule {
   public boolean verifySign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
 
-    return ecKey.verify(this.getRawHash().getBytes(), signature);
+    byte[] bytes = this.block.getBlockHeader().getWitnessSignature().toByteArray();
+    byte[] r = new byte[32];
+    byte[] s = new byte[32];
+
+    if (bytes.length != 65) {
+      return false;
+    }
+
+    System.arraycopy(bytes, 0, r, 0, 32);
+    System.arraycopy(bytes, 32, s, 0, 32);
+    byte revId = bytes[64];
+
+    ECDSASignature signature = ECDSASignature.fromComponents(r, s, revId);
+
+    return ecKey.verify(this.getRawHash().getBytes(),
+        signature);
   }
 
   private Sha256Hash getRawHash() {
     unPack();
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+  }
+
+  private Sha256Hash getWitnessSignature() {
+    unPack();
+    return Sha256Hash.of(this.block.getBlockHeader().getWitnessSignature().toByteArray());
   }
 
   public boolean validateSignature() {
