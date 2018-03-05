@@ -66,7 +66,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testRest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test2");
-    dataSource.initDB();
+    dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
     dataSource.closeDB();
   }
