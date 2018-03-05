@@ -52,32 +52,13 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     Account accountSource = dbManager.getAccountStore().getAccount(voteAddress);
     logger.info("voteAddress pre-voteCount is {}", accountSource.getVotesList());
-    Account witnessTarget = accountSource.toBuilder().addVotes(
+    Account accountTarget = accountSource.toBuilder().addVotes(
         Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd)
             .build()).build();
-    logger.info("voteAddress pre-voteCount is {}", witnessTarget.getVotesList());
+    logger.info("voteAddress pre-voteCount is {}", accountTarget.getVotesList());
 
-    dbManager.getAccountStore().putAccount(voteAddress, witnessTarget);
+    dbManager.getAccountStore().putAccount(voteAddress, accountTarget);
 
   }
-//
-//  public boolean countVoteWitness(ByteString voteAddress, int countAdd) {
-//    logger.info("voteAddress is {},voteAddCount is {}", voteAddress, countAdd);
-//    try {
-//      byte[] value = dbSource.getData(voteAddress.toByteArray());
-//      if (null == value) {
-//        return false;
-//      }
-//      Witness witnessSource = Witness.parseFrom(value).toBuilder().build();
-//      logger.info("voteAddress pre-voteCount is {}", witnessSource.getVoteCount());
-//      Witness witnessTarget = witnessSource.toBuilder()
-//          .setVoteCount(witnessSource.getVoteCount() + countAdd).build();
-//      logger.info("voteAddress pre-voteCount is {}", witnessTarget.getVoteCount());
-//
-//      dbSource.putData(voteAddress.toByteArray(), witnessTarget.toByteArray());
-//    } catch (InvalidProtocolBufferException e) {
-//      e.printStackTrace();
-//    }
-//    return true;
-//  }
+
 }

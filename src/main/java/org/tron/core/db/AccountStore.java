@@ -1,7 +1,10 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.Protocal.Account;
@@ -79,5 +82,14 @@ public class AccountStore extends TronDatabase {
     logger.info("address is {},account is {}", address, account);
     return null != account;
   }
-  
+
+  public List<Account> getAllAccounts() {
+    List<Account> accountList = Lists.newArrayList();
+    Set<byte[]> allKeys = dbSource.allKeys();
+    allKeys.forEach(key -> {
+      Account account = getAccount(ByteString.copyFrom(key));
+      accountList.add(account);
+    });
+    return accountList;
+  }
 }
