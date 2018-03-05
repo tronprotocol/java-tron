@@ -13,13 +13,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.common.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class Constant {
 
-public class BlockCapsuleTest {
+  // whole
+  public static final byte[] LAST_HASH = ByteArray.fromString("lastHash");
+  public static final String DIFFICULTY = "2001";
 
-  private static final Logger logger = LoggerFactory.getLogger("Test");
+  // DB
+  public static final String BLOCK_DB_NAME = "block_data";
+  public static final String TRANSACTION_DB_NAME = "transaction_data";
 
+  //config
+  public static final String NORMAL = "normal";
+  public static final String TEST = "test";
+  public static final String NORMAL_CONF = "config.conf";
+  public static final String TEST_CONF = "config-test.conf";
+  public static final String DATABASE_DIR = "storage.directory";
 }

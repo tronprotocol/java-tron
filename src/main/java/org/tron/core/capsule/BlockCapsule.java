@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
@@ -111,7 +111,7 @@ public class BlockCapsule {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
@@ -119,16 +119,47 @@ public class BlockCapsule {
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
   }
 
+  /*
+   * verify the private key signature
+   *
+   * @param privateKey private key
+   */
+  public boolean verifySign(byte[] privateKey) {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+
+    byte[] bytes = this.block.getBlockHeader().getWitnessSignature().toByteArray();
+    byte[] r = new byte[32];
+    byte[] s = new byte[32];
+
+    if (bytes.length != 65) {
+      return false;
+    }
+
+    System.arraycopy(bytes, 0, r, 0, 32);
+    System.arraycopy(bytes, 32, s, 0, 32);
+    byte revId = bytes[64];
+
+    ECDSASignature signature = ECDSASignature.fromComponents(r, s, revId);
+
+    return ecKey.verify(this.getRawHash().getBytes(),
+        signature);
+  }
+
   private Sha256Hash getRawHash() {
     unPack();
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
+  private Sha256Hash getWitnessSignature() {
+    unPack();
+    return Sha256Hash.of(this.block.getBlockHeader().getWitnessSignature().toByteArray());
+  }
+
   public boolean validateSignature() {
     try {
       return Arrays
-          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
-              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
+          .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
+              block.getBlockHeader().getWitnessSignature().toString()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();
@@ -142,8 +173,7 @@ public class BlockCapsule {
   }
 
   public Sha256Hash calcMerklerRoot() {
-    if (this.block.getTransactionsList() == null
-        || this.block.getTransactionsList().isEmpty()) {
+    if (this.block.getTransactionsList().size() == 0) {
       return Sha256Hash.ZERO_HASH;
     }
 

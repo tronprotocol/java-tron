@@ -1,7 +1,7 @@
 package org.tron.core.net.node;
 
 import java.util.List;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.net.message.Message;

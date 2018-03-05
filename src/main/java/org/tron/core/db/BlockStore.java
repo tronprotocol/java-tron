@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -68,7 +68,7 @@ public class BlockStore extends TronDatabase {
   /**
    * to do.
    */
-  public Sha256Hash getHeadBlockId() {
+  public Sha256Hash getHeadBlockHash() {
     if (head == null) {
       return Sha256Hash.ZERO_HASH;
     }
@@ -88,7 +88,7 @@ public class BlockStore extends TronDatabase {
   /**
    * Get the block id from the number.
    */
-  public Sha256Hash getBlockIdByNum(long num) {
+  public Sha256Hash getBlockHashByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
     if (hash != null) {
       return Sha256Hash.wrap(hash);
@@ -99,7 +99,7 @@ public class BlockStore extends TronDatabase {
   /**
    * Get number of block by the block id.
    */
-  public long getBlockNumById(Sha256Hash hash) {
+  public long getBlockNumByHash(Sha256Hash hash) {
     if (khaosDb.containBlock(hash)) {
       return khaosDb.getBlock(hash).getNum();
     }
@@ -126,11 +126,8 @@ public class BlockStore extends TronDatabase {
   }
 
   public DateTime getHeadBlockTime() {
-    if (head == null) {
-      return getGenesisTime();
-    } else {
-      return new DateTime(head.getTimeStamp());
-    }
+    DateTime time = DateTime.now();
+    return time.minus(time.getMillisOfSecond() + 1000); // for test. assume a block generated 1s ago
   }
 
   public long currentASlot() {
@@ -190,6 +187,7 @@ public class BlockStore extends TronDatabase {
    * save a block.
    */
   public void pushBlock(BlockCapsule block) {
+    logger.info("save block");
     khaosDb.push(block);
 
     //todo: check block's validity
@@ -205,7 +203,7 @@ public class BlockStore extends TronDatabase {
         return;
       }
 
-      block.getTransactions().forEach(trx -> {
+      block.getTransactions().forEach(trx->{
         if (!pushTransactions(trx)) {
           return;
         }
@@ -215,7 +213,6 @@ public class BlockStore extends TronDatabase {
     }
 
     dbSource.putData(block.getBlockId().getBytes(), block.getData());
-    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     head = khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);

@@ -1,4 +1,4 @@
-package org.tron.core;
+package org.tron.common.utils;
 
 /*
  * Copyright 2011 Google Inc.
@@ -30,8 +30,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.tron.common.utils.ByteArray;
-
 
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be
@@ -123,9 +121,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SHA-256 MessageDigest instance.
-   * This is a convenience method which wraps the checked exception that can never occur with a
-   * RuntimeException.
+   * Returns a new SHA-256 MessageDigest instance. This is a convenience method which wraps the
+   * checked exception that can never occur with a RuntimeException.
    *
    * @return a new SHA-256 MessageDigest instance
    */
@@ -208,11 +205,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     return Arrays.equals(bytes, ((Sha256Hash) o).bytes);
   }
 
-  @Override
-  public String toString() {
-    return ByteArray.toHexString(bytes);
-  }
-
   /**
    * Returns the last four bytes of the wrapped hash. This should be unique enough to be a suitable
    * hash code even for blocks, where the goal is to try and get the first bytes to be zeros (i.e.
@@ -260,5 +252,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       }
     }
     return 0;
+  }
+
+  @Override
+  public String toString() {
+    return ByteArray.toHexString(this.bytes);
   }
 }
