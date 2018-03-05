@@ -1,12 +1,12 @@
 package org.tron.core.db;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.protos.Protocal.Account;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Witness;
 
@@ -26,6 +26,7 @@ public class Manager {
   private static final Logger logger = LoggerFactory.getLogger("Manager");
 
   private static final long BLOCK_INTERVAL_SEC = 1;
+  private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
 
   private AccountStore accountStore;
@@ -269,7 +270,7 @@ public class Manager {
   }
 
   public void updateWitness() {
-    //TODO validator maint needed
+    //TODO validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
     List<Account> accountList = accountStore.getAllAccounts();
     accountList.forEach(account -> {
@@ -283,15 +284,19 @@ public class Manager {
         }
       });
     });
-
+    List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     countWitness.forEach((address, voteCount) -> {
       Witness witnessSource = witnessStore.getWitness(address);
       if (null == witnessSource) {
         logger.warn("winessSouece is null.address is {}", address);
       }
       Witness witnessTarget = witnessSource.toBuilder().setVoteCount(voteCount).build();
+      witnessCapsuleList.add(new WitnessCapsule(witnessTarget));
       witnessStore.putWitness(address, witnessTarget);
     });
-    //TODO  select final witness from witnessList
+    witnessCapsuleList.sort((a, b) -> {
+      return (int) (a.getVoteCount() - b.getVoteCount());
+    });
+    wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
   }
 }
