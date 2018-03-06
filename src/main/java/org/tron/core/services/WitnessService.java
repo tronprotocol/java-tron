@@ -32,7 +32,7 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  public static final int LOOP_INTERVAL = 1000; // millisecond
+  private static final int LOOP_INTERVAL = 1000; // millisecond
   private byte[] privateKey;
   private boolean hasCheckedSynchronization = true;
 
@@ -68,7 +68,7 @@ public class WitnessService implements Service {
       };
 
   private void blockProductionLoop() {
-    BlockProductionCondition result = null;
+    BlockProductionCondition result;
     String capture = "";
     try {
       result = tryProduceBlock(capture);
@@ -175,8 +175,8 @@ public class WitnessService implements Service {
     }
     long interval = blockInterval();
     BlockStore blockStore = tronApp.getDbManager().getBlockStore();
+    DateTime genesisTime = blockStore.getGenesisTime();
     if (blockStore.getHeadBlockNum() == 0) {
-      DateTime genesisTime = blockStore.getGenesisTime();
       return genesisTime.plus(slotNum * interval);
     }
 
@@ -186,15 +186,17 @@ public class WitnessService implements Service {
 
     DateTime headSlotTime = blockStore.getHeadBlockTime();
 
+    //align slot time
+    headSlotTime = headSlotTime.minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+
     return headSlotTime.plus(interval * slotNum);
   }
-
 
   private boolean lastHeadBlockIsMaintenance(){
     return db.getDynamicPropertiesStore().getMaintenanceFlag() == 1;
   }
 
-  public long getSkipSlotInMaintenance(){
+  private long getSkipSlotInMaintenance(){
     return 0;
   }
 
