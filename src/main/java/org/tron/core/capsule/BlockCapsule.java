@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -32,6 +34,51 @@ import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
 public class BlockCapsule {
+
+  public class BlockId extends Sha256Hash {
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || (getClass() != o.getClass() && !o.getClass().equals(Sha256Hash.class))) {
+        return false;
+      }
+      return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
+    }
+
+    @Override
+    public String toString() {
+      return super.toString();
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
+    }
+
+    @Override
+    public int compareTo(Sha256Hash other) {
+      return super.compareTo(other);
+    }
+
+    private long num = 0;
+
+    /**
+     * Use {@link #wrap(byte[])} instead.
+     */
+    public BlockId(Sha256Hash hash, long num) {
+      super(hash.getBytes());
+      this.num = num;
+    }
+
+    public long getNum() {
+      return num;
+    }
+  }
+
+  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
 
   protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
 
@@ -92,9 +139,7 @@ public class BlockCapsule {
 
     // block
     Block.Builder blockBuild = Block.newBuilder();
-    transactionList.forEach(trx -> {
-      blockBuild.addTransactions(trx);
-    });
+    transactionList.forEach(trx -> blockBuild.addTransactions(trx));
     this.block = blockBuild.setBlockHeader(blockHeader).build();
     unpacked = true;
   }
@@ -139,13 +184,19 @@ public class BlockCapsule {
   }
 
   public Sha256Hash getBlockId() {
-    pack();
-    return Sha256Hash.of(this.block.getBlockHeader().toByteArray());
+    unPack();
+    if(blockId.equals(Sha256Hash.ZERO_HASH)) {
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
+    }
+
+    return blockId;
+//    return blockId.equals(Sha256Hash.ZERO_HASH)
+//        ? blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum())
+//        : blockId;
   }
 
   public Sha256Hash calcMerklerRoot() {
-    if (this.block.getTransactionsList() == null
-        || this.block.getTransactionsList().isEmpty()) {
+    if (CollectionUtils.isEmpty(this.block.getTransactionsList())) {
       return Sha256Hash.ZERO_HASH;
     }
 
@@ -181,7 +232,6 @@ public class BlockCapsule {
 
     this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
-    return;
   }
 
   public Sha256Hash getMerklerRoot() {

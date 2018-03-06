@@ -16,17 +16,20 @@
 package org.tron.core.db;
 
 import java.util.ArrayList;
-import javafx.util.Pair;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
+import javafx.util.Pair;
 
 public class BlockStore extends TronDatabase {
 
@@ -43,7 +46,7 @@ public class BlockStore extends TronDatabase {
   private BlockStore(String dbName) {
     super(dbName);
     numHashCache = new LevelDbDataSourceImpl(
-        Constant.OUTPUT_DIR, dbName + "_NUM_HASH");
+        Args.getInstance().getOutputDirectory(), dbName + "_NUM_HASH");
     numHashCache.initDB();
     khaosDb = new KhaosDatabase(dbName + "_KDB");
   }
@@ -64,25 +67,22 @@ public class BlockStore extends TronDatabase {
     return instance;
   }
 
+  public void initHeadBlock(Sha256Hash id) {
+    head = getBlockByHash(id);
+  }
 
   /**
    * to do.
    */
   public Sha256Hash getHeadBlockId() {
-    if (head == null) {
-      return Sha256Hash.ZERO_HASH;
-    }
-    return head.getBlockId();
+    return head == null ? Sha256Hash.ZERO_HASH : head.getBlockId();
   }
 
   /**
    * Get the head block's number.
    */
   public long getHeadBlockNum() {
-    if (head == null) {
-      return 0;
-    }
-    return head.getNum();
+    return head == null ? 0 : head.getNum();
   }
 
   /**
@@ -90,10 +90,7 @@ public class BlockStore extends TronDatabase {
    */
   public Sha256Hash getBlockIdByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
-    if (hash != null) {
-      return Sha256Hash.wrap(hash);
-    }
-    return Sha256Hash.ZERO_HASH;
+    return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
   }
 
   /**
@@ -106,31 +103,22 @@ public class BlockStore extends TronDatabase {
 
     //TODO: optimize here
     byte[] blockByte = dbSource.getData(hash.getBytes());
-
-    if (blockByte != null) {
-      return new BlockCapsule(blockByte).getNum();
-    }
-
-    return 0;
+    return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
   }
 
   /**
    * Get the fork branch.
    */
   public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
-    ArrayList<Sha256Hash> ret = new ArrayList<>();
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
-    branch.getValue().forEach(b -> ret.add(b.getBlockId()));
-    return ret;
+            khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+    return branch.getValue().stream()
+            .map(blockCapsule -> blockCapsule.getBlockId())
+            .collect(Collectors.toCollection(ArrayList::new));
   }
 
   public DateTime getHeadBlockTime() {
-    if (head == null) {
-      return getGenesisTime();
-    } else {
-      return new DateTime(head.getTimeStamp());
-    }
+    return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
   }
 
   public long currentASlot() {
@@ -149,16 +137,19 @@ public class BlockStore extends TronDatabase {
    */
   public boolean containBlock(Sha256Hash blockHash) {
     //TODO: check it from levelDB
-    if (khaosDb.containBlock(blockHash)) {
-      return true;
-    }
-
-    if (dbSource.getData(blockHash.getBytes()) != null) {
-      return true;
-    }
-    return false;
+    return khaosDb.containBlock(blockHash) || dbSource.getData(blockHash.getBytes()) != null;
   }
 
+  /**
+   * judge has blocks.
+   */
+  public boolean hasBlocks() {
+    return dbSource.allKeys().size() > 0 || khaosDb.hasData();
+  }
+
+  /**
+   * push transaction into db.
+   */
   public boolean pushTransactions(TransactionCapsule trx) {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -187,7 +178,7 @@ public class BlockStore extends TronDatabase {
         return;
       }
 
-      block.getTransactions().forEach(trx->{
+      block.getTransactions().forEach(trx -> {
         if (!pushTransactions(trx)) {
           return;
         }
@@ -207,20 +198,14 @@ public class BlockStore extends TronDatabase {
    * find a block packed data by id.
    */
   public byte[] findBlockByHash(Sha256Hash hash) {
-    if (khaosDb.containBlock(hash)) {
-      return khaosDb.getBlock(hash).getData();
-    }
-    return dbSource.getData(hash.getBytes());
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash).getData() : dbSource.getData(hash.getBytes());
   }
 
   /**
    * Get a BlockCapsule by id.
    */
   public BlockCapsule getBlockByHash(Sha256Hash hash) {
-    if (khaosDb.containBlock(hash)) {
-      return khaosDb.getBlock(hash);
-    }
-    return new BlockCapsule(dbSource.getData(hash.getBytes()));
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash) : new BlockCapsule(dbSource.getData(hash.getBytes()));
   }
 
   /**
@@ -244,6 +229,7 @@ public class BlockStore extends TronDatabase {
     dbSource.resetDb();
   }
 
+  @Override
   public void close() {
     dbSource.closeDB();
   }

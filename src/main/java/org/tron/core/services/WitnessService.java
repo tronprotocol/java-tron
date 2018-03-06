@@ -10,18 +10,21 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.CancelException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
 public class WitnessService implements Service {
 
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
+  private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private Application tronApp;
   @Getter
   protected WitnessCapsule localWitnessState; //  WitnessId;
@@ -30,7 +33,7 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  public static final int LOOP_INTERVAL = 1000; // millisecond
+  private static final int LOOP_INTERVAL = 1000; // millisecond
   private byte[] privateKey;
 
   /**
@@ -65,12 +68,15 @@ public class WitnessService implements Service {
       };
 
   private void blockProductionLoop() {
-    BlockProductionCondition result = null;
+    BlockProductionCondition result;
     String capture = "";
     try {
       result = tryProduceBlock(capture);
+    } catch (CancelException ex) {
+      throw ex;
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error("produce block error,", ex);
+      result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
     if (result == null) {
@@ -112,6 +118,14 @@ public class WitnessService implements Service {
   }
 
   private BlockProductionCondition tryProduceBlock(String capture) {
+
+    int participation = db.calculateParticipationRate();
+    if (participation < MIN_PARTICIPATION_RATE) {
+      logger.warn(
+          "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
+              + "]");
+      return BlockProductionCondition.LOW_PARTICIPATION;
+    }
 
     long slot = getSlotAtTime(DateTime.now());
     logger.info("slot:" + slot);
@@ -192,7 +206,7 @@ public class WitnessService implements Service {
 
   private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
     return witnessStates.stream()
-        .map(witnessCapsule -> witnessCapsule.getAddress().toStringUtf8())
+        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
 
@@ -212,6 +226,7 @@ public class WitnessService implements Service {
     tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
+
 
   @Override
   public void init(Args args) {

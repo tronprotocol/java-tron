@@ -18,7 +18,10 @@
 
 package org.tron.core;
 
+import com.google.protobuf.Any;
+
 import java.util.ArrayList;
+
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +30,21 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.TXOutput;
 
 public class Wallet {
 
@@ -46,6 +56,7 @@ public class Wallet {
   private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
+  private Manager dbManager;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -63,6 +74,7 @@ public class Wallet {
     this.p2pnode = app.getP2pNode();
     this.db = app.getBlockStoreS();
     utxoStore = app.getDbManager().getUtxoStore();
+    dbManager = app.getDbManager();
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
@@ -98,6 +110,11 @@ public class Wallet {
     return balance;
   }
 
+  public Account getBalance(Account account) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    return accountStore.getAccount(account.getAddress().toByteArray());
+  }
+
   /**
    * Create a transaction.
    */
@@ -105,6 +122,16 @@ public class Wallet {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
         utxoStore);
+    return transactionCapsule.getTransaction();
+  }
+
+
+  /**
+   * Create a transaction by contract.
+   */
+  public Transaction createTransaction(TransferContract contract) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
     return transactionCapsule.getTransaction();
   }
 
@@ -122,8 +149,25 @@ public class Wallet {
     return false;
   }
 
-  public void createAccount(byte[] address, Account account) {
-    TransactionCapsule transactionCapsule = new TransactionCapsule(address, account);
+  public Transaction createAccount(AccountCreateContract contract) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
+    return transactionCapsule.getTransaction();
+  }
+
+  public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
+    return transactionCapsule.getTransaction();
+  }
+
+  public Transaction createTransaction(AssetIssueContract assetIssueContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(assetIssueContract);
+    return transactionCapsule.getTransaction();
+  }
+
+  public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
+    return transactionCapsule.getTransaction();
   }
 
 }
