@@ -27,12 +27,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         int voteAdd = voteContract.getCount();
         if (voteAdd > 0) {
           int countVote = 0;
-          voteContract.getVoteAddressList().forEach(voteAddress -> {
-            if (null != dbManager) {
-              //dbManager.getWitnessStore().countVoteWitness(voteAddress, voteAdd);
-              countVoteAccount(voteAddress, voteAdd);
-            }
-          });
+          countVoteAccount(voteContract);
         }
       }
     } catch (InvalidProtocolBufferException e) {
@@ -47,17 +42,22 @@ public class VoteWitnessActuator extends AbstractActuator {
     return false;
   }
 
-  public void countVoteAccount(ByteString voteAddress, int voteAdd) {
-    logger.info("voteAddress is {},voteAddCount is {}", voteAddress, voteAdd);
+  public void countVoteAccount(VoteWitnessContract voteContract) {
+    int voteAdd = voteContract.getCount();
+    logger.info("voteAddress is {},voteAddCount is {}", voteContract.getOwnerAddress(), voteAdd);
 
-    Account accountSource = dbManager.getAccountStore().getAccount(voteAddress);
+    Account accountSource = dbManager.getAccountStore().getAccount(voteContract.getOwnerAddress());
     logger.info("voteAddress pre-voteCount is {}", accountSource.getVotesList());
-    Account accountTarget = accountSource.toBuilder().addVotes(
-        Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd)
-            .build()).build();
+    Account.Builder accountBuilder = accountSource.toBuilder();
+
+    voteContract.getVoteAddressList().forEach(voteAddress -> {
+      accountBuilder
+          .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build());
+    });
+    Account accountTarget = accountBuilder.build();
     logger.info("voteAddress pre-voteCount is {}", accountTarget.getVotesList());
 
-    dbManager.getAccountStore().putAccount(voteAddress, accountTarget);
+    dbManager.getAccountStore().putAccount(voteContract.getOwnerAddress(), accountTarget);
   }
 
   @Override
