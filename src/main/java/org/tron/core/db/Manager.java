@@ -113,6 +113,10 @@ public class Manager {
     return scheduledWitness;
   }
 
+  public int calculateParticipationRate() {
+    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+  }
+
   public List<WitnessCapsule> getShuffledWitnesses() {
     List<WitnessCapsule> shuffleWits = getWitnesses();
     //Collections.shuffle(shuffleWits);
