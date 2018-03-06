@@ -35,6 +35,25 @@ import org.tron.protos.Protocal.Transaction;
 
 public class BlockCapsule {
 
+  public class BlockId extends Sha256Hash {
+
+    private long num = 0;
+
+    /**
+     * Use {@link #wrap(byte[])} instead.
+     */
+    public BlockId(Sha256Hash hash, long num) {
+      super(hash.getBytes());
+      this.num = num;
+    }
+
+    public long getNum() {
+      return num;
+    }
+  }
+
+  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
+
   protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
 
   private byte[] data;
@@ -140,7 +159,9 @@ public class BlockCapsule {
 
   public Sha256Hash getBlockId() {
     pack();
-    return Sha256Hash.of(this.block.getBlockHeader().toByteArray());
+    return blockId.equals(Sha256Hash.ZERO_HASH)
+        ? blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum())
+        : blockId;
   }
 
   public Sha256Hash calcMerklerRoot() {

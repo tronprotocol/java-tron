@@ -256,7 +256,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void startSync() {
-    //gossipNode.getValidPeer().forEach(this::startSyncWithPeer);
     mapPeer.values().forEach(this::startSyncWithPeer);
   }
 
@@ -275,6 +274,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void fetchNextBatchChainIds(PeerConnection peer) {
+
 
   }
 
