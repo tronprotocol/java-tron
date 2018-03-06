@@ -16,7 +16,7 @@ public class Args {
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
-  private String outputDirectory = new String("output-directory");
+  private String outputDirectory = "output-directory";
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
@@ -25,10 +25,10 @@ public class Args {
   private List<String> seedNodes = new ArrayList<>();
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
-  private String privateKey = new String("");
+  private String privateKey = "";
 
   @Parameter(names = {"--storage-directory"}, description = "Storage directory")
-  private String storageDirectory = new String("");
+  private String storageDirectory = "";
 
   @Parameter(names = {"--overlay-port"}, description = "Overlay port")
   private int overlayPort = 0;

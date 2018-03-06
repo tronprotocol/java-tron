@@ -18,14 +18,18 @@
 
 package org.tron.common.utils;
 
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 
 public class ByteArray {
 
@@ -57,50 +61,36 @@ public class ByteArray {
    * get long data from bytes data.
    */
   public static long toLong(byte[] b) {
-    if (b == null || b.length == 0) {
-      return 0;
-    }
-    return new BigInteger(1, b).longValue();
+    return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).longValue();
   }
 
   /**
    * get int data from bytes data.
    */
   public static int toInt(byte[] b) {
-    if (b == null || b.length == 0) {
-      return 0;
-    }
-    return new BigInteger(1, b).intValue();
+    return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).intValue();
   }
 
   /**
    * get bytes data from string data.
    */
-  public static byte[] fromString(String str) {
-    if (str == null) {
-      return null;
-    }
-
-    return str.getBytes();
+  public static byte[] fromString(String s) {
+    return StringUtils.isBlank(s) ? null : s.getBytes();
   }
 
   /**
    * get string data from bytes data.
    */
-  public static String toStr(byte[] byteArray) {
-    if (byteArray == null) {
-      return null;
-    }
-
-    return new String(byteArray);
+  public static String toStr(byte[] b) {
+    return ArrayUtils.isEmpty(b) ? null : new String(b);
   }
 
   public static byte[] fromLong(long val) {
-    return ByteBuffer.allocate(8).putLong(val).array();
+    return Longs.toByteArray(val);
   }
 
   public static byte[] fromInt(int val) {
-    return ByteBuffer.allocate(8).putInt(val).array();
+    return Ints.toByteArray(val);
   }
 
   /**
@@ -108,34 +98,16 @@ public class ByteArray {
    */
   public static byte[] fromObject(Object obj) {
     byte[] bytes = null;
-    ByteArrayOutputStream byteArrayOutputStream = null;
-    ObjectOutputStream objectOutputStream = null;
-    try {
-      byteArrayOutputStream = new ByteArrayOutputStream();
-      objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+
+    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
       objectOutputStream.writeObject(obj);
       objectOutputStream.flush();
       bytes = byteArrayOutputStream.toByteArray();
-
     } catch (IOException e) {
       logger.error("objectToByteArray failed, " + e);
-    } finally {
-      if (objectOutputStream != null) {
-        try {
-          objectOutputStream.close();
-        } catch (IOException e) {
-          logger.error("close objectOutputStream failed, " + e);
-        }
-      }
-      if (byteArrayOutputStream != null) {
-        try {
-          byteArrayOutputStream.close();
-        } catch (IOException e) {
-          logger.error("close byteArrayOutputStream failed, " + e);
-        }
-      }
-
     }
+
     return bytes;
   }
 }

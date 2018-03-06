@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import org.tron.core.db.Manager;
 
 public class TransferActuator extends AbstractActuator {
@@ -17,8 +18,13 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean Validator() {
+  public boolean validator() {
     //TODO
     return false;
+  }
+
+  @Override
+  public ByteString getOwnerAddress() {
+    return null;
   }
 }
