@@ -112,7 +112,7 @@ public class BlockCapsule {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
@@ -120,47 +120,16 @@ public class BlockCapsule {
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
   }
 
-  /*
-   * verify the private key signature
-   *
-   * @param privateKey private key
-   */
-  public boolean verifySign(byte[] privateKey) {
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-
-    byte[] bytes = this.block.getBlockHeader().getWitnessSignature().toByteArray();
-    byte[] r = new byte[32];
-    byte[] s = new byte[32];
-
-    if (bytes.length != 65) {
-      return false;
-    }
-
-    System.arraycopy(bytes, 0, r, 0, 32);
-    System.arraycopy(bytes, 32, s, 0, 32);
-    byte revId = bytes[64];
-
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, revId);
-
-    return ecKey.verify(this.getRawHash().getBytes(),
-        signature);
-  }
-
   private Sha256Hash getRawHash() {
     unPack();
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  private Sha256Hash getWitnessSignature() {
-    unPack();
-    return Sha256Hash.of(this.block.getBlockHeader().getWitnessSignature().toByteArray());
-  }
-
   public boolean validateSignature() {
     try {
       return Arrays
-          .equals(ECKey.signatureToAddress(block.getBlockHeader().getRawData().toByteArray(),
-              block.getBlockHeader().getWitnessSignature().toString()),
+          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       e.printStackTrace();
@@ -269,5 +238,9 @@ public class BlockCapsule {
   public String toString() {
     unPack();
     return this.block.toString();
+  }
+
+  public Block getBlock() {
+    return this.block;
   }
 }
