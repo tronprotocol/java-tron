@@ -34,9 +34,8 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary) {
     //todo: return the blocks it should be have.
-
     List<Sha256Hash> retBlockHashes = new ArrayList<>();
-    Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
+    Sha256Hash lastKnownBlkHash = Sha25Hash.ZERO_HASH;
 
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
