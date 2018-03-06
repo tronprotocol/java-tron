@@ -9,12 +9,12 @@ import org.tron.core.db.Manager;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Witness;
 
-public class WitnessCteateActuator extends AbstractActuator {
+public class WitnessCreateActuator extends AbstractActuator {
 
 
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCteateActuator");
+  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
 
-  WitnessCteateActuator(Any contract, Manager dbManager) {
+  WitnessCreateActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
