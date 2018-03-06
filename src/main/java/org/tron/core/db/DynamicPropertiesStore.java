@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
@@ -9,12 +10,12 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
 
-
-
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
+
+  private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
@@ -36,6 +37,8 @@ public class DynamicPropertiesStore extends TronDatabase {
     } catch (IllegalArgumentException e) {
       this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
     }
+
+
   }
 
   private static DynamicPropertiesStore instance;
@@ -132,5 +135,13 @@ public class DynamicPropertiesStore extends TronDatabase {
   public void saveLatestBlockHeaderHash(ByteString h) {
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.dbSource.putData(LATEST_BLOCK_HEADER_HASH, h.toByteArray());
+  }
+
+  public void missedBlock(){
+    blockFilledSlots.applyBlock(false);
+  }
+
+  public int calculateFilledSlotsCount(){
+    return blockFilledSlots.calculateFilledSlotsCount();
   }
 }

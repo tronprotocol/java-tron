@@ -22,7 +22,7 @@ public class ApplicationImpl implements Application {
   private Manager dbManager;
 
   private boolean isProducer;
-  
+
   private void resetP2PNode() {
     p2pNode.listen();
     p2pNode.connectToP2PNetWork();
