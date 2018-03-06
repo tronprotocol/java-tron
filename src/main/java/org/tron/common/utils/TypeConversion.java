@@ -18,67 +18,31 @@
 
 package org.tron.common.utils;
 
-import java.nio.ByteBuffer;
+import com.google.common.primitives.Longs;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 public class TypeConversion {
 
-  private static ByteBuffer buffer = ByteBuffer.allocate(8);
-
   public static byte[] longToBytes(long x) {
-    buffer.clear();
-    buffer.putLong(0, x);
-    return buffer.array();
+    return Longs.toByteArray(x);
   }
 
   public static long bytesToLong(byte[] bytes) {
-    buffer.clear();
-    buffer.put(bytes, 0, bytes.length);
-    buffer.flip();
-    return buffer.getLong();
+    return Longs.fromByteArray(bytes);
   }
 
   public static String bytesToHexString(byte[] src) {
-    StringBuilder stringBuilder = new StringBuilder("");
-
-    if (src == null || src.length <= 0) {
-      return null;
-    }
-
-    for (int i = 0; i < src.length; i++) {
-      int v = src[i] & 0xFF;
-      String hv = Integer.toHexString(v);
-
-      if (hv.length() < 2) {
-        stringBuilder.append(0);
-      }
-
-      stringBuilder.append(hv);
-    }
-
-    return stringBuilder.toString();
+    return Hex.encodeHexString(src);
   }
 
   public static byte[] hexStringToBytes(String hexString) {
-    if (hexString == null || hexString.equals("")) {
+    try {
+      return Hex.decodeHex(hexString);
+    } catch (DecoderException e) {
+      e.printStackTrace();
       return null;
     }
-
-    hexString = hexString.toUpperCase();
-    int length = hexString.length() / 2;
-    char[] hexChars = hexString.toCharArray();
-    byte[] d = new byte[length];
-
-    for (int i = 0; i < length; i++) {
-      int pos = i * 2;
-      d[i] = (byte) (charToByte(hexChars[pos]) << 4 | charToByte
-          (hexChars[pos + 1]));
-    }
-
-    return d;
-  }
-
-  private static byte charToByte(char c) {
-    return (byte) "0123456789ABCDEF".indexOf(c);
   }
 
   public static boolean increment(byte[] bytes) {

@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -92,9 +94,7 @@ public class BlockCapsule {
 
     // block
     Block.Builder blockBuild = Block.newBuilder();
-    transactionList.forEach(trx -> {
-      blockBuild.addTransactions(trx);
-    });
+    transactionList.forEach(trx -> blockBuild.addTransactions(trx));
     this.block = blockBuild.setBlockHeader(blockHeader).build();
     unpacked = true;
   }
@@ -144,8 +144,7 @@ public class BlockCapsule {
   }
 
   public Sha256Hash calcMerklerRoot() {
-    if (this.block.getTransactionsList() == null
-        || this.block.getTransactionsList().isEmpty()) {
+    if (CollectionUtils.isEmpty(this.block.getTransactionsList())) {
       return Sha256Hash.ZERO_HASH;
     }
 
@@ -181,7 +180,6 @@ public class BlockCapsule {
 
     this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
-    return;
   }
 
   public Sha256Hash getMerklerRoot() {

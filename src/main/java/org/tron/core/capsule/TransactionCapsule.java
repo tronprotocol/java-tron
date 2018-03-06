@@ -16,7 +16,9 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +29,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
@@ -140,22 +144,18 @@ public class TransactionCapsule {
    * cheack balance of the address.
    */
   public boolean checkBalance(byte[] address, String to, long amount, long balance) {
-
     if (to.length() != 40) {
       logger.error("address invalid");
       return false;
     }
-
     if (amount <= 0) {
       logger.error("amount required a positive number");
       return false;
     }
-
     if (amount > balance) {
       logger.error("don't have enough money");
       return false;
     }
-
     return true;
   }
 
@@ -172,13 +172,24 @@ public class TransactionCapsule {
 
 
   /**
-   * TODO
-   * validateSignature.
+   * validate signature
    */
   public boolean validateSignature() {
+    assert (this.getTransaction().getSignatureCount() ==
+        this.getTransaction().getRawData().getContractCount());
+    List<Actuator> actuatorList = ActuatorFactory.createActuator(this, null);
+    for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
+      try {
+        Arrays.equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+            this.transaction.getSignature(i).toStringUtf8()),
+            actuatorList.get(i).getOwnerAddress().toByteArray());
+      } catch (SignatureException e) {
+        e.printStackTrace();
+        return false;
+      }
+    }
     return true;
   }
-
 
   public Sha256Hash getTransactionId() {
     return Sha256Hash.of(this.transaction.toByteArray());

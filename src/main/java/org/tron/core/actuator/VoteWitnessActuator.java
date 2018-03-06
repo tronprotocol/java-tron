@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,14 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean Validator() {
+  public boolean validator() {
     //TODO
     return false;
+  }
+
+  @Override
+  public ByteString getOwnerAddress() {
+    return null;
   }
 
 }
