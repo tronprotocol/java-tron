@@ -134,10 +134,9 @@ public class Manager {
     setWitnessStore(WitnessStore.create("witness"));
     setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
-    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     pendingTrxs = new ArrayList<>();
-
-    //initGenesis();
+    initGenesis();
+    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
   /**
@@ -156,6 +155,9 @@ public class Manager {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
         this.getBlockStore().pushBlock(genesisBlockCapsule);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(genesisBlockCapsule.getBlockId().getByteString());
+        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(genesisBlockCapsule.getTimeStamp());
       }
     }
   }
