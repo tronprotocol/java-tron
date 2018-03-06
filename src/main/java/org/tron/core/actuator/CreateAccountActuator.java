@@ -44,8 +44,18 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean Validator() {
+  public boolean validator() {
     //TODO
     return false;
+  }
+
+  @Override
+  public ByteString getOwnerAddress() {
+    try {
+      return contract.unpack(AccountCreateContract.class).getOwnerAddress();
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 }
