@@ -24,6 +24,7 @@ public class WitnessService implements Service {
 
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
+  private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
   protected WitnessCapsule localWitnessState; //  WitnessId;
@@ -48,6 +49,10 @@ public class WitnessService implements Service {
 
   private Runnable scheduleProductionLoop =
       () -> {
+        if (localWitnessState == null) {
+          logger.error("local witness is null");
+        }
+
         while (isRunning) {
           DateTime time = DateTime.now();
           int timeToNextSecond = LOOP_INTERVAL - time.getMillisOfSecond();
@@ -69,9 +74,8 @@ public class WitnessService implements Service {
 
   private void blockProductionLoop() {
     BlockProductionCondition result;
-    String capture = "";
     try {
-      result = tryProduceBlock(capture);
+      result = tryProduceBlock();
     } catch (CancelException ex) {
       throw ex;
     } catch (Exception ex) {
@@ -118,10 +122,9 @@ public class WitnessService implements Service {
   }
 
 
+  private BlockProductionCondition tryProduceBlock() {
 
-  private BlockProductionCondition tryProduceBlock(String capture) {
-
-    if(!hasCheckedSynchronization){
+    if (!hasCheckedSynchronization) {
       return BlockProductionCondition.NOT_SYNCED;
     }
 
@@ -134,10 +137,9 @@ public class WitnessService implements Service {
     }
 
     long slot = getSlotAtTime(DateTime.now());
-    logger.info("slot:" + slot);
+    logger.debug("slot:" + slot);
 
     if (slot == 0) {
-      // todo capture error message
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
@@ -148,6 +150,10 @@ public class WitnessService implements Service {
     }
 
     DateTime scheduledTime = getSlotTime(slot);
+
+    if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
+      return BlockProductionCondition.LAG;
+    }
 
     //TODO:implement private and public key code, fake code first.
     BlockCapsule block = generateBlock(scheduledTime);
@@ -180,23 +186,24 @@ public class WitnessService implements Service {
       return genesisTime.plus(slotNum * interval);
     }
 
-    if(lastHeadBlockIsMaintenance()){
+    if (lastHeadBlockIsMaintenance()) {
       slotNum += getSkipSlotInMaintenance();
     }
 
     DateTime headSlotTime = blockStore.getHeadBlockTime();
 
     //align slot time
-    headSlotTime = headSlotTime.minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+    headSlotTime = headSlotTime
+        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
 
     return headSlotTime.plus(interval * slotNum);
   }
 
-  private boolean lastHeadBlockIsMaintenance(){
+  private boolean lastHeadBlockIsMaintenance() {
     return db.getDynamicPropertiesStore().getMaintenanceFlag() == 1;
   }
 
-  private long getSkipSlotInMaintenance(){
+  private long getSkipSlotInMaintenance() {
     return 0;
   }
 
