@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,35 +131,18 @@ public class TransactionCapsule {
     }
   }
 
-  // TODO
-  public TransactionCapsule(byte[] address, Account account) {
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder()
-        .addContract(
-            Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).build());
-    //.setParameter(Any.pack(account));
-  }
-
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
     Account account = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
       return; // Account isexit
     }
 
-    Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
-    try {
-      Any any = Any.pack(contract);
-      contractBuilder.setParameter(any);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return;
-    }
-
-    contractBuilder.setType(Transaction.Contract.ContractType.AccountCreateContract);
-    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    transactionBuilder.getRawDataBuilder().addContract(contractBuilder);
-    transactionBuilder.getRawDataBuilder().setType(Transaction.TranscationType.ContractType);
-
-    transaction = transactionBuilder.build();
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TranscationType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).setParameter(
+            Any.pack(contract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
@@ -175,19 +159,12 @@ public class TransactionCapsule {
       return; //to is invalid
     }
 
-    try {
-      Any any = Any.pack(contract);
-      contractBuilder.setParameter(any);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return;
-    }
-
-    contractBuilder.setType(Transaction.Contract.ContractType.TransferContract);
-    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    transactionBuilder.getRawDataBuilder().addContract(contractBuilder);
-    transactionBuilder.getRawDataBuilder().setType(Transaction.TranscationType.ContractType);
-    transaction = transactionBuilder.build();
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TranscationType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
+            Any.pack(contract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
   public TransactionCapsule(Contract.VoteWitnessContract voteWitnessContract) {
@@ -205,11 +182,22 @@ public class TransactionCapsule {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TranscationType.ContractType).addContract(
-        Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
+        Transaction.Contract.newBuilder().setType(ContractType.WitnessCreateContract).setParameter(
             Any.pack(witnessCreateContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
+
+  public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TranscationType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.AssetIssueContract).setParameter(
+            Any.pack(assetIssueContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
   public Sha256Hash getHash() {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(transBytes);

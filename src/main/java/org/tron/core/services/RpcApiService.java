@@ -129,7 +129,14 @@ public class RpcApiService implements Service {
     @Override
     public void createAssetIssue(AssetIssueContract request,
                                  StreamObserver<Transaction> responseObserver) {
-      super.createAssetIssue(request, responseObserver);
+      ByteString owner = request.getOwnerAddress();
+      if (owner != null) {
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
