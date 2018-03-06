@@ -10,15 +10,19 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.GenesisBlock;
 import org.tron.protos.Protocal.Account;
+import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Witness;
 
@@ -116,6 +120,9 @@ public class Manager {
     return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
   }
 
+  /**
+   * get shuffled witnesses.
+   */
   public List<WitnessCapsule> getShuffledWitnesses() {
     List<WitnessCapsule> shuffleWits = getWitnesses();
     //Collections.shuffle(shuffleWits);
@@ -136,7 +143,8 @@ public class Manager {
 
     pendingTrxs = new ArrayList<>();
     initGenesis();
-    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
+    blockStore.initHeadBlock(
+        Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
   /**
@@ -156,10 +164,28 @@ public class Manager {
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
         this.getBlockStore().pushBlock(genesisBlockCapsule);
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
-        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(genesisBlockCapsule.getBlockId().getByteString());
-        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(genesisBlockCapsule.getTimeStamp());
+        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
+            genesisBlockCapsule.getBlockId().getByteString());
+        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
+            genesisBlockCapsule.getTimeStamp());
+        initAccount();
       }
     }
+  }
+
+  /**
+   * save account into database.
+   */
+  public void initAccount() {
+    Args args = Args.getInstance();
+    GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    genesisBlockArg.getAssets().forEach(key -> {
+      AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
+          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
+          Long.valueOf(key.getBalance()));
+
+      this.accountStore.putAccount(accountCapsule);
+    });
   }
 
   public AccountStore getAccountStore() {
@@ -269,12 +295,18 @@ public class Manager {
     this.utxoStore = utxoStore;
   }
 
+  /**
+   * process block.
+   */
   public void processBlock(BlockCapsule block) {
     block.getTransactions().forEach(transactionCapsule -> {
       processTrx(transactionCapsule);
     });
   }
 
+  /**
+   * update witness.
+   */
   public void updateWitness() {
     //TODO validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
