@@ -34,6 +34,7 @@ public class WitnessService implements Service {
   private volatile boolean isRunning = false;
   public static final int LOOP_INTERVAL = 1000; // millisecond
   private byte[] privateKey;
+  private boolean hasCheckedSynchronization = true;
 
   /**
    * Construction method.
@@ -116,7 +117,13 @@ public class WitnessService implements Service {
     }
   }
 
+
+
   private BlockProductionCondition tryProduceBlock(String capture) {
+
+    if(!hasCheckedSynchronization){
+      return BlockProductionCondition.NOT_SYNCED;
+    }
 
     int participation = db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
@@ -173,9 +180,22 @@ public class WitnessService implements Service {
       return genesisTime.plus(slotNum * interval);
     }
 
+    if(lastHeadBlockIsMaintenance()){
+      slotNum += getSkipSlotInMaintenance();
+    }
+
     DateTime headSlotTime = blockStore.getHeadBlockTime();
 
     return headSlotTime.plus(interval * slotNum);
+  }
+
+
+  private boolean lastHeadBlockIsMaintenance(){
+    return db.getDynamicPropertiesStore().getMaintenanceFlag() == 1;
+  }
+
+  public long getSkipSlotInMaintenance(){
+    return 0;
   }
 
   private long getSlotAtTime(DateTime when) {

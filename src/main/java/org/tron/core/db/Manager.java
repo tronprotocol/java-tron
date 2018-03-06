@@ -108,7 +108,7 @@ public class Manager {
   }
 
   public int calculateParticipationRate() {
-    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount() / BlockFilledSlots.SLOT_NUMBER;
   }
 
   public List<WitnessCapsule> getShuffledWitnesses() {
