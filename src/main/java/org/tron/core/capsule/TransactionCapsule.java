@@ -254,18 +254,71 @@ public class TransactionCapsule {
   }
 
 
+  public static byte[] getOwner(Transaction.Contract contract) {
+    ByteString owner;
+    try {
+      switch (contract.getType()) {
+        case AccountCreateContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.AccountCreateContract.class).getOwnerAddress();
+          break;
+        case TransferContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferContract.class).getOwnerAddress();
+          break;
+        case TransferAssertContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferAssertContract.class).getOwnerAddress();
+          break;
+        case VoteAssetContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteAssetContract.class).getOwnerAddress();
+          break;
+        case VoteWitnessContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteWitnessContract.class).getOwnerAddress();
+          break;
+        case WitnessCreateContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.WitnessCreateContract.class).getOwnerAddress();
+          break;
+        case AssetIssueContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class).getOwnerAddress();
+          break;
+        case DeployContract:
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class).getOwnerAddress();
+          break;
+        default:
+          return null;
+      }
+      return owner.toByteArray();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
+  public static String getBase64FromByteString(ByteString sign) {
+    byte[] r = sign.substring(0, 32).toByteArray();
+    byte[] s = sign.substring(32, 64).toByteArray();
+    byte v = sign.byteAt(64);
+    if (v < 27) {
+      v += 27; //revId -> v
+    }
+    ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
+    return signature.toBase64();
+  }
+
+
   /**
-   * TODO validateSignature.
+   * validate signature
    */
   public boolean validateSignature() {
     assert (this.getTransaction().getSignatureCount() ==
         this.getTransaction().getRawData().getContractCount());
-    List<Actuator> actuatorList = ActuatorFactory.createActuator(this, null);
+    List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
     for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
       try {
-        Arrays.equals(ECKey.signatureToAddress(getRawHash().getBytes(),
-            this.transaction.getSignature(i).toStringUtf8()),
-            actuatorList.get(i).getOwnerAddress().toByteArray());
+        Transaction.Contract contract = listContract.get(i);
+        byte[] owner = getOwner(contract);
+        byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(), getBase64FromByteString(this.transaction.getSignature(i)));
+        if (!Arrays.equals(owner, address)) {
+          return false;
+        }
       } catch (SignatureException e) {
         e.printStackTrace();
         return false;
@@ -273,7 +326,6 @@ public class TransactionCapsule {
     }
     return true;
   }
-
 
   public Sha256Hash getTransactionId() {
     return Sha256Hash.of(this.transaction.toByteArray());
