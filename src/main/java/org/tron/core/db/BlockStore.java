@@ -17,7 +17,7 @@ package org.tron.core.db;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
-
+import javafx.util.Pair;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -25,11 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import javafx.util.Pair;
 
 public class BlockStore extends TronDatabase {
 

@@ -1,8 +1,11 @@
 package org.tron.core.net.node;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
@@ -12,10 +15,6 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class NodeDelegateImpl implements NodeDelegate {
 

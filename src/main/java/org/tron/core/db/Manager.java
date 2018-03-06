@@ -10,7 +10,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
