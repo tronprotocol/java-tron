@@ -72,10 +72,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
     }
 
-    for (long num = getBlockStoreDb().getBlockNumByHash(lastKnownBlkHash);
+    for (long num = getBlockStoreDb().getBlockNumById(lastKnownBlkHash);
          num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
       if (num > 0) {
-        retBlockHashes.add(getBlockStoreDb().getBlockHashByNum(num));
+        retBlockHashes.add(getBlockStoreDb().getBlockIdByNum(num));
       }
     }
     return retBlockHashes;
@@ -94,11 +94,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (refPoint != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
       if (getBlockStoreDb().containBlock(refPoint)) {
-        highBlkNum = getBlockStoreDb().getBlockNumByHash(refPoint);
+        highBlkNum = getBlockStoreDb().getBlockNumById(refPoint);
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = getBlockStoreDb().getBlockChainHashesOnFork(refPoint);
-        highNoForkBlkNum = getBlockStoreDb().getBlockNumByHash(forkList.get(forkList.size() - 1));
+        highNoForkBlkNum = getBlockStoreDb().getBlockNumById(forkList.get(forkList.size() - 1));
         forkList.remove(forkList.get(forkList.size() - 1));
       }
 
@@ -113,7 +113,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + num;
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.add(getBlockStoreDb().getBlockHashByNum(lowBlkNum));
+        retSummary.add(getBlockStoreDb().getBlockIdByNum(lowBlkNum));
       } else {
         retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       }
