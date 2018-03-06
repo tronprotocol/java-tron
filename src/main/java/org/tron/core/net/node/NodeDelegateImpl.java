@@ -33,9 +33,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public void handleBlock(BlockCapsule block) {
-    logger.info("handle block");
-    getBlockStoreDb().saveBlock(block.getHash(), block);
-
+    dbManager.processBlock(block);
+    blockStoreDb.pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
@@ -47,7 +46,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    getBlockStoreDb().pushTransactions(trx.getTransaction());
+    getBlockStoreDb().pushTransactions(trx);
   }
 
   @Override
@@ -127,7 +126,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(getBlockStoreDb().findBlockByHash(hash.getBytes()));
+        return new BlockMessage(getBlockStoreDb().findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
       default:
@@ -156,7 +155,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     return new byte[0];
   }
 
-  @Override
+  
   public boolean hasItem(byte[] hash) {
     return false;
   }
