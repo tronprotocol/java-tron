@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -290,5 +289,9 @@ public class BlockCapsule {
   public String toString() {
     unPack();
     return this.block.toString();
+  }
+
+  public Block getBlock() {
+    return this.block;
   }
 }
