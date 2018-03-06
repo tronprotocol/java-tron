@@ -1,5 +1,8 @@
 package org.tron.core.net.node;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -8,14 +11,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class NodeDelegateImpl implements NodeDelegate {
 
@@ -34,7 +34,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     dbManager.processBlock(block);
-    getBlockStoreDb().pushBlock(block);
+    dbManager.pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
@@ -46,7 +46,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    getBlockStoreDb().pushTransactions(trx);
+    try {
+      getBlockStoreDb().pushTransactions(trx);
+    } catch (ValidateException e) {
+      logger.error("");
+    }
   }
 
   @Override
@@ -72,7 +76,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
 
     for (long num = getBlockStoreDb().getBlockNumById(lastKnownBlkHash);
-         num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
+        num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
       if (num > 0) {
         retBlockHashes.add(getBlockStoreDb().getBlockIdByNum(num));
       }
@@ -128,7 +132,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       case BLOCK:
         return new BlockMessage(getBlockStoreDb().findBlockByHash(hash));
       case TRX:
-        return new TransactionMessage(dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+        return new TransactionMessage(
+            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
       default:
         logger.info("message type not block or trx.");
         return null;

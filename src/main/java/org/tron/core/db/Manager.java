@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.actuator.Actuator;
@@ -21,6 +22,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.exception.ValidateException;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
@@ -40,6 +42,11 @@ public class Manager {
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+
+
+  private LevelDbDataSourceImpl numHashCache;
+  private KhaosDatabase khaosDb;
+  private BlockCapsule head;
 
   public WitnessStore getWitnessStore() {
     return witnessStore;
@@ -81,9 +88,9 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
   public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"),"http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Olivier.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
   }
 
   public void addWitness(WitnessCapsule witnessCapsule) {
@@ -141,6 +148,11 @@ public class Manager {
     setWitnessStore(WitnessStore.create("witness"));
     setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
+    numHashCache = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
+    numHashCache.initDB();
+    khaosDb = new KhaosDatabase("block" + "_KDB");
+
     pendingTrxs = new ArrayList<>();
     initGenesis();
     blockStore.initHeadBlock(
@@ -162,7 +174,7 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
-        this.getBlockStore().pushBlock(genesisBlockCapsule);
+        pushBlock(genesisBlockCapsule);
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             genesisBlockCapsule.getBlockId().getByteString());
@@ -197,6 +209,35 @@ public class Manager {
   }
 
   /**
+   * save a block.
+   */
+  public void pushBlock(BlockCapsule block) {
+    khaosDb.push(block);
+    //todo: check block's validity
+    if (!block.generatedByMyself) {
+      if (!block.validateSignature()) {
+        logger.info("The siganature is not validated.");
+        return;
+      }
+
+      if (!block.calcMerklerRoot().equals(block.getMerklerRoot())) {
+        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerklerRoot()
+            + " , the headers is " + block.getMerklerRoot());
+        return;
+      }
+      for (TransactionCapsule trx : block.getTransactions()) {
+        processTrx(trx);
+      }
+      //todo: In some case it need to switch the branch
+    }
+    getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
+    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    head = khaosDb.getHead();
+    // blockDbDataSource.putData(blockHash, blockData);
+  }
+
+  /**
    * Process transaction.
    */
   public boolean processTrx(TransactionCapsule trxCap) {
@@ -217,7 +258,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) {
+      long when, byte[] privateKey) throws ValidateException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -259,8 +300,7 @@ public class Manager {
     blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
-    getBlockStore().pushBlock(blockCapsule);
-
+    pushBlock(blockCapsule);
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
     dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());

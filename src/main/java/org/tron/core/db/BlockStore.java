@@ -17,7 +17,7 @@ package org.tron.core.db;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
-
+import javafx.util.Pair;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -29,7 +29,7 @@ import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import javafx.util.Pair;
+import org.tron.core.exception.ValidateException;
 
 public class BlockStore extends TronDatabase {
 
@@ -111,10 +111,10 @@ public class BlockStore extends TronDatabase {
    */
   public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-            khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
-            .map(blockCapsule -> blockCapsule.getBlockId())
-            .collect(Collectors.toCollection(ArrayList::new));
+        .map(blockCapsule -> blockCapsule.getBlockId())
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   public DateTime getHeadBlockTime() {
@@ -150,62 +150,29 @@ public class BlockStore extends TronDatabase {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(TransactionCapsule trx) {
+  public boolean pushTransactions(TransactionCapsule trx) throws ValidateException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
-      return false;
+      throw new ValidateException("trans sig validate failed");
     }
     dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
   }
 
   /**
-   * save a block.
-   */
-  public void pushBlock(BlockCapsule block) {
-    khaosDb.push(block);
-
-    //todo: check block's validity
-    if (!block.generatedByMyself) {
-      if (!block.validateSignature()) {
-        logger.info("The siganature is not validated.");
-        return;
-      }
-
-      if (!block.calcMerklerRoot().equals(block.getMerklerRoot())) {
-        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerklerRoot()
-            + " , the headers is " + block.getMerklerRoot());
-        return;
-      }
-
-      block.getTransactions().forEach(trx -> {
-        if (!pushTransactions(trx)) {
-          return;
-        }
-      });
-
-      //todo: In some case it need to switch the branch
-    }
-
-    dbSource.putData(block.getBlockId().getBytes(), block.getData());
-    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
-    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    head = khaosDb.getHead();
-    // blockDbDataSource.putData(blockHash, blockData);
-  }
-
-  /**
    * find a block packed data by id.
    */
   public byte[] findBlockByHash(Sha256Hash hash) {
-    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash).getData() : dbSource.getData(hash.getBytes());
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash).getData()
+        : dbSource.getData(hash.getBytes());
   }
 
   /**
    * Get a BlockCapsule by id.
    */
   public BlockCapsule getBlockByHash(Sha256Hash hash) {
-    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash) : new BlockCapsule(dbSource.getData(hash.getBytes()));
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash)
+        : new BlockCapsule(dbSource.getData(hash.getBytes()));
   }
 
   /**
