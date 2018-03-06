@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -140,6 +141,7 @@ public class WitnessService implements Service {
     logger.debug("slot:" + slot);
 
     if (slot == 0) {
+      // todo capture error message
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
@@ -234,7 +236,7 @@ public class WitnessService implements Service {
 
   private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
     return witnessStates.stream()
-        .map(witnessCapsule -> witnessCapsule.getAddress().toStringUtf8())
+        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
 

@@ -1,13 +1,14 @@
 package org.tron.core.db;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
-import java.util.Set;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.Protocal.Account;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class AccountStore extends TronDatabase {
 
@@ -40,10 +41,7 @@ public class AccountStore extends TronDatabase {
 
     try {
       byte[] value = dbSource.getData(voteAddress.toByteArray());
-      if (null == value) {
-        return null;
-      }
-      return Account.parseFrom(value);
+      return ArrayUtils.isEmpty(value) ? null : Account.parseFrom(value);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -70,26 +68,51 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+  /**
+   * createAccount fun.
+   *
+   * @param address the address of Account
+   * @param account the data of Account
+   */
 
   public boolean createAccount(byte[] address, byte[] account) {
     dbSource.putData(address, account);
     logger.info("address is {},account is {}", address, account);
     return true;
   }
+  /**
+   * isAccountExist fun.
+   *
+   * @param address the address of Account
+   */
 
   public boolean isAccountExist(byte[] address) {
     byte[] account = dbSource.getData(address);
     logger.info("address is {},account is {}", address, account);
     return null != account;
   }
+  /**
+   * getAccount fun.
+   *
+   * @param address the address of Account
+   */
+
+  public Account getAccount(byte[] address) {
+    byte[] account = dbSource.getData(address);
+    if (account == null || account.length == 0) {
+      return null;
+    }
+    try {
+      return Account.parseFrom(account);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
 
   public List<Account> getAllAccounts() {
-    List<Account> accountList = Lists.newArrayList();
-    Set<byte[]> allKeys = dbSource.allKeys();
-    allKeys.forEach(key -> {
-      Account account = getAccount(ByteString.copyFrom(key));
-      accountList.add(account);
-    });
-    return accountList;
+    return dbSource.allKeys().stream()
+            .map(key -> getAccount(ByteString.copyFrom(key)))
+            .collect(Collectors.toList());
   }
 }

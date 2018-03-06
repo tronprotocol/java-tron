@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -66,6 +67,10 @@ public class Manager {
 
   public List<WitnessCapsule> getWitnesses() {
     return wits;
+  }
+
+  public Sha256Hash getHeadBlockId() {
+    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   /**
@@ -131,8 +136,8 @@ public class Manager {
     setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
     pendingTrxs = new ArrayList<>();
-
     initGenesis();
+    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
   /**
@@ -151,6 +156,9 @@ public class Manager {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
         this.getBlockStore().pushBlock(genesisBlockCapsule);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(genesisBlockCapsule.getBlockId().getByteString());
+        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(genesisBlockCapsule.getTimeStamp());
       }
     }
   }

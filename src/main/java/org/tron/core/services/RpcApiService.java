@@ -4,9 +4,10 @@ import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
 import java.util.logging.Logger;
-import org.spongycastle.util.encoders.Hex;
+
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -54,16 +55,11 @@ public class RpcApiService implements Service {
 
     logger.info("Server started, listening on " + port);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-
-      @Override
-      public void run() {
-
-        System.err.println("*** shutting down gRPC server since JVM is shutting down");
-        //server.this.stop();
-        System.err.println("*** server shut down");
-      }
-    });
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.err.println("*** shutting down gRPC server since JVM is shutting down");
+      //server.this.stop();
+      System.err.println("*** server shut down");
+    }));
   }
 
   private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
@@ -71,7 +67,7 @@ public class RpcApiService implements Service {
     private Application app;
     private Wallet wallet;
 
-    public WalletApi(Application app) {
+    private WalletApi(Application app) {
       this.app = app;
       this.wallet = new Wallet(this.app);
     }
@@ -81,9 +77,10 @@ public class RpcApiService implements Service {
     public void getBalance(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
-        byte[] addressBa = addressBs.toByteArray();
-        long balance = wallet.getBalance(addressBa);
-        Account reply = Account.newBuilder().setBalance(balance).build();
+        //      byte[] addressBa = addressBs.toByteArray();
+        //     long balance = wallet.getBalance(addressBa);
+        //    Account reply = Account.newBuilder().setBalance(balance).build();
+        Account reply = wallet.getBalance(req);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -94,15 +91,12 @@ public class RpcApiService implements Service {
     @Override
 
     public void createTransaction(TransferContract req,
-        StreamObserver<Transaction> responseObserver) {
+                                  StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = req.getOwnerAddress();
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
-        byte[] fromBa = fromBs.toByteArray();
-        byte[] toBa = toBs.toByteArray();
-        String toHexString = Hex.toHexString(toBa);
-        Transaction trx = wallet.createTransaction(fromBa, toHexString, amount);
+        Transaction trx = wallet.createTransaction(req);
         responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
@@ -112,7 +106,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void broadcastTransaction(Transaction req,
-        StreamObserver<GrpcAPI.Return> responseObserver) {
+                                     StreamObserver<GrpcAPI.Return> responseObserver) {
       boolean ret = wallet.broadcastTransaction(req);
       GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
       responseObserver.onNext(retur);
@@ -121,15 +115,28 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAccount(AccountCreateContract request,
-        StreamObserver<Transaction> responseObserver) {
-      super.createAccount(request, responseObserver);
+                              StreamObserver<Transaction> responseObserver) {
+      if (request.getType() == null || request.getAccountName() == null || request.getOwnerAddress() == null) {
+        responseObserver.onNext(null);
+      } else {
+        Transaction trx = wallet.createAccount(request);
+        responseObserver.onNext(trx);
+      }
+      responseObserver.onCompleted();
     }
 
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
-        StreamObserver<Transaction> responseObserver) {
-      super.createAssetIssue(request, responseObserver);
+                                 StreamObserver<Transaction> responseObserver) {
+      ByteString owner = request.getOwnerAddress();
+      if (owner != null) {
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
