@@ -32,11 +32,16 @@ public class TxInputCapsule {
    */
   public TxInputCapsule(byte[] txId, long vout, byte[]
       signature, byte[] pubKey) {
-    this.txInput = TXInput.newBuilder()
+    TXInput.raw txInputRaw = TXInput.raw.newBuilder()
         .setTxID(ByteString.copyFrom(txId))
         .setVout(vout)
-        .setSignature(ByteString.copyFrom(signature))
         .setPubKey(ByteString.copyFrom(pubKey)).build();
+
+    this.txInput = TXInput.newBuilder()
+        .setRawData(txInputRaw)
+        .setSignature(ByteString.copyFrom(signature))
+        .build();
+
   }
 
   public TXInput getTxInput() {

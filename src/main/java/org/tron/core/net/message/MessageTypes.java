@@ -23,13 +23,15 @@ public enum MessageTypes {
 
   SYNC_BLOCK_CHAIN(0x08),
 
-  ITEM_NOT_FOUND(0x09),
+  BLOCK_CHAIN_INVENTORY(0x09),
 
-  FETCH_BLOCK_HEADERS(0x10),
+  ITEM_NOT_FOUND(0x10),
 
-  BLOCK_INVENTORY(0x11),
+  FETCH_BLOCK_HEADERS(0x11),
 
-  TRX_INVENTORY(0x12),
+  BLOCK_INVENTORY(0x12),
+
+  TRX_INVENTORY(0x13),
 
   LAST(0xFF);
 
@@ -47,7 +49,6 @@ public enum MessageTypes {
     this.type = type;
   }
 
-
   public static MessageTypes fromByte(byte i) {
     return intToTypeMap.get((int) i);
   }
@@ -58,6 +59,25 @@ public enum MessageTypes {
 
   public byte asByte() {
     return (byte) (type);
+  }
+
+  @Override
+  public String toString() {
+    switch (type) {
+      case 1:
+        return "TRX";
+      case 2:
+        return "BLOCK";
+      case 6:
+        return "INVENTORY";
+      case 7:
+        return "FETCH_INV_DATA";
+      case 8:
+        return "SYNC_BLOCK_CHAIN";
+      case 11:
+        return "BLOCK_INVENTORY";
+    }
+    return super.toString();
   }
 }
 

@@ -4,11 +4,17 @@ import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
@@ -49,18 +55,25 @@ public class Manager {
   // transaction cache
   private List<Transaction> pendingTrxs;
 
+  private List<WitnessCapsule> wits = new ArrayList<>();
+
   // witness
 
-  /**
-   * get witnessCapsule List.
-   */
   public List<WitnessCapsule> getWitnesses() {
-    List<WitnessCapsule> wits = new ArrayList<WitnessCapsule>();
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x11")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x12")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x13")));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x14")));
     return wits;
+  }
+
+  /**
+   * TODO: should get this list from Database. get witnessCapsule List.
+   */
+  public void initalWitnessList() {
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"),"http://Loser.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Marcus.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Olivier.org"));
+  }
+
+  public void addWitness(WitnessCapsule witnessCapsule) {
+    this.wits.add(witnessCapsule);
   }
 
   public List<WitnessCapsule> getCurrentShuffledWitnesses() {
@@ -78,20 +91,21 @@ public class Manager {
       throw new RuntimeException("currentSlot should be positive.");
     }
     List<WitnessCapsule> currentShuffledWitnesses = getShuffledWitnesses();
-    if (currentShuffledWitnesses == null || currentShuffledWitnesses.size() == 0) {
+    if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
     int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
 
     ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex).getAddress();
-
-    logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
+    //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
 
     return scheduledWitness;
   }
 
   public List<WitnessCapsule> getShuffledWitnesses() {
-    return getWitnesses();
+    List<WitnessCapsule> shuffleWits = getWitnesses();
+    //Collections.shuffle(shuffleWits);
+    return shuffleWits;
   }
 
 
@@ -108,6 +122,27 @@ public class Manager {
 
     pendingTrxs = new ArrayList<>();
 
+    initGenesis();
+  }
+
+  /**
+   * init genesis block.
+   */
+  public void initGenesis() {
+    BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
+    if (this.getBlockStore().containBlock(genesisBlockCapsule.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+    } else {
+      if (this.getBlockStore().hasBlocks()) {
+        logger.error("genesis block modify, please delete database directory({}) and restart",
+            Args.getInstance().getOutputDirectory());
+        System.exit(1);
+      } else {
+        logger.info("create genesis block");
+        Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+        this.getBlockStore().pushBlock(genesisBlockCapsule);
+      }
+    }
   }
 
   public AccountStore getAccountStore() {
@@ -123,33 +158,23 @@ public class Manager {
    */
   public boolean processTrx(TransactionCapsule trxCap) {
 
-    if (!trxCap.validate()) {
+    if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
 
-    Transaction trx = trxCap.getTransaction();
-
-    switch (trx.getType()) {
-      case Transfer:
-        break;
-      case VoteWitess:
-        break;
-      case CreateAccount:
-        break;
-      case DeployContract:
-        break;
-      default:
-        break;
-    }
-
+    //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
+    List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    assert actuatorList != null;
+    actuatorList.forEach(actuator -> actuator.execute());
     return true;
   }
+
 
   /**
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, String privateKey) {
+      long when, byte[] privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -188,15 +213,12 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    // generate block
-
-    blockCapsule.calcMerkleRoot();
-
-    //blockCapsule.hash();
-
+    blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
+    getBlockStore().pushBlock(blockCapsule);
 
-    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getHashStr());
+    dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
     dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;

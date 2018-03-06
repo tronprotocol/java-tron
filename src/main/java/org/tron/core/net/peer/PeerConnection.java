@@ -5,6 +5,7 @@ import io.scalecube.cluster.Member;
 import java.io.UnsupportedEncodingException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -30,6 +31,10 @@ public class PeerConnection {
 
   private Cluster cluster;
 
+  public Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
+
+  public Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
+
   public PeerConnection(Cluster cluster, Member member) {
     this.cluster = cluster;
     this.member = member;
@@ -44,6 +49,8 @@ public class PeerConnection {
 //  }
 
   public void sendMessage(Message message) {
+    logger.info("Send message " + message + ", Peer:" + this);
+
     if (message == null) {
       logger.error("send message = null");
       return;
@@ -53,6 +60,7 @@ public class PeerConnection {
     byte[] value = message.getData();
 
     if (cluster == null) {
+      logger.error("cluster is null");
       return;
     }
 
@@ -69,4 +77,8 @@ public class PeerConnection {
     }
   }
 
+  @Override
+  public String toString() {
+    return "[" + "peer ID: " + member.id() + " peer IP:" + member.address() + "]";
+  }
 }

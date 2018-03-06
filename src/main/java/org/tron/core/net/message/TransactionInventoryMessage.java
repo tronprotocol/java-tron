@@ -16,39 +16,6 @@ public class TransactionInventoryMessage extends InventoryMessage  {
   }
 
   public TransactionInventoryMessage(List<Sha256Hash> hashList) {
-    Inventory.Builder invBuilder = Inventory.newBuilder();
-
-    for (Sha256Hash hash :
-        hashList) {
-      invBuilder.addIds(hash.getByteString());
-    }
-    invBuilder.setType(InventoryType.TRX);
-    inv = invBuilder.build();
-    unpacked = true;
-  }
-
-  @Override
-  public byte[] getData() {
-    return super.getData();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.TRX_INVENTORY;
-  }
-
-  @Override
-  public Inventory getInventory() {
-    return super.getInventory();
-  }
-
-  @Override
-  public List<Sha256Hash> getHashList() {
-    return super.getHashList();
+    super(hashList, InventoryType.TRX);
   }
 }

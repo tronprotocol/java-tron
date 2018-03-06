@@ -49,12 +49,13 @@ public class ByteUtil {
   }
 
   /**
-   * Omitting sign indication byte. <br><br> Instead of {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
+   * Omitting sign indication byte. <br><br> Instead of
+   * {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
    * <br>we use this custom method to avoid an empty array in case of BigInteger.ZERO
    *
    * @param value - any big integer number. A <code>null</code>-value will return <code>null</code>
    * @return A byte array without a leading zero byte if present in the signed encoding.
-   * BigInteger.ZERO will return an array with length 1 and byte-value 0.
+   *     BigInteger.ZERO will return an array with length 1 and byte-value 0.
    */
   public static byte[] bigIntegerToBytes(BigInteger value) {
     if (value == null) {
@@ -72,14 +73,13 @@ public class ByteUtil {
   }
 
   /**
+   * merge arrays.
    * @param arrays - arrays to merge
    * @return - merged array
    */
   public static byte[] merge(byte[]... arrays) {
-    int arrCount = 0;
     int count = 0;
     for (byte[] array : arrays) {
-      arrCount++;
       count += array.length;
     }
 
@@ -94,7 +94,7 @@ public class ByteUtil {
   }
 
   /**
-   * Creates a copy of bytes and appends b to the end of it
+   * Creates a copy of bytes and appends b to the end of it.
    */
   public static byte[] appendByte(byte[] bytes, byte b) {
     byte[] result = Arrays.copyOf(bytes, bytes.length + 1);
@@ -103,7 +103,7 @@ public class ByteUtil {
   }
 
   /**
-   * Turn nibbles to a pretty looking output string <p> Example. [ 1, 2, 3, 4, 5 ] becomes
+   * Turn nibbles to a pretty looking output string Example. [ 1, 2, 3, 4, 5 ] becomes
    * '\x11\x23\x45'
    *
    * @param nibbles - getting byte of data [ 04 ] and turning it to a '\x04' representation
@@ -118,6 +118,9 @@ public class ByteUtil {
     return builder.toString();
   }
 
+  /**
+   * get hex string data from byte data.
+   */
   public static String oneByteToHexString(byte value) {
     String retVal = Integer.toString(value & 0xFF, 16);
     if (retVal.length() == 1) {
@@ -140,7 +143,7 @@ public class ByteUtil {
   }
 
   /**
-   * Cast hex encoded value from byte[] to int <p> Limited to Integer.MAX_VALUE: 2^32-1 (4 bytes)
+   * Cast hex encoded value from byte[] to int Limited to Integer.MAX_VALUE: 2^32-1 (4 bytes)
    *
    * @param b array contains the values
    * @return unsigned positive int value.

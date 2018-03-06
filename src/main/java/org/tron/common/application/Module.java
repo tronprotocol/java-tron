@@ -23,8 +23,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import javax.inject.Named;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.core.Blockchain;
-import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
 
 public class Module extends AbstractModule {
 
@@ -40,7 +39,7 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("transaction")
   public LevelDbDataSourceImpl buildTransactionDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
         TRANSACTION_DB_NAME);
     db.initDB();
     return db;
@@ -53,15 +52,9 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("block")
   public LevelDbDataSourceImpl buildBlockDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR,
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
         BLOCK_DB_NAME);
     db.initDB();
     return db;
-  }
-
-  @Provides
-  @Singleton
-  public Blockchain buildBlockchain(@Named("block") LevelDbDataSourceImpl blockDb) {
-    return new Blockchain(blockDb);
   }
 }

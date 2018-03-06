@@ -29,10 +29,4 @@ public class TxOutputCapsuleTest {
     logger.info("test new TXOutput: {}", TxOutputUtil.newTxOutput(1,
         "12"));
   }
-
-  @Test
-  public void testToPrintString() {
-    logger.info("test to print string: {}",
-        TxOutputUtil.toPrintString(TxOutputUtil.newTxOutput(1, "12")));
-  }
 }

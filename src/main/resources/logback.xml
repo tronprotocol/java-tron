@@ -76,6 +76,11 @@
   <logger name="FullNode" level="INFO"/>
   <logger name="PeerConnection" level="INFO"/>
   <logger name="TransactionUtil" level="INFO"/>
+  <logger name="TransactionVoteActuator" level="INFO"/>
+  <logger name="WitnessStore" level="INFO"/>
+  <logger name="ActuatorFactory" level="INFO"/>
+  <logger name="ByteArray" level="INFO"/>
+  <logger name="Args" level="INFO"/>
 
 </configuration>
 

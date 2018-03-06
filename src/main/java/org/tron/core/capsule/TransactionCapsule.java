@@ -15,23 +15,30 @@
 
 package org.tron.core.capsule;
 
-import static org.tron.protos.Protocal.Transaction.TranscationType.Transfer;
-
+import com.google.protobuf.ByteString;
+import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.Transaction.Contract.ContractType;
 
 public class TransactionCapsule {
 
@@ -46,6 +53,26 @@ public class TransactionCapsule {
     this.transaction = trx;
   }
 
+  public TransactionCapsule(String key, int value) {
+    TXInput.raw rawData = TXInput.raw.newBuilder()
+        .setTxID(ByteString.copyFrom(new byte[]{}))
+        .setVout(-1).build();
+
+    TXInput txi = TXInput.newBuilder()
+        .setSignature(ByteString.copyFrom(new byte[]{}))
+        .setRawData(rawData).build();
+
+    TXOutput txo = TXOutput.newBuilder()
+        .setValue(value)
+        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .build();
+
+    Transaction.raw.Builder rawCoinbaseTransaction = Transaction.raw.newBuilder()
+        .addVin(txi)
+        .addVout(txo);
+    this.transaction = Transaction.newBuilder().setRawData(rawCoinbaseTransaction.build()).build();
+
+  }
 
   /**
    * constructor TransactionCapsule.
@@ -58,7 +85,8 @@ public class TransactionCapsule {
       UtxoStore utxoStore
   ) {
 
-    Transaction.Builder transactionBuilder = Transaction.newBuilder().setType(Transfer);
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).build());
     List<TXInput> txInputs = new ArrayList<>();
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
@@ -88,11 +116,19 @@ public class TransactionCapsule {
         transactionBuilder.addVout(txOutput);
       }
       logger.info("Transaction create succeeded！");
-      transaction = transactionBuilder.build();
+      transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
     } else {
       logger.error("Transaction create failed！");
       transaction = null;
     }
+  }
+
+  // TODO
+  public TransactionCapsule(byte[] address, Account account) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder()
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).build());
+    //.setParameter(Any.pack(account));
   }
 
   public Sha256Hash getHash() {
@@ -100,27 +136,26 @@ public class TransactionCapsule {
     return Sha256Hash.of(transBytes);
   }
 
+  public Sha256Hash getRawHash() {
+    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+  }
 
   /**
    * cheack balance of the address.
    */
   public boolean checkBalance(byte[] address, String to, long amount, long balance) {
-
     if (to.length() != 40) {
       logger.error("address invalid");
       return false;
     }
-
     if (amount <= 0) {
       logger.error("amount required a positive number");
       return false;
     }
-
     if (amount > balance) {
       logger.error("don't have enough money");
       return false;
     }
-
     return true;
   }
 
@@ -128,10 +163,44 @@ public class TransactionCapsule {
     return transaction;
   }
 
+  public void sign(byte[] privateKey) {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
+  }
+
+
   /**
-   * validate.
+   * validate signature
    */
-  public boolean validate() {
+  public boolean validateSignature() {
+    assert (this.getTransaction().getSignatureCount() ==
+        this.getTransaction().getRawData().getContractCount());
+    List<Actuator> actuatorList = ActuatorFactory.createActuator(this, null);
+    for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
+      try {
+        Arrays.equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+            this.transaction.getSignature(i).toStringUtf8()),
+            actuatorList.get(i).getOwnerAddress().toByteArray());
+      } catch (SignatureException e) {
+        e.printStackTrace();
+        return false;
+      }
+    }
     return true;
+  }
+
+  public Sha256Hash getTransactionId() {
+    return Sha256Hash.of(this.transaction.toByteArray());
+  }
+
+  public byte[] getData() {
+    return this.transaction.toByteArray();
+  }
+
+  @Override
+  public String toString() {
+    return this.transaction.toString();
   }
 }

@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.core.config.Config;
+import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 public class LevelDbDataSourceImplTest {
@@ -32,8 +32,8 @@ public class LevelDbDataSourceImplTest {
 
   @Before
   public void setup() {
-    Args.setParam(new String[]{}, Config.getConf(Constant.TEST_CONF));
-    dataSource = new LevelDbDataSourceImpl(Constant.OUTPUT_DIR, "test");
+    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    dataSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), "test");
   }
 
   @Test
