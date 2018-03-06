@@ -55,16 +55,11 @@ public class RpcApiService implements Service {
 
     logger.info("Server started, listening on " + port);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-
-      @Override
-      public void run() {
-
-        System.err.println("*** shutting down gRPC server since JVM is shutting down");
-        //server.this.stop();
-        System.err.println("*** server shut down");
-      }
-    });
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.err.println("*** shutting down gRPC server since JVM is shutting down");
+      //server.this.stop();
+      System.err.println("*** server shut down");
+    }));
   }
 
   private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
