@@ -34,7 +34,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     dbManager.processBlock(block);
-    getBlockStoreDb.pushBlock(block);
+    getBlockStoreDb().pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
@@ -158,7 +158,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public boolean contain(Sha256Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
-      return blockStoreDb.containBlock(hash);
+      return getBlockStoreDb().containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
       return false;
