@@ -25,7 +25,5 @@ public class BlockFilledSlotsTest {
     }
     blockFilledSlots.applyBlock(true);
     Assert.assertEquals(1,blockFilledSlots.getBlockFilledSlots()[0]);
-
   }
-
 }

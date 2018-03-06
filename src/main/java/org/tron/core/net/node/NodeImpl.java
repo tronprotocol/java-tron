@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
@@ -184,7 +185,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
-    List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
+    //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
       while (mapPeer.isEmpty()) {
@@ -195,13 +196,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       e.printStackTrace();
     }
 
-    loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
+    //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.setLastBlockPeerKnow(blkMsg.getMessageId());
+    peer.setLastBlockPeerKnow((BlockId)blkMsg.getMessageId());
     del.handleBlock(blkMsg.getBlockCapsule());
   }
 
@@ -213,8 +214,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
     List<Sha256Hash> blockIds = del.getBlockHashes(syncMsg.getHashList());
-    BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds);
-    peer.sendMessage(blkInvMsg);
+    //BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds);
+    ChainInventoryMessage chainInvMsg = new ChainInventoryMessage(blockIds);
+    peer.sendMessage(chainInvMsg);
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
@@ -261,9 +263,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startSyncWithPeer(PeerConnection peer) {
     peer.setNeedSyncFromPeer(true);
-    peer.getChainIdsToFetch().clear();
+    peer.getBlockChainToFetch().clear();
     peer.setNumUnfetchBlock(0);
-    peer.setLastBlockPeerKnow(Sha256Hash.ZERO_HASH);
+    peer.setLastBlockPeerKnow(del.getGenissBlock());
     peer.setBanned(false);
     fetchNextBatchChainIds(peer);
   }
@@ -274,8 +276,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void fetchNextBatchChainIds(PeerConnection peer) {
-
-
+    List<Sha256Hash> chainSummary = del.getBlockChainSummary(peer.getLastBlockPeerKnow(), peer.getBlockChainToFetch());
   }
 
   @Override
