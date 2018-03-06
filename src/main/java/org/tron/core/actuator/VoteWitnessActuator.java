@@ -5,10 +5,9 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.Account.Vote;
 
 public class VoteWitnessActuator extends AbstractActuator {
 
@@ -44,20 +43,15 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   public void countVoteAccount(VoteWitnessContract voteContract) {
     int voteAdd = voteContract.getCount();
-    logger.info("voteAddress is {},voteAddCount is {}", voteContract.getOwnerAddress(), voteAdd);
 
-    Account accountSource = dbManager.getAccountStore().getAccount(voteContract.getOwnerAddress());
-    logger.info("voteAddress pre-voteCount is {}", accountSource.getVotesList());
-    Account.Builder accountBuilder = accountSource.toBuilder();
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .getAccount(voteContract.getOwnerAddress());
 
     voteContract.getVoteAddressList().forEach(voteAddress -> {
-      accountBuilder
-          .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build());
+      accountCapsule.addVotes(voteAddress, voteAdd);
     });
-    Account accountTarget = accountBuilder.build();
-    logger.info("voteAddress pre-voteCount is {}", accountTarget.getVotesList());
 
-    dbManager.getAccountStore().putAccount(voteContract.getOwnerAddress(), accountTarget);
+    dbManager.getAccountStore().putAccount(accountCapsule.getAddress(), accountCapsule);
   }
 
   @Override

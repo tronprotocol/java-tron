@@ -17,9 +17,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.protos.Protocal.Account;
+import org.tron.protos.Protocal.Account.Vote;
 import org.tron.protos.Protocal.AccountType;
 
 public class AccountCapsule {
@@ -55,14 +57,20 @@ public class AccountCapsule {
         .setAddress(address)
         .setBalance(balance)
         .build();
+    this.unpacked = false;
+  }
+
+  public AccountCapsule(Account account) {
+    this.account = account;
+    this.unpacked = false;
   }
 
   public AccountCapsule() {
-    unpacked = true;
+    this.unpacked = true;
   }
 
   private void pack() {
-    if (data == null) {
+    if (this.data == null) {
       this.data = this.account.toByteArray();
     }
   }
@@ -81,5 +89,16 @@ public class AccountCapsule {
   public String toString() {
     unPack();
     return this.account.toString();
+  }
+
+  public void addVotes(ByteString voteAddress, int voteAdd) {
+    unPack();
+    this.account = this.account.toBuilder()
+        .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
+        .build();
+  }
+
+  public List<Vote> getVotesList() {
+    return this.account.getVotesList();
   }
 }
