@@ -43,7 +43,7 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean validator() {
-    //TODO
+    //TODO witness
     return false;
   }
 

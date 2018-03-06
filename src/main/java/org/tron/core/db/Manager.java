@@ -72,9 +72,9 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
   public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"),"http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Olivier.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
   }
 
   public void addWitness(WitnessCapsule witnessCapsule) {
@@ -108,7 +108,8 @@ public class Manager {
   }
 
   public int calculateParticipationRate() {
-    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount() / BlockFilledSlots.SLOT_NUMBER;
+    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
+        / BlockFilledSlots.SLOT_NUMBER;
   }
 
   public List<WitnessCapsule> getShuffledWitnesses() {
@@ -268,12 +269,12 @@ public class Manager {
   }
 
   public void updateWitness() {
-    //TODO validate maint needed
+    //TODO witness validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
     List<Account> accountList = accountStore.getAllAccounts();
     accountList.forEach(account -> {
       account.getVotesList().forEach(vote -> {
-        //TODO validate witness //active_witness
+        //TODO witness validate witness //active_witness
         if (countWitness.containsKey(vote.getVoteAddress())) {
           countWitness.put(vote.getVoteAddress(),
               countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
