@@ -133,15 +133,30 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void voteWitnessAccount(VoteWitnessContract request,
+    public void voteWitnessAccount(VoteWitnessContract req,
         StreamObserver<Transaction> responseObserver) {
-      super.voteWitnessAccount(request, responseObserver);
+      ByteString fromBs = req.getOwnerAddress();
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
-    public void createWitness(WitnessCreateContract request,
+    public void createWitness(WitnessCreateContract req,
         StreamObserver<Transaction> responseObserver) {
-      super.createWitness(request, responseObserver);
+      ByteString fromBs = req.getOwnerAddress();
+
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
   }
 
