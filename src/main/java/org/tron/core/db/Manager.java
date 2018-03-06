@@ -72,15 +72,9 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
   public void initalWitnessList() {
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x01"),
-        "http://Loser.org"));
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x02"),
-        "http://Marcus.org"));
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x02"),
-        "http://Olivier.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"),"http://Loser.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Marcus.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Olivier.org"));
   }
 
   public void addWitness(WitnessCapsule witnessCapsule) {

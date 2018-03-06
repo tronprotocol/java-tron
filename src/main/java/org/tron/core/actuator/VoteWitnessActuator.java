@@ -42,7 +42,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean Validator() {
+  public boolean validator() {
     //TODO
     return false;
   }
@@ -58,6 +58,11 @@ public class VoteWitnessActuator extends AbstractActuator {
     logger.info("voteAddress pre-voteCount is {}", accountTarget.getVotesList());
 
     dbManager.getAccountStore().putAccount(voteAddress, accountTarget);
+  }
+
+  @Override
+  public ByteString getOwnerAddress() {
+    return null;
 
   }
 
