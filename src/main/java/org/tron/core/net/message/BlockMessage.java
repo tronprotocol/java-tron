@@ -34,7 +34,8 @@ public class BlockMessage extends Message {
 
   @Override
   public Sha256Hash getMessageId() {
-    return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
+    return getBlockCapsule().getBlockId();
+    //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
   }
 
   public Block getBlock() {

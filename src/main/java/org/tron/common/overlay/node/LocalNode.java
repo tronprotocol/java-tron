@@ -23,7 +23,7 @@ public interface LocalNode {
    *
    * @param message {@link Message}
    */
-  void broadcast(Message message);
+  //void broadcast(Message message);
 
   void start();
 }

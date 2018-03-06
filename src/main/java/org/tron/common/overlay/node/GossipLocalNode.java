@@ -17,11 +17,9 @@ package org.tron.common.overlay.node;
 
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
-import io.scalecube.cluster.Member;
 import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import rx.Subscription;
@@ -46,16 +43,21 @@ public class GossipLocalNode implements LocalNode {
 
   private static final GossipLocalNode INSTANCE = new GossipLocalNode();
 
-  public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
+  //public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private ExecutorService executors;
   
   private CompositeSubscription subscriptions = new CompositeSubscription();
 
-  @Override
-  public void broadcast(Message message) {
-    listPeer.forEach((id, peer) -> peer.sendMessage(message));
-  }
+//  public Collection<PeerConnection> getValidPeer() {
+//    //TODO: maintain a valid peer list here by some methods
+//    return listPeer.values();
+//  }
+
+//  @Override
+//  public void broadcast(Message message) {
+//    listPeer.forEach((id, peer) -> peer.sendMessage(message));
+//  }
 
   @Override
   public void start() {
@@ -72,20 +74,20 @@ public class GossipLocalNode implements LocalNode {
 
     cluster = Cluster.joinAwait(config);
 
-    for (Member member : cluster.otherMembers()) {
-      listPeer.put(member.hashCode(), new PeerConnection(this.cluster, member));
-    }
+    //Peer connect
+    cluster.otherMembers().forEach(member ->
+        peerDel.connectPeer(new PeerConnection(this.cluster, member)));
 
+    //liston peer's change
     Subscription membershipListener = cluster
             .listenMembership()
             .subscribe(event -> {
               if (event.type() == Type.REMOVED) {
-                listPeer.remove(event.oldMember().hashCode());
+                PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
+                peerDel.disconnectPeer(peer);
               } else {
-                listPeer.put(
-                    event.newMember().hashCode(),
-                    new PeerConnection(this.cluster,
-                        event.newMember()));
+                PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
+                peerDel.connectPeer(peer);
               }
             });
 
@@ -93,7 +95,7 @@ public class GossipLocalNode implements LocalNode {
         new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
     Subscription messageSubscription = cluster.listen().subscribe(msg -> {
-      executors.submit(new StartWorker(msg, peerDel, listPeer, cluster));
+      executors.submit(new StartWorker(msg, peerDel, cluster));
     });
 
     subscriptions.add(membershipListener);
@@ -107,8 +109,6 @@ public class GossipLocalNode implements LocalNode {
     cluster.shutdown();
     executors.shutdown();
     subscriptions.clear();
-    listPeer.clear();
-
     cluster = null;
   }
 
