@@ -34,6 +34,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validator() {
+    //TODO witness
     return false;
   }
 
