@@ -68,17 +68,46 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+  /**
+   * createAccount fun.
+   *
+   * @param address the address of Account
+   * @param account the data of Account
+   */
 
   public boolean createAccount(byte[] address, byte[] account) {
     dbSource.putData(address, account);
     logger.info("address is {},account is {}", address, account);
     return true;
   }
+  /**
+   * isAccountExist fun.
+   *
+   * @param address the address of Account
+   */
 
   public boolean isAccountExist(byte[] address) {
     byte[] account = dbSource.getData(address);
     logger.info("address is {},account is {}", address, account);
     return null != account;
+  }
+  /**
+   * getAccount fun.
+   *
+   * @param address the address of Account
+   */
+
+  public Account getAccount(byte[] address) {
+    byte[] account = dbSource.getData(address);
+    if (account == null || account.length == 0) {
+      return null;
+    }
+    try {
+      return Account.parseFrom(account);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
   }
 
   public List<Account> getAllAccounts() {
