@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -34,11 +35,14 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.UtxoStore;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Transaction.Contract.ContractType;
+import org.tron.protos.Protocal.Transaction.TranscationType;
 
 public class TransactionCapsule {
 
@@ -131,6 +135,27 @@ public class TransactionCapsule {
     //.setParameter(Any.pack(account));
   }
 
+  public TransactionCapsule(VoteWitnessContract voteWitnessContract) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TranscationType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
+            Any.pack(voteWitnessContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+
+  }
+
+  public TransactionCapsule(WitnessCreateContract witnessCreateContract) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TranscationType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
+            Any.pack(witnessCreateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
   public Sha256Hash getHash() {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(transBytes);
@@ -172,7 +197,7 @@ public class TransactionCapsule {
 
 
   /**
-   * validate signature
+   * TODO validateSignature.
    */
   public boolean validateSignature() {
     assert (this.getTransaction().getSignatureCount() ==

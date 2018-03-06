@@ -112,10 +112,10 @@ public class ApplicationImpl implements Application, NodeDelegate {
   @Override
   public void handleBlock(BlockCapsule block) {
     logger.info("handle block");
+    //TODO Process Block (witness Trx record)
+    dbManager.processBlock(block);
     blockStoreDb.pushBlock(block);
-
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId());

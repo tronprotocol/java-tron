@@ -32,6 +32,8 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
@@ -108,6 +110,7 @@ public class Wallet {
     return transactionCapsule.getTransaction();
   }
 
+
   /**
    * Broadcast a transaction.
    */
@@ -126,4 +129,13 @@ public class Wallet {
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, account);
   }
 
+  public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
+    return transactionCapsule.getTransaction();
+  }
+
+  public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
+    return transactionCapsule.getTransaction();
+  }
 }

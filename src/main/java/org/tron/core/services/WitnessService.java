@@ -23,6 +23,7 @@ import org.tron.core.witness.BlockProductionCondition;
 public class WitnessService implements Service {
 
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
+  private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private Application tronApp;
   @Getter
   protected WitnessCapsule localWitnessState; //  WitnessId;
@@ -73,7 +74,7 @@ public class WitnessService implements Service {
     } catch (CancelException ex) {
       throw ex;
     } catch (Exception ex) {
-      logger.error("produce block error,",ex);
+      logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
@@ -116,6 +117,14 @@ public class WitnessService implements Service {
   }
 
   private BlockProductionCondition tryProduceBlock(String capture) {
+
+    int participation = db.calculateParticipationRate();
+    if (participation < MIN_PARTICIPATION_RATE) {
+      logger.warn(
+          "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
+              + "]");
+      return BlockProductionCondition.LOW_PARTICIPATION;
+    }
 
     long slot = getSlotAtTime(DateTime.now());
     logger.info("slot:" + slot);
