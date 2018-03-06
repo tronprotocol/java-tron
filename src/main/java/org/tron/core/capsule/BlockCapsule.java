@@ -34,6 +34,51 @@ import org.tron.protos.Protocal.Transaction;
 
 public class BlockCapsule {
 
+  public class BlockId extends Sha256Hash {
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || (getClass() != o.getClass() && !o.getClass().equals(Sha256Hash.class))) {
+        return false;
+      }
+      return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
+    }
+
+    @Override
+    public String toString() {
+      return super.toString();
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
+    }
+
+    @Override
+    public int compareTo(Sha256Hash other) {
+      return super.compareTo(other);
+    }
+
+    private long num = 0;
+
+    /**
+     * Use {@link #wrap(byte[])} instead.
+     */
+    public BlockId(Sha256Hash hash, long num) {
+      super(hash.getBytes());
+      this.num = num;
+    }
+
+    public long getNum() {
+      return num;
+    }
+  }
+
+  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
+
   protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
 
   private byte[] data;
@@ -138,8 +183,15 @@ public class BlockCapsule {
   }
 
   public Sha256Hash getBlockId() {
-    pack();
-    return Sha256Hash.of(this.block.getBlockHeader().toByteArray());
+    unPack();
+    if(blockId.equals(Sha256Hash.ZERO_HASH)) {
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
+    }
+
+    return blockId;
+//    return blockId.equals(Sha256Hash.ZERO_HASH)
+//        ? blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum())
+//        : blockId;
   }
 
   public Sha256Hash calcMerklerRoot() {

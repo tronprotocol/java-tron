@@ -2,6 +2,7 @@ package org.tron.core.net.peer;
 
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
+import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -15,38 +16,132 @@ import org.tron.core.net.message.MessageTypes;
 
 public class PeerConnection {
 
+  @Override
+  public int hashCode() {
+    return member.hashCode();
+  }
+
   private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
-//  private PeerConnectionDelegate peerDel;
 
+  //private
   private Member member;
-
-  public Sha256Hash lastBlockWeKnow = Sha256Hash.ZERO_HASH;
-
-  public Queue<Sha256Hash> blockToFetch = new LinkedBlockingDeque<>();
-
-  public boolean needToSync = false;
-
-  public boolean needSyncFrom = false;
 
   private Cluster cluster;
 
-  public Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
+  //broadcast
+  private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
-  public Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
+  private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
+
+  private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
+
+  //sync chain
+  private Sha256Hash lastBlockPeerKnow = Sha256Hash.ZERO_HASH;
+
+  private Queue<Sha256Hash> chainIdsToFetch = new LinkedBlockingDeque<>();
+
+  public Address getAddress() {
+    return member.address();
+  }
+
+  public int getNumUnfetchBlock() {
+    return numUnfetchBlock;
+  }
+
+  public void setNumUnfetchBlock(int numUnfetchBlock) {
+    this.numUnfetchBlock = numUnfetchBlock;
+  }
+
+  private int numUnfetchBlock = 0;
+
+  private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
+
+  private boolean needSyncFromPeer;
+
+  private boolean needSyncFromUs;
+
+  private boolean banned;
+
+  public Queue<Sha256Hash> getBlocksWeRequested() {
+    return blocksWeRequested;
+  }
+
+  public void setBlocksWeRequested(Queue<Sha256Hash> blocksWeRequested) {
+    this.blocksWeRequested = blocksWeRequested;
+  }
+
+  public Queue<Sha256Hash> getChainIdsWeReqeuested() {
+    return chainIdsWeReqeuested;
+  }
+
+  public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
+    this.chainIdsWeReqeuested = chainIdsWeReqeuested;
+  }
+
+  public boolean isBanned() {
+    return banned;
+  }
+
+  public void setBanned(boolean banned) {
+    this.banned = banned;
+  }
+
+  public Sha256Hash getLastBlockPeerKnow() {
+    return lastBlockPeerKnow;
+  }
+
+  public void setLastBlockPeerKnow(Sha256Hash lastBlockPeerKnow) {
+    this.lastBlockPeerKnow = lastBlockPeerKnow;
+  }
+
+  public Queue<Sha256Hash> getChainIdsToFetch() {
+    return chainIdsToFetch;
+  }
+
+  public void setChainIdsToFetch(Queue<Sha256Hash> chainIdsToFetch) {
+    this.chainIdsToFetch = chainIdsToFetch;
+  }
+
+  public boolean isNeedSyncFromPeer() {
+    return needSyncFromPeer;
+  }
+
+  public void setNeedSyncFromPeer(boolean needSyncFromPeer) {
+    this.needSyncFromPeer = needSyncFromPeer;
+  }
+
+  public boolean isNeedSyncFromUs() {
+    return needSyncFromUs;
+  }
+
+  public void setNeedSyncFromUs(boolean needSyncFromUs) {
+    this.needSyncFromUs = needSyncFromUs;
+  }
+
+  public Queue<Sha256Hash> getInvToUs() {
+    return invToUs;
+  }
+
+  public void setInvToUs(Queue<Sha256Hash> invToUs) {
+    this.invToUs = invToUs;
+  }
+
+  public Queue<Sha256Hash> getInvWeAdv() {
+    return invWeAdv;
+  }
+
+  public void setInvWeAdv(Queue<Sha256Hash> invWeAdv) {
+    this.invWeAdv = invWeAdv;
+  }
+
 
   public PeerConnection(Cluster cluster, Member member) {
     this.cluster = cluster;
     this.member = member;
+    //this.needSyncFromPeer = true;
   }
 
-//  public void onMessage(PeerConnection peerConnection, Message msg) {
-//    peerDel.onMessage(peerConnection, msg);
-//  }
-//
-//  public Message getMessage(Sha256Hash msgId) {
-//    return peerDel.getMessage(msgId);
-//  }
 
   public void sendMessage(Message message) {
     logger.info("Send message " + message + ", Peer:" + this);
@@ -77,8 +172,11 @@ public class PeerConnection {
     }
   }
 
+
   @Override
   public String toString() {
-    return "[" + "peer ID: " + member.id() + " peer IP:" + member.address() + "]";
+    return "PeerConnection{" +
+        "member=" + member +
+        '}';
   }
 }

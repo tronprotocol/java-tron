@@ -1,7 +1,14 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.protos.Protocal.Account;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class AccountStore extends TronDatabase {
 
@@ -29,6 +36,24 @@ public class AccountStore extends TronDatabase {
     return instance;
   }
 
+  public Account getAccount(ByteString voteAddress) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    try {
+      byte[] value = dbSource.getData(voteAddress.toByteArray());
+      return ArrayUtils.isEmpty(value) ? null : Account.parseFrom(value);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public void putAccount(ByteString voteAddress, Account account) {
+    logger.info("voteAddress is {} ", voteAddress);
+
+    dbSource.putData(voteAddress.toByteArray(), account.toByteArray());
+  }
+
   @Override
   void add() {
 
@@ -45,7 +70,7 @@ public class AccountStore extends TronDatabase {
   }
 
   public boolean createAccount(byte[] address, byte[] account) {
-    dbSource.putData(address,account);
+    dbSource.putData(address, account);
     logger.info("address is {},account is {}", address, account);
     return true;
   }
@@ -56,4 +81,9 @@ public class AccountStore extends TronDatabase {
     return null != account;
   }
 
+  public List<Account> getAllAccounts() {
+    return dbSource.allKeys().stream()
+            .map(key -> getAccount(ByteString.copyFrom(key)))
+            .collect(Collectors.toList());
+  }
 }

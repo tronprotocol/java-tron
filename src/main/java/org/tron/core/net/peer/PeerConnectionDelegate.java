@@ -9,6 +9,13 @@ public abstract class PeerConnectionDelegate {
 
     public abstract Message getMessage(Sha256Hash msgId);
 
-    //public abstract gvoid onConnectionClosed(PeerConnection peer);
+    public abstract void connectPeer(PeerConnection peer);
+
+    public abstract void disconnectPeer(PeerConnection peer);
+
+    public abstract PeerConnection getPeer(io.scalecube.transport.Message msg);
+
+
+  //public abstract gvoid onConnectionClosed(PeerConnection peer);
 
 }

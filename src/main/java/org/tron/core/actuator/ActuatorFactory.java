@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Transaction.Contract;
 import org.tron.protos.Protocal.Transaction.TranscationType;
 
@@ -33,13 +34,11 @@ public class ActuatorFactory {
       return actuatorList;
     }
 
-    if (transactionCapsule.getTransaction().getRawData().getType()
-        .equals(TranscationType.ContractType)) {
-      transactionCapsule.getTransaction().getRawData().getContractList().forEach(contract -> {
-        actuatorList.add(getActuatorByContract(contract, manager));
-      });
+    Protocal.Transaction.raw rawData = transactionCapsule.getTransaction().getRawData();
+    if (TranscationType.ContractType.equals(rawData.getType())) {
+      rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     }
-    return null;
+    return actuatorList;
   }
 
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {
@@ -57,6 +56,7 @@ public class ActuatorFactory {
         new VoteWitnessActuator(contract.getParameter(), manager);
         break;
       case WitnessCreateContract:
+        new WitnessCteateActuator(contract.getParameter(), manager);
         break;
       case AssetIssueContract:
         break;

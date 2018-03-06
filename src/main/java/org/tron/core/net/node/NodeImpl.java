@@ -1,7 +1,9 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
+import io.scalecube.transport.Address;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -25,6 +27,8 @@ import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
+
+  private HashMap<Address, PeerConnection> mapPeer = new HashMap();
 
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
@@ -127,8 +131,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
-      for (PeerConnection peer : gossipNode.listPeer.values()) {
-        if (!peer.needSyncFrom) {
+      for (PeerConnection peer : mapPeer.values()) {
+        if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
         }
@@ -175,7 +179,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       }
     });
-
     advertiseLoopThread.start();
   }
 
@@ -184,7 +187,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
-      while (gossipNode.listPeer.values().size() <= 0) {
+      while (mapPeer.isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
         Thread.sleep(10000L);
       }
@@ -198,7 +201,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.lastBlockWeKnow = blkMsg.getMessageId();
+    peer.setLastBlockPeerKnow(blkMsg.getMessageId());
     del.handleBlock(blkMsg.getBlockCapsule());
   }
 
@@ -251,4 +254,41 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     fetchMap.put(fetchMsg.getMessageId(), peer);
     loopFetchBlocks.push(fetchMsg);
   }
+
+  private void startSync() {
+    mapPeer.values().forEach(this::startSyncWithPeer);
+  }
+
+  private void startSyncWithPeer(PeerConnection peer) {
+    peer.setNeedSyncFromPeer(true);
+    peer.getChainIdsToFetch().clear();
+    peer.setNumUnfetchBlock(0);
+    peer.setLastBlockPeerKnow(Sha256Hash.ZERO_HASH);
+    peer.setBanned(false);
+    fetchNextBatchChainIds(peer);
+  }
+
+  @Override
+  public PeerConnection getPeer(io.scalecube.transport.Message msg) {
+    return mapPeer.get(msg.sender());
+  }
+
+  private void fetchNextBatchChainIds(PeerConnection peer) {
+
+
+  }
+
+  @Override
+  public void connectPeer(PeerConnection peer) {
+    mapPeer.put(peer.getAddress(), peer);
+    startSyncWithPeer(peer);
+  }
+
+  @Override
+  public void disconnectPeer(PeerConnection peer) {
+    mapPeer.remove(peer.getAddress());
+  }
+
+
 }
+

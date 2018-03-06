@@ -35,4 +35,8 @@ public class WitnessCapsule {
   public void setPubKey(ByteString pubKey) {
     this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
   }
+
+  public Long getVoteCount() {
+    return witness.getVoteCount();
+  }
 }

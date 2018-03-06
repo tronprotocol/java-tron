@@ -17,7 +17,6 @@ package org.tron.common.overlay.node;
 
 import io.scalecube.cluster.Cluster;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
@@ -25,7 +24,6 @@ import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 
 public class StartWorker implements Runnable {
@@ -34,18 +32,14 @@ public class StartWorker implements Runnable {
 
   private PeerConnectionDelegate peerDel;
 
-  private HashMap<Integer, PeerConnection> listPeer;
-
   private Cluster cluster;
 
   /**
    * Handle the received message.
    */
-  public StartWorker(io.scalecube.transport.Message msg, final PeerConnectionDelegate peerDel,
-      final HashMap<Integer, PeerConnection> listPeer, final Cluster cluster) {
+  public StartWorker(io.scalecube.transport.Message msg, final PeerConnectionDelegate peerDel, final Cluster cluster) {
     this.msg = msg;
     this.peerDel = peerDel;
-    this.listPeer = listPeer;
     this.cluster = cluster;
   }
 
@@ -61,7 +55,8 @@ public class StartWorker implements Runnable {
     }
 
     org.tron.core.net.message.Message message = getMessageByKey(key, newValueBytes);
-    peerDel.onMessage(listPeer.get(cluster.member(msg.sender()).get().hashCode()), message);
+    //peerDel.onMessage(listPeer.get(cluster.member(msg.sender()).get().hashCode()), message);
+    peerDel.onMessage(peerDel.getPeer(msg),message);
   }
 
   private Message getMessageByKey(String key, byte[] content) {

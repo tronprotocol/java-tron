@@ -1,13 +1,16 @@
 package org.tron.core.db;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -15,13 +18,16 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.Witness;
 
 public class Manager {
 
   private static final Logger logger = LoggerFactory.getLogger("Manager");
 
   private static final long BLOCK_INTERVAL_SEC = 1;
+  private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
 
   private AccountStore accountStore;
@@ -63,19 +69,17 @@ public class Manager {
     return wits;
   }
 
+  public Sha256Hash getHeadBlockId() {
+    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
+  }
+
   /**
    * TODO: should get this list from Database. get witnessCapsule List.
    */
   public void initalWitnessList() {
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x01"),
-        "http://Loser.org"));
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x02"),
-        "http://Marcus.org"));
-    wits.add(new WitnessCapsule(
-        ByteString.copyFromUtf8("0x02"),
-        "http://Olivier.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"),"http://Loser.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Marcus.org"));
+    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"),"http://Olivier.org"));
   }
 
   public void addWitness(WitnessCapsule witnessCapsule) {
@@ -114,6 +118,10 @@ public class Manager {
     return scheduledWitness;
   }
 
+  public int calculateParticipationRate() {
+    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+  }
+
   public List<WitnessCapsule> getShuffledWitnesses() {
     List<WitnessCapsule> shuffleWits = getWitnesses();
     //Collections.shuffle(shuffleWits);
@@ -133,8 +141,8 @@ public class Manager {
     setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
     pendingTrxs = new ArrayList<>();
-
     initGenesis();
+    blockStore.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
   /**
@@ -153,6 +161,9 @@ public class Manager {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
         this.getBlockStore().pushBlock(genesisBlockCapsule);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
+        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(genesisBlockCapsule.getBlockId().getByteString());
+        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(genesisBlockCapsule.getTimeStamp());
       }
     }
   }
@@ -262,5 +273,42 @@ public class Manager {
 
   private void setUtxoStore(UtxoStore utxoStore) {
     this.utxoStore = utxoStore;
+  }
+
+  public void processBlock(BlockCapsule block) {
+    block.getTransactions().forEach(transactionCapsule -> {
+      processTrx(transactionCapsule);
+    });
+  }
+
+  public void updateWitness() {
+    //TODO validate maint needed
+    Map<ByteString, Long> countWitness = Maps.newHashMap();
+    List<Account> accountList = accountStore.getAllAccounts();
+    accountList.forEach(account -> {
+      account.getVotesList().forEach(vote -> {
+        //TODO validate witness //active_witness
+        if (countWitness.containsKey(vote.getVoteAddress())) {
+          countWitness.put(vote.getVoteAddress(),
+              countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+        } else {
+          countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+        }
+      });
+    });
+    List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
+    countWitness.forEach((address, voteCount) -> {
+      Witness witnessSource = witnessStore.getWitness(address);
+      if (null == witnessSource) {
+        logger.warn("winessSouece is null.address is {}", address);
+      }
+      Witness witnessTarget = witnessSource.toBuilder().setVoteCount(voteCount).build();
+      witnessCapsuleList.add(new WitnessCapsule(witnessTarget));
+      witnessStore.putWitness(witnessTarget);
+    });
+    witnessCapsuleList.sort((a, b) -> {
+      return (int) (a.getVoteCount() - b.getVoteCount());
+    });
+    wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
   }
 }

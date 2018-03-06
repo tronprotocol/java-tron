@@ -15,6 +15,8 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 
@@ -52,16 +54,11 @@ public class RpcApiService implements Service {
 
     logger.info("Server started, listening on " + port);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-
-      @Override
-      public void run() {
-
-        System.err.println("*** shutting down gRPC server since JVM is shutting down");
-        //server.this.stop();
-        System.err.println("*** server shut down");
-      }
-    });
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.err.println("*** shutting down gRPC server since JVM is shutting down");
+      //server.this.stop();
+      System.err.println("*** server shut down");
+    }));
   }
 
   private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
@@ -131,6 +128,32 @@ public class RpcApiService implements Service {
       super.createAssetIssue(request, responseObserver);
     }
 
+    @Override
+    public void voteWitnessAccount(VoteWitnessContract req,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = req.getOwnerAddress();
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createWitness(WitnessCreateContract req,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = req.getOwnerAddress();
+
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   @Override
