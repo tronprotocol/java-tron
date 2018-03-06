@@ -2,6 +2,7 @@ package org.tron.core.net.peer;
 
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
+import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -14,6 +15,11 @@ import org.tron.core.net.message.MessageTypes;
 
 
 public class PeerConnection {
+
+  @Override
+  public int hashCode() {
+    return member.hashCode();
+  }
 
   private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
@@ -28,16 +34,58 @@ public class PeerConnection {
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
+  private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
+
   //sync chain
   private Sha256Hash lastBlockPeerKnow = Sha256Hash.ZERO_HASH;
 
   private Queue<Sha256Hash> chainIdsToFetch = new LinkedBlockingDeque<>();
 
-  //private Queue<Sha256Hash> chainIdsPeerRequest = new LinkedBlockingQueue<>();
+  public Address getAddress() {
+    return member.address();
+  }
+
+  public int getNumUnfetchBlock() {
+    return numUnfetchBlock;
+  }
+
+  public void setNumUnfetchBlock(int numUnfetchBlock) {
+    this.numUnfetchBlock = numUnfetchBlock;
+  }
+
+  private int numUnfetchBlock = 0;
+
+  private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
 
   private boolean needSyncFromPeer;
 
   private boolean needSyncFromUs;
+
+  private boolean banned;
+
+  public Queue<Sha256Hash> getBlocksWeRequested() {
+    return blocksWeRequested;
+  }
+
+  public void setBlocksWeRequested(Queue<Sha256Hash> blocksWeRequested) {
+    this.blocksWeRequested = blocksWeRequested;
+  }
+
+  public Queue<Sha256Hash> getChainIdsWeReqeuested() {
+    return chainIdsWeReqeuested;
+  }
+
+  public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
+    this.chainIdsWeReqeuested = chainIdsWeReqeuested;
+  }
+
+  public boolean isBanned() {
+    return banned;
+  }
+
+  public void setBanned(boolean banned) {
+    this.banned = banned;
+  }
 
   public Sha256Hash getLastBlockPeerKnow() {
     return lastBlockPeerKnow;
