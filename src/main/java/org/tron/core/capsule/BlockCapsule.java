@@ -290,8 +290,4 @@ public class BlockCapsule {
     unPack();
     return this.block.toString();
   }
-
-  public Block getBlock() {
-    return this.block;
-  }
 }

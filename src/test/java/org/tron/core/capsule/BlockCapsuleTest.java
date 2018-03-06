@@ -22,8 +22,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.core.Sha256Hash;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.BlockHeader.raw;
@@ -48,31 +46,6 @@ public class BlockCapsuleTest {
                 .build())).build());
 
     blockCapsule.sign(privKeyBytes);
-
-    Block block = blockCapsule.getBlock();
-
-    byte[] sign = block.getBlockHeader().getWitnessSignature().toByteArray();
-
-    byte[] r = new byte[32];
-    byte[] s = new byte[32];
-
-    if (sign.length != 65) {
-      return;
-    }
-
-    System.arraycopy(sign, 0, r, 0, 32);
-    System.arraycopy(sign, 32, s, 0, 32);
-    byte revId = sign[64];
-    if (revId < 27) {
-      revId += 27; //revId -> v
-    }
-
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, revId);
-
-    // test sign
-    Assert.assertTrue(
-        key.verify(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).getBytes(),
-            signature));
 
     // test validateSignature
     Assert.assertTrue(blockCapsule.validateSignature());
