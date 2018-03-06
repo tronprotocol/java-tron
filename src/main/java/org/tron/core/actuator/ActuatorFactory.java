@@ -56,6 +56,7 @@ public class ActuatorFactory {
         new VoteWitnessActuator(contract.getParameter(), manager);
         break;
       case WitnessCreateContract:
+        new WitnessCteateActuator(contract.getParameter(), manager);
         break;
       case AssetIssueContract:
         break;
