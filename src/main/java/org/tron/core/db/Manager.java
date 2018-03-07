@@ -26,6 +26,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.exception.ValidateException;
 import org.tron.protos.Protocal.AccountType;
 
@@ -44,6 +45,7 @@ public class Manager {
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockCapsule genesisBlock;
+
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
@@ -89,11 +91,15 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
 
-  public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
+  public void initialWitnessList() {
+    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness()
+        .getActiveWitnessList();
+    activeWitnessList.forEach(activeWitness -> {
+      wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
+          activeWitness.getUrl()));
+    });
   }
+
 
   public void addWitness(WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
@@ -126,7 +132,8 @@ public class Manager {
   }
 
   public int calculateParticipationRate() {
-    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
+        / BlockFilledSlots.SLOT_NUMBER;
   }
 
   /**

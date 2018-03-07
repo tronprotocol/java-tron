@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.ConfigObject;
+import org.tron.core.config.args.InitialWitness.LocalWitness;
 
 public class Args {
 
@@ -38,6 +39,7 @@ public class Args {
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
+  private InitialWitness initialWitness;
 
   private Args() {
 
@@ -83,6 +85,20 @@ public class Args {
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
+
+    if (config.hasPath("initialWitness")) {
+      INSTANCE.initialWitness = new InitialWitness();
+
+      if (config.hasPath("initialWitness.localWitness")) {
+        INSTANCE.initialWitness.setLocalWitness(getLocalWitnessFromConfig(config));
+      }
+
+      if (config.hasPath("initialWitness.activeWitness")) {
+        INSTANCE.initialWitness.setActiveWitnessList(getActiveWitnessFromConfig(config));
+      }
+    } else {
+      INSTANCE.initialWitness = new InitialWitness();
+    }
   }
 
   private static List<Account> getAccountsFromConfig(com.typesafe.config.Config config) {
@@ -98,6 +114,31 @@ public class Args {
     account.setAddress(asset.get("address").unwrapped().toString());
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
+  }
+
+  private static InitialWitness.LocalWitness getLocalWitnessFromConfig(
+      com.typesafe.config.Config config) {
+
+    InitialWitness.LocalWitness localWitness = new InitialWitness.LocalWitness();
+    localWitness.setPrivateKey(config.getString("initialWitness.localWitness.privateKey"));
+    localWitness.setUrl(config.getString("initialWitness.localWitness.url"));
+    return localWitness;
+  }
+
+  private static List<InitialWitness.ActiveWitness> getActiveWitnessFromConfig(
+      com.typesafe.config.Config config) {
+    List<? extends ConfigObject> objectList = config.getObjectList("initialWitness.activeWitness");
+
+    List<InitialWitness.ActiveWitness> activeWitnessList = new ArrayList<>();
+    objectList.forEach(object -> activeWitnessList.add(createActiveWitness(object)));
+    return activeWitnessList;
+  }
+
+  private static InitialWitness.ActiveWitness createActiveWitness(ConfigObject asset) {
+    InitialWitness.ActiveWitness activeWitness = new InitialWitness.ActiveWitness();
+    activeWitness.setPublicKey(asset.get("publicKey").unwrapped().toString());
+    activeWitness.setUrl(asset.get("url").unwrapped().toString());
+    return activeWitness;
   }
 
   public static Args getInstance() {
@@ -149,4 +190,14 @@ public class Args {
   public void setChainId(String chainId) {
     this.chainId = chainId;
   }
+
+  public InitialWitness getInitialWitness() {
+    return initialWitness;
+  }
+
+  public void setInitialWitness(InitialWitness initialWitness) {
+    this.initialWitness = initialWitness;
+  }
+
+
 }
