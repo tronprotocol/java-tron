@@ -17,7 +17,7 @@ package org.tron.core.db;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
-
+import javafx.util.Pair;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -27,9 +27,9 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import javafx.util.Pair;
 
 public class BlockStore extends TronDatabase {
 
@@ -88,9 +88,11 @@ public class BlockStore extends TronDatabase {
   /**
    * Get the block id from the number.
    */
-  public Sha256Hash getBlockIdByNum(long num) {
+  public BlockId getBlockIdByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
-    return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
+    //TODO wait copmletion of BlockStore's refactor
+    return new BlockId(Sha256Hash.wrap(hash), 0);
+    //return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
   }
 
   /**
@@ -109,7 +111,7 @@ public class BlockStore extends TronDatabase {
   /**
    * Get the fork branch.
    */
-  public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
+  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
             khaosDb.getBranch(head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()

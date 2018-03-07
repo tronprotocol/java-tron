@@ -50,10 +50,10 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary) {
+  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
     //todo: return the blocks it should be have.
 
-    List<Sha256Hash> retBlockHashes = new ArrayList<>();
+    List<BlockId> retBlockHashes = new ArrayList<>();
     Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
 
     if (!blockChainSummary.isEmpty()) {
@@ -81,14 +81,14 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<Sha256Hash> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds)  {
+  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds)  {
 
-    List<Sha256Hash> retSummary = new ArrayList<>();
+    List<BlockId> retSummary = new ArrayList<>();
     long highBlkNum = 0;
     long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
 
-    List<Sha256Hash> forkList = new ArrayList<>();
+    List<BlockId> forkList = new ArrayList<>();
 
     if (beginBLockId != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.

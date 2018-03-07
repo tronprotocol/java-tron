@@ -14,9 +14,9 @@ public interface NodeDelegate {
 
   void handleTransaction(TransactionCapsule trx);
 
-  List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary);
+  List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary);
 
-  List<Sha256Hash> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
+  List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
