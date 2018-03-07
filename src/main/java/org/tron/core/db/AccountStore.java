@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -39,16 +38,11 @@ public class AccountStore extends TronDatabase {
   /**
    * get account by address.
    */
-  public Account getAccount(ByteString address) {
+  public AccountCapsule getAccount(ByteString address) {
     logger.info("address is {} ", address);
 
-    try {
-      byte[] value = dbSource.getData(address.toByteArray());
-      return ArrayUtils.isEmpty(value) ? null : Account.parseFrom(value);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-    return null;
+    byte[] value = dbSource.getData(address.toByteArray());
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   /**
@@ -72,10 +66,10 @@ public class AccountStore extends TronDatabase {
   /**
    * save account.
    */
-  public void putAccount(ByteString address, Account account) {
+  public void putAccount(ByteString address, AccountCapsule account) {
     logger.info("address is {} ", address);
 
-    dbSource.putData(address.toByteArray(), account.toByteArray());
+    dbSource.putData(address.toByteArray(), account.getData());
   }
 
   public void putAccount(AccountCapsule accountCapsule) {
@@ -96,6 +90,7 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+
   /**
    * createAccount fun.
    *
@@ -103,11 +98,12 @@ public class AccountStore extends TronDatabase {
    * @param account the data of Account
    */
 
-  public boolean createAccount(byte[] address, byte[] account) {
-    dbSource.putData(address, account);
+  public boolean createAccount(byte[] address, AccountCapsule account) {
+    dbSource.putData(address, account.getData());
     logger.info("address is {},account is {}", address, account);
     return true;
   }
+
   /**
    * isAccountExist fun.
    *
@@ -122,11 +118,10 @@ public class AccountStore extends TronDatabase {
 
   /**
    * get all accounts.
-   * @return
    */
-  public List<Account> getAllAccounts() {
+  public List<AccountCapsule> getAllAccounts() {
     return dbSource.allKeys().stream()
-            .map(key -> getAccount(ByteString.copyFrom(key)))
-            .collect(Collectors.toList());
+        .map(key -> getAccount(ByteString.copyFrom(key)))
+        .collect(Collectors.toList());
   }
 }
