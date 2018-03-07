@@ -1,42 +1,21 @@
 package org.tron.core.net.message;
 
 import java.util.List;
-import org.tron.core.Sha256Hash;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.Inventory;
-import org.tron.protos.Protocal.Inventory.InventoryType;
+import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.protos.Protocal.BlockInventory.Type;
 
-public class SyncBlockChainMessage extends InventoryMessage {
+public class SyncBlockChainMessage extends BlockInventoryMessage {
 
   public SyncBlockChainMessage(byte[] packed) {
     super(packed);
   }
 
-  public SyncBlockChainMessage(Inventory inv) {
-    super(inv);
-  }
-
-  public SyncBlockChainMessage(List<Sha256Hash> hashList) {
-    super(hashList, InventoryType.BLOCK);
-  }
-
-  @Override
-  public byte[] getData() {
-    return super.getData();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
+  public SyncBlockChainMessage(List<BlockId> blockIds) {
+    super(blockIds, Type.SYNC);
   }
 
   @Override
   public MessageTypes getType() {
     return MessageTypes.SYNC_BLOCK_CHAIN;
-  }
-
-  @Override
-  public Protocal.Inventory getInventory() {
-    return super.getInventory();
   }
 }

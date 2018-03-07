@@ -19,6 +19,7 @@ import io.scalecube.cluster.Cluster;
 import java.io.UnsupportedEncodingException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -77,6 +78,9 @@ public class StartWorker implements Runnable {
         break;
       case BLOCK_INVENTORY:
         message = new BlockInventoryMessage(content);
+        break;
+      case BLOCK_CHAIN_INVENTORY:
+        message = new ChainInventoryMessage(content);
         break;
       default:
         try {

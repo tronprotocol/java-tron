@@ -33,7 +33,7 @@ import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
@@ -293,10 +293,10 @@ public class TransactionCapsule {
   /**
    * validate signature
    */
-  public boolean validateSignature() throws ValidateException {
+  public boolean validateSignature() throws ValidateSignatureException {
     if (this.getTransaction().getSignatureCount() !=
         this.getTransaction().getRawData().getContractCount()) {
-      throw new ValidateException("miss sig or contract");
+      throw new ValidateSignatureException("miss sig or contract");
     }
 
     List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
@@ -307,10 +307,10 @@ public class TransactionCapsule {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
-          throw new ValidateException("sig error");
+          throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
-        throw new ValidateException(e.getMessage());
+        throw new ValidateSignatureException(e.getMessage());
       }
     }
     return true;

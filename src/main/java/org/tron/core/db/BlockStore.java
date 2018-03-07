@@ -69,7 +69,6 @@ public class BlockStore extends TronDatabase {
     return head == null ? 0 : head.getNum();
   }
 
-
   public DateTime getHeadBlockTime() {
     return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
   }

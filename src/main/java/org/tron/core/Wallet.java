@@ -31,7 +31,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -145,7 +145,7 @@ public class Wallet {
         p2pnode.broadcast(message);
         return true;
       }
-    } catch (ValidateException e) {
+    } catch (ValidateSignatureException e) {
       e.printStackTrace();
     }
     return false;
