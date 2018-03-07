@@ -7,7 +7,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocal.AccountType;
 
 public class CreateAccountActuator extends AbstractActuator {
 

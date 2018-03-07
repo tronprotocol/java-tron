@@ -487,6 +487,7 @@ public class Manager {
       WitnessCapsule witnessCapsule = witnessStore.getWitness(address);
       if (null == witnessCapsule) {
         logger.warn("winessSouece is null.address is {}", address);
+        return;
       }
       witnessCapsule.setVoteCount(voteCount);
       witnessCapsuleList.add(witnessCapsule);
@@ -495,6 +496,8 @@ public class Manager {
     witnessCapsuleList.sort((a, b) -> {
       return (int) (a.getVoteCount() - b.getVoteCount());
     });
-    wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
+    if (wits.size() > MAX_ACTIVE_WITNESS_NUM) {
+      wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
+    }
   }
 }
