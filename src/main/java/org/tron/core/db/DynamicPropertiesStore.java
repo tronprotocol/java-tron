@@ -41,7 +41,7 @@ public class DynamicPropertiesStore extends TronDatabase {
     try {
       this.getStateFlag();
     } catch (IllegalArgumentException e) {
-      this.saveMaintenanceFlag(0);
+      this.saveStateFlag(0);
     }
 
   }
@@ -152,8 +152,8 @@ public class DynamicPropertiesStore extends TronDatabase {
     this.dbSource.putData(LATEST_BLOCK_HEADER_HASH, h.toByteArray());
   }
 
-  public void saveMaintenanceFlag(int n) {
-    logger.info("update maintenance flag = {}", n);
+  public void saveStateFlag(int n) {
+    logger.info("update state flag = {}", n);
     this.dbSource.putData(STATE_FLAG, ByteArray.fromInt(n));
   }
 

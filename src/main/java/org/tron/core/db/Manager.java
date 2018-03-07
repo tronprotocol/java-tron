@@ -434,12 +434,12 @@ public class Manager {
    * update witness.
    */
   public void updateWitness() {
-    //TODO witness validate maint needed
+    //TODO validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
     List<AccountCapsule> accountList = accountStore.getAllAccounts();
     accountList.forEach(account -> {
       account.getVotesList().forEach(vote -> {
-        //TODO witness validate witness //active_witness
+        //TODO validate witness //active_witness
         if (countWitness.containsKey(vote.getVoteAddress())) {
           countWitness.put(vote.getVoteAddress(),
               countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());

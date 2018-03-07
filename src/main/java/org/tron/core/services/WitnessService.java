@@ -38,6 +38,7 @@ public class WitnessService implements Service {
   private static final int LOOP_INTERVAL = 1000; // millisecond
   private byte[] privateKey;
   private boolean hasCheckedSynchronization = true;
+  private volatile boolean canceled = false;
 
   /**
    * Construction method.
@@ -169,6 +170,9 @@ public class WitnessService implements Service {
   }
 
   private void checkCancelFlag() throws CancelException {
+    if(canceled){
+      throw new CancelException();
+    }
   }
 
   private void broadcastBlock(BlockCapsule block) {
