@@ -9,12 +9,12 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.WitnessCreateContract;
 
-public class WitnessCteateActuator extends AbstractActuator {
+public class WitnessCreateActuator extends AbstractActuator {
 
 
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCteateActuator");
+  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
 
-  WitnessCteateActuator(Any contract, Manager dbManager) {
+  WitnessCreateActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -34,6 +34,7 @@ public class WitnessCteateActuator extends AbstractActuator {
 
   @Override
   public boolean validator() {
+    //TODO witness
     return false;
   }
 
