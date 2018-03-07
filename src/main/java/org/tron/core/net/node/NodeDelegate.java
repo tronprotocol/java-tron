@@ -30,6 +30,6 @@ public interface NodeDelegate {
 
   boolean contain(Sha256Hash hash, MessageTypes type);
 
-  BlockId getGenissBlock();
+  BlockId getGenesisBlock();
 
 }

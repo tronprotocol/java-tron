@@ -12,6 +12,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -33,8 +34,17 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public void handleBlock(BlockCapsule block) {
-    dbManager.processBlock(block);
-    getBlockStoreDb().pushBlock(block);
+
+    try {
+      dbManager.processBlock(block);
+    } catch (ValidateException e) {
+      e.printStackTrace();
+    }
+    try {
+      dbManager.pushBlock(block);
+    } catch (ValidateException e) {
+      e.printStackTrace();
+    }
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
@@ -46,7 +56,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
-    getBlockStoreDb().pushTransactions(trx);
+    try {
+      dbManager.pushTransactions(trx);
+    } catch (ValidateException e) {
+      logger.error("new transaction is not valid");
+    }
   }
 
   @Override
@@ -60,7 +74,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       for (Sha256Hash hash : blockChainSummary) {
-        if (getBlockStoreDb().containBlock(hash)) {
+        if (dbManager.containBlock(hash)) {
           lastKnownBlkHash = hash;
           break;
         }
@@ -71,10 +85,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
     }
 
-    for (long num = getBlockStoreDb().getBlockNumById(lastKnownBlkHash);
-         num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
+    for (long num = dbManager.getBlockNumById(lastKnownBlkHash);
+        num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
       if (num > 0) {
-        retBlockHashes.add(getBlockStoreDb().getBlockIdByNum(num));
+        retBlockHashes.add(dbManager.getBlockIdByNum(num));
       }
     }
     return retBlockHashes;
@@ -92,12 +106,12 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (beginBLockId != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
-      if (getBlockStoreDb().containBlock(beginBLockId)) {
+      if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
-        forkList = getBlockStoreDb().getBlockChainHashesOnFork(beginBLockId);
-        highNoForkBlkNum = getBlockStoreDb().getBlockNumById(forkList.get(forkList.size() - 1));
+        forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
+        highNoForkBlkNum = dbManager.getBlockNumById(forkList.get(forkList.size() - 1));
         forkList.remove(forkList.get(forkList.size() - 1));
         highBlkNum = highNoForkBlkNum + forkList.size();
       }
@@ -113,7 +127,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.add(getBlockStoreDb().getBlockIdByNum(lowBlkNum));
+        retSummary.add(dbManager.getBlockIdByNum(lowBlkNum));
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
@@ -129,9 +143,10 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(getBlockStoreDb().findBlockByHash(hash));
+        return new BlockMessage(dbManager.findBlockByHash(hash));
       case TRX:
-        return new TransactionMessage(dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+        return new TransactionMessage(
+            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
       default:
         logger.info("message type not block or trx.");
         return null;
@@ -161,7 +176,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public boolean contain(Sha256Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
-      return getBlockStoreDb().containBlock(hash);
+      return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
       return false;
@@ -170,7 +185,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public BlockId getGenissBlock() {
+  public BlockId getGenesisBlock() {
     //TODO return a genissBlock
     return new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
   }

@@ -18,10 +18,7 @@
 
 package org.tron.core;
 
-import com.google.protobuf.Any;
-
 import java.util.ArrayList;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,17 +31,18 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocal.Transaction;
 
 public class Wallet {
 
@@ -141,10 +139,14 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
 
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.validateSignature()) {
-      Message message = new TransactionMessage(signaturedTransaction);
-      p2pnode.broadcast(message);
-      return true;
+    try {
+      if (trx.validateSignature()) {
+        Message message = new TransactionMessage(signaturedTransaction);
+        p2pnode.broadcast(message);
+        return true;
+      }
+    } catch (ValidateException e) {
+      e.printStackTrace();
     }
     return false;
   }

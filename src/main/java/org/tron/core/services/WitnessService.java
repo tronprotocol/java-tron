@@ -17,7 +17,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.CancelException;
+import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
@@ -70,15 +70,7 @@ public class WitnessService implements Service {
   private void blockProductionLoop() {
     BlockProductionCondition result;
     String capture = "";
-    try {
-      result = tryProduceBlock(capture);
-    } catch (CancelException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      logger.error("produce block error,", ex);
-      result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    }
-
+    result = tryProduceBlock(capture);
     if (result == null) {
       logger.warn("result is null");
       return;
@@ -142,12 +134,14 @@ public class WitnessService implements Service {
     }
 
     DateTime scheduledTime = getSlotTime(slot);
-
-    //TODO:implement private and public key code, fake code first.
-    BlockCapsule block = generateBlock(scheduledTime);
-    logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
-
-    broadcastBlock(block);
+    try {
+      //TODO:implement private and public key code, fake code first.
+      BlockCapsule block = generateBlock(scheduledTime);
+      logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
+      broadcastBlock(block);
+    } catch (ValidateException e) {
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    }
     return BlockProductionCondition.PRODUCED;
   }
 
@@ -159,7 +153,7 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when) {
+  private BlockCapsule generateBlock(DateTime when) throws ValidateException {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
