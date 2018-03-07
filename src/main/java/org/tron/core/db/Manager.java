@@ -326,6 +326,7 @@ public class Manager {
     }
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     assert actuatorList != null;
+    actuatorList.forEach(actuator -> actuator.validator());
     actuatorList.forEach(actuator -> actuator.execute());
     return true;
   }

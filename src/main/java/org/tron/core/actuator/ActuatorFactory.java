@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,10 +30,11 @@ public class ActuatorFactory {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
-    if (null == manager) {
-      logger.info("manager is null");
-      return actuatorList;
-    }
+//    if (null == manager) {
+//      logger.info("manager is null");
+//      return actuatorList;
+//    }
+    Preconditions.checkNotNull(manager, "manager is null");
 
     Protocal.Transaction.raw rawData = transactionCapsule.getTransaction().getRawData();
     if (TranscationType.ContractType.equals(rawData.getType())) {
