@@ -13,7 +13,7 @@ public class DynamicPropertiesStore extends TronDatabase {
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
-  private static final byte[] MAINTENANCE_FLAG = "maintenance_flag".getBytes();// 1 : is maintenance, 0 : is not maintenance
+  private static final byte[] STATE_FLAG = "state_flag".getBytes();// 1 : is maintenance, 0 : is not maintenance
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
 
@@ -39,7 +39,7 @@ public class DynamicPropertiesStore extends TronDatabase {
     }
 
     try {
-      this.getMaintenanceFlag();
+      this.getStateFlag();
     } catch (IllegalArgumentException e) {
       this.saveMaintenanceFlag(0);
     }
@@ -105,8 +105,8 @@ public class DynamicPropertiesStore extends TronDatabase {
     return ByteArray.toLong(n);
   }
 
-  public int getMaintenanceFlag() {
-    byte[] n = this.dbSource.getData(MAINTENANCE_FLAG);
+  public int getStateFlag() {
+    byte[] n = this.dbSource.getData(STATE_FLAG);
 
     if (n == null || n.length == 0) {
       throw new IllegalArgumentException("not found maintenance flag");
@@ -154,7 +154,7 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   public void saveMaintenanceFlag(int n) {
     logger.info("update maintenance flag = {}", n);
-    this.dbSource.putData(MAINTENANCE_FLAG, ByteArray.fromInt(n));
+    this.dbSource.putData(STATE_FLAG, ByteArray.fromInt(n));
   }
 
   public BlockFilledSlots getBlockFilledSlots() {
