@@ -35,30 +35,31 @@ public class AccountCapsule {
 
   private boolean unpacked;
 
-  public AccountCapsule(byte[] data) {
+  public AccountCapsule(final byte[] data) {
     this.data = data;
     this.unpacked = false;
   }
 
 
   private synchronized void unPack() {
-    if (unpacked) {
+    if (this.unpacked) {
       return;
     }
 
     try {
-      this.account = Account.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
+      this.account = Account.parseFrom(this.data);
+    } catch (final InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
 
-    unpacked = true;
+    this.unpacked = true;
   }
 
   /**
    * initial account capsule.
    */
-  public AccountCapsule(AccountType accountType, ByteString address, long balance) {
+  public AccountCapsule(final AccountType accountType, final ByteString address,
+      final long balance) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
@@ -67,7 +68,7 @@ public class AccountCapsule {
     this.unpacked = true;
   }
 
-  public AccountCapsule(AccountCreateContract contract) {
+  public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
         .setType(contract.getType())
         .setAddress(contract.getOwnerAddress())
@@ -76,8 +77,8 @@ public class AccountCapsule {
     this.unpacked = true;
   }
 
-  public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType) {
+  public AccountCapsule(final ByteString address, final ByteString accountName,
+      final AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
@@ -85,7 +86,7 @@ public class AccountCapsule {
     this.unpacked = true;
   }
 
-  public AccountCapsule(Account account) {
+  public AccountCapsule(final Account account) {
     this.account = account;
     this.unpacked = true;
   }
@@ -101,34 +102,35 @@ public class AccountCapsule {
   }
 
   public byte[] getData() {
-    pack();
-    return data;
+    this.pack();
+    return this.data;
   }
 
   public ByteString getAddress() {
-    unPack();
+    this.unPack();
     return this.account.getAddress();
   }
 
   @Override
   public String toString() {
-    unPack();
+    this.unPack();
     return this.account.toString();
   }
 
-  public void addVotes(ByteString voteAddress, long voteAdd) {
-    unPack();
+  public void addVotes(final ByteString voteAddress, final long voteAdd) {
+    this.unPack();
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
         .build();
+    this.data = null;
   }
 
   public List<Vote> getVotesList() {
-    unPack();
+    this.unPack();
     return this.account.getVotesList();
   }
 
-  public long getShare(){
+  public long getShare() {
     return this.account.getBalance();
   }
 

@@ -18,8 +18,8 @@ public class WitnessCapsule {
   /**
    * WitnessCapsule constructor with pubKey and url.
    */
-  public WitnessCapsule(ByteString pubKey, String url) {
-    Witness.Builder witnessBuilder = Witness.newBuilder();
+  public WitnessCapsule(final ByteString pubKey, final String url) {
+    final Witness.Builder witnessBuilder = Witness.newBuilder();
     this.witness = witnessBuilder
         .setPubKey(pubKey)
         .setAddress(ByteString.copyFrom(ECKey.computeAddress(pubKey.toByteArray())))
@@ -27,7 +27,7 @@ public class WitnessCapsule {
     this.unpacked = true;
   }
 
-  public WitnessCapsule(Witness witness) {
+  public WitnessCapsule(final Witness witness) {
     this.witness = witness;
     this.unpacked = true;
   }
@@ -35,7 +35,7 @@ public class WitnessCapsule {
   /**
    * WitnessCapsule constructor with address.
    */
-  public WitnessCapsule(ByteString address) {
+  public WitnessCapsule(final ByteString address) {
     this.witness = Witness.newBuilder().setAddress(address).build();
     this.unpacked = true;
   }
@@ -43,27 +43,27 @@ public class WitnessCapsule {
   /**
    * WitnessCapsule constructor with address and voteCount.
    */
-  public WitnessCapsule(ByteString address, long voteCount) {
-    Witness.Builder witnessBuilder = Witness.newBuilder();
+  public WitnessCapsule(final ByteString address, final long voteCount) {
+    final Witness.Builder witnessBuilder = Witness.newBuilder();
     this.witness = witnessBuilder
         .setAddress(address)
         .setVoteCount(voteCount).build();
     this.unpacked = true;
   }
 
-  public WitnessCapsule(byte[] data) {
+  public WitnessCapsule(final byte[] data) {
     this.data = data;
     this.unpacked = false;
   }
 
   private synchronized void unPack() {
     try {
-      if (unpacked) {
+      if (this.unpacked) {
         return;
       }
-      this.witness = Witness.parseFrom(data);
+      this.witness = Witness.parseFrom(this.data);
       this.unpacked = true;
-    } catch (InvalidProtocolBufferException e) {
+    } catch (final InvalidProtocolBufferException e) {
       e.printStackTrace();
       logger.error(e.getMessage());
     }
@@ -76,32 +76,34 @@ public class WitnessCapsule {
   }
 
   public ByteString getAddress() {
-    unPack();
+    this.unPack();
     return this.witness.getAddress();
   }
 
   public byte[] getData() {
-    pack();
+    this.pack();
     return this.data;
   }
 
   public long getLatestBlockNum() {
-    unPack();
+    this.unPack();
     return this.witness.getLatestBlockNum();
   }
 
-  public void setPubKey(ByteString pubKey) {
-    unPack();
+  public void setPubKey(final ByteString pubKey) {
+    this.unPack();
     this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
+    this.data = null;
   }
 
   public long getVoteCount() {
-    unPack();
+    this.unPack();
     return this.witness.getVoteCount();
   }
 
-  public void setVoteCount(long voteCount) {
-    unPack();
+  public void setVoteCount(final long voteCount) {
+    this.unPack();
     this.witness = this.witness.toBuilder().setVoteCount(voteCount).build();
+    this.data = null;
   }
 }
