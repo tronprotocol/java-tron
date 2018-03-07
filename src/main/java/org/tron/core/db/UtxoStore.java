@@ -28,6 +28,7 @@ import org.tron.protos.Protocal.TXOutputs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -101,29 +102,22 @@ public class UtxoStore extends TronDatabase {
     HashMap<String, long[]> unspentOutputs = new HashMap<>();
     long accumulated = 0L;
 
-    Set<byte[]> keySet = getDbSource().allKeys();
-
-    for (byte[] key : keySet) {
+    for (byte[] key : getDbSource().allKeys()) {
       byte[] txOutputsData = getDbSource().getData(key);
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txOutputsData);
-
         int len = txOutputs.getOutputsCount();
+        String toHexString = ByteArray.toHexString(key);
 
         for (int i = 0; i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
               .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
                   && accumulated < amount) {
+
             accumulated += txOutput.getValue();
-
-            long[] v = unspentOutputs.get(ByteArray.toHexString(key));
-
-            if (v == null) {
-              v = new long[0];
-            }
-
-            unspentOutputs.put(ByteArray.toHexString(key), ArrayUtils.add(v, i));
+            long[] v = Optional.ofNullable(unspentOutputs.get(toHexString)).orElse(new long[0]);
+            unspentOutputs.put(toHexString, ArrayUtils.add(v, i));
           }
         }
       } catch (InvalidProtocolBufferException e) {
