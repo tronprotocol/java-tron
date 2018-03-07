@@ -1,13 +1,14 @@
 package org.tron.core.config.args;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.ConfigObject;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Args {
 
@@ -48,6 +49,11 @@ public class Args {
    */
   public static void setParam(String[] args, com.typesafe.config.Config config) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+
+    if (StringUtils.isBlank(INSTANCE.privateKey)) {
+      INSTANCE.privateKey = config.getString("private.key");
+    }
+    logger.info("private.key = {}", INSTANCE.privateKey);
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDirectory(config.getString("storage.directory"));
