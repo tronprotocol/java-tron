@@ -75,6 +75,11 @@ public class WitnessCapsule {
     }
   }
 
+  private void clearData() {
+    this.data = null;
+    this.unpacked = true;
+  }
+
   public ByteString getAddress() {
     this.unPack();
     return this.witness.getAddress();
@@ -93,7 +98,7 @@ public class WitnessCapsule {
   public void setPubKey(final ByteString pubKey) {
     this.unPack();
     this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
-    this.data = null;
+    this.clearData();
   }
 
   public long getVoteCount() {
@@ -104,6 +109,6 @@ public class WitnessCapsule {
   public void setVoteCount(final long voteCount) {
     this.unPack();
     this.witness = this.witness.toBuilder().setVoteCount(voteCount).build();
-    this.data = null;
+    this.clearData();
   }
 }

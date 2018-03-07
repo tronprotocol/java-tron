@@ -101,6 +101,11 @@ public class AccountCapsule {
     }
   }
 
+  private void clearData() {
+    this.data = null;
+    this.unpacked = true;
+  }
+
   public byte[] getData() {
     this.pack();
     return this.data;
@@ -122,7 +127,7 @@ public class AccountCapsule {
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
         .build();
-    this.data = null;
+    this.clearData();
   }
 
   public List<Vote> getVotesList() {
