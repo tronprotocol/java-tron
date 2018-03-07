@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
@@ -208,6 +209,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (ValidateSignatureException e) {
       //TODO process validate signature exception
       e.printStackTrace();
+    } catch (BadBlockException e) {
+
     }
   }
 
