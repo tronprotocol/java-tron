@@ -127,4 +127,9 @@ public class AccountCapsule {
     unPack();
     return this.account.getVotesList();
   }
+
+  public long getShare(){
+    return this.account.getBalance();
+  }
+
 }

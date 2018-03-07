@@ -381,6 +381,8 @@ public class Manager {
     BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
+
+
     for (TransactionCapsule trx : pendingTrxs) {
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
@@ -446,13 +448,27 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTrx(transactionCapsule);
     }
+
+    updateDynamicProperties(block);
+
+    if(dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block.getTimeStamp()){
+      processMaintenance();
+    }
+  }
+
+  private void updateDynamicProperties(BlockCapsule block){
+
+  }
+
+  private void processMaintenance(){
+    updateWitness();
+    dynamicPropertiesStore.updateMaintenanceTime();
   }
 
   /**
    * update witness.
    */
   public void updateWitness() {
-    //TODO validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
     List<AccountCapsule> accountList = accountStore.getAllAccounts();
     accountList.forEach(account -> {
