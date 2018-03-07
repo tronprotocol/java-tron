@@ -24,15 +24,15 @@ public class VoteWitnessActuator extends AbstractActuator {
     try {
       if (contract.is(VoteWitnessContract.class)) {
         VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-        int voteAdd = voteContract.getCount();
-        if (voteAdd > 0) {
-          int countVote = 0;
-          voteContract.getVoteAddressList().forEach(voteAddress -> {
+        for (int i = 0; i < voteContract.getVoteAddressCount(); i++) {
+          ByteString voteAddress = voteContract.getVoteAddress(i);
+          int voteAdd = voteContract.getCount(i);
+          if(voteAdd > 0){
             if (null != dbManager) {
               //dbManager.getWitnessStore().countVoteWitness(voteAddress, voteAdd);
               countVoteAccount(voteAddress, voteAdd);
             }
-          });
+          }
         }
       }
     } catch (InvalidProtocolBufferException e) {
@@ -43,7 +43,7 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean validator() {
-    //TODO
+    //TODO :
     return false;
   }
 
