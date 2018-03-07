@@ -13,6 +13,7 @@ import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
@@ -228,7 +229,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       blockIds = del.getLostBlockIds(summaryCHhainIds);
     } catch (UnReachBlockException e) {
-
     }
 
     if (blockIds.isEmpty()) {
@@ -258,13 +258,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
+  private void banTraitorPeer (PeerConnection peer) {
+    disconnectPeer(peer);
+  }
+
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
     logger.info("on handle block chain inventory message");
+    try {
+      if (peer.getSyncChainRequested() != null) {
 
+      } else {
+        throw new TraitorPeerException("We don't send sync request to " + peer);
+      }
 
-
-
-//    List<Sha256Hash> blockIds = del.getLostBlockIds(msg.getHashList());
+    } catch (TraitorPeerException e) {
+      banTraitorPeer(peer);
+    }
+    //    List<Sha256Hash> blockIds = del.getLostBlockIds(msg.getHashList());
 //    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
 //    fetchMap.put(fetchMsg.getMessageId(), peer);
 //    loopFetchBlocks.push(fetchMsg);

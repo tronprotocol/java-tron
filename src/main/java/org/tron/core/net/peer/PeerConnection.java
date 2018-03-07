@@ -4,10 +4,12 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -25,7 +27,6 @@ public class PeerConnection {
 
   private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
-
   //private
   private Member member;
 
@@ -42,6 +43,17 @@ public class PeerConnection {
   private BlockId lastBlockPeerKnow;
 
   private List<BlockId> blockChainToFetch = new ArrayList<>();
+
+  private Pair<Sha256Hash, Timestamp> syncChainRequested = null;
+
+  public Pair<Sha256Hash, Timestamp> getSyncChainRequested() {
+    return syncChainRequested;
+  }
+
+  public void setSyncChainRequested(
+      Pair<Sha256Hash, Timestamp> syncChainRequested) {
+    this.syncChainRequested = syncChainRequested;
+  }
 
   public Address getAddress() {
     return member.address();
