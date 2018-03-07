@@ -82,6 +82,7 @@
   <logger name="ByteArray" level="INFO"/>
   <logger name="Args" level="INFO"/>
   <logger name="WitnessCteateActuator" level="INFO"/>
+  <logger name="AccountCapsule" level="INFO"/>
 
 </configuration>
 

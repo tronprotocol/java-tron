@@ -5,9 +5,9 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Witness;
 
 public class WitnessCreateActuator extends AbstractActuator {
 
@@ -45,11 +45,10 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   private void createWitness(WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
-    Witness witness = Witness.newBuilder()
-        .setAddress(witnessCreateContract.getOwnerAddress())
-        .setVoteCount(0).build();
+    WitnessCapsule witnessCapsule = new WitnessCapsule(
+        witnessCreateContract.getOwnerAddress(), 0);
 
-    dbManager.getWitnessStore().putWitness(witness);
+    dbManager.getWitnessStore().putWitness(witnessCapsule);
   }
 
 }

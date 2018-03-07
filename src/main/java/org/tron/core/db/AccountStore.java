@@ -1,14 +1,13 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.protos.Protocal.Account;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class AccountStore extends TronDatabase {
 
@@ -36,22 +35,45 @@ public class AccountStore extends TronDatabase {
     return instance;
   }
 
-  public Account getAccount(ByteString voteAddress) {
-    logger.info("voteAddress is {} ", voteAddress);
+  /**
+   * get account by address.
+   */
+  public AccountCapsule getAccount(ByteString address) {
+    logger.info("address is {} ", address);
 
-    try {
-      byte[] value = dbSource.getData(voteAddress.toByteArray());
-      return ArrayUtils.isEmpty(value) ? null : Account.parseFrom(value);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-    return null;
+    byte[] value = dbSource.getData(address.toByteArray());
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
-  public void putAccount(ByteString voteAddress, Account account) {
-    logger.info("voteAddress is {} ", voteAddress);
+  /**
+   * getAccount fun.
+   *
+   * @param address the address of Account
+   */
+  public Account getAccount(byte[] address) {
+    byte[] account = dbSource.getData(address);
+    if (account == null || account.length == 0) {
+      return null;
+    }
+    try {
+      return Account.parseFrom(account);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
 
-    dbSource.putData(voteAddress.toByteArray(), account.toByteArray());
+  /**
+   * save account.
+   */
+  public void putAccount(ByteString address, AccountCapsule account) {
+    logger.info("address is {} ", address);
+
+    dbSource.putData(address.toByteArray(), account.getData());
+  }
+
+  public void putAccount(AccountCapsule accountCapsule) {
+    dbSource.putData(accountCapsule.getAddress().toByteArray(), accountCapsule.getData());
   }
 
   @Override
@@ -68,6 +90,7 @@ public class AccountStore extends TronDatabase {
   void fetch() {
 
   }
+
   /**
    * createAccount fun.
    *
@@ -75,11 +98,12 @@ public class AccountStore extends TronDatabase {
    * @param account the data of Account
    */
 
-  public boolean createAccount(byte[] address, byte[] account) {
-    dbSource.putData(address, account);
+  public boolean createAccount(byte[] address, AccountCapsule account) {
+    dbSource.putData(address, account.getData());
     logger.info("address is {},account is {}", address, account);
     return true;
   }
+
   /**
    * isAccountExist fun.
    *
@@ -91,28 +115,13 @@ public class AccountStore extends TronDatabase {
     logger.info("address is {},account is {}", address, account);
     return null != account;
   }
+
   /**
-   * getAccount fun.
-   *
-   * @param address the address of Account
+   * get all accounts.
    */
-
-  public Account getAccount(byte[] address) {
-    byte[] account = dbSource.getData(address);
-    if (account == null || account.length == 0) {
-      return null;
-    }
-    try {
-      return Account.parseFrom(account);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return null;
-    }
-  }
-
-  public List<Account> getAllAccounts() {
+  public List<AccountCapsule> getAllAccounts() {
     return dbSource.allKeys().stream()
-            .map(key -> getAccount(ByteString.copyFrom(key)))
-            .collect(Collectors.toList());
+        .map(key -> getAccount(ByteString.copyFrom(key)))
+        .collect(Collectors.toList());
   }
 }
