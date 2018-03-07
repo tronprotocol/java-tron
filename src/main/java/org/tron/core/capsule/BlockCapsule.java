@@ -143,8 +143,8 @@ public class BlockCapsule {
     unpacked = true;
   }
 
-  public void addTransaction(Transaction pendingTrx) {
-    this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
+  public void addTransaction(TransactionCapsule pendingTrx) {
+    this.block = this.block.toBuilder().addTransactions(pendingTrx.getTransaction()).build();
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -184,7 +184,7 @@ public class BlockCapsule {
 
   public Sha256Hash getBlockId() {
     unPack();
-    if(blockId.equals(Sha256Hash.ZERO_HASH)) {
+    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
     }
 

@@ -25,10 +25,9 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.exception.ValidateException;
-import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
-import org.tron.protos.Protocal.Transaction;
 
 public class Manager {
 
@@ -44,7 +43,6 @@ public class Manager {
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
-
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
@@ -66,13 +64,13 @@ public class Manager {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-  public List<Transaction> getPendingTrxs() {
+  public List<TransactionCapsule> getPendingTrxs() {
     return pendingTrxs;
   }
 
 
   // transaction cache
-  private List<Transaction> pendingTrxs;
+  private List<TransactionCapsule> pendingTrxs;
 
   private List<WitnessCapsule> wits = new ArrayList<>();
 
@@ -89,11 +87,16 @@ public class Manager {
   /**
    * TODO: should get this list from Database. get witnessCapsule List.
    */
-  public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
+
+  public void initialWitnessList() {
+    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness()
+        .getActiveWitnessList();
+    activeWitnessList.forEach(activeWitness -> {
+      wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
+          activeWitness.getUrl()));
+    });
   }
+
 
   public void addWitness(WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
@@ -126,7 +129,8 @@ public class Manager {
   }
 
   public int calculateParticipationRate() {
-    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
+        / BlockFilledSlots.SLOT_NUMBER;
   }
 
   /**
@@ -175,7 +179,11 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
-        pushBlock(genesisBlockCapsule);
+        try {
+          pushBlock(genesisBlockCapsule);
+        } catch (ValidateException e) {
+          e.printStackTrace();
+        }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             genesisBlockCapsule.getBlockId().getByteString());
@@ -205,14 +213,24 @@ public class Manager {
     return accountStore;
   }
 
-  public void pushTrx(Transaction trx) {
-    this.pendingTrxs.add(trx);
+  /**
+   * push transaction into db.
+   */
+  public boolean pushTransactions(TransactionCapsule trx) throws ValidateException {
+    logger.info("push transaction");
+    if (!trx.validateSignature()) {
+      throw new ValidateException("trans sig validate failed");
+    }
+    pendingTrxs.add(trx);
+    getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
+    return true;
   }
+
 
   /**
    * save a block.
    */
-  public void pushBlock(BlockCapsule block) {
+  public void pushBlock(BlockCapsule block) throws ValidateException {
     khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -298,13 +316,11 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(TransactionCapsule trxCap) {
+  public boolean processTrx(TransactionCapsule trxCap) throws ValidateException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
-
-    //ActuatorFactory actuatorFactory = ActuatorFactory.getInstance();
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     assert actuatorList != null;
     actuatorList.forEach(actuator -> actuator.execute());
@@ -359,7 +375,7 @@ public class Manager {
     BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    for (Transaction trx : pendingTrxs) {
+    for (TransactionCapsule trx : pendingTrxs) {
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
       if (currentTrxSize > TRXS_SIZE) {
@@ -368,7 +384,7 @@ public class Manager {
       }
 
       // apply transaction
-      if (processTrx(new TransactionCapsule(trx))) {
+      if (processTrx(trx)) {
         // push into block
         blockCapsule.addTransaction(trx);
         pendingTrxs.remove(trx);
@@ -420,10 +436,10 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) {
-    block.getTransactions().forEach(transactionCapsule -> {
+  public void processBlock(BlockCapsule block) throws ValidateException {
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTrx(transactionCapsule);
-    });
+    }
   }
 
   /**

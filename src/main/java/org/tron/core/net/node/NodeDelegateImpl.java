@@ -33,8 +33,17 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public void handleBlock(BlockCapsule block) {
-    dbManager.processBlock(block);
-    dbManager.pushBlock(block);
+
+    try {
+      dbManager.processBlock(block);
+    } catch (ValidateException e) {
+      e.printStackTrace();
+    }
+    try {
+      dbManager.pushBlock(block);
+    } catch (ValidateException e) {
+      e.printStackTrace();
+    }
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
     //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
@@ -47,9 +56,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   public void handleTransaction(TransactionCapsule trx) {
     logger.info("handle transaction");
     try {
-      getBlockStoreDb().pushTransactions(trx);
+      dbManager.pushTransactions(trx);
     } catch (ValidateException e) {
-      logger.error("");
+      logger.error("new transaction is not valid");
     }
   }
 
