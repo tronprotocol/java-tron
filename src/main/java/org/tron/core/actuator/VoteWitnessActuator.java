@@ -23,11 +23,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     try {
       if (contract.is(VoteWitnessContract.class)) {
         VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-        int voteAdd = voteContract.getCount();
-        if (voteAdd > 0) {
-          int countVote = 0;
-          countVoteAccount(voteContract);
-        }
+        countVoteAccount(voteContract);
       }
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
@@ -42,13 +38,12 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   public void countVoteAccount(VoteWitnessContract voteContract) {
-    int voteAdd = voteContract.getCount();
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .getAccount(voteContract.getOwnerAddress());
 
-    voteContract.getVoteAddressList().forEach(voteAddress -> {
-      accountCapsule.addVotes(voteAddress, voteAdd);
+    voteContract.getVotesList().forEach(vote -> {
+      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
     dbManager.getAccountStore().putAccount(accountCapsule.getAddress(), accountCapsule);

@@ -107,7 +107,7 @@ public class AccountCapsule {
     return this.account.toString();
   }
 
-  public void addVotes(ByteString voteAddress, int voteAdd) {
+  public void addVotes(ByteString voteAddress, long voteAdd) {
     unPack();
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
