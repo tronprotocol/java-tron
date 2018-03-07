@@ -17,6 +17,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
@@ -73,11 +74,11 @@ public class WitnessService implements Service {
         }
       };
 
-  private void blockProductionLoop() {
+  private void blockProductionLoop() throws CancelException{
     BlockProductionCondition result;
     try {
       result = tryProduceBlock();
-    } catch (Exception ex) {
+    }  catch (Exception ex) {
       logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
@@ -121,7 +122,9 @@ public class WitnessService implements Service {
   }
 
 
-  private BlockProductionCondition tryProduceBlock() {
+  private BlockProductionCondition tryProduceBlock() throws ValidateException,CancelException{
+
+    checkCancelFlag();
 
     if (!hasCheckedSynchronization) {
       return BlockProductionCondition.NOT_SYNCED;
@@ -151,9 +154,11 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
+
     if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
+
     try {
       //TODO:implement private and public key code, fake code first.
       BlockCapsule block = generateBlock(scheduledTime);
@@ -162,8 +167,11 @@ public class WitnessService implements Service {
     } catch (ValidateException e) {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
+
     return BlockProductionCondition.PRODUCED;
   }
+
+  private void checkCancelFlag() throws CancelException{}
 
   private void broadcastBlock(BlockCapsule block) {
     try {
@@ -249,7 +257,7 @@ public class WitnessService implements Service {
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
         Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
-//    tronApp.getDbManager().addWitness(localWitnessState);
+    //    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 

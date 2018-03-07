@@ -24,9 +24,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.config.args.InitialWitness;
 import org.tron.core.exception.ValidateException;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
 
@@ -44,7 +46,6 @@ public class Manager {
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
-
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
@@ -97,6 +98,7 @@ public class Manager {
           activeWitness.getUrl()));
     });
   }
+
 
   public void addWitness(WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
