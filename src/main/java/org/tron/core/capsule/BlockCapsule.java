@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,8 +229,8 @@ public class BlockCapsule {
     blockHeaderRaw = this.block.getBlockHeader().getRawData().toBuilder()
         .setTxTrieRoot(calcMerklerRoot().getByteString()).build();
 
-    this.block.toBuilder().setBlockHeader(
-        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
   public Sha256Hash getMerklerRoot() {
