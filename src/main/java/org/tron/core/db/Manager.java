@@ -20,6 +20,7 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -43,6 +44,8 @@ public class Manager {
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+  private BlockCapsule genesisBlock;
+
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
@@ -168,9 +171,9 @@ public class Manager {
    * init genesis block.
    */
   public void initGenesis() {
-    BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
-    if (containBlock(genesisBlockCapsule.getBlockId())) {
-      Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+    genesisBlock = BlockUtil.newGenesisBlockCapsule();
+    if (containBlock(genesisBlock.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (hasBlocks()) {
         logger.error("genesis block modify, please delete database directory({}) and restart",
@@ -178,17 +181,17 @@ public class Manager {
         System.exit(1);
       } else {
         logger.info("create genesis block");
-        Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+        Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
         try {
-          pushBlock(genesisBlockCapsule);
+          pushBlock(genesisBlock);
         } catch (ValidateSignatureException e) {
           e.printStackTrace();
         }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
-            genesisBlockCapsule.getBlockId().getByteString());
+            genesisBlock.getBlockId().getByteString());
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
-            genesisBlockCapsule.getTimeStamp());
+            genesisBlock.getTimeStamp());
         initAccount();
       }
     }
@@ -259,7 +262,7 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
+  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
         khaosDb.getBranch(head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
@@ -329,9 +332,11 @@ public class Manager {
   /**
    * Get the block id from the number.
    */
-  public Sha256Hash getBlockIdByNum(long num) {
+  public BlockId getBlockIdByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
-    return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
+    return ArrayUtils.isNotEmpty(hash)
+        ? genesisBlock.getBlockId()
+        : new BlockId(Sha256Hash.wrap(hash), num);
   }
 
   /**

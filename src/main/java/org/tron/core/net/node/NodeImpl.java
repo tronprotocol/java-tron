@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
@@ -28,13 +29,14 @@ import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocal;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
+
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private HashMap<Address, PeerConnection> mapPeer = new HashMap();
 
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
-  private final List<Sha256Hash> blockToAdvertise = new ArrayList<>();
+  private final List<BlockId> blockToAdvertise = new ArrayList<>();
 
   private static final Logger logger = LoggerFactory.getLogger("Node");
 
@@ -102,7 +104,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public void broadcast(Message msg) {
     if (msg instanceof BlockMessage) {
       logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
-      blockToAdvertise.add(msg.getMessageId());
+      blockToAdvertise.add(((BlockMessage) msg).getBlockId());
     }
     if (msg instanceof TransactionMessage) {
       trxToAdvertise.add(msg.getMessageId());
@@ -186,7 +188,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
-    List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
+    //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
       while (mapPeer.isEmpty()) {
@@ -197,13 +199,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       e.printStackTrace();
     }
 
-    loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
+    //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.setLastBlockPeerKnow(blkMsg.getMessageId());
+    peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
     try {
       del.handleBlock(blkMsg.getBlockCapsule());
     } catch (ValidateSignatureException e) {
@@ -221,9 +223,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
-    List<Sha256Hash> blockIds = del.getBlockHashes(syncMsg.getHashList());
-    BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds);
-    peer.sendMessage(blkInvMsg);
+    //List<Sha256Hash> blockIds = del.getLostBlockIds(syncMsg.getHashList());
+    //BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds);
+    //ChainInventoryMessage chainInvMsg = new ChainInventoryMessage(blockIds);
+    //peer.sendMessage(chainInvMsg);
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
@@ -243,10 +246,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
     logger.info("on handle block chain inventory message");
-    List<Sha256Hash> blockIds = del.getBlockHashes(msg.getHashList());
-    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.getMessageId(), peer);
-    loopFetchBlocks.push(fetchMsg);
+//    List<Sha256Hash> blockIds = del.getLostBlockIds(msg.getHashList());
+//    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
+//    fetchMap.put(fetchMsg.getMessageId(), peer);
+//    loopFetchBlocks.push(fetchMsg);
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
@@ -270,11 +273,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startSyncWithPeer(PeerConnection peer) {
     peer.setNeedSyncFromPeer(true);
-    peer.getChainIdsToFetch().clear();
+    peer.getBlockChainToFetch().clear();
     peer.setNumUnfetchBlock(0);
-    peer.setLastBlockPeerKnow(Sha256Hash.ZERO_HASH);
+    peer.setLastBlockPeerKnow(del.getGenesisBlock());
     peer.setBanned(false);
-    fetchNextBatchChainIds(peer);
+    syncNextBatchChainIds(peer);
   }
 
   @Override
@@ -282,7 +285,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     return mapPeer.get(msg.sender());
   }
 
-  private void fetchNextBatchChainIds(PeerConnection peer) {
+  private void syncNextBatchChainIds(PeerConnection peer) {
+    try {
+      List<BlockId> chainSummary = del
+          .getBlockChainSummary(peer.getLastBlockPeerKnow(), peer.getBlockChainToFetch());
+      peer.setLastBlockPeerKnow(chainSummary.isEmpty() ? del.getGenesisBlock()
+          : chainSummary.get(chainSummary.size() - 1));
+      peer.sendMessage(new SyncBlockChainMessage(chainSummary));
+    } catch (Exception e) { //TODO: use tron excpetion here
+      e.printStackTrace();
+      disconnectPeer(peer);
+    }
 
   }
 
