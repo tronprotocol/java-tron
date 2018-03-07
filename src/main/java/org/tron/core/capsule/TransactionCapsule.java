@@ -17,14 +17,12 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -35,6 +33,7 @@ import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.ValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
@@ -238,28 +237,36 @@ public class TransactionCapsule {
     try {
       switch (contract.getType()) {
         case AccountCreateContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.AccountCreateContract.class).getOwnerAddress();
+          owner = contract.getParameter()
+              .unpack(org.tron.protos.Contract.AccountCreateContract.class).getOwnerAddress();
           break;
         case TransferContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferContract.class).getOwnerAddress();
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferContract.class)
+              .getOwnerAddress();
           break;
         case TransferAssertContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferAssertContract.class).getOwnerAddress();
+          owner = contract.getParameter()
+              .unpack(org.tron.protos.Contract.TransferAssertContract.class).getOwnerAddress();
           break;
         case VoteAssetContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteAssetContract.class).getOwnerAddress();
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteAssetContract.class)
+              .getOwnerAddress();
           break;
         case VoteWitnessContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteWitnessContract.class).getOwnerAddress();
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteWitnessContract.class)
+              .getOwnerAddress();
           break;
         case WitnessCreateContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.WitnessCreateContract.class).getOwnerAddress();
+          owner = contract.getParameter()
+              .unpack(org.tron.protos.Contract.WitnessCreateContract.class).getOwnerAddress();
           break;
         case AssetIssueContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class).getOwnerAddress();
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class)
+              .getOwnerAddress();
           break;
         case DeployContract:
-          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class).getOwnerAddress();
+          owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class)
+              .getOwnerAddress();
           break;
         default:
           return null;
@@ -286,21 +293,24 @@ public class TransactionCapsule {
   /**
    * validate signature
    */
-  public boolean validateSignature() {
-    assert (this.getTransaction().getSignatureCount() ==
-        this.getTransaction().getRawData().getContractCount());
+  public boolean validateSignature() throws ValidateException {
+    if (this.getTransaction().getSignatureCount() !=
+        this.getTransaction().getRawData().getContractCount()) {
+      throw new ValidateException("miss sig or contract");
+    }
+
     List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
     for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
       try {
         Transaction.Contract contract = listContract.get(i);
         byte[] owner = getOwner(contract);
-        byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(), getBase64FromByteString(this.transaction.getSignature(i)));
+        byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
+            getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
-          return false;
+          throw new ValidateException("sig error");
         }
       } catch (SignatureException e) {
-        e.printStackTrace();
-        return false;
+        throw new ValidateException(e.getMessage());
       }
     }
     return true;
