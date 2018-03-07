@@ -74,7 +74,7 @@ public class WitnessService implements Service {
         }
       };
 
-  private void blockProductionLoop() throws CancelException{
+  private void blockProductionLoop() throws CancelException {
     BlockProductionCondition result;
     try {
       result = tryProduceBlock();
@@ -124,7 +124,7 @@ public class WitnessService implements Service {
   }
 
 
-  private BlockProductionCondition tryProduceBlock() throws ValidateException,CancelException{
+  private BlockProductionCondition tryProduceBlock() throws ValidateException, CancelException {
 
     checkCancelFlag();
 
@@ -167,8 +167,9 @@ public class WitnessService implements Service {
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
-  
-  private void checkCancelFlag() throws CancelException{}
+
+  private void checkCancelFlag() throws CancelException {
+  }
 
   private void broadcastBlock(BlockCapsule block) {
     try {
@@ -207,7 +208,7 @@ public class WitnessService implements Service {
   }
 
   private boolean lastHeadBlockIsMaintenance() {
-    return db.getDynamicPropertiesStore().getMaintenanceFlag() == 1;
+    return db.getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
   private long getSkipSlotInMaintenance() {
@@ -248,7 +249,8 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey().getBytes();
+    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey()
+        .getBytes();
     tronApp.getDbManager().initialWitnessList();
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
