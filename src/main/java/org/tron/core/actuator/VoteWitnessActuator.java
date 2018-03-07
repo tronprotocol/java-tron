@@ -22,8 +22,8 @@ public class VoteWitnessActuator extends AbstractActuator {
   @Override
   public boolean execute() {
     try {
-        VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-        countVoteAccount(voteContract);
+      VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
+      countVoteAccount(voteContract);
     } catch (InvalidProtocolBufferException e) {
       throw new RuntimeException("Parse contract error", e);
     }
@@ -31,29 +31,32 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {try {
-    if (!contract.is(VoteWitnessContract.class)) {
-      throw new RuntimeException(
-          "contract type error,expected type [VoteWitnessContract],real type[" + contract
-              .getClass() + "]");
+  public boolean validator() {
+    try {
+      if (!contract.is(VoteWitnessContract.class)) {
+        throw new RuntimeException(
+            "contract type error,expected type [VoteWitnessContract],real type[" + contract
+                .getClass() + "]");
+      }
+
+      VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
+
+      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+
+      if (!dbManager.getAccountStore().isAccountExist(contract.getOwnerAddress().toByteArray())) {
+        throw new RuntimeException("Account[" + contract.getOwnerAddress() + "] not exists");
+      }
+
+      long share = dbManager.getAccountStore().getAccount(contract.getOwnerAddress()).getShare();
+      long sum = contract.getVotesList().stream().map(vote -> vote.getVoteCount()).count();
+      if (sum > share) {
+        throw new RuntimeException(
+            "The total number of votes[" + sum + "] is greater than the share[" + share + "]");
+      }
+
+    } catch (Exception ex) {
+      throw new RuntimeException("Validate AccountCreateContract error.", ex);
     }
-
-    VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
-
-    Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
-
-    boolean accountExist = dbManager.getAccountStore()
-        .isAccountExist(contract.getOwnerAddress().toByteArray());
-    if (!accountExist) {
-      throw new RuntimeException("OwnerAddress not exists");
-    }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .getAccount(contract.getOwnerAddress());
-
-  } catch (Exception ex) {
-    throw new RuntimeException("Validate AccountCreateContract error.", ex);
-  }
 
     return true;
   }

@@ -45,10 +45,8 @@ public class CreateAccountActuator extends AbstractActuator {
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(contract.getType(), "Type is null");
 
-      boolean accountExist = dbManager.getAccountStore()
-          .isAccountExist(contract.getOwnerAddress().toByteArray());
-      if (accountExist) {
-        throw new RuntimeException("OwnerAddress has existed");
+      if (dbManager.getAccountStore().isAccountExist(contract.getOwnerAddress().toByteArray())) {
+        throw new RuntimeException("Account has existed");
       }
 
     } catch (Exception ex) {

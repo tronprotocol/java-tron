@@ -127,4 +127,9 @@ public class AccountCapsule {
   public List<Vote> getVotesList() {
     return this.account.getVotesList();
   }
+
+  public long getShare(){
+    return this.account.getBalance();
+  }
+
 }
