@@ -7,7 +7,10 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -155,8 +158,7 @@ public class Manager {
 
     pendingTrxs = new ArrayList<>();
     initGenesis();
-    blockStore.initHeadBlock(
-        Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
+    initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
   /**
@@ -164,10 +166,10 @@ public class Manager {
    */
   public void initGenesis() {
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
-    if (this.getBlockStore().containBlock(genesisBlockCapsule.getBlockId())) {
+    if (containBlock(genesisBlockCapsule.getBlockId())) {
       Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
     } else {
-      if (this.getBlockStore().hasBlocks()) {
+      if (hasBlocks()) {
         logger.error("genesis block modify, please delete database directory({}) and restart",
             Args.getInstance().getOutputDirectory());
         System.exit(1);
@@ -237,6 +239,63 @@ public class Manager {
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
+
+  /**
+   * Get the fork branch.
+   */
+  public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+    return branch.getValue().stream()
+        .map(blockCapsule -> blockCapsule.getBlockId())
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  /**
+   * judge id.
+   *
+   * @param blockHash blockHash
+   */
+  public boolean containBlock(Sha256Hash blockHash) {
+    //TODO: check it from levelDB
+    return khaosDb.containBlock(blockHash)
+        || getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+  }
+
+  /**
+   * find a block packed data by id.
+   */
+  public byte[] findBlockByHash(Sha256Hash hash) {
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash).getData()
+        : getBlockStore().dbSource.getData(hash.getBytes());
+  }
+
+  /**
+   * Get a BlockCapsule by id.
+   */
+  public BlockCapsule getBlockByHash(Sha256Hash hash) {
+    return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash)
+        : new BlockCapsule(getBlockStore().dbSource.getData(hash.getBytes()));
+  }
+
+  /**
+   * Delete a block.
+   */
+  public void deleteBlock(Sha256Hash blockHash) {
+    BlockCapsule block = getBlockByHash(blockHash);
+    khaosDb.removeBlk(blockHash);
+    getBlockStore().dbSource.deleteData(blockHash.getBytes());
+    numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
+    head = khaosDb.getHead();
+  }
+
+  /**
+   * judge has blocks.
+   */
+  public boolean hasBlocks() {
+    return getBlockStore().dbSource.allKeys().size() > 0 || khaosDb.hasData();
+  }
+
   /**
    * Process transaction.
    */
@@ -253,6 +312,30 @@ public class Manager {
     return true;
   }
 
+  /**
+   * Get the block id from the number.
+   */
+  public Sha256Hash getBlockIdByNum(long num) {
+    byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
+    return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
+  }
+
+  /**
+   * Get number of block by the block id.
+   */
+  public long getBlockNumById(Sha256Hash hash) {
+    if (khaosDb.containBlock(hash)) {
+      return khaosDb.getBlock(hash).getNum();
+    }
+
+    //TODO: optimize here
+    byte[] blockByte = getBlockStore().dbSource.getData(hash.getBytes());
+    return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
+  }
+
+  public void initHeadBlock(Sha256Hash id) {
+    head = getBlockByHash(id);
+  }
 
   /**
    * Generate a block.
