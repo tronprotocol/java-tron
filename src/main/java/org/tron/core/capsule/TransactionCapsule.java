@@ -22,7 +22,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -32,8 +31,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
@@ -99,30 +96,24 @@ public class TransactionCapsule {
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
 
-    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
-        .getUnspentOutputs().entrySet();
-    for (Map.Entry<String, long[]> entry : entrySet) {
+    Set<Entry<String, long[]>> entrySet =
+            utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
+
+    entrySet.forEach(entry -> {
       String txId = entry.getKey();
       long[] outs = entry.getValue();
-      for (long out : outs) {
-        TXInput txInput = TxInputUtil
-            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
-        txInputs.add(txInput);
-      }
-    }
+
+      Arrays.stream(outs)
+              .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+              .forEachOrdered(txInputs::add);
+    });
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
-    txOutputs
-        .add(
-            TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+    txOutputs.add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (checkBalance(address, to, amount, balance)) {
-      for (TXInput txInput : txInputs) {
-        transactionBuilder.addVin(txInput);
-      }
-      for (TXOutput txOutput : txOutputs) {
-        transactionBuilder.addVout(txOutput);
-      }
+      txInputs.forEach(transactionBuilder::addVin);
+      txOutputs.forEach(transactionBuilder::addVout);
       logger.info("Transaction create succeeded！");
       transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
     } else {
