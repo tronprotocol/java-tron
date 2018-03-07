@@ -28,13 +28,14 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
 public class BlockCapsule {
 
-  public class BlockId extends Sha256Hash {
+  public static class BlockId extends Sha256Hash {
 
     @Override
     public boolean equals(Object o) {
@@ -59,10 +60,23 @@ public class BlockCapsule {
 
     @Override
     public int compareTo(Sha256Hash other) {
+      if (other.getClass().equals(BlockId.class)) {
+        long otherNum = ((BlockId) other).getNum();
+        if (num > otherNum) {
+          return 1;
+        } else if (otherNum < num) {
+          return -1;
+        }
+      }
       return super.compareTo(other);
     }
 
-    private long num = 0;
+    private long num;
+
+    public BlockId() {
+      super(Sha256Hash.ZERO_HASH.getBytes());
+      num = 0;
+    }
 
     /**
      * Use {@link #wrap(byte[])} instead.
@@ -170,19 +184,18 @@ public class BlockCapsule {
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  public boolean validateSignature() {
+  public boolean validateSignature() throws ValidateSignatureException {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      e.printStackTrace();
-      return false;
+      throw new ValidateSignatureException(e.getMessage());
     }
   }
 
-  public Sha256Hash getBlockId() {
+  public BlockId getBlockId() {
     unPack();
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
@@ -212,7 +225,8 @@ public class BlockCapsule {
       int k = 0;
       for (int i = 0; i < max; i += 2) {
         ids.set(k++, Sha256Hash
-            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString())).toByteArray()));
+            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString()))
+                .toByteArray()));
       }
 
       if (hashNum % 2 == 1) {
