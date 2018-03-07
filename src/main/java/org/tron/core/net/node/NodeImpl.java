@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
@@ -266,6 +267,52 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("on handle block chain inventory message");
     try {
       if (peer.getSyncChainRequested() != null) {
+        List<BlockId> blockIds = msg.getBlockIds();
+
+        if (!blockIds.isEmpty()) {
+          long num = blockIds.get(0).getNum();
+          for (BlockId id :
+              blockIds) {
+            if (id.getNum() != num++) {
+              throw new TraitorPeerException("We get a not continuous block inv from " + peer);
+            }
+          }
+
+          BlockId first = blockIds.get(0);
+
+          if (peer.getSyncChainRequested().getKey().isEmpty()) {
+            if (first.getNum() != 1) {
+              throw new TraitorPeerException("We want a block inv starting from beginning from " + peer);
+            }
+          } else {
+            boolean isFound = false;
+            for (BlockId id :
+                blockIds) {
+              if (id.equals(first)) {
+                isFound = true;
+              }
+            }
+            if (!isFound) {
+              throw new TraitorPeerException("We get a unlinked block chain from " + peer);
+            }
+          }
+        }
+
+        //this answer is legal
+        peer.setSyncChainRequested(null);
+        if (blockIds.isEmpty() && peer.getBlockChainToFetch().isEmpty()) {
+          peer.setNeedSyncFromPeer(false);
+          //TODO: check whole sync status and notify del sync status.
+          return;
+        }
+
+
+
+
+
+
+
+
 
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
@@ -317,8 +364,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       List<BlockId> chainSummary = del
           .getBlockChainSummary(peer.getLastBlockPeerKnow(), peer.getBlockChainToFetch());
-      peer.setLastBlockPeerKnow(chainSummary.isEmpty() ? del.getGenesisBlock()
-          : chainSummary.get(chainSummary.size() - 1));
+      //peer.setLastBlockPeerKnow(chainSummary.isEmpty() ? del.getGenesisBlock()
+      //    : chainSummary.get(chainSummary.size() - 1));
+      peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
       e.printStackTrace();

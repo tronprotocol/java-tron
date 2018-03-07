@@ -4,7 +4,6 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -44,14 +43,14 @@ public class PeerConnection {
 
   private List<BlockId> blockChainToFetch = new ArrayList<>();
 
-  private Pair<Sha256Hash, Timestamp> syncChainRequested = null;
+  private Pair<List<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<Sha256Hash, Timestamp> getSyncChainRequested() {
+  public Pair<List<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      Pair<Sha256Hash, Timestamp> syncChainRequested) {
+      Pair<List<BlockId>, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
   }
 
