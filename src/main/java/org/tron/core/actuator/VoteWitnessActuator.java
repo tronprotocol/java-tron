@@ -32,7 +32,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     //TODO witness
     return false;
   }
