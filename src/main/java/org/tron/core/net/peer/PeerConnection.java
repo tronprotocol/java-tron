@@ -4,12 +4,14 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
@@ -37,9 +39,9 @@ public class PeerConnection {
   private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
 
   //sync chain
-  private Sha256Hash lastBlockPeerKnow = Sha256Hash.ZERO_HASH;
+  private BlockId lastBlockPeerKnow;
 
-  private Queue<Sha256Hash> chainIdsToFetch = new LinkedBlockingDeque<>();
+  private List<BlockId> blockChainToFetch = new ArrayList<>();
 
   public Address getAddress() {
     return member.address();
@@ -87,20 +89,16 @@ public class PeerConnection {
     this.banned = banned;
   }
 
-  public Sha256Hash getLastBlockPeerKnow() {
+  public BlockId getLastBlockPeerKnow() {
     return lastBlockPeerKnow;
   }
 
-  public void setLastBlockPeerKnow(Sha256Hash lastBlockPeerKnow) {
+  public void setLastBlockPeerKnow(BlockId lastBlockPeerKnow) {
     this.lastBlockPeerKnow = lastBlockPeerKnow;
   }
 
-  public Queue<Sha256Hash> getChainIdsToFetch() {
-    return chainIdsToFetch;
-  }
-
-  public void setChainIdsToFetch(Queue<Sha256Hash> chainIdsToFetch) {
-    this.chainIdsToFetch = chainIdsToFetch;
+  public List<BlockId> getBlockChainToFetch() {
+    return blockChainToFetch;
   }
 
   public boolean isNeedSyncFromPeer() {
