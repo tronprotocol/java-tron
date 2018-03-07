@@ -34,6 +34,12 @@ public class AccountCapsule {
 
   private boolean unpacked;
 
+  public AccountCapsule(byte[] data) {
+    this.data = data;
+    this.unpacked = false;
+  }
+
+
   private synchronized void unPack() {
     if (unpacked) {
       return;
@@ -57,12 +63,22 @@ public class AccountCapsule {
         .setAddress(address)
         .setBalance(balance)
         .build();
-    this.unpacked = false;
+    this.unpacked = true;
+  }
+
+  public AccountCapsule(ByteString address, ByteString accountName,
+      AccountType accountType, int typeValue) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAddress(address)
+        .setTypeValue(typeValue)
+        .build();
+    this.unpacked = true;
   }
 
   public AccountCapsule(Account account) {
     this.account = account;
-    this.unpacked = false;
+    this.unpacked = true;
   }
 
   public AccountCapsule() {

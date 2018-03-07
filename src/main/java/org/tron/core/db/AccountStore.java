@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -42,13 +41,8 @@ public class AccountStore extends TronDatabase {
   public AccountCapsule getAccount(ByteString address) {
     logger.info("address is {} ", address);
 
-    try {
-      byte[] value = dbSource.getData(address.toByteArray());
-      return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(Account.parseFrom(value));
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-    return null;
+    byte[] value = dbSource.getData(address.toByteArray());
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   /**
@@ -104,8 +98,8 @@ public class AccountStore extends TronDatabase {
    * @param account the data of Account
    */
 
-  public boolean createAccount(byte[] address, byte[] account) {
-    dbSource.putData(address, account);
+  public boolean createAccount(byte[] address, AccountCapsule account) {
+    dbSource.putData(address, account.getData());
     logger.info("address is {},account is {}", address, account);
     return true;
   }
