@@ -46,6 +46,10 @@ public class Manager {
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
 
+  private LevelDbDataSourceImpl numHashCache;
+  private KhaosDatabase khaosDb;
+  private BlockCapsule head;
+
   public WitnessStore getWitnessStore() {
     return witnessStore;
   }
