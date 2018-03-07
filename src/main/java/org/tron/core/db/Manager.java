@@ -25,6 +25,8 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.exception.ValidateException;
+import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
 
@@ -338,7 +340,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) {
+      long when, byte[] privateKey) throws ValidateException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -381,7 +383,6 @@ public class Manager {
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     pushBlock(blockCapsule);
-
     dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
     dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
