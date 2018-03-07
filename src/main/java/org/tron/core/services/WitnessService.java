@@ -17,7 +17,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ValidateException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
@@ -77,9 +76,7 @@ public class WitnessService implements Service {
   private void blockProductionLoop() {
     BlockProductionCondition result;
     try {
-      result = tryProduceBlock(capture);
-    } catch (CancelException ex) {
-      throw ex;
+      result = tryProduceBlock();
     } catch (Exception ex) {
       logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
@@ -246,7 +243,8 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey().getBytes();
+    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey()
+        .getBytes();
     tronApp.getDbManager().initialWitnessList();
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),

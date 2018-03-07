@@ -25,11 +25,10 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.exception.ValidateException;
-import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.Witness;
 
 public class Manager {
 
@@ -91,9 +90,11 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
   public void initialWitnessList() {
-    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness().getActiveWitnessList();
+    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness()
+        .getActiveWitnessList();
     activeWitnessList.forEach(activeWitness -> {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()), activeWitness.getUrl()));
+      wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
+          activeWitness.getUrl()));
     });
   }
 
