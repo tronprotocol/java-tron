@@ -54,7 +54,7 @@ abstract class AbstractMissDoDatabase implements IMissDoDatabase {
   }
 
   @Override
-  public void pop_commit() {
+  public void pop() {
 
   }
   

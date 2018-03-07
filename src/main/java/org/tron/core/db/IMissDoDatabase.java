@@ -18,7 +18,7 @@ public interface IMissDoDatabase {
   
   void commit();
   
-  void pop_commit();
+  void pop();
   
   MissDoState head();
   
