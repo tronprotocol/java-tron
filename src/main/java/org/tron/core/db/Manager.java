@@ -25,7 +25,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.AccountType;
 
 public class Manager {
@@ -176,7 +176,7 @@ public class Manager {
         Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
         try {
           pushBlock(genesisBlockCapsule);
-        } catch (ValidateException e) {
+        } catch (ValidateSignatureException e) {
           e.printStackTrace();
         }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
@@ -211,10 +211,10 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(TransactionCapsule trx) throws ValidateException {
+  public boolean pushTransactions(TransactionCapsule trx) throws ValidateSignatureException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
-      throw new ValidateException("trans sig validate failed");
+      throw new ValidateSignatureException("trans sig validate failed");
     }
     pendingTrxs.add(trx);
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
@@ -225,7 +225,7 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(BlockCapsule block) throws ValidateException {
+  public void pushBlock(BlockCapsule block) throws ValidateSignatureException {
     khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -239,9 +239,8 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      for (TransactionCapsule trx : block.getTransactions()) {
-        processTrx(trx);
-      }
+      // block
+      processBlock(block);
       //todo: In some case it need to switch the branch
     }
     getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
@@ -311,7 +310,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(TransactionCapsule trxCap) throws ValidateException {
+  public boolean processTrx(TransactionCapsule trxCap) throws ValidateSignatureException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
@@ -351,7 +350,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) throws ValidateException {
+      long when, byte[] privateKey) throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -431,7 +430,7 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateException {
+  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTrx(transactionCapsule);
     }

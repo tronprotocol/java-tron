@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
@@ -170,15 +171,14 @@ public class BlockCapsule {
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  public boolean validateSignature() {
+  public boolean validateSignature() throws ValidateSignatureException {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      e.printStackTrace();
-      return false;
+      throw new ValidateSignatureException(e.getMessage());
     }
   }
 

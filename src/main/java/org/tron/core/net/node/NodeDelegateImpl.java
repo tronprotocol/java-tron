@@ -11,7 +11,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -32,23 +33,21 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void handleBlock(BlockCapsule block) {
+  public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
+    boolean isSync = false;
 
-    try {
-      dbManager.processBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
+    long gap = System.currentTimeMillis() - block.getTimeStamp();
+    if (gap / 1000 < -6000) {
+      throw new BadBlockException("block time error");
     }
-    try {
-      dbManager.pushBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
+
+    dbManager.pushBlock(block);
+    if (!isSync) {
+      // TODO fetch the trans in this block to see if we have know this trans
     }
+
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-
-    //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
   }
 
 
@@ -57,7 +56,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     logger.info("handle transaction");
     try {
       dbManager.pushTransactions(trx);
-    } catch (ValidateException e) {
+    } catch (ValidateSignatureException e) {
       logger.error("new transaction is not valid");
     }
   }

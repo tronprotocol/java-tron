@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
@@ -202,7 +203,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
     peer.setLastBlockPeerKnow(blkMsg.getMessageId());
-    del.handleBlock(blkMsg.getBlockCapsule());
+    try {
+      del.handleBlock(blkMsg.getBlockCapsule());
+    } catch (ValidateSignatureException e) {
+      //TODO process validate signature exception
+      e.printStackTrace();
+    }
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
@@ -274,7 +280,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void fetchNextBatchChainIds(PeerConnection peer) {
-
 
   }
 
