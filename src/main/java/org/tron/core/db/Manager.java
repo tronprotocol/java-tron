@@ -18,6 +18,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Witness;
@@ -76,10 +77,11 @@ public class Manager {
   /**
    * TODO: should get this list from Database. get witnessCapsule List.
    */
-  public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
+  public void initialWitnessList() {
+    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness().getActiveWitnessList();
+    activeWitnessList.forEach(activeWitness -> {
+      wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()), activeWitness.getUrl()));
+    });
   }
 
   public void addWitness(WitnessCapsule witnessCapsule) {

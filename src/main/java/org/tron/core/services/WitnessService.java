@@ -240,20 +240,15 @@ public class WitnessService implements Service {
         .collect(Collectors.toList());
   }
 
-
-  private float witnessParticipationRate() {
-    return 0f;
-  }
-
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = "0x11".getBytes();
-    tronApp.getDbManager().initalWitnessList();
+    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey().getBytes();
+    tronApp.getDbManager().initialWitnessList();
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
-        "http://tron.org");
-    tronApp.getDbManager().addWitness(localWitnessState);
+        Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
+//    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 
