@@ -74,11 +74,11 @@ public class WitnessService implements Service {
         }
       };
 
-  private void blockProductionLoop() throws CancelException{
+  private void blockProductionLoop() throws CancelException {
     BlockProductionCondition result;
     try {
       result = tryProduceBlock();
-    }  catch (Exception ex) {
+    } catch (Exception ex) {
       logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
@@ -122,7 +122,7 @@ public class WitnessService implements Service {
   }
 
 
-  private BlockProductionCondition tryProduceBlock() throws ValidateException,CancelException{
+  private BlockProductionCondition tryProduceBlock() throws ValidateException, CancelException {
 
     checkCancelFlag();
 
@@ -154,7 +154,6 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
-
     if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
@@ -171,7 +170,8 @@ public class WitnessService implements Service {
     return BlockProductionCondition.PRODUCED;
   }
 
-  private void checkCancelFlag() throws CancelException{}
+  private void checkCancelFlag() throws CancelException {
+  }
 
   private void broadcastBlock(BlockCapsule block) {
     try {
