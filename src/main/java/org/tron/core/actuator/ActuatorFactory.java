@@ -47,6 +47,7 @@ public class ActuatorFactory {
         new CreateAccountActuator(contract.getParameter(), manager);
         break;
       case TransferContract:
+        new TransferActuator(contract.getParameter(), manager);
         break;
       case TransferAssertContract:
         break;
