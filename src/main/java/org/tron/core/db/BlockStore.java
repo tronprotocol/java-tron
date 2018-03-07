@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.ValidateException;
 
 public class BlockStore extends TronDatabase {
 
@@ -83,19 +81,6 @@ public class BlockStore extends TronDatabase {
   // genesis_time
   public DateTime getGenesisTime() {
     return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
-  }
-
-
-  /**
-   * push transaction into db.
-   */
-  public boolean pushTransactions(TransactionCapsule trx) throws ValidateException {
-    logger.info("push transaction");
-    if (!trx.validateSignature()) {
-      throw new ValidateException("trans sig validate failed");
-    }
-    dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
-    return true;
   }
 
 
