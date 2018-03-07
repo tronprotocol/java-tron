@@ -51,7 +51,9 @@ public class Args {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
 
     if (StringUtils.isBlank(INSTANCE.privateKey)) {
-      INSTANCE.privateKey = config.getString("private.key");
+      if (config.hasPath("private.key")) {
+        INSTANCE.privateKey = config.getString("private.key");
+      }
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
