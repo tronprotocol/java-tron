@@ -77,11 +77,10 @@ public class AccountCapsule {
   }
 
   public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType, int typeValue) {
+      AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
-        .setTypeValue(typeValue)
         .build();
     this.unpacked = true;
   }
@@ -125,6 +124,7 @@ public class AccountCapsule {
   }
 
   public List<Vote> getVotesList() {
+    unPack();
     return this.account.getVotesList();
   }
 }
