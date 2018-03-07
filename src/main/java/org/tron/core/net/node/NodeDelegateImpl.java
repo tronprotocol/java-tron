@@ -13,6 +13,7 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
@@ -63,34 +64,46 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
+  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+      throws UnReachBlockException {
+    //todo: return the remain block count.
     //todo: return the blocks it should be have.
 
-    List<BlockId> retBlockHashes = new ArrayList<>();
-    Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
+    List<BlockId> retBlockIds = new ArrayList<>();
+    if (dbManager.getHeadBlockNum() == 0) {
+      return retBlockIds;
+    }
+
+    BlockId unForkedBlockId = null;
+
+    if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
+      unForkedBlockId = dbManager.getGenesisBlockId();
+    }
 
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      for (Sha256Hash hash : blockChainSummary) {
-        if (dbManager.containBlock(hash)) {
-          lastKnownBlkHash = hash;
+      for (BlockId blockId : blockChainSummary) {
+        if (dbManager.containBlock(blockId)) {
+          unForkedBlockId = blockId;
           break;
         }
       }
 
-      if (lastKnownBlkHash == Sha256Hash.ZERO_HASH) {
+      if (unForkedBlockId == null) {
+        throw new UnReachBlockException();
         //todo: can not find any same block form peer's summary and my db.
       }
     }
 
-    for (long num = dbManager.getBlockNumById(lastKnownBlkHash);
-        num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
+    //todo: limit the count of block to send peer by one time.
+    for (long num = unForkedBlockId.getNum();
+        num <= dbManager.getHeadBlockNum(); ++num) {
       if (num > 0) {
-        retBlockHashes.add(dbManager.getBlockIdByNum(num));
+        retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
     }
-    return retBlockHashes;
+    return retBlockIds;
   }
 
   @Override

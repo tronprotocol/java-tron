@@ -87,6 +87,10 @@ public class Manager {
     return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
+  public long getHeadBlockNum() {
+    return head.getNum();
+  }
+
   /**
    * TODO: should get this list from Database. get witnessCapsule List.
    */
@@ -165,6 +169,10 @@ public class Manager {
     pendingTrxs = new ArrayList<>();
     initGenesis();
     initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
+  }
+
+  public BlockId getGenesisBlockId() {
+    return genesisBlock.getBlockId();
   }
 
   /**
