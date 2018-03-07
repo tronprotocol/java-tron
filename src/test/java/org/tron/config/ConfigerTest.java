@@ -46,7 +46,7 @@ public class ConfigerTest {
 
   @Test
   public void testInitialWitness() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.NORMAL_CONF));
+    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     InitialWitness initialWitness = Args.getInstance().getInitialWitness();
     assertEquals("http://tron.org", initialWitness.getLocalWitness().getUrl());
     assertEquals(3, initialWitness.getActiveWitnessList().size());

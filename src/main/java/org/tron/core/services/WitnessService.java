@@ -167,7 +167,7 @@ public class WitnessService implements Service {
     broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
-
+  
   private void checkCancelFlag() throws CancelException{}
 
   private void broadcastBlock(BlockCapsule block) {
@@ -207,7 +207,7 @@ public class WitnessService implements Service {
   }
 
   private boolean lastHeadBlockIsMaintenance() {
-    return db.getDynamicPropertiesStore().getStateFlag() == 1;
+    return db.getDynamicPropertiesStore().getMaintenanceFlag() == 1;
   }
 
   private long getSkipSlotInMaintenance() {

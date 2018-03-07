@@ -24,10 +24,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.InitialWitness;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.exception.ValidateException;
-import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountType;
 import org.tron.protos.Protocal.Transaction;
 
@@ -435,12 +434,12 @@ public class Manager {
    * update witness.
    */
   public void updateWitness() {
-    //TODO validate maint needed
+    //TODO witness validate maint needed
     Map<ByteString, Long> countWitness = Maps.newHashMap();
     List<AccountCapsule> accountList = accountStore.getAllAccounts();
     accountList.forEach(account -> {
       account.getVotesList().forEach(vote -> {
-        //TODO validate witness //active_witness
+        //TODO witness validate witness //active_witness
         if (countWitness.containsKey(vote.getVoteAddress())) {
           countWitness.put(vote.getVoteAddress(),
               countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
