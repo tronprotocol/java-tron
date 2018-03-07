@@ -1,7 +1,7 @@
 package org.tron.core.net.message;
 
 import java.util.List;
-import org.tron.core.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocal.Inventory;
 import org.tron.protos.Protocal.Inventory.InventoryType;
 
@@ -15,8 +15,17 @@ public class BlockInventoryMessage extends InventoryMessage {
     super(inv);
   }
 
-  public BlockInventoryMessage(List<Sha256Hash> hashList) {
-    super(hashList, InventoryType.BLOCK);
+  public BlockInventoryMessage(List<BlockId> blockIds) {
+
+    Inventory.Builder invBuilder = Inventory.newBuilder();
+
+    for (BlockId id :
+        blockIds) {
+      invBuilder.addIds(id.getByteString());
+    }
+    invBuilder.setType(InventoryType.BLOCK);
+    inv = invBuilder.build();
+    unpacked = true;
   }
 
   @Override
@@ -24,5 +33,6 @@ public class BlockInventoryMessage extends InventoryMessage {
     return MessageTypes.BLOCK_INVENTORY;
   }
 
+  //public List<BlockId> getBlockIds()
 
 }

@@ -20,12 +20,14 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.config.args.InitialWitness;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.AccountType;
 
 public class Manager {
@@ -42,6 +44,7 @@ public class Manager {
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+  private BlockCapsule genesisBlock;
 
 
   private LevelDbDataSourceImpl numHashCache;
@@ -88,11 +91,15 @@ public class Manager {
    * TODO: should get this list from Database. get witnessCapsule List.
    */
 
-  public void initalWitnessList() {
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x01"), "http://Loser.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Marcus.org"));
-    wits.add(new WitnessCapsule(ByteString.copyFromUtf8("0x02"), "http://Olivier.org"));
+  public void initialWitnessList() {
+    List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance().getInitialWitness()
+        .getActiveWitnessList();
+    activeWitnessList.forEach(activeWitness -> {
+      wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
+          activeWitness.getUrl()));
+    });
   }
+
 
   public void addWitness(WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
@@ -125,7 +132,8 @@ public class Manager {
   }
 
   public int calculateParticipationRate() {
-    return 100 * dynamicPropertiesStore.calculateFilledSlotsCount() / 128;
+    return 100 * dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
+        / BlockFilledSlots.SLOT_NUMBER;
   }
 
   /**
@@ -163,9 +171,9 @@ public class Manager {
    * init genesis block.
    */
   public void initGenesis() {
-    BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
-    if (containBlock(genesisBlockCapsule.getBlockId())) {
-      Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+    genesisBlock = BlockUtil.newGenesisBlockCapsule();
+    if (containBlock(genesisBlock.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (hasBlocks()) {
         logger.error("genesis block modify, please delete database directory({}) and restart",
@@ -173,17 +181,17 @@ public class Manager {
         System.exit(1);
       } else {
         logger.info("create genesis block");
-        Args.getInstance().setChainId(genesisBlockCapsule.getBlockId().toString());
+        Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
         try {
-          pushBlock(genesisBlockCapsule);
-        } catch (ValidateException e) {
+          pushBlock(genesisBlock);
+        } catch (ValidateSignatureException e) {
           e.printStackTrace();
         }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
-            genesisBlockCapsule.getBlockId().getByteString());
+            genesisBlock.getBlockId().getByteString());
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
-            genesisBlockCapsule.getTimeStamp());
+            genesisBlock.getTimeStamp());
         initAccount();
       }
     }
@@ -211,10 +219,10 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(TransactionCapsule trx) throws ValidateException {
+  public boolean pushTransactions(TransactionCapsule trx) throws ValidateSignatureException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
-      throw new ValidateException("trans sig validate failed");
+      throw new ValidateSignatureException("trans sig validate failed");
     }
     pendingTrxs.add(trx);
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
@@ -225,7 +233,7 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(BlockCapsule block) throws ValidateException {
+  public void pushBlock(BlockCapsule block) throws ValidateSignatureException {
     khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -239,9 +247,8 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      for (TransactionCapsule trx : block.getTransactions()) {
-        processTrx(trx);
-      }
+      // block
+      processBlock(block);
       //todo: In some case it need to switch the branch
     }
     getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
@@ -255,7 +262,7 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<Sha256Hash> getBlockChainHashesOnFork(Sha256Hash forkBlockHash) {
+  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
         khaosDb.getBranch(head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
@@ -311,7 +318,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(TransactionCapsule trxCap) throws ValidateException {
+  public boolean processTrx(TransactionCapsule trxCap) throws ValidateSignatureException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
@@ -325,9 +332,11 @@ public class Manager {
   /**
    * Get the block id from the number.
    */
-  public Sha256Hash getBlockIdByNum(long num) {
+  public BlockId getBlockIdByNum(long num) {
     byte[] hash = numHashCache.getData(ByteArray.fromLong(num));
-    return ArrayUtils.isNotEmpty(hash) ? Sha256Hash.wrap(hash) : Sha256Hash.ZERO_HASH;
+    return ArrayUtils.isNotEmpty(hash)
+        ? genesisBlock.getBlockId()
+        : new BlockId(Sha256Hash.wrap(hash), num);
   }
 
   /**
@@ -351,7 +360,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) throws ValidateException {
+      long when, byte[] privateKey) throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -431,7 +440,7 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateException {
+  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTrx(transactionCapsule);
     }

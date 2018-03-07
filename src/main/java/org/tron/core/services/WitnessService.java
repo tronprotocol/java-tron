@@ -17,14 +17,17 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.CancelException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
+
 
 public class WitnessService implements Service {
 
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
+  private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
   protected WitnessCapsule localWitnessState; //  WitnessId;
@@ -35,6 +38,8 @@ public class WitnessService implements Service {
   private volatile boolean isRunning = false;
   private static final int LOOP_INTERVAL = 1000; // millisecond
   private byte[] privateKey;
+  private boolean hasCheckedSynchronization = true;
+  private volatile boolean canceled = false;
 
   /**
    * Construction method.
@@ -48,6 +53,10 @@ public class WitnessService implements Service {
 
   private Runnable scheduleProductionLoop =
       () -> {
+        if (localWitnessState == null) {
+          logger.error("local witness is null");
+        }
+
         while (isRunning) {
           DateTime time = DateTime.now();
           int timeToNextSecond = LOOP_INTERVAL - time.getMillisOfSecond();
@@ -67,10 +76,17 @@ public class WitnessService implements Service {
         }
       };
 
-  private void blockProductionLoop() {
+  private void blockProductionLoop() throws CancelException {
     BlockProductionCondition result;
-    String capture = "";
-    result = tryProduceBlock(capture);
+    try {
+      result = tryProduceBlock();
+    } catch (CancelException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      logger.error("produce block error,", ex);
+      result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    }
+
     if (result == null) {
       logger.warn("result is null");
       return;
@@ -109,7 +125,15 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockProductionCondition tryProduceBlock(String capture) {
+
+  private BlockProductionCondition tryProduceBlock()
+      throws ValidateSignatureException, CancelException {
+
+    checkCancelFlag();
+
+    if (!hasCheckedSynchronization) {
+      return BlockProductionCondition.NOT_SYNCED;
+    }
 
     int participation = db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
@@ -120,7 +144,7 @@ public class WitnessService implements Service {
     }
 
     long slot = getSlotAtTime(DateTime.now());
-    logger.info("slot:" + slot);
+    logger.debug("slot:" + slot);
 
     if (slot == 0) {
       // todo capture error message
@@ -134,15 +158,30 @@ public class WitnessService implements Service {
     }
 
     DateTime scheduledTime = getSlotTime(slot);
-    try {
-      //TODO:implement private and public key code, fake code first.
-      BlockCapsule block = generateBlock(scheduledTime);
-      logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
-      broadcastBlock(block);
-    } catch (ValidateException e) {
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+
+    //TODO:implement private and public key code, fake code first.
+
+    if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
+      return BlockProductionCondition.LAG;
     }
+
+    //TODO:implement private and public key code, fake code first.
+    BlockCapsule block = null;
+    try {
+      block = generateBlock(scheduledTime);
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
+    logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
+
+    broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
+  }
+
+  private void checkCancelFlag() throws CancelException {
+    if (canceled) {
+      throw new CancelException();
+    }
   }
 
   private void broadcastBlock(BlockCapsule block) {
@@ -153,7 +192,7 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when) throws ValidateException {
+  private BlockCapsule generateBlock(DateTime when) throws ValidateSignatureException {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
@@ -163,14 +202,30 @@ public class WitnessService implements Service {
     }
     long interval = blockInterval();
     BlockStore blockStore = tronApp.getDbManager().getBlockStore();
+    DateTime genesisTime = blockStore.getGenesisTime();
     if (blockStore.getHeadBlockNum() == 0) {
-      DateTime genesisTime = blockStore.getGenesisTime();
       return genesisTime.plus(slotNum * interval);
+    }
+
+    if (lastHeadBlockIsMaintenance()) {
+      slotNum += getSkipSlotInMaintenance();
     }
 
     DateTime headSlotTime = blockStore.getHeadBlockTime();
 
+    //align slot time
+    headSlotTime = headSlotTime
+        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+
     return headSlotTime.plus(interval * slotNum);
+  }
+
+  private boolean lastHeadBlockIsMaintenance() {
+    return db.getDynamicPropertiesStore().getStateFlag() == 1;
+  }
+
+  private long getSkipSlotInMaintenance() {
+    return 0;
   }
 
   private long getSlotAtTime(DateTime when) {
@@ -204,20 +259,16 @@ public class WitnessService implements Service {
         .collect(Collectors.toList());
   }
 
-
-  private float witnessParticipationRate() {
-    return 0f;
-  }
-
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = "0x11".getBytes();
-    tronApp.getDbManager().initalWitnessList();
+    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey()
+        .getBytes();
+    tronApp.getDbManager().initialWitnessList();
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
-        "http://tron.org");
-    tronApp.getDbManager().addWitness(localWitnessState);
+        Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
+//    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 

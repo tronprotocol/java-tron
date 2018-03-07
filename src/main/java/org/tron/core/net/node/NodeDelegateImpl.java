@@ -7,11 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -32,23 +34,21 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void handleBlock(BlockCapsule block) {
+  public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
+    boolean isSync = false;
 
-    try {
-      dbManager.processBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
+    long gap = System.currentTimeMillis() - block.getTimeStamp();
+    if (gap / 1000 < -6000) {
+      throw new BadBlockException("block time error");
     }
-    try {
-      dbManager.pushBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
+
+    dbManager.pushBlock(block);
+    if (!isSync) {
+      // TODO fetch the trans in this block to see if we have know this trans
     }
+
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-
-    //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
   }
 
 
@@ -57,16 +57,16 @@ public class NodeDelegateImpl implements NodeDelegate {
     logger.info("handle transaction");
     try {
       dbManager.pushTransactions(trx);
-    } catch (ValidateException e) {
+    } catch (ValidateSignatureException e) {
       logger.error("new transaction is not valid");
     }
   }
 
   @Override
-  public List<Sha256Hash> getBlockHashes(List<Sha256Hash> blockChainSummary) {
+  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
     //todo: return the blocks it should be have.
 
-    List<Sha256Hash> retBlockHashes = new ArrayList<>();
+    List<BlockId> retBlockHashes = new ArrayList<>();
     Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
 
     if (!blockChainSummary.isEmpty()) {
@@ -94,24 +94,25 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<Sha256Hash> getBlockChainSummary(Sha256Hash refPoint, int num) {
+  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds)  {
 
-    List<Sha256Hash> retSummary = new ArrayList<>();
+    List<BlockId> retSummary = new ArrayList<>();
     long highBlkNum = 0;
     long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
 
-    List<Sha256Hash> forkList = new ArrayList<>();
+    List<BlockId> forkList = new ArrayList<>();
 
-    if (refPoint != Sha256Hash.ZERO_HASH) {
+    if (beginBLockId != Sha256Hash.ZERO_HASH) {
       //todo: get db's head num to check local db's block status.
-      if (dbManager.containBlock(refPoint)) {
-        highBlkNum = dbManager.getBlockNumById(refPoint);
+      if (dbManager.containBlock(beginBLockId)) {
+        highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
-        forkList = dbManager.getBlockChainHashesOnFork(refPoint);
+        forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
         highNoForkBlkNum = dbManager.getBlockNumById(forkList.get(forkList.size() - 1));
         forkList.remove(forkList.get(forkList.size() - 1));
+        highBlkNum = highNoForkBlkNum + forkList.size();
       }
 
     } else {
@@ -122,15 +123,17 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
     }
 
-    long realHighBlkNum = highBlkNum + num;
+    long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
         retSummary.add(dbManager.getBlockIdByNum(lowBlkNum));
-      } else {
+      } else if (lowBlkNum <= highBlkNum) {
         retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
+      } else {
+        retSummary.add(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
-    } while (lowBlkNum <= highBlkNum);
+    } while (lowBlkNum <= realHighBlkNum);
     return retSummary;
   }
 
@@ -178,5 +181,11 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     }
     return false;
+  }
+
+  @Override
+  public BlockId getGenesisBlock() {
+    //TODO return a genissBlock
+    return new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
   }
 }

@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
@@ -14,6 +13,7 @@ public class DynamicPropertiesStore extends TronDatabase {
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
+  private static final byte[] STATE_FLAG = "state_flag".getBytes();// 1 : is maintenance, 0 : is not maintenance
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
 
@@ -38,6 +38,11 @@ public class DynamicPropertiesStore extends TronDatabase {
       this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
     }
 
+    try {
+      this.getStateFlag();
+    } catch (IllegalArgumentException e) {
+      this.saveStateFlag(0);
+    }
 
   }
 
@@ -100,6 +105,16 @@ public class DynamicPropertiesStore extends TronDatabase {
     return ByteArray.toLong(n);
   }
 
+  public int getStateFlag() {
+    byte[] n = this.dbSource.getData(STATE_FLAG);
+
+    if (n == null || n.length == 0) {
+      throw new IllegalArgumentException("not found maintenance flag");
+    }
+
+    return ByteArray.toInt(n);
+  }
+
   /**
    * get id of global latest block.
    */
@@ -137,11 +152,13 @@ public class DynamicPropertiesStore extends TronDatabase {
     this.dbSource.putData(LATEST_BLOCK_HEADER_HASH, h.toByteArray());
   }
 
-  public void missedBlock(){
-    blockFilledSlots.applyBlock(false);
+  public void saveStateFlag(int n) {
+    logger.info("update state flag = {}", n);
+    this.dbSource.putData(STATE_FLAG, ByteArray.fromInt(n));
   }
 
-  public int calculateFilledSlotsCount(){
-    return blockFilledSlots.calculateFilledSlotsCount();
+  public BlockFilledSlots getBlockFilledSlots() {
+    return blockFilledSlots;
   }
+
 }
