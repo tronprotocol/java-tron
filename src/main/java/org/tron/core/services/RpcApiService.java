@@ -91,7 +91,7 @@ public class RpcApiService implements Service {
     @Override
 
     public void createTransaction(TransferContract req,
-                                  StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = req.getOwnerAddress();
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
@@ -106,7 +106,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void broadcastTransaction(Transaction req,
-                                     StreamObserver<GrpcAPI.Return> responseObserver) {
+        StreamObserver<GrpcAPI.Return> responseObserver) {
       boolean ret = wallet.broadcastTransaction(req);
       GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
       responseObserver.onNext(retur);
@@ -115,8 +115,9 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAccount(AccountCreateContract request,
-                              StreamObserver<Transaction> responseObserver) {
-      if (request.getType() == null || request.getAccountName() == null || request.getOwnerAddress() == null) {
+        StreamObserver<Transaction> responseObserver) {
+      if (request.getType() == null || request.getAccountName() == null
+          || request.getOwnerAddress() == null) {
         responseObserver.onNext(null);
       } else {
         Transaction trx = wallet.createAccount(request);
@@ -128,7 +129,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
-                                 StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString owner = request.getOwnerAddress();
       if (owner != null) {
         Transaction trx = wallet.createTransaction(request);

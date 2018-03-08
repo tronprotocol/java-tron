@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import java.util.ArrayList;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,8 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
@@ -147,6 +148,12 @@ public class Wallet {
         p2pnode.broadcast(message);
         return true;
       }
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+    } catch (ContractExeException e) {
+      e.printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
     }
