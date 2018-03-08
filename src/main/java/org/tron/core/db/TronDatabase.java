@@ -3,7 +3,7 @@ package org.tron.core.db;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 
-public abstract class TronDatabase {
+public abstract class TronDatabase<T> {
 
   protected LevelDbDataSourceImpl dbSource;
 
@@ -16,20 +16,26 @@ public abstract class TronDatabase {
     return dbSource;
   }
 
+  /**
+   * reset the database.
+   */
+  public void reset() {
+    dbSource.resetDb();
+  }
+
+  /**
+   * close the database.
+   */
   public void close() {
     dbSource.closeDB();
   }
 
-  //TODO: optimize these abstract methods
+  public abstract void put(byte[] key, T item);
 
-  abstract void add();
+  public abstract void delete(byte[] key);
 
-  abstract void del();
+  public abstract T get(byte[] key);
 
-  abstract void fetch();
-
-  void addItem(byte[] key, byte[] val) {
-    dbSource.putData(key, val);
-  }
+  public abstract boolean has(byte[] key);
 
 }

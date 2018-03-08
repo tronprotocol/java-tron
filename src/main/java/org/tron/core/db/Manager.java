@@ -27,6 +27,9 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.config.args.InitialWitness;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.AccountType;
 
@@ -216,7 +219,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(key.getBalance()));
 
-      this.accountStore.putAccount(accountCapsule);
+      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
     });
   }
 
@@ -224,14 +227,32 @@ public class Manager {
     return accountStore;
   }
 
+  public void adjustBalance(byte[] account_address, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().get(account_address);
+    long balance = account.getBalance();
+    if (amount == 0) {
+      return;
+    }
+    if (amount < 0) {
+      if (balance < -amount) {
+        throw new BalanceInsufficientException(account_address + " Insufficient");
+      }
+    }
+    account.setBalance(balance + amount);
+    getAccountStore().put(account.getAddress().toByteArray(), account);
+  }
+
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(TransactionCapsule trx) throws ValidateSignatureException {
+  public boolean pushTransactions(TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
+    processTransaction(trx);
     pendingTrxs.add(trx);
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -326,14 +347,19 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(TransactionCapsule trxCap) throws ValidateSignatureException {
+  public boolean processTransaction(TransactionCapsule trxCap)
+      throws ValidateSignatureException, ContractExeException, ContractValidateException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     assert actuatorList != null;
-    actuatorList.forEach(actuator -> actuator.execute());
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute();
+
+    }
     return true;
   }
 
@@ -368,7 +394,8 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) throws ValidateSignatureException {
+      long when, byte[] privateKey)
+      throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -396,10 +423,16 @@ public class Manager {
       }
 
       // apply transaction
-      if (processTrx(trx)) {
-        // push into block
-        blockCapsule.addTransaction(trx);
-        pendingTrxs.remove(trx);
+      try {
+        if (processTransaction(trx)) {
+          // push into block
+          blockCapsule.addTransaction(trx);
+          pendingTrxs.remove(trx);
+        }
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
+        e.printStackTrace();
       }
     }
 
@@ -450,7 +483,13 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block) throws ValidateSignatureException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      processTrx(transactionCapsule);
+      try {
+        processTransaction(transactionCapsule);
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
+        e.printStackTrace();
+      }
     }
   }
 
