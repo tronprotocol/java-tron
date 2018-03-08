@@ -24,6 +24,9 @@ public class Args {
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
 
+  @Parameter(names = {"-w", "--witness"})
+  private boolean witness = false;
+
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
@@ -195,5 +198,9 @@ public class Args {
 
   public void setInitialWitness(InitialWitness initialWitness) {
     this.initialWitness = initialWitness;
+  }
+
+  public boolean isWitness() {
+    return witness;
   }
 }
