@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
@@ -18,11 +21,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.AccountList;
-import org.tron.protos.Protocal.NullMessage;
-import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.WitnessList;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
 
 public class RpcApiService implements Service {
 
@@ -92,9 +92,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-
     public void createTransaction(TransferContract req,
-                                  StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = req.getOwnerAddress();
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
@@ -109,7 +108,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void broadcastTransaction(Transaction req,
-                                     StreamObserver<GrpcAPI.Return> responseObserver) {
+        StreamObserver<GrpcAPI.Return> responseObserver) {
       boolean ret = wallet.broadcastTransaction(req);
       GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
       responseObserver.onNext(retur);
@@ -118,8 +117,9 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAccount(AccountCreateContract request,
-                              StreamObserver<Transaction> responseObserver) {
-      if (request.getType() == null || request.getAccountName() == null || request.getOwnerAddress() == null) {
+        StreamObserver<Transaction> responseObserver) {
+      if (request.getType() == null || request.getAccountName() == null
+          || request.getOwnerAddress() == null) {
         responseObserver.onNext(null);
       } else {
         Transaction trx = wallet.createAccount(request);
@@ -131,7 +131,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
-                                 StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString owner = request.getOwnerAddress();
       if (owner != null) {
         Transaction trx = wallet.createTransaction(request);
@@ -169,14 +169,15 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+
     @Override
-    public void listAccounts(NullMessage request, StreamObserver<AccountList> responseObserver) {
+    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
       responseObserver.onNext(wallet.getAllAccounts());
       responseObserver.onCompleted();
     }
 
     @Override
-    public void listWitnesses(NullMessage request, StreamObserver<WitnessList> responseObserver) {
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       super.listWitnesses(request, responseObserver);
     }

@@ -23,6 +23,8 @@ import java.util.List;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -43,11 +45,9 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.AccountList;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.WitnessList;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
 
 public class Wallet {
 

@@ -26,9 +26,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.BlockHeader;
-import org.tron.protos.Protocal.BlockHeader.raw;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.BlockHeader.raw;
 
 public class BlockUtilTest {
 
