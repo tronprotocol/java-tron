@@ -86,8 +86,9 @@ public class Manager {
     return wits;
   }
 
-  public Sha256Hash getHeadBlockId() {
-    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
+  public BlockId getHeadBlockId() {
+    return head.getBlockId();
+    //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
@@ -176,6 +177,10 @@ public class Manager {
 
   public BlockId getGenesisBlockId() {
     return genesisBlock.getBlockId();
+  }
+
+  public BlockCapsule getGenesisBlock() {
+    return genesisBlock;
   }
 
   /**
@@ -305,9 +310,12 @@ public class Manager {
    * @param blockHash blockHash
    */
   public boolean containBlock(Sha256Hash blockHash) {
-    //TODO: check it from levelDB
     return khaosDb.containBlock(blockHash)
         || getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+  }
+
+  public boolean containBlockInMainChain(BlockId blockId) {
+    return getBlockStore().dbSource.getData(blockId.getBytes()) != null;
   }
 
   /**
@@ -321,7 +329,7 @@ public class Manager {
   /**
    * Get a BlockCapsule by id.
    */
-  public BlockCapsule getBlockByHash(Sha256Hash hash) {
+  public BlockCapsule getBlockById(Sha256Hash hash) {
     return khaosDb.containBlock(hash) ? khaosDb.getBlock(hash)
         : new BlockCapsule(getBlockStore().dbSource.getData(hash.getBytes()));
   }
@@ -330,7 +338,7 @@ public class Manager {
    * Delete a block.
    */
   public void deleteBlock(Sha256Hash blockHash) {
-    BlockCapsule block = getBlockByHash(blockHash);
+    BlockCapsule block = getBlockById(blockHash);
     khaosDb.removeBlk(blockHash);
     getBlockStore().dbSource.deleteData(blockHash.getBytes());
     numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
@@ -387,7 +395,7 @@ public class Manager {
   }
 
   public void initHeadBlock(Sha256Hash id) {
-    head = getBlockByHash(id);
+    head = getBlockById(id);
   }
 
   /**

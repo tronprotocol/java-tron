@@ -25,13 +25,15 @@ public interface NodeDelegate {
 
   void syncToCli();
 
-  void getBlockNum(byte[] hash);
+  long getBlockTime(BlockId id);
 
-  void getBlockTime(byte[] hash);
-
-  byte[] getHeadBlockId();
+  BlockId getHeadBlockId();
 
   boolean contain(Sha256Hash hash, MessageTypes type);
+
+  boolean containBlock(BlockId id);
+
+  boolean containBlockInMainChain(BlockId id);
 
   BlockId getGenesisBlock();
 

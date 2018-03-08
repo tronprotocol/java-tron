@@ -3,6 +3,7 @@ package org.tron.core.net.node;
 import com.google.protobuf.ByteString;
 import io.scalecube.transport.Address;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -315,8 +316,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           return;
         }
 
-        Deque<BlockId> blockIdDeque = new LinkedList<>(blockIds);
-        if (!blockIdDeque.isEmpty() && peer.getBlockChainToFetch().isEmpty()) {
+        Deque<BlockId> blockIdWeGet = new LinkedList<>(blockIds);
+        if (!blockIdWeGet.isEmpty() && peer.getBlockChainToFetch().isEmpty()) {
+          boolean isFound = false;
+
+          for (PeerConnection peerToCheck :
+              getActivePeer()) {
+            if (!peerToCheck.equals(peer)
+                && !peerToCheck.getBlockChainToFetch().isEmpty()
+                && peerToCheck.getBlockChainToFetch().peekFirst()
+                .equals(blockIdWeGet.peekFirst())) {
+              isFound = true;
+              break;
+            }
+          }
+
+          if (!isFound) {
+            while (!blockIdWeGet.isEmpty()
+                && del.contain())
+          }
 
         }
 
@@ -350,6 +368,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startSync() {
     mapPeer.values().forEach(this::startSyncWithPeer);
+  }
+
+  private Collection<PeerConnection> getActivePeer() {
+    //TODO: filter active peer, exclude banned, dead, traitor peers
+    return mapPeer.values();
   }
 
   private void startSyncWithPeer(PeerConnection peer) {

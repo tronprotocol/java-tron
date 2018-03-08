@@ -4,7 +4,8 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -39,9 +40,11 @@ public class PeerConnection {
   private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
 
   //sync chain
-  private BlockId lastBlockPeerKnow;
+  private BlockId headBlockWeBothHave;
 
-  private List<BlockId> blockChainToFetch = new ArrayList<>();
+  private long headBlockTimeWeBothHave;
+
+  private Deque<BlockId> blockChainToFetch = new LinkedList<>();
 
   private Pair<List<BlockId>, Long> syncChainRequested = null;
 
@@ -100,15 +103,23 @@ public class PeerConnection {
     this.banned = banned;
   }
 
-  public BlockId getLastBlockPeerKnow() {
-    return lastBlockPeerKnow;
+  public BlockId getHeadBlockWeBothHave() {
+    return headBlockWeBothHave;
   }
 
-  public void setLastBlockPeerKnow(BlockId lastBlockPeerKnow) {
-    this.lastBlockPeerKnow = lastBlockPeerKnow;
+  public void setHeadBlockWeBothHave(BlockId headBlockWeBothHave) {
+    this.headBlockWeBothHave = headBlockWeBothHave;
   }
 
-  public List<BlockId> getBlockChainToFetch() {
+  public long getHeadBlockTimeWeBothHave() {
+    return headBlockTimeWeBothHave;
+  }
+
+  public void setHeadBlockTimeWeBothHave(long headBlockTimeWeBothHave) {
+    this.headBlockTimeWeBothHave = headBlockTimeWeBothHave;
+  }
+
+  public Deque<BlockId> getBlockChainToFetch() {
     return blockChainToFetch;
   }
 

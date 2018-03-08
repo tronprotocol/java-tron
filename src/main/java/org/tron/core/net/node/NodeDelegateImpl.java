@@ -172,19 +172,27 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   }
 
-  @Override
-  public void getBlockNum(byte[] hash) {
 
+  @Override
+  public long getBlockTime(BlockId id) {
+    return dbManager.containBlock(id)
+        ? dbManager.getBlockById(id).getTimeStamp()
+        : dbManager.getGenesisBlock().getTimeStamp();
   }
 
   @Override
-  public void getBlockTime(byte[] hash) {
-
+  public BlockId getHeadBlockId() {
+    return dbManager.getHeadBlockId();
   }
 
   @Override
-  public byte[] getHeadBlockId() {
-    return new byte[0];
+  public boolean containBlock(BlockId id) {
+    return dbManager.containBlock(id);
+  }
+
+  @Override
+  public boolean containBlockInMainChain(BlockId id) {
+    return dbManager.containBlockInMainChain(id);
   }
 
   @Override
