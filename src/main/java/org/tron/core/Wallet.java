@@ -19,19 +19,24 @@
 package org.tron.core;
 
 import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -40,9 +45,9 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
 
 public class Wallet {
 
@@ -110,8 +115,9 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.getAccount(account.getAddress().toByteArray());
+    return accountStore.get(account.getAddress().toByteArray()).getInstance();
   }
+
 
   /**
    * Create a transaction.
@@ -120,7 +126,7 @@ public class Wallet {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
         utxoStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 
@@ -130,7 +136,7 @@ public class Wallet {
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   /**
@@ -145,7 +151,7 @@ public class Wallet {
         p2pnode.broadcast(message);
         return true;
       }
-    } catch (ValidateException e) {
+    } catch (ValidateSignatureException e) {
       e.printStackTrace();
     }
     return false;
@@ -154,22 +160,39 @@ public class Wallet {
   public Transaction createAccount(AccountCreateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(assetIssueContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
+  public AccountList getAllAccounts() {
+    List<AccountCapsule> allAccounts = dbManager.getAccountStore().getAllAccounts();
+    AccountList.Builder builder = AccountList.newBuilder();
+    allAccounts.forEach(accountCapsule -> {
+      builder.addAccounts(accountCapsule.getInstance());
+    });
+    return builder.build();
+  }
+
+  public WitnessList getWitnessList() {
+    List<WitnessCapsule> witnessCapsules = dbManager.getWitnessStore().getAllWitnesses();
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    witnessCapsules.forEach(witnessCapsule -> {
+      builder.addWitnesses(witnessCapsule.getInstance());
+    });
+    return builder.build();
+  }
 }

@@ -17,18 +17,17 @@
 package org.tron.core.db;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.TXOutputs;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.TXOutputs;
 
 
 public class UtxoStore extends TronDatabase {
@@ -39,20 +38,6 @@ public class UtxoStore extends TronDatabase {
     super(dbName);
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 
   private static UtxoStore instance;
 
@@ -113,7 +98,7 @@ public class UtxoStore extends TronDatabase {
         for (int i = 0; i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
-              .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
+                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
                   && accumulated < amount) {
             accumulated += txOutput.getValue();
 
@@ -151,7 +136,7 @@ public class UtxoStore extends TronDatabase {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
         for (TXOutput txOutput : txOutputs.getOutputsList()) {
           if (ByteArray.toHexString(ECKey.computeAddress(address))
-              .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))) {
+                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))) {
             utxos.add(txOutput);
           }
         }
@@ -165,5 +150,25 @@ public class UtxoStore extends TronDatabase {
 
   public void close() {
     dbSource.closeDB();
+  }
+
+  @Override
+  public void put(byte[] key, Object item) {
+
+  }
+
+  @Override
+  public void delete(byte[] key) {
+
+  }
+
+  @Override
+  public Object get(byte[] key) {
+    return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
   }
 }

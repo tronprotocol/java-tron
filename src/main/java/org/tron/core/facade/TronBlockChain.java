@@ -15,7 +15,7 @@
 
 package org.tron.core.facade;
 
-import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocol.Block;
 
 public interface TronBlockChain {
 

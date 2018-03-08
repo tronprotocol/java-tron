@@ -22,15 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
-public class BlockStore extends TronDatabase {
+public class BlockStore extends TronDatabase<BlockCapsule> {
 
   public static final Logger logger = LoggerFactory.getLogger("BlockStore");
-  //private LevelDbDataSourceImpl blockDbDataSource;
-  //private LevelDbDataSourceImpl unSpendCache;
-
-  //private LevelDbDataSourceImpl numHashCache;
-
-  //private KhaosDatabase khaosDb;
 
   private BlockCapsule head;
 
@@ -69,7 +63,6 @@ public class BlockStore extends TronDatabase {
     return head == null ? 0 : head.getNum();
   }
 
-
   public DateTime getHeadBlockTime() {
     return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
   }
@@ -85,32 +78,28 @@ public class BlockStore extends TronDatabase {
 
 
   public void getUnspend(byte[] key) {
+
   }
 
-  /**
-   * resetDb the database.
-   */
-  public void reset() {
-    dbSource.resetDb();
-  }
 
   @Override
-  public void close() {
-    dbSource.closeDB();
-  }
-
-  @Override
-  void add() {
+  public void put(byte[] key, BlockCapsule item) {
 
   }
 
   @Override
-  void del() {
+  public void delete(byte[] key) {
 
   }
 
   @Override
-  void fetch() {
-
+  public BlockCapsule get(byte[] key) {
+    return null;
   }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
+  }
+
 }

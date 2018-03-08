@@ -17,9 +17,9 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocol.TXOutput;
 
-public class TxOutputCapsule {
+public class TxOutputCapsule implements ProtoCapsule<TXOutput> {
 
   private TXOutput txOutput;
 
@@ -45,5 +45,15 @@ public class TxOutputCapsule {
    */
   public boolean validate() {
     return true;
+  }
+
+  @Override
+  public byte[] getData() {
+    return new byte[0];
+  }
+
+  @Override
+  public TXOutput getInstance() {
+    return this.txOutput;
   }
 }

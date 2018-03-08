@@ -21,7 +21,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -34,18 +33,17 @@ import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.TXInput;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.Transaction.Contract.ContractType;
-import org.tron.protos.Protocal.Transaction.TranscationType;
+import org.tron.protos.Protocol.TXInput;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.TransactionType;
 
-public class TransactionCapsule {
+public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
 
@@ -96,30 +94,24 @@ public class TransactionCapsule {
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
 
-    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
-        .getUnspentOutputs().entrySet();
-    for (Map.Entry<String, long[]> entry : entrySet) {
+    Set<Entry<String, long[]>> entrySet =
+            utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
+
+    entrySet.forEach(entry -> {
       String txId = entry.getKey();
       long[] outs = entry.getValue();
-      for (long out : outs) {
-        TXInput txInput = TxInputUtil
-            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
-        txInputs.add(txInput);
-      }
-    }
+
+      Arrays.stream(outs)
+              .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+              .forEachOrdered(txInputs::add);
+    });
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
-    txOutputs
-        .add(
-            TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+    txOutputs.add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (checkBalance(address, to, amount, balance)) {
-      for (TXInput txInput : txInputs) {
-        transactionBuilder.addVin(txInput);
-      }
-      for (TXOutput txOutput : txOutputs) {
-        transactionBuilder.addVout(txOutput);
-      }
+      txInputs.forEach(transactionBuilder::addVin);
+      txOutputs.forEach(transactionBuilder::addVout);
       logger.info("Transaction create succeeded！");
       transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
     } else {
@@ -129,13 +121,13 @@ public class TransactionCapsule {
   }
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
-    Account account = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
       return; // Account isexit
     }
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).setParameter(
             Any.pack(contract)).build());
     logger.info("Transaction create succeeded！");
@@ -145,19 +137,19 @@ public class TransactionCapsule {
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
     Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
-    Account owner = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule owner = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {
       return; //The balance is not enough
     }
 
-    Account to = accountStore.getAccount(contract.getToAddress().toByteArray());
+    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
 
     if (to == null) {
       return; //to is invalid
     }
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
             Any.pack(contract)).build());
     logger.info("Transaction create succeeded！");
@@ -167,7 +159,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.VoteWitnessContract voteWitnessContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
             Any.pack(voteWitnessContract)).build());
     logger.info("Transaction create succeeded！");
@@ -178,7 +170,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.WitnessCreateContract witnessCreateContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.WitnessCreateContract).setParameter(
             Any.pack(witnessCreateContract)).build());
     logger.info("Transaction create succeeded！");
@@ -188,7 +180,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.AssetIssueContract).setParameter(
             Any.pack(assetIssueContract)).build());
     logger.info("Transaction create succeeded！");
@@ -225,10 +217,6 @@ public class TransactionCapsule {
     }
 
     return true;
-  }
-
-  public Transaction getTransaction() {
-    return transaction;
   }
 
   public void sign(byte[] privateKey) {
@@ -300,10 +288,10 @@ public class TransactionCapsule {
   /**
    * validate signature
    */
-  public boolean validateSignature() throws ValidateException {
-    if (this.getTransaction().getSignatureCount() !=
-        this.getTransaction().getRawData().getContractCount()) {
-      throw new ValidateException("miss sig or contract");
+  public boolean validateSignature() throws ValidateSignatureException {
+    if (this.getInstance().getSignatureCount() !=
+        this.getInstance().getRawData().getContractCount()) {
+      throw new ValidateSignatureException("miss sig or contract");
     }
 
     List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
@@ -314,10 +302,10 @@ public class TransactionCapsule {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
-          throw new ValidateException("sig error");
+          throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
-        throw new ValidateException(e.getMessage());
+        throw new ValidateSignatureException(e.getMessage());
       }
     }
     return true;
@@ -327,8 +315,14 @@ public class TransactionCapsule {
     return Sha256Hash.of(this.transaction.toByteArray());
   }
 
+  @Override
   public byte[] getData() {
     return this.transaction.toByteArray();
+  }
+
+  @Override
+  public Transaction getInstance() {
+    return this.transaction;
   }
 
   @Override

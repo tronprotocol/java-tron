@@ -18,9 +18,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.CancelException;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
+
 
 public class WitnessService implements Service {
 
@@ -47,7 +48,6 @@ public class WitnessService implements Service {
     this.tronApp = tronApp;
     db = tronApp.getDbManager();
     generateThread = new Thread(scheduleProductionLoop);
-    init();
   }
 
   private Runnable scheduleProductionLoop =
@@ -125,7 +125,8 @@ public class WitnessService implements Service {
   }
 
 
-  private BlockProductionCondition tryProduceBlock() throws ValidateException, CancelException {
+  private BlockProductionCondition tryProduceBlock()
+      throws ValidateSignatureException, CancelException {
 
     checkCancelFlag();
 
@@ -157,12 +158,19 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = getSlotTime(slot);
 
+    //TODO:implement private and public key code, fake code first.
+
     if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
 
     //TODO:implement private and public key code, fake code first.
-    BlockCapsule block = generateBlock(scheduledTime);
+    BlockCapsule block = null;
+    try {
+      block = generateBlock(scheduledTime);
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
     logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
 
     broadcastBlock(block);
@@ -170,7 +178,7 @@ public class WitnessService implements Service {
   }
 
   private void checkCancelFlag() throws CancelException {
-    if(canceled){
+    if (canceled) {
       throw new CancelException();
     }
   }
@@ -183,7 +191,7 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when) throws ValidateException {
+  private BlockCapsule generateBlock(DateTime when) throws ValidateSignatureException {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
@@ -259,7 +267,7 @@ public class WitnessService implements Service {
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
         Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
-//    tronApp.getDbManager().addWitness(localWitnessState);
+    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 
