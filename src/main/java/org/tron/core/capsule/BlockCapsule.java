@@ -86,6 +86,16 @@ public class BlockCapsule {
       this.num = num;
     }
 
+    public BlockId(byte[] hash, long num) {
+      super(hash);
+      this.num = num;
+    }
+
+    public BlockId(ByteString hash, long num) {
+      super(hash.toByteArray());
+      this.num = num;
+    }
+
     public long getNum() {
       return num;
     }
