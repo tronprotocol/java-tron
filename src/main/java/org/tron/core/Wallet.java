@@ -19,14 +19,19 @@
 package org.tron.core;
 
 import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -113,6 +118,7 @@ public class Wallet {
     return accountStore.get(account.getAddress().toByteArray()).getInstance();
   }
 
+
   /**
    * Create a transaction.
    */
@@ -172,4 +178,21 @@ public class Wallet {
     return transactionCapsule.getInstance();
   }
 
+  public AccountList getAllAccounts() {
+    List<AccountCapsule> allAccounts = dbManager.getAccountStore().getAllAccounts();
+    AccountList.Builder builder = AccountList.newBuilder();
+    allAccounts.forEach(accountCapsule -> {
+      builder.addAccounts(accountCapsule.getInstance());
+    });
+    return builder.build();
+  }
+
+  public WitnessList getWitnessList() {
+    List<WitnessCapsule> witnessCapsules = dbManager.getWitnessStore().getAllWitnesses();
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    witnessCapsules.forEach(witnessCapsule -> {
+      builder.addWitnesses(witnessCapsule.getInstance());
+    });
+    return builder.build();
+  }
 }

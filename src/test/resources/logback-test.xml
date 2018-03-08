@@ -1,39 +1,40 @@
 <configuration>
 
-    <!-- FILE appender is disabled -->
+  <!-- FILE appender is disabled -->
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-    </appender>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>INFO</level>
+    </filter>
+  </appender>
 
-    <appender name="FILE"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>./logs/tron-test.log</file>
-        <rollingPolicy
-                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>./logs/tron-test-%d{yyyy-MM-dd}.%i.log.zip
-            </fileNamePattern>
-            <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>20GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
-        </encoder>
-    </appender>
+  <appender name="FILE"
+    class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>./logs/tron-test.log</file>
+    <rollingPolicy
+      class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>./logs/tron-test-%d{yyyy-MM-dd}.%i.log.zip
+      </fileNamePattern>
+      <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>60</maxHistory>
+      <totalSizeCap>20GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
+    </encoder>
+  </appender>
 
-    <root level="ERROR">
-        <appender-ref ref="STDOUT"/>
-        <!--<appender-ref ref="FILE"/>-->
-    </root>
+  <root level="ERROR">
+    <appender-ref ref="STDOUT"/>
+    <!--<appender-ref ref="FILE"/>-->
+  </root>
 
-    <logger name="Test" level="INFO"/>
+  <logger name="Test" level="INFO"/>
+  <logger name="Manager" level="INFO"/>
 
 </configuration>
