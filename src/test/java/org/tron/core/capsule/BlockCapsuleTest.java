@@ -95,7 +95,7 @@ public class BlockCapsuleTest {
             .build());
 
     System.out.println("testSign().sign:" + ByteArray.toHexString(sign.toByteArray()));
-    // test validateSignature
+
     try {
       Assert.assertTrue("testSign():blockCapsule2.validateSignature() error",
           blockCapsule2.validateSignature());
