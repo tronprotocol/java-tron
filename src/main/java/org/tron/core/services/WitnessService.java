@@ -48,7 +48,6 @@ public class WitnessService implements Service {
     this.tronApp = tronApp;
     db = tronApp.getDbManager();
     generateThread = new Thread(scheduleProductionLoop);
-    init();
   }
 
   private Runnable scheduleProductionLoop =
@@ -268,7 +267,7 @@ public class WitnessService implements Service {
     localWitnessState = new WitnessCapsule(
         ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
         Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
-//    tronApp.getDbManager().addWitness(localWitnessState);
+    tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
   }
 

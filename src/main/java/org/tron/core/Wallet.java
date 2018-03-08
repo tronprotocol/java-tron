@@ -142,6 +142,7 @@ public class Wallet {
     try {
       if (trx.validateSignature()) {
         Message message = new TransactionMessage(signaturedTransaction);
+        dbManager.pushTransactions(trx);
         p2pnode.broadcast(message);
         return true;
       }

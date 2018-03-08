@@ -1,7 +1,9 @@
 package org.tron.core.actuator;
 
 import com.google.common.collect.Lists;
+
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -23,7 +25,7 @@ public class ActuatorFactory {
   }
 
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
-      Manager manager) {
+                                              Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
     if (null == transactionCapsule || null == transactionCapsule.getTransaction()) {
       logger.info("transactionCapsule or Transaction is null");
@@ -44,21 +46,17 @@ public class ActuatorFactory {
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {
     switch (contract.getType()) {
       case AccountCreateContract:
-        new CreateAccountActuator(contract.getParameter(), manager);
-        break;
+        return new CreateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
-        new TransferActuator(contract.getParameter(), manager);
-        break;
+        return new TransferActuator(contract.getParameter(), manager);
       case TransferAssertContract:
         break;
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
-        new VoteWitnessActuator(contract.getParameter(), manager);
-        break;
+        return new VoteWitnessActuator(contract.getParameter(), manager);
       case WitnessCreateContract:
-        new WitnessCreateActuator(contract.getParameter(), manager);
-        break;
+        return new WitnessCreateActuator(contract.getParameter(), manager);
       case AssetIssueContract:
         break;
       case DeployContract:
