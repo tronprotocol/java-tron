@@ -44,7 +44,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
-public class TransactionCapsule {
+public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
 
@@ -220,10 +220,6 @@ public class TransactionCapsule {
     return true;
   }
 
-  public Transaction getTransaction() {
-    return transaction;
-  }
-
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
@@ -294,8 +290,8 @@ public class TransactionCapsule {
    * validate signature
    */
   public boolean validateSignature() throws ValidateSignatureException {
-    if (this.getTransaction().getSignatureCount() !=
-        this.getTransaction().getRawData().getContractCount()) {
+    if (this.getInstance().getSignatureCount() !=
+        this.getInstance().getRawData().getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
     }
 
@@ -320,8 +316,14 @@ public class TransactionCapsule {
     return Sha256Hash.of(this.transaction.toByteArray());
   }
 
+  @Override
   public byte[] getData() {
     return this.transaction.toByteArray();
+  }
+
+  @Override
+  public Transaction getInstance() {
+    return this.transaction;
   }
 
   @Override

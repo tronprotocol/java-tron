@@ -18,7 +18,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import org.tron.protos.Protocol.TXInput;
 
-public class TxInputCapsule {
+public class TxInputCapsule implements ProtoCapsule<TXInput> {
 
   private TXInput txInput;
 
@@ -50,5 +50,15 @@ public class TxInputCapsule {
 
   public boolean validate() {
     return true;
+  }
+
+  @Override
+  public byte[] getData() {
+    return new byte[0];
+  }
+
+  @Override
+  public TXInput getInstance() {
+    return this.txInput;
   }
 }

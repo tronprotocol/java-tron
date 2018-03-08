@@ -27,7 +27,7 @@ public class TransactionUtil {
   private static final Logger logger = LoggerFactory.getLogger("TransactionUtil");
 
   public static Transaction newGenesisTransaction(String key, int value) {
-    return new TransactionCapsule(key, value).getTransaction();
+    return new TransactionCapsule(key, value).getInstance();
   }
 
   /**

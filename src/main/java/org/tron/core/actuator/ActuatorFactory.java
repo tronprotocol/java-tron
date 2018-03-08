@@ -25,7 +25,7 @@ public class ActuatorFactory {
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
       Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
-    if (null == transactionCapsule || null == transactionCapsule.getTransaction()) {
+    if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
@@ -33,7 +33,7 @@ public class ActuatorFactory {
       logger.info("manager is null");
       return actuatorList;
     }
-
+    
     Protocol.Transaction.raw rawData = transactionCapsule.getTransaction().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
       rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
