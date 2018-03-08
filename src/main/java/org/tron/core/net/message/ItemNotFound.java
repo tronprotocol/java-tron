@@ -1,17 +1,17 @@
 package org.tron.core.net.message;
 
-import org.tron.protos.Protocal;
+import org.tron.protos.Protocol;
 
 public class ItemNotFound extends Message {
 
-  private org.tron.protos.Protocal.Items notFound;
+  private org.tron.protos.Protocol.Items notFound;
 
   /**
    * means can not find this block or trx.
    */
   public ItemNotFound() {
-    Protocal.Items.Builder itemsBuilder = Protocal.Items.newBuilder();
-    itemsBuilder.setType(Protocal.Items.ItemType.ERR);
+    Protocol.Items.Builder itemsBuilder = Protocol.Items.newBuilder();
+    itemsBuilder.setType(Protocol.Items.ItemType.ERR);
     notFound = itemsBuilder.build();
   }
 

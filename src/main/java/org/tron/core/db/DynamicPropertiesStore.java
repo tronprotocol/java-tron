@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 
+import java.util.Optional;
+
 public class DynamicPropertiesStore extends TronDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
@@ -91,12 +93,9 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public long getLatestBlockHeaderTimestamp() {
     byte[] t = this.dbSource.getData(LATEST_BLOCK_HEADER_TIMESTAMP);
-
-    if (t == null || t.length == 0) {
-      throw new IllegalArgumentException("not found latest block header timestamp");
-    }
-
-    return ByteArray.toLong(t);
+    return Optional.ofNullable(t)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found latest block header timestamp"));
   }
 
   /**
@@ -104,12 +103,9 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public long getLatestBlockHeaderNumber() {
     byte[] n = this.dbSource.getData(LATEST_BLOCK_HEADER_NUMBER);
-
-    if (n == null || n.length == 0) {
-      throw new IllegalArgumentException("not found latest block header number");
-    }
-
-    return ByteArray.toLong(n);
+    return Optional.ofNullable(n)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
   public int getStateFlag() {
@@ -127,12 +123,9 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public ByteString getLatestBlockHeaderHash() {
     byte[] h = this.dbSource.getData(LATEST_BLOCK_HEADER_HASH);
-
-    if (h == null || h.length == 0) {
-      throw new IllegalArgumentException("not found latest block header id");
-    }
-
-    return ByteString.copyFrom(h);
+    return Optional.ofNullable(h)
+            .map(ByteString::copyFrom)
+            .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
   }
 
   /**

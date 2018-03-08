@@ -19,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
 
 public class TransactionUtil {
 
@@ -37,9 +37,10 @@ public class TransactionUtil {
    * @return boolean true for coinbase, false for not coinbase.
    */
   public static boolean isCoinbaseTransaction(Transaction transaction) {
-    return transaction.getRawData().getVinList().size() == 1 && transaction.getRawData().getVin(0)
-        .getRawData().getTxID().size() == 0
-        && transaction.getRawData().getVin(0).getRawData().getVout() == -1;
+    Transaction.raw rawData = transaction.getRawData();
+    return rawData.getVinList().size() == 1
+            && rawData.getVin(0).getRawData().getTxID().size() == 0
+            && rawData.getVin(0).getRawData().getVout() == -1;
   }
 
   private static boolean checkTxOutUnSpent(TXOutput prevOut) {

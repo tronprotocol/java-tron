@@ -18,8 +18,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
 
 public class RpcApiService implements Service {
 

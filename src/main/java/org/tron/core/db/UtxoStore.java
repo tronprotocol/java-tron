@@ -17,17 +17,19 @@
 package org.tron.core.db;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.TXOutputs;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.Set;
 
 
 public class UtxoStore extends TronDatabase {
@@ -38,6 +40,20 @@ public class UtxoStore extends TronDatabase {
     super(dbName);
   }
 
+  @Override
+  void add() {
+
+  }
+
+  @Override
+  void del() {
+
+  }
+
+  @Override
+  void fetch() {
+
+  }
 
   private static UtxoStore instance;
 
@@ -86,29 +102,22 @@ public class UtxoStore extends TronDatabase {
     HashMap<String, long[]> unspentOutputs = new HashMap<>();
     long accumulated = 0L;
 
-    Set<byte[]> keySet = getDbSource().allKeys();
-
-    for (byte[] key : keySet) {
+    for (byte[] key : getDbSource().allKeys()) {
       byte[] txOutputsData = getDbSource().getData(key);
       try {
         TXOutputs txOutputs = TXOutputs.parseFrom(txOutputsData);
-
         int len = txOutputs.getOutputsCount();
+        String toHexString = ByteArray.toHexString(key);
 
         for (int i = 0; i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
               .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
-              && accumulated < amount) {
+                  && accumulated < amount) {
+
             accumulated += txOutput.getValue();
-
-            long[] v = unspentOutputs.get(ByteArray.toHexString(key));
-
-            if (v == null) {
-              v = new long[0];
-            }
-
-            unspentOutputs.put(ByteArray.toHexString(key), ArrayUtils.add(v, i));
+            long[] v = Optional.ofNullable(unspentOutputs.get(toHexString)).orElse(new long[0]);
+            unspentOutputs.put(toHexString, ArrayUtils.add(v, i));
           }
         }
       } catch (InvalidProtocolBufferException e) {
@@ -150,25 +159,5 @@ public class UtxoStore extends TronDatabase {
 
   public void close() {
     dbSource.closeDB();
-  }
-
-  @Override
-  public void put(byte[] key, Object item) {
-
-  }
-
-  @Override
-  public void delete(byte[] key) {
-
-  }
-
-  @Override
-  public Object get(byte[] key) {
-    return null;
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    return false;
   }
 }

@@ -17,7 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocol.TXOutput;
 
 public class TxOutputUtil {
 
