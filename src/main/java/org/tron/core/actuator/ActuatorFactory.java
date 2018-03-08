@@ -34,7 +34,7 @@ public class ActuatorFactory {
       return actuatorList;
     }
     
-    Protocol.Transaction.raw rawData = transactionCapsule.getTransaction().getRawData();
+    Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
       rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     }
