@@ -16,10 +16,11 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ValidateException;
 
+
 public class ManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  static Manager dbManager = new Manager();
+  private static Manager dbManager = new Manager();
 
   @BeforeClass
   public static void init() {
@@ -29,7 +30,6 @@ public class ManagerTest {
 
   @Test
   public void pushBlock() {
-
     BlockCapsule blockCapsule2 = new BlockCapsule(0, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
         0,
@@ -49,7 +49,7 @@ public class ManagerTest {
     Assert.assertEquals("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4",
         dbManager.getBlockIdByNum(1).toString());
 
-    KhaosDatabase khaosDatabase = new KhaosDatabase("test_khaosDB");
+    KhaosDatabase khaosDatabase = new KhaosDatabase("test_KHaos");
     khaosDatabase.push(blockCapsule2);
 
     Assert.assertEquals("[c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4]",

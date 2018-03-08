@@ -27,7 +27,5 @@ public class BlockStoreTest {
     Assert.assertEquals(0, blockStore.getHeadBlockNum());
     Assert.assertEquals(blockStore.getGenesisTime(), blockStore.getHeadBlockTime());
     Assert.assertEquals(0, blockStore.currentASlot());
-    blockStore.close();
-
   }
 }
