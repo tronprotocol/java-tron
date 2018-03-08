@@ -10,5 +10,4 @@ public class CancelException extends TronException {
     super(message);
   }
 
-
 }

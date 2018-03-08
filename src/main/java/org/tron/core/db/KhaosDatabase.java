@@ -8,6 +8,7 @@ import java.util.Map;
 import javafx.util.Pair;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 
 public class KhaosDatabase extends TronDatabase {
 
@@ -25,14 +26,14 @@ public class KhaosDatabase extends TronDatabase {
 
     BlockCapsule blk;
     KhaosBlock parent;
-    Sha256Hash id;
+    BlockId id;
     Boolean invalid;
     long num;
   }
 
   private class KhaosStore {
 
-    private HashMap<Sha256Hash, KhaosBlock> hashKblkMap = new HashMap<>();
+    private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     //private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
     private int maxCapcity = 1024;
 
@@ -202,8 +203,8 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
-  public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(Sha256Hash block1,
-      Sha256Hash block2) {
+  public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(BlockId block1,
+      BlockId block2) {
     ArrayList<BlockCapsule> list1 = new ArrayList<>();
     ArrayList<BlockCapsule> list2 = new ArrayList<>();
     Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair<>(list1, list2);

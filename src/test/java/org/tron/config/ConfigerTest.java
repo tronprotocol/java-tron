@@ -23,6 +23,10 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
+import org.tron.core.config.Configuration;
+import org.tron.core.config.args.Args;
+import org.tron.core.config.args.InitialWitness;
 
 
 public class ConfigerTest {
@@ -39,4 +43,14 @@ public class ConfigerTest {
     assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0",
         ByteArray.toHexString(key.getAddress()));
   }
+
+  @Test
+  public void testInitialWitness() {
+    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    InitialWitness initialWitness = Args.getInstance().getInitialWitness();
+    assertEquals("http://tron.org", initialWitness.getLocalWitness().getUrl());
+    assertEquals(3, initialWitness.getActiveWitnessList().size());
+    assertEquals("0x01", initialWitness.getActiveWitnessList().get(0).getPublicKey());
+  }
+
 }
