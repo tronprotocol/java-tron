@@ -14,6 +14,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ValidateSignatureException;
 
 
 public class ManagerTest {
@@ -44,7 +45,8 @@ public class ManagerTest {
     try {
       dbManager.pushBlock(blockCapsule2);
     } catch (Exception e) {
-      e.printStackTrace();
+      Assert.assertNotNull(e);
+      Assert.assertTrue(e instanceof ValidateSignatureException);
     }
     Assert.assertTrue(dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4"))));
