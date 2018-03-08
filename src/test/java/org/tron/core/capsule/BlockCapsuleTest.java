@@ -100,7 +100,7 @@ public class BlockCapsuleTest {
       Assert.assertTrue("testSign():blockCapsule2.validateSignature() error",
           blockCapsule2.validateSignature());
     } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
+      e.getMessage();
     }
 
   }
