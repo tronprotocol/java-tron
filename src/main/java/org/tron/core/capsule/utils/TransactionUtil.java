@@ -37,9 +37,10 @@ public class TransactionUtil {
    * @return boolean true for coinbase, false for not coinbase.
    */
   public static boolean isCoinbaseTransaction(Transaction transaction) {
-    return transaction.getRawData().getVinList().size() == 1 && transaction.getRawData().getVin(0)
-        .getRawData().getTxID().size() == 0
-        && transaction.getRawData().getVin(0).getRawData().getVout() == -1;
+    Transaction.raw rawData = transaction.getRawData();
+    return rawData.getVinList().size() == 1
+            && rawData.getVin(0).getRawData().getTxID().size() == 0
+            && rawData.getVin(0).getRawData().getVout() == -1;
   }
 
   private static boolean checkTxOutUnSpent(TXOutput prevOut) {

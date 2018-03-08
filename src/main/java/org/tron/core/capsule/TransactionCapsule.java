@@ -41,7 +41,6 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.TransactionType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -95,30 +94,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
 
-    Set<Entry<String, long[]>> entrySet = utxoStore.findSpendableOutputs(address, amount)
-        .getUnspentOutputs().entrySet();
-    for (Map.Entry<String, long[]> entry : entrySet) {
+    Set<Entry<String, long[]>> entrySet =
+            utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
+
+    entrySet.forEach(entry -> {
       String txId = entry.getKey();
       long[] outs = entry.getValue();
-      for (long out : outs) {
-        TXInput txInput = TxInputUtil
-            .newTxInput(ByteArray.fromHexString(txId), out, null, address);
-        txInputs.add(txInput);
-      }
-    }
+
+      Arrays.stream(outs)
+              .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+              .forEachOrdered(txInputs::add);
+    });
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
-    txOutputs
-        .add(
-            TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+    txOutputs.add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (checkBalance(address, to, amount, balance)) {
-      for (TXInput txInput : txInputs) {
-        transactionBuilder.addVin(txInput);
-      }
-      for (TXOutput txOutput : txOutputs) {
-        transactionBuilder.addVout(txOutput);
-      }
+      txInputs.forEach(transactionBuilder::addVin);
+      txOutputs.forEach(transactionBuilder::addVout);
       logger.info("Transaction create succeeded！");
       transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
     } else {
