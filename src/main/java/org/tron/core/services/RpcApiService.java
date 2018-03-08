@@ -171,14 +171,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void listAccounts(NullMessage request, StreamObserver<AccountList> responseObserver) {
-      wallet.getAllAccounts();
-
-//      responseObserver.onNext();
+      responseObserver.onNext(wallet.getAllAccounts());
       responseObserver.onCompleted();
     }
 
     @Override
     public void listWitnesses(NullMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessList());
       super.listWitnesses(request, responseObserver);
     }
   }

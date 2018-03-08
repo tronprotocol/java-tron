@@ -1,8 +1,11 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 
 public class WitnessStore extends TronDatabase<WitnessCapsule> {
@@ -65,6 +68,15 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
     logger.info("voteAddress is {} ", witnessCapsule.getAddress());
 
     dbSource.putData(witnessCapsule.getAddress().toByteArray(), witnessCapsule.getData());
+  }
+
+  /**
+   * get all witnesses.
+   */
+  public List<WitnessCapsule> getAllWitnesses() {
+    return dbSource.allKeys().stream()
+        .map(key -> get(key))
+        .collect(Collectors.toList());
   }
 
 }

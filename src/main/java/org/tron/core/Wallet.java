@@ -29,6 +29,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -44,9 +45,9 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.AccountList;
-import org.tron.protos.Protocal.AccountList.Builder;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.WitnessList;
 
 public class Wallet {
 
@@ -179,11 +180,19 @@ public class Wallet {
 
   public AccountList getAllAccounts() {
     List<AccountCapsule> allAccounts = dbManager.getAccountStore().getAllAccounts();
-    Builder builder = AccountList.newBuilder();
-//    allAccounts.forEach(accountCapsule -> {
-//      builder.addAccounts(accountCapsule.)
-//    });
-//    Builder builder = AccountList.newBuilder().addAccounts();
-    return null;
+    AccountList.Builder builder = AccountList.newBuilder();
+    allAccounts.forEach(accountCapsule -> {
+      builder.addAccounts(accountCapsule.getInstance());
+    });
+    return builder.build();
+  }
+
+  public WitnessList getWitnessList() {
+    List<WitnessCapsule> witnessCapsules = dbManager.getWitnessStore().getAllWitnesses();
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    witnessCapsules.forEach(witnessCapsule -> {
+      builder.addWitnesses(witnessCapsule.getInstance());
+    });
+    return builder.build();
   }
 }
