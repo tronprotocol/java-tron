@@ -3,7 +3,9 @@ package org.tron.core.net.node;
 import com.google.protobuf.ByteString;
 import io.scalecube.transport.Address;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.util.Pair;
@@ -269,6 +271,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (peer.getSyncChainRequested() != null) {
         List<BlockId> blockIds = msg.getBlockIds();
 
+        //check if the peer is a traitor
         if (!blockIds.isEmpty()) {
           long num = blockIds.get(0).getNum();
           for (BlockId id :
@@ -297,22 +300,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
         }
+        //check finish
 
-        //this answer is legal
+        //here this peer's answer is legal
         peer.setSyncChainRequested(null);
         if (blockIds.isEmpty() && peer.getBlockChainToFetch().isEmpty()) {
           peer.setNeedSyncFromPeer(false);
           //TODO: check whole sync status and notify del sync status.
+          //TODO: if sync finish call del.syncToCli();
           return;
         }
 
+        Deque<BlockId> blockIdDeque = new LinkedList<>(blockIds);
+        if (!blockIdDeque.isEmpty() && peer.getBlockChainToFetch().isEmpty()) {
 
-
-
-
-
-
-
+        }
 
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
