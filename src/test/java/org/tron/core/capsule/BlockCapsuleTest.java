@@ -67,8 +67,8 @@ public class BlockCapsuleTest {
     try {
       Block block = Block.parseFrom(blockCapsule.getData());
 
-      String signStr = ByteArray
-          .toHexString(block.getBlockHeader().getWitnessSignature().toByteArray());
+      String signStr = ByteArray.toHexString(block.getBlockHeader()
+          .getWitnessSignature().toByteArray());
       System.out.println("signStr:" + signStr);
       Assert.assertEquals("signature is error", str, signStr);
 
@@ -139,8 +139,8 @@ public class BlockCapsuleTest {
                 BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
             .build());
 
-    System.out
-        .println("testValidateSignature1().sign1:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidateSignature1().sign1:"
+        + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
     try {
       Assert.assertTrue("validateSignature1():blockCapsule2.validateSignature() error",
@@ -162,8 +162,8 @@ public class BlockCapsuleTest {
                     .setRawData(rawData.build()))
             .build());
 
-    System.out
-        .println("testValidateSignature1().sign2:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidateSignature1().sign2:"
+        + ByteArray.toHexString(sign.toByteArray()));
 
     try {
       Assert.assertFalse("rawDate is different", blockCapsule3.validateSignature());
@@ -202,8 +202,8 @@ public class BlockCapsuleTest {
                 BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
             .build());
 
-    System.out
-        .println("testValidataSignature2().sign:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidataSignature2().sign:"
+        + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
     try {
       Assert.assertTrue("testValidataSignature2(): blockCapsule2.validateSignature() is error",
@@ -255,8 +255,8 @@ public class BlockCapsuleTest {
                     .setRawData(rawData.build()))
             .build());
 
-    System.out
-        .println("testValidataSignature2().sign:" + ByteArray.toHexString(errorSign.toByteArray()));
+    System.out.println("testValidataSignature2().sign:"
+        + ByteArray.toHexString(errorSign.toByteArray()));
 
     try {
       Assert.assertFalse("signature was changed", blockCapsule3.validateSignature());
@@ -291,8 +291,8 @@ public class BlockCapsuleTest {
                 BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
             .build());
 
-    System.out.println(
-        "testValidateWithoutWitnessAddress().sign:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidateWithoutWitnessAddress().sign:"
+        + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
 
     try {
@@ -337,8 +337,8 @@ public class BlockCapsuleTest {
 
     System.out
         .println("testValidateWithoutNumber().sign:" + ByteArray.toHexString(sign.toByteArray()));
-    // test validateSignature
 
+    // test validateSignature
     try {
       Assert.assertTrue("validate signature without number is error",
           blockCapsule.validateSignature());
@@ -379,8 +379,8 @@ public class BlockCapsuleTest {
                 BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
             .build());
 
-    System.out.println(
-        "testValidateWithoutWitnessId().sign:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidateWithoutWitnessId().sign:"
+        + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
     try {
       Assert.assertTrue("validate signature without witnessId is error",
@@ -421,8 +421,8 @@ public class BlockCapsuleTest {
                 BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
             .build());
 
-    System.out.println(
-        "testValidateWithoutParentHash().sign:" + ByteArray.toHexString(sign.toByteArray()));
+    System.out.println("testValidateWithoutParentHash().sign:"
+        + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
     try {
       Assert.assertTrue("validate signature without parentHash is error",
