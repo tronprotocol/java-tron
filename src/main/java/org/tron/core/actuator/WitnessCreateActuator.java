@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -22,20 +23,35 @@ public class WitnessCreateActuator extends AbstractActuator {
   @Override
   public boolean execute() {
     try {
-      if (contract.is(WitnessCreateContract.class)) {
-        WitnessCreateContract witnessCreateContract = contract.unpack(WitnessCreateContract.class);
-        createWitness(witnessCreateContract);
-      }
+      WitnessCreateContract witnessCreateContract = contract.unpack(WitnessCreateContract.class);
+      createWitness(witnessCreateContract);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      throw new RuntimeException("Parse contract error", e);
     }
     return true;
   }
 
   @Override
   public boolean validate() {
-    //TODO witness
-    return false;
+    try {
+      if (!contract.is(WitnessCreateContract.class)) {
+        throw new RuntimeException(
+            "contract type error,expected type [AccountCreateContract],real type[" + contract
+                .getClass() + "]");
+      }
+
+      WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
+
+      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+
+      if (dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
+        throw new RuntimeException("Witness has existed");
+      }
+
+    } catch (Exception ex) {
+      throw new RuntimeException("Validate WitnessCreateContract error.", ex);
+    }
+    return true;
   }
 
   @Override

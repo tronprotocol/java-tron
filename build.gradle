@@ -5,6 +5,7 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -17,9 +18,11 @@ repositories {
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
     }
 }
 
@@ -188,8 +191,14 @@ protobuf {
 }
 
 run {
-    if (project.hasProperty('server')) {
+    if (project.hasProperty('witness')) {
         standardInput = System.in
-        args = ['--type', 'server']
+        args = ['--witness', true]
     }
+}
+
+shadowJar {
+    baseName = 'java-tron'
+    classifier = null
+    version = null
 }

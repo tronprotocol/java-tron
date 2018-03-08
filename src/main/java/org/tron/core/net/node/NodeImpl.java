@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.util.Pair;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
+import org.tron.core.net.message.FetchBlockInvMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -31,9 +34,9 @@ import org.tron.core.net.message.TransactionInventoryMessage;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.BlockInventory.Type;
-import org.tron.protos.Protocal.Inventory.InventoryType;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.BlockInventory.Type;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
@@ -57,6 +60,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private volatile boolean isAdvertiseActive;
 
   private Thread advertiseLoopThread;
+
+  //sync
+  private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -253,7 +259,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
-    Protocal.Inventory inv = fetchInvDataMsg.getInventory();
+    Protocol.Inventory inv = fetchInvDataMsg.getInventory();
     MessageTypes type =
         inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 
@@ -378,12 +384,36 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startFetchSyncBlock() {
     //TODO: check how many block is processing and decide if fetch more
-//    HashMap<PeerConnection, Queue<>>
-//
-//    getActivePeer().forEach(peer -> {
-//      if (peer.isNeedSyncFromPeer())
-//    });
+    HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
+    HashSet<BlockId> request = new HashSet<>();
 
+    getActivePeer().stream()
+        .filter(peer -> peer.isNeedSyncFromPeer())
+        .forEach(peer -> {
+          if (!send.containsKey(peer)) { //TODO: Attention multi thread here
+            send.put(peer, new LinkedList<>());
+          }
+          for (BlockId blockId :
+              peer.getBlockChainToFetch()) {
+            if (!request.contains(blockId) //TODO: clean processing block
+                && syncBlockIdWeRequested.containsKey(blockId)) {
+                send.get(peer).add(blockId);
+                request.add(blockId);
+                if (send.get(peer).size() > 200) { //Max Blocks peer get one time
+                  break;
+                }
+            }
+          }
+        });
+
+    send.forEach((peer, blockIds) -> {
+      blockIds.forEach(blockId -> {
+        syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+        peer.getSyncChainRequested().put(blockId, System.currentTimeMillis());
+      });
+      peer.sendMessage(new FetchBlockInvMessage(blockIds));
+    });
+    send.clear();
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId id) {

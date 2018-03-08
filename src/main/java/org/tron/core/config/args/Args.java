@@ -6,13 +6,11 @@ import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.typesafe.config.ConfigObject;
-import org.tron.core.config.args.InitialWitness.LocalWitness;
 
 public class Args {
 
@@ -25,6 +23,9 @@ public class Args {
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
+
+  @Parameter(names = {"-w", "--witness"})
+  private boolean witness = false;
 
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
@@ -55,30 +56,25 @@ public class Args {
   public static void setParam(String[] args, com.typesafe.config.Config config) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
 
-    if (StringUtils.isBlank(INSTANCE.privateKey)) {
-      if (config.hasPath("private.key")) {
-        INSTANCE.privateKey = config.getString("private.key");
-      }
+    if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
+      INSTANCE.privateKey = config.getString("private.key");
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
     INSTANCE.storage = new Storage();
-    INSTANCE.storage.setDirectory(config.getString("storage.directory"));
-    if (!INSTANCE.storageDirectory.isEmpty()) {
-      INSTANCE.storage.setDirectory(INSTANCE.storageDirectory);
-    }
+    INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(config.getString("storage.directory")));
 
     INSTANCE.overlay = new Overlay();
-    INSTANCE.overlay.setPort(config.getInt("overlay.port"));
-    if (INSTANCE.overlayPort != 0) {
-      INSTANCE.overlay.setPort(INSTANCE.overlayPort);
-    }
+    INSTANCE.overlay.setPort(Optional.ofNullable(INSTANCE.overlayPort)
+            .filter(i -> 0 != i)
+            .orElse(config.getInt("overlay.port")));
 
     INSTANCE.seedNode = new SeedNode();
-    INSTANCE.seedNode.setIpList(config.getStringList("seed.node.ip.list"));
-    if (INSTANCE.seedNodes.size() != 0) {
-      INSTANCE.seedNode.setIpList(INSTANCE.seedNodes);
-    }
+    INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
+            .filter(seedNode -> 0 != seedNode.size())
+            .orElse(config.getStringList("seed.node.ip.list")));
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -89,9 +85,7 @@ public class Args {
       INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
       if (config.hasPath("genesis.block.assets")) {
-        List<Account> accounts = getAccountsFromConfig(config);
-
-        INSTANCE.genesisBlock.setAssets(accounts);
+        INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
       }
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
@@ -113,11 +107,9 @@ public class Args {
   }
 
   private static List<Account> getAccountsFromConfig(com.typesafe.config.Config config) {
-    List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
-
-    List<Account> accounts = new ArrayList<>();
-    assets.forEach(asset -> accounts.add(createAccount(asset)));
-    return accounts;
+    return config.getObjectList("genesis.block.assets").stream()
+            .map(Args::createAccount)
+            .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private static Account createAccount(ConfigObject asset) {
@@ -137,12 +129,10 @@ public class Args {
   }
 
   private static List<InitialWitness.ActiveWitness> getActiveWitnessFromConfig(
-      com.typesafe.config.Config config) {
-    List<? extends ConfigObject> objectList = config.getObjectList("initialWitness.activeWitness");
-
-    List<InitialWitness.ActiveWitness> activeWitnessList = new ArrayList<>();
-    objectList.forEach(object -> activeWitnessList.add(createActiveWitness(object)));
-    return activeWitnessList;
+          com.typesafe.config.Config config) {
+    return config.getObjectList("initialWitness.activeWitness").stream()
+            .map(Args::createActiveWitness)
+            .collect(Collectors.toList());
   }
 
   private static InitialWitness.ActiveWitness createActiveWitness(ConfigObject asset) {
@@ -210,5 +200,7 @@ public class Args {
     this.initialWitness = initialWitness;
   }
 
-
+  public boolean isWitness() {
+    return witness;
+  }
 }

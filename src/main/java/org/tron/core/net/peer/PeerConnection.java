@@ -5,11 +5,10 @@ import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -46,14 +45,14 @@ public class PeerConnection {
 
   private Deque<BlockId> blockChainToFetch = new LinkedList<>();
 
-  private Pair<List<BlockId>, Long> syncChainRequested = null;
+  private HashMap<BlockId, Long>  syncChainRequested = null;
 
-  public Pair<List<BlockId>, Long> getSyncChainRequested() {
+  public HashMap<BlockId, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      Pair<List<BlockId>, Long> syncChainRequested) {
+      HashMap<BlockId, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
   }
 

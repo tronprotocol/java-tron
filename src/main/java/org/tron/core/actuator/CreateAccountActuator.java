@@ -1,12 +1,12 @@
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocal.AccountType;
 
 public class CreateAccountActuator extends AbstractActuator {
 
@@ -18,23 +18,12 @@ public class CreateAccountActuator extends AbstractActuator {
   @Override
   public boolean execute() {
     try {
-      if (contract.is(AccountCreateContract.class)) {
-        AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
-        ByteString ownerAddress = accountCreateContract.getOwnerAddress();
-        ByteString accountName = accountCreateContract.getAccountName();
-        AccountType type = accountCreateContract.getType();
-        int typeValue = accountCreateContract.getTypeValue();
-        if (null != dbManager) {
-          boolean accountExist = dbManager.getAccountStore().has(ownerAddress.toByteArray());
-          if (null != accountName && !accountExist) {
-            AccountCapsule accountCapsule = new AccountCapsule(ownerAddress, accountName, type,
-                typeValue);
-            dbManager.getAccountStore().createAccount(ownerAddress.toByteArray(), accountCapsule);
-          }
-        }
-      }
+      AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
+      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
+      dbManager.getAccountStore()
+          .createAccount(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      throw new RuntimeException("Parse contract error", e);
     }
 
     return true;
@@ -42,8 +31,28 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean validate() {
-    //TODO
-    return false;
+    try {
+      if (!contract.is(AccountCreateContract.class)) {
+        throw new RuntimeException(
+            "contract type error,expected type [AccountCreateContract],real type[" + contract
+                .getClass() + "]");
+      }
+
+      AccountCreateContract contract = this.contract.unpack(AccountCreateContract.class);
+
+      Preconditions.checkNotNull(contract.getAccountName(), "AccountName is null");
+      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+      Preconditions.checkNotNull(contract.getType(), "Type is null");
+
+      if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+        throw new RuntimeException("Account has existed");
+      }
+
+    } catch (Exception ex) {
+      throw new RuntimeException("Validate AccountCreateContract error.", ex);
+    }
+
+    return true;
   }
 
   @Override

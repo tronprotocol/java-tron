@@ -20,6 +20,10 @@ service Wallet {
 
   };
 
+  rpc ListAccounts (EmptyMessage) returns (AccountList) {
+
+  };
+
   rpc CreateAccount (AccountCreateContract) returns (Transaction) {
 
   };
@@ -32,14 +36,27 @@ service Wallet {
 
   };
 
+  rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
+
+  };
 
   rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
 
   };
 
-
 };
 
 message Return {
   bool result = 1;
+}
+
+message AccountList{
+  repeated Account accounts = 1;
+}
+
+message WitnessList{
+  repeated Witness witnesses = 1;
+}
+
+message EmptyMessage{
 }
