@@ -11,38 +11,38 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 @Slf4j
 abstract class AbstractMissDoDatabase implements IMissDoDatabase {
-   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-   
-   private Deque<MissDoState> stack = new LinkedBlockingDeque<>();
-   private boolean disabled = true;
-   private int activeDialog = 0;
-   
+  private static final int DEFAULT_STACK_MAX_SIZE = 256;
+  
+  private Deque<MissDoState> stack = new LinkedBlockingDeque<>();
+  private boolean disabled = true;
+  private int activeDialog = 0;
+  
   @Override
   public Dialog buildDialog() {
     return new Dialog(this);
   }
   
-   @Override
-   public void onCreate(MissDoTuple tuple, byte[] value) {
-   
-   }
+  @Override
+  public void onCreate(MissDoTuple tuple, byte[] value) {
   
-   @Override
-   public void onModify(MissDoTuple tuple, byte[] value) {
-   
-   }
-  
-   @Override
-   public void onRemove(MissDoTuple tuple, byte[] value) {
-   
-   }
-  
-  
-   @Override
-  public void merge() {
-
   }
-
+  
+  @Override
+  public void onModify(MissDoTuple tuple, byte[] value) {
+  
+  }
+  
+  @Override
+  public void onRemove(MissDoTuple tuple, byte[] value) {
+  
+  }
+  
+  
+  @Override
+  public void merge() {
+  
+  }
+  
   @Override
   public void takeback() {
   
@@ -50,36 +50,36 @@ abstract class AbstractMissDoDatabase implements IMissDoDatabase {
   
   @Override
   public void commit() {
-
+  
   }
-
+  
   @Override
   public void pop() {
-
+  
   }
   
-   @Override
-   public MissDoState head() {
-     return null;
-   }
-   
-   @Override
-   public void enable() {
-   
-   }
+  @Override
+  public MissDoState head() {
+    return null;
+  }
   
-   @Override
-   public void disable() {
-   
-   }
-   
+  @Override
+  public void enable() {
+  
+  }
+  
+  @Override
+  public void disable() {
+  
+  }
+  
   @Builder
   @Slf4j
   public class Dialog {
     private IMissDoDatabase missDoDatabase;
     private boolean applyMissDo = true;
     private boolean disableOnExit = false;
-
+    
     public Dialog(Dialog dialog) {
       this.missDoDatabase = dialog.missDoDatabase;
       this.applyMissDo = dialog.applyMissDo;
@@ -104,7 +104,7 @@ abstract class AbstractMissDoDatabase implements IMissDoDatabase {
       if (applyMissDo) {
         missDoDatabase.takeback();
       }
-    
+      
       applyMissDo = false;
     }
     
@@ -115,7 +115,7 @@ abstract class AbstractMissDoDatabase implements IMissDoDatabase {
       
       applyMissDo = false;
     }
-
+    
     void copy(Dialog dialog) {
       if (this.equals(dialog)) {
         return;
