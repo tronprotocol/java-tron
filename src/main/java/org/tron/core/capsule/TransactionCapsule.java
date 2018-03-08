@@ -21,7 +21,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -42,6 +41,7 @@ import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.TransactionType;
 
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
