@@ -170,10 +170,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     try {
       return database.get(key);
     } catch (DBException e) {
-      return database.get(key);
+      e.printStackTrace();
     } finally {
       resetDbLock.readLock().unlock();
     }
+    return null;
   }
 
   @Override

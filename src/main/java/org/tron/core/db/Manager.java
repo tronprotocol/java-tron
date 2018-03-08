@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -253,7 +254,6 @@ public class Manager {
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    processTransaction(trx);
     pendingTrxs.add(trx);
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -411,20 +411,21 @@ public class Manager {
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    for (final TransactionCapsule trx : this.pendingTrxs) {
+    Iterator iterator = pendingTrxs.iterator();
+    while (iterator.hasNext()) {
+      TransactionCapsule trx = (TransactionCapsule) iterator.next();
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
       if (currentTrxSize > TRXS_SIZE) {
         postponedTrxCount++;
         continue;
       }
-
       // apply transaction
       try {
         if (processTransaction(trx)) {
           // push into block
           blockCapsule.addTransaction(trx);
-          pendingTrxs.remove(trx);
+          iterator.remove();
         }
       } catch (ContractExeException e) {
         e.printStackTrace();

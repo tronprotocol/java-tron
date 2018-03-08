@@ -29,86 +29,48 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
   protected static final Logger logger = LoggerFactory.getLogger("AccountCapsule");
 
-  private byte[] data;
-
   private Account account;
 
-  private boolean unpacked;
-
-  public AccountCapsule(final byte[] data) {
-    this.data = data;
-    this.unpacked = false;
-  }
-
-
-  private synchronized void unPack() {
-    if (this.unpacked) {
-      return;
-    }
-
+  public AccountCapsule(byte[] data) {
     try {
-      this.account = Account.parseFrom(this.data);
-    } catch (final InvalidProtocolBufferException e) {
+      this.account = Account.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
-
-    this.unpacked = true;
   }
 
   /**
    * initial account capsule.
    */
-  public AccountCapsule(final AccountType accountType, final ByteString address,
-      final long balance) {
+  public AccountCapsule(AccountType accountType, ByteString address, long balance) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
         .setBalance(balance)
         .build();
-    this.unpacked = true;
   }
-
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
         .setType(contract.getType())
         .setAddress(contract.getOwnerAddress())
         .setTypeValue(contract.getTypeValue())
         .build();
-    this.unpacked = true;
   }
 
-  public AccountCapsule(final ByteString address, final ByteString accountName,
-      final AccountType accountType) {
+  public AccountCapsule(ByteString address, ByteString accountName,
+      AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
         .build();
-    this.unpacked = true;
   }
 
-  public AccountCapsule(final Account account) {
+  public AccountCapsule(Account account) {
     this.account = account;
-    this.unpacked = true;
-  }
-
-  public AccountCapsule() {
-    this.unpacked = true;
-  }
-
-  private void pack() {
-    if (this.data == null) {
-      this.data = this.account.toByteArray();
-    }
-  }
-
-  private void clearData() {
-    this.data = null;
-    this.unpacked = true;
   }
 
   public byte[] getData() {
-    this.pack();
-    return this.data;
+    return this.account.toByteArray();
   }
 
   @Override
@@ -117,12 +79,10 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   }
 
   public ByteString getAddress() {
-    this.unPack();
     return this.account.getAddress();
   }
 
   public AccountType getType() {
-    unPack();
     return this.account.getType();
   }
 
@@ -137,20 +97,17 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
   @Override
   public String toString() {
-    this.unPack();
     return this.account.toString();
   }
 
-  public void addVotes(final ByteString voteAddress, final long voteAdd) {
-    this.unPack();
+
+  public void addVotes(ByteString voteAddress, long voteAdd) {
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
         .build();
-    this.clearData();
   }
 
   public List<Vote> getVotesList() {
-    this.unPack();
     return this.account.getVotesList();
   }
 
