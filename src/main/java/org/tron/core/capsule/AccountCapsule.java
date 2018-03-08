@@ -58,11 +58,10 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   }
 
   public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType, int typeValue) {
+      AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
-        .setTypeValue(typeValue)
         .build();
   }
 
