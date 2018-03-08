@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core;
+package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
@@ -22,8 +22,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
+import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Block;
