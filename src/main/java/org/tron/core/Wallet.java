@@ -19,6 +19,7 @@
 package org.tron.core;
 
 import java.util.ArrayList;
+
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +147,7 @@ public class Wallet {
         p2pnode.broadcast(message);
         return true;
       }
-    } catch (ValidateSignatureException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return false;

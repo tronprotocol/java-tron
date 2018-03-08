@@ -24,7 +24,7 @@ public class TransferActuator extends AbstractActuator {
         }
         TransferContract transferContract = contract.unpack(TransferContract.class);
         ByteString ownerAddress = transferContract.getOwnerAddress();
-        Account ownerAccount = dbManager.getAccountStore().getAccount(ownerAddress.toByteArray());
+        AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress.toByteArray());
         if (ownerAccount == null) {
           return false;
         }
@@ -34,20 +34,16 @@ public class TransferActuator extends AbstractActuator {
           return false;
         }
         ByteString toAddress = transferContract.getToAddress();
-        Account toAccount = dbManager.getAccountStore().getAccount(toAddress.toByteArray());
+        AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
         if (toAccount == null) {
           return false;
         }
-        Account.Builder ownerBuilder = ownerAccount.toBuilder();
-        ownerBuilder.setBalance(ownerAccount.getBalance() - amount);
-        ownerAccount = ownerBuilder.build();
-        dbManager.getAccountStore().putAccount(new AccountCapsule(ownerAccount));
+        ownerAccount.setBalance(ownerAccount.getBalance() - amount);
+        dbManager.getAccountStore().put(ownerAddress.toByteArray(), ownerAccount);
 
-        toAccount = dbManager.getAccountStore().getAccount(toAddress.toByteArray());
-        Account.Builder toBuilder = toAccount.toBuilder();
-        toBuilder.setBalance(toAccount.getBalance() + amount);
-        toAccount = toBuilder.build();
-        dbManager.getAccountStore().putAccount(new AccountCapsule(toAccount));
+        toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
+        toAccount.setBalance(toAccount.getBalance() + amount);
+        dbManager.getAccountStore().put(toAddress.toByteArray(), toAccount);
         return true;
       }
     } catch (InvalidProtocolBufferException e) {
