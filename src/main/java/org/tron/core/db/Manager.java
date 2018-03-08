@@ -219,7 +219,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(key.getBalance()));
 
-      this.accountStore.putAccount(accountCapsule);
+      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
     });
   }
 
@@ -229,7 +229,7 @@ public class Manager {
 
   public void adjustBalance(byte[] account_address, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().getItem(account_address);
+    AccountCapsule account = getAccountStore().get(account_address);
     long balance = account.getBalance();
     if (amount == 0) {
       return;
@@ -240,7 +240,7 @@ public class Manager {
       }
     }
     account.setBalance(balance + amount);
-    getAccountStore().putAccount(account);
+    getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   /**

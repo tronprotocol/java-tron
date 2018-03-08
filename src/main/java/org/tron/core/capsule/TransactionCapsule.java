@@ -128,7 +128,7 @@ public class TransactionCapsule {
   }
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
-    AccountCapsule account = accountStore.getItem(contract.getOwnerAddress().toByteArray());
+    AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
       return; // Account isexit
     }
@@ -144,12 +144,12 @@ public class TransactionCapsule {
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
     Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
-    AccountCapsule owner = accountStore.getItem(contract.getOwnerAddress().toByteArray());
+    AccountCapsule owner = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {
       return; //The balance is not enough
     }
 
-    AccountCapsule to = accountStore.getItem(contract.getToAddress().toByteArray());
+    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
 
     if (to == null) {
       return; //to is invalid

@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,15 +15,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
     super(dbName);
   }
 
-  @Override
-  void putItem(byte[] key, AccountCapsule item) {
-
-  }
-
-  @Override
-  void deleteItem(byte[] key) {
-
-  }
 
   private static AccountStore instance;
 
@@ -44,24 +34,34 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
     return instance;
   }
 
-  /**
-   * save account.
-   */
-  public void putAccount(ByteString address, AccountCapsule account) {
-    logger.info("address is {} ", address);
-
-    dbSource.putData(address.toByteArray(), account.getData());
-  }
-
-  public void putAccount(AccountCapsule accountCapsule) {
-    dbSource.putData(accountCapsule.getAddress().toByteArray(), accountCapsule.getData());
-  }
-
 
   @Override
-  public AccountCapsule getItem(byte[] key) {
+  public void put(byte[] key, AccountCapsule item) {
+    logger.info("address is {} ", key);
+    dbSource.putData(key, item.getData());
+  }
+
+  @Override
+  public void delete(byte[] key) {
+
+  }
+
+  @Override
+  public AccountCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+  }
+
+  /**
+   * isAccountExist fun.
+   *
+   * @param key the address of Account
+   */
+  @Override
+  public boolean has(byte[] key) {
+    byte[] account = dbSource.getData(key);
+    logger.info("address is {},account is {}", key, account);
+    return null != account;
   }
 
   /**
@@ -78,23 +78,11 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   }
 
   /**
-   * isAccountExist fun.
-   *
-   * @param address the address of Account
-   */
-
-  public boolean isAccountExist(byte[] address) {
-    byte[] account = dbSource.getData(address);
-    logger.info("address is {},account is {}", address, account);
-    return null != account;
-  }
-
-  /**
    * get all accounts.
    */
   public List<AccountCapsule> getAllAccounts() {
     return dbSource.allKeys().stream()
-        .map(key -> getItem(key))
+        .map(key -> get(key))
         .collect(Collectors.toList());
   }
 }
