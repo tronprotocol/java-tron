@@ -1,20 +1,27 @@
 package org.tron.core.db;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
 
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingDeque;
 
 @Slf4j
 abstract class AbstractRevokingStore implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   
-  private Deque<RevokingState> stack = new LinkedBlockingDeque<>();
+  private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
   private int activeDialog = 0;
   
@@ -96,15 +103,51 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   
   @Override
   public void merge() {
+    if (activeDialog == 1 && stack.size() == 1) {
+      stack.pollLast();
+      --activeDialog;
+    }
+    
+    RevokingState state = stack.peekLast();
+    @SuppressWarnings("unchecked")
+    List<RevokingState> list = (List<RevokingState>) stack;
+    RevokingState prevState = list.get(stack.size() - 2);
+    
+    state.oldValues.entrySet().stream()
+        .filter(e -> !prevState.newIds.contains(e.getKey()))
+        .filter(e -> !prevState.oldValues.containsKey(e.getKey()))
+        .forEach(e -> prevState.oldValues.put(e.getKey(), e.getValue()));
   
+    prevState.newIds.addAll(state.newIds);
+    
+    state.removed.entrySet().stream()
+        .filter(e -> {
+          boolean has = prevState.newIds.contains(e.getKey());
+          if (has) {
+            prevState.newIds.remove(e.getKey());
+          }
+          
+          return !has;
+        })
+        .filter(e -> {
+          boolean has = prevState.oldValues.containsKey(e.getKey());
+          if (has) {
+            prevState.removed.put(e.getKey(), e.getValue());
+            prevState.oldValues.remove(e.getKey());
+          }
+          
+          return !has;
+        })
+        .forEach(e -> prevState.removed.put(e.getKey(), e.getValue()));
+    
+    stack.pollLast();
+    --activeDialog;
   }
   
   @Override
   public void revoke() {
-    disable();
-    
-    RevokingState state = stack.peekLast();
-    
+    pop();
+    --activeDialog;
   }
   
   @Override
@@ -114,7 +157,21 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   
   @Override
   public void pop() {
+    disable();
   
+    try {
+      RevokingState state = stack.peekLast();
+      if (Objects.isNull(state)) {
+        return;
+      }
+  
+      state.oldValues.forEach((k, v) -> k.getDatabase().putData(k.getKey(), v));
+      state.newIds.forEach(e -> e.getDatabase().deleteData(e.getKey()));
+      state.removed.forEach((k, v) -> k.getDatabase().putData(k.getKey(), v));
+      stack.pollLast();
+    } finally {
+      enable();
+    }
   }
   
   @Override
@@ -138,7 +195,6 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     }
   }
   
-  @Builder
   @Slf4j
   public static class Dialog implements AutoCloseable {
     private RevokingDatabase revokingDatabase;
@@ -212,5 +268,13 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
     HashSet<RevokingTuple> newIds = new HashSet<>();
     HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
+  }
+  
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class RevokingTuple {
+    private SourceInter<byte[], byte[]> database;
+    private byte[] key;
   }
 }

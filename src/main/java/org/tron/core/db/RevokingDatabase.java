@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.db.AbstractRevokingStore.RevokingState;
+import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
 
 public interface RevokingDatabase {
   Dialog buildDialog();
