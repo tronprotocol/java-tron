@@ -26,7 +26,9 @@ public class ManagerTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{"-d", "output_manager"},
+        Configuration.getByPath(Constant.TEST_CONF));
+
     dbManager.init();
     blockCapsule2 = new BlockCapsule(0, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
