@@ -35,7 +35,6 @@ public class ActuatorFactory {
 //      return actuatorList;
 //    }
     Preconditions.checkNotNull(manager, "manager is null");
-
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
       rawData.getContractList()
@@ -47,20 +46,17 @@ public class ActuatorFactory {
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {
     switch (contract.getType()) {
       case AccountCreateContract:
-        new CreateAccountActuator(contract.getParameter(), manager);
-        break;
+        return new CreateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
-        break;
+        return new TransferActuator(contract.getParameter(), manager);
       case TransferAssertContract:
         break;
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
-        new VoteWitnessActuator(contract.getParameter(), manager);
-        break;
+        return new VoteWitnessActuator(contract.getParameter(), manager);
       case WitnessCreateContract:
-        new WitnessCreateActuator(contract.getParameter(), manager);
-        break;
+        return new WitnessCreateActuator(contract.getParameter(), manager);
       case AssetIssueContract:
         break;
       case DeployContract:
