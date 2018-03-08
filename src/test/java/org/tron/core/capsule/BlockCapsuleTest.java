@@ -39,6 +39,7 @@ public class BlockCapsuleTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   protected BlockCapsule blockCapsule;
 
+  // test sign and validateSignature together
   @Test
   public void testSign() {
     ECKey key = ECKey.fromPrivate(new BigInteger(
