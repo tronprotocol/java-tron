@@ -43,7 +43,8 @@ public class LevelDbDataSourceImplTest {
   @Before
   public void initDb() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-    dataSourceTest = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), "test");
+    dataSourceTest = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
+        "test_levelDb");
   }
 
   @Test
@@ -69,7 +70,7 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_reset");
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
-    dataSource.closeDB();
+    //dataSource.closeDB();
   }
 
   @Test

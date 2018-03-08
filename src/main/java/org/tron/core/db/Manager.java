@@ -366,7 +366,7 @@ public class Manager {
    */
   public BlockId getBlockIdByNum(final long num) {
     final byte[] hash = this.numHashCache.getData(ByteArray.fromLong(num));
-    return ArrayUtils.isNotEmpty(hash)
+    return ArrayUtils.isEmpty(hash)
         ? this.genesisBlock.getBlockId()
         : new BlockId(Sha256Hash.wrap(hash), num);
   }
@@ -392,7 +392,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey){
+      final long when, final byte[] privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 

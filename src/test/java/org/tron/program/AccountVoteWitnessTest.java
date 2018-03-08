@@ -22,7 +22,9 @@ public class AccountVoteWitnessTest {
 
   @BeforeClass
   public static void initConf() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{"-d", "output_witness"},
+        Configuration.getByPath(Constant.TEST_CONF));
     dbManager.init();
   }
 
@@ -31,7 +33,7 @@ public class AccountVoteWitnessTest {
     List<AccountCapsule> accountCapsuleList = getAccountList();
     List<WitnessCapsule> witnessCapsuleList = getWitnessList();
     accountCapsuleList.forEach(accountCapsule -> {
-          dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(),accountCapsule);
+          dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
           printAccount(accountCapsule.getAddress());
         }
     );
