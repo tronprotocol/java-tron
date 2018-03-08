@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
@@ -89,7 +92,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-
     public void createTransaction(TransferContract req,
         StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = req.getOwnerAddress();
@@ -165,6 +167,19 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
+      responseObserver.onNext(wallet.getAllAccounts());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessList());
+      super.listWitnesses(request, responseObserver);
     }
   }
 

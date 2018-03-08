@@ -37,7 +37,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;

@@ -1,9 +1,8 @@
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -25,20 +24,21 @@ public class ActuatorFactory {
   }
 
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
-                                              Manager manager) {
+      Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
     if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
-    if (null == manager) {
-      logger.info("manager is null");
-      return actuatorList;
-    }
-
+//    if (null == manager) {
+//      logger.info("manager is null");
+//      return actuatorList;
+//    }
+    Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
-      rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
+      rawData.getContractList()
+          .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     }
     return actuatorList;
   }

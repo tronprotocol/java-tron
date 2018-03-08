@@ -20,6 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
@@ -46,6 +47,13 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .setType(accountType)
         .setAddress(address)
         .setBalance(balance)
+        .build();
+  }
+  public AccountCapsule(final AccountCreateContract contract) {
+    this.account = Account.newBuilder()
+        .setType(contract.getType())
+        .setAddress(contract.getOwnerAddress())
+        .setTypeValue(contract.getTypeValue())
         .build();
   }
 
@@ -103,4 +111,9 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   public List<Vote> getVotesList() {
     return this.account.getVotesList();
   }
+
+  public long getShare() {
+    return this.account.getBalance();
+  }
+
 }

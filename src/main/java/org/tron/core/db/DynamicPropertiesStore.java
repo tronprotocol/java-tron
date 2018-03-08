@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
@@ -11,6 +12,8 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
 
+  private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
+
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
@@ -18,7 +21,9 @@ public class DynamicPropertiesStore extends TronDatabase {
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes();// 1 : is maintenance, 0 : is not maintenance
 
+
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
+  private DateTime nextMaintenanceTime;
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
@@ -159,6 +164,15 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   public BlockFilledSlots getBlockFilledSlots() {
     return blockFilledSlots;
+  }
+
+
+  public DateTime getNextMaintenanceTime() {
+    return nextMaintenanceTime;
+  }
+
+  public void updateMaintenanceTime(){
+    nextMaintenanceTime = nextMaintenanceTime.plus(MAINTENANCE_TIME_INTERVAL);
   }
 
 }
