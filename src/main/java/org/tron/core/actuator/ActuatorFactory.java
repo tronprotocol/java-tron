@@ -33,7 +33,7 @@ public class ActuatorFactory {
       logger.info("manager is null");
       return actuatorList;
     }
-    
+
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
       rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
