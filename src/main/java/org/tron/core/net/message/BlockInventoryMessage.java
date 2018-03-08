@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.protos.Protocal.BlockInventory;
+import org.tron.protos.Protocol.BlockInventory;
 
 public class BlockInventoryMessage extends Message {
 

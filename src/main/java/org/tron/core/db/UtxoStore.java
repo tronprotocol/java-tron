@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.TXOutputs;
 
 
 public class UtxoStore extends TronDatabase {
@@ -98,8 +98,8 @@ public class UtxoStore extends TronDatabase {
         for (int i = 0; i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
-              .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
-              && accumulated < amount) {
+                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
+                  && accumulated < amount) {
             accumulated += txOutput.getValue();
 
             long[] v = unspentOutputs.get(ByteArray.toHexString(key));
@@ -136,7 +136,7 @@ public class UtxoStore extends TronDatabase {
         TXOutputs txOutputs = TXOutputs.parseFrom(txData);
         for (TXOutput txOutput : txOutputs.getOutputsList()) {
           if (ByteArray.toHexString(ECKey.computeAddress(address))
-              .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))) {
+                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))) {
             utxos.add(txOutput);
           }
         }

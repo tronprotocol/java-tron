@@ -4,7 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocol.Block;
 
 
 public class BlockMessage extends Message {

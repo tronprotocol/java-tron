@@ -34,7 +34,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocal.AccountType;
+import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 

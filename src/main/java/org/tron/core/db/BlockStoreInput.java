@@ -18,7 +18,7 @@
 
 package org.tron.core.db;
 
-import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocol.Block;
 
 public interface BlockStoreInput {
 

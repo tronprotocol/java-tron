@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.protos.Protocal.Witness;
+import org.tron.protos.Protocol.Witness;
 
 public class WitnessCapsule implements ProtoCapsule<Witness> {
 
