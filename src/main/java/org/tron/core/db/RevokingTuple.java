@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MissDoTuple {
+public class RevokingTuple {
   private TronDatabase database;
   private byte[] key;
 }
