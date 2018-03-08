@@ -15,7 +15,7 @@ public interface NodeDelegate {
 
   void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException;
 
-  void handleTransaction(TransactionCapsule trx);
+  void handleTransaction(TransactionCapsule trx) throws ValidateSignatureException;
 
   List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
 

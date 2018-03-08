@@ -102,18 +102,18 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   @Override
-  void add() {
+  void putItem(byte[] key, Object item) {
+    
+  }
+
+  @Override
+  void deleteItem(byte[] key) {
 
   }
 
   @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
+  public Object getItem(byte[] key) {
+    return null;
   }
 
 

@@ -13,12 +13,15 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
+
 
 public class NodeDelegateImpl implements NodeDelegate {
 
@@ -36,39 +39,38 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
-    boolean isSync = false;
-
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
     }
-
     dbManager.pushBlock(block);
-    if (!isSync) {
-      // TODO fetch the trans in this block to see if we have know this trans
-    }
-
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
   }
 
 
   @Override
-  public void handleTransaction(TransactionCapsule trx) {
+  public void handleTransaction(TransactionCapsule trx) throws ValidateSignatureException {
     logger.info("handle transaction");
     try {
       dbManager.pushTransactions(trx);
-    } catch (ValidateSignatureException e) {
-      logger.error("new transaction is not valid");
+    } catch (ContractValidateException e) {
+      logger.info("Contract validate failed");
+      // TODO stores failed trans in db for inquiry.
+      e.printStackTrace();
+    } catch (ContractExeException e) {
+      logger.info("Contract execute failed");
+      // TODO stores failed trans in db for inquiry.
+      e.printStackTrace();
     }
   }
 
   @Override
+
   public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-
     List<BlockId> retBlockIds = new ArrayList<>();
     if (dbManager.getHeadBlockNum() == 0) {
       return retBlockIds;
@@ -107,7 +109,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds)  {
+  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
     List<BlockId> retSummary = new ArrayList<>();
     long highBlkNum = 0;

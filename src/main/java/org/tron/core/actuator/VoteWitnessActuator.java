@@ -32,7 +32,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     //TODO witness
     return false;
   }
@@ -40,7 +40,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   public void countVoteAccount(VoteWitnessContract voteContract) {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .getAccount(voteContract.getOwnerAddress());
+        .getItem(voteContract.getOwnerAddress().toByteArray());
 
     voteContract.getVotesList().forEach(vote -> {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());

@@ -5,12 +5,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.WitnessCapsule;
 
-public class WitnessStore extends TronDatabase {
+public class WitnessStore extends TronDatabase<WitnessCapsule> {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessStore");
 
   protected WitnessStore(String dbName) {
     super(dbName);
+  }
+
+  @Override
+  void putItem(byte[] key, WitnessCapsule item) {
+
+  }
+
+  @Override
+  void deleteItem(byte[] key) {
+
+  }
+
+  @Override
+  public WitnessCapsule getItem(byte[] key) {
+    return null;
   }
 
   private static WitnessStore instance;
@@ -47,18 +62,4 @@ public class WitnessStore extends TronDatabase {
     dbSource.putData(witnessCapsule.getAddress().toByteArray(), witnessCapsule.getData());
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 }
