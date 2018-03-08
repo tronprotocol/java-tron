@@ -392,7 +392,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey){
+      final long when, final byte[] privateKey) {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
