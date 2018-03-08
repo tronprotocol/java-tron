@@ -27,6 +27,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.BlockHeader.raw;
@@ -86,7 +87,11 @@ public class BlockCapsuleTest {
 
     System.out.println("sig1:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    Assert.assertTrue(blockCapsule2.validateSignature());
+    try {
+      Assert.assertTrue(blockCapsule2.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
 
     // before base64 end
     rawData.setNumber(2);
@@ -105,7 +110,11 @@ public class BlockCapsuleTest {
     logger
         .info("Changes in number、WitnessId and address values have an impact on the test results");
 
-    Assert.assertFalse(blockCapsule3.validateSignature());
+    try {
+      Assert.assertFalse(blockCapsule3.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
   }
 
   /*
@@ -139,7 +148,11 @@ public class BlockCapsuleTest {
 
     System.out.println("sig1:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    Assert.assertTrue(blockCapsule2.validateSignature());
+    try {
+      Assert.assertTrue(blockCapsule2.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
 
     // before base64 start
     // correct sign
@@ -186,7 +199,11 @@ public class BlockCapsuleTest {
 
     System.out.println("sig2:" + ByteArray.toHexString(errorSign.toByteArray()));
 
-    Assert.assertFalse(blockCapsule3.validateSignature());
+    try {
+      Assert.assertFalse(blockCapsule3.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
   }
 
   /*
@@ -214,7 +231,11 @@ public class BlockCapsuleTest {
 
     System.out.println("sig3:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    Assert.assertFalse(blockCapsule.validateSignature());
+    try {
+      Assert.assertFalse(blockCapsule.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
   }
 
 
