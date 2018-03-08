@@ -37,6 +37,7 @@ public class BlockCapsuleTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   protected BlockCapsule blockCapsule;
 
+
   @Test
   public void testSign() {
     ECKey key = ECKey.fromPrivate(new BigInteger(
@@ -46,10 +47,13 @@ public class BlockCapsuleTest {
     byte[] address = key.getAddress();
     ByteString witnessAddress = ByteString.copyFrom(address);
 
+    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString("0x000000000000000000"
+        + "0000000000000000000000000000000000000000000000"));
     blockCapsule = new BlockCapsule(
         Block.newBuilder()
             .setBlockHeader(BlockHeader.newBuilder().setRawData(
                 raw.newBuilder().setWitnessAddress(witnessAddress).setNumber(2).setWitnessId(2)
+                    .setParentHash(parentHash)
                     .build())
                 .build()).build());
 
@@ -67,6 +71,8 @@ public class BlockCapsuleTest {
     byte[] privKeyBytes = key.getPrivKeyBytes();
     byte[] address = key.getAddress();
     ByteString witnessAddress = ByteString.copyFrom(address);
+    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString("0x000000000000000000"
+        + "0000000000000000000000000000000000000000000000"));
 
     // test
     raw.Builder rawData = Block.newBuilder().getBlockHeader().getRawData().toBuilder();
@@ -74,6 +80,7 @@ public class BlockCapsuleTest {
     rawData.setNumber(1);
     rawData.setWitnessId(2);
     rawData.setWitnessAddress(witnessAddress);
+    rawData.setParentHash(parentHash);
 
     ECKey ecKey = ECKey.fromPrivate(privKeyBytes);
     ECDSASignature signature = ecKey.sign(Sha256Hash.of(rawData.build().toByteArray()).getBytes());
@@ -106,9 +113,6 @@ public class BlockCapsuleTest {
             .build());
 
     System.out.println("sig2:" + ByteArray.toHexString(sign.toByteArray()));
-
-    logger
-        .info("Changes in number、WitnessId and address values have an impact on the test results");
 
     try {
       Assert.assertFalse(blockCapsule3.validateSignature());
@@ -210,7 +214,8 @@ public class BlockCapsuleTest {
    * validate signature without witnessAddress
    */
   @Test
-  public void testValidateNullParameters() {
+  public void testValidateWithoutWitnessAddress() {
+
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -238,5 +243,112 @@ public class BlockCapsuleTest {
     }
   }
 
+  @Test
+  public void testValidateWithoutNumber() {
+    ECKey key = ECKey.fromPrivate(new BigInteger(
+        "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
+    byte[] privKeyBytes = key.getPrivKeyBytes();
+    byte[] address = key.getAddress();
+    ByteString witnessAddress = ByteString.copyFrom(address);
+    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString("0x000000000000000000"
+        + "0000000000000000000000000000000000000000000000"));
+
+    // test
+    raw.Builder rawData = Block.newBuilder().getBlockHeader().getRawData().toBuilder();
+
+    rawData.setWitnessId(2);
+    rawData.setWitnessAddress(witnessAddress);
+    rawData.setParentHash(parentHash);
+
+    ECKey ecKey = ECKey.fromPrivate(privKeyBytes);
+    ECDSASignature signature = ecKey.sign(Sha256Hash.of(rawData.build().toByteArray()).getBytes());
+    ByteString sign = ByteString.copyFrom(signature.toBase64().getBytes());
+
+    BlockCapsule blockCapsule = new BlockCapsule(
+        Block.newBuilder()
+            .setBlockHeader(
+                BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
+            .build());
+
+    System.out.println("sig3:" + ByteArray.toHexString(sign.toByteArray()));
+    // test validateSignature
+    try {
+      Assert.assertTrue(blockCapsule.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testValidateWithoutWitnessId() {
+    ECKey key = ECKey.fromPrivate(new BigInteger(
+        "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
+
+    byte[] privKeyBytes = key.getPrivKeyBytes();
+    byte[] address = key.getAddress();
+    ByteString witnessAddress = ByteString.copyFrom(address);
+    ByteString parentHash = ByteString.copyFrom(ByteArray.fromHexString("0x000000000000000000"
+        + "0000000000000000000000000000000000000000000000"));
+
+    // test
+    raw.Builder rawData = Block.newBuilder().getBlockHeader().getRawData().toBuilder();
+
+    rawData.setNumber(1);
+    rawData.setWitnessAddress(witnessAddress);
+    rawData.setParentHash(parentHash);
+
+    ECKey ecKey = ECKey.fromPrivate(privKeyBytes);
+    ECDSASignature signature = ecKey.sign(Sha256Hash.of(rawData.build().toByteArray()).getBytes());
+    ByteString sign = ByteString.copyFrom(signature.toBase64().getBytes());
+
+    BlockCapsule blockCapsule = new BlockCapsule(
+        Block.newBuilder()
+            .setBlockHeader(
+                BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
+            .build());
+
+    System.out.println("sig3:" + ByteArray.toHexString(sign.toByteArray()));
+    // test validateSignature
+    try {
+      Assert.assertTrue(blockCapsule.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testValidateWithoutParentHash() {
+    ECKey key = ECKey.fromPrivate(new BigInteger(
+        "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
+
+    byte[] privKeyBytes = key.getPrivKeyBytes();
+    byte[] address = key.getAddress();
+    ByteString witnessAddress = ByteString.copyFrom(address);
+
+    // test
+    raw.Builder rawData = Block.newBuilder().getBlockHeader().getRawData().toBuilder();
+
+    rawData.setNumber(1);
+    rawData.setWitnessId(2);
+    rawData.setWitnessAddress(witnessAddress);
+
+    ECKey ecKey = ECKey.fromPrivate(privKeyBytes);
+    ECDSASignature signature = ecKey.sign(Sha256Hash.of(rawData.build().toByteArray()).getBytes());
+    ByteString sign = ByteString.copyFrom(signature.toBase64().getBytes());
+
+    BlockCapsule blockCapsule = new BlockCapsule(
+        Block.newBuilder()
+            .setBlockHeader(
+                BlockHeader.newBuilder().setWitnessSignature(sign).setRawData(rawData.build()))
+            .build());
+
+    System.out.println("sig3:" + ByteArray.toHexString(sign.toByteArray()));
+    // test validateSignature
+    try {
+      Assert.assertTrue(blockCapsule.validateSignature());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
+  }
 }
