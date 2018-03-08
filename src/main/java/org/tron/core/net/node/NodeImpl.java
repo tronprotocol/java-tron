@@ -210,7 +210,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
+    //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
     try {
       del.handleBlock(blkMsg.getBlockCapsule());
     } catch (ValidateSignatureException e) {
@@ -333,10 +333,39 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
           if (!isFound) {
             while (!blockIdWeGet.isEmpty()
-                && del.contain())
+                && del.containBlock(blockIdWeGet.peek())) {
+              peer.setHeadBlockWeBothHave(blockIdWeGet.peek());
+              peer.setHeadBlockTimeWeBothHave(del.getBlockTime(blockIdWeGet.peek()));
+              blockIdWeGet.poll();
+            }
           }
-
+        } else if (!blockIdWeGet.isEmpty()) {
+          while (!peer.getBlockChainToFetch().isEmpty()) {
+            if (peer.getBlockChainToFetch().peekLast() != blockIdWeGet.peekFirst()) {
+              peer.getBlockChainToFetch().pop();
+            } else {
+              break;
+            }
+          }
+          if (peer.getBlockChainToFetch().isEmpty()) {
+            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+          }
+          //poll the block we both have.
+          blockIdWeGet.poll();
         }
+
+        //sew it
+        peer.getBlockChainToFetch().addAll(blockIdWeGet);
+
+        //TODO: check head block time is legal here
+        //TODO: refresh sync status to cli. call del.syncToCli() here
+
+        //TODO: depends on peer's BlockChainToFetch count and remaining block count
+        //TODO: to decide to fetch again or sync, now do it together
+
+        startFetchSyncBlock();
+        syncNextBatchChainIds(peer);
+
 
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
@@ -345,10 +374,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TraitorPeerException e) {
       banTraitorPeer(peer);
     }
-    //    List<Sha256Hash> blockIds = del.getLostBlockIds(msg.getHashList());
-//    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
-//    fetchMap.put(fetchMsg.getMessageId(), peer);
-//    loopFetchBlocks.push(fetchMsg);
+  }
+
+  private void startFetchSyncBlock() {
+    //TODO: check how many block is processing and decide if fetch more
+//    HashMap<PeerConnection, Queue<>>
+//
+//    getActivePeer().forEach(peer -> {
+//      if (peer.isNeedSyncFromPeer())
+//    });
+
+  }
+
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId id) {
+    peer.setHeadBlockWeBothHave(id);
+    peer.setHeadBlockTimeWeBothHave(del.getBlockTime(id));
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
@@ -379,7 +419,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setNeedSyncFromPeer(true);
     peer.getBlockChainToFetch().clear();
     peer.setNumUnfetchBlock(0);
-    peer.setLastBlockPeerKnow(del.getGenesisBlock());
+    peer.setHeadBlockWeBothHave(del.getGenesisBlock());
     peer.setBanned(false);
     syncNextBatchChainIds(peer);
   }
@@ -392,9 +432,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void syncNextBatchChainIds(PeerConnection peer) {
     try {
       List<BlockId> chainSummary = del
-          .getBlockChainSummary(peer.getLastBlockPeerKnow(), peer.getBlockChainToFetch());
-      //peer.setLastBlockPeerKnow(chainSummary.isEmpty() ? del.getGenesisBlock()
-      //    : chainSummary.get(chainSummary.size() - 1));
+          .getBlockChainSummary(peer.getHeadBlockWeBothHave(), ((LinkedList)peer.getBlockChainToFetch()));
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
