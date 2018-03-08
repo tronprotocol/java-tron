@@ -40,7 +40,7 @@ public class BlockCapsuleTest {
   protected BlockCapsule blockCapsule;
 
   @Test
-  public void testSign() {
+  public void testSign() throws InvalidProtocolBufferException, ValidateSignatureException {
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -63,7 +63,7 @@ public class BlockCapsuleTest {
         + "c7659513d";
 
     // test sign
-    try {
+//    try {
       Block block = Block.parseFrom(blockCapsule.getData());
 
       String signStr = ByteArray
@@ -71,9 +71,9 @@ public class BlockCapsuleTest {
       System.out.println("signStr:" + signStr);
       Assert.assertEquals("signature is error", str, signStr);
 
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (InvalidProtocolBufferException e) {
+//      logger.debug(e.getMessage());
+//    }
 
     // test validateSignature
     raw.Builder rawData = Block.newBuilder().getBlockHeader().getRawData().toBuilder();
@@ -95,12 +95,12 @@ public class BlockCapsuleTest {
 
     System.out.println("testSign().sign:" + ByteArray.toHexString(sign.toByteArray()));
 
-    try {
+//    try {
       Assert.assertTrue("testSign():blockCapsule2.validateSignature() error",
           blockCapsule2.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
 
   }
 
@@ -108,7 +108,7 @@ public class BlockCapsuleTest {
    * validate signature by different rawData parameters
    */
   @Test
-  public void testValidateSignature1() {
+  public void testValidateSignature1() throws ValidateSignatureException {
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -139,12 +139,12 @@ public class BlockCapsuleTest {
     System.out
         .println("testValidateSignature1().sign1:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    try {
+//    try {
       Assert.assertTrue("validateSignature1():blockCapsule2.validateSignature() error",
           blockCapsule2.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
 
     // before base64 end
     rawData.setNumber(2);
@@ -161,18 +161,18 @@ public class BlockCapsuleTest {
     System.out
         .println("testValidateSignature1().sign2:" + ByteArray.toHexString(sign.toByteArray()));
 
-    try {
+//    try {
       Assert.assertFalse("rawDate is different", blockCapsule3.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
   }
 
   /*
    * valiedate by change signature
    */
   @Test
-  public void testValidataSignature2() {
+  public void testValidataSignature2() throws ValidateSignatureException {
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -200,12 +200,12 @@ public class BlockCapsuleTest {
     System.out
         .println("testValidataSignature2().sign:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    try {
+//    try {
       Assert.assertTrue("testValidataSignature2(): blockCapsule2.validateSignature() is error",
           blockCapsule2.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
 
     // before base64 start
     // correct sign
@@ -252,11 +252,11 @@ public class BlockCapsuleTest {
     System.out
         .println("testValidataSignature2().sign:" + ByteArray.toHexString(errorSign.toByteArray()));
 
-    try {
+//    try {
       Assert.assertFalse("signature was changed", blockCapsule3.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
 
   }
 
@@ -264,7 +264,7 @@ public class BlockCapsuleTest {
    * validate signature without witnessAddress
    */
   @Test
-  public void testValidateWithoutWitnessAddress() {
+  public void testValidateWithoutWitnessAddress() throws ValidateSignatureException {
 
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
@@ -288,19 +288,19 @@ public class BlockCapsuleTest {
         "testValidateWithoutWitnessAddress().sign:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
 
-    try {
+//    try {
       Assert.assertFalse("validate signature without witnessAddress is error",
           blockCapsule.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
   }
 
   /*
    * validate signature without number
    */
   @Test
-  public void testValidateWithoutNumber() {
+  public void testValidateWithoutNumber() throws ValidateSignatureException {
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -331,19 +331,19 @@ public class BlockCapsuleTest {
         .println("testValidateWithoutNumber().sign:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
 
-    try {
+//    try {
       Assert.assertTrue("validate signature without number is error",
           blockCapsule.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
   }
 
   /*
    * validate signature without witnessId
    */
   @Test
-  public void testValidateWithoutWitnessId() {
+  public void testValidateWithoutWitnessId() throws ValidateSignatureException {
     ECKey key = ECKey.fromPrivate(new BigInteger(
         "48720541756297624231117183381585618702966411811775628910886100667008198869515"));
 
@@ -373,12 +373,12 @@ public class BlockCapsuleTest {
     System.out.println(
         "testValidateWithoutWitnessId().sign:" + ByteArray.toHexString(sign.toByteArray()));
     // test validateSignature
-    try {
+//    try {
       Assert.assertTrue("validate signature without witnessId is error",
           blockCapsule.validateSignature());
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage());
-    }
+//    } catch (ValidateSignatureException e) {
+//      logger.debug(e.getMessage());
+//    }
 
   }
 
