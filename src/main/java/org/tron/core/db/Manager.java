@@ -222,7 +222,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(key.getBalance()));
 
-      this.accountStore.putAccount(accountCapsule);
+      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
     });
   }
 
@@ -232,7 +232,7 @@ public class Manager {
 
   public void adjustBalance(byte[] account_address, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().getItem(account_address);
+    AccountCapsule account = getAccountStore().get(account_address);
     long balance = account.getBalance();
     if (amount == 0) {
       return;
@@ -243,7 +243,7 @@ public class Manager {
       }
     }
     account.setBalance(balance + amount);
-    getAccountStore().putAccount(account);
+    getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   /**
@@ -349,14 +349,19 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(TransactionCapsule trxCap) throws ValidateSignatureException {
+  public boolean processTransaction(TransactionCapsule trxCap)
+      throws ValidateSignatureException, ContractExeException, ContractValidateException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     assert actuatorList != null;
-    actuatorList.forEach(actuator -> actuator.execute());
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute();
+
+    }
     return true;
   }
 
@@ -392,8 +397,6 @@ public class Manager {
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
                                     long when, byte[] privateKey) throws ValidateSignatureException {
-      long when, byte[] privateKey)
-      throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -412,7 +415,9 @@ public class Manager {
     BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    for (TransactionCapsule trx : pendingTrxs) {
+    Iterator iterator = pendingTrxs.iterator();
+    while (iterator.hasNext()) {
+      TransactionCapsule trx = (TransactionCapsule) iterator.next();
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
       if (currentTrxSize > TRXS_SIZE) {
@@ -432,7 +437,6 @@ public class Manager {
         e.printStackTrace();
       }
     }
-
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }

@@ -14,18 +14,23 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
   }
 
   @Override
-  void putItem(byte[] key, WitnessCapsule item) {
+  public void put(byte[] key, WitnessCapsule item) {
 
   }
 
   @Override
-  void deleteItem(byte[] key) {
+  public void delete(byte[] key) {
 
   }
 
   @Override
-  public WitnessCapsule getItem(byte[] key) {
+  public WitnessCapsule get(byte[] key) {
     return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
   }
 
   private static WitnessStore instance;

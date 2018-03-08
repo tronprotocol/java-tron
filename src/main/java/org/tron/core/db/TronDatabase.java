@@ -16,14 +16,26 @@ public abstract class TronDatabase<T> {
     return dbSource;
   }
 
+  /**
+   * reset the database.
+   */
+  public void reset() {
+    dbSource.resetDb();
+  }
+
+  /**
+   * close the database.
+   */
   public void close() {
     dbSource.closeDB();
   }
 
-  abstract void putItem(byte[] key, T item);
+  public abstract void put(byte[] key, T item);
 
-  abstract void deleteItem(byte[] key);
+  public abstract void delete(byte[] key);
 
-  public abstract T getItem(byte[] key);
+  public abstract T get(byte[] key);
+
+  public abstract boolean has(byte[] key);
 
 }

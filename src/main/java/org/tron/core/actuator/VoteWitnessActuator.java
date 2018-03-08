@@ -40,13 +40,13 @@ public class VoteWitnessActuator extends AbstractActuator {
   public void countVoteAccount(VoteWitnessContract voteContract) {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .getItem(voteContract.getOwnerAddress().toByteArray());
+        .get(voteContract.getOwnerAddress().toByteArray());
 
     voteContract.getVotesList().forEach(vote -> {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    dbManager.getAccountStore().putAccount(accountCapsule.getAddress(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
 
   @Override

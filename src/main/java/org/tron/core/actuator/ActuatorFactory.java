@@ -27,7 +27,7 @@ public class ActuatorFactory {
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
                                               Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
-    if (null == transactionCapsule || null == transactionCapsule.getTransaction()) {
+    if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
@@ -36,9 +36,10 @@ public class ActuatorFactory {
       return actuatorList;
     }
 
-    Protocal.Transaction.raw rawData = transactionCapsule.getTransaction().getRawData();
+    Protocal.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TranscationType.ContractType.equals(rawData.getType())) {
-      rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
+      rawData.getContractList()
+          .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     }
     return actuatorList;
   }

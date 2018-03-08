@@ -25,8 +25,7 @@ public class CreateAccountActuator extends AbstractActuator {
         AccountType type = accountCreateContract.getType();
         int typeValue = accountCreateContract.getTypeValue();
         if (null != dbManager) {
-          boolean accountExist = dbManager.getAccountStore()
-              .isAccountExist(ownerAddress.toByteArray());
+          boolean accountExist = dbManager.getAccountStore().has(ownerAddress.toByteArray());
           if (null != accountName && !accountExist) {
             AccountCapsule accountCapsule = new AccountCapsule(ownerAddress, accountName, type,
                 typeValue);

@@ -48,18 +48,23 @@ public class DynamicPropertiesStore extends TronDatabase {
   }
 
   @Override
-  void putItem(byte[] key, Object item) {
+  public void put(byte[] key, Object item) {
 
   }
 
   @Override
-  void deleteItem(byte[] key) {
+  public void delete(byte[] key) {
 
   }
 
   @Override
-  public Object getItem(byte[] key) {
+  public Object get(byte[] key) {
     return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
   }
 
   private static DynamicPropertiesStore instance;
