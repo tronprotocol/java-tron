@@ -12,11 +12,13 @@ import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
@@ -25,7 +27,9 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocal;
+import org.tron.protos.Protocal.BlockInventory.Type;
 import org.tron.protos.Protocal.Inventory.InventoryType;
+
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
@@ -53,7 +57,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
 
-  ExecutorLoop<InventoryMessage> loopAdvertiseInv;
+  ExecutorLoop<Message> loopAdvertiseInv;
 
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
@@ -158,7 +162,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     advertiseLoopThread = new Thread(() -> {
       while (isAdvertiseActive) {
-        if (blockToAdvertise.isEmpty() && trxToAdvertise.isEmpty()) {
+        if (trxToAdvertise.isEmpty() && blockToAdvertise.isEmpty()) {
           try {
             Thread.sleep(1000);
           } catch (InterruptedException e) {
@@ -173,11 +177,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
         if (!blockToAdvertise.isEmpty()) {
           synchronized (this.blockToAdvertise) {
-            loopAdvertiseInv.push(new BlockInventoryMessage(blockToAdvertise));
+            loopAdvertiseInv.push(new BlockInventoryMessage(blockToAdvertise, Type.ADVTISE));
             blockToAdvertise.clear();
           }
         }
-
       }
     });
     advertiseLoopThread.start();
@@ -202,21 +205,46 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     logger.info("on handle block message");
-    peer.setLastBlockPeerKnow((BlockId)blkMsg.getMessageId());
-    del.handleBlock(blkMsg.getBlockCapsule());
+    peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
+    try {
+      del.handleBlock(blkMsg.getBlockCapsule());
+    } catch (ValidateSignatureException e) {
+      //TODO process validate signature exception
+      e.printStackTrace();
+    } catch (BadBlockException e) {
+
+    }
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     logger.info("on handle transaction message");
-    del.handleTransaction(trxMsg.getTransactionCapsule());
+    try {
+      del.handleTransaction(trxMsg.getTransactionCapsule());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    }
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
-    //List<Sha256Hash> blockIds = del.getLostBlockIds(syncMsg.getHashList());
-    //BlockInventoryMessage blkInvMsg = new BlockInventoryMessage(blockIds);
-    //ChainInventoryMessage chainInvMsg = new ChainInventoryMessage(blockIds);
-    //peer.sendMessage(chainInvMsg);
+    List<BlockId> blockIds = new ArrayList<>();
+    List<BlockId> summaryCHhainIds = syncMsg.getBlockIds();
+    try {
+      blockIds = del.getLostBlockIds(summaryCHhainIds);
+    } catch (UnReachBlockException e) {
+
+    }
+
+    if (blockIds.isEmpty()) {
+      peer.setNeedSyncFromUs(false);
+    }
+
+    if (!peer.isNeedSyncFromPeer()
+        && !summaryCHhainIds.isEmpty()
+        && !del.contain(summaryCHhainIds.get(summaryCHhainIds.size() - 1), MessageTypes.BLOCK)) {
+      startSyncWithPeer(peer);
+    }
+    peer.sendMessage(new ChainInventoryMessage(blockIds));
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
@@ -236,6 +264,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
     logger.info("on handle block chain inventory message");
+
+
+
+
 //    List<Sha256Hash> blockIds = del.getLostBlockIds(msg.getHashList());
 //    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(blockIds, InventoryType.BLOCK);
 //    fetchMap.put(fetchMsg.getMessageId(), peer);
@@ -247,7 +279,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //todo: check this peer's advertise history and the history of our request to this peer.
     //simple implement here first
     List<Sha256Hash> fetchList = new ArrayList<>();
-    msg.getHashList().forEach(hash -> {
+    msg.getBlockIds().forEach(hash -> {
       //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
       logger.info("We will fetch " + hash + " from " + peer);
       fetchList.add(hash);
@@ -286,6 +318,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       e.printStackTrace();
       disconnectPeer(peer);
     }
+
   }
 
   @Override

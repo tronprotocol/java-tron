@@ -34,18 +34,17 @@ import org.tron.core.capsule.utils.TxInputUtil;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
 import org.tron.protos.Protocal.Transaction.Contract.ContractType;
 import org.tron.protos.Protocal.Transaction.TranscationType;
 
-public class TransactionCapsule {
+public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
 
@@ -129,7 +128,7 @@ public class TransactionCapsule {
   }
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
-    Account account = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
       return; // Account isexit
     }
@@ -145,12 +144,12 @@ public class TransactionCapsule {
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
     Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
-    Account owner = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule owner = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {
       return; //The balance is not enough
     }
 
-    Account to = accountStore.getAccount(contract.getToAddress().toByteArray());
+    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
 
     if (to == null) {
       return; //to is invalid
@@ -227,10 +226,6 @@ public class TransactionCapsule {
     return true;
   }
 
-  public Transaction getTransaction() {
-    return transaction;
-  }
-
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
@@ -300,10 +295,10 @@ public class TransactionCapsule {
   /**
    * validate signature
    */
-  public boolean validateSignature() throws ValidateException {
-    if (this.getTransaction().getSignatureCount() !=
-        this.getTransaction().getRawData().getContractCount()) {
-      throw new ValidateException("miss sig or contract");
+  public boolean validateSignature() throws ValidateSignatureException {
+    if (this.getInstance().getSignatureCount() !=
+        this.getInstance().getRawData().getContractCount()) {
+      throw new ValidateSignatureException("miss sig or contract");
     }
 
     List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
@@ -314,10 +309,10 @@ public class TransactionCapsule {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
-          throw new ValidateException("sig error");
+          throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
-        throw new ValidateException(e.getMessage());
+        throw new ValidateSignatureException(e.getMessage());
       }
     }
     return true;
@@ -327,8 +322,14 @@ public class TransactionCapsule {
     return Sha256Hash.of(this.transaction.toByteArray());
   }
 
+  @Override
   public byte[] getData() {
     return this.transaction.toByteArray();
+  }
+
+  @Override
+  public Transaction getInstance() {
+    return this.transaction;
   }
 
   @Override

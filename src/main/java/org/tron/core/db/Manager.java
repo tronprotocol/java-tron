@@ -27,7 +27,10 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.config.args.InitialWitness;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.AccountType;
 
 public class Manager {
@@ -85,6 +88,10 @@ public class Manager {
 
   public Sha256Hash getHeadBlockId() {
     return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
+  }
+
+  public long getHeadBlockNum() {
+    return head.getNum();
   }
 
   /**
@@ -168,6 +175,10 @@ public class Manager {
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
 
+  public BlockId getGenesisBlockId() {
+    return genesisBlock.getBlockId();
+  }
+
   /**
    * init genesis block.
    */
@@ -185,7 +196,7 @@ public class Manager {
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
         try {
           this.pushBlock(this.genesisBlock);
-        } catch (final ValidateException e) {
+        } catch (ValidateSignatureException e) {
           e.printStackTrace();
         }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
@@ -209,7 +220,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(key.getBalance()));
 
-      this.accountStore.putAccount(accountCapsule);
+      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
     });
   }
 
@@ -217,16 +228,34 @@ public class Manager {
     return this.accountStore;
   }
 
+  public void adjustBalance(byte[] account_address, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().get(account_address);
+    long balance = account.getBalance();
+    if (amount == 0) {
+      return;
+    }
+    if (amount < 0) {
+      if (balance < -amount) {
+        throw new BalanceInsufficientException(account_address + " Insufficient");
+      }
+    }
+    account.setBalance(balance + amount);
+    getAccountStore().put(account.getAddress().toByteArray(), account);
+  }
+
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx) throws ValidateException {
+  public boolean pushTransactions(TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
-      throw new ValidateException("trans sig validate failed");
+      throw new ValidateSignatureException("trans sig validate failed");
     }
-    this.pendingTrxs.add(trx);
-    this.getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
+    processTransaction(trx);
+    pendingTrxs.add(trx);
+    getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
   }
 
@@ -234,8 +263,8 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(final BlockCapsule block) throws ValidateException {
-    this.khaosDb.push(block);
+  public void pushBlock(BlockCapsule block) throws ValidateSignatureException {
+    khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
       if (!block.validateSignature()) {
@@ -248,15 +277,15 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      for (final TransactionCapsule trx : block.getTransactions()) {
-        this.processTrx(trx);
+      for (TransactionCapsule trx : block.getTransactions()) {
+        processTrx(trx);
       }
       //todo: In some case it need to switch the branch
     }
-    this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
-    this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    this.head = this.khaosDb.getHead();
+    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    head = khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
@@ -264,9 +293,9 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
-    final Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-        this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
+  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
+    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(ArrayList::new));
@@ -320,7 +349,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTrx(final TransactionCapsule trxCap) throws ValidateException {
+  public boolean processTransaction(final TransactionCapsule trxCap) throws ValidateException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
@@ -391,10 +420,16 @@ public class Manager {
       }
 
       // apply transaction
-      if (this.processTrx(trx)) {
-        // push into block
-        blockCapsule.addTransaction(trx);
-        this.pendingTrxs.remove(trx);
+      try {
+        if (processTransaction(trx)) {
+          // push into block
+          blockCapsule.addTransaction(trx);
+          pendingTrxs.remove(trx);
+        }
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
+        e.printStackTrace();
       }
     }
 
@@ -444,15 +479,20 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(final BlockCapsule block) throws ValidateException {
-    for (final TransactionCapsule transactionCapsule : block.getTransactions()) {
-      this.processTrx(transactionCapsule);
-    }
+  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      try {
+        processTransaction(transactionCapsule);
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
+        e.printStackTrace();
+      }
+      this.updateDynamicProperties(block);
 
-    this.updateDynamicProperties(block);
-
-    if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block.getTimeStamp()) {
-      this.processMaintenance();
+      if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block.getTimeStamp()) {
+        this.processMaintenance();
+      }
     }
   }
 

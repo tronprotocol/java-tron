@@ -28,11 +28,12 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
-public class BlockCapsule {
+public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
 
@@ -82,6 +83,16 @@ public class BlockCapsule {
      */
     public BlockId(Sha256Hash hash, long num) {
       super(hash.getBytes());
+      this.num = num;
+    }
+
+    public BlockId(byte[] hash, long num) {
+      super(hash);
+      this.num = num;
+    }
+
+    public BlockId(ByteString hash, long num) {
+      super(hash.toByteArray());
       this.num = num;
     }
 
@@ -157,7 +168,7 @@ public class BlockCapsule {
   }
 
   public void addTransaction(TransactionCapsule pendingTrx) {
-    this.block = this.block.toBuilder().addTransactions(pendingTrx.getTransaction()).build();
+    this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -183,15 +194,14 @@ public class BlockCapsule {
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  public boolean validateSignature() {
+  public boolean validateSignature() throws ValidateSignatureException {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      e.printStackTrace();
-      return false;
+      throw new ValidateSignatureException(e.getMessage());
     }
   }
 
@@ -274,9 +284,15 @@ public class BlockCapsule {
     unPack();
   }
 
+  @Override
   public byte[] getData() {
     pack();
     return data;
+  }
+
+  @Override
+  public Block getInstance() {
+    return this.block;
   }
 
   public Sha256Hash getParentHash() {

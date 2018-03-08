@@ -16,7 +16,8 @@ public class DynamicPropertiesStore extends TronDatabase {
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
-  private static final byte[] STATE_FLAG = "state_flag".getBytes();// 1 : is maintenance, 0 : is not maintenance
+  private static final byte[] STATE_FLAG = "state_flag"
+      .getBytes();// 1 : is maintenance, 0 : is not maintenance
 
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
@@ -51,6 +52,26 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   }
 
+  @Override
+  public void put(byte[] key, Object item) {
+
+  }
+
+  @Override
+  public void delete(byte[] key) {
+
+  }
+
+  @Override
+  public Object get(byte[] key) {
+    return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
+  }
+
   private static DynamicPropertiesStore instance;
 
   /**
@@ -69,20 +90,6 @@ public class DynamicPropertiesStore extends TronDatabase {
     return instance;
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 
   /**
    * get timestamp of creating global latest block.

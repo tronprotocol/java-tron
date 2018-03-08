@@ -33,7 +33,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -114,7 +114,7 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.getAccount(account.getAddress().toByteArray());
+    return accountStore.get(account.getAddress().toByteArray()).getInstance();
   }
 
 
@@ -125,7 +125,7 @@ public class Wallet {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
         utxoStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 
@@ -135,7 +135,7 @@ public class Wallet {
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   /**
@@ -150,7 +150,7 @@ public class Wallet {
         p2pnode.broadcast(message);
         return true;
       }
-    } catch (ValidateException e) {
+    } catch (ValidateSignatureException e) {
       e.printStackTrace();
     }
     return false;
@@ -159,22 +159,22 @@ public class Wallet {
   public Transaction createAccount(AccountCreateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(assetIssueContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public AccountList getAllAccounts() {

@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.protos.Protocal.Witness;
 
-public class WitnessCapsule {
+public class WitnessCapsule implements ProtoCapsule<Witness> {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessCapsule");
   private Witness witness;
@@ -85,9 +85,15 @@ public class WitnessCapsule {
     return this.witness.getAddress();
   }
 
+  @Override
   public byte[] getData() {
     this.pack();
     return this.data;
+  }
+
+  @Override
+  public Witness getInstance() {
+    return this.witness;
   }
 
   public long getLatestBlockNum() {

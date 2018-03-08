@@ -12,11 +12,16 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ValidateException;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
+
 
 public class NodeDelegateImpl implements NodeDelegate {
 
@@ -33,69 +38,78 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void handleBlock(BlockCapsule block) {
-
-    try {
-      dbManager.processBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
+  public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
+    long gap = System.currentTimeMillis() - block.getTimeStamp();
+    if (gap / 1000 < -6000) {
+      throw new BadBlockException("block time error");
     }
-    try {
-      dbManager.pushBlock(block);
-    } catch (ValidateException e) {
-      e.printStackTrace();
-    }
+    dbManager.pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-
-    //dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.get);
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    //dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getHash());
   }
 
 
   @Override
-  public void handleTransaction(TransactionCapsule trx) {
+  public void handleTransaction(TransactionCapsule trx) throws ValidateSignatureException {
     logger.info("handle transaction");
     try {
       dbManager.pushTransactions(trx);
-    } catch (ValidateException e) {
-      logger.error("new transaction is not valid");
+    } catch (ContractValidateException e) {
+      logger.info("Contract validate failed");
+      // TODO stores failed trans in db for inquiry.
+      e.printStackTrace();
+    } catch (ContractExeException e) {
+      logger.info("Contract execute failed");
+      // TODO stores failed trans in db for inquiry.
+      e.printStackTrace();
     }
   }
 
   @Override
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
-    //todo: return the blocks it should be have.
 
-    List<BlockId> retBlockHashes = new ArrayList<>();
-    Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;
+  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+      throws UnReachBlockException {
+    //todo: return the remain block count.
+    //todo: return the blocks it should be have.
+    List<BlockId> retBlockIds = new ArrayList<>();
+    if (dbManager.getHeadBlockNum() == 0) {
+      return retBlockIds;
+    }
+
+    BlockId unForkedBlockId = null;
+
+    if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
+      unForkedBlockId = dbManager.getGenesisBlockId();
+    }
 
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      for (Sha256Hash hash : blockChainSummary) {
-        if (dbManager.containBlock(hash)) {
-          lastKnownBlkHash = hash;
+      for (BlockId blockId : blockChainSummary) {
+        if (dbManager.containBlock(blockId)) {
+          unForkedBlockId = blockId;
           break;
         }
       }
 
-      if (lastKnownBlkHash == Sha256Hash.ZERO_HASH) {
+      if (unForkedBlockId == null) {
+        throw new UnReachBlockException();
         //todo: can not find any same block form peer's summary and my db.
       }
     }
 
-    for (long num = dbManager.getBlockNumById(lastKnownBlkHash);
-        num <= getBlockStoreDb().getHeadBlockNum(); ++num) {
+    //todo: limit the count of block to send peer by one time.
+    for (long num = unForkedBlockId.getNum();
+        num <= dbManager.getHeadBlockNum(); ++num) {
       if (num > 0) {
-        retBlockHashes.add(dbManager.getBlockIdByNum(num));
+        retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
     }
-    return retBlockHashes;
+    return retBlockIds;
   }
 
   @Override
-  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds)  {
+  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
     List<BlockId> retSummary = new ArrayList<>();
     long highBlkNum = 0;
