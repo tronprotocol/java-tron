@@ -9,10 +9,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.typesafe.config.ConfigObject;
-import org.tron.core.config.args.InitialWitness.LocalWitness;
 
 public class Args {
 
@@ -25,6 +21,9 @@ public class Args {
 
   @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
   private boolean help = false;
+
+  @Parameter(names = {"-w", "--witness"})
+  private boolean witness = false;
 
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
@@ -210,5 +209,7 @@ public class Args {
     this.initialWitness = initialWitness;
   }
 
-
+  public boolean isWitness() {
+    return witness;
+  }
 }
