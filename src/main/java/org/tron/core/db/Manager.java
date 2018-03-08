@@ -4,10 +4,13 @@ import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -368,7 +371,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(WitnessCapsule witnessCapsule,
-      long when, byte[] privateKey) throws ValidateSignatureException {
+                                    long when, byte[] privateKey) throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -387,19 +390,20 @@ public class Manager {
     BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    for (TransactionCapsule trx : pendingTrxs) {
+    Iterator iterator = pendingTrxs.iterator();
+    while (iterator.hasNext()) {
+      TransactionCapsule trx = (TransactionCapsule) iterator.next();
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
       if (currentTrxSize > TRXS_SIZE) {
         postponedTrxCount++;
         continue;
       }
-
       // apply transaction
       if (processTrx(trx)) {
         // push into block
         blockCapsule.addTransaction(trx);
-        pendingTrxs.remove(trx);
+        iterator.remove();
       }
     }
 
