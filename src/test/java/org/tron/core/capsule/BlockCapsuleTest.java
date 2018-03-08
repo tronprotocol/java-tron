@@ -74,6 +74,7 @@ public class BlockCapsuleTest {
 
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
     // test validateSignature
@@ -101,6 +102,7 @@ public class BlockCapsuleTest {
           blockCapsule2.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
   }
@@ -145,6 +147,7 @@ public class BlockCapsuleTest {
           blockCapsule2.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
     // before base64 end
@@ -166,6 +169,7 @@ public class BlockCapsuleTest {
       Assert.assertFalse("rawDate is different", blockCapsule3.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
   }
 
@@ -206,6 +210,7 @@ public class BlockCapsuleTest {
           blockCapsule2.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
     // before base64 start
@@ -257,6 +262,7 @@ public class BlockCapsuleTest {
       Assert.assertFalse("signature was changed", blockCapsule3.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
   }
@@ -294,6 +300,7 @@ public class BlockCapsuleTest {
           blockCapsule.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
   }
 
@@ -337,6 +344,7 @@ public class BlockCapsuleTest {
           blockCapsule.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
   }
 
@@ -379,6 +387,7 @@ public class BlockCapsuleTest {
           blockCapsule.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
   }
@@ -420,6 +429,7 @@ public class BlockCapsuleTest {
           blockCapsule.validateSignature());
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage());
+      Assert.assertTrue(false);
     }
 
   }
