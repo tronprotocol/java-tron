@@ -22,7 +22,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.Transaction;
 
 public class BlockUtil {
 

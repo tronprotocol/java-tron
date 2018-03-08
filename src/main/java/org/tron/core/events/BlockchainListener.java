@@ -15,7 +15,7 @@
 
 package org.tron.core.events;
 
-import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocol.Block;
 
 public interface BlockchainListener {
 

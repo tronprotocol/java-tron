@@ -3,8 +3,8 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
-import org.tron.protos.Protocal.BlockHeader;
-import org.tron.protos.Protocal.Items;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.Items;
 
 
 public class BlockHeadersMessage extends Message {

@@ -20,9 +20,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.Account.Vote;
-import org.tron.protos.Protocal.AccountType;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.Vote;
+import org.tron.protos.Protocol.AccountType;
 
 public class AccountCapsule implements ProtoCapsule<Account> {
 
