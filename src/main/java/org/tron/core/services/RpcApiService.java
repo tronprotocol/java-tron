@@ -19,7 +19,10 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocal.Account;
+import org.tron.protos.Protocal.AccountList;
+import org.tron.protos.Protocal.NullMessage;
 import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocal.WitnessList;
 
 public class RpcApiService implements Service {
 
@@ -164,6 +167,19 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listAccounts(NullMessage request, StreamObserver<AccountList> responseObserver) {
+      wallet.getAllAccounts();
+
+//      responseObserver.onNext();
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listWitnesses(NullMessage request, StreamObserver<WitnessList> responseObserver) {
+      super.listWitnesses(request, responseObserver);
     }
   }
 
