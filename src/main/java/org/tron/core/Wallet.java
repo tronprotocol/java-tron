@@ -110,7 +110,7 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.getAccount(account.getAddress().toByteArray());
+    return accountStore.get(account.getAddress().toByteArray()).getInstance();
   }
 
   /**
@@ -120,7 +120,7 @@ public class Wallet {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
         utxoStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 
@@ -130,7 +130,7 @@ public class Wallet {
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   /**
@@ -155,22 +155,22 @@ public class Wallet {
   public Transaction createAccount(AccountCreateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(assetIssueContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 }
