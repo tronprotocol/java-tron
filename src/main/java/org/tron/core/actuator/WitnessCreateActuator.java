@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -31,7 +32,7 @@ public class WitnessCreateActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     try {
       if (!contract.is(WitnessCreateContract.class)) {
         throw new RuntimeException(

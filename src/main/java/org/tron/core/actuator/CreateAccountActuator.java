@@ -30,7 +30,7 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     try {
       if (!contract.is(AccountCreateContract.class)) {
         throw new RuntimeException(
@@ -44,7 +44,7 @@ public class CreateAccountActuator extends AbstractActuator {
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(contract.getType(), "Type is null");
 
-      if (dbManager.getAccountStore().isAccountExist(contract.getOwnerAddress().toByteArray())) {
+      if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
         throw new RuntimeException("Account has existed");
       }
 

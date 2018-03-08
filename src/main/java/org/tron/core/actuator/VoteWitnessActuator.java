@@ -31,7 +31,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     try {
       if (!contract.is(VoteWitnessContract.class)) {
         throw new RuntimeException(
@@ -43,11 +43,11 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
-      if (!dbManager.getAccountStore().isAccountExist(contract.getOwnerAddress().toByteArray())) {
+      if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
         throw new RuntimeException("Account[" + contract.getOwnerAddress() + "] not exists");
       }
 
-      long share = dbManager.getAccountStore().getAccount(contract.getOwnerAddress()).getShare();
+      long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray()).getShare();
       long sum = contract.getVotesList().stream().map(vote -> vote.getVoteCount()).count();
       if (sum > share) {
         throw new RuntimeException(

@@ -278,7 +278,7 @@ public class Manager {
         return;
       }
       for (TransactionCapsule trx : block.getTransactions()) {
-        processTrx(trx);
+        processTransaction(trx);
       }
       //todo: In some case it need to switch the branch
     }
@@ -349,15 +349,15 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap) throws ValidateException {
+  public boolean processTransaction(final TransactionCapsule trxCap) {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     assert actuatorList != null;
-    actuatorList.forEach(actuator -> actuator.validator());
-    actuatorList.forEach(actuator -> actuator.execute());
+    actuatorList.forEach(Actuator::validate);
+    actuatorList.forEach(Actuator::execute);
     return true;
   }
 
@@ -392,7 +392,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) throws ValidateException {
+      final long when, final byte[] privateKey){
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
 
@@ -490,7 +490,8 @@ public class Manager {
       }
       this.updateDynamicProperties(block);
 
-      if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block.getTimeStamp()) {
+      if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
+          .getTimeStamp()) {
         this.processMaintenance();
       }
     }
