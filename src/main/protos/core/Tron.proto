@@ -29,10 +29,6 @@ message Account {
   map<string, int64> asset = 6;
 }
 
-message AccountList {
-  repeated Account accounts = 1;
-}
-
 // Witness
 message Witness {
   bytes address = 1;
@@ -42,11 +38,6 @@ message Witness {
   int64 totalProduced = 5;
   int64 totalMissed = 6;
   int64 latestBlockNum = 7;
-}
-
-
-message WitnessList {
-  repeated Witness witnesses = 1;
 }
 
 message NullMessage {
@@ -127,6 +118,7 @@ message Block {
 }
 
 // Inventory
+
 message BlockInventory {
   enum Type {
     SYNC = 0;
