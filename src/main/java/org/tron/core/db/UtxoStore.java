@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.TXOutputs;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.TXOutputs;
 
 import java.util.ArrayList;
 import java.util.HashMap;

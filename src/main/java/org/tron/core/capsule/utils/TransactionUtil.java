@@ -19,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
 
 public class TransactionUtil {
 

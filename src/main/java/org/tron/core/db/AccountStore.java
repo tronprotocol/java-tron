@@ -7,7 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.protos.Protocal.Account;
+import org.tron.protos.Protocol.Account;
 
 public class AccountStore extends TronDatabase {
 

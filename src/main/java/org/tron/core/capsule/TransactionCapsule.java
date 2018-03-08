@@ -37,12 +37,12 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.TXInput;
-import org.tron.protos.Protocal.TXOutput;
-import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.Transaction.Contract.ContractType;
-import org.tron.protos.Protocal.Transaction.TranscationType;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.TXInput;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.TransactionType;
 
 public class TransactionCapsule {
 
@@ -128,7 +128,7 @@ public class TransactionCapsule {
     }
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).setParameter(
             Any.pack(contract)).build());
     logger.info("Transaction create succeeded！");
@@ -150,7 +150,7 @@ public class TransactionCapsule {
     }
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
             Any.pack(contract)).build());
     logger.info("Transaction create succeeded！");
@@ -160,7 +160,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.VoteWitnessContract voteWitnessContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
             Any.pack(voteWitnessContract)).build());
     logger.info("Transaction create succeeded！");
@@ -171,7 +171,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.WitnessCreateContract witnessCreateContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.WitnessCreateContract).setParameter(
             Any.pack(witnessCreateContract)).build());
     logger.info("Transaction create succeeded！");
@@ -181,7 +181,7 @@ public class TransactionCapsule {
   public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TranscationType.ContractType).addContract(
+        TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.AssetIssueContract).setParameter(
             Any.pack(assetIssueContract)).build());
     logger.info("Transaction create succeeded！");
