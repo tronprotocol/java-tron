@@ -5,8 +5,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import org.tron.core.Sha256Hash;
-import org.tron.protos.Protocal.Inventory;
-import org.tron.protos.Protocal.Inventory.InventoryType;
+import org.tron.protos.Protocol.Inventory;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 
 public class InventoryMessage extends Message {

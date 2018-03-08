@@ -2,8 +2,8 @@ package org.tron.core.net.message;
 
 import java.util.List;
 import org.tron.core.Sha256Hash;
-import org.tron.protos.Protocal.Inventory;
-import org.tron.protos.Protocal.Inventory.InventoryType;
+import org.tron.protos.Protocol.Inventory;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class FetchInvDataMessage extends InventoryMessage {
 

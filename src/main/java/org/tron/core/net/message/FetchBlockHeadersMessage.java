@@ -1,6 +1,6 @@
 package org.tron.core.net.message;
 
-import org.tron.protos.Protocal;
+import org.tron.protos.Protocol;
 
 public class FetchBlockHeadersMessage extends InventoryMessage {
 
@@ -8,7 +8,7 @@ public class FetchBlockHeadersMessage extends InventoryMessage {
     super(packed);
   }
 
-  public FetchBlockHeadersMessage(Protocal.Inventory inv) {
+  public FetchBlockHeadersMessage(Protocol.Inventory inv) {
     super(inv);
   }
 

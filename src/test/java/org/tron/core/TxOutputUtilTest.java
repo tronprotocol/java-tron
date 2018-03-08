@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.TxOutputUtil;
-import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocol.TXOutput;
 
 public class TxOutputUtilTest {
 

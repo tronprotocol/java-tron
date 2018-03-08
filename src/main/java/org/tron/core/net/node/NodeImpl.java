@@ -26,9 +26,9 @@ import org.tron.core.net.message.TransactionInventoryMessage;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.BlockInventory.Type;
-import org.tron.protos.Protocal.Inventory.InventoryType;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.BlockInventory.Type;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
@@ -249,7 +249,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
-    Protocal.Inventory inv = fetchInvDataMsg.getInventory();
+    Protocol.Inventory inv = fetchInvDataMsg.getInventory();
     MessageTypes type =
         inv.getType() == InventoryType.BLOCK ? MessageTypes.BLOCK : MessageTypes.TRX;
 

@@ -29,9 +29,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.BlockHeader;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.Transaction;
 
 public class BlockCapsule implements ProtoCapsule<Block> {
 

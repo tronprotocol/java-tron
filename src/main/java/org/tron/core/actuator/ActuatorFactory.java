@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
-import org.tron.protos.Protocal;
-import org.tron.protos.Protocal.Transaction.Contract;
-import org.tron.protos.Protocal.Transaction.TranscationType;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.TransactionType;
 
 public class ActuatorFactory {
 
@@ -33,11 +33,10 @@ public class ActuatorFactory {
       logger.info("manager is null");
       return actuatorList;
     }
-
-    Protocal.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
-    if (TranscationType.ContractType.equals(rawData.getType())) {
-      rawData.getContractList()
-          .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
+    
+    Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
+    if (TransactionType.ContractType.equals(rawData.getType())) {
+      rawData.getContractList().forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     }
     return actuatorList;
   }
