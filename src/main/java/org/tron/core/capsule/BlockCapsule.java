@@ -33,7 +33,7 @@ import org.tron.protos.Protocal.Block;
 import org.tron.protos.Protocal.BlockHeader;
 import org.tron.protos.Protocal.Transaction;
 
-public class BlockCapsule {
+public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
 
@@ -168,7 +168,7 @@ public class BlockCapsule {
   }
 
   public void addTransaction(TransactionCapsule pendingTrx) {
-    this.block = this.block.toBuilder().addTransactions(pendingTrx.getTransaction()).build();
+    this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -284,9 +284,15 @@ public class BlockCapsule {
     unPack();
   }
 
+  @Override
   public byte[] getData() {
     pack();
     return data;
+  }
+
+  @Override
+  public Block getInstance() {
+    return this.block;
   }
 
   public Sha256Hash getParentHash() {
