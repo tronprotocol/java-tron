@@ -2,7 +2,7 @@ package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.protos.Protocol.Transaction;
 
 public class TransactionMessage extends Message {
 

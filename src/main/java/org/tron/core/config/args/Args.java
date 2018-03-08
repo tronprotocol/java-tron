@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,10 +115,9 @@ public class Args {
 
   private static List<Account> getAccountsFromConfig(com.typesafe.config.Config config) {
     List<? extends ConfigObject> assets = config.getObjectList("genesis.block.assets");
-
-    List<Account> accounts = new ArrayList<>();
-    assets.forEach(asset -> accounts.add(createAccount(asset)));
-    return accounts;
+    return assets.stream()
+            .map(Args::createAccount)
+            .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private static Account createAccount(ConfigObject asset) {
