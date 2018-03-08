@@ -18,7 +18,7 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     //TODO
     return false;
   }

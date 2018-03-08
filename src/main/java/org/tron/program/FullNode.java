@@ -29,7 +29,9 @@ public class FullNode {
     appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT);
     appT.addService(rpcApiService);
-    appT.addService(new WitnessService(appT));
+    if (cfgArgs.isWitness()) {
+      appT.addService(new WitnessService(appT));
+    }
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();

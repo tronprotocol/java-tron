@@ -188,8 +188,8 @@ protobuf {
 }
 
 run {
-    if (project.hasProperty('server')) {
+    if (project.hasProperty('witness')) {
         standardInput = System.in
-        args = ['--type', 'server']
+        args = ['--witness', true]
     }
 }

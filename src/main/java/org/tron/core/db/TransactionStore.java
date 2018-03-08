@@ -1,9 +1,33 @@
 package org.tron.core.db;
 
-public class TransactionStore extends TronDatabase {
+import org.tron.core.capsule.TransactionCapsule;
+
+public class TransactionStore extends TronDatabase<TransactionCapsule> {
 
   private TransactionStore(String dbName) {
     super(dbName);
+  }
+
+  @Override
+  public void put(byte[] key, TransactionCapsule item) {
+
+  }
+
+
+  @Override
+  public void delete(byte[] key) {
+
+  }
+
+  @Override
+  public TransactionCapsule get(byte[] key) {
+    return null;
+  }
+
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
   }
 
   private static TransactionStore instance;
@@ -30,18 +54,4 @@ public class TransactionStore extends TronDatabase {
     return dbSource.getData(trxHash);
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 }

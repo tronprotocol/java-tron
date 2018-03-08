@@ -3,11 +3,10 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.db.AccountStore;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Protocal.AccountType;
+import org.tron.protos.Protocol.AccountType;
 
 public class CreateAccountActuator extends AbstractActuator {
 
@@ -26,13 +25,11 @@ public class CreateAccountActuator extends AbstractActuator {
         AccountType type = accountCreateContract.getType();
         int typeValue = accountCreateContract.getTypeValue();
         if (null != dbManager) {
-          boolean accountExist = dbManager.getAccountStore()
-              .isAccountExist(ownerAddress.toByteArray());
+          boolean accountExist = dbManager.getAccountStore().has(ownerAddress.toByteArray());
           if (null != accountName && !accountExist) {
-            Account account = Account.newBuilder().setAddress(ownerAddress)
-                .setAccoutName(accountName).setType(type).setTypeValue(typeValue).build();
-            AccountStore accountStore = dbManager.getAccountStore();
-            accountStore.createAccount(ownerAddress.toByteArray(), account.toByteArray());
+            AccountCapsule accountCapsule = new AccountCapsule(ownerAddress, accountName, type,
+                typeValue);
+            dbManager.getAccountStore().createAccount(ownerAddress.toByteArray(), accountCapsule);
           }
         }
       }
@@ -44,7 +41,7 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validator() {
+  public boolean validate() {
     //TODO
     return false;
   }

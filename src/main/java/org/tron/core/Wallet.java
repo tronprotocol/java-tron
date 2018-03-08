@@ -18,10 +18,7 @@
 
 package org.tron.core;
 
-import com.google.protobuf.Any;
-
 import java.util.ArrayList;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,17 +31,18 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocal.Account;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocal.Transaction;
-import org.tron.protos.Protocal.TXOutput;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Protocol.Transaction;
 
 public class Wallet {
 
@@ -112,7 +110,7 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.getAccount(account.getAddress().toByteArray());
+    return accountStore.get(account.getAddress().toByteArray()).getInstance();
   }
 
   /**
@@ -122,7 +120,7 @@ public class Wallet {
     long balance = getBalance(address);
     TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
         utxoStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 
@@ -132,7 +130,7 @@ public class Wallet {
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   /**
@@ -141,10 +139,14 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
 
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.validateSignature()) {
-      Message message = new TransactionMessage(signaturedTransaction);
-      p2pnode.broadcast(message);
-      return true;
+    try {
+      if (trx.validateSignature()) {
+        Message message = new TransactionMessage(signaturedTransaction);
+        p2pnode.broadcast(message);
+        return true;
+      }
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
     }
     return false;
   }
@@ -152,22 +154,22 @@ public class Wallet {
   public Transaction createAccount(AccountCreateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(contract, accountStore);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(voteWitnessContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(assetIssueContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
-    return transactionCapsule.getTransaction();
+    return transactionCapsule.getInstance();
   }
 
 }

@@ -22,20 +22,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Sha256Hash;
-import org.tron.protos.Protocal.Block;
-import org.tron.protos.Protocal.BlockHeader;
-import org.tron.protos.Protocal.Transaction;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.Transaction;
 
-public class BlockCapsule {
+public class BlockCapsule implements ProtoCapsule<Block> {
 
-  public class BlockId extends Sha256Hash {
+  public static class BlockId extends Sha256Hash {
 
     @Override
     public boolean equals(Object o) {
@@ -60,16 +60,39 @@ public class BlockCapsule {
 
     @Override
     public int compareTo(Sha256Hash other) {
+      if (other.getClass().equals(BlockId.class)) {
+        long otherNum = ((BlockId) other).getNum();
+        if (num > otherNum) {
+          return 1;
+        } else if (otherNum < num) {
+          return -1;
+        }
+      }
       return super.compareTo(other);
     }
 
-    private long num = 0;
+    private long num;
+
+    public BlockId() {
+      super(Sha256Hash.ZERO_HASH.getBytes());
+      num = 0;
+    }
 
     /**
      * Use {@link #wrap(byte[])} instead.
      */
     public BlockId(Sha256Hash hash, long num) {
       super(hash.getBytes());
+      this.num = num;
+    }
+
+    public BlockId(byte[] hash, long num) {
+      super(hash);
+      this.num = num;
+    }
+
+    public BlockId(ByteString hash, long num) {
+      super(hash.toByteArray());
       this.num = num;
     }
 
@@ -144,8 +167,8 @@ public class BlockCapsule {
     unpacked = true;
   }
 
-  public void addTransaction(Transaction pendingTrx) {
-    this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
+  public void addTransaction(TransactionCapsule pendingTrx) {
+    this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -171,21 +194,20 @@ public class BlockCapsule {
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  public boolean validateSignature() {
+  public boolean validateSignature() throws ValidateSignatureException {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               block.getBlockHeader().getWitnessSignature().toStringUtf8()),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      e.printStackTrace();
-      return false;
+      throw new ValidateSignatureException(e.getMessage());
     }
   }
 
-  public Sha256Hash getBlockId() {
+  public BlockId getBlockId() {
     unPack();
-    if(blockId.equals(Sha256Hash.ZERO_HASH)) {
+    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
     }
 
@@ -213,7 +235,8 @@ public class BlockCapsule {
       int k = 0;
       for (int i = 0; i < max; i += 2) {
         ids.set(k++, Sha256Hash
-            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString())).toByteArray()));
+            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString()))
+                .toByteArray()));
       }
 
       if (hashNum % 2 == 1) {
@@ -230,8 +253,8 @@ public class BlockCapsule {
     blockHeaderRaw = this.block.getBlockHeader().getRawData().toBuilder()
         .setTxTrieRoot(calcMerklerRoot().getByteString()).build();
 
-    this.block.toBuilder().setBlockHeader(
-        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw));
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
   public Sha256Hash getMerklerRoot() {
@@ -261,9 +284,15 @@ public class BlockCapsule {
     unPack();
   }
 
+  @Override
   public byte[] getData() {
     pack();
     return data;
+  }
+
+  @Override
+  public Block getInstance() {
+    return this.block;
   }
 
   public Sha256Hash getParentHash() {

@@ -1,17 +1,36 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.protos.Protocal.Witness;
+import org.tron.core.capsule.WitnessCapsule;
 
-public class WitnessStore extends TronDatabase {
+public class WitnessStore extends TronDatabase<WitnessCapsule> {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessStore");
 
   protected WitnessStore(String dbName) {
     super(dbName);
+  }
+
+  @Override
+  public void put(byte[] key, WitnessCapsule item) {
+
+  }
+
+  @Override
+  public void delete(byte[] key) {
+
+  }
+
+  @Override
+  public WitnessCapsule get(byte[] key) {
+    return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return false;
   }
 
   private static WitnessStore instance;
@@ -32,39 +51,20 @@ public class WitnessStore extends TronDatabase {
     return instance;
   }
 
-  public Witness getWitness(ByteString voteAddress) {
+  public WitnessCapsule getWitness(ByteString voteAddress) {
     logger.info("voteAddress is {} ", voteAddress);
 
-    try {
-      byte[] value = dbSource.getData(voteAddress.toByteArray());
-      if (null == value) {
-        return null;
-      }
-      return Witness.parseFrom(value);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+    byte[] value = dbSource.getData(voteAddress.toByteArray());
+    if (null == value) {
+      return null;
     }
-    return null;
+    return new WitnessCapsule(value);
   }
 
-  public void putWitness(Witness witness) {
-    logger.info("voteAddress is {} ", witness.getAddress());
+  public void putWitness(WitnessCapsule witnessCapsule) {
+    logger.info("voteAddress is {} ", witnessCapsule.getAddress());
 
-    dbSource.putData(witness.getAddress().toByteArray(), witness.toByteArray());
+    dbSource.putData(witnessCapsule.getAddress().toByteArray(), witnessCapsule.getData());
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 }
