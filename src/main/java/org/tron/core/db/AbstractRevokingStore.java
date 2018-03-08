@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.SourceInter;
@@ -15,7 +12,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.LinkedBlockingDeque;
 
 @Slf4j
 abstract class AbstractRevokingStore implements RevokingDatabase {
@@ -165,9 +161,9 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
         return;
       }
   
-      state.oldValues.forEach((k, v) -> k.getDatabase().putData(k.getKey(), v));
-      state.newIds.forEach(e -> e.getDatabase().deleteData(e.getKey()));
-      state.removed.forEach((k, v) -> k.getDatabase().putData(k.getKey(), v));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
+      state.newIds.forEach(e -> e.database.deleteData(e.key));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
       enable();
@@ -270,8 +266,6 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
   }
   
-  @Data
-  @NoArgsConstructor
   @AllArgsConstructor
   public static class RevokingTuple {
     private SourceInter<byte[], byte[]> database;
