@@ -1,8 +1,9 @@
 package org.tron.core.db;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.Utils;
 
 import java.util.Deque;
 import java.util.HashMap;
@@ -44,19 +45,54 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   
   @Override
   public void onCreate(RevokingTuple tuple, byte[] value) {
+    if (disabled) {
+      return;
+    }
   
+    addIfEmtpy();
+    RevokingState state = stack.peekLast();
+    state.newIds.add(tuple);
   }
   
   @Override
   public void onModify(RevokingTuple tuple, byte[] value) {
-  
+    if (disabled) {
+      return;
+    }
+    
+    addIfEmtpy();
+    RevokingState state = stack.peekLast();
+    if (state.newIds.contains(tuple) || state.oldValues.containsKey(tuple)) {
+      return;
+    }
+    
+    state.oldValues.put(tuple, Utils.clone(value));
   }
   
   @Override
   public void onRemove(RevokingTuple tuple, byte[] value) {
-  
+    if (disabled) {
+      return;
+    }
+    
+    addIfEmtpy();
+    RevokingState state = stack.peekLast();
+    if (state.newIds.contains(tuple)) {
+      state.newIds.remove(tuple);
+    }
+    
+    if (state.oldValues.containsKey(tuple)) {
+      state.removed.put(tuple, state.oldValues.get(tuple));
+      state.oldValues.remove(tuple);
+      return;
+    }
+    
+    if (state.removed.containsKey(tuple)) {
+      return;
+    }
+    
+    state.removed.put(tuple, Utils.clone(value));
   }
-  
   
   @Override
   public void merge() {
@@ -65,12 +101,15 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   
   @Override
   public void revoke() {
-  
+    disable();
+    
+    RevokingState state = stack.peekLast();
+    
   }
   
   @Override
   public void commit() {
-  
+    --activeDialog;
   }
   
   @Override
@@ -80,22 +119,28 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   
   @Override
   public RevokingState head() {
-    return null;
+    return stack.peekLast();
   }
   
   @Override
   public void enable() {
-  
+    disabled = false;
   }
   
   @Override
   public void disable() {
+    disabled = true;
+  }
   
+  private void addIfEmtpy() {
+    if (stack.isEmpty()) {
+      stack.add(new RevokingState());
+    }
   }
   
   @Builder
   @Slf4j
-  public class Dialog {
+  public static class Dialog implements AutoCloseable {
     private RevokingDatabase revokingDatabase;
     private boolean applyRevoking = true;
     private boolean disableOnExit = false;
@@ -120,7 +165,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       revokingDatabase.commit();
     }
     
-    void takeback() {
+    void revoke() {
       if (applyRevoking) {
         revokingDatabase.revoke();
       }
@@ -147,10 +192,23 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       applyRevoking = dialog.applyRevoking;
       dialog.applyRevoking = false;
     }
+  
+    @Override
+    public void close() throws Exception {
+      try {
+        if (applyRevoking) {
+          revokingDatabase.revoke();
+        }
+      } catch (Exception e) {
+        log.error("revoke database error.", e);
+        throw e;
+      }
+      if (disableOnExit) revokingDatabase.disable();
+    }
   }
   
-  @Data
-  class RevokingState {
+  @ToString
+  static class RevokingState {
     HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
     HashSet<RevokingTuple> newIds = new HashSet<>();
     HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
