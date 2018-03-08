@@ -110,7 +110,7 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.getAccount(account.getAddress().toByteArray());
+    return accountStore.getItem(account.getAddress().toByteArray()).getInstance();
   }
 
   /**

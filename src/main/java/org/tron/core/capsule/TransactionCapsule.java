@@ -38,7 +38,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.TXInput;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.Transaction;
@@ -129,7 +128,7 @@ public class TransactionCapsule {
   }
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
-    Account account = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule account = accountStore.getItem(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
       return; // Account isexit
     }
@@ -145,12 +144,12 @@ public class TransactionCapsule {
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
     Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
-    Account owner = accountStore.getAccount(contract.getOwnerAddress().toByteArray());
+    AccountCapsule owner = accountStore.getItem(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {
       return; //The balance is not enough
     }
 
-    Account to = accountStore.getAccount(contract.getToAddress().toByteArray());
+    AccountCapsule to = accountStore.getItem(contract.getToAddress().toByteArray());
 
     if (to == null) {
       return; //to is invalid

@@ -99,17 +99,18 @@ public class BlockStore extends TronDatabase {
   }
 
   @Override
-  void add() {
+  void putItem(byte[] key, Object item) {
 
   }
 
   @Override
-  void del() {
+  void deleteItem(byte[] key) {
 
   }
 
   @Override
-  void fetch() {
-
+  public Object getItem(byte[] key) {
+    return null;
   }
+
 }

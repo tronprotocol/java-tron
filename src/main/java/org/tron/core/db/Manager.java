@@ -27,6 +27,7 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.config.args.InitialWitness;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -216,6 +217,22 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return accountStore;
+  }
+
+  public void adjustBalance(byte[] account_address, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().getItem(account_address);
+    long balance = account.getBalance();
+    if (amount == 0) {
+      return;
+    }
+    if (amount < 0) {
+      if (balance < -amount) {
+        throw new BalanceInsufficientException(account_address + " Insufficient");
+      }
+    }
+    account.setBalance(balance + amount);
+    getAccountStore().putAccount(account);
   }
 
   /**

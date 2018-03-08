@@ -54,16 +54,18 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
       logger.info("Contract validate failed");
+      // TODO stores failed trans in db for inquiry.
       e.printStackTrace();
     } catch (ContractExeException e) {
       logger.info("Contract execute failed");
+      // TODO stores failed trans in db for inquiry.
       e.printStackTrace();
     }
   }
 
   @Override
   public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
-    //todo: return the blocks it should be have.
+    //TODO: return the blocks it should be have.
 
     List<BlockId> retBlockHashes = new ArrayList<>();
     Sha256Hash lastKnownBlkHash = Sha256Hash.ZERO_HASH;

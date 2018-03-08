@@ -24,7 +24,7 @@ import org.tron.protos.Protocal.Account;
 import org.tron.protos.Protocal.Account.Vote;
 import org.tron.protos.Protocal.AccountType;
 
-public class AccountCapsule {
+public class AccountCapsule implements ProtoCapsule<Account> {
 
   protected static final Logger logger = LoggerFactory.getLogger("AccountCapsule");
 
@@ -96,9 +96,28 @@ public class AccountCapsule {
     return data;
   }
 
+  @Override
+  public Account getInstance() {
+    return this.account;
+  }
+
   public ByteString getAddress() {
     unPack();
     return this.account.getAddress();
+  }
+
+  public AccountType getType() {
+    unPack();
+    return this.account.getType();
+  }
+
+
+  public long getBalance() {
+    return this.account.getBalance();
+  }
+
+  public void setBalance(long balance) {
+    this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
   @Override
@@ -106,6 +125,7 @@ public class AccountCapsule {
     unPack();
     return this.account.toString();
   }
+
 
   public void addVotes(ByteString voteAddress, long voteAdd) {
     unPack();

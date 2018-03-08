@@ -6,6 +6,21 @@ public class TransactionStore extends TronDatabase {
     super(dbName);
   }
 
+  @Override
+  void putItem(byte[] key, Object item) {
+
+  }
+
+  @Override
+  void deleteItem(byte[] key) {
+
+  }
+
+  @Override
+  public Object getItem(byte[] key) {
+    return null;
+  }
+
   private static TransactionStore instance;
 
 
@@ -30,18 +45,4 @@ public class TransactionStore extends TronDatabase {
     return dbSource.getData(trxHash);
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 }

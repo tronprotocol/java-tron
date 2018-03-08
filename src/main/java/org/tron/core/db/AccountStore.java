@@ -7,14 +7,23 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.protos.Protocal.Account;
 
-public class AccountStore extends TronDatabase {
+public class AccountStore extends TronDatabase<AccountCapsule> {
 
   private static final Logger logger = LoggerFactory.getLogger("AccountStore");
 
   private AccountStore(String dbName) {
     super(dbName);
+  }
+
+  @Override
+  void putItem(byte[] key, AccountCapsule item) {
+
+  }
+
+  @Override
+  void deleteItem(byte[] key) {
+
   }
 
   private static AccountStore instance;
@@ -36,34 +45,6 @@ public class AccountStore extends TronDatabase {
   }
 
   /**
-   * get account by address.
-   */
-  public AccountCapsule getAccount(ByteString address) {
-    logger.info("address is {} ", address);
-
-    byte[] value = dbSource.getData(address.toByteArray());
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
-  }
-
-  /**
-   * getAccount fun.
-   *
-   * @param address the address of Account
-   */
-  public Account getAccount(byte[] address) {
-    byte[] account = dbSource.getData(address);
-    if (account == null || account.length == 0) {
-      return null;
-    }
-    try {
-      return Account.parseFrom(account);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return null;
-    }
-  }
-
-  /**
    * save account.
    */
   public void putAccount(ByteString address, AccountCapsule account) {
@@ -76,19 +57,11 @@ public class AccountStore extends TronDatabase {
     dbSource.putData(accountCapsule.getAddress().toByteArray(), accountCapsule.getData());
   }
 
-  @Override
-  void add() {
-
-  }
 
   @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
+  public AccountCapsule getItem(byte[] key) {
+    byte[] value = dbSource.getData(key);
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   /**
@@ -121,7 +94,7 @@ public class AccountStore extends TronDatabase {
    */
   public List<AccountCapsule> getAllAccounts() {
     return dbSource.allKeys().stream()
-        .map(key -> getAccount(ByteString.copyFrom(key)))
+        .map(key -> getItem(key))
         .collect(Collectors.toList());
   }
 }

@@ -17,6 +17,9 @@
 package org.tron.core.db;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +28,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
 import org.tron.protos.Protocal.TXOutput;
 import org.tron.protos.Protocal.TXOutputs;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
 
 
 public class UtxoStore extends TronDatabase {
@@ -39,20 +38,6 @@ public class UtxoStore extends TronDatabase {
     super(dbName);
   }
 
-  @Override
-  void add() {
-
-  }
-
-  @Override
-  void del() {
-
-  }
-
-  @Override
-  void fetch() {
-
-  }
 
   private static UtxoStore instance;
 
@@ -114,7 +99,7 @@ public class UtxoStore extends TronDatabase {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
               .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
-                  && accumulated < amount) {
+              && accumulated < amount) {
             accumulated += txOutput.getValue();
 
             long[] v = unspentOutputs.get(ByteArray.toHexString(key));
@@ -165,5 +150,20 @@ public class UtxoStore extends TronDatabase {
 
   public void close() {
     dbSource.closeDB();
+  }
+
+  @Override
+  void putItem(byte[] key, Object item) {
+
+  }
+
+  @Override
+  void deleteItem(byte[] key) {
+
+  }
+
+  @Override
+  public Object getItem(byte[] key) {
+    return null;
   }
 }
