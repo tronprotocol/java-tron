@@ -70,6 +70,6 @@ public class ManagerTest {
       e.printStackTrace();
     }
     Assert
-        .assertEquals(123, transactionCapsule.getTransaction().getRawData().getVout(0).getValue());
+        .assertEquals(123, transactionCapsule.getInstance().getRawData().getVout(0).getValue());
   }
 }
