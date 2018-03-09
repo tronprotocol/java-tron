@@ -17,6 +17,7 @@ public abstract class Message {
   public Message(byte[] packed) {
     this.data = packed;
     unpacked = false;
+
   }
 
   public Sha256Hash getMessageId() {

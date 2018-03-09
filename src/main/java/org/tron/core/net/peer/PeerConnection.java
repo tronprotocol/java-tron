@@ -4,10 +4,12 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -25,7 +27,6 @@ public class PeerConnection {
 
   private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
-
   //private
   private Member member;
 
@@ -36,12 +37,36 @@ public class PeerConnection {
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
-  private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
+  private HashMap<BlockId, Long> blocksWeRequested = new HashMap<>();
 
   //sync chain
-  private BlockId lastBlockPeerKnow;
+  private BlockId headBlockWeBothHave;
 
-  private List<BlockId> blockChainToFetch = new ArrayList<>();
+  private long headBlockTimeWeBothHave;
+
+  private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
+
+  private HashMap<BlockId, Long> syncBlockRequested = null;
+
+  private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
+
+  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
+    return syncChainRequested;
+  }
+
+  public void setSyncChainRequested(
+      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
+    this.syncChainRequested = syncChainRequested;
+  }
+
+  public HashMap<BlockId, Long> getSyncBlockRequested() {
+    return syncBlockRequested;
+  }
+
+  public void setSyncBlockRequested(
+      HashMap<BlockId, Long> syncBlockRequested) {
+    this.syncBlockRequested = syncBlockRequested;
+  }
 
   public Address getAddress() {
     return member.address();
@@ -65,11 +90,11 @@ public class PeerConnection {
 
   private boolean banned;
 
-  public Queue<Sha256Hash> getBlocksWeRequested() {
+  public HashMap<BlockId, Long> getBlocksWeRequested() {
     return blocksWeRequested;
   }
 
-  public void setBlocksWeRequested(Queue<Sha256Hash> blocksWeRequested) {
+  public void setBlocksWeRequested(HashMap<BlockId, Long>blocksWeRequested) {
     this.blocksWeRequested = blocksWeRequested;
   }
 
@@ -89,16 +114,24 @@ public class PeerConnection {
     this.banned = banned;
   }
 
-  public BlockId getLastBlockPeerKnow() {
-    return lastBlockPeerKnow;
+  public BlockId getHeadBlockWeBothHave() {
+    return headBlockWeBothHave;
   }
 
-  public void setLastBlockPeerKnow(BlockId lastBlockPeerKnow) {
-    this.lastBlockPeerKnow = lastBlockPeerKnow;
+  public void setHeadBlockWeBothHave(BlockId headBlockWeBothHave) {
+    this.headBlockWeBothHave = headBlockWeBothHave;
   }
 
-  public List<BlockId> getBlockChainToFetch() {
-    return blockChainToFetch;
+  public long getHeadBlockTimeWeBothHave() {
+    return headBlockTimeWeBothHave;
+  }
+
+  public void setHeadBlockTimeWeBothHave(long headBlockTimeWeBothHave) {
+    this.headBlockTimeWeBothHave = headBlockTimeWeBothHave;
+  }
+
+  public Deque<BlockId> getSyncBlockToFetch() {
+    return syncBlockToFetch;
   }
 
   public boolean isNeedSyncFromPeer() {

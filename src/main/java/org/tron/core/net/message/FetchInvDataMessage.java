@@ -33,6 +33,10 @@ public class FetchInvDataMessage extends InventoryMessage {
     return super.toString();
   }
 
+  public MessageTypes getInvType() {
+    return inv.getType().equals(InventoryType.BLOCK) ? MessageTypes.BLOCK : MessageTypes.TRX;
+  }
+
   @Override
   public org.tron.core.net.message.MessageTypes getType() {
     return MessageTypes.FETCH_INV_DATA;
