@@ -216,12 +216,11 @@ public class Manager {
   public void initAccount() {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
-    genesisBlockArg.getAssets().forEach(key -> {
+    genesisBlockArg.getAssets().forEach(account -> {
       final AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
-          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
-          Long.valueOf(key.getBalance()));
-
-      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
+          ByteString.copyFrom(ByteArray.fromHexString(account.getAddress())),
+          account.getBalance());
+      this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
     });
   }
 
@@ -254,6 +253,7 @@ public class Manager {
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
+    processTransaction(trx);
     pendingTrxs.add(trx);
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;

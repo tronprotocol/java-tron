@@ -56,7 +56,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = trx;
   }
 
-  public TransactionCapsule(String key, int value) {
+  public TransactionCapsule(String key, long value) {
     TXInput.raw rawData = TXInput.raw.newBuilder()
         .setTxID(ByteString.copyFrom(new byte[]{}))
         .setVout(-1).build();
@@ -95,19 +95,21 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     long spendableOutputs = balance;
 
     Set<Entry<String, long[]>> entrySet =
-            utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
+        utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
 
     entrySet.forEach(entry -> {
       String txId = entry.getKey();
       long[] outs = entry.getValue();
 
       Arrays.stream(outs)
-              .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
-              .forEachOrdered(txInputs::add);
+          .mapToObj(
+              out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+          .forEachOrdered(txInputs::add);
     });
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
-    txOutputs.add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
+    txOutputs
+        .add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
 
     if (checkBalance(address, to, amount, balance)) {
       txInputs.forEach(transactionBuilder::addVin);

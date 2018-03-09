@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import org.tron.common.utils.ByteArray;
+
 public class Account {
 
   private String address;
@@ -25,13 +27,18 @@ public class Account {
     return address;
   }
 
+  public byte[] getAddressBytes() {
+    return ByteArray.fromHexString(this.address);
+  }
+
   public void setAddress(String address) {
     this.address = address;
   }
 
-  public String getBalance() {
-    return balance;
+  public long getBalance() {
+    return Long.parseLong(balance);
   }
+
 
   public void setBalance(String balance) {
     this.balance = balance;
