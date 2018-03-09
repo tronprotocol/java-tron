@@ -36,7 +36,7 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  private static final int LOOP_INTERVAL = Args.getInstance().getInitialWitness().getBlock_interval(); // millisecond
+  private static final Long LOOP_INTERVAL = Args.getInstance().getBlockInterval(); // millisecond
   private byte[] privateKey;
   private boolean hasCheckedSynchronization = true;
   private volatile boolean canceled = false;
@@ -44,22 +44,22 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp) {
+  public WitnessService(final Application tronApp) {
     this.tronApp = tronApp;
-    db = tronApp.getDbManager();
-    generateThread = new Thread(scheduleProductionLoop);
+    this.db = tronApp.getDbManager();
+    this.generateThread = new Thread(this.scheduleProductionLoop);
     logger.info("LOOP_INTERVAL:" + LOOP_INTERVAL + "ms");
   }
 
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessState == null) {
+        if (this.localWitnessState == null) {
           logger.error("local witness is null");
         }
 
-        while (isRunning) {
+        while (this.isRunning) {
           DateTime time = DateTime.now();
-          int timeToNextSecond = LOOP_INTERVAL - time.getMillisOfSecond();
+          Long timeToNextSecond = LOOP_INTERVAL - time.getMillisOfSecond();
           if (timeToNextSecond < 50) {
             timeToNextSecond = timeToNextSecond + LOOP_INTERVAL;
           }
@@ -67,9 +67,9 @@ public class WitnessService implements Service {
             DateTime nextTime = time.plus(timeToNextSecond);
             logger.info("sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
             Thread.sleep(timeToNextSecond);
-            blockProductionLoop();
+            this.blockProductionLoop();
 
-            updateWitnessSchedule();
+            this.updateWitnessSchedule();
           } catch (Exception ex) {
             logger.error("ProductionLoop error", ex);
           }
@@ -79,10 +79,10 @@ public class WitnessService implements Service {
   private void blockProductionLoop() throws CancelException {
     BlockProductionCondition result;
     try {
-      result = tryProduceBlock();
-    } catch (CancelException ex) {
+      result = this.tryProduceBlock();
+    } catch (final CancelException ex) {
       throw ex;
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
@@ -129,13 +129,13 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock()
       throws ValidateSignatureException, CancelException {
 
-    checkCancelFlag();
+    this.checkCancelFlag();
 
-    if (!hasCheckedSynchronization) {
+    if (!this.hasCheckedSynchronization) {
       return BlockProductionCondition.NOT_SYNCED;
     }
 
-    int participation = db.calculateParticipationRate();
+    final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
           "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
@@ -143,7 +143,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = getSlotAtTime(DateTime.now());
+    final long slot = this.getSlotAtTime(DateTime.now());
     logger.debug("slot:" + slot);
 
     if (slot == 0) {
@@ -151,13 +151,13 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    ByteString scheduledWitness = db.getScheduledWitness(slot);
+    final ByteString scheduledWitness = this.db.getScheduledWitness(slot);
 
-    if (!scheduledWitness.equals(getLocalWitnessState().getAddress())) {
+    if (!scheduledWitness.equals(this.getLocalWitnessState().getAddress())) {
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
-    DateTime scheduledTime = getSlotTime(slot);
+    final DateTime scheduledTime = this.getSlotTime(slot);
 
     //TODO:implement private and public key code, fake code first.
 
@@ -168,47 +168,48 @@ public class WitnessService implements Service {
     //TODO:implement private and public key code, fake code first.
     BlockCapsule block = null;
     try {
-      block = generateBlock(scheduledTime);
-    } catch (ValidateSignatureException e) {
+      block = this.generateBlock(scheduledTime);
+    } catch (final ValidateSignatureException e) {
       e.printStackTrace();
     }
     logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
 
-    broadcastBlock(block);
+    this.broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
   }
 
   private void checkCancelFlag() throws CancelException {
-    if (canceled) {
+    if (this.canceled) {
       throw new CancelException();
     }
   }
 
-  private void broadcastBlock(BlockCapsule block) {
+  private void broadcastBlock(final BlockCapsule block) {
     try {
-      tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
-    } catch (Exception ex) {
+      this.tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
+    } catch (final Exception ex) {
       throw new RuntimeException("broadcastBlock error");
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when) throws ValidateSignatureException {
-    return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
+  private BlockCapsule generateBlock(final DateTime when) throws ValidateSignatureException {
+    return this.tronApp.getDbManager().generateBlock(this.localWitnessState, when.getMillis(),
+        this.privateKey);
   }
 
   private DateTime getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return DateTime.now();
     }
-    long interval = blockInterval();
-    BlockStore blockStore = tronApp.getDbManager().getBlockStore();
-    DateTime genesisTime = blockStore.getGenesisTime();
+    final long interval = this.blockInterval();
+    final BlockStore blockStore = this.tronApp.getDbManager().getBlockStore();
+    final DateTime genesisTime = blockStore.getGenesisTime();
     if (blockStore.getHeadBlockNum() == 0) {
       return genesisTime.plus(slotNum * interval);
     }
 
-    if (lastHeadBlockIsMaintenance()) {
-      slotNum += getSkipSlotInMaintenance();
+    if (this.lastHeadBlockIsMaintenance()) {
+      slotNum += this.getSkipSlotInMaintenance();
     }
 
     DateTime headSlotTime = blockStore.getHeadBlockTime();
@@ -221,19 +222,19 @@ public class WitnessService implements Service {
   }
 
   private boolean lastHeadBlockIsMaintenance() {
-    return db.getDynamicPropertiesStore().getStateFlag() == 1;
+    return this.db.getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
   private long getSkipSlotInMaintenance() {
     return 0;
   }
 
-  private long getSlotAtTime(DateTime when) {
-    DateTime firstSlotTime = getSlotTime(1);
+  private long getSlotAtTime(final DateTime when) {
+    final DateTime firstSlotTime = this.getSlotTime(1);
     if (when.isBefore(firstSlotTime)) {
       return 0;
     }
-    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
+    return (when.getMillis() - firstSlotTime.getMillis()) / this.blockInterval() + 1;
   }
 
 
@@ -244,16 +245,17 @@ public class WitnessService implements Service {
 
   // shuffle witnesses
   private void updateWitnessSchedule() {
-    if (db.getBlockStore().getHeadBlockNum() % witnessStates.size() == 0) {
-      String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
-      witnessStates = new RandomGenerator<WitnessCapsule>()
-          .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
+    if (this.db.getBlockStore().getHeadBlockNum() % this.witnessStates.size() == 0) {
+      final String witnessStringListBefore = this.getWitnessStringList(this.witnessStates)
+          .toString();
+      this.witnessStates = new RandomGenerator<WitnessCapsule>()
+          .shuffle(this.witnessStates, this.db.getBlockStore().getHeadBlockTime());
       logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
-          + getWitnessStringList(witnessStates));
+          + this.getWitnessStringList(this.witnessStates));
     }
   }
 
-  private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
+  private List<String> getWitnessStringList(final List<WitnessCapsule> witnessStates) {
     return witnessStates.stream()
         .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
@@ -262,32 +264,33 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey()
+    this.privateKey = Args.getInstance().getLocalWitness().getPrivateKey()
         .getBytes();
-    tronApp.getDbManager().initialWitnessList();
-    localWitnessState = new WitnessCapsule(
-        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
-        Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
-    tronApp.getDbManager().addWitness(localWitnessState);
-    this.witnessStates = db.getWitnesses();
+    final ECKey ecKey = ECKey.fromPrivate(this.privateKey);
+
+    final WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
+        .get(ecKey.getAddress());
+
+    this.localWitnessState = witnessCapsule;
+    this.witnessStates = this.db.getWitnesses();
   }
 
 
   @Override
-  public void init(Args args) {
+  public void init(final Args args) {
     //this.privateKey = args.getPrivateKey();
-    init();
+    this.init();
   }
 
   @Override
   public void start() {
-    isRunning = true;
-    generateThread.start();
+    this.isRunning = true;
+    this.generateThread.start();
   }
 
   @Override
   public void stop() {
-    isRunning = false;
-    generateThread.interrupt();
+    this.isRunning = false;
+    this.generateThread.interrupt();
   }
 }
