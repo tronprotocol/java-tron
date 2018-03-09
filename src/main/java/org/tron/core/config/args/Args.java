@@ -91,9 +91,8 @@ public class Args {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
 
+    INSTANCE.initialWitness = new InitialWitness();
     if (config.hasPath("initialWitness")) {
-      INSTANCE.initialWitness = new InitialWitness();
-
       if (config.hasPath("initialWitness.localWitness")) {
         INSTANCE.initialWitness.setLocalWitness(getLocalWitnessFromConfig(config));
       }
@@ -101,8 +100,6 @@ public class Args {
       if (config.hasPath("initialWitness.activeWitness")) {
         INSTANCE.initialWitness.setActiveWitnessList(getActiveWitnessFromConfig(config));
       }
-    } else {
-      INSTANCE.initialWitness = new InitialWitness();
     }
   }
 
