@@ -54,7 +54,7 @@ public class Manager {
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
   private BlockCapsule head;
-  private RevokingStore revokingStore;
+  private RevokingDatabase revokingStore;
   private RevokingStore.Dialog dialog;
 
   public WitnessStore getWitnessStore() {
@@ -179,7 +179,7 @@ public class Manager {
     this.initGenesis();
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
-    revokingStore = new RevokingStore();
+    revokingStore = RevokingStore.getInstance();
   }
 
   public BlockId getGenesisBlockId() {
