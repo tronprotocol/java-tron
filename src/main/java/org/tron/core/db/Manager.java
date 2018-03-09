@@ -251,7 +251,7 @@ public class Manager {
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(account_address + " Insufficient");
+      throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
     account.setBalance(balance + amount);
     getAccountStore().put(account.getAddress().toByteArray(), account);
