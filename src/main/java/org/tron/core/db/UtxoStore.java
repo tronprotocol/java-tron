@@ -119,7 +119,7 @@ public class UtxoStore extends TronDatabase {
   /**
    * Find related UTXOs.
    */
-  public ArrayList<TXOutput> findUtxo(byte[] address) throws Exception {
+  public ArrayList<TXOutput> findUtxo(byte[] address) {
     return getDbSource().allKeys().stream()
             .map(key -> {
               try {
