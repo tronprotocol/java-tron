@@ -36,7 +36,7 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  private static final int LOOP_INTERVAL = 1000; // millisecond
+  private static final int LOOP_INTERVAL = Args.getInstance().getInitialWitness().getBlock_interval(); // millisecond
   private byte[] privateKey;
   private boolean hasCheckedSynchronization = true;
   private volatile boolean canceled = false;
@@ -48,6 +48,7 @@ public class WitnessService implements Service {
     this.tronApp = tronApp;
     db = tronApp.getDbManager();
     generateThread = new Thread(scheduleProductionLoop);
+    logger.info("LOOP_INTERVAL:" + LOOP_INTERVAL + "ms");
   }
 
   private Runnable scheduleProductionLoop =

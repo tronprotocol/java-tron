@@ -6,6 +6,7 @@ public class InitialWitness {
 
   private LocalWitness localWitness;
   private List<ActiveWitness> activeWitnessList;
+  private int block_interval;
 
   public LocalWitness getLocalWitness() {
     return localWitness;
@@ -17,6 +18,14 @@ public class InitialWitness {
 
   public List<ActiveWitness> getActiveWitnessList() {
     return activeWitnessList;
+  }
+
+  public int getBlock_interval() {
+    return block_interval;
+  }
+
+  public void setBlock_interval(int block_interval) {
+    this.block_interval = block_interval;
   }
 
   public void setActiveWitnessList(

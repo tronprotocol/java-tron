@@ -101,6 +101,11 @@ public class Args {
       if (config.hasPath("initialWitness.activeWitness")) {
         INSTANCE.initialWitness.setActiveWitnessList(getActiveWitnessFromConfig(config));
       }
+
+      if (config.hasPath("initialWitness.block_interval")) {
+        INSTANCE.initialWitness.setBlock_interval(config.getInt("initialWitness.block_interval"));
+      }
+
     } else {
       INSTANCE.initialWitness = new InitialWitness();
     }
