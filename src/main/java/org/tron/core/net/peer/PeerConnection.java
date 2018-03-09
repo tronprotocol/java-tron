@@ -37,18 +37,18 @@ public class PeerConnection {
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
-  private Queue<Sha256Hash> blocksWeRequested = new LinkedBlockingQueue<>();
+  private HashMap<BlockId, Long> blocksWeRequested = new HashMap<>();
 
   //sync chain
   private BlockId headBlockWeBothHave;
 
   private long headBlockTimeWeBothHave;
 
-  private Deque<BlockId> blockChainToFetch = new LinkedList<>();
+  private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
 
   private HashMap<BlockId, Long> syncBlockRequested = null;
 
-  private Pair<LinkedList<BlockId>, Long> syncChainRequested;
+  private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
 
   public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
@@ -90,11 +90,11 @@ public class PeerConnection {
 
   private boolean banned;
 
-  public Queue<Sha256Hash> getBlocksWeRequested() {
+  public HashMap<BlockId, Long> getBlocksWeRequested() {
     return blocksWeRequested;
   }
 
-  public void setBlocksWeRequested(Queue<Sha256Hash> blocksWeRequested) {
+  public void setBlocksWeRequested(HashMap<BlockId, Long>blocksWeRequested) {
     this.blocksWeRequested = blocksWeRequested;
   }
 
@@ -130,8 +130,8 @@ public class PeerConnection {
     this.headBlockTimeWeBothHave = headBlockTimeWeBothHave;
   }
 
-  public Deque<BlockId> getBlockChainToFetch() {
-    return blockChainToFetch;
+  public Deque<BlockId> getSyncBlockToFetch() {
+    return syncBlockToFetch;
   }
 
   public boolean isNeedSyncFromPeer() {

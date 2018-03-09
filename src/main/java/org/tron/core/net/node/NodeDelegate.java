@@ -14,7 +14,7 @@ import org.tron.core.net.message.MessageTypes;
 
 public interface NodeDelegate {
 
-  void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException;
+  List<TransactionCapsule> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException;
 
   void handleTransaction(TransactionCapsule trx) throws ValidateSignatureException;
 

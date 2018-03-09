@@ -40,7 +40,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
+  public List<TransactionCapsule> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
