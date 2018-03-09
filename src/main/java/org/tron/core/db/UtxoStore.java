@@ -20,6 +20,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,29 +89,20 @@ public class UtxoStore extends TronDatabase {
     HashMap<String, long[]> unspentOutputs = new HashMap<>();
     long accumulated = 0L;
 
-    Set<byte[]> keySet = getDbSource().allKeys();
-
-    for (byte[] key : keySet) {
-      byte[] txOutputsData = getDbSource().getData(key);
+    for (byte[] key : getDbSource().allKeys()) {
       try {
-        TXOutputs txOutputs = TXOutputs.parseFrom(txOutputsData);
+        TXOutputs txOutputs = TXOutputs.parseFrom(getDbSource().getData(key));
+        String keyToHexString = ByteArray.toHexString(key);
 
-        int len = txOutputs.getOutputsCount();
-
-        for (int i = 0; i < len; i++) {
+        for (int i = 0, len = txOutputs.getOutputsCount(); i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
                   .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
                   && accumulated < amount) {
+
             accumulated += txOutput.getValue();
-
-            long[] v = unspentOutputs.get(ByteArray.toHexString(key));
-
-            if (v == null) {
-              v = new long[0];
-            }
-
-            unspentOutputs.put(ByteArray.toHexString(key), ArrayUtils.add(v, i));
+            long[] v = ArrayUtils.nullToEmpty(unspentOutputs.get(keyToHexString));
+            unspentOutputs.put(keyToHexString, ArrayUtils.add(v, i));
           }
         }
       } catch (InvalidProtocolBufferException e) {
@@ -125,27 +119,22 @@ public class UtxoStore extends TronDatabase {
   /**
    * Find related UTXOs.
    */
-  public ArrayList<TXOutput> findUtxo(byte[] address) {
-    ArrayList<TXOutput> utxos = new ArrayList<>();
-
-    Set<byte[]> keySet = getDbSource().allKeys();
-
-    for (byte[] key : keySet) {
-      byte[] txData = getDbSource().getData(key);
-      try {
-        TXOutputs txOutputs = TXOutputs.parseFrom(txData);
-        for (TXOutput txOutput : txOutputs.getOutputsList()) {
-          if (ByteArray.toHexString(ECKey.computeAddress(address))
-                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))) {
-            utxos.add(txOutput);
-          }
-        }
-      } catch (InvalidProtocolBufferException e) {
-        e.printStackTrace();
-      }
-    }
-
-    return utxos;
+  public ArrayList<TXOutput> findUtxo(byte[] address) throws Exception {
+    return getDbSource().allKeys().stream()
+            .map(key -> {
+              try {
+                return TXOutputs.parseFrom(getDbSource().getData(key));
+              } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+                return null;
+              }
+            })
+            .filter(Objects::nonNull)
+            .map(TXOutputs::getOutputsList)
+            .flatMap(List::stream)
+            .filter(txOutput -> ByteArray.toHexString(ECKey.computeAddress(address))
+                    .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray())))
+            .collect(Collectors.toCollection(ArrayList::new));
   }
 
   public void close() {

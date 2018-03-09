@@ -235,10 +235,8 @@ public class Manager {
     if (amount == 0) {
       return;
     }
-    if (amount < 0) {
-      if (balance < -amount) {
-        throw new BalanceInsufficientException(account_address + " Insufficient");
-      }
+    if (amount < 0 && balance < -amount) {
+      throw new BalanceInsufficientException(account_address + " Insufficient");
     }
     account.setBalance(balance + amount);
     getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -427,9 +425,7 @@ public class Manager {
           blockCapsule.addTransaction(trx);
           iterator.remove();
         }
-      } catch (ContractExeException e) {
-        e.printStackTrace();
-      } catch (ContractValidateException e) {
+      } catch (ContractExeException | ContractValidateException e) {
         e.printStackTrace();
       }
     }
@@ -484,9 +480,7 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       try {
         processTransaction(transactionCapsule);
-      } catch (ContractExeException e) {
-        e.printStackTrace();
-      } catch (ContractValidateException e) {
+      } catch (ContractExeException | ContractValidateException e) {
         e.printStackTrace();
       }
       this.updateDynamicProperties(block);
@@ -518,12 +512,12 @@ public class Manager {
       logger.info("there is account ,account address is {}", account.getAddress().toStringUtf8());
       account.getVotesList().forEach(vote -> {
         //TODO validate witness //active_witness
-        if (countWitness.containsKey(vote.getVoteAddress())) {
-          countWitness.put(vote.getVoteAddress(),
-              countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
-        } else {
-          countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        if (countWitness.containsKey(voteAddress)) {
+          voteCount += countWitness.get(voteAddress);
         }
+        countWitness.put(voteAddress, voteCount);
       });
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
@@ -540,9 +534,7 @@ public class Manager {
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
           witnessCapsule.getVoteCount());
     });
-    witnessCapsuleList.sort((a, b) -> {
-      return (int) (a.getVoteCount() - b.getVoteCount());
-    });
+    witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
