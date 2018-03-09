@@ -11,6 +11,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
+import org.tron.core.db.RevokingStore.RevokingEnum;
 
 @Slf4j
 abstract class AbstractRevokingStore implements RevokingDatabase {
@@ -275,17 +276,4 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     private byte[] key;
   }
 
-  private enum RevokingEnum {
-    INSTANCE;
-
-    private RevokingDatabase instance;
-
-    RevokingEnum() {
-      instance = new RevokingStore();
-    }
-
-    private RevokingDatabase getInstance() {
-      return instance;
-    }
-  }
 }
