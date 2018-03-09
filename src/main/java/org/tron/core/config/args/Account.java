@@ -15,7 +15,16 @@
 
 package org.tron.core.config.args;
 
+import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocol.AccountType;
+
 public class Account {
+
+  private String accountName;
+
+  private String accountType;
 
   private String address;
 
@@ -25,15 +34,61 @@ public class Account {
     return address;
   }
 
+  public byte[] getAddressBytes() {
+    return ByteArray.fromHexString(this.address);
+  }
+
   public void setAddress(String address) {
     this.address = address;
   }
 
-  public String getBalance() {
-    return balance;
+  public long getBalance() {
+    return Long.parseLong(balance);
   }
+
 
   public void setBalance(String balance) {
     this.balance = balance;
+  }
+
+  /**
+   * get account from configuration.
+   */
+  public ByteString getAccountName() {
+    if (StringUtils.isBlank(this.accountName)) {
+      return ByteString.EMPTY;
+    }
+
+    return ByteString.copyFrom(ByteArray.fromString(this.accountName));
+  }
+
+  public void setAccountName(String accountName) {
+    this.accountName = accountName;
+  }
+
+  /**
+   * switch account type.
+   */
+  public AccountType getAccountType() {
+    AccountType accountType;
+    switch (this.accountType) {
+      case "Normal":
+        accountType = AccountType.Normal;
+        break;
+      case "AssetIssue":
+        accountType = AccountType.AssetIssue;
+        break;
+      case "Contract":
+        accountType = AccountType.Contract;
+        break;
+      default:
+        throw new IllegalArgumentException("account type error.");
+    }
+
+    return accountType;
+  }
+
+  public void setAccountType(String accountType) {
+    this.accountType = accountType;
   }
 }

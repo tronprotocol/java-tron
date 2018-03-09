@@ -37,7 +37,7 @@ public class BlockUtil {
     genesisBlockArg.getAssets().forEach(key ->
         transactionList
             .add(TransactionUtil
-                .newGenesisTransaction(key.getAddress(), Integer.parseInt(key.getBalance()))));
+                .newGenesisTransaction(key.getAddress(), key.getBalance())));
 
     long timestamp = Long.parseLong(genesisBlockArg.getTimeStamp());
     ByteString parentHash = ByteString

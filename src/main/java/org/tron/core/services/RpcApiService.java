@@ -4,13 +4,12 @@ import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-
 import java.io.IOException;
 import java.util.logging.Logger;
-
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -180,6 +179,12 @@ public class RpcApiService implements Service {
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
+      // TODO: this.app.getP2pNode().getActiveNodes();
+      super.listNodes(request, responseObserver);
     }
   }
 

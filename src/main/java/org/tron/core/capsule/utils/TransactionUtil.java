@@ -26,7 +26,7 @@ public class TransactionUtil {
 
   private static final Logger logger = LoggerFactory.getLogger("TransactionUtil");
 
-  public static Transaction newGenesisTransaction(String key, int value) {
+  public static Transaction newGenesisTransaction(String key, long value) {
     return new TransactionCapsule(key, value).getInstance();
   }
 
@@ -39,8 +39,8 @@ public class TransactionUtil {
   public static boolean isCoinbaseTransaction(Transaction transaction) {
     Transaction.raw rawData = transaction.getRawData();
     return rawData.getVinList().size() == 1
-            && rawData.getVin(0).getRawData().getTxID().size() == 0
-            && rawData.getVin(0).getRawData().getVout() == -1;
+        && rawData.getVin(0).getRawData().getTxID().size() == 0
+        && rawData.getVin(0).getRawData().getVout() == -1;
   }
 
   private static boolean checkTxOutUnSpent(TXOutput prevOut) {
