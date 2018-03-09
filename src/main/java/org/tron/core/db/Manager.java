@@ -297,9 +297,7 @@ public class Manager {
         return;
       }
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        for (TransactionCapsule trx : block.getTransactions()) {
-          processTransaction(trx);
-        }
+        this.processBlock(block);
         tmpDialog.commit();
       } catch (Exception e) {
         e.printStackTrace();
@@ -528,8 +526,9 @@ public class Manager {
       } catch (ContractValidateException e) {
         e.printStackTrace();
       }
-      this.updateDynamicProperties(block);
 
+      this.updateDynamicProperties(block);
+      this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
           .getTimeStamp()) {
         this.processMaintenance();
@@ -544,6 +543,11 @@ public class Manager {
   private void processMaintenance() {
     this.updateWitness();
     this.dynamicPropertiesStore.updateMaintenanceTime();
+  }
+
+
+  public void updateSignedWitness(BlockCapsule block) {
+    //witnessStore.get(block);
   }
 
   /**
