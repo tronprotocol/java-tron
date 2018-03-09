@@ -438,6 +438,8 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
+    logger.info("postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTrxs.size() + "]");
+
     blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
