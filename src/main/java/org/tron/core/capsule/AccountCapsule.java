@@ -31,6 +31,9 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
   private Account account;
 
+  /**
+   * get account from bytes data.
+   */
   public AccountCapsule(byte[] data) {
     try {
       this.account = Account.parseFrom(data);
@@ -42,13 +45,19 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   /**
    * initial account capsule.
    */
-  public AccountCapsule(AccountType accountType, ByteString address, long balance) {
+  public AccountCapsule(ByteString accountName, AccountType accountType, ByteString address,
+      long balance) {
     this.account = Account.newBuilder()
+        .setAccountName(accountName)
         .setType(accountType)
         .setAddress(address)
         .setBalance(balance)
         .build();
   }
+
+  /**
+   * get account from contract.
+   */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
         .setType(contract.getType())
@@ -57,6 +66,9 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .build();
   }
 
+  /**
+   * get account from address and account name.
+   */
   public AccountCapsule(ByteString address, ByteString accountName,
       AccountType accountType) {
     this.account = Account.newBuilder()
@@ -101,6 +113,9 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   }
 
 
+  /**
+   * set votes.
+   */
   public void addVotes(ByteString voteAddress, long voteAdd) {
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
