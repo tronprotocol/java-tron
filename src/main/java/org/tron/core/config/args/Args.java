@@ -44,7 +44,8 @@ public class Args {
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
-  private InitialWitness initialWitness;
+  private LocalWitness localWitness;
+  private long blockInterval;
 
   private Args() {
 
@@ -53,7 +54,7 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(String[] args, com.typesafe.config.Config config) {
+  public static void setParam(final String[] args, final com.typesafe.config.Config config) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
@@ -63,19 +64,23 @@ public class Args {
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
-            .filter(StringUtils::isNotEmpty)
-            .orElse(config.getString("storage.directory")));
+        .filter(StringUtils::isNotEmpty)
+        .orElse(config.getString("storage.directory")));
 
     INSTANCE.overlay = new Overlay();
     INSTANCE.overlay.setPort(Optional.ofNullable(INSTANCE.overlayPort)
-            .filter(i -> 0 != i)
-            .orElse(config.getInt("overlay.port")));
+        .filter(i -> 0 != i)
+        .orElse(config.getInt("overlay.port")));
 
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
-            .filter(seedNode -> 0 != seedNode.size())
-            .orElse(config.getStringList("seed.node.ip.list")));
+        .filter(seedNode -> 0 != seedNode.size())
+        .orElse(config.getStringList("seed.node.ip.list")));
 
+    if (config.hasPath("localwitness")) {
+      INSTANCE.localWitness = new LocalWitness();
+      INSTANCE.localWitness.setPrivateKey(config.getString("localwitness.priveteKey"));
+    }
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
@@ -87,78 +92,41 @@ public class Args {
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
       }
+      if (config.hasPath("genesis.block.witnesses")) {
+        INSTANCE.genesisBlock.setWitnesses(getWitnessesFromConfig(config));
+      }
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
-
-    if (config.hasPath("initialWitness")) {
-      INSTANCE.initialWitness = new InitialWitness();
-
-      if (config.hasPath("initialWitness.localWitness")) {
-        INSTANCE.initialWitness.setLocalWitness(getLocalWitnessFromConfig(config));
-      }
-
-      if (config.hasPath("initialWitness.activeWitness")) {
-        INSTANCE.initialWitness.setActiveWitnessList(getActiveWitnessFromConfig(config));
-      }
-
-      if (config.hasPath("initialWitness.block_interval")) {
-        INSTANCE.initialWitness.setBlock_interval(config.getInt("initialWitness.block_interval"));
-      }
-
-    } else {
-      INSTANCE.initialWitness = new InitialWitness();
-    }
+    INSTANCE.blockInterval = config.getLong("block.interval");
   }
 
-  private static List<Account> getAccountsFromConfig(com.typesafe.config.Config config) {
+
+  private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
+    return config.getObjectList("genesis.block.witnesses").stream()
+        .map(Args::createWitness)
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  private static Witness createWitness(final ConfigObject witnessAccount) {
+    final Witness witness = new Witness();
+    witness.setAddress(witnessAccount.get("address").unwrapped().toString());
+    witness.setUrl(witnessAccount.get("url").unwrapped().toString());
+    witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
+    return witness;
+  }
+
+  private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.assets").stream()
-            .map(Args::createAccount)
-            .collect(Collectors.toCollection(ArrayList::new));
+        .map(Args::createAccount)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  private static Account createAccount(ConfigObject asset) {
-    Account account = new Account();
-    if (asset.containsKey("accountName")) {
-      account.setAccountName(asset.get("accountName").unwrapped().toString());
-    }
-
-    if (asset.containsKey("accountType")) {
-      account.setAccountType(asset.get("accountType").unwrapped().toString());
-    }
-
-    if (asset.containsKey("address")) {
-      account.setAddress(asset.get("address").unwrapped().toString());
-    }
-
-    if (asset.containsKey("balance")) {
-      account.setBalance(asset.get("balance").unwrapped().toString());
-    }
-
+  private static Account createAccount(final ConfigObject asset) {
+    final Account account = new Account();
+    account.setAddress(asset.get("address").unwrapped().toString());
+    account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
-  }
-
-  private static InitialWitness.LocalWitness getLocalWitnessFromConfig(
-      com.typesafe.config.Config config) {
-
-    InitialWitness.LocalWitness localWitness = new InitialWitness.LocalWitness();
-    localWitness.setPrivateKey(config.getString("initialWitness.localWitness.privateKey"));
-    localWitness.setUrl(config.getString("initialWitness.localWitness.url"));
-    return localWitness;
-  }
-
-  private static List<InitialWitness.ActiveWitness> getActiveWitnessFromConfig(
-          com.typesafe.config.Config config) {
-    return config.getObjectList("initialWitness.activeWitness").stream()
-            .map(Args::createActiveWitness)
-            .collect(Collectors.toList());
-  }
-
-  private static InitialWitness.ActiveWitness createActiveWitness(ConfigObject asset) {
-    InitialWitness.ActiveWitness activeWitness = new InitialWitness.ActiveWitness();
-    activeWitness.setPublicKey(asset.get("publicKey").unwrapped().toString());
-    activeWitness.setUrl(asset.get("url").unwrapped().toString());
-    return activeWitness;
   }
 
   public static Args getInstance() {
@@ -169,57 +137,65 @@ public class Args {
    * get output directory.
    */
   public String getOutputDirectory() {
-    if (!outputDirectory.equals("") && !outputDirectory.endsWith(File.separator)) {
-      return outputDirectory + File.separator;
+    if (!this.outputDirectory.equals("") && !this.outputDirectory.endsWith(File.separator)) {
+      return this.outputDirectory + File.separator;
     }
-    return outputDirectory;
+    return this.outputDirectory;
   }
 
   public boolean isHelp() {
-    return help;
+    return this.help;
   }
 
   public List<String> getSeedNodes() {
-    return seedNodes;
+    return this.seedNodes;
   }
 
   public String getPrivateKey() {
-    return privateKey;
+    return this.privateKey;
   }
 
   public Storage getStorage() {
-    return storage;
+    return this.storage;
   }
 
   public Overlay getOverlay() {
-    return overlay;
+    return this.overlay;
   }
 
   public SeedNode getSeedNode() {
-    return seedNode;
+    return this.seedNode;
   }
 
   public GenesisBlock getGenesisBlock() {
-    return genesisBlock;
+    return this.genesisBlock;
   }
 
   public String getChainId() {
-    return chainId;
+    return this.chainId;
   }
 
-  public void setChainId(String chainId) {
+  public void setChainId(final String chainId) {
     this.chainId = chainId;
   }
 
-  public InitialWitness getInitialWitness() {
-    return initialWitness;
-  }
-
-  public void setInitialWitness(InitialWitness initialWitness) {
-    this.initialWitness = initialWitness;
-  }
-
   public boolean isWitness() {
-    return witness;
+    return this.witness;
+  }
+
+  public LocalWitness getLocalWitness() {
+    return this.localWitness;
+  }
+
+  public void setLocalWitness(final LocalWitness localWitness) {
+    this.localWitness = localWitness;
+  }
+
+  public long getBlockInterval() {
+    return this.blockInterval;
+  }
+
+  public void setBlockInterval(final long blockInterval) {
+    this.blockInterval = blockInterval;
   }
 }

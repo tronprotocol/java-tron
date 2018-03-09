@@ -65,9 +65,9 @@ public class WitnessService implements Service {
             DateTime nextTime = time.plus(timeToNextSecond);
             logger.info("sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
             Thread.sleep(timeToNextSecond);
-            blockProductionLoop();
+            this.blockProductionLoop();
 
-            updateWitnessSchedule();
+            this.updateWitnessSchedule();
           } catch (Exception ex) {
             logger.error("ProductionLoop error", ex);
           }
@@ -77,10 +77,10 @@ public class WitnessService implements Service {
   private void blockProductionLoop() throws CancelException {
     BlockProductionCondition result;
     try {
-      result = tryProduceBlock();
-    } catch (CancelException ex) {
+      result = this.tryProduceBlock();
+    } catch (final CancelException ex) {
       throw ex;
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       logger.error("produce block error,", ex);
       result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
@@ -127,13 +127,13 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock()
       throws ValidateSignatureException, CancelException {
 
-    checkCancelFlag();
+    this.checkCancelFlag();
 
-    if (!hasCheckedSynchronization) {
+    if (!this.hasCheckedSynchronization) {
       return BlockProductionCondition.NOT_SYNCED;
     }
 
-    int participation = db.calculateParticipationRate();
+    final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
           "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
@@ -149,9 +149,9 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    ByteString scheduledWitness = db.getScheduledWitness(slot);
+    final ByteString scheduledWitness = this.db.getScheduledWitness(slot);
 
-    if (!scheduledWitness.equals(getLocalWitnessState().getAddress())) {
+    if (!scheduledWitness.equals(this.getLocalWitnessState().getAddress())) {
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -215,15 +215,21 @@ public class WitnessService implements Service {
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = Args.getInstance().getInitialWitness().getLocalWitness().getPrivateKey()
+    this.privateKey = Args.getInstance().getLocalWitness().getPrivateKey()
         .getBytes();
-    tronApp.getDbManager().initialWitnessList();
-    localWitnessState = new WitnessCapsule(
-        ByteString.copyFrom(ECKey.fromPrivate(this.privateKey).getPubKey()),
-        Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
-    tronApp.getDbManager().addWitness(localWitnessState);
-    this.witnessStates = db.getWitnesses();
-    logger.info("LOOP_INTERVAL:" + Manager.LOOP_INTERVAL + "ms");
+    final ECKey ecKey = ECKey.fromPrivate(this.privateKey);
+
+    WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
+        .get(ecKey.getAddress());
+    // need handle init witness
+    if (null == witnessCapsule) {
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getPubKey()));
+    }
+    this.db.updateWitness();
+    //
+
+    this.localWitnessState = witnessCapsule;
+    this.witnessStates = this.db.getWitnesses();
   }
 
 

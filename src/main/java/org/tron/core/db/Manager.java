@@ -30,11 +30,11 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.config.args.InitialWitness;
-import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -97,23 +97,8 @@ public class Manager {
   }
 
   public long getHeadBlockNum() {
-    return head.getNum();
+    return this.head.getNum();
   }
-
-  /**
-   * TODO: should get this list from Database. get witnessCapsule List.
-   */
-
-  public void initialWitnessList() {
-    final List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance()
-        .getInitialWitness()
-        .getActiveWitnessList();
-    activeWitnessList.forEach(activeWitness -> {
-      this.wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
-          activeWitness.getUrl()));
-    });
-  }
-
 
   public void addWitness(final WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
@@ -184,7 +169,7 @@ public class Manager {
   }
 
   public BlockId getGenesisBlockId() {
-    return genesisBlock.getBlockId();
+    return this.genesisBlock.getBlockId();
   }
 
   /**
@@ -204,7 +189,7 @@ public class Manager {
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
         try {
           this.pushBlock(this.genesisBlock);
-        } catch (ValidateSignatureException e) {
+        } catch (final ValidateSignatureException e) {
           e.printStackTrace();
         }
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
@@ -213,6 +198,8 @@ public class Manager {
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
             this.genesisBlock.getTimeStamp());
         this.initAccount();
+        this.initWitness();
+
       }
     }
   }
@@ -229,6 +216,23 @@ public class Manager {
           ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
       this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
+    });
+  }
+
+  private void initWitness() {
+    final Args args = Args.getInstance();
+    final GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    genesisBlockArg.getWitnesses().forEach(key -> {
+      final AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
+          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
+          Long.valueOf(0));
+      final WitnessCapsule witnessCapsule = new WitnessCapsule(
+          ByteString.copyFromUtf8(key.getAddress()),
+          key.getVoteCount(), key.getUrl());
+
+      this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
+      this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
+      this.wits.add(witnessCapsule);
     });
   }
 
@@ -252,12 +256,14 @@ public class Manager {
       }
     }
     account.setBalance(balance + amount);
-    getAccountStore().put(account.getAddress().toByteArray(), account);
+    this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   /**
    * push transaction into db.
    */
+  public boolean pushTransactions(final TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
   public boolean pushTransactions(TransactionCapsule trx) {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -284,8 +290,8 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(BlockCapsule block) throws ValidateSignatureException {
-    khaosDb.push(block);
+  public void pushBlock(final BlockCapsule block) throws ValidateSignatureException {
+    this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
       if (!block.validateSignature()) {
@@ -306,10 +312,10 @@ public class Manager {
       }
       //todo: In some case it need to switch the branch
     }
-    getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
-    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    head = khaosDb.getHead();
+    this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    this.head = this.khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
@@ -317,9 +323,9 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+  public ArrayList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
+    final Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+        this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(ArrayList::new));
