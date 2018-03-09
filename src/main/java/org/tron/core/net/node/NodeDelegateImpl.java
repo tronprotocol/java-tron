@@ -48,6 +48,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     dbManager.pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    //TODO: get block's TRXs here and return
+    return new ArrayList<>();
   }
 
 
