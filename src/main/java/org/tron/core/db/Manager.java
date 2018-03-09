@@ -32,7 +32,6 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -217,8 +216,9 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getAssets().forEach(account -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
-          ByteString.copyFrom(ByteArray.fromHexString(account.getAddress())),
+      final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
+          account.getAccountType(),
+          ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
       this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
     });
@@ -228,16 +228,19 @@ public class Manager {
     return this.accountStore;
   }
 
-  public void adjustBalance(byte[] account_address, long amount)
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().get(account_address);
+    AccountCapsule account = getAccountStore().get(accountAddress);
     long balance = account.getBalance();
     if (amount == 0) {
       return;
     }
     if (amount < 0) {
       if (balance < -amount) {
-        throw new BalanceInsufficientException(account_address + " Insufficient");
+        throw new BalanceInsufficientException(accountAddress + " Insufficient");
       }
     }
     account.setBalance(balance + amount);

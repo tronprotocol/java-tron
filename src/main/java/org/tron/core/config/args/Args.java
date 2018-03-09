@@ -114,8 +114,22 @@ public class Args {
 
   private static Account createAccount(ConfigObject asset) {
     Account account = new Account();
-    account.setAddress(asset.get("address").unwrapped().toString());
-    account.setBalance(asset.get("balance").unwrapped().toString());
+    if (asset.containsKey("accountName")) {
+      account.setAccountName(asset.get("accountName").unwrapped().toString());
+    }
+
+    if (asset.containsKey("accountType")) {
+      account.setAccountType(asset.get("accountType").unwrapped().toString());
+    }
+
+    if (asset.containsKey("address")) {
+      account.setAddress(asset.get("address").unwrapped().toString());
+    }
+
+    if (asset.containsKey("balance")) {
+      account.setBalance(asset.get("balance").unwrapped().toString());
+    }
+
     return account;
   }
 
