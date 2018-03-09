@@ -268,8 +268,14 @@ public class WitnessService implements Service {
         .getBytes();
     final ECKey ecKey = ECKey.fromPrivate(this.privateKey);
 
-    final WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
+    WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
         .get(ecKey.getAddress());
+    // need handle init witness
+    if (null == witnessCapsule) {
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getPubKey()));
+    }
+    this.db.updateWitness();
+    //
 
     this.localWitnessState = witnessCapsule;
     this.witnessStates = this.db.getWitnesses();
