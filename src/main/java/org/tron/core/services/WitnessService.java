@@ -36,7 +36,6 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  private static final int LOOP_INTERVAL = Args.getInstance().getInitialWitness().getBlock_interval(); // millisecond
   private byte[] privateKey;
   private boolean hasCheckedSynchronization = true;
   private volatile boolean canceled = false;
@@ -48,7 +47,6 @@ public class WitnessService implements Service {
     this.tronApp = tronApp;
     db = tronApp.getDbManager();
     generateThread = new Thread(scheduleProductionLoop);
-    logger.info("LOOP_INTERVAL:" + LOOP_INTERVAL + "ms");
   }
 
   private Runnable scheduleProductionLoop =
@@ -59,9 +57,9 @@ public class WitnessService implements Service {
 
         while (isRunning) {
           DateTime time = DateTime.now();
-          int timeToNextSecond = LOOP_INTERVAL - time.getMillisOfSecond();
+          int timeToNextSecond = Manager.LOOP_INTERVAL - time.getMillisOfSecond();
           if (timeToNextSecond < 50) {
-            timeToNextSecond = timeToNextSecond + LOOP_INTERVAL;
+            timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
           }
           try {
             DateTime nextTime = time.plus(timeToNextSecond);
@@ -143,7 +141,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = getSlotAtTime(DateTime.now());
+    long slot = tronApp.getDbManager().getSlotAtTime(DateTime.now());
     logger.debug("slot:" + slot);
 
     if (slot == 0) {
@@ -157,7 +155,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
-    DateTime scheduledTime = getSlotTime(slot);
+    DateTime scheduledTime = tronApp.getDbManager().getSlotTime(slot);
 
     //TODO:implement private and public key code, fake code first.
 
@@ -196,51 +194,6 @@ public class WitnessService implements Service {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
-  private DateTime getSlotTime(long slotNum) {
-    if (slotNum == 0) {
-      return DateTime.now();
-    }
-    long interval = blockInterval();
-    BlockStore blockStore = tronApp.getDbManager().getBlockStore();
-    DateTime genesisTime = blockStore.getGenesisTime();
-    if (blockStore.getHeadBlockNum() == 0) {
-      return genesisTime.plus(slotNum * interval);
-    }
-
-    if (lastHeadBlockIsMaintenance()) {
-      slotNum += getSkipSlotInMaintenance();
-    }
-
-    DateTime headSlotTime = blockStore.getHeadBlockTime();
-
-    //align slot time
-    headSlotTime = headSlotTime
-        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
-
-    return headSlotTime.plus(interval * slotNum);
-  }
-
-  private boolean lastHeadBlockIsMaintenance() {
-    return db.getDynamicPropertiesStore().getStateFlag() == 1;
-  }
-
-  private long getSkipSlotInMaintenance() {
-    return 0;
-  }
-
-  private long getSlotAtTime(DateTime when) {
-    DateTime firstSlotTime = getSlotTime(1);
-    if (when.isBefore(firstSlotTime)) {
-      return 0;
-    }
-    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
-  }
-
-
-  private long blockInterval() {
-    return LOOP_INTERVAL; // millisecond todo getFromDb
-  }
-
 
   // shuffle witnesses
   private void updateWitnessSchedule() {
@@ -270,6 +223,7 @@ public class WitnessService implements Service {
         Args.getInstance().getInitialWitness().getLocalWitness().getUrl());
     tronApp.getDbManager().addWitness(localWitnessState);
     this.witnessStates = db.getWitnesses();
+    logger.info("LOOP_INTERVAL:" + Manager.LOOP_INTERVAL + "ms");
   }
 
 

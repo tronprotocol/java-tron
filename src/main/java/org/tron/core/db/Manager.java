@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -42,6 +43,7 @@ public class Manager {
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
+  public static final int LOOP_INTERVAL = Args.getInstance().getInitialWitness().getBlock_interval(); // millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -548,7 +550,69 @@ public class Manager {
 
 
   public void updateSignedWitness(BlockCapsule block) {
-    //witnessStore.get(block);
+    //TODO: add verification
+    WitnessCapsule witnessCapsule = witnessStore
+        .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+
+    long latestSlotNum = 0L;
+
+//    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+
+    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
+        .setLatestSlotNum(latestSlotNum)
+        .build();
+
+    processFee();
+  }
+
+  private void processFee() {
+
+  }
+
+  private long blockInterval() {
+    return LOOP_INTERVAL; // millisecond todo getFromDb
+  }
+
+  public long getSlotAtTime(DateTime when) {
+    DateTime firstSlotTime = getSlotTime(1);
+    if (when.isBefore(firstSlotTime)) {
+      return 0;
+    }
+    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
+  }
+
+
+  public DateTime getSlotTime(long slotNum) {
+    if (slotNum == 0) {
+      return DateTime.now();
+    }
+    long interval = blockInterval();
+    BlockStore blockStore = getBlockStore();
+    DateTime genesisTime = blockStore.getGenesisTime();
+    if (blockStore.getHeadBlockNum() == 0) {
+      return genesisTime.plus(slotNum * interval);
+    }
+
+    if (lastHeadBlockIsMaintenance()) {
+      slotNum += getSkipSlotInMaintenance();
+    }
+
+    DateTime headSlotTime = blockStore.getHeadBlockTime();
+
+    //align slot time
+    headSlotTime = headSlotTime
+        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+
+    return headSlotTime.plus(interval * slotNum);
+  }
+
+
+  private boolean lastHeadBlockIsMaintenance() {
+    return getDynamicPropertiesStore().getStateFlag() == 1;
+  }
+
+  private long getSkipSlotInMaintenance() {
+    return 0;
   }
 
   /**
