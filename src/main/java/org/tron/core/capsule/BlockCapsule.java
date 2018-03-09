@@ -242,6 +242,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       if (hashNum % 2 == 1) {
         ids.set(k++, ids.get(max));
       }
+      hashNum = k;
     }
 
     return ids.firstElement();
