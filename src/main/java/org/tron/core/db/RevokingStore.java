@@ -5,7 +5,11 @@ class RevokingStore extends AbstractRevokingStore {
   private RevokingStore() {
   }
 
-  enum RevokingEnum {
+  public static RevokingDatabase getInstance() {
+    return RevokingEnum.INSTANCE.getInstance();
+  }
+
+  private enum RevokingEnum {
     INSTANCE;
 
     private RevokingDatabase instance;
@@ -14,7 +18,7 @@ class RevokingStore extends AbstractRevokingStore {
       instance = new RevokingStore();
     }
 
-    RevokingDatabase getInstance() {
+    private RevokingDatabase getInstance() {
       return instance;
     }
   }
