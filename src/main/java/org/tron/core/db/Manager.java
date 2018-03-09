@@ -206,6 +206,7 @@ public class Manager {
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
             this.genesisBlock.getTimeStamp());
         this.initAccount();
+
       }
     }
   }
@@ -221,7 +222,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(key.getBalance()));
 
-      this.accountStore.put(key.getAddress().getBytes(), accountCapsule);
+      this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
     });
   }
 
