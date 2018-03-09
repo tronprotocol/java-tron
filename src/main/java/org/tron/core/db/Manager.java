@@ -90,8 +90,9 @@ public class Manager {
     return this.wits;
   }
 
-  public Sha256Hash getHeadBlockId() {
-    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
+  public BlockId getHeadBlockId() {
+    return head.getBlockId();
+    //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
@@ -183,6 +184,10 @@ public class Manager {
 
   public BlockId getGenesisBlockId() {
     return genesisBlock.getBlockId();
+  }
+
+  public BlockCapsule getGenesisBlock() {
+    return genesisBlock;
   }
 
   /**
@@ -329,9 +334,12 @@ public class Manager {
    * @param blockHash blockHash
    */
   public boolean containBlock(final Sha256Hash blockHash) {
-    //TODO: check it from levelDB
     return this.khaosDb.containBlock(blockHash)
         || this.getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+  }
+
+  public boolean containBlockInMainChain(BlockId blockId) {
+    return getBlockStore().dbSource.getData(blockId.getBytes()) != null;
   }
 
   /**
@@ -345,7 +353,8 @@ public class Manager {
   /**
    * Get a BlockCapsule by id.
    */
-  public BlockCapsule getBlockByHash(final Sha256Hash hash) {
+
+  public BlockCapsule getBlockById(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash)
         : new BlockCapsule(this.getBlockStore().dbSource.getData(hash.getBytes()));
   }
@@ -353,8 +362,9 @@ public class Manager {
   /**
    * Delete a block.
    */
+
   public void deleteBlock(final Sha256Hash blockHash) {
-    final BlockCapsule block = this.getBlockByHash(blockHash);
+    final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
     this.getBlockStore().dbSource.deleteData(blockHash.getBytes());
     this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
@@ -406,8 +416,9 @@ public class Manager {
     return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
   }
 
+
   public void initHeadBlock(final Sha256Hash id) {
-    this.head = this.getBlockByHash(id);
+    this.head = this.getBlockById(id);
   }
 
   /**

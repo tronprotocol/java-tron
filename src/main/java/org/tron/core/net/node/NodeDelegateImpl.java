@@ -2,6 +2,8 @@ package org.tron.core.net.node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void handleBlock(BlockCapsule block) throws ValidateSignatureException, BadBlockException {
+  public List<TransactionCapsule> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -46,6 +48,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     dbManager.pushBlock(block);
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    //TODO: get block's TRXs here and return
+    return new ArrayList<>();
   }
 
 
@@ -109,9 +113,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
-    List<BlockId> retSummary = new ArrayList<>();
+    Deque<BlockId> retSummary = new LinkedList<>();
     long highBlkNum = 0;
     long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
@@ -141,11 +145,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.add(dbManager.getBlockIdByNum(lowBlkNum));
+        retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
       } else if (lowBlkNum <= highBlkNum) {
-        retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
+        retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
-        retSummary.add(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
+        retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);
@@ -172,19 +176,27 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   }
 
-  @Override
-  public void getBlockNum(byte[] hash) {
 
+  @Override
+  public long getBlockTime(BlockId id) {
+    return dbManager.containBlock(id)
+        ? dbManager.getBlockById(id).getTimeStamp()
+        : dbManager.getGenesisBlock().getTimeStamp();
   }
 
   @Override
-  public void getBlockTime(byte[] hash) {
-
+  public BlockId getHeadBlockId() {
+    return dbManager.getHeadBlockId();
   }
 
   @Override
-  public byte[] getHeadBlockId() {
-    return new byte[0];
+  public boolean containBlock(BlockId id) {
+    return dbManager.containBlock(id);
+  }
+
+  @Override
+  public boolean containBlockInMainChain(BlockId id) {
+    return dbManager.containBlockInMainChain(id);
   }
 
   @Override
@@ -199,8 +211,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public BlockId getGenesisBlock() {
+  public BlockCapsule getGenesisBlock() {
     //TODO return a genissBlock
-    return new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
+    return dbManager.getGenesisBlock();
   }
 }
