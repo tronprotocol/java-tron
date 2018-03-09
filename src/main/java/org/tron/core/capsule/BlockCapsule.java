@@ -131,7 +131,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setNumber(number + 1)
+        .setNumber(number)
         .setParentHash(hash)
         .setTimestamp(when)
         .setWitnessAddress(witnessAddress).build();

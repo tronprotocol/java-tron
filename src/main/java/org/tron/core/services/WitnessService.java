@@ -247,8 +247,8 @@ public class WitnessService implements Service {
       String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
       witnessStates = new RandomGenerator<WitnessCapsule>()
           .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
-      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
-          + getWitnessStringList(witnessStates));
+//      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
+//          + getWitnessStringList(witnessStates));
     }
   }
 
