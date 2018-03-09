@@ -316,6 +316,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (blockIds.isEmpty()) {
       peer.setNeedSyncFromUs(false);
+    } else { //TODO: here must check when blockIds.size == 1, it is maybe is in sync status
+      peer.setNeedSyncFromUs(true);
     }
 
     if (!peer.isNeedSyncFromPeer()
@@ -562,6 +564,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectPeer(PeerConnection peer) {
+    logger.info("Discover new peer:" + peer);
     mapPeer.put(peer.getAddress(), peer);
     startSyncWithPeer(peer);
   }
