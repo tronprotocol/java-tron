@@ -10,6 +10,9 @@ import org.tron.protos.Protocol.Witness;
 public class WitnessCapsule implements ProtoCapsule<Witness> {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessCapsule");
+
+  public static final long MIN_BALANCE = 100;
+
   private Witness witness;
 
   private byte[] data;

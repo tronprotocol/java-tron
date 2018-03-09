@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
@@ -519,24 +520,47 @@ public class Manager {
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
       logger.info("there is account ,account address is {}", account.getAddress().toStringUtf8());
-      account.getVotesList().forEach(vote -> {
-        //TODO validate witness //active_witness
-        if (countWitness.containsKey(vote.getVoteAddress())) {
-          countWitness.put(vote.getVoteAddress(),
-              countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+
+      Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
+          .reduce((a, b) -> a + b);
+      if (sum.isPresent()) {
+        if (sum.get() <= account.getShare()) {
+          account.getVotesList().forEach(vote -> {
+            //TODO validate witness //active_witness
+            if (countWitness.containsKey(vote.getVoteAddress())) {
+              countWitness.put(vote.getVoteAddress(),
+                  countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+            } else {
+              countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+            }
+          });
         } else {
-          countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+          logger.info(
+              "account" + account.getAddress() + ",share[" + account.getShare() + "] > voteSum["
+                  + sum.get() + "]");
         }
-      });
+      }
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
     countWitness.forEach((address, voteCount) -> {
       final WitnessCapsule witnessCapsule = this.witnessStore.getWitness(address);
       if (null == witnessCapsule) {
-        logger.warn("winessSouece is null.address is {}", address);
+        logger.warn("witnessCapsule is null.address is {}", address);
         return;
       }
+
+      ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
+      AccountCapsule witnessAccountCapsule = accountStore.get(witnessAddress.toByteArray());
+      if (witnessAccountCapsule == null) {
+        logger.warn("witnessAccount[" + witnessAddress + "] not exists");
+      }
+
+      if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
+        logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
+            .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
+      }
+
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
       witnessCapsuleList.add(witnessCapsule);
       this.witnessStore.putWitness(witnessCapsule);

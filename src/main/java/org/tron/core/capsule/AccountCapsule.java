@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
@@ -108,7 +109,11 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   }
 
   public List<Vote> getVotesList() {
-    return this.account.getVotesList();
+    if(this.account.getVotesList() != null){
+      return this.account.getVotesList();
+    }else {
+      return Lists.newArrayList();
+    }
   }
 
   public long getShare() {
