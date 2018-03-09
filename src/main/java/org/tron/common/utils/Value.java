@@ -342,12 +342,9 @@ public class Value {
   public int countBranchNodes() {
 //        decode();
     if (this.isList()) {
-      List<Object> objList = this.asList();
-      int i = 0;
-      for (Object obj : objList) {
-        i += (new Value(obj)).countBranchNodes();
-      }
-      return i;
+      return this.asList().stream()
+              .mapToInt(obj -> (new Value(obj)).countBranchNodes())
+              .sum();
     } else if (this.isBytes()) {
       this.asBytes();
     }

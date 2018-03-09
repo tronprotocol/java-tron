@@ -19,6 +19,9 @@
 package org.tron.common.utils;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import org.spongycastle.util.encoders.Hex;
 
 @SuppressWarnings("serial")
@@ -50,11 +53,9 @@ public class DecodeResult implements Serializable {
     } else if (decoded instanceof byte[]) {
       return Hex.toHexString((byte[]) decoded);
     } else if (decoded instanceof Object[]) {
-      StringBuilder result = new StringBuilder();
-      for (Object item : (Object[]) decoded) {
-        result.append(asString(item));
-      }
-      return result.toString();
+      return Arrays.stream((Object[]) decoded)
+              .map(this::asString)
+              .collect(Collectors.joining());
     }
     throw new RuntimeException("Not a valid type. Should not occur");
   }

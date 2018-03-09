@@ -27,7 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class FileUtil {
 
@@ -66,11 +68,10 @@ public class FileUtil {
     if (file.exists()) {
       // check if the file is a directory
       if (file.isDirectory()) {
-        String[] filesList = file.list();
-        for (String s : filesList) {
-          // call deletion of file individually
-          recursiveDelete(fileName + System.getProperty("file.separator") + s);
-        }
+        // call deletion of file individually
+        Arrays.stream(Objects.requireNonNull(file.list()))
+                .map(s -> fileName + System.getProperty("file.separator") + s)
+                .forEachOrdered(FileUtil::recursiveDelete);
       }
 
       file.setWritable(true);
