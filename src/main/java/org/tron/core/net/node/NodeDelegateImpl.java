@@ -2,6 +2,8 @@ package org.tron.core.net.node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,9 +111,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
-    List<BlockId> retSummary = new ArrayList<>();
+    Deque<BlockId> retSummary = new LinkedList<>();
     long highBlkNum = 0;
     long highNoForkBlkNum;
     long lowBlkNum = 0; //TODO：get this from db.
@@ -141,11 +143,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.add(dbManager.getBlockIdByNum(lowBlkNum));
+        retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
       } else if (lowBlkNum <= highBlkNum) {
-        retSummary.add(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
+        retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
-        retSummary.add(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
+        retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);
@@ -207,8 +209,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public BlockId getGenesisBlock() {
+  public BlockCapsule getGenesisBlock() {
     //TODO return a genissBlock
-    return new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
+    return dbManager.getGenesisBlock();
   }
 }

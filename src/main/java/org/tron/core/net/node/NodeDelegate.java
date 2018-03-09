@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import java.util.Deque;
 import java.util.List;
 import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -19,7 +20,7 @@ public interface NodeDelegate {
 
   List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
 
-  List<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
+  Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
@@ -35,6 +36,6 @@ public interface NodeDelegate {
 
   boolean containBlockInMainChain(BlockId id);
 
-  BlockId getGenesisBlock();
+  BlockCapsule getGenesisBlock();
 
 }

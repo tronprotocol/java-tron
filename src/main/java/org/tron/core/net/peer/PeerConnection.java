@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Sha256Hash;
@@ -45,15 +46,26 @@ public class PeerConnection {
 
   private Deque<BlockId> blockChainToFetch = new LinkedList<>();
 
-  private HashMap<BlockId, Long>  syncChainRequested = null;
+  private HashMap<BlockId, Long> syncBlockRequested = null;
 
-  public HashMap<BlockId, Long> getSyncChainRequested() {
+  private Pair<LinkedList<BlockId>, Long> syncChainRequested;
+
+  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      HashMap<BlockId, Long> syncChainRequested) {
+      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
+  }
+
+  public HashMap<BlockId, Long> getSyncBlockRequested() {
+    return syncBlockRequested;
+  }
+
+  public void setSyncBlockRequested(
+      HashMap<BlockId, Long> syncBlockRequested) {
+    this.syncBlockRequested = syncBlockRequested;
   }
 
   public Address getAddress() {
