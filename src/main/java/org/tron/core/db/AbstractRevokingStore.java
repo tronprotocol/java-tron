@@ -1,26 +1,29 @@
 package org.tron.core.db;
 
-import lombok.AllArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import org.tron.common.storage.SourceInter;
-import org.tron.common.utils.Utils;
-
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.SourceInter;
+import org.tron.common.utils.Utils;
 
 @Slf4j
 abstract class AbstractRevokingStore implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  
+
   private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
   private int activeDialog = 0;
-  
+
+  public static RevokingDatabase getInstance() {
+    return RevokingEnum.INSTANCE.getInstance();
+  }
+
   @Override
   public Dialog buildDialog() {
     return buildDialog(false);
@@ -270,5 +273,19 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   public static class RevokingTuple {
     private SourceInter<byte[], byte[]> database;
     private byte[] key;
+  }
+
+  private enum RevokingEnum {
+    INSTANCE;
+
+    private RevokingDatabase instance;
+
+    RevokingEnum() {
+      instance = new RevokingStore();
+    }
+
+    private RevokingDatabase getInstance() {
+      return instance;
+    }
   }
 }
