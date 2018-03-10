@@ -57,7 +57,7 @@ public class WitnessService implements Service {
 
         while (isRunning) {
           DateTime time = DateTime.now();
-          int timeToNextSecond = Manager.LOOP_INTERVAL - time.getMillisOfSecond();
+          long timeToNextSecond = Manager.LOOP_INTERVAL - time.getMillisOfSecond();
           if (timeToNextSecond < 50) {
             timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
           }

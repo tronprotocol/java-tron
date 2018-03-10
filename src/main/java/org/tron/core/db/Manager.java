@@ -29,7 +29,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.config.args.InitialWitness;
+import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -43,7 +43,7 @@ public class Manager {
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
-  public static final int LOOP_INTERVAL = Args.getInstance().getInitialWitness().getBlock_interval(); // millisecond
+  public static final long LOOP_INTERVAL = Args.getInstance().getBlockInterval(); // millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -223,7 +223,7 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getWitnesses().forEach(key -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
+      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,AccountType.AssetIssue,
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(0));
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
@@ -262,9 +262,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
-  public boolean pushTransactions(TransactionCapsule trx) {
+  public boolean pushTransactions(final TransactionCapsule trx){
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
