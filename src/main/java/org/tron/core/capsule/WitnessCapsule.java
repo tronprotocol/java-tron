@@ -10,6 +10,9 @@ import org.tron.protos.Protocol.Witness;
 public class WitnessCapsule implements ProtoCapsule<Witness> {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessCapsule");
+
+  public static final long MIN_BALANCE = 100;
+
   private Witness witness;
 
   private byte[] data;
@@ -43,11 +46,11 @@ public class WitnessCapsule implements ProtoCapsule<Witness> {
   /**
    * WitnessCapsule constructor with address and voteCount.
    */
-  public WitnessCapsule(final ByteString address, final long voteCount) {
+  public WitnessCapsule(final ByteString address, final long voteCount, final String url) {
     final Witness.Builder witnessBuilder = Witness.newBuilder();
     this.witness = witnessBuilder
         .setAddress(address)
-        .setVoteCount(voteCount).build();
+        .setVoteCount(voteCount).setUrl(url).build();
     this.unpacked = true;
   }
 

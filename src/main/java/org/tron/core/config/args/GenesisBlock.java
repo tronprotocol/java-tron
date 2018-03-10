@@ -13,6 +13,7 @@ public class GenesisBlock implements Serializable {
   private static final String DEFAULT_PARENT_HASH = "0";
 
   private List<Account> assets;
+  private List<Witness> witnesses;
   private String timeStamp;
   private String parentHash;
   private String hash;
@@ -22,7 +23,7 @@ public class GenesisBlock implements Serializable {
    * return default genesis block.
    */
   public static GenesisBlock getDefault() {
-    GenesisBlock genesisBlock = new GenesisBlock();
+    final GenesisBlock genesisBlock = new GenesisBlock();
     genesisBlock.setNumber(DEFAULT_NUMBER);
     genesisBlock.setTimeStamp(DEFAULT_TIMESTAMP);
     genesisBlock.setHash(DEFAULT_HASH);
@@ -31,42 +32,50 @@ public class GenesisBlock implements Serializable {
   }
 
   public List<Account> getAssets() {
-    return assets;
+    return this.assets;
   }
 
-  public void setAssets(List<Account> assets) {
+  public void setAssets(final List<Account> assets) {
     this.assets = assets;
   }
 
   public String getTimeStamp() {
-    return timeStamp;
+    return this.timeStamp;
   }
 
-  public void setTimeStamp(String timeStamp) {
+  public void setTimeStamp(final String timeStamp) {
     this.timeStamp = timeStamp;
   }
 
   public String getParentHash() {
-    return parentHash;
+    return this.parentHash;
   }
 
-  public void setParentHash(String parentHash) {
+  public void setParentHash(final String parentHash) {
     this.parentHash = parentHash;
   }
 
   public String getHash() {
-    return hash;
+    return this.hash;
   }
 
-  public void setHash(String hash) {
+  public void setHash(final String hash) {
     this.hash = hash;
   }
 
   public String getNumber() {
-    return number;
+    return this.number;
   }
 
-  public void setNumber(String number) {
+  public void setNumber(final String number) {
     this.number = number;
+  }
+
+  public List<Witness> getWitnesses() {
+    return this.witnesses;
+  }
+
+  public void setWitnesses(final List<Witness> witnesses) {
+    this.witnesses = witnesses;
   }
 }

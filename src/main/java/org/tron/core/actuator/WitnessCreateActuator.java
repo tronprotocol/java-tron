@@ -15,7 +15,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
 
-  WitnessCreateActuator(Any contract, Manager dbManager) {
+  WitnessCreateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -23,9 +23,10 @@ public class WitnessCreateActuator extends AbstractActuator {
   @Override
   public boolean execute() {
     try {
-      WitnessCreateContract witnessCreateContract = contract.unpack(WitnessCreateContract.class);
-      createWitness(witnessCreateContract);
-    } catch (InvalidProtocolBufferException e) {
+      final WitnessCreateContract witnessCreateContract = this.contract
+          .unpack(WitnessCreateContract.class);
+      this.createWitness(witnessCreateContract);
+    } catch (final InvalidProtocolBufferException e) {
       throw new RuntimeException("Parse contract error", e);
     }
     return true;
@@ -34,21 +35,21 @@ public class WitnessCreateActuator extends AbstractActuator {
   @Override
   public boolean validate() {
     try {
-      if (!contract.is(WitnessCreateContract.class)) {
+      if (!this.contract.is(WitnessCreateContract.class)) {
         throw new RuntimeException(
-            "contract type error,expected type [AccountCreateContract],real type[" + contract
+            "contract type error,expected type [AccountCreateContract],real type[" + this.contract
                 .getClass() + "]");
       }
 
-      WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
+      final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
-      if (dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
+      if (this.dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
         throw new RuntimeException("Witness has existed");
       }
 
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       throw new RuntimeException("Validate WitnessCreateContract error.", ex);
     }
     return true;
@@ -59,12 +60,12 @@ public class WitnessCreateActuator extends AbstractActuator {
     return null;
   }
 
-  private void createWitness(WitnessCreateContract witnessCreateContract) {
+  private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
-    WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0);
+    final WitnessCapsule witnessCapsule = new WitnessCapsule(
+        witnessCreateContract.getOwnerAddress(), 0, "");
 
-    dbManager.getWitnessStore().putWitness(witnessCapsule);
+    this.dbManager.getWitnessStore().putWitness(witnessCapsule);
   }
 
 }
