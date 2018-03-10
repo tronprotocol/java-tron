@@ -127,6 +127,10 @@ public class PeerConnection {
     this.chainIdsWeReqeuested = chainIdsWeReqeuested;
   }
 
+  public void cleanInvGarbage() {
+    //TODO: clean advObjSpreadToUs and advObjWeSpread.
+  }
+
   public boolean isBanned() {
     return banned;
   }
