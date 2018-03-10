@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferContract;
 
 public class TransferActuator extends AbstractActuator {
@@ -46,9 +47,19 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ContractValidateException {
     //TODO
-    return false;
+    if (contract.is(TransferContract.class)) {
+      try {
+        TransferContract transferContract = contract.unpack(TransferContract.class);
+
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    } else {
+      throw new ContractValidateException("wrong transfer type");
+    }
+    return true;
   }
 
   @Override
@@ -62,5 +73,10 @@ public class TransferActuator extends AbstractActuator {
       e.printStackTrace();
     }
     return null;
+  }
+
+  @Override
+  public long calcFee() {
+    return 0;
   }
 }

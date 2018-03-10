@@ -269,7 +269,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx) {
+  public boolean pushTransactions(final TransactionCapsule trx) throws ValidateSignatureException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -388,15 +388,19 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap) {
+  public boolean processTransaction(final TransactionCapsule trxCap)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    assert actuatorList != null;
-    actuatorList.forEach(Actuator::validate);
-    actuatorList.forEach(Actuator::execute);
+
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute();
+    }
+
     return true;
   }
 
@@ -432,7 +436,7 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) {
+      final long when, final byte[] privateKey) throws ValidateSignatureException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -465,13 +469,9 @@ public class Manager {
         continue;
       }
       // apply transaction
-      try {
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          processTransaction(trx);
-          tmpDialog.merge();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        processTransaction(trx);
+        tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
@@ -480,6 +480,8 @@ public class Manager {
         e.printStackTrace();
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
+        e.printStackTrace();
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }

@@ -47,7 +47,8 @@ public class VoteWitnessActuator extends AbstractActuator {
         throw new RuntimeException("Account[" + contract.getOwnerAddress() + "] not exists");
       }
 
-      long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray()).getShare();
+      long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
+          .getShare();
       long sum = contract.getVotesList().stream().map(vote -> vote.getVoteCount()).count();
       if (sum > share) {
         throw new RuntimeException(
@@ -77,6 +78,11 @@ public class VoteWitnessActuator extends AbstractActuator {
   public ByteString getOwnerAddress() {
     return null;
 
+  }
+
+  @Override
+  public long calcFee() {
+    return 0;
   }
 
 }
