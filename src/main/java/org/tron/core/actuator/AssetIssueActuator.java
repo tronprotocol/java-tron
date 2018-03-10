@@ -38,6 +38,14 @@ public class AssetIssueActuator extends AbstractActuator {
   @Override
   public boolean execute() throws ContractExeException {
     try {
+      if (!this.contract.is(AssetIssueContract.class)) {
+        throw new ContractExeException();
+      }
+
+      if (dbManager == null) {
+        throw new ContractExeException();
+      }
+
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
 
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
