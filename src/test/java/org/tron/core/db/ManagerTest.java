@@ -79,7 +79,7 @@ public class ManagerTest {
 
     Assert.assertFalse("deleteBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString(blockCapsule2.getBlockId().toString()))));
-  }
+}
 
   @Test
   public void testPushTransactions() {
