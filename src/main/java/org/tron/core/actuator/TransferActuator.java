@@ -5,6 +5,9 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferContract;
 
 public class TransferActuator extends AbstractActuator {
@@ -15,7 +18,7 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() {
+  public boolean execute() throws ContractExeException {
     try {
       TransferContract transferContract = contract.unpack(TransferContract.class);
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
@@ -23,16 +26,20 @@ public class TransferActuator extends AbstractActuator {
       dbManager.adjustBalance(transferContract.getToAddress().toByteArray(),
           transferContract.getAmount());
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("Parse contract error", e);
+      e.printStackTrace();
+      throw new ContractExeException(e.getMessage());
+    } catch (BalanceInsufficientException e) {
+      e.printStackTrace();
+      throw new ContractExeException(e.getMessage());
     }
     return true;
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ContractValidateException {
     try {
       if (!contract.is(TransferContract.class)) {
-        throw new RuntimeException(
+        throw new ContractValidateException(
             "contract type error,expected type [TransferContract],real type[" + contract
                 .getClass() + "]");
       }
@@ -44,33 +51,26 @@ public class TransferActuator extends AbstractActuator {
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
 
       if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
-        throw new RuntimeException("Validate TransferContract error, no OwnerAccount.");
+        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
       }
       if (!dbManager.getAccountStore().has(transferContract.getToAddress().toByteArray())) {
-        throw new RuntimeException("Validate TransferContract error, no ToAccount.");
+        throw new ContractValidateException("Validate TransferContract error, no ToAccount.");
       }
       long amount = transferContract.getAmount();
       if (amount < 0) {
-        throw new RuntimeException("Amount is less than 0.");
+        throw new ContractValidateException("Amount is less than 0.");
       }
     } catch (Exception ex) {
-      throw new RuntimeException("Validate TransferContract error.", ex);
+      ex.printStackTrace();
+      throw new ContractValidateException(ex.getMessage());
     }
 
     return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    try {
-      if (contract.is(TransferContract.class)) {
-        TransferContract transferContract = contract.unpack(TransferContract.class);
-        return transferContract.getOwnerAddress();
-      }
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(TransferContract.class).getOwnerAddress();
   }
 
   @Override
