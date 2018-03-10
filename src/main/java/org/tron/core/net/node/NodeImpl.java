@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -64,6 +65,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private volatile boolean isAdvertiseActive;
 
   private Thread advertiseLoopThread;
+
+  //broadcast
+  private Set<Sha256Hash> freshAdvObj = new HashSet<>();
+
+  private HashMap<BlockId, Long> advObjWeRequested = new HashMap<>();
+
+  private Set<Sha256Hash> advObjToFetch = new HashSet<>();
 
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();

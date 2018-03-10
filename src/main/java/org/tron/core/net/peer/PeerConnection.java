@@ -37,7 +37,28 @@ public class PeerConnection {
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
+  private HashMap<Sha256Hash, Long> advObjSpreadToUs = new HashMap<>();
+
+  private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
+
   private HashMap<BlockId, Long> blocksWeRequested = new HashMap<>();
+
+  public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
+    return advObjSpreadToUs;
+  }
+
+  public void setAdvObjSpreadToUs(
+      HashMap<Sha256Hash, Long> advObjSpreadToUs) {
+    this.advObjSpreadToUs = advObjSpreadToUs;
+  }
+
+  public HashMap<Sha256Hash, Long> getAdvObjWeSpread() {
+    return advObjWeSpread;
+  }
+
+  public void setAdvObjWeSpread(HashMap<Sha256Hash, Long> advObjWeSpread) {
+    this.advObjWeSpread = advObjWeSpread;
+  }
 
   //sync chain
   private BlockId headBlockWeBothHave;
