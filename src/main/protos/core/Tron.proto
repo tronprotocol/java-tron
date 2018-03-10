@@ -30,8 +30,6 @@ message Account {
 
 }
 
-
-
 // Witness
 message Witness {
   bytes address = 1;
@@ -41,8 +39,12 @@ message Witness {
   int64 totalProduced = 5;
   int64 totalMissed = 6;
   int64 latestBlockNum = 7;
+<<<<<<< HEAD
+=======
+  int64 latestSlotNum = 8;
+  bool isJobs = 9;
+>>>>>>> 1889f42dc6054ad89c01cbe204c14f7e82bf56e2
 }
-
 
 // Transcation
 
