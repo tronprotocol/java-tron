@@ -167,6 +167,7 @@ public class Manager {
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
     revokingStore = RevokingStore.getInstance();
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -274,7 +275,6 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    revokingStore.buildDialog();
     if (dialog != null) {
       dialog = revokingStore.buildDialog();
     }

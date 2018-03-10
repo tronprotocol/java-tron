@@ -82,6 +82,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     RevokingState state = stack.peekLast();
     if (state.newIds.contains(tuple)) {
       state.newIds.remove(tuple);
+      return;
     }
 
     if (state.oldValues.containsKey(tuple)) {
@@ -99,9 +100,18 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Override
   public void merge() {
+    if (activeDialog <= 0) {
+      throw new IllegalStateException("activeDialog has to be greater than 0");
+    }
+
     if (activeDialog == 1 && stack.size() == 1) {
       stack.pollLast();
       --activeDialog;
+      return;
+    }
+
+    if (stack.size() < 2) {
+      return;
     }
 
     RevokingState state = stack.peekLast();
@@ -142,17 +152,51 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Override
   public void revoke() {
-    pop();
+    if (disabled) {
+      return;
+    }
+
+    if (activeDialog <= 0) {
+      throw new IllegalStateException("activeDialog has to be greater than 0");
+    }
+
+    disable();
+
+    try {
+      RevokingState state = stack.peekLast();
+      if (Objects.isNull(state)) {
+        return;
+      }
+
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
+      state.newIds.forEach(e -> e.database.deleteData(e.key));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v));
+      stack.pollLast();
+    } finally {
+      enable();
+    }
     --activeDialog;
   }
 
   @Override
   public void commit() {
+    if (activeDialog <= 0) {
+      throw new IllegalStateException("activeDialog has to be greater than 0");
+    }
+
     --activeDialog;
   }
 
   @Override
   public void pop() {
+    if (activeDialog != 0) {
+      throw new IllegalStateException("activeDialog has to be equal 0");
+    }
+
+    if (stack.isEmpty()) {
+      return;
+    }
+
     disable();
 
     try {
@@ -172,6 +216,10 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Override
   public RevokingState head() {
+    if (stack.isEmpty()) {
+      return null;
+    }
+
     return stack.peekLast();
   }
 
