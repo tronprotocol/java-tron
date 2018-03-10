@@ -22,9 +22,9 @@ import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
@@ -110,6 +110,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private Thread advertiseLoopThread;
 
   private Thread advObjFetchLoopThread;
+
+  private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
 
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
@@ -320,7 +322,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
-          this.advObjToFetch.put(id, msg.getInventoryType());
+          if (!badAdvObj.containsKey(id)) {
+            this.advObjToFetch.put(id, msg.getInventoryType());
+          }
         }
       }
     });
@@ -386,7 +390,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
-        throw e;
+        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       } catch (UnReachBlockException e) {
         //TODO:unlinked block
         startSyncWithPeer(peer);
@@ -413,7 +417,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       del.handleBlock(block, true);
       freshBlockId.offer(block.getBlockId());
     } catch (BadBlockException e) {
-      throw e;
+      badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
     }
 
     Deque<PeerConnection> needSync = new LinkedList<>();
@@ -441,16 +445,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     logger.info("on handle transaction message");
-    if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
-      throw new TraitorPeerException("We don't send fetch request to" + peer);
-    }
-
-
-
     try {
-      del.handleTransaction(trxMsg.getTransactionCapsule());
-    } catch (ValidateSignatureException e) {
-      e.printStackTrace();
+      if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
+        throw new TraitorPeerException("We don't send fetch request to" + peer);
+      } else {
+        peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
+        del.handleTransaction(trxMsg.getTransactionCapsule());
+      }
+    } catch (TraitorPeerException e) {
+      banTraitorPeer(peer);
+    } catch (BadTransactionException e) {
+      badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
     }
   }
 
