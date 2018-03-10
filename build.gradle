@@ -12,11 +12,14 @@ sourceCompatibility = 1.8
 mainClassName = 'org.tron.program.FullNode'
 
 repositories {
+    maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+    mavenLocal()
     mavenCentral()
 }
 
 buildscript {
     repositories {
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
         mavenCentral()
         jcenter()
     }
@@ -112,6 +115,10 @@ dependencies {
     compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
+
+    compile 'org.aspectj:aspectjrt:1.8.13'
+    compile 'org.aspectj:aspectjweaver:1.8.13'
+    compile 'org.aspectj:aspectjtools:1.8.13'
 }
 
 check.dependsOn 'lint'

@@ -12,13 +12,12 @@ import org.tron.core.capsule.AccountCapsule;
 public class AccountStore extends TronDatabase<AccountCapsule> {
 
   private static final Logger logger = LoggerFactory.getLogger("AccountStore");
+  private static AccountStore instance;
+
 
   private AccountStore(String dbName) {
     super(dbName);
   }
-
-
-  private static AccountStore instance;
 
   /**
    * create fun.
@@ -39,13 +38,25 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
+    logger.info("address is {} ", key);
+
+    byte[] value = dbSource.getData(key);
+    if (ArrayUtils.isNotEmpty(value)) {
+      onModify(key, value);
+    }
+
     logger.info("address is {} ", ByteArray.toHexString(key));
     dbSource.putData(key, item.getData());
+
+    if (ArrayUtils.isEmpty(value)) {
+      onCreate(key);
+    }
   }
 
   @Override
   public void delete(byte[] key) {
-
+    // This should be called just before an object is removed.
+    onDelete(key);
   }
 
   @Override

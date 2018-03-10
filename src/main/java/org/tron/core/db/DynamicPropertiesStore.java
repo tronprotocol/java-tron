@@ -97,8 +97,7 @@ public class DynamicPropertiesStore extends TronDatabase {
    * get timestamp of creating global latest block.
    */
   public long getLatestBlockHeaderTimestamp() {
-    byte[] t = this.dbSource.getData(LATEST_BLOCK_HEADER_TIMESTAMP);
-    return Optional.ofNullable(t)
+    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_TIMESTAMP))
             .map(ByteArray::toLong)
             .orElseThrow(() -> new IllegalArgumentException("not found latest block header timestamp"));
   }
@@ -107,28 +106,22 @@ public class DynamicPropertiesStore extends TronDatabase {
    * get number of global latest block.
    */
   public long getLatestBlockHeaderNumber() {
-    byte[] n = this.dbSource.getData(LATEST_BLOCK_HEADER_NUMBER);
-    return Optional.ofNullable(n)
+    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_NUMBER))
             .map(ByteArray::toLong)
             .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
   public int getStateFlag() {
-    byte[] n = this.dbSource.getData(STATE_FLAG);
-
-    if (n == null || n.length == 0) {
-      throw new IllegalArgumentException("not found maintenance flag");
-    }
-
-    return ByteArray.toInt(n);
+    return Optional.ofNullable(this.dbSource.getData(STATE_FLAG))
+            .map(ByteArray::toInt)
+            .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
   }
 
   /**
    * get id of global latest block.
    */
   public ByteString getLatestBlockHeaderHash() {
-    byte[] h = this.dbSource.getData(LATEST_BLOCK_HEADER_HASH);
-    return Optional.ofNullable(h)
+    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
             .map(ByteString::copyFrom)
             .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
   }

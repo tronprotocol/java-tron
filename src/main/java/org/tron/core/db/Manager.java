@@ -8,12 +8,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -29,12 +27,12 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.InitialWitness;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -57,7 +55,7 @@ public class Manager {
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
   private BlockCapsule head;
-  private RevokingStore revokingStore;
+  private RevokingDatabase revokingStore;
   private RevokingStore.Dialog dialog;
 
   public WitnessStore getWitnessStore() {
@@ -92,8 +90,9 @@ public class Manager {
     return this.wits;
   }
 
-  public Sha256Hash getHeadBlockId() {
-    return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
+  public BlockId getHeadBlockId() {
+    return head.getBlockId();
+    //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
@@ -165,11 +164,15 @@ public class Manager {
     this.initGenesis();
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
-    revokingStore = new RevokingStore();
+    revokingStore = RevokingStore.getInstance();
   }
 
   public BlockId getGenesisBlockId() {
     return this.genesisBlock.getBlockId();
+  }
+
+  public BlockCapsule getGenesisBlock() {
+    return genesisBlock;
   }
 
   /**
@@ -215,7 +218,7 @@ public class Manager {
           account.getAccountType(),
           ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
-      this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
+      this.accountStore.put(account.getAddressBytes(), accountCapsule);
     });
   }
 
@@ -250,10 +253,9 @@ public class Manager {
     if (amount == 0) {
       return;
     }
-    if (amount < 0) {
-      if (balance < -amount) {
-        throw new BalanceInsufficientException(accountAddress + " Insufficient");
-      }
+
+    if (amount < 0 && balance < -amount) {
+      throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
     account.setBalance(balance + amount);
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -335,9 +337,12 @@ public class Manager {
    * @param blockHash blockHash
    */
   public boolean containBlock(final Sha256Hash blockHash) {
-    //TODO: check it from levelDB
     return this.khaosDb.containBlock(blockHash)
         || this.getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+  }
+
+  public boolean containBlockInMainChain(BlockId blockId) {
+    return getBlockStore().dbSource.getData(blockId.getBytes()) != null;
   }
 
   /**
@@ -351,7 +356,8 @@ public class Manager {
   /**
    * Get a BlockCapsule by id.
    */
-  public BlockCapsule getBlockByHash(final Sha256Hash hash) {
+
+  public BlockCapsule getBlockById(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash)
         : new BlockCapsule(this.getBlockStore().dbSource.getData(hash.getBytes()));
   }
@@ -359,8 +365,9 @@ public class Manager {
   /**
    * Delete a block.
    */
+
   public void deleteBlock(final Sha256Hash blockHash) {
-    final BlockCapsule block = this.getBlockByHash(blockHash);
+    final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
     this.getBlockStore().dbSource.deleteData(blockHash.getBytes());
     this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
@@ -412,8 +419,9 @@ public class Manager {
     return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
   }
 
+
   public void initHeadBlock(final Sha256Hash id) {
-    this.head = this.getBlockByHash(id);
+    this.head = this.getBlockById(id);
   }
 
   /**
@@ -529,11 +537,10 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       try {
         processTransaction(transactionCapsule);
-      } catch (ContractExeException e) {
-        e.printStackTrace();
-      } catch (ContractValidateException e) {
+      } catch (ContractExeException | ContractValidateException e) {
         e.printStackTrace();
       }
+
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
@@ -675,9 +682,7 @@ public class Manager {
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
           witnessCapsule.getVoteCount());
     });
-    witnessCapsuleList.sort((a, b) -> {
-      return (int) (a.getVoteCount() - b.getVoteCount());
-    });
+    witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }

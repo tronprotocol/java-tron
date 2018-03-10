@@ -131,7 +131,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setNumber(number + 1)
+        .setNumber(number)
         .setParentHash(hash)
         .setTimestamp(when)
         .setWitnessAddress(witnessAddress).build();
@@ -242,6 +242,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       if (hashNum % 2 == 1) {
         ids.set(k++, ids.get(max));
       }
+      hashNum = k;
     }
 
     return ids.firstElement();
