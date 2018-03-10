@@ -164,7 +164,18 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
     this.pendingTrxs = new ArrayList<>();
-    this.initGenesis();
+    try {
+      this.initGenesis();
+    } catch (ContractValidateException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ContractExeException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ValidateSignatureException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
     revokingStore = RevokingStore.getInstance();
@@ -182,7 +193,8 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis() {
+  public void initGenesis()
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -194,11 +206,9 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-        try {
-          this.pushBlock(this.genesisBlock);
-        } catch (final ValidateSignatureException e) {
-          e.printStackTrace();
-        }
+
+        this.pushBlock(this.genesisBlock);
+
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
@@ -296,7 +306,8 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(final BlockCapsule block) throws ValidateSignatureException {
+  public void pushBlock(final BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -440,7 +451,8 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) throws ValidateSignatureException {
+      final long when, final byte[] privateKey)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -537,14 +549,10 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
+  public void processBlock(BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      try {
-        processTransaction(transactionCapsule);
-      } catch (ContractExeException | ContractValidateException e) {
-        e.printStackTrace();
-      }
-
+      processTransaction(transactionCapsule);
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block

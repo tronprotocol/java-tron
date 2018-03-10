@@ -50,6 +50,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.pushBlock(block);
     } catch (ValidateSignatureException e) {
       throw new BadBlockException("validate signature exception");
+    } catch (ContractValidateException e) {
+      throw new BadBlockException("ContractValidate exception");
+    } catch (ContractExeException e) {
+      throw new BadBlockException("Contract Exectute exception");
     }
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
