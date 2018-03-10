@@ -72,4 +72,9 @@ public class TransferActuator extends AbstractActuator {
     }
     return null;
   }
+
+  @Override
+  public long calcFee() {
+    return 0;
+  }
 }

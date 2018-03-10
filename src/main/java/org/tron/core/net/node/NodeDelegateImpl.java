@@ -40,12 +40,21 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<TransactionCapsule> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException {
+  public List<TransactionCapsule> handleBlock(BlockCapsule block,
+      boolean syncMode) throws BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
     }
-    dbManager.pushBlock(block);
+    try {
+      dbManager.pushBlock(block);
+    } catch (ValidateSignatureException e) {
+      throw new BadBlockException("validate signature exception");
+    } catch (ContractValidateException e) {
+      throw new BadBlockException("ContractValidate exception");
+    } catch (ContractExeException e) {
+      throw new BadBlockException("Contract Exectute exception");
+    }
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return

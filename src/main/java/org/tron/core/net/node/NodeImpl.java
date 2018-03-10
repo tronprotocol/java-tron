@@ -246,7 +246,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       del.handleBlock(block, true);
       freshBlock.offer(block.getBlockId());
     } catch (BadBlockException e) {
-      throw e;
     }
   }
 
@@ -269,7 +268,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       del.handleBlock(block, true);
       freshBlock.offer(block.getBlockId());
     } catch (BadBlockException e) {
-      throw e;
+
     }
 
     Deque<PeerConnection> needSync = new LinkedList<>();

@@ -19,12 +19,12 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.config.args.Args;
@@ -94,9 +94,8 @@ public class GossipLocalNode implements LocalNode {
     executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
         new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
-    Subscription messageSubscription = cluster.listen().subscribe(msg -> {
-      executors.submit(new StartWorker(msg, peerDel, cluster));
-    });
+    Subscription messageSubscription =
+            cluster.listen().subscribe(msg -> executors.submit(new StartWorker(msg, peerDel, cluster)));
 
     subscriptions.add(membershipListener);
     subscriptions.add(messageSubscription);
@@ -121,19 +120,10 @@ public class GossipLocalNode implements LocalNode {
   }
 
   private List<Address> getAddresses() {
-    List<Address> addresses = new ArrayList<>();
-
-    List<String> ipList = Args.getInstance().getSeedNode().getIpList();
-
-    ipList.forEach(ip -> {
-      String[] ipSplit = ip.split(":");
-      if (ipSplit.length > 1) {
-        Address address = Address
-            .create(ipSplit[0], Integer.valueOf(ipSplit[1]));
-        addresses.add(address);
-      }
-    });
-
-    return addresses;
+    return Args.getInstance().getSeedNode().getIpList().stream()
+            .map(ip -> ip.split(":"))
+            .filter(ipSplit -> ipSplit.length > 1)
+            .map(ipSplit -> Address.create(ipSplit[0], Integer.valueOf(ipSplit[1])))
+            .collect(Collectors.toList());
   }
 }

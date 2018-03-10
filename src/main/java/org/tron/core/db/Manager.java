@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -27,12 +29,13 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.config.args.InitialWitness;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -41,6 +44,7 @@ public class Manager {
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
+  public static final long LOOP_INTERVAL = Args.getInstance().getBlockInterval(); // millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -60,7 +64,6 @@ public class Manager {
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
-
 
   private void setWitnessStore(final WitnessStore witnessStore) {
     this.witnessStore = witnessStore;
@@ -96,23 +99,8 @@ public class Manager {
   }
 
   public long getHeadBlockNum() {
-    return head.getNum();
+    return this.head.getNum();
   }
-
-  /**
-   * TODO: should get this list from Database. get witnessCapsule List.
-   */
-
-  public void initialWitnessList() {
-    final List<InitialWitness.ActiveWitness> activeWitnessList = Args.getInstance()
-        .getInitialWitness()
-        .getActiveWitnessList();
-    activeWitnessList.forEach(activeWitness -> {
-      this.wits.add(new WitnessCapsule(ByteString.copyFromUtf8(activeWitness.getPublicKey()),
-          activeWitness.getUrl()));
-    });
-  }
-
 
   public void addWitness(final WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
@@ -176,14 +164,26 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
     this.pendingTrxs = new ArrayList<>();
-    this.initGenesis();
+    try {
+      this.initGenesis();
+    } catch (ContractValidateException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ContractExeException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ValidateSignatureException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
     revokingStore = RevokingStore.getInstance();
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
-    return genesisBlock.getBlockId();
+    return this.genesisBlock.getBlockId();
   }
 
   public BlockCapsule getGenesisBlock() {
@@ -193,7 +193,8 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis() {
+  public void initGenesis()
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -205,17 +206,17 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-        try {
-          this.pushBlock(this.genesisBlock);
-        } catch (ValidateSignatureException e) {
-          e.printStackTrace();
-        }
+
+        this.pushBlock(this.genesisBlock);
+
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
             this.genesisBlock.getTimeStamp());
         this.initAccount();
+        this.initWitness();
+
       }
     }
   }
@@ -227,11 +228,30 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getAssets().forEach(account -> {
+      account.setAccountType("Normal");//to be set in conf
       final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
           account.getAccountType(),
           ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
       this.accountStore.put(account.getAddressBytes(), accountCapsule);
+    });
+  }
+
+  private void initWitness() {
+    final Args args = Args.getInstance();
+    final GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    genesisBlockArg.getWitnesses().forEach(key -> {
+      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,
+          AccountType.AssetIssue,
+          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
+          Long.valueOf(0));
+      final WitnessCapsule witnessCapsule = new WitnessCapsule(
+          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
+          key.getVoteCount(), key.getUrl());
+
+      this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
+      this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
+      this.wits.add(witnessCapsule);
     });
   }
 
@@ -254,20 +274,20 @@ public class Manager {
       throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
     account.setBalance(balance + amount);
-    getAccountStore().put(account.getAddress().toByteArray(), account);
+    this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(TransactionCapsule trx) {
+  public boolean pushTransactions(final TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    revokingStore.buildDialog();
-    if (dialog != null) {
+    if (dialog == null) {
       dialog = revokingStore.buildDialog();
     }
 
@@ -275,8 +295,8 @@ public class Manager {
       processTransaction(trx);
       pendingTrxs.add(trx);
       tmpDialog.merge();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (RevokingStoreIllegalStateException e) {
+
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -286,8 +306,9 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(BlockCapsule block) throws ValidateSignatureException {
-    khaosDb.push(block);
+  public void pushBlock(final BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+    this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
       if (!block.validateSignature()) {
@@ -300,18 +321,20 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(block);
-        tmpDialog.commit();
-      } catch (Exception e) {
+      try {
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          this.processBlock(block);
+          tmpDialog.commit();
+        }
+      } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
       //todo: In some case it need to switch the branch
     }
-    getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
-    numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    head = khaosDb.getHead();
+    this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    this.head = this.khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
@@ -319,9 +342,9 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) {
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
-        khaosDb.getBranch(head.getBlockId(), forkBlockHash);
+  public ArrayList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
+    final Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+        this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(ArrayList::new));
@@ -380,15 +403,19 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap) {
+  public boolean processTransaction(final TransactionCapsule trxCap)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    assert actuatorList != null;
-    actuatorList.forEach(Actuator::validate);
-    actuatorList.forEach(Actuator::execute);
+
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute();
+    }
+
     return true;
   }
 
@@ -424,7 +451,8 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) {
+      final long when, final byte[] privateKey)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -440,11 +468,8 @@ public class Manager {
 
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
-    try {
-      dialog.close();
-    } catch (Exception e) {
 
-    }
+    dialog.destroy();
     dialog = revokingStore.buildDialog();
 
     Iterator iterator = pendingTrxs.iterator();
@@ -457,13 +482,9 @@ public class Manager {
         continue;
       }
       // apply transaction
-      try {
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          processTransaction(trx);
-          tmpDialog.merge();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        processTransaction(trx);
+        tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
@@ -473,17 +494,18 @@ public class Manager {
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
         e.printStackTrace();
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
       }
     }
-    try {
-      dialog.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+
+    dialog.destroy();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
+
+    logger.info("postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTrxs.size() + "]");
 
     blockCapsule.setMerklerRoot();
     blockCapsule.sign(privateKey);
@@ -527,14 +549,10 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
+  public void processBlock(BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      try {
-        processTransaction(transactionCapsule);
-      } catch (ContractExeException | ContractValidateException e) {
-        e.printStackTrace();
-      }
-
+      processTransaction(transactionCapsule);
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
@@ -555,7 +573,69 @@ public class Manager {
 
 
   public void updateSignedWitness(BlockCapsule block) {
-    //witnessStore.get(block);
+    //TODO: add verification
+    WitnessCapsule witnessCapsule = witnessStore
+        .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+
+    long latestSlotNum = 0L;
+
+//    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+
+    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
+        .setLatestSlotNum(latestSlotNum)
+        .build();
+
+    processFee();
+  }
+
+  private void processFee() {
+
+  }
+
+  private long blockInterval() {
+    return LOOP_INTERVAL; // millisecond todo getFromDb
+  }
+
+  public long getSlotAtTime(DateTime when) {
+    DateTime firstSlotTime = getSlotTime(1);
+    if (when.isBefore(firstSlotTime)) {
+      return 0;
+    }
+    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
+  }
+
+
+  public DateTime getSlotTime(long slotNum) {
+    if (slotNum == 0) {
+      return DateTime.now();
+    }
+    long interval = blockInterval();
+    BlockStore blockStore = getBlockStore();
+    DateTime genesisTime = blockStore.getGenesisTime();
+    if (blockStore.getHeadBlockNum() == 0) {
+      return genesisTime.plus(slotNum * interval);
+    }
+
+    if (lastHeadBlockIsMaintenance()) {
+      slotNum += getSkipSlotInMaintenance();
+    }
+
+    DateTime headSlotTime = blockStore.getHeadBlockTime();
+
+    //align slot time
+    headSlotTime = headSlotTime
+        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+
+    return headSlotTime.plus(interval * slotNum);
+  }
+
+
+  private boolean lastHeadBlockIsMaintenance() {
+    return getDynamicPropertiesStore().getStateFlag() == 1;
+  }
+
+  private long getSkipSlotInMaintenance() {
+    return 0;
   }
 
   /**
@@ -566,25 +646,50 @@ public class Manager {
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
-      logger.info("there is account ,account address is {}", account.getAddress().toStringUtf8());
-      account.getVotesList().forEach(vote -> {
-        //TODO validate witness //active_witness
-        ByteString voteAddress = vote.getVoteAddress();
-        long voteCount = vote.getVoteCount();
-        if (countWitness.containsKey(voteAddress)) {
-          voteCount += countWitness.get(voteAddress);
+      logger.info("there is account ,account address is {}",
+          ByteArray.toHexString(account.getAddress().toByteArray()));
+
+      Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
+          .reduce((a, b) -> a + b);
+      if (sum.isPresent()) {
+        if (sum.get() <= account.getShare()) {
+          account.getVotesList().forEach(vote -> {
+            //TODO validate witness //active_witness
+            ByteString voteAddress = vote.getVoteAddress();
+            long voteCount = vote.getVoteCount();
+            if (countWitness.containsKey(voteAddress)) {
+              countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
+            } else {
+              countWitness.put(voteAddress, voteCount);
+            }
+          });
+        } else {
+          logger.info(
+              "account" + account.getAddress() + ",share[" + account.getShare() + "] > voteSum["
+                  + sum.get() + "]");
         }
-        countWitness.put(voteAddress, voteCount);
-      });
+      }
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
     countWitness.forEach((address, voteCount) -> {
       final WitnessCapsule witnessCapsule = this.witnessStore.getWitness(address);
       if (null == witnessCapsule) {
-        logger.warn("winessSouece is null.address is {}", address);
+        logger.warn("witnessCapsule is null.address is {}", address);
         return;
       }
+
+      ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
+      AccountCapsule witnessAccountCapsule = accountStore.get(witnessAddress.toByteArray());
+      if (witnessAccountCapsule == null) {
+        logger.warn("witnessAccount[" + witnessAddress + "] not exists");
+      }
+
+      if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
+        logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
+            .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
+      }
+
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
       witnessCapsuleList.add(witnessCapsule);
       this.witnessStore.putWitness(witnessCapsule);

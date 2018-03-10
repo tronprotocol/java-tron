@@ -23,10 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
-import org.tron.core.config.args.Args;
-import org.tron.core.config.args.InitialWitness;
 
 
 public class ConfigerTest {
@@ -35,22 +31,13 @@ public class ConfigerTest {
 
   @Test
   public void testGeClientTestEcKey() {
-    ECKey key = ECKey.fromPrivate(
+    final ECKey key = ECKey.fromPrivate(
         Hex.decode("1cd5a70741c6e583d2dd3c5f17231e608eb1e52437210d948c5085e141c2d830"));
 
     logger.info("address = {}", ByteArray.toHexString(key.getAddress()));
 
     assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0",
         ByteArray.toHexString(key.getAddress()));
-  }
-
-  @Test
-  public void testInitialWitness() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-    InitialWitness initialWitness = Args.getInstance().getInitialWitness();
-    assertEquals("http://tron.org", initialWitness.getLocalWitness().getUrl());
-    assertEquals(3, initialWitness.getActiveWitnessList().size());
-    assertEquals("0x01", initialWitness.getActiveWitnessList().get(0).getPublicKey());
   }
 
 }
