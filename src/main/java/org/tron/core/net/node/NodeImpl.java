@@ -611,7 +611,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //TODO: to decide to fetch again or sync, now do it together
 
         startFetchSyncBlock();
-        syncNextBatchChainIds(peer);
+
+        //syncNextBatchChainIds(peer);
 
 
       } else {

@@ -56,7 +56,7 @@ public class InventoryMessage extends Message {
   }
 
   public MessageTypes getInvMessageType() {
-    return getInventory().equals(InventoryType.BLOCK) ? MessageTypes.BLOCK : MessageTypes.TRX;
+    return getInventoryType().equals(InventoryType.BLOCK) ? MessageTypes.BLOCK : MessageTypes.TRX;
 
   }
 
