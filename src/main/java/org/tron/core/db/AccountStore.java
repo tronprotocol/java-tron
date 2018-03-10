@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -8,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
 
