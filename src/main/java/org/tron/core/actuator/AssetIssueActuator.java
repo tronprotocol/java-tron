@@ -55,7 +55,8 @@ public class AssetIssueActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       throw new ContractExeException();
     }
-    return false;
+
+    return true;
   }
 
   @Override
