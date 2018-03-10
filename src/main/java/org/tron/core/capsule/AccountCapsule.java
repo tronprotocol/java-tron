@@ -60,6 +60,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
    */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
+        .setAccountName(contract.getAccountName())
         .setType(contract.getType())
         .setAddress(contract.getOwnerAddress())
         .setTypeValue(contract.getTypeValue())
