@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -492,7 +491,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
-    MessageTypes type = fetchInvDataMsg.getInvType();
+    MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     //TODO:maybe can use message cache here
     final BlockCapsule[] blocks = {del.getGenesisBlock()};
@@ -628,7 +627,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   }
 
-  private void startFetchSyncBlock() {
+  private synchronized void startFetchSyncBlock() {
     //TODO: check how many block is processing and decide if fetch more
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     HashSet<BlockId> request = new HashSet<>();
@@ -642,7 +641,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           for (BlockId blockId :
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
-                && syncBlockIdWeRequested.containsKey(blockId)) {
+                && !syncBlockIdWeRequested.containsKey(blockId)) {
               send.get(peer).add(blockId);
               request.add(blockId);
               if (send.get(peer).size() > 200) { //Max Blocks peer get one time
@@ -652,17 +651,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         });
 
-    send.forEach((peer, blockIds) ->
-        peer.sendMessage(new FetchInvDataMessage(
-            blockIds.stream()
-                .peek(blockId -> {
-                  syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
-                  peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-                })
-                .collect(Collectors.toCollection(LinkedList::new)),
-            InventoryType.BLOCK
-        ))
-    );
+    send.forEach((peer, blockIds) -> {
+        //TODO: use collector
+        blockIds.forEach(blockId -> {
+          syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+          peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
+        });
+        List<Sha256Hash> ids = new LinkedList<>();
+        ids.addAll(blockIds);
+        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+    });
+
     send.clear();
   }
 

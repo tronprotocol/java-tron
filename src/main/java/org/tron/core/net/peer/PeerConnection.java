@@ -67,7 +67,7 @@ public class PeerConnection {
 
   private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
 
-  private HashMap<BlockId, Long> syncBlockRequested = null;
+  private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
 
   private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
 
