@@ -53,7 +53,7 @@ public class ActuatorFactory {
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager);
       case TransferAssertContract:
-        break;
+        return new TransferAssertActuator(contract.getParameter(), manager);
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
