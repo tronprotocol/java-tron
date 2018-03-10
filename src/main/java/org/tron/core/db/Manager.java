@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -27,12 +29,12 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.config.args.InitialWitness;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -226,7 +228,8 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getWitnesses().forEach(key -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,AccountType.AssetIssue,
+      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,
+          AccountType.AssetIssue,
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(0));
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
@@ -264,7 +267,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx){
+  public boolean pushTransactions(final TransactionCapsule trx) {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -634,7 +637,8 @@ public class Manager {
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
-      logger.info("there is account ,account address is {}", ByteArray.toHexString(account.getAddress().toByteArray()));
+      logger.info("there is account ,account address is {}",
+          ByteArray.toHexString(account.getAddress().toByteArray()));
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
@@ -642,11 +646,12 @@ public class Manager {
         if (sum.get() <= account.getShare()) {
           account.getVotesList().forEach(vote -> {
             //TODO validate witness //active_witness
-            if (countWitness.containsKey(vote.getVoteAddress())) {
-              countWitness.put(vote.getVoteAddress(),
-                  countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+            ByteString voteAddress = vote.getVoteAddress();
+            long voteCount = vote.getVoteCount();
+            if (countWitness.containsKey(voteAddress)) {
+              countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
             } else {
-              countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
+              countWitness.put(voteAddress, voteCount);
             }
           });
         } else {
