@@ -40,7 +40,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public List<TransactionCapsule> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException {
+  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -49,7 +49,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
-    return new ArrayList<>();
+    return new LinkedList<>();
   }
 
 
