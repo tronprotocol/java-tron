@@ -60,6 +60,11 @@ public class WitnessCreateActuator extends AbstractActuator {
     return null;
   }
 
+  @Override
+  public long calcFee() {
+    return 0;
+  }
+
   private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
