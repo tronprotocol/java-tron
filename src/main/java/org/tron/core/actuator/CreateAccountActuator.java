@@ -64,4 +64,9 @@ public class CreateAccountActuator extends AbstractActuator {
     }
     return null;
   }
+
+  @Override
+  public long calcFee() {
+    return 0;
+  }
 }

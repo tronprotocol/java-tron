@@ -43,6 +43,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   class InvToSend {
+
     private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
         = new HashMap<>();
 
@@ -87,7 +88,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private static final Logger logger = LoggerFactory.getLogger("Node");
 
   //public
-  private Queue<BlockId> freshBlockId = new LinkedBlockingQueue<>(); //TODO:need auto erase oldest block
+  //TODO:need auto erase oldest block
+  private Queue<BlockId> freshBlockId = new LinkedBlockingQueue<>();
 
   private ConcurrentHashMap<Sha256Hash, PeerConnection> syncMap = new ConcurrentHashMap<>();
 
@@ -252,16 +254,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           getActivePeer().stream()
               .filter(peer -> !peer.isNeedSyncFromUs())
               .forEach(peer -> {
-                    spread.entrySet().stream()
-                        .filter(idToSpread ->
-                            !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
-                                && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
-                        .forEach(idToSpread -> {
-                          peer.getAdvObjWeSpread().put(idToSpread.getKey(), System.currentTimeMillis());
-                          sendPackage.add(idToSpread, peer);
-                        });
-                    peer.cleanInvGarbage();
-                  });
+                spread.entrySet().stream()
+                    .filter(idToSpread ->
+                        !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
+                            && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
+                    .forEach(idToSpread -> {
+                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), System.currentTimeMillis());
+                      sendPackage.add(idToSpread, peer);
+                    });
+                peer.cleanInvGarbage();
+              });
 
           sendPackage.sendInv();
         }
@@ -354,7 +356,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (peer.getAdvObjWeRequested().containsKey(blkMsg.getBlockId())) {
       //broadcast mode
       peer.getAdvObjWeRequested().remove(blkMsg.getBlockId());
-      processAdvBlock(PeerConnection peer, blkMsg.getBlockCapsule());
+      processAdvBlock(peer, blkMsg.getBlockCapsule());
       startFetchItem();
     } else if (peer.getSyncBlockRequested().containsKey(blkMsg.getBlockId())) {
       //sync mode
@@ -371,7 +373,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
     //TODO: lack the complete flow.
-
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
@@ -391,10 +392,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       } catch (BadBlockException e) {
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
-      } catch (UnReachBlockException e) {
-        //TODO:unlinked block
-        startSyncWithPeer(peer);
-      }
+      }  //TODO:unlinked block and call startSyncWithPeer(peer);
+
     }
   }
 
@@ -667,9 +666,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
     logger.info("on handle advertise blocks inventory message");
     peer.cleanInvGarbage();
-
-
-
 
     //todo: check this peer's advertise history and the history of our request to this peer.
     //simple implement here first

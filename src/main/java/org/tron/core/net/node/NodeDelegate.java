@@ -8,16 +8,16 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
 public interface NodeDelegate {
 
-  LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws ValidateSignatureException, BadBlockException;
+  LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws BadBlockException;
 
-  void handleTransaction(TransactionCapsule trx) throws ValidateSignatureException;
+  void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
   List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
 

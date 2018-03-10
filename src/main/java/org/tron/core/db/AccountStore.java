@@ -1,10 +1,12 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
@@ -36,13 +38,14 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    logger.info("address is {} ", key);
+    logger.info("address is {},account is {}", key, item);
 
     byte[] value = dbSource.getData(key);
     if (ArrayUtils.isNotEmpty(value)) {
       onModify(key, value);
     }
 
+    logger.info("address is {} ", ByteArray.toHexString(key));
     dbSource.putData(key, item.getData());
 
     if (ArrayUtils.isEmpty(value)) {
@@ -54,6 +57,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   public void delete(byte[] key) {
     // This should be called just before an object is removed.
     onDelete(key);
+    dbSource.deleteData(key);
   }
 
   @Override
@@ -82,8 +86,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
    */
 
   public boolean createAccount(byte[] address, AccountCapsule account) {
-    dbSource.putData(address, account.getData());
-    logger.info("address is {},account is {}", address, account);
+    put(address, account);
     return true;
   }
 
@@ -92,7 +95,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
    */
   public List<AccountCapsule> getAllAccounts() {
     return dbSource.allKeys().stream()
-        .map(key -> get(key))
+        .map(this::get)
         .collect(Collectors.toList());
   }
 }

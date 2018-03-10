@@ -178,7 +178,7 @@ public class RpcApiService implements Service {
     @Override
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
-      super.listWitnesses(request, responseObserver);
+      responseObserver.onCompleted();
     }
 
     @Override
