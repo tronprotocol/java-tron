@@ -101,6 +101,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isAdvertiseActive;
 
+  private volatile boolean isFetchActive;
+
 
   //broadcast
   private HashMap<Sha256Hash, InventoryType> advObjToSpread = new HashMap<>();
@@ -193,6 +195,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode.setPeerDel(this);
     gossipNode.start();
     isAdvertiseActive = true;
+    isFetchActive = true;
   }
 
   @Override
@@ -202,7 +205,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();
     isAdvertiseActive = false;
+    isFetchActive = true;
     advertiseLoopThread.join();
+    advObjFetchLoopThread.join();
   }
 
   @Override
@@ -240,6 +245,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (advObjToSpread.isEmpty()) {
           try {
             Thread.sleep(1000);
+            continue;
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -271,33 +277,35 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     });
 
     advObjFetchLoopThread = new Thread(() -> {
-      if (advObjToFetch.isEmpty()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+      while (isFetchActive) {
+        if (advObjToFetch.isEmpty()) {
+          try {
+            Thread.sleep(1000);
+            continue;
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+
+        synchronized (advObjToFetch) {
+          InvToSend sendPackage = new InvToSend();
+          advObjToFetch.entrySet().stream()
+              .forEach(idToFetch -> {
+                for (PeerConnection peer :
+                    getActivePeer()) {
+                  //TODO: don't fetch too much obj from only one peer
+                  if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
+                    sendPackage.add(idToFetch, peer);
+                    advObjToFetch.remove(idToFetch.getKey());
+                    peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
+                    break;
+                  }
+                }
+              });
+          sendPackage.sendFetch();
         }
       }
-
-      synchronized (advObjToFetch) {
-        InvToSend sendPackage = new InvToSend();
-        advObjToFetch.entrySet().stream()
-            .forEach(idToFetch -> {
-              for (PeerConnection peer :
-                  getActivePeer()) {
-                //TODO: don't fetch too much obj from only one peer
-                if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
-                  sendPackage.add(idToFetch, peer);
-                  advObjToFetch.remove(idToFetch.getKey());
-                  peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
-                  break;
-                }
-              }
-            });
-        sendPackage.sendFetch();
-      }
-    }
-    );
+    });
 
     advertiseLoopThread.start();
     advObjFetchLoopThread.start();
