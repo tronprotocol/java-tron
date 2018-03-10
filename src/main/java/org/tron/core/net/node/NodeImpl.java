@@ -8,9 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -64,18 +62,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isAdvertiseActive;
 
-  private Thread advertiseLoopThread;
 
   //broadcast
-  private Set<Sha256Hash> advTrxToSpread = new HashSet<>();
+  private HashMap<Sha256Hash, InventoryType> advObjToSpread = new HashMap<>();
 
-  private Set<Sha256Hash> advBlkToSpread = new HashSet<>();
+  private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  private Map<Sha256Hash, InventoryType> advObjToSpread = new HashMap<>();
+  private HashMap<Sha256Hash, Long> advObjToFetch = new HashMap<>();
 
-  private HashMap<BlockId, Long> advObjWeRequested = new HashMap<>();
+  private Thread advertiseLoopThread;
 
-  private Set<Sha256Hash> advObjToFetch = new HashSet<>();
+  private Thread advObjfetchLoopThread;
 
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
@@ -107,6 +104,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case BLOCK_CHAIN_INVENTORY:
         onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
+        break;
+      case INVENTORY:
+        onHandleInventoryMessage(peer, (InventoryMessage) msg);
         break;
       default:
         throw new IllegalArgumentException("No such message");
@@ -243,7 +243,40 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     });
+
+    advObjfetchLoopThread = new Thread(() -> {
+
+    }
+    );
+
     advertiseLoopThread.start();
+  }
+
+  private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
+    logger.info("on handle advertise inventory message");
+    peer.cleanInvGarbage();
+
+    msg.getHashList().forEach(id -> {
+      final boolean[] spreaded = {false};
+      final boolean[] requested = {false};
+      getActivePeer().forEach(p -> {
+        if (p.getAdvObjWeSpread().containsKey(id)) {
+          spreaded[0] = true;
+        }
+        if (p.getAdvObjWeRequested().containsKey(id)) {
+          requested[0] = true;
+        }
+      });
+
+      if (!spreaded[0]) {
+        //TODO: avoid TRX flood attack here.
+        peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
+        if (!requested[0]) {
+          //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
+          this.advObjToFetch.put(id, System.currentTimeMillis());
+        }
+      }
+    });
   }
 
   @Override
@@ -267,9 +300,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
-    if (peer.getBlocksWeRequested().containsKey(blkMsg.getBlockId())) {
+    if (peer.getAdvObjWeRequested().containsKey(blkMsg.getBlockId())) {
       //broadcast mode
-      peer.getBlocksWeRequested().remove(blkMsg.getBlockId());
+      peer.getAdvObjWeRequested().remove(blkMsg.getBlockId());
       processAdvBlock(blkMsg.getBlockCapsule());
       startFetchItem();
     } else if (peer.getSyncBlockRequested().containsKey(blkMsg.getBlockId())) {
@@ -555,7 +588,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle blocks inventory message");
+    logger.info("on handle advertise blocks inventory message");
+    peer.cleanInvGarbage();
+
+
+
+
     //todo: check this peer's advertise history and the history of our request to this peer.
     //simple implement here first
     List<Sha256Hash> fetchList = new ArrayList<>();

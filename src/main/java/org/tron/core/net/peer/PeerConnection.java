@@ -41,7 +41,7 @@ public class PeerConnection {
 
   private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
 
-  private HashMap<BlockId, Long> blocksWeRequested = new HashMap<>();
+  private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
   public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
     return advObjSpreadToUs;
@@ -111,12 +111,12 @@ public class PeerConnection {
 
   private boolean banned;
 
-  public HashMap<BlockId, Long> getBlocksWeRequested() {
-    return blocksWeRequested;
+  public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
+    return advObjWeRequested;
   }
 
-  public void setBlocksWeRequested(HashMap<BlockId, Long>blocksWeRequested) {
-    this.blocksWeRequested = blocksWeRequested;
+  public void setAdvObjWeRequested(HashMap<Sha256Hash, Long> advObjWeRequested) {
+    this.advObjWeRequested = advObjWeRequested;
   }
 
   public Queue<Sha256Hash> getChainIdsWeReqeuested() {
