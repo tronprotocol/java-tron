@@ -482,7 +482,7 @@ public class Manager {
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
         e.printStackTrace();
-      } catch (Exception e) {
+      } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
     }
