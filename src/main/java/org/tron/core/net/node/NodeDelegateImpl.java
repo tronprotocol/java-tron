@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -41,7 +41,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws BadBlockException {
+  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
+      throws BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");

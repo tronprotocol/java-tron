@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Configuration;
@@ -67,7 +67,6 @@ public class ManagerTest {
     } catch (Exception e) {
       Assert.assertTrue("pushBlock is error", false);
     }
-
     Assert.assertTrue("containBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString(blockCapsule2.getBlockId().toString()))));
     Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),

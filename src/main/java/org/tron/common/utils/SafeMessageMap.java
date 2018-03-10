@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.tron.core.Sha256Hash;
 import org.tron.core.net.message.Message;
 
 public class SafeMessageMap {
@@ -15,8 +14,8 @@ public class SafeMessageMap {
   protected ALock readLock = new ALock(rwLock.readLock());
   protected ALock writeLock = new ALock(rwLock.writeLock());
 
-  public SafeMessageMap(){
-      this.storage = new HashMap<>();
+  public SafeMessageMap() {
+    this.storage = new HashMap<>();
   }
 
   public void put(Sha256Hash msgId, Message msg) {
