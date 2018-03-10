@@ -33,6 +33,7 @@ import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -269,7 +270,8 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx) throws ValidateSignatureException {
+  public boolean pushTransactions(final TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -283,8 +285,8 @@ public class Manager {
       processTransaction(trx);
       pendingTrxs.add(trx);
       tmpDialog.merge();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (RevokingStoreIllegalStateException e) {
+
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -308,9 +310,13 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(block);
-        tmpDialog.commit();
+      try {
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          this.processBlock(block);
+          tmpDialog.commit();
+        }
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
       }
       //todo: In some case it need to switch the branch
     }
