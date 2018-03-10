@@ -216,6 +216,7 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getAssets().forEach(account -> {
+      account.setAccountType("Normal");//to be set in conf
       final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
           account.getAccountType(),
           ByteString.copyFrom(account.getAddressBytes()),
