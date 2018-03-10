@@ -11,6 +11,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 abstract class AbstractRevokingStore implements RevokingDatabase {
@@ -101,7 +102,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public void merge() {
     if (activeDialog <= 0) {
-      throw new IllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
 
     if (activeDialog == 1 && stack.size() == 1) {
@@ -157,7 +158,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
     }
 
     if (activeDialog <= 0) {
-      throw new IllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
 
     disable();
@@ -181,7 +182,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public void commit() {
     if (activeDialog <= 0) {
-      throw new IllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
 
     --activeDialog;
@@ -190,7 +191,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public void pop() {
     if (activeDialog != 0) {
-      throw new IllegalStateException("activeDialog has to be equal 0");
+      throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
 
     if (stack.isEmpty()) {
@@ -294,15 +295,28 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       dialog.applyRevoking = false;
     }
 
-    @Override
-    public void close() throws Exception {
+    public void destroy() {
       try {
         if (applyRevoking) {
           revokingDatabase.revoke();
         }
       } catch (Exception e) {
         log.error("revoke database error.", e);
-        throw e;
+      }
+      if (disableOnExit) {
+        revokingDatabase.disable();
+      }
+    }
+
+    @Override
+    public void close() throws IllegalStateException {
+      try {
+        if (applyRevoking) {
+          revokingDatabase.revoke();
+        }
+      } catch (Exception e) {
+        log.error("revoke database error.", e);
+        throw new RevokingStoreIllegalStateException(e);
       }
       if (disableOnExit) {
         revokingDatabase.disable();
