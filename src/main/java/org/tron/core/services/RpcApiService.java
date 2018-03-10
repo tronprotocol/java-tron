@@ -1,5 +1,6 @@
 package org.tron.core.services;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -146,31 +147,21 @@ public class RpcApiService implements Service {
     }
 
     //refactor、test later
-    private boolean checkVoteWitnessAccount(VoteWitnessContract req) {
+    private void checkVoteWitnessAccount(VoteWitnessContract req) {
 
       //send back to cli
-      if (req.getOwnerAddress() == null) {
-        logger.info("OwnerAddress is null");
-        return false;
-      }
+      Preconditions.checkNotNull(req.getOwnerAddress(), "OwnerAddress is null");
 
       AccountCapsule account = app.getDbManager().getAccountStore()
           .get(req.getOwnerAddress().toByteArray());
 
-      if (account == null) {
-        logger.info("OwnerAddress[" + req.getOwnerAddress() + "] not exists");
-        return false;
-      }
+      Preconditions.checkNotNull(account, "OwnerAddress[" + req.getOwnerAddress() + "] not exists");
 
-      if (req.getVotesCount() <= 0) {
-        logger.info("VotesCount[" + req.getVotesCount() + "] <= 0");
-        return false;
-      }
+      Preconditions
+          .checkArgument(req.getVotesCount() <= 0, "VotesCount[" + req.getVotesCount() + "] <= 0");
 
-      if (account.getShare() < req.getVotesCount()) {
-        logger.info("Share[" + account.getShare() + "] <  VotesCount[" + req.getVotesCount() + "]");
-        return false;
-      }
+      Preconditions.checkArgument(account.getShare() < req.getVotesCount(),
+          "Share[" + account.getShare() + "] <  VotesCount[" + req.getVotesCount() + "]");
 
       Iterator<Vote> iterator = req.getVotesList().iterator();
       while (iterator.hasNext()) {
@@ -178,29 +169,23 @@ public class RpcApiService implements Service {
         ByteString voteAddress = vote.getVoteAddress();
         WitnessCapsule witness = app.getDbManager().getWitnessStore()
             .get(voteAddress.toByteArray());
-        if (witness == null) {
-          logger.info("witness[" + voteAddress + "] not exists");
-          return false;
-        }
+        Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
 
-        if (vote.getVoteCount() <= 0) {
-          logger.info("VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount()
-              + "] <= 0");
-          return false;
-        }
+        Preconditions.checkArgument(vote.getVoteCount() <= 0,
+            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount()
+                + "] <= 0");
       }
-      return true;
     }
 
     @Override
     public void voteWitnessAccount(VoteWitnessContract req,
         StreamObserver<Transaction> response) {
 
-      boolean check = checkVoteWitnessAccount(req);//to be complemented later
-      if (true) {
+      try {
+//        checkVoteWitnessAccount(req);//to be complemented later
         Transaction trx = wallet.createTransaction(req);
         response.onNext(trx);
-      } else {
+      } catch (Exception ex) {
         response.onNext(null);
       }
       response.onCompleted();
