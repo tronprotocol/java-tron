@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.SourceInter;
@@ -14,6 +15,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
+@Getter // only for unit test
 abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
@@ -241,6 +243,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Slf4j
+  @Getter // only for unit test
   public static class Dialog implements AutoCloseable {
 
     private RevokingDatabase revokingDatabase;
@@ -325,6 +328,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @ToString
+  @Getter // only for unit test
   static class RevokingState {
 
     HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
