@@ -469,7 +469,9 @@ public class Manager {
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    dialog.destroy();
+    if (dialog != null) {
+      dialog.destroy();
+    }
     dialog = revokingStore.buildDialog();
 
     Iterator iterator = pendingTrxs.iterator();
