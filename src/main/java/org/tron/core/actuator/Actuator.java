@@ -11,4 +11,6 @@ public interface Actuator {
   boolean validate() throws ContractValidateException;
 
   ByteString getOwnerAddress();
+
+  long calcFee();
 }

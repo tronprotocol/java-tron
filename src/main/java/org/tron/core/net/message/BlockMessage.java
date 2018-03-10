@@ -20,6 +20,11 @@ public class BlockMessage extends Message {
     unpacked = true;
   }
 
+  public BlockMessage(BlockCapsule block) {
+    data = block.getData();
+    unpacked = false;
+  }
+
   @Override
   public MessageTypes getType() {
     return MessageTypes.BLOCK;

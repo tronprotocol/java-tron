@@ -37,7 +37,28 @@ public class PeerConnection {
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
-  private HashMap<BlockId, Long> blocksWeRequested = new HashMap<>();
+  private HashMap<Sha256Hash, Long> advObjSpreadToUs = new HashMap<>();
+
+  private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
+
+  private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
+
+  public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
+    return advObjSpreadToUs;
+  }
+
+  public void setAdvObjSpreadToUs(
+      HashMap<Sha256Hash, Long> advObjSpreadToUs) {
+    this.advObjSpreadToUs = advObjSpreadToUs;
+  }
+
+  public HashMap<Sha256Hash, Long> getAdvObjWeSpread() {
+    return advObjWeSpread;
+  }
+
+  public void setAdvObjWeSpread(HashMap<Sha256Hash, Long> advObjWeSpread) {
+    this.advObjWeSpread = advObjWeSpread;
+  }
 
   //sync chain
   private BlockId headBlockWeBothHave;
@@ -90,12 +111,12 @@ public class PeerConnection {
 
   private boolean banned;
 
-  public HashMap<BlockId, Long> getBlocksWeRequested() {
-    return blocksWeRequested;
+  public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
+    return advObjWeRequested;
   }
 
-  public void setBlocksWeRequested(HashMap<BlockId, Long>blocksWeRequested) {
-    this.blocksWeRequested = blocksWeRequested;
+  public void setAdvObjWeRequested(HashMap<Sha256Hash, Long> advObjWeRequested) {
+    this.advObjWeRequested = advObjWeRequested;
   }
 
   public Queue<Sha256Hash> getChainIdsWeReqeuested() {
@@ -104,6 +125,10 @@ public class PeerConnection {
 
   public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
     this.chainIdsWeReqeuested = chainIdsWeReqeuested;
+  }
+
+  public void cleanInvGarbage() {
+    //TODO: clean advObjSpreadToUs and advObjWeSpread.
   }
 
   public boolean isBanned() {
