@@ -23,6 +23,9 @@ public class ActuatorFactory {
     return INSTANCE;
   }
 
+  /**
+   * create actuator.
+   */
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
       Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
@@ -30,10 +33,10 @@ public class ActuatorFactory {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
-//    if (null == manager) {
-//      logger.info("manager is null");
-//      return actuatorList;
-//    }
+    //    if (null == manager) {
+    //      logger.info("manager is null");
+    //      return actuatorList;
+    //    }
     Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     if (TransactionType.ContractType.equals(rawData.getType())) {
@@ -50,7 +53,7 @@ public class ActuatorFactory {
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager);
       case TransferAssertContract:
-        break;
+        return new TransferAssertActuator(contract.getParameter(), manager);
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
@@ -58,7 +61,7 @@ public class ActuatorFactory {
       case WitnessCreateContract:
         return new WitnessCreateActuator(contract.getParameter(), manager);
       case AssetIssueContract:
-        break;
+        return new AssetIssueActuator(contract.getParameter(), manager);
       case DeployContract:
         break;
       default:
