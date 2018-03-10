@@ -12,6 +12,7 @@ import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.RandomGenerator;
+import org.tron.common.utils.Utils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -52,8 +53,11 @@ public class WitnessService implements Service {
   private Runnable scheduleProductionLoop =
       () -> {
         if (localWitnessState == null) {
-          logger.error("local witness is null");
+          logger.error("LocalWitness is null");
         }
+
+        logger.info("LocalWitness[" + ByteArray
+            .toHexString(this.getLocalWitnessState().getAddress().toByteArray()) + "]");
 
         while (isRunning) {
           DateTime time = DateTime.now();
@@ -152,6 +156,8 @@ public class WitnessService implements Service {
     final ByteString scheduledWitness = this.db.getScheduledWitness(slot);
 
     if (!scheduledWitness.equals(this.getLocalWitnessState().getAddress())) {
+      logger
+          .info("scheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -197,7 +203,9 @@ public class WitnessService implements Service {
 
   // shuffle witnesses
   private void updateWitnessSchedule() {
-    if (db.getBlockStore().getHeadBlockNum() % witnessStates.size() == 0) {
+
+    long headBlockNum = db.getBlockStore().getHeadBlockNum();
+    if (headBlockNum != 0 && headBlockNum % witnessStates.size() == 0) {
       String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
       witnessStates = new RandomGenerator<WitnessCapsule>()
           .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
@@ -212,18 +220,29 @@ public class WitnessService implements Service {
         .collect(Collectors.toList());
   }
 
+  public static void main(String[] args) {
+    Utils.getRandom();
+
+    byte[] privateKey = Args.getInstance().getLocalWitness().getPrivateKey()
+        .getBytes();
+
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+
+
+  }
+
+
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = Args.getInstance().getLocalWitness().getPrivateKey()
-        .getBytes();
+    this.privateKey = ByteArray.fromHexString(Args.getInstance().getLocalWitness().getPrivateKey());
     final ECKey ecKey = ECKey.fromPrivate(this.privateKey);
 
     WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
         .get(ecKey.getAddress());
     // need handle init witness
     if (null == witnessCapsule) {
-      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getPubKey()));
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getAddress()));
     }
     this.db.updateWitness();
     //

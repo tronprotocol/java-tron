@@ -1,10 +1,12 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
@@ -37,7 +39,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    logger.info("address is {} ", key);
+    logger.info("address is {} ", ByteArray.toHexString(key));
     dbSource.putData(key, item.getData());
   }
 

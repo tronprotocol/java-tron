@@ -227,7 +227,7 @@ public class Manager {
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           Long.valueOf(0));
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-          ByteString.copyFromUtf8(key.getAddress()),
+          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           key.getVoteCount(), key.getUrl());
 
       this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
@@ -627,7 +627,7 @@ public class Manager {
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
-      logger.info("there is account ,account address is {}", account.getAddress().toStringUtf8());
+      logger.info("there is account ,account address is {}", ByteArray.toHexString(account.getAddress().toByteArray()));
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
