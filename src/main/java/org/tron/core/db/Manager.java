@@ -231,7 +231,7 @@ public class Manager {
           account.getAccountType(),
           ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
-      this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
+      this.accountStore.put(account.getAddressBytes(), accountCapsule);
     });
   }
 

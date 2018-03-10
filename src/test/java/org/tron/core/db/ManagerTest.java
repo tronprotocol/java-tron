@@ -3,6 +3,7 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ValidateSignatureException;
 
-
+@Ignore
 public class ManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
