@@ -32,6 +32,7 @@ import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.ValidateSignatureException;
 
 public class Manager {
@@ -267,7 +268,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    if (dialog != null) {
+    if (dialog == null) {
       dialog = revokingStore.buildDialog();
     }
 
@@ -303,7 +304,7 @@ public class Manager {
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         this.processBlock(block);
         tmpDialog.commit();
-      } catch (Exception e) {
+      } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
       //todo: In some case it need to switch the branch
@@ -440,11 +441,8 @@ public class Manager {
 
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
-    try {
-      dialog.close();
-    } catch (Exception e) {
 
-    }
+    dialog.destroy();
     dialog = revokingStore.buildDialog();
 
     Iterator iterator = pendingTrxs.iterator();
@@ -461,7 +459,7 @@ public class Manager {
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           processTransaction(trx);
           tmpDialog.merge();
-        } catch (Exception e) {
+        } catch (RevokingStoreIllegalStateException e) {
           e.printStackTrace();
         }
         // push into block
@@ -475,11 +473,8 @@ public class Manager {
         e.printStackTrace();
       }
     }
-    try {
-      dialog.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+
+    dialog.destroy();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
