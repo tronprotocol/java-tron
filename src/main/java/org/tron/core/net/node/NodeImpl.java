@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,6 +42,42 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
+  class InvToSend {
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+        = new HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>>();
+
+    public void clear() {
+      this.send.clear();
+    }
+
+    public void add(Entry<Sha256Hash, InventoryType> id, PeerConnection peer) {
+      if (send.containsKey(peer) && send.get(peer).containsKey(id.getValue())) {
+        send.get(peer).get(id.getValue()).offer(id.getKey());
+      } else if (send.containsKey(peer)) {
+        LinkedList<Sha256Hash> ids = new LinkedList<>();
+        send.get(peer).put(id.getValue(), ids);
+        send.get(peer).get(id.getValue()).offer(id.getKey());
+      } else {
+        send.put(peer, new HashMap<>());
+        LinkedList<Sha256Hash> ids = new LinkedList<>();
+        send.get(peer).put(id.getValue(), ids);
+        send.get(peer).get(id.getValue()).offer(id.getKey());
+      }
+    }
+
+    public void sendInv() {
+      send.forEach((peer, ids) -> ids.entrySet().stream().forEach(idToSend ->
+          peer.sendMessage(new InventoryMessage(idToSend.getValue(), idToSend.getKey()))
+      ));
+    }
+
+    public void sendFetch() {
+      send.forEach((peer, ids) -> ids.entrySet().stream().forEach(idToSend ->
+          peer.sendMessage(new FetchInvDataMessage(idToSend.getValue(), idToSend.getKey()))
+      ));
+    }
+  }
+
   private HashMap<Address, PeerConnection> mapPeer = new HashMap();
 
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
@@ -68,7 +105,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  private HashMap<Sha256Hash, Long> advObjToFetch = new HashMap<>();
+  private HashMap<Sha256Hash, InventoryType> advObjToFetch = new HashMap<>();
 
   private Thread advertiseLoopThread;
 
@@ -207,7 +244,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         synchronized (advObjToSpread) {
           HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
 
-          HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+          //HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+          InvToSend sendPackage = new InvToSend();
           spread.putAll(advObjToSpread);
           advObjToSpread.clear();
 
@@ -220,36 +258,59 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                                 && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
                         .forEach(idToSpread -> {
                           peer.getAdvObjWeSpread().put(idToSpread.getKey(), System.currentTimeMillis());
-                          if (send.containsKey(peer) && send.get(peer).containsKey(idToSpread.getValue())) {
-                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
-                          } else if (send.containsKey(peer)) {
-                            LinkedList<Sha256Hash> ids = new LinkedList<>();
-                            send.get(peer).put(idToSpread.getValue(), ids);
-                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
-                          } else {
-                            send.put(peer, new HashMap<>());
-                            LinkedList<Sha256Hash> ids = new LinkedList<>();
-                            send.get(peer).put(idToSpread.getValue(), ids);
-                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
-                          }
+                          sendPackage.add(idToSpread, peer);
+//                          if (send.containsKey(peer) && send.get(peer).containsKey(idToSpread.getValue())) {
+//                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
+//                          } else if (send.containsKey(peer)) {
+//                            LinkedList<Sha256Hash> ids = new LinkedList<>();
+//                            send.get(peer).put(idToSpread.getValue(), ids);
+//                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
+//                          } else {
+//                            send.put(peer, new HashMap<>());
+//                            LinkedList<Sha256Hash> ids = new LinkedList<>();
+//                            send.get(peer).put(idToSpread.getValue(), ids);
+//                            send.get(peer).get(idToSpread.getValue()).offer(idToSpread.getKey());
+//                          }
                         });
                     peer.cleanInvGarbage();
                   });
 
-
-          send.forEach((peer, ids) -> ids.entrySet().stream().forEach(idToSend ->
-            peer.sendMessage(new InventoryMessage(idToSend.getValue(), idToSend.getKey()))
-          ));
+          sendPackage.sendInv();
         }
       }
     });
 
     advObjfetchLoopThread = new Thread(() -> {
+      if (advObjToFetch.isEmpty()) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
 
+      synchronized (advObjToFetch) {
+        InvToSend sendPackage = new InvToSend();
+        advObjToFetch.entrySet().stream()
+            .forEach(idToFetch -> {
+              for (PeerConnection peer :
+                  getActivePeer()) {
+                //TODO: don't fetch too much obj from only one peer
+                if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
+                  sendPackage.add(idToFetch, peer);
+                  advObjToFetch.remove(idToFetch.getKey());
+                  peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
+                  break;
+                }
+              }
+            });
+        sendPackage.sendFetch();
+      }
     }
     );
 
     advertiseLoopThread.start();
+    advObjfetchLoopThread.start();
   }
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
@@ -273,7 +334,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
-          this.advObjToFetch.put(id, System.currentTimeMillis());
+          this.advObjToFetch.put(id, msg.getInventoryType());
         }
       }
     });

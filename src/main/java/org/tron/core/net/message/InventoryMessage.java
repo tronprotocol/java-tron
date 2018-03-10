@@ -54,6 +54,11 @@ public class InventoryMessage extends Message {
     return inv;
   }
 
+  public InventoryType getInventoryType() {
+    unPack();
+    return inv.getType();
+  }
+
   private synchronized void unPack() {
     if (unpacked) {
       return;
