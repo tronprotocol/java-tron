@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -76,18 +75,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
     byte[] account = dbSource.getData(key);
     logger.info("address is {},account is {}", key, account);
     return null != account;
-  }
-
-  /**
-   * createAccount fun.
-   *
-   * @param address the address of Account
-   * @param account the data of Account
-   */
-
-  public boolean createAccount(byte[] address, AccountCapsule account) {
-    put(address, account);
-    return true;
   }
 
   /**
