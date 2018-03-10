@@ -145,7 +145,7 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    //do refactor、test later
+    //refactor、test later
     private boolean checkVoteWitnessAccount(VoteWitnessContract req) {
 
       //send back to cli
