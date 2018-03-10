@@ -78,18 +78,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   }
 
   /**
-   * createAccount fun.
-   *
-   * @param address the address of Account
-   * @param account the data of Account
-   */
-
-  public boolean createAccount(byte[] address, AccountCapsule account) {
-    put(address, account);
-    return true;
-  }
-
-  /**
    * get all accounts.
    */
   public List<AccountCapsule> getAllAccounts() {

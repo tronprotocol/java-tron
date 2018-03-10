@@ -21,7 +21,7 @@ public class CreateAccountActuator extends AbstractActuator {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
       dbManager.getAccountStore()
-          .createAccount(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
+          .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
       throw new RuntimeException("Parse contract error", e);
     }

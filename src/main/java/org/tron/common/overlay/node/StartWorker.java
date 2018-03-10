@@ -21,6 +21,7 @@ import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
@@ -81,6 +82,9 @@ public class StartWorker implements Runnable {
         break;
       case BLOCK_CHAIN_INVENTORY:
         message = new ChainInventoryMessage(content);
+        break;
+      case INVENTORY:
+        message = new InventoryMessage(content);
         break;
       default:
         try {
