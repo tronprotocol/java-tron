@@ -39,7 +39,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    logger.info("address is {} ", key);
+    logger.info("address is {},account is {}", key, item);
 
     byte[] value = dbSource.getData(key);
     if (ArrayUtils.isNotEmpty(value)) {
@@ -58,6 +58,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   public void delete(byte[] key) {
     // This should be called just before an object is removed.
     onDelete(key);
+    dbSource.deleteData(key);
   }
 
   @Override
@@ -86,8 +87,7 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
    */
 
   public boolean createAccount(byte[] address, AccountCapsule account) {
-    dbSource.putData(address, account.getData());
-    logger.info("address is {},account is {}", address, account);
+    put(address, account);
     return true;
   }
 

@@ -33,6 +33,7 @@ import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -163,7 +164,18 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
     this.pendingTrxs = new ArrayList<>();
-    this.initGenesis();
+    try {
+      this.initGenesis();
+    } catch (ContractValidateException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ContractExeException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ValidateSignatureException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
     revokingStore = RevokingStore.getInstance();
@@ -181,7 +193,8 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis() {
+  public void initGenesis()
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -193,11 +206,9 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-        try {
-          this.pushBlock(this.genesisBlock);
-        } catch (final ValidateSignatureException e) {
-          e.printStackTrace();
-        }
+
+        this.pushBlock(this.genesisBlock);
+
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
@@ -269,13 +280,14 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx) {
+  public boolean pushTransactions(final TransactionCapsule trx)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    if (dialog != null) {
+    if (dialog == null) {
       dialog = revokingStore.buildDialog();
     }
 
@@ -283,8 +295,8 @@ public class Manager {
       processTransaction(trx);
       pendingTrxs.add(trx);
       tmpDialog.merge();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (RevokingStoreIllegalStateException e) {
+
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -294,7 +306,8 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(final BlockCapsule block) throws ValidateSignatureException {
+  public void pushBlock(final BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -308,10 +321,12 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(block);
-        tmpDialog.commit();
-      } catch (Exception e) {
+      try {
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          this.processBlock(block);
+          tmpDialog.commit();
+        }
+      } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
       //todo: In some case it need to switch the branch
@@ -388,15 +403,19 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap) {
+  public boolean processTransaction(final TransactionCapsule trxCap)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    assert actuatorList != null;
-    actuatorList.forEach(Actuator::validate);
-    actuatorList.forEach(Actuator::execute);
+
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute();
+    }
+
     return true;
   }
 
@@ -432,7 +451,8 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) {
+      final long when, final byte[] privateKey)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -448,11 +468,8 @@ public class Manager {
 
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
-    try {
-      dialog.close();
-    } catch (Exception e) {
 
-    }
+    dialog.destroy();
     dialog = revokingStore.buildDialog();
 
     Iterator iterator = pendingTrxs.iterator();
@@ -465,13 +482,9 @@ public class Manager {
         continue;
       }
       // apply transaction
-      try {
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          processTransaction(trx);
-          tmpDialog.merge();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        processTransaction(trx);
+        tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
@@ -481,13 +494,12 @@ public class Manager {
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
         e.printStackTrace();
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
       }
     }
-    try {
-      dialog.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+
+    dialog.destroy();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -537,14 +549,10 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
+  public void processBlock(BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      try {
-        processTransaction(transactionCapsule);
-      } catch (ContractExeException | ContractValidateException e) {
-        e.printStackTrace();
-      }
-
+      processTransaction(transactionCapsule);
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block

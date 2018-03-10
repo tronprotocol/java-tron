@@ -25,7 +25,7 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
       onModify(key, value);
     }
 
-    dbSource.putData(item.getAddress().toByteArray(), item.getData());
+    dbSource.putData(key, item.getData());
 
     if (ArrayUtils.isEmpty(value)) {
       onCreate(key);
@@ -36,7 +36,7 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
   public void delete(byte[] key) {
     // This should be called just before an object is removed.
     onDelete(key);
-
+    dbSource.deleteData(key);
   }
 
   @Override
@@ -78,9 +78,7 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
   }
 
   public void putWitness(WitnessCapsule witnessCapsule) {
-    logger.info("voteAddress is {} ", witnessCapsule.getAddress());
-
-    dbSource.putData(witnessCapsule.getAddress().toByteArray(), witnessCapsule.getData());
+    put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
   }
 
   /**

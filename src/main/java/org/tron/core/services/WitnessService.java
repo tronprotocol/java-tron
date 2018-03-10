@@ -18,6 +18,8 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.CancelException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
@@ -172,13 +174,20 @@ public class WitnessService implements Service {
     BlockCapsule block = null;
     try {
       block = generateBlock(scheduledTime);
+      logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
+      broadcastBlock(block);
     } catch (ValidateSignatureException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    } catch (ContractValidateException e) {
+      logger.error(e.getMessage());
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    } catch (ContractExeException e) {
+      logger.error(e.getMessage());
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
-    logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
-
-    broadcastBlock(block);
     return BlockProductionCondition.PRODUCED;
+
   }
 
   private void checkCancelFlag() throws CancelException {
@@ -195,7 +204,8 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when) throws ValidateSignatureException {
+  private BlockCapsule generateBlock(DateTime when)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 

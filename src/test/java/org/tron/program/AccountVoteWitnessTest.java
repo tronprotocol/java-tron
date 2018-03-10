@@ -2,7 +2,9 @@ package org.tron.program;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.io.File;
 import java.util.List;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,13 +21,34 @@ public class AccountVoteWitnessTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
+  private static String dbPath = "output_witness";
 
   @BeforeClass
-  public static void initConf() {
+  public static void init() {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
-    Args.setParam(new String[]{"-d", "output_witness"},
+    Args.setParam(new String[]{"-d", dbPath},
         Configuration.getByPath(Constant.TEST_CONF));
+
     dbManager.init();
+  }
+
+  @AfterClass
+  public static void removeDb() {
+    File dbFolder = new File(dbPath);
+    deleteFolder(dbFolder);
+  }
+
+  private static void deleteFolder(File index) {
+    if (!index.isDirectory() || index.listFiles().length <= 0) {
+      index.delete();
+      return;
+    }
+    for (File file : index.listFiles()) {
+      if (null != file) {
+        deleteFolder(file);
+      }
+    }
+    index.delete();
   }
 
   @Test
