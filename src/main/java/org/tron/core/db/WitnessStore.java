@@ -87,9 +87,9 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
    * get all witnesses.
    */
   public List<WitnessCapsule> getAllWitnesses() {
-    return dbSource.allKeys().stream()
-        .map(key -> get(key))
-        .collect(Collectors.toList());
+    return dbSource.allValues().stream().map(bytes ->
+      new WitnessCapsule(bytes)
+    ).collect(Collectors.toList());
   }
 
 }

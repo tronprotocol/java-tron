@@ -16,7 +16,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -242,9 +241,9 @@ public class WitnessService implements Service {
         .get(ecKey.getAddress());
     // need handle init witness
     if (null == witnessCapsule) {
+      logger.warn("witnessCapsule[" + ecKey.getAddress() + "] is not in witnessStore");
       witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getAddress()));
     }
-    this.db.updateWitness();
     //
 
     this.localWitnessState = witnessCapsule;

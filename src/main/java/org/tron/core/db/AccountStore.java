@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
 
@@ -94,8 +95,8 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
    * get all accounts.
    */
   public List<AccountCapsule> getAllAccounts() {
-    return dbSource.allKeys().stream()
-        .map(key -> get(key))
-        .collect(Collectors.toList());
+    return dbSource.allValues().stream().map(bytes ->
+        new AccountCapsule(bytes)
+    ).collect(Collectors.toList());
   }
 }
