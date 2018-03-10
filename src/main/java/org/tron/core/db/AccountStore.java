@@ -81,8 +81,8 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
    * get all accounts.
    */
   public List<AccountCapsule> getAllAccounts() {
-    return dbSource.allKeys().stream()
-        .map(this::get)
-        .collect(Collectors.toList());
+    return dbSource.allValues().stream().map(bytes ->
+        new AccountCapsule(bytes)
+    ).collect(Collectors.toList());
   }
 }
