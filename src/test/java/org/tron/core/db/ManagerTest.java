@@ -3,6 +3,7 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
