@@ -1,4 +1,4 @@
-package org.tron.core;
+package org.tron.core.capsule;
 
 
 import org.junit.Assert;
