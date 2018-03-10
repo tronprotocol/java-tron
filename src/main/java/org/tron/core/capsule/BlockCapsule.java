@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
