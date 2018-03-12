@@ -161,6 +161,9 @@ public class Manager {
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.enable();
+
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
@@ -180,9 +183,6 @@ public class Manager {
       System.exit(-1);
     }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
-
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -325,14 +325,18 @@ public class Manager {
         return;
       }
 
+      //todo: In some case it need to switch the branch
+    }
+
+    if (block.getNum() != 0) {
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         this.processBlock(block);
         tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
-      //todo: In some case it need to switch the branch
     }
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());

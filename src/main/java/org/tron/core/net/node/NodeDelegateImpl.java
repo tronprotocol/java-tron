@@ -11,6 +11,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -87,11 +88,11 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
 
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-    List<BlockId> retBlockIds = new ArrayList<>();
+    LinkedList<BlockId> retBlockIds = new LinkedList<>();
     if (dbManager.getHeadBlockNum() == 0) {
       return retBlockIds;
     }
@@ -120,7 +121,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     //todo: limit the count of block to send peer by one time.
     for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum(); ++num) {
+        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
       if (num > 0) {
         retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
@@ -187,8 +188,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void syncToCli() {
-
+  public void syncToCli(long unSyncNum) {
+    logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    //TODO: notify cli know how many block we need to sync
   }
 
 
