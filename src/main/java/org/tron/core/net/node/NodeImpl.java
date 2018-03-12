@@ -486,7 +486,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         && !del.contain(summaryCHhainIds.get(summaryCHhainIds.size() - 1), MessageTypes.BLOCK)) {
       startSyncWithPeer(peer);
     }
-    peer.sendMessage(new ChainInventoryMessage(blockIds));
+    //long remainNum = del.getHeadBlockId().getNum() - blockIds.
+
+    peer.sendMessage(new ChainInventoryMessage(blockIds, (long) 0));
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
