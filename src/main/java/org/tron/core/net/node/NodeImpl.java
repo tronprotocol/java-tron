@@ -784,7 +784,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void disconnectPeer(PeerConnection peer) {
-    mapPeer.remove(peer.getAddress());
+    //TODO:when use new p2p framework, remove this
+    //mapPeer.remove(peer.getAddress());
   }
 }
 
