@@ -1,7 +1,9 @@
 package org.tron.core.services;
 
+import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.joda.time.DateTime;
@@ -12,7 +14,6 @@ import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.RandomGenerator;
-import org.tron.common.utils.Utils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -32,13 +33,14 @@ public class WitnessService implements Service {
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
-  protected WitnessCapsule localWitnessState; //  WitnessId;
+  protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
+      .newHashMap(); //  <address,WitnessCapsule>
   @Getter
   protected List<WitnessCapsule> witnessStates;
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
-  private byte[] privateKey;
+  private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
   private volatile boolean canceled = false;
 
@@ -53,12 +55,9 @@ public class WitnessService implements Service {
 
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessState == null) {
-          logger.error("LocalWitness is null");
+        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
+          logger.error("LocalWitnesses is null");
         }
-
-        logger.info("LocalWitness[" + ByteArray
-            .toHexString(this.getLocalWitnessState().getAddress().toByteArray()) + "]");
 
         while (isRunning) {
           DateTime time = DateTime.now();
@@ -154,13 +153,12 @@ public class WitnessService implements Service {
     logger.debug("slot:" + slot);
 
     if (slot == 0) {
-      // todo capture error message
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
     final ByteString scheduledWitness = this.db.getScheduledWitness(slot);
 
-    if (!scheduledWitness.equals(this.getLocalWitnessState().getAddress())) {
+    if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger
           .info("scheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
       return BlockProductionCondition.NOT_MY_TURN;
@@ -176,7 +174,7 @@ public class WitnessService implements Service {
 
     //TODO:implement private and public key code, fake code first.
     try {
-      BlockCapsule block = generateBlock(scheduledTime);
+      BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
@@ -189,7 +187,7 @@ public class WitnessService implements Service {
     } catch (ContractExeException e) {
       logger.error(e.getMessage());
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    }catch (Exception e) {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
@@ -211,9 +209,10 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when)
+  private BlockCapsule generateBlock(DateTime when, ByteString witnessAddress)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    return db.generateBlock(localWitnessState, when.getMillis(), privateKey);
+    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when.getMillis(),
+        this.privateKeyMap.get(witnessAddress));
   }
 
 
@@ -236,41 +235,33 @@ public class WitnessService implements Service {
         .collect(Collectors.toList());
   }
 
-  public static void main(String[] args) {
-    Utils.getRandom();
-
-    byte[] privateKey = Args.getInstance().getLocalWitness().getPrivateKey()
-        .getBytes();
-
-    final ECKey ecKey = ECKey.fromPrivate(privateKey);
-
-
-  }
-
-
   // shuffle todo
   @Override
   public void init() {
-    this.privateKey = ByteArray.fromHexString(Args.getInstance().getLocalWitness().getPrivateKey());
-    final ECKey ecKey = ECKey.fromPrivate(this.privateKey);
+    Args.getInstance().getLocalWitnesses().getPrivateKeys().forEach(key -> {
+      byte[] privateKey = ByteArray.fromHexString(key);
+      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      byte[] address = ecKey.getAddress();
+      WitnessCapsule witnessCapsule = this.db.getWitnessStore()
+          .get(address);
+      // need handle init witness
+      if (null == witnessCapsule) {
+        logger.warn("witnessCapsule[" + address + "] is not in witnessStore");
+        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+      }
 
-    WitnessCapsule witnessCapsule = this.db.getWitnessStore()
-        .get(ecKey.getAddress());
-    // need handle init witness
-    if (null == witnessCapsule) {
-      logger.warn("witnessCapsule[" + ecKey.getAddress() + "] is not in witnessStore");
-      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getAddress()));
-    }
-    //
+      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+    });
+
     this.db.updateWits();
-    this.localWitnessState = witnessCapsule;
     this.witnessStates = this.db.getWitnesses();
   }
 
 
   @Override
   public void init(Args args) {
-    //this.privateKey = args.getPrivateKey();
+    //this.privateKey = args.getPrivateKeys();
     init();
   }
 
