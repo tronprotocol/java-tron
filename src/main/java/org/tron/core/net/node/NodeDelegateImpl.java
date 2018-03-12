@@ -101,7 +101,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     LinkedList<BlockId> retBlockIds = new LinkedList<>();
 
     if (dbManager.getHeadBlockNum() == 0) {
-      return new ArrayList<>();
+      return new LinkedList<>();
     }
 
     BlockId unForkedBlockId = null;
