@@ -85,4 +85,12 @@ public class WitnessCapsule implements ProtoCapsule<Witness> {
   public void setVoteCount(final long voteCount) {
     this.witness = this.witness.toBuilder().setVoteCount(voteCount).build();
   }
+
+  public void setIsJobs(final boolean isJobs) {
+    this.witness = this.witness.toBuilder().setIsJobs(isJobs).build();
+  }
+
+  public boolean getIsJobs() {
+    return this.witness.getIsJobs();
+  }
 }

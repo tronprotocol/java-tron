@@ -48,7 +48,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
-      if (this.dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
+      if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) != null) {
         throw new ContractValidateException("Witness has existed");
       }
     } catch (final Exception ex) {
@@ -73,7 +73,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
         witnessCreateContract.getOwnerAddress(), 0, "");
 
-    this.dbManager.getWitnessStore().putWitness(witnessCapsule);
+    this.dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
   }
 
 }
