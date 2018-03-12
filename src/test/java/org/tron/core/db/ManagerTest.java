@@ -14,6 +14,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
@@ -79,7 +80,7 @@ public class ManagerTest {
 
     Assert.assertFalse("deleteBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString(blockCapsule2.getBlockId().toString()))));
-}
+  }
 
   @Test
   public void testPushTransactions() {
@@ -92,5 +93,40 @@ public class ManagerTest {
     }
     Assert.assertEquals("pushTransaction is error", 123,
         transactionCapsule.getInstance().getRawData().getVout(0).getValue());
+  }
+
+  @Test
+  public void updateWits() {
+    int sizePrv = dbManager.getWitnesses().size();
+    dbManager.getWitnesses().forEach(witnessCapsule -> {
+      logger.info("witness address is {}",
+          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+    });
+    logger.info("------------");
+    WitnessCapsule witnessCapsulef = new WitnessCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString("0x0011")), "www.tron.net/first");
+    witnessCapsulef.setIsJobs(true);
+    WitnessCapsule witnessCapsules = new WitnessCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString("0x0012")), "www.tron.net/second");
+    witnessCapsules.setIsJobs(true);
+    WitnessCapsule witnessCapsulet = new WitnessCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString("0x0013")), "www.tron.net/three");
+    witnessCapsulet.setIsJobs(false);
+
+    dbManager.getWitnesses().forEach(witnessCapsule -> {
+      logger.info("witness address is {}",
+          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+    });
+    logger.info("---------");
+    dbManager.getWitnessStore().putWitness(witnessCapsulef);
+    dbManager.getWitnessStore().putWitness(witnessCapsules);
+    dbManager.getWitnessStore().putWitness(witnessCapsulet);
+    dbManager.updateWits();
+    dbManager.getWitnesses().forEach(witnessCapsule -> {
+      logger.info("witness address is {}",
+          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+    });
+    int sizeTis = dbManager.getWitnesses().size();
+    Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
   }
 }

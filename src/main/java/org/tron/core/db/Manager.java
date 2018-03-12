@@ -250,7 +250,7 @@ public class Manager {
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           key.getVoteCount(), key.getUrl());
-
+      witnessCapsule.setIsJobs(true);
       this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
       this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
       this.wits.add(witnessCapsule);
@@ -683,6 +683,12 @@ public class Manager {
         }
       }
     });
+
+    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+      witnessCapsule.setVoteCount(0);
+      witnessCapsule.setIsJobs(false);
+      this.witnessStore.putWitness(witnessCapsule);
+    });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
     countWitness.forEach((address, voteCount) -> {
@@ -704,6 +710,7 @@ public class Manager {
       }
 
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+      witnessCapsule.setIsJobs(false);
       witnessCapsuleList.add(witnessCapsule);
       this.witnessStore.putWitness(witnessCapsule);
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
@@ -713,6 +720,20 @@ public class Manager {
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
+
+    witnessCapsuleList.forEach(witnessCapsule -> {
+      witnessCapsule.setIsJobs(true);
+      this.witnessStore.putWitness(witnessCapsule);
+    });
+  }
+
+  public void updateWits() {
+    wits.clear();
+    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+      if (witnessCapsule.getIsJobs()) {
+        wits.add(witnessCapsule);
+      }
+    });
   }
 
   public AssetIssueStore getAssetIssueStore() {

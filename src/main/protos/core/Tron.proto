@@ -43,7 +43,6 @@ message Witness {
   bool isJobs = 9;
 }
 
-
 // Transcation
 
 message TXOutput {
