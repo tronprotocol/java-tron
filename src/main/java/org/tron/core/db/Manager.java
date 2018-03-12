@@ -286,7 +286,7 @@ public class Manager {
       processTransaction(trx);
       pendingTrxs.add(trx);
       tmpDialog.merge();
-    } catch (Exception e) {
+    } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
