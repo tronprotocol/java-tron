@@ -12,13 +12,12 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadBlockException;
@@ -100,6 +99,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private GossipLocalNode gossipNode;
 
   private volatile boolean isAdvertiseActive;
+
+  private volatile boolean isFetchActive;
 
 
   //broadcast
@@ -193,6 +194,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode.setPeerDel(this);
     gossipNode.start();
     isAdvertiseActive = true;
+    isFetchActive = true;
   }
 
   @Override
@@ -202,7 +204,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();
     isAdvertiseActive = false;
+    isFetchActive = true;
     advertiseLoopThread.join();
+    advObjFetchLoopThread.join();
   }
 
   @Override
@@ -240,6 +244,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (advObjToSpread.isEmpty()) {
           try {
             Thread.sleep(1000);
+            continue;
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -271,33 +276,35 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     });
 
     advObjFetchLoopThread = new Thread(() -> {
-      if (advObjToFetch.isEmpty()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+      while (isFetchActive) {
+        if (advObjToFetch.isEmpty()) {
+          try {
+            Thread.sleep(1000);
+            continue;
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+
+        synchronized (advObjToFetch) {
+          InvToSend sendPackage = new InvToSend();
+          advObjToFetch.entrySet().stream()
+              .forEach(idToFetch -> {
+                for (PeerConnection peer :
+                    getActivePeer()) {
+                  //TODO: don't fetch too much obj from only one peer
+                  if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
+                    sendPackage.add(idToFetch, peer);
+                    advObjToFetch.remove(idToFetch.getKey());
+                    peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
+                    break;
+                  }
+                }
+              });
+          sendPackage.sendFetch();
         }
       }
-
-      synchronized (advObjToFetch) {
-        InvToSend sendPackage = new InvToSend();
-        advObjToFetch.entrySet().stream()
-            .forEach(idToFetch -> {
-              for (PeerConnection peer :
-                  getActivePeer()) {
-                //TODO: don't fetch too much obj from only one peer
-                if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
-                  sendPackage.add(idToFetch, peer);
-                  advObjToFetch.remove(idToFetch.getKey());
-                  peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
-                  break;
-                }
-              }
-            });
-        sendPackage.sendFetch();
-      }
-    }
-    );
+    });
 
     advertiseLoopThread.start();
     advObjFetchLoopThread.start();
@@ -484,7 +491,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     logger.info("on handle fetch block message");
-    MessageTypes type = fetchInvDataMsg.getInvType();
+    MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     //TODO:maybe can use message cache here
     final BlockCapsule[] blocks = {del.getGenesisBlock()};
@@ -604,7 +611,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //TODO: to decide to fetch again or sync, now do it together
 
         startFetchSyncBlock();
-        syncNextBatchChainIds(peer);
+
+        //syncNextBatchChainIds(peer);
 
 
       } else {
@@ -620,7 +628,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   }
 
-  private void startFetchSyncBlock() {
+  private synchronized void startFetchSyncBlock() {
     //TODO: check how many block is processing and decide if fetch more
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     HashSet<BlockId> request = new HashSet<>();
@@ -634,7 +642,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           for (BlockId blockId :
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
-                && syncBlockIdWeRequested.containsKey(blockId)) {
+                && !syncBlockIdWeRequested.containsKey(blockId)) {
               send.get(peer).add(blockId);
               request.add(blockId);
               if (send.get(peer).size() > 200) { //Max Blocks peer get one time
@@ -644,17 +652,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         });
 
-    send.forEach((peer, blockIds) ->
-        peer.sendMessage(new FetchInvDataMessage(
-            blockIds.stream()
-                .peek(blockId -> {
-                  syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
-                  peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-                })
-                .collect(Collectors.toCollection(LinkedList::new)),
-            InventoryType.BLOCK
-        ))
-    );
+    send.forEach((peer, blockIds) -> {
+        //TODO: use collector
+        blockIds.forEach(blockId -> {
+          syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+          peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
+        });
+        List<Sha256Hash> ids = new LinkedList<>();
+        ids.addAll(blockIds);
+        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+    });
+
     send.clear();
   }
 

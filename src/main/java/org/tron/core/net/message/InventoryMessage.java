@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -17,7 +17,8 @@ public class InventoryMessage extends Message {
     super(packed);
   }
 
-  public InventoryMessage() {}
+  public InventoryMessage() {
+  }
 
   public InventoryMessage(Inventory inv) {
     this.inv = inv;
@@ -52,6 +53,11 @@ public class InventoryMessage extends Message {
   public Inventory getInventory() {
     unPack();
     return inv;
+  }
+
+  public MessageTypes getInvMessageType() {
+    return getInventoryType().equals(InventoryType.BLOCK) ? MessageTypes.BLOCK : MessageTypes.TRX;
+
   }
 
   public InventoryType getInventoryType() {

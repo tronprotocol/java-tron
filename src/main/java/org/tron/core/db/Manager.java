@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -51,6 +51,7 @@ public class Manager {
   private BlockStore blockStore;
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
+  private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockCapsule genesisBlock;
 
@@ -156,6 +157,7 @@ public class Manager {
     this.setBlockStore(BlockStore.create("block"));
     this.setUtxoStore(UtxoStore.create("utxo"));
     this.setWitnessStore(WitnessStore.create("witness"));
+    this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
     this.numHashCache = new LevelDbDataSourceImpl(
@@ -296,7 +298,7 @@ public class Manager {
       pendingTrxs.add(trx);
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
-
+      e.printStackTrace();
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -574,6 +576,9 @@ public class Manager {
   }
 
 
+  /**
+   * update signed witness.
+   */
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
@@ -581,7 +586,7 @@ public class Manager {
 
     long latestSlotNum = 0L;
 
-//    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+    //    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
 
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
@@ -598,6 +603,9 @@ public class Manager {
     return LOOP_INTERVAL; // millisecond todo getFromDb
   }
 
+  /**
+   * get slot at time.
+   */
   public long getSlotAtTime(DateTime when) {
     DateTime firstSlotTime = getSlotTime(1);
     if (when.isBefore(firstSlotTime)) {
@@ -607,6 +615,9 @@ public class Manager {
   }
 
 
+  /**
+   * get slot time.
+   */
   public DateTime getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return DateTime.now();
@@ -702,5 +713,13 @@ public class Manager {
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
+  }
+
+  public AssetIssueStore getAssetIssueStore() {
+    return assetIssueStore;
+  }
+
+  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
+    this.assetIssueStore = assetIssueStore;
   }
 }
