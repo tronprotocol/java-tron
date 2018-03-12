@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -16,7 +18,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 @Getter // only for unit test
-abstract class AbstractRevokingStore implements RevokingDatabase {
+public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
@@ -331,9 +333,9 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   @Getter // only for unit test
   static class RevokingState {
 
-    HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
-    HashSet<RevokingTuple> newIds = new HashSet<>();
-    HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
+    Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
+    Set<RevokingTuple> newIds = new HashSet<>();
+    Map<RevokingTuple, byte[]> removed = new HashMap<>();
   }
 
   @AllArgsConstructor

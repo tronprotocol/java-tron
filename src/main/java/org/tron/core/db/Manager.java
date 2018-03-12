@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -60,7 +61,7 @@ public class Manager {
   private KhaosDatabase khaosDb;
   private BlockCapsule head;
   private RevokingDatabase revokingStore;
-  private RevokingStore.Dialog dialog;
+  private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -289,8 +290,8 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    if (dialog == null) {
-      dialog = revokingStore.buildDialog();
+    if (!dialog.valid()) {
+      dialog = DialogOptional.of(revokingStore.buildDialog());
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
@@ -323,11 +324,10 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      try {
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
           this.processBlock(block);
           tmpDialog.commit();
-        }
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
@@ -471,10 +471,8 @@ public class Manager {
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    if (dialog != null) {
-      dialog.destroy();
-    }
-    dialog = revokingStore.buildDialog();
+    dialog.reset();
+    dialog = DialogOptional.of(revokingStore.buildDialog());
 
     Iterator iterator = pendingTrxs.iterator();
     while (iterator.hasNext()) {
@@ -503,7 +501,7 @@ public class Manager {
       }
     }
 
-    dialog.destroy();
+    dialog.reset();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
