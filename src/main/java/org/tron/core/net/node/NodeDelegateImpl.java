@@ -138,7 +138,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (beginBLockId != getGenesisBlock().getBlockId()) {
+    if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
       if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;

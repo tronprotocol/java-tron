@@ -377,7 +377,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (peer.isNeedSyncFromPeer()) {
         syncNextBatchChainIds(peer);
       }
-      startFetchSyncBlock();
+      //TODO: here should be a loop do this thing
+      //startFetchSyncBlock();
     }
   }
 
@@ -483,6 +484,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (blockIds.isEmpty()) {
       peer.setNeedSyncFromUs(false);
+    } else if (blockIds.size() == 1
+        && !summaryChainIds.isEmpty()
+        && summaryChainIds.contains(blockIds.peekFirst())) {
+      peer.setNeedSyncFromPeer(false);
     } else { //TODO: here must check when blockIds.size == 1, it is maybe is in sync status
       peer.setNeedSyncFromUs(true);
     }
