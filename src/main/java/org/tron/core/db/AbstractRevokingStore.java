@@ -18,7 +18,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 @Getter // only for unit test
-abstract class AbstractRevokingStore implements RevokingDatabase {
+public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
