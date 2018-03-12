@@ -251,11 +251,11 @@ public class WitnessService implements Service {
         .get(ecKey.getAddress());
     // need handle init witness
     if (null == witnessCapsule) {
+      logger.warn("witnessCapsule[" + ecKey.getAddress() + "] is not in witnessStore");
       witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getAddress()));
     }
-    this.db.updateWitness();
     //
-
+    this.tronApp.getDbManager().updateWits();
     this.localWitnessState = witnessCapsule;
     this.witnessStates = this.db.getWitnesses();
   }

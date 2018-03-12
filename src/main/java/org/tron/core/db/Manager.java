@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -51,6 +53,7 @@ public class Manager {
   private BlockStore blockStore;
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
+  private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockCapsule genesisBlock;
 
@@ -59,7 +62,7 @@ public class Manager {
   private KhaosDatabase khaosDb;
   private BlockCapsule head;
   private RevokingDatabase revokingStore;
-  private RevokingStore.Dialog dialog;
+  private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -156,7 +159,11 @@ public class Manager {
     this.setBlockStore(BlockStore.create("block"));
     this.setUtxoStore(UtxoStore.create("utxo"));
     this.setWitnessStore(WitnessStore.create("witness"));
+    this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
+
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.enable();
 
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
@@ -177,9 +184,6 @@ public class Manager {
       System.exit(-1);
     }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
-
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -248,7 +252,7 @@ public class Manager {
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
           ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
           key.getVoteCount(), key.getUrl());
-
+      witnessCapsule.setIsJobs(true);
       this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
       this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
       this.wits.add(witnessCapsule);
@@ -287,8 +291,8 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    if (dialog == null) {
-      dialog = revokingStore.buildDialog();
+    if (!dialog.valid()) {
+      dialog = DialogOptional.of(revokingStore.buildDialog());
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
@@ -296,7 +300,7 @@ public class Manager {
       pendingTrxs.add(trx);
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
-
+      e.printStackTrace();
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
@@ -321,16 +325,19 @@ public class Manager {
             + " , the headers is " + block.getMerklerRoot());
         return;
       }
-      try {
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          this.processBlock(block);
-          tmpDialog.commit();
-        }
+
+      //todo: In some case it need to switch the branch
+    }
+
+    if (block.getNum() != 0) {
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        this.processBlock(block);
+        tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
-      //todo: In some case it need to switch the branch
     }
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
@@ -342,12 +349,12 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
-    final Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
+    final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
         this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
-        .collect(Collectors.toCollection(ArrayList::new));
+        .collect(Collectors.toCollection(LinkedList::new));
   }
 
   /**
@@ -469,10 +476,8 @@ public class Manager {
     final BlockCapsule blockCapsule = new BlockCapsule(number + 1, preHash, when,
         witnessCapsule.getAddress());
 
-    if (dialog != null) {
-      dialog.destroy();
-    }
-    dialog = revokingStore.buildDialog();
+    dialog.reset();
+    dialog = DialogOptional.of(revokingStore.buildDialog());
 
     Iterator iterator = pendingTrxs.iterator();
     while (iterator.hasNext()) {
@@ -501,7 +506,7 @@ public class Manager {
       }
     }
 
-    dialog.destroy();
+    dialog.reset();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -574,6 +579,9 @@ public class Manager {
   }
 
 
+  /**
+   * update signed witness.
+   */
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
@@ -581,7 +589,7 @@ public class Manager {
 
     long latestSlotNum = 0L;
 
-//    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+    //    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
 
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
@@ -598,6 +606,9 @@ public class Manager {
     return LOOP_INTERVAL; // millisecond todo getFromDb
   }
 
+  /**
+   * get slot at time.
+   */
   public long getSlotAtTime(DateTime when) {
     DateTime firstSlotTime = getSlotTime(1);
     if (when.isBefore(firstSlotTime)) {
@@ -607,6 +618,9 @@ public class Manager {
   }
 
 
+  /**
+   * get slot time.
+   */
   public DateTime getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return DateTime.now();
@@ -672,6 +686,12 @@ public class Manager {
         }
       }
     });
+
+    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+      witnessCapsule.setVoteCount(0);
+      witnessCapsule.setIsJobs(false);
+      this.witnessStore.putWitness(witnessCapsule);
+    });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
     countWitness.forEach((address, voteCount) -> {
@@ -693,6 +713,7 @@ public class Manager {
       }
 
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+      witnessCapsule.setIsJobs(false);
       witnessCapsuleList.add(witnessCapsule);
       this.witnessStore.putWitness(witnessCapsule);
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
@@ -702,5 +723,27 @@ public class Manager {
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
+
+    witnessCapsuleList.forEach(witnessCapsule -> {
+      witnessCapsule.setIsJobs(true);
+      this.witnessStore.putWitness(witnessCapsule);
+    });
+  }
+
+  public void updateWits() {
+    wits.clear();
+    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+      if (witnessCapsule.getIsJobs()) {
+        wits.add(witnessCapsule);
+      }
+    });
+  }
+
+  public AssetIssueStore getAssetIssueStore() {
+    return assetIssueStore;
+  }
+
+  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
+    this.assetIssueStore = assetIssueStore;
   }
 }

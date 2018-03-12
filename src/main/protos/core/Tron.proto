@@ -30,8 +30,6 @@ message Account {
 
 }
 
-
-
 // Witness
 message Witness {
   bytes address = 1;
@@ -42,8 +40,8 @@ message Witness {
   int64 totalMissed = 6;
   int64 latestBlockNum = 7;
   int64 latestSlotNum = 8;
+  bool isJobs = 9;
 }
-
 
 // Transcation
 
@@ -117,6 +115,15 @@ message BlockHeader {
 message Block {
   repeated Transaction transactions = 1;
   BlockHeader block_header = 2;
+}
+
+message ChainInventory {
+  message BlockId {
+    bytes hash = 1;
+    int64 number = 2;
+  }
+  repeated BlockId ids = 1;
+  int64 remain_num = 2;
 }
 
 // Inventory

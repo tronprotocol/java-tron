@@ -78,11 +78,14 @@
   <logger name="TransactionUtil" level="INFO"/>
   <logger name="TransactionVoteActuator" level="INFO"/>
   <logger name="WitnessStore" level="INFO"/>
+  <logger name="AssetIssueStore" level="INFO"/>
   <logger name="ActuatorFactory" level="INFO"/>
   <logger name="ByteArray" level="INFO"/>
   <logger name="Args" level="INFO"/>
   <logger name="WitnessCteateActuator" level="INFO"/>
+  <logger name="AssetIssueActuator" level="INFO"/>
   <logger name="AccountCapsule" level="INFO"/>
+  <logger name="AssetIssueCapsule" level="INFO"/>
   <logger name="Manager" level="INFO"/>
 
 </configuration>

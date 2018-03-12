@@ -1,16 +1,16 @@
 package org.tron.core.net.node;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -41,7 +41,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws BadBlockException {
+  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
+      throws BadBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -86,11 +87,11 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
 
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-    List<BlockId> retBlockIds = new ArrayList<>();
+    LinkedList<BlockId> retBlockIds = new LinkedList<>();
     if (dbManager.getHeadBlockNum() == 0) {
       return retBlockIds;
     }
@@ -119,7 +120,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     //todo: limit the count of block to send peer by one time.
     for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum(); ++num) {
+        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
       if (num > 0) {
         retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
@@ -131,26 +132,27 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
-    long highBlkNum = 0;
+    long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0; //TODO：get this from db.
+    long lowBlkNum = 0;
 
-    List<BlockId> forkList = new ArrayList<>();
+    LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (beginBLockId != Sha256Hash.ZERO_HASH) {
-      //todo: get db's head num to check local db's block status.
+    if (beginBLockId != getGenesisBlock().getBlockId()) {
       if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        highNoForkBlkNum = dbManager.getBlockNumById(forkList.get(forkList.size() - 1));
-        forkList.remove(forkList.get(forkList.size() - 1));
+        highNoForkBlkNum = forkList.peekLast().getNum();
+        forkList.pollLast();
+        Collections.reverse(forkList);
         highBlkNum = highNoForkBlkNum + forkList.size();
+        logger.info("highNum: " + highBlkNum);
+        logger.info("forkLastNum: " + forkList.peekLast().getNum());
       }
-
     } else {
-      highBlkNum = getBlockStoreDb().getHeadBlockNum();
+      highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
       if (highBlkNum == 0) {
         return retSummary;
@@ -187,8 +189,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void syncToCli() {
-
+  public void syncToCli(long unSyncNum) {
+    logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    //TODO: notify cli know how many block we need to sync
   }
 
 

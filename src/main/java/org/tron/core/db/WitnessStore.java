@@ -41,7 +41,11 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
 
   @Override
   public WitnessCapsule get(byte[] key) {
-    return null;
+    byte[] value = dbSource.getData(key);
+    if (null == value) {
+      return null;
+    }
+    return new WitnessCapsule(value);
   }
 
   @Override
@@ -85,9 +89,9 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
    * get all witnesses.
    */
   public List<WitnessCapsule> getAllWitnesses() {
-    return dbSource.allKeys().stream()
-        .map(this::get)
-        .collect(Collectors.toList());
+    return dbSource.allValues().stream().map(bytes ->
+      new WitnessCapsule(bytes)
+    ).collect(Collectors.toList());
   }
 
 }

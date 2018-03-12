@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -67,7 +67,7 @@ public class PeerConnection {
 
   private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
 
-  private HashMap<BlockId, Long> syncBlockRequested = null;
+  private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
 
   private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
 
@@ -93,15 +93,15 @@ public class PeerConnection {
     return member.address();
   }
 
-  public int getNumUnfetchBlock() {
-    return numUnfetchBlock;
+  public long getUnfetchSyncNum() {
+    return unfetchSyncNum;
   }
 
-  public void setNumUnfetchBlock(int numUnfetchBlock) {
-    this.numUnfetchBlock = numUnfetchBlock;
+  public void setUnfetchSyncNum(long unfetchSyncNum) {
+    this.unfetchSyncNum = unfetchSyncNum;
   }
 
-  private int numUnfetchBlock = 0;
+  private long unfetchSyncNum = 0L;
 
   private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
 

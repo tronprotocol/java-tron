@@ -3,7 +3,7 @@ package org.tron.core.net.node;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -19,13 +19,13 @@ public interface NodeDelegate {
 
   void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
-  List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
+  LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
 
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
-  void syncToCli();
+  void syncToCli(long unSyncNum);
 
   long getBlockTime(BlockId id);
 

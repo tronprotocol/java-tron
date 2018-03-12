@@ -1,4 +1,4 @@
-package org.tron.core;
+package org.tron.common.utils;
 
 /*
  * Copyright 2011 Google Inc.
@@ -30,7 +30,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.tron.common.utils.ByteArray;
 
 
 /**
@@ -123,9 +122,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SHA-256 MessageDigest instance.
-   * This is a convenience method which wraps the checked exception that can never occur with a
-   * RuntimeException.
+   * Returns a new SHA-256 MessageDigest instance. This is a convenience method which wraps the
+   * checked exception that can never occur with a RuntimeException.
    *
    * @return a new SHA-256 MessageDigest instance
    */
@@ -202,7 +200,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || !(o instanceof Sha256Hash)) {
       return false;
     }
     return Arrays.equals(bytes, ((Sha256Hash) o).bytes);
