@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javafx.util.Pair;
@@ -208,11 +209,11 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
-  public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(BlockId block1,
+  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(BlockId block1,
       BlockId block2) {
-    ArrayList<BlockCapsule> list1 = new ArrayList<>();
-    ArrayList<BlockCapsule> list2 = new ArrayList<>();
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair<>(list1, list2);
+    LinkedList<BlockCapsule> list1 = new LinkedList<>();
+    LinkedList<BlockCapsule> list2 = new LinkedList<>();
+    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 

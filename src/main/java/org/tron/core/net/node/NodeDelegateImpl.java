@@ -1,6 +1,5 @@
 package org.tron.core.net.node;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -140,27 +139,27 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
-    long highBlkNum = 0;
+    long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0; //TODO：get this from db.
+    long lowBlkNum = 0;
 
-    List<BlockId> forkList = new ArrayList<>();
+    LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (beginBLockId != Sha256Hash.ZERO_HASH) {
-      //todo: get db's head num to check local db's block status.
+    if (beginBLockId != getGenesisBlock().getBlockId()) {
       if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        int forkListSize = forkList.size();
-        BlockId blockId = forkList.get(forkListSize - 1);
-        highNoForkBlkNum = dbManager.getBlockNumById(blockId);
-        forkList.remove(blockId);
-        highBlkNum = highNoForkBlkNum + forkListSize;
+        highNoForkBlkNum = forkList.peekLast().getNum();
+        forkList.pollLast();
+        Collections.reverse(forkList);
+        highBlkNum = highNoForkBlkNum + forkList.size();
+        logger.info("highNum: " + highBlkNum);
+        logger.info("forkLastNum: " + forkList.peekLast().getNum());
       }
     } else {
-      highBlkNum = getBlockStoreDb().getHeadBlockNum();
+      highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
       if (highBlkNum == 0) {
         return retSummary;
@@ -189,7 +188,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         return new BlockMessage(dbManager.findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(
-            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+            dbManager.getTransactionStore().get(hash.getBytes()).getData());
       default:
         logger.info("message type not block or trx.");
         return null;
