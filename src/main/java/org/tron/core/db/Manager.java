@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -52,6 +52,7 @@ public class Manager {
   private BlockStore blockStore;
   private UtxoStore utxoStore;
   private WitnessStore witnessStore;
+  private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockCapsule genesisBlock;
 
@@ -157,6 +158,7 @@ public class Manager {
     this.setBlockStore(BlockStore.create("block"));
     this.setUtxoStore(UtxoStore.create("utxo"));
     this.setWitnessStore(WitnessStore.create("witness"));
+    this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
     this.numHashCache = new LevelDbDataSourceImpl(
@@ -165,7 +167,18 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
     this.pendingTrxs = new ArrayList<>();
-    this.initGenesis();
+    try {
+      this.initGenesis();
+    } catch (ContractValidateException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ContractExeException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    } catch (ValidateSignatureException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
+    }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
 
     revokingStore = RevokingStore.getInstance();
@@ -183,7 +196,8 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis() {
+  public void initGenesis()
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -195,11 +209,9 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-        try {
-          this.pushBlock(this.genesisBlock);
-        } catch (final ValidateSignatureException e) {
-          e.printStackTrace();
-        }
+
+        this.pushBlock(this.genesisBlock);
+
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
@@ -297,7 +309,8 @@ public class Manager {
   /**
    * save a block.
    */
-  public void pushBlock(final BlockCapsule block) throws ValidateSignatureException {
+  public void pushBlock(final BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -440,7 +453,8 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
-      final long when, final byte[] privateKey) throws ValidateSignatureException {
+      final long when, final byte[] privateKey)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -482,7 +496,7 @@ public class Manager {
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
         e.printStackTrace();
-      } catch (Exception e) {
+      } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
     }
@@ -537,14 +551,10 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block) throws ValidateSignatureException {
+  public void processBlock(BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      try {
-        processTransaction(transactionCapsule);
-      } catch (ContractExeException | ContractValidateException e) {
-        e.printStackTrace();
-      }
-
+      processTransaction(transactionCapsule);
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
       if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
@@ -564,6 +574,9 @@ public class Manager {
   }
 
 
+  /**
+   * update signed witness.
+   */
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
@@ -571,7 +584,7 @@ public class Manager {
 
     long latestSlotNum = 0L;
 
-//    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+    //    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
 
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
@@ -588,6 +601,9 @@ public class Manager {
     return LOOP_INTERVAL; // millisecond todo getFromDb
   }
 
+  /**
+   * get slot at time.
+   */
   public long getSlotAtTime(DateTime when) {
     DateTime firstSlotTime = getSlotTime(1);
     if (when.isBefore(firstSlotTime)) {
@@ -597,6 +613,9 @@ public class Manager {
   }
 
 
+  /**
+   * get slot time.
+   */
   public DateTime getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return DateTime.now();
@@ -692,5 +711,13 @@ public class Manager {
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
+  }
+
+  public AssetIssueStore getAssetIssueStore() {
+    return assetIssueStore;
+  }
+
+  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
+    this.assetIssueStore = assetIssueStore;
   }
 }

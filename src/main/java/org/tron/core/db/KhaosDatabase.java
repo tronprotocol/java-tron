@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javafx.util.Pair;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 
@@ -155,7 +155,7 @@ public class KhaosDatabase extends TronDatabase {
     if (block != null) {
       return block.blk;
     } else {
-      KhaosBlock blockUnlinked = miniStore.getByHash(hash);
+      KhaosBlock blockUnlinked = miniUnlinkedStore.getByHash(hash);
       if (blockUnlinked != null) {
         return blockUnlinked.blk;
       } else {

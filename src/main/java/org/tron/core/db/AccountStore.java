@@ -11,6 +11,10 @@ import org.tron.core.capsule.AccountCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
 
+  private static final String ACCOUNT_SUN_ADDRESS = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
+  private static final String ACCOUNT_COLLAPSAR_ADDRESS
+      = "548794500882809695a8a687866e76d4271a146a";
+
   private static final Logger logger = LoggerFactory.getLogger("AccountStore");
   private static AccountStore instance;
 
@@ -79,23 +83,35 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   }
 
   /**
-   * createAccount fun.
-   *
-   * @param address the address of Account
-   * @param account the data of Account
-   */
-
-  public boolean createAccount(byte[] address, AccountCapsule account) {
-    put(address, account);
-    return true;
-  }
-
-  /**
    * get all accounts.
    */
   public List<AccountCapsule> getAllAccounts() {
-    return dbSource.allKeys().stream()
-        .map(this::get)
-        .collect(Collectors.toList());
+    return dbSource.allValues().stream().map(bytes ->
+        new AccountCapsule(bytes)
+    ).collect(Collectors.toList());
+  }
+
+  /**
+   * Max TRX account.
+   */
+  public AccountCapsule getSun() {
+    byte[] data = dbSource.getData(
+        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_SUN_ADDRESS))
+            .toByteArray());
+
+    AccountCapsule accountCapsule = new AccountCapsule(data);
+    return accountCapsule;
+  }
+
+  /**
+   * Min TRX account.
+   */
+  public AccountCapsule getCollapsar() {
+    byte[] data = dbSource.getData(
+        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_COLLAPSAR_ADDRESS))
+            .toByteArray());
+
+    AccountCapsule accountCapsule = new AccountCapsule(data);
+    return accountCapsule;
   }
 }
