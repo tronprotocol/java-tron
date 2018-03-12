@@ -187,8 +187,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void syncToCli() {
-
+  public void syncToCli(long unSyncNum) {
+      //TODO: notify cli know how many block we need to sync
   }
 
 

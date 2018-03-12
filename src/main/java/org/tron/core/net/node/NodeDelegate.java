@@ -25,7 +25,7 @@ public interface NodeDelegate {
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
-  void syncToCli();
+  void syncToCli(long unSyncNum);
 
   long getBlockTime(BlockId id);
 

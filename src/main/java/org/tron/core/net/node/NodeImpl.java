@@ -119,6 +119,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
 
+  private Long unSyncNum = 0l;
+
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
   ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
@@ -561,8 +563,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
-        if (blockIdWeGet.isEmpty() && peer.getSyncBlockToFetch().isEmpty()) {
+        if (msg.getRemainNum() == 0
+            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del.containBlock(blockIdWeGet.peek())))
+            && peer.getSyncBlockToFetch().isEmpty()
+            && peer.getUnfetchSyncNum() == 0) {
+
           peer.setNeedSyncFromPeer(false);
+          unSyncNum = getUnSyncNum();
+          if (unSyncNum == 0) {
+            del.syncToCli(0);
+          }
           //TODO: check whole sync status and notify del sync status.
           //TODO: if sync finish call del.syncToCli();
           return;
@@ -607,17 +617,34 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //sew it
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
+        peer.setUnfetchSyncNum(msg.getRemainNum());
+
+        long newUnSyncNum = getUnSyncNum();
+        if (unSyncNum != newUnSyncNum) {
+          unSyncNum = newUnSyncNum;
+          del.syncToCli(unSyncNum);
+        }
+
+        if (msg.getRemainNum() == 0) {
+          if (!peer.getSyncBlockToFetch().isEmpty()) {
+            startFetchSyncBlock();
+          } else {
+            syncNextBatchChainIds(peer);
+          }
+        } else {
+          if (peer.getSyncBlockToFetch().size() > 1000) {
+            //TODO: if too many sync block to fetch, handle these first
+            startFetchSyncBlock();
+          } else {
+            syncNextBatchChainIds(peer);
+          }
+        }
 
         //TODO: check head block time is legal here
         //TODO: refresh sync status to cli. call del.syncToCli() here
 
         //TODO: depends on peer's BlockChainToFetch count and remaining block count
         //TODO: to decide to fetch again or sync, now do it together
-
-        startFetchSyncBlock();
-
-        //syncNextBatchChainIds(peer);
-
 
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
@@ -630,6 +657,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startFetchItem() {
 
+  }
+
+  private long getUnSyncNum() {
+    return getActivePeer().stream()
+        .mapToLong(peer -> peer.getUnfetchSyncNum() + peer.getSyncBlockToFetch().size())
+        .max()
+        .getAsLong();
   }
 
   private synchronized void startFetchSyncBlock() {
@@ -704,7 +738,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void startSyncWithPeer(PeerConnection peer) {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
-    peer.setNumUnfetchBlock(0);
+    peer.setUnfetchSyncNum(0);
     peer.setHeadBlockWeBothHave(del.getGenesisBlock().getBlockId());
     peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimeStamp());
     peer.setBanned(false);

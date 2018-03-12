@@ -58,6 +58,10 @@ public class ChainInventoryMessage extends Message {
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
+  public Long getRemainNum() {
+    return getChainInventory().getRemainNum();
+  }
+
   private synchronized void unPack() {
     if (unpacked) {
       return;
