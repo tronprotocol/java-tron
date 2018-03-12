@@ -155,7 +155,7 @@ public class KhaosDatabase extends TronDatabase {
     if (block != null) {
       return block.blk;
     } else {
-      KhaosBlock blockUnlinked = miniStore.getByHash(hash);
+      KhaosBlock blockUnlinked = miniUnlinkedStore.getByHash(hash);
       if (blockUnlinked != null) {
         return blockUnlinked.blk;
       } else {

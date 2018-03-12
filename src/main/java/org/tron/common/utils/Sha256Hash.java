@@ -200,7 +200,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || !(o instanceof Sha256Hash)) {
       return false;
     }
     return Arrays.equals(bytes, ((Sha256Hash) o).bytes);
