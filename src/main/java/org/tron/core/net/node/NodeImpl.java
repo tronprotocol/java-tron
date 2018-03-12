@@ -119,7 +119,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
 
-  private Long unSyncNum = 0l;
+  private Long unSyncNum = 0L;
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -491,7 +491,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       startSyncWithPeer(peer);
     }
 
-    long remainNum =  blockIds.peekLast().getNum() - del.getHeadBlockId().getNum();
+    long remainNum = blockIds.peekLast().getNum() - del.getHeadBlockId().getNum();
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
@@ -564,7 +564,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
         if (msg.getRemainNum() == 0
-            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del.containBlock(blockIdWeGet.peek())))
+            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del
+            .containBlock(blockIdWeGet.peek())))
             && peer.getSyncBlockToFetch().isEmpty()
             && peer.getUnfetchSyncNum() == 0) {
 
@@ -691,14 +692,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         });
 
     send.forEach((peer, blockIds) -> {
-        //TODO: use collector
-        blockIds.forEach(blockId -> {
-          syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
-          peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-        });
-        List<Sha256Hash> ids = new LinkedList<>();
-        ids.addAll(blockIds);
-        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+      //TODO: use collector
+      blockIds.forEach(blockId -> {
+        syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
+      });
+      List<Sha256Hash> ids = new LinkedList<>();
+      ids.addAll(blockIds);
+      peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
     });
 
     send.clear();

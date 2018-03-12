@@ -101,7 +101,7 @@ public class PeerConnection {
     this.unfetchSyncNum = unfetchSyncNum;
   }
 
-  private long unfetchSyncNum = 0l;
+  private long unfetchSyncNum = 0L;
 
   private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
 
