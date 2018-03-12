@@ -46,6 +46,7 @@ public class Args {
   private String chainId;
   private LocalWitness localWitness;
   private long blockInterval;
+  private boolean needSyncCheck;
 
   private Args() {
 
@@ -99,6 +100,7 @@ public class Args {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
     INSTANCE.blockInterval = config.getLong("block.interval");
+    INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
   }
 
 
@@ -197,5 +199,13 @@ public class Args {
 
   public void setBlockInterval(final long blockInterval) {
     this.blockInterval = blockInterval;
+  }
+
+  public boolean isNeedSyncCheck() {
+    return needSyncCheck;
+  }
+
+  public void setNeedSyncCheck(boolean needSyncCheck) {
+    this.needSyncCheck = needSyncCheck;
   }
 }
