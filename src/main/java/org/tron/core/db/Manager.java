@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -348,12 +349,12 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public ArrayList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
-    final Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> branch =
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
+    final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
         this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
-        .collect(Collectors.toCollection(ArrayList::new));
+        .collect(Collectors.toCollection(LinkedList::new));
   }
 
   /**

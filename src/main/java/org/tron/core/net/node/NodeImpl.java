@@ -442,7 +442,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             //TODO: erase process here
             peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
             peer.setHeadBlockWeBothHave(block.getBlockId());
-            if (peer.getSyncBlockToFetch().isEmpty()) { //TODO: check unfetch number and process
+            if (peer.getSyncBlockToFetch().isEmpty()
+                && peer.getUnfetchSyncNum() == 0) { //send sync to let peer know we are sync.
               needFetchAgain.offer(peer);
             }
           }
@@ -769,9 +770,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectPeer(PeerConnection peer) {
+    //TODO:when use new p2p framework, remove this
+    if (mapPeer.containsKey(peer.getAddress())) {
+      return;
+    }
+
     logger.info("Discover new peer:" + peer);
     mapPeer.put(peer.getAddress(), peer);
-    startSyncWithPeer(peer);
+    if (!peer.isNeedSyncFromPeer()) {
+      startSyncWithPeer(peer);
+    }
   }
 
   @Override
