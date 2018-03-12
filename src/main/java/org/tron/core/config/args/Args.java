@@ -124,6 +124,8 @@ public class Args {
 
   private static Account createAccount(final ConfigObject asset) {
     final Account account = new Account();
+    account.setAccountName(asset.get("accountName").unwrapped().toString());
+    account.setAccountType(asset.get("accountType").unwrapped().toString());
     account.setAddress(asset.get("address").unwrapped().toString());
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;

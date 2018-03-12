@@ -18,6 +18,7 @@ package org.tron.core.config.args;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.AccountType;
 
 public class Account {
@@ -38,16 +39,33 @@ public class Account {
     return ByteArray.fromHexString(this.address);
   }
 
+  /**
+   * Account address is a 40-bits hex string.
+   */
   public void setAddress(String address) {
-    this.address = address;
+
+    if (StringUtil.isHexString(address, 40)) {
+      this.address = address;
+    } else {
+      throw new IllegalArgumentException(
+          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+    }
   }
 
   public long getBalance() {
     return Long.parseLong(balance);
   }
 
-
+  /**
+   * Account balance is a long type.
+   */
   public void setBalance(String balance) {
+    try {
+      Long.parseLong(balance);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Balance(" + balance + ") must be Long type.");
+    }
+
     this.balance = balance;
   }
 
@@ -62,7 +80,14 @@ public class Account {
     return ByteString.copyFrom(ByteArray.fromString(this.accountName));
   }
 
+  /**
+   * Account name is a no-empty string.
+   */
   public void setAccountName(String accountName) {
+    if (StringUtils.isBlank(accountName)) {
+      throw new IllegalArgumentException("Account name must be non-empty.");
+    }
+
     this.accountName = accountName;
   }
 
@@ -82,13 +107,24 @@ public class Account {
         accountType = AccountType.Contract;
         break;
       default:
-        throw new IllegalArgumentException("account type error.");
+        throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }
 
     return accountType;
   }
 
+  /**
+   * Account type: Normal/AssetIssue/Contract.
+   */
   public void setAccountType(String accountType) {
-    this.accountType = accountType;
+    switch (accountType) {
+      case "Normal":
+      case "AssetIssue":
+      case "Contract":
+        this.accountType = accountType;
+        break;
+      default:
+        throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+    }
   }
 }
