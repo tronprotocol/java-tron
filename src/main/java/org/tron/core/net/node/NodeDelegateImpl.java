@@ -181,7 +181,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         return new BlockMessage(dbManager.findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(
-            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+            dbManager.getTransactionStore().get(hash.getBytes()).getData());
       default:
         logger.info("message type not block or trx.");
         return null;

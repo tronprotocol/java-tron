@@ -690,12 +690,12 @@ public class Manager {
     witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
       witnessCapsule.setVoteCount(0);
       witnessCapsule.setIsJobs(false);
-      this.witnessStore.putWitness(witnessCapsule);
+      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
     countWitness.forEach((address, voteCount) -> {
-      final WitnessCapsule witnessCapsule = this.witnessStore.getWitness(address);
+      final WitnessCapsule witnessCapsule = this.witnessStore.get(address.toByteArray());
       if (null == witnessCapsule) {
         logger.warn("witnessCapsule is null.address is {}", address);
         return;
@@ -715,7 +715,7 @@ public class Manager {
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
       witnessCapsule.setIsJobs(false);
       witnessCapsuleList.add(witnessCapsule);
-      this.witnessStore.putWitness(witnessCapsule);
+      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
           witnessCapsule.getVoteCount());
     });
@@ -726,10 +726,13 @@ public class Manager {
 
     witnessCapsuleList.forEach(witnessCapsule -> {
       witnessCapsule.setIsJobs(true);
-      this.witnessStore.putWitness(witnessCapsule);
+      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
     });
   }
 
+  /**
+   * update wits sync to store.
+   */
   public void updateWits() {
     wits.clear();
     witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
