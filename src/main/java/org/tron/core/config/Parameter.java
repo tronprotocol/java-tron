@@ -6,6 +6,7 @@ public interface Parameter {
 
     long TRANSFER_FEE = 1; // 1 drop
     long ASSET_ISSUE_FEE = 100000; // 100000 drop
-    long VOTE_WITNESS = 10000; // 10000 drop
+    long VOTE_WITNESS_FEE = 10000; // 10000 drop
+    long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
   }
 }
