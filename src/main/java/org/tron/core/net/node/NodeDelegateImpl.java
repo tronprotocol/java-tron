@@ -150,7 +150,6 @@ public class NodeDelegateImpl implements NodeDelegate {
         forkList.remove(blockId);
         highBlkNum = highNoForkBlkNum + forkListSize;
       }
-
     } else {
       highBlkNum = getBlockStoreDb().getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;

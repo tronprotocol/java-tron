@@ -1,6 +1,6 @@
 package org.tron.core.db;
 
-class RevokingStore extends AbstractRevokingStore {
+public class RevokingStore extends AbstractRevokingStore {
 
   private RevokingStore() {
     enable();
