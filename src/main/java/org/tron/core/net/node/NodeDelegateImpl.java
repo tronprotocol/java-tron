@@ -11,6 +11,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -120,7 +121,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     //todo: limit the count of block to send peer by one time.
     for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum(); ++num) {
+        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
       if (num > 0) {
         retBlockIds.add(dbManager.getBlockIdByNum(num));
       }

@@ -20,6 +20,7 @@ import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
@@ -630,11 +631,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!peer.getSyncBlockToFetch().isEmpty()) {
             startFetchSyncBlock();
           } else {
+            //let peer know we are sync.
             syncNextBatchChainIds(peer);
           }
         } else {
-          if (peer.getSyncBlockToFetch().size() > 1000) {
-            //TODO: if too many sync block to fetch, handle these first
+          if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
+            //one batch by one batch.
             startFetchSyncBlock();
           } else {
             syncNextBatchChainIds(peer);
