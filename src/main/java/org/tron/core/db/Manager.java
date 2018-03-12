@@ -32,7 +32,6 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocol.AccountType;
 
 public class Manager {
 
@@ -217,8 +216,9 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getAssets().forEach(account -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(AccountType.AssetIssue,
-          ByteString.copyFrom(ByteArray.fromHexString(account.getAddress())),
+      final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
+          account.getAccountType(),
+          ByteString.copyFrom(account.getAddressBytes()),
           account.getBalance());
       this.accountStore.put(account.getAddress().getBytes(), accountCapsule);
     });
@@ -228,15 +228,20 @@ public class Manager {
     return this.accountStore;
   }
 
-  public void adjustBalance(byte[] account_address, long amount)
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().get(account_address);
+    AccountCapsule account = getAccountStore().get(accountAddress);
     long balance = account.getBalance();
     if (amount == 0) {
       return;
     }
-    if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(account_address + " Insufficient");
+    if (amount < 0) {
+      if (balance < -amount) {
+        throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      }
     }
     account.setBalance(balance + amount);
     getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -425,7 +430,9 @@ public class Manager {
           blockCapsule.addTransaction(trx);
           iterator.remove();
         }
-      } catch (ContractExeException | ContractValidateException e) {
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
         e.printStackTrace();
       }
     }
@@ -480,7 +487,9 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       try {
         processTransaction(transactionCapsule);
-      } catch (ContractExeException | ContractValidateException e) {
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
         e.printStackTrace();
       }
       this.updateDynamicProperties(block);
@@ -512,12 +521,12 @@ public class Manager {
       logger.info("there is account ,account address is {}", account.getAddress().toStringUtf8());
       account.getVotesList().forEach(vote -> {
         //TODO validate witness //active_witness
-        ByteString voteAddress = vote.getVoteAddress();
-        long voteCount = vote.getVoteCount();
-        if (countWitness.containsKey(voteAddress)) {
-          voteCount += countWitness.get(voteAddress);
+        if (countWitness.containsKey(vote.getVoteAddress())) {
+          countWitness.put(vote.getVoteAddress(),
+              countWitness.get(vote.getVoteAddress()) + vote.getVoteCount());
+        } else {
+          countWitness.put(vote.getVoteAddress(), vote.getVoteCount());
         }
-        countWitness.put(voteAddress, voteCount);
       });
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
@@ -534,7 +543,9 @@ public class Manager {
       logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
           witnessCapsule.getVoteCount());
     });
-    witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
+    witnessCapsuleList.sort((a, b) -> {
+      return (int) (a.getVoteCount() - b.getVoteCount());
+    });
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
