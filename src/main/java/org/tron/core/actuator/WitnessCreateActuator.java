@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 
 public class WitnessCreateActuator extends AbstractActuator {
@@ -21,22 +23,23 @@ public class WitnessCreateActuator extends AbstractActuator {
 
 
   @Override
-  public boolean execute() {
+  public boolean execute() throws ContractExeException {
     try {
       final WitnessCreateContract witnessCreateContract = this.contract
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
     } catch (final InvalidProtocolBufferException e) {
-      throw new RuntimeException("Parse contract error", e);
+      e.printStackTrace();
+      throw new ContractExeException(e.getMessage());
     }
     return true;
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ContractValidateException {
     try {
       if (!this.contract.is(WitnessCreateContract.class)) {
-        throw new RuntimeException(
+        throw new ContractValidateException(
             "contract type error,expected type [AccountCreateContract],real type[" + this.contract
                 .getClass() + "]");
       }
@@ -46,18 +49,23 @@ public class WitnessCreateActuator extends AbstractActuator {
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
       if (this.dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
-        throw new RuntimeException("Witness has existed");
+        throw new ContractValidateException("Witness has existed");
       }
-
     } catch (final Exception ex) {
-      throw new RuntimeException("Validate WitnessCreateContract error.", ex);
+      ex.printStackTrace();
+      throw new ContractValidateException(ex.getMessage());
     }
     return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(WitnessCreateContract.class).getOwnerAddress();
+  }
+
+  @Override
+  public long calcFee() {
+    return 0;
   }
 
   private void createWitness(final WitnessCreateContract witnessCreateContract) {

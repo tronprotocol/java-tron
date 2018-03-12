@@ -19,7 +19,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
 public class BlockStore extends TronDatabase<BlockCapsule> {

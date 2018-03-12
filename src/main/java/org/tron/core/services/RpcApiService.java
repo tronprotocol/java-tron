@@ -1,10 +1,12 @@
 package org.tron.core.services;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.logging.Logger;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
@@ -14,11 +16,14 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
@@ -141,17 +146,49 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    //refactor、test later
+    private void checkVoteWitnessAccount(VoteWitnessContract req) {
+
+      //send back to cli
+      Preconditions.checkNotNull(req.getOwnerAddress(), "OwnerAddress is null");
+
+      AccountCapsule account = app.getDbManager().getAccountStore()
+          .get(req.getOwnerAddress().toByteArray());
+
+      Preconditions.checkNotNull(account, "OwnerAddress[" + req.getOwnerAddress() + "] not exists");
+
+      Preconditions
+          .checkArgument(req.getVotesCount() <= 0, "VotesCount[" + req.getVotesCount() + "] <= 0");
+
+      Preconditions.checkArgument(account.getShare() < req.getVotesCount(),
+          "Share[" + account.getShare() + "] <  VotesCount[" + req.getVotesCount() + "]");
+
+      Iterator<Vote> iterator = req.getVotesList().iterator();
+      while (iterator.hasNext()) {
+        Vote vote = iterator.next();
+        ByteString voteAddress = vote.getVoteAddress();
+        WitnessCapsule witness = app.getDbManager().getWitnessStore()
+            .get(voteAddress.toByteArray());
+        Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
+
+        Preconditions.checkArgument(vote.getVoteCount() <= 0,
+            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount()
+                + "] <= 0");
+      }
+    }
+
     @Override
     public void voteWitnessAccount(VoteWitnessContract req,
-        StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getOwnerAddress();
-      if (fromBs != null) {
+        StreamObserver<Transaction> response) {
+
+      try {
+//        checkVoteWitnessAccount(req);//to be complemented later
         Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
+        response.onNext(trx);
+      } catch (Exception ex) {
+        response.onNext(null);
       }
-      responseObserver.onCompleted();
+      response.onCompleted();
     }
 
     @Override
