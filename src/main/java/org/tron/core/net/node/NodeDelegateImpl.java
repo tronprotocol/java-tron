@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -60,7 +62,10 @@ public class NodeDelegateImpl implements NodeDelegate {
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
-    return new LinkedList<>();
+    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
+    return trx.stream()
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(LinkedList::new));
   }
 
 
@@ -91,9 +96,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-    List<BlockId> retBlockIds = new ArrayList<>();
     if (dbManager.getHeadBlockNum() == 0) {
-      return retBlockIds;
+      return new ArrayList<>();
     }
 
     BlockId unForkedBlockId = null;
@@ -105,27 +109,22 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      for (BlockId blockId : blockChainSummary) {
-        if (dbManager.containBlock(blockId)) {
-          unForkedBlockId = blockId;
-          break;
-        }
-      }
+      unForkedBlockId = blockChainSummary.stream()
+              .filter(blockId -> dbManager.containBlock(blockId))
+              .findFirst()
+              .orElseThrow(UnReachBlockException::new);
 
-      if (unForkedBlockId == null) {
-        throw new UnReachBlockException();
-        //todo: can not find any same block form peer's summary and my db.
-      }
+//      if (unForkedBlockId == null) {
+//        throw new UnReachBlockException();
+//        //todo: can not find any same block form peer's summary and my db.
+//      }
     }
 
     //todo: limit the count of block to send peer by one time.
-    for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum(); ++num) {
-      if (num > 0) {
-        retBlockIds.add(dbManager.getBlockIdByNum(num));
-      }
-    }
-    return retBlockIds;
+    return LongStream.rangeClosed(unForkedBlockId.getNum(), dbManager.getHeadBlockNum())
+            .filter(num -> num > 0)
+            .mapToObj(num -> dbManager.getBlockIdByNum(num))
+            .collect(Collectors.toList());
   }
 
   @Override
@@ -145,9 +144,11 @@ public class NodeDelegateImpl implements NodeDelegate {
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        highNoForkBlkNum = dbManager.getBlockNumById(forkList.get(forkList.size() - 1));
-        forkList.remove(forkList.get(forkList.size() - 1));
-        highBlkNum = highNoForkBlkNum + forkList.size();
+        int forkListSize = forkList.size();
+        BlockId blockId = forkList.get(forkListSize - 1);
+        highNoForkBlkNum = dbManager.getBlockNumById(blockId);
+        forkList.remove(blockId);
+        highBlkNum = highNoForkBlkNum + forkListSize;
       }
 
     } else {
