@@ -1,12 +1,11 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.util.Optional;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
-
-import java.util.Optional;
 
 public class DynamicPropertiesStore extends TronDatabase {
 
@@ -23,7 +22,7 @@ public class DynamicPropertiesStore extends TronDatabase {
 
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
-  private DateTime nextMaintenanceTime;
+  private DateTime nextMaintenanceTime = DateTime.now(); // todo for test, DataTime.now() need remove
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
