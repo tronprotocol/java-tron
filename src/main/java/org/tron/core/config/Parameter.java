@@ -9,4 +9,11 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
   }
+
+  interface NodeConstant {
+    long SYNC_FETCH_BATCH_NUM = 1000;
+    long SYNC_CHAIN_LIMIT_NUM = 500;
+  }
+
+
 }
