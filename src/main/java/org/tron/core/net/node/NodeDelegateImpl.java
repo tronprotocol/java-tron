@@ -87,11 +87,11 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
 
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-    List<BlockId> retBlockIds = new ArrayList<>();
+    LinkedList<BlockId> retBlockIds = new LinkedList<>();
     if (dbManager.getHeadBlockNum() == 0) {
       return retBlockIds;
     }

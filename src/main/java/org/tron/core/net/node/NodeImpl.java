@@ -467,12 +467,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
-    List<BlockId> blockIds = new ArrayList<>();
-    List<BlockId> summaryCHhainIds = syncMsg.getBlockIds();
+    LinkedList<BlockId> blockIds;
+    List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     try {
-      blockIds = del.getLostBlockIds(summaryCHhainIds);
+      blockIds = del.getLostBlockIds(summaryChainIds);
     } catch (UnReachBlockException e) {
+      //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
+      return;
     }
 
     if (blockIds.isEmpty()) {
@@ -482,13 +484,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (!peer.isNeedSyncFromPeer()
-        && !summaryCHhainIds.isEmpty()
-        && !del.contain(summaryCHhainIds.get(summaryCHhainIds.size() - 1), MessageTypes.BLOCK)) {
+        && !summaryChainIds.isEmpty()
+        && !del.contain(summaryChainIds.get(summaryChainIds.size() - 1), MessageTypes.BLOCK)) {
       startSyncWithPeer(peer);
     }
-    //long remainNum = del.getHeadBlockId().getNum() - blockIds.
 
-    peer.sendMessage(new ChainInventoryMessage(blockIds, (long) 0));
+    long remainNum =  blockIds.peekLast().getNum() - del.getHeadBlockId().getNum();
+    peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
