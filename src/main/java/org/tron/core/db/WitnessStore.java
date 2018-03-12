@@ -41,7 +41,11 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
 
   @Override
   public WitnessCapsule get(byte[] key) {
-    return null;
+    byte[] value = dbSource.getData(key);
+    if (null == value) {
+      return null;
+    }
+    return new WitnessCapsule(value);
   }
 
   @Override

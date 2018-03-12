@@ -20,6 +20,7 @@ import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
@@ -114,6 +115,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //sync
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
+
+  private Long unSyncNum = 0L;
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -463,12 +466,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
-    List<BlockId> blockIds = new ArrayList<>();
-    List<BlockId> summaryCHhainIds = syncMsg.getBlockIds();
+    LinkedList<BlockId> blockIds;
+    List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     try {
-      blockIds = del.getLostBlockIds(summaryCHhainIds);
+      blockIds = del.getLostBlockIds(summaryChainIds);
     } catch (UnReachBlockException e) {
+      //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
+      return;
     }
 
     if (blockIds.isEmpty()) {
@@ -478,11 +483,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (!peer.isNeedSyncFromPeer()
-        && !summaryCHhainIds.isEmpty()
-        && !del.contain(summaryCHhainIds.get(summaryCHhainIds.size() - 1), MessageTypes.BLOCK)) {
+        && !summaryChainIds.isEmpty()
+        && !del.contain(summaryChainIds.get(summaryChainIds.size() - 1), MessageTypes.BLOCK)) {
       startSyncWithPeer(peer);
     }
-    peer.sendMessage(new ChainInventoryMessage(blockIds));
+
+    long remainNum = blockIds.peekLast().getNum() - del.getHeadBlockId().getNum();
+    peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
@@ -553,8 +560,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
-        if (blockIdWeGet.isEmpty() && peer.getSyncBlockToFetch().isEmpty()) {
+        if (msg.getRemainNum() == 0
+            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del
+            .containBlock(blockIdWeGet.peek())))
+            && peer.getSyncBlockToFetch().isEmpty()
+            && peer.getUnfetchSyncNum() == 0) {
+
           peer.setNeedSyncFromPeer(false);
+          unSyncNum = getUnSyncNum();
+          if (unSyncNum == 0) {
+            del.syncToCli(0);
+          }
           //TODO: check whole sync status and notify del sync status.
           //TODO: if sync finish call del.syncToCli();
           return;
@@ -599,17 +615,35 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //sew it
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
+        peer.setUnfetchSyncNum(msg.getRemainNum());
+
+        long newUnSyncNum = getUnSyncNum();
+        if (unSyncNum != newUnSyncNum) {
+          unSyncNum = newUnSyncNum;
+          del.syncToCli(unSyncNum);
+        }
+
+        if (msg.getRemainNum() == 0) {
+          if (!peer.getSyncBlockToFetch().isEmpty()) {
+            startFetchSyncBlock();
+          } else {
+            //let peer know we are sync.
+            syncNextBatchChainIds(peer);
+          }
+        } else {
+          if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
+            //one batch by one batch.
+            startFetchSyncBlock();
+          } else {
+            syncNextBatchChainIds(peer);
+          }
+        }
 
         //TODO: check head block time is legal here
         //TODO: refresh sync status to cli. call del.syncToCli() here
 
         //TODO: depends on peer's BlockChainToFetch count and remaining block count
         //TODO: to decide to fetch again or sync, now do it together
-
-        startFetchSyncBlock();
-
-        //syncNextBatchChainIds(peer);
-
 
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
@@ -622,6 +656,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void startFetchItem() {
 
+  }
+
+  private long getUnSyncNum() {
+    return getActivePeer().stream()
+        .mapToLong(peer -> peer.getUnfetchSyncNum() + peer.getSyncBlockToFetch().size())
+        .max()
+        .getAsLong();
   }
 
   private synchronized void startFetchSyncBlock() {
@@ -649,14 +690,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         });
 
     send.forEach((peer, blockIds) -> {
-        //TODO: use collector
-        blockIds.forEach(blockId -> {
-          syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
-          peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-        });
-        List<Sha256Hash> ids = new LinkedList<>();
-        ids.addAll(blockIds);
-        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+      //TODO: use collector
+      blockIds.forEach(blockId -> {
+        syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
+      });
+      List<Sha256Hash> ids = new LinkedList<>();
+      ids.addAll(blockIds);
+      peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
     });
 
     send.clear();
@@ -696,7 +737,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void startSyncWithPeer(PeerConnection peer) {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
-    peer.setNumUnfetchBlock(0);
+    peer.setUnfetchSyncNum(0);
     peer.setHeadBlockWeBothHave(del.getGenesisBlock().getBlockId());
     peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimeStamp());
     peer.setBanned(false);
