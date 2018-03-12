@@ -22,7 +22,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -52,7 +54,10 @@ public class AssetIssueActuator extends AbstractActuator {
 
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
     } catch (InvalidProtocolBufferException e) {
+      throw new ContractExeException();
+    } catch (BalanceInsufficientException e) {
       throw new ContractExeException();
     }
 
@@ -90,6 +95,6 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return ChainConstant.ASSET_ISSUE_FEE;
   }
 }
