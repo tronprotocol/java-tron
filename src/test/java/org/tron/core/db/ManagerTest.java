@@ -97,8 +97,7 @@ public class ManagerTest {
 
   @Test
   public void updateWits() {
-    Assert.assertEquals(dbManager.getWitnesses().size(), 4);
-
+    int sizePrv = dbManager.getWitnesses().size();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
       logger.info("witness address is {}",
           ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
@@ -127,6 +126,7 @@ public class ManagerTest {
       logger.info("witness address is {}",
           ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
     });
-    Assert.assertEquals(dbManager.getWitnesses().size(), 6);
+    int sizeTis = dbManager.getWitnesses().size();
+    Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
   }
 }
