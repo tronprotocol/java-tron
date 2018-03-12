@@ -6,6 +6,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountCreateContract;
 
 public class CreateAccountActuator extends AbstractActuator {
@@ -16,24 +18,24 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() {
+  public boolean execute() throws ContractExeException {
     try {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
       dbManager.getAccountStore()
-          .createAccount(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
+          .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("Parse contract error", e);
+      e.printStackTrace();
+      throw new ContractExeException(e.getMessage());
     }
-
     return true;
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ContractValidateException {
     try {
       if (!contract.is(AccountCreateContract.class)) {
-        throw new RuntimeException(
+        throw new ContractValidateException(
             "contract type error,expected type [AccountCreateContract],real type[" + contract
                 .getClass() + "]");
       }
@@ -45,23 +47,22 @@ public class CreateAccountActuator extends AbstractActuator {
       Preconditions.checkNotNull(contract.getType(), "Type is null");
 
       if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
-        throw new RuntimeException("Account has existed");
+        throw new ContractValidateException("Account has existed");
       }
-
     } catch (Exception ex) {
-      throw new RuntimeException("Validate AccountCreateContract error.", ex);
+      ex.printStackTrace();
+      throw new ContractValidateException(ex.getMessage());
     }
-
     return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    try {
-      return contract.unpack(AccountCreateContract.class).getOwnerAddress();
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(AccountCreateContract.class).getOwnerAddress();
+  }
+
+  @Override
+  public long calcFee() {
+    return 0;
   }
 }

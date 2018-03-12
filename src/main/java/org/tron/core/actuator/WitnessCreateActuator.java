@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 
 public class WitnessCreateActuator extends AbstractActuator {
@@ -15,56 +17,63 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
 
-  WitnessCreateActuator(Any contract, Manager dbManager) {
+  WitnessCreateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
 
 
   @Override
-  public boolean execute() {
+  public boolean execute() throws ContractExeException {
     try {
-      WitnessCreateContract witnessCreateContract = contract.unpack(WitnessCreateContract.class);
-      createWitness(witnessCreateContract);
-    } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("Parse contract error", e);
+      final WitnessCreateContract witnessCreateContract = this.contract
+          .unpack(WitnessCreateContract.class);
+      this.createWitness(witnessCreateContract);
+    } catch (final InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractExeException(e.getMessage());
     }
     return true;
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ContractValidateException {
     try {
-      if (!contract.is(WitnessCreateContract.class)) {
-        throw new RuntimeException(
-            "contract type error,expected type [AccountCreateContract],real type[" + contract
+      if (!this.contract.is(WitnessCreateContract.class)) {
+        throw new ContractValidateException(
+            "contract type error,expected type [AccountCreateContract],real type[" + this.contract
                 .getClass() + "]");
       }
 
-      WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
+      final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
-      if (dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
-        throw new RuntimeException("Witness has existed");
+      if (this.dbManager.getWitnessStore().getWitness(contract.getOwnerAddress()) != null) {
+        throw new ContractValidateException("Witness has existed");
       }
-
-    } catch (Exception ex) {
-      throw new RuntimeException("Validate WitnessCreateContract error.", ex);
+    } catch (final Exception ex) {
+      ex.printStackTrace();
+      throw new ContractValidateException(ex.getMessage());
     }
     return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(WitnessCreateContract.class).getOwnerAddress();
   }
 
-  private void createWitness(WitnessCreateContract witnessCreateContract) {
-    //Create Witness by witnessCreateContract
-    WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0);
+  @Override
+  public long calcFee() {
+    return 0;
+  }
 
-    dbManager.getWitnessStore().putWitness(witnessCapsule);
+  private void createWitness(final WitnessCreateContract witnessCreateContract) {
+    //Create Witness by witnessCreateContract
+    final WitnessCapsule witnessCapsule = new WitnessCapsule(
+        witnessCreateContract.getOwnerAddress(), 0, "");
+
+    this.dbManager.getWitnessStore().putWitness(witnessCapsule);
   }
 
 }

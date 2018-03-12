@@ -2,7 +2,7 @@ package org.tron.core.net.message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {
 
@@ -12,7 +12,8 @@ public abstract class Message {
   protected byte[] data;
   protected byte type;
 
-  public Message() {}
+  public Message() {
+  }
 
   public Message(byte[] packed) {
     this.data = packed;

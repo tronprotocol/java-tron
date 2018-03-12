@@ -117,7 +117,11 @@ public class Wallet {
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    return accountStore.get(account.getAddress().toByteArray()).getInstance();
+    AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+    return accountCapsule.getInstance();
   }
 
 

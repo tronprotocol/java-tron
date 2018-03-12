@@ -1,6 +1,8 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -8,13 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ValidateSignatureException;
 
 
 public class ManagerTest {
@@ -22,15 +23,15 @@ public class ManagerTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
-  //private static KhaosDatabase khaosDatabase;
+  private static String dbPath = "output_manager";
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", "output_manager"},
+    Args.setParam(new String[]{"-d", dbPath},
         Configuration.getByPath(Constant.TEST_CONF));
 
     dbManager.init();
-    blockCapsule2 = new BlockCapsule(0, ByteString.copyFrom(ByteArray
+    blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
         0,
         ByteString.copyFrom(
@@ -38,8 +39,25 @@ public class ManagerTest {
                 .getAddress()));
     blockCapsule2.setMerklerRoot();
     blockCapsule2.sign(Args.getInstance().getPrivateKey().getBytes());
-    //khaosDatabase = dbManager.getKhaosDb();
-    //khaosDatabase.push(blockCapsule2);
+  }
+
+  @AfterClass
+  public static void removeDb() {
+    File dbFolder = new File(dbPath);
+    deleteFolder(dbFolder);
+  }
+
+  private static void deleteFolder(File index) {
+    if (!index.isDirectory() || index.listFiles().length <= 0) {
+      index.delete();
+      return;
+    }
+    for (File file : index.listFiles()) {
+      if (null != file) {
+        deleteFolder(file);
+      }
+    }
+    index.delete();
   }
 
   @Test
@@ -47,22 +65,21 @@ public class ManagerTest {
     try {
       dbManager.pushBlock(blockCapsule2);
     } catch (Exception e) {
-      Assert.assertNotNull(e);
-      Assert.assertTrue(e instanceof ValidateSignatureException);
+      Assert.assertTrue("pushBlock is error", false);
     }
-    Assert.assertTrue(dbManager.containBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4"))));
-    Assert.assertEquals("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4",
+
+    Assert.assertTrue("containBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
+        .fromHexString(blockCapsule2.getBlockId().toString()))));
+    Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
         dbManager.getBlockIdByNum(1).toString());
-    //Assert.assertEquals("[c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4]",
-    //dbManager.getBlockChainHashesOnFork(khaosDatabase.getHead().getBlockId()).toString());
-    Assert.assertTrue(dbManager.hasBlocks());
+    Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
 
     dbManager.deleteBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4")));
-    Assert.assertFalse(dbManager.containBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString("c37fea1dec8048180911c6cf075348f93a524336c47e97317eb59b91bd485ca4"))));
-  }
+        .fromHexString(blockCapsule2.getBlockId().toString())));
+
+    Assert.assertFalse("deleteBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
+        .fromHexString(blockCapsule2.getBlockId().toString()))));
+}
 
   @Test
   public void testPushTransactions() {
@@ -71,9 +88,9 @@ public class ManagerTest {
     try {
       dbManager.pushTransactions(transactionCapsule);
     } catch (Exception e) {
-      e.printStackTrace();
+      Assert.assertTrue("pushTransaction is error", false);
     }
-    Assert
-        .assertEquals(123, transactionCapsule.getInstance().getRawData().getVout(0).getValue());
+    Assert.assertEquals("pushTransaction is error", 123,
+        transactionCapsule.getInstance().getRawData().getVout(0).getValue());
   }
 }

@@ -15,11 +15,14 @@
 
 package org.tron.core.capsule;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
@@ -60,6 +63,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
    */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
+        .setAccountName(contract.getAccountName())
         .setType(contract.getType())
         .setAddress(contract.getOwnerAddress())
         .setTypeValue(contract.getTypeValue())
@@ -122,12 +126,59 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .build();
   }
 
+  /**
+   * get votes.
+   */
   public List<Vote> getVotesList() {
-    return this.account.getVotesList();
+    if (this.account.getVotesList() != null) {
+      return this.account.getVotesList();
+    } else {
+      return Lists.newArrayList();
+    }
   }
 
   public long getShare() {
     return this.account.getBalance();
   }
 
+  public Map<String, Long> getAsset() {
+    return this.account.getAssetMap();
+  }
+
+  /**
+   * reduce asset amount.
+   */
+  public boolean reduceAssetAmount(ByteString name, long amount) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+
+    String nameKey = ByteArray.toHexString(name.toByteArray());
+
+    Long currentAmount = assetMap.get(nameKey);
+
+    if (amount > 0 && amount <= currentAmount) {
+      this.account = this.account.toBuilder().putAsset(nameKey, currentAmount - amount).build();
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * add asset amount.
+   */
+  public boolean addAssetAmount(ByteString name, long amount) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+
+    String nameKey = ByteArray.toHexString(name.toByteArray());
+
+    Long currentAmount = assetMap.get(nameKey);
+
+    if (currentAmount == null) {
+      currentAmount = 0L;
+    }
+
+    this.account = this.account.toBuilder().putAsset(nameKey, currentAmount + amount).build();
+
+    return true;
+  }
 }
