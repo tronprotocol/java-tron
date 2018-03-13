@@ -241,6 +241,9 @@ public class Manager {
     });
   }
 
+  /**
+   * save witnesses into database.
+   */
   private void initWitness() {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
@@ -573,14 +576,21 @@ public class Manager {
     }
   }
 
+  /**
+   * Determine if the current time is maintenance time
+   */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
   }
 
+  //// To be added
   private void updateDynamicProperties(final BlockCapsule block) {
 
   }
 
+  /**
+   * Perform maintenance
+   */
   private void processMaintenance(BlockCapsule block) {
     this.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
@@ -658,6 +668,7 @@ public class Manager {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
+  // To be added
   private long getSkipSlotInMaintenance() {
     return 0;
   }
@@ -721,7 +732,7 @@ public class Manager {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
           witnessCapsuleList.add(witnessCapsule);
-          this.witnessStore.put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+          this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
           logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
               witnessCapsule.getVoteCount());
         }

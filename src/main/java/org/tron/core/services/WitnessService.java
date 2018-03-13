@@ -51,6 +51,9 @@ public class WitnessService implements Service {
     generateThread = new Thread(scheduleProductionLoop);
   }
 
+  /**
+   * Cycle thread to generate blocks
+   */
   private Runnable scheduleProductionLoop =
       () -> {
         if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
@@ -79,6 +82,9 @@ public class WitnessService implements Service {
         }
       };
 
+  /**
+   * Loop to generate blocks
+   */
   private void blockProductionLoop() {
     BlockProductionCondition result = this.tryProduceBlock();
 
@@ -121,6 +127,9 @@ public class WitnessService implements Service {
   }
 
 
+  /**
+   * Generate and broadcast blocks
+   */
   private BlockProductionCondition tryProduceBlock() {
 
     if (this.needSyncCheck) {
@@ -196,7 +205,9 @@ public class WitnessService implements Service {
   }
 
 
-  // shuffle witnesses
+  /**
+   * shuffle witnesses after each cycle is completed
+   */
   private void updateWitnessSchedule() {
 
     long headBlockNum = db.getBlockStore().getHeadBlockNum();
@@ -215,7 +226,9 @@ public class WitnessService implements Service {
         .collect(Collectors.toList());
   }
 
-  // shuffle todo
+  /**
+   * Initialize the local witnesses
+   */
   @Override
   public void init() {
     Args.getInstance().getLocalWitnesses().getPrivateKeys().forEach(key -> {
