@@ -143,7 +143,7 @@ public class Account {
       throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }
 
-    switch (this.accountType.toUpperCase()) {
+    switch (accountType.toUpperCase()) {
       case ACCOUNT_TYPE_NORMAL:
         return AccountType.Normal;
       case ACCOUNT_TYPE_ASSETISSUE:

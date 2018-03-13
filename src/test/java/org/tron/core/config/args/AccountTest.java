@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocol.AccountType;
 
 public class AccountTest {
 
@@ -122,6 +123,12 @@ public class AccountTest {
     Assert.assertEquals("4948c2e8a756d9437037dcd8c7e0c73d560ca38d", account.getAddress());
   }
 
+  @Test
+  public void getAccountAddressBytes() {
+    byte[] bytes = ByteArray.fromHexString("4948c2e8a756d9437037dcd8c7e0c73d560ca38d");
+    Assert.assertArrayEquals(bytes, account.getAddressBytes());
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void whenSetNullAccountBalanceShouldThrowIllegalArgumentException() {
     account.setBalance(null);
@@ -162,5 +169,38 @@ public class AccountTest {
   @Test
   public void getAccountBalance() {
     Assert.assertEquals(10000, account.getBalance());
+  }
+
+  @Test
+  public void testIsAccountType() {
+    Assert.assertFalse(account.isAccountType(null));
+    Assert.assertFalse(account.isAccountType(""));
+    Assert.assertFalse(account.isAccountType("abc"));
+    Assert.assertTrue(account.isAccountType("Normal"));
+    Assert.assertTrue(account.isAccountType("normal"));
+    Assert.assertTrue(account.isAccountType("AssetIssue"));
+    Assert.assertTrue(account.isAccountType("assetissue"));
+    Assert.assertTrue(account.isAccountType("Contract"));
+    Assert.assertTrue(account.isAccountType("contract"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void whenGetNullAccountTypeByStringShouldThrowIllegalArgumentException() {
+    Assert.assertEquals(AccountType.Normal, account.getAccountTypeByString(null));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void whenGetEmptyAccountTypeByStringShouldThrowIllegalArgumentException() {
+    Assert.assertEquals(AccountType.Normal, account.getAccountTypeByString(""));
+  }
+
+  @Test
+  public void testGetAccountTypeByStringRight() {
+    Assert.assertEquals(AccountType.Normal, account.getAccountTypeByString("Normal"));
+    Assert.assertEquals(AccountType.Normal, account.getAccountTypeByString("normal"));
+    Assert.assertEquals(AccountType.AssetIssue, account.getAccountTypeByString("AssetIssue"));
+    Assert.assertEquals(AccountType.AssetIssue, account.getAccountTypeByString("assetissue"));
+    Assert.assertEquals(AccountType.Contract, account.getAccountTypeByString("Contract"));
+    Assert.assertEquals(AccountType.Contract, account.getAccountTypeByString("contract"));
   }
 }
