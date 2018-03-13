@@ -98,76 +98,76 @@ public class AccountTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetNullAccountAddressShouldThrowIllegalArgumentException() {
+  public void whenSetNullAddressShouldThrowIllegalArgumentException() {
     account.setAddress(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetEmptyAccountAddressShouldThrowIllegalArgumentException() {
+  public void whenSetEmptyAddressShouldThrowIllegalArgumentException() {
     account.setAddress("");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetBadFormatAccountAddressShouldThrowIllegalArgumentException() {
+  public void whenSetBadFormatAddressShouldThrowIllegalArgumentException() {
     account.setAddress("0123131");
   }
 
   @Test
-  public void setAccountBalanceRight() {
-    account.setAddress("92814a458256d9437037dcd8c7e0c7948327154d");
-    Assert.assertEquals("92814a458256d9437037dcd8c7e0c7948327154d", account.getAddress());
-  }
-
-  @Test
-  public void getAccountAddress() {
+  public void getAddress() {
     Assert.assertEquals("4948c2e8a756d9437037dcd8c7e0c73d560ca38d", account.getAddress());
   }
 
   @Test
-  public void getAccountAddressBytes() {
+  public void getAddressBytes() {
     byte[] bytes = ByteArray.fromHexString("4948c2e8a756d9437037dcd8c7e0c73d560ca38d");
     Assert.assertArrayEquals(bytes, account.getAddressBytes());
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetNullAccountBalanceShouldThrowIllegalArgumentException() {
+  public void whenSetNullBalanceShouldThrowIllegalArgumentException() {
     account.setBalance(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetEmptyAccountBalanceShouldThrowIllegalArgumentException() {
+  public void whenSetEmptyBalanceShouldThrowIllegalArgumentException() {
     account.setBalance("");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetNonDigitalAccountBalanceShouldThrowIllegalArgumentException() {
+  public void whenSetNonDigitalBalanceShouldThrowIllegalArgumentException() {
     account.setBalance("12a");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetExceedTheMaxAccountBalanceShouldThrowIllegalArgumentException() {
+  public void whenSetExceedTheMaxBalanceShouldThrowIllegalArgumentException() {
     account.setBalance("9223372036854775808");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void whenSetExceedTheMinAccountBalanceShouldThrowIllegalArgumentException() {
+  public void whenSetExceedTheMinBalanceShouldThrowIllegalArgumentException() {
     account.setBalance("-9223372036854775809");
   }
 
   @Test
-  public void setMaxAccountBalance() {
+  public void setMaxBalanceRight() {
     account.setBalance("9223372036854775807");
     Assert.assertEquals(Long.MAX_VALUE, account.getBalance());
   }
 
   @Test
-  public void setMinAccountBalance() {
+  public void setMinBalanceRight() {
     account.setBalance("-9223372036854775808");
     Assert.assertEquals(Long.MIN_VALUE, account.getBalance());
   }
 
   @Test
-  public void getAccountBalance() {
+  public void setBalanceRight() {
+    account.setAddress("92814a458256d9437037dcd8c7e0c7948327154d");
+    Assert.assertEquals("92814a458256d9437037dcd8c7e0c7948327154d", account.getAddress());
+  }
+
+  @Test
+  public void getBalance() {
     Assert.assertEquals(10000, account.getBalance());
   }
 
