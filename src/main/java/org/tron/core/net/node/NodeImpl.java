@@ -25,6 +25,8 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
+import org.tron.core.exception.TronException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
@@ -102,11 +104,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   //broadcast
-  private HashMap<Sha256Hash, InventoryType> advObjToSpread = new HashMap<>();
+  private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  private HashMap<Sha256Hash, InventoryType> advObjToFetch = new HashMap<>();
+  private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
 
   private Thread advertiseLoopThread;
 
@@ -381,12 +383,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.getSyncBlockToFetch().remove(blkMsg.getBlockId());
       syncBlockIdWeRequested.remove(blkMsg.getBlockId());
       processSyncBlock(blkMsg.getBlockCapsule());
-      if (peer.isNeedSyncFromPeer()
-          && !peer.isBusy()) {
-        syncNextBatchChainIds(peer);
+      if (!peer.isBusy()) {
+        if (peer.getUnfetchSyncNum() > 0
+            && peer.getSyncBlockToFetch().size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
+          syncNextBatchChainIds(peer);
+        } else {
+          //TODO: here should be a loop do this thing
+          //startFetchSyncBlock();
+        }
       }
-      //TODO: here should be a loop do this thing
-      //startFetchSyncBlock();
+
     }
   }
 
@@ -407,12 +413,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             });
 
         getActivePeer().forEach(p -> p.cleanInvGarbage());
+        //rebroadcast
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
-      }  //TODO:unlinked block and call startSyncWithPeer(peer);
-
+      } catch (UnLinkedBlockException e) {
+        //reSync
+        startSyncWithPeer(peer);
+      }
     }
   }
 
@@ -436,6 +445,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       freshBlockId.offer(block.getBlockId());
     } catch (BadBlockException e) {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+    } catch (TronException e) {
+      //should not go here.
+      logger.error(e.getMessage());
+      return;
     }
 
     Deque<PeerConnection> needSync = new LinkedList<>();
@@ -497,7 +510,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && summaryChainIds.contains(blockIds.peekFirst())) {
-      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
     }

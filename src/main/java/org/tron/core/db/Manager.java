@@ -38,6 +38,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -184,6 +185,9 @@ public class Manager {
     } catch (ValidateSignatureException e) {
       logger.error(e.getMessage());
       System.exit(-1);
+    } catch (UnLinkedBlockException e) {
+      logger.error(e.getMessage());
+      System.exit(-1);
     }
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
   }
@@ -200,7 +204,7 @@ public class Manager {
    * init genesis block.
    */
   public void initGenesis()
-      throws ContractValidateException, ContractExeException, ValidateSignatureException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException, UnLinkedBlockException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -336,8 +340,7 @@ public class Manager {
    * save a block.
    */
   public void pushBlock(final BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
-
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
     boolean useKhaoDB = false;
     BlockCapsule newBlock = this.khaosDb.push(block);
     //todo: check block's validity
@@ -534,7 +537,7 @@ public class Manager {
    */
   public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

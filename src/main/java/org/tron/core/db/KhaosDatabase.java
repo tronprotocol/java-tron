@@ -10,6 +10,7 @@ import javafx.util.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.UnLinkedBlockException;
 
 public class KhaosDatabase extends TronDatabase {
 
@@ -168,16 +169,15 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Push the block in the KhoasDB.
    */
-  public BlockCapsule push(BlockCapsule blk) {
+  public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
         block.parent = kblock;
       } else {
-        //unlinked
         miniUnlinkedStore.insert(block);
-        return head.blk;
+        throw new UnLinkedBlockException();
       }
     }
 

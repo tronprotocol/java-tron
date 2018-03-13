@@ -20,6 +20,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
@@ -185,6 +186,9 @@ public class WitnessService implements Service {
     } catch (ContractExeException e) {
       logger.error(e.getMessage());
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    } catch (UnLinkedBlockException e) {
+      logger.error(e.getMessage());
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
     return BlockProductionCondition.PRODUCED;
 
@@ -205,7 +209,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(DateTime when)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
     return tronApp.getDbManager().generateBlock(localWitnessState, when.getMillis(), privateKey);
   }
 
