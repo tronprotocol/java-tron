@@ -27,6 +27,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
@@ -245,16 +246,16 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getWitnesses().forEach(key -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,
-          AccountType.AssetIssue,
-          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
-          Long.valueOf(0));
+      byte[] keyAddress = ByteArray.fromHexString(key.getAddress());
+      ByteString address = ByteString.copyFrom(keyAddress);
+
+      final AccountCapsule accountCapsule = new AccountCapsule(
+              ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
-          key.getVoteCount(), key.getUrl());
+              address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
-      this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
-      this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
+      this.accountStore.put(keyAddress, accountCapsule);
+      this.witnessStore.put(keyAddress, witnessCapsule);
       this.wits.add(witnessCapsule);
     });
   }
@@ -298,6 +299,7 @@ public class Manager {
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
       processTransaction(trx);
       pendingTrxs.add(trx);
+
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
@@ -332,6 +334,7 @@ public class Manager {
     if (block.getNum() != 0) {
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         this.processBlock(block);
+
         tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
@@ -413,16 +416,19 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
+    TransactionResultCapsule transRet;
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
 
     for (Actuator act : actuatorList) {
-      act.validate();
-      act.execute();
-    }
 
+      act.validate();
+      act.execute(ret);
+      trxCap.setResult(ret);
+    }
     return true;
   }
 
