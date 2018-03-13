@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +55,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public TransactionCapsule(Transaction trx) {
     this.transaction = trx;
+  }
+
+  /**
+   * get account from bytes data.
+   */
+  public TransactionCapsule(byte[] data) {
+    try {
+      this.transaction = Transaction.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
   }
 
   public TransactionCapsule(String key, long value) {
