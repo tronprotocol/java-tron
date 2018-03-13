@@ -474,8 +474,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("on handle sync block chain message");
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
+    long remainNum = 0;
     try {
       blockIds = del.getLostBlockIds(summaryChainIds);
+      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
@@ -488,7 +490,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         && !summaryChainIds.isEmpty()
         && summaryChainIds.contains(blockIds.peekFirst())) {
       peer.setNeedSyncFromPeer(false);
-    } else { //TODO: here must check when blockIds.size == 1, it is maybe is in sync status
+    } else {
       peer.setNeedSyncFromUs(true);
     }
 
@@ -498,7 +500,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       startSyncWithPeer(peer);
     }
 
-    long remainNum = blockIds.peekLast().getNum() - del.getHeadBlockId().getNum();
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
@@ -571,11 +572,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
         if (msg.getRemainNum() == 0
-            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del
-            .containBlock(blockIdWeGet.peek())))
+            && (blockIdWeGet.isEmpty()
+              || (blockIdWeGet.size() == 1
+                && del.containBlock(blockIdWeGet.peek())))
             && peer.getSyncBlockToFetch().isEmpty()
             && peer.getUnfetchSyncNum() == 0) {
-
           peer.setNeedSyncFromPeer(false);
           unSyncNum = getUnSyncNum();
           if (unSyncNum == 0) {
