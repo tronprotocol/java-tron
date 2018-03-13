@@ -125,7 +125,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Thread handleSyncBlockLoop;
 
-  private Set<BlockMessage>
+  private Set<BlockMessage> blockWaitToProc = new HashSet<>();
+
+  private Set<BlockMessage> blockWaitToProcBak = new HashSet<>();
+
+  private Set<BlockMessage> blockInProc = new HashSet<>();
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -215,6 +219,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     isFetchActive = true;
     advertiseLoopThread.join();
     advObjFetchLoopThread.join();
+    handleSyncBlockLoop.join();
   }
 
   @Override
@@ -328,18 +333,48 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     });
 
     handleSyncBlockLoop = new Thread(() -> {
-      while (){
 
-      }
 
       while (isHandleSyncBlockActive) {
+        try {
+          Thread.sleep(1000);
+          continue;
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
 
+        boolean isFound = false;
+
+        do {
+          blockWaitToProc.addAll(blockWaitToProcBak);
+          //need lock here
+          synchronized (blockWaitToProcBak) {blockWaitToProcBak.clear();}
+          blockWaitToProc.stream()
+              .filter(msg ->
+                getActivePeer().stream()
+                    .filter(peer ->
+                        !peer.getSyncBlockToFetch().isEmpty()
+                            && peer.getSyncBlockToFetch().peek().equals(msg.getMessageId()))
+                    .peek(peer -> {
+                      peer.getSyncBlockToFetch().pop();
+                      peer.getBlockInProc().add(msg.getBlockId());
+                    })
+                    .count() > 0)
+              .forEach(msg -> {
+                processSyncBlock(msg.getBlockCapsule());
+              });
+
+
+
+        } while (isFound);
       }
 
     });
 
+    //TODO: wait to refactor these thread.
     advertiseLoopThread.start();
     advObjFetchLoopThread.start();
+    handleSyncBlockLoop.start();
   }
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
@@ -402,7 +437,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.getSyncBlockRequested().remove(blkMsg.getBlockId());
       peer.getSyncBlockToFetch().remove(blkMsg.getBlockId());
       syncBlockIdWeRequested.remove(blkMsg.getBlockId());
-      processSyncBlock(blkMsg.getBlockCapsule());
+      //TODO: maybe use consume pipe here better
+      blockWaitToProcBak.add(blkMsg);
+      //processSyncBlock(blkMsg.getBlockCapsule());
       if (!peer.isBusy()) {
         if (peer.getUnfetchSyncNum() > 0
             && peer.getSyncBlockToFetch().size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
@@ -483,6 +520,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             needSync.offer(peer);
           } else {
             //TODO: erase process here
+            peer.getBlockInProc().remove(block.getBlockId());
+            //updateBlockWeBothHave(peer, block.getBlockId());
             peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
             peer.setHeadBlockWeBothHave(block.getBlockId());
             if (peer.getSyncBlockToFetch().isEmpty()
