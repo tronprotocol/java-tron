@@ -80,7 +80,12 @@ public class Args {
 
     if (config.hasPath("localwitness")) {
       INSTANCE.localWitness = new LocalWitnesses();
-      INSTANCE.localWitness.setPrivateKeys(config.getStringList("localwitness"));
+      List<String> localwitness = config.getStringList("localwitness");
+      if (localwitness.size() > 1) {
+        logger.warn("localwitness size must be one,get the first one");
+        localwitness = localwitness.subList(0, 1);
+      }
+      INSTANCE.localWitness.setPrivateKeys(localwitness);
     }
 
     if (config.hasPath("genesis.block")) {
