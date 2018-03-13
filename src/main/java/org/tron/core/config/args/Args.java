@@ -59,6 +59,16 @@ public class Args {
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.toUpperCase().startsWith("0X")) {
+        INSTANCE.privateKey = INSTANCE.privateKey.substring(2);
+      }
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
+          && INSTANCE.privateKey.length() != 64) {
+        throw new IllegalArgumentException(
+            "Private key(" + INSTANCE.privateKey + ") must be 66-bits hex string.");
+      }
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 

@@ -47,7 +47,7 @@ public class BlockUtil {
     BlockCapsule blockCapsule = new BlockCapsule(timestamp, parentHash, number, transactionList);
 
     blockCapsule.setMerklerRoot();
-    blockCapsule.sign(Args.getInstance().getPrivateKey().getBytes());
+    blockCapsule.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
     blockCapsule.generatedByMyself = true;
 
     return blockCapsule;

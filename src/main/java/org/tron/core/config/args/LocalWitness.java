@@ -35,7 +35,8 @@ public class LocalWitness {
 
     if (this.privateKey != null && this.privateKey.length() != 0
         && this.privateKey.length() != 66) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException(
+          "Private key(" + this.privateKey + ") must be 66-bits hex string.");
     }
   }
 }
