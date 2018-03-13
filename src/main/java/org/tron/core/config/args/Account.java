@@ -23,6 +23,10 @@ import org.tron.protos.Protocol.AccountType;
 
 public class Account {
 
+  private static final String ACCOUNT_TYPE_NORMAL = "NORMAL";
+  private static final String ACCOUNT_TYPE_ASSETISSUE = "ASSETISSUE";
+  private static final String ACCOUNT_TYPE_CONTRACT = "CONTRACT";
+
   private String accountName;
 
   private String accountType;
@@ -43,6 +47,10 @@ public class Account {
    * Account address is a 40-bits hex string.
    */
   public void setAddress(String address) {
+    if (null == address) {
+      throw new IllegalArgumentException(
+          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+    }
 
     if (StringUtil.isHexString(address, 40)) {
       this.address = address;
@@ -95,34 +103,53 @@ public class Account {
    * switch account type.
    */
   public AccountType getAccountType() {
-    AccountType accountType;
-    switch (this.accountType) {
-      case "Normal":
-        accountType = AccountType.Normal;
-        break;
-      case "AssetIssue":
-        accountType = AccountType.AssetIssue;
-        break;
-      case "Contract":
-        accountType = AccountType.Contract;
-        break;
-      default:
-        throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
-    }
-
-    return accountType;
+    return getAccountTypeByString(this.accountType);
   }
 
   /**
    * Account type: Normal/AssetIssue/Contract.
    */
   public void setAccountType(String accountType) {
-    switch (accountType) {
-      case "Normal":
-      case "AssetIssue":
-      case "Contract":
-        this.accountType = accountType;
-        break;
+    if (!this.isAccountType(accountType)) {
+      throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+    }
+
+    this.accountType = accountType;
+  }
+
+  /**
+   * judge account type.
+   */
+  public boolean isAccountType(String accountType) {
+    if (accountType == null) {
+      return false;
+    }
+
+    switch (accountType.toUpperCase()) {
+      case ACCOUNT_TYPE_NORMAL:
+      case ACCOUNT_TYPE_ASSETISSUE:
+      case ACCOUNT_TYPE_CONTRACT:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Normal/AssetIssue/Contract.
+   */
+  public AccountType getAccountTypeByString(String accountType) {
+    if (accountType == null) {
+      throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+    }
+
+    switch (this.accountType.toUpperCase()) {
+      case ACCOUNT_TYPE_NORMAL:
+        return AccountType.Normal;
+      case ACCOUNT_TYPE_ASSETISSUE:
+        return AccountType.AssetIssue;
+      case ACCOUNT_TYPE_CONTRACT:
+        return AccountType.Contract;
       default:
         throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }
