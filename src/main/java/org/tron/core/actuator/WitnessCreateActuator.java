@@ -6,11 +6,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class WitnessCreateActuator extends AbstractActuator {
 
@@ -23,13 +25,16 @@ public class WitnessCreateActuator extends AbstractActuator {
 
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    long fee = calcFee();
     try {
       final WitnessCreateContract witnessCreateContract = this.contract
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
+      ret.setStatus(fee, code.SUCESS);
     } catch (final InvalidProtocolBufferException e) {
       e.printStackTrace();
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
     return true;

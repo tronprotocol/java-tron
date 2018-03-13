@@ -179,6 +179,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
+  public void setResult(TransactionResultCapsule transactionResultCapsule) {
+    //this.getInstance().toBuilder(). (transactionResultCapsule.getInstance());
+  }
+
   public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
