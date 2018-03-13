@@ -84,10 +84,8 @@ public class Args {
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
-      INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+      INSTANCE.genesisBlock.setTimestamp(config.getString("genesis.block.timestamp"));
       INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-      INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-      INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));

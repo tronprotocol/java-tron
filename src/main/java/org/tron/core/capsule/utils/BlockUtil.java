@@ -39,7 +39,7 @@ public class BlockUtil {
             .add(TransactionUtil
                 .newGenesisTransaction(key.getAddress(), key.getBalance())));
 
-    long timestamp = Long.parseLong(genesisBlockArg.getTimeStamp());
+    long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());
     ByteString parentHash = ByteString
         .copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash()));
     long number = Long.parseLong(genesisBlockArg.getNumber());
