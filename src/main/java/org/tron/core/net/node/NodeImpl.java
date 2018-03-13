@@ -289,16 +289,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           InvToSend sendPackage = new InvToSend();
           advObjToFetch.entrySet()
               .forEach(idToFetch -> {
-                for (PeerConnection peer :
-                    getActivePeer()) {
-                  //TODO: don't fetch too much obj from only one peer
-                  if (peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
-                    sendPackage.add(idToFetch, peer);
-                    advObjToFetch.remove(idToFetch.getKey());
-                    peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
-                    break;
-                  }
-                }
+                getActivePeer().stream().filter(peer -> !peer.isBusy()
+                    && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
+                    .findFirst()
+                    .ifPresent(peer -> {
+                      //TODO: don't fetch too much obj from only one peer
+                      sendPackage.add(idToFetch, peer);
+                      advObjToFetch.remove(idToFetch.getKey());
+                      peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
+                    });
+//                for (PeerConnection peer :
+//                    getActivePeer()) {
+//                  //TODO: don't fetch too much obj from only one peer
+//                  if (!peer.isBusy()
+//                      && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
+//                    sendPackage.add(idToFetch, peer);
+//                    advObjToFetch.remove(idToFetch.getKey());
+//                    peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
+//                    break;
+//                  }
+//                }
               });
           sendPackage.sendFetch();
         }
@@ -370,7 +380,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.getSyncBlockToFetch().remove(blkMsg.getBlockId());
       syncBlockIdWeRequested.remove(blkMsg.getBlockId());
       processSyncBlock(blkMsg.getBlockCapsule());
-      if (peer.isNeedSyncFromPeer()) {
+      if (peer.isNeedSyncFromPeer()
+          && !peer.isBusy()) {
         syncNextBatchChainIds(peer);
       }
       //TODO: here should be a loop do this thing
@@ -649,9 +660,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //TODO: check head block time is legal here
         //TODO: refresh sync status to cli. call del.syncToCli() here
 
-        //TODO: depends on peer's BlockChainToFetch count and remaining block count
-        //TODO: to decide to fetch again or sync, now do it together
-
       } else {
         throw new TraitorPeerException("We don't send sync request to " + peer);
       }
@@ -678,7 +686,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashSet<BlockId> request = new HashSet<>();
 
     getActivePeer().stream()
-        .filter(peer -> peer.isNeedSyncFromPeer())
+        .filter(peer -> peer.isNeedSyncFromPeer() && !peer.isBusy())
         .forEach(peer -> {
           if (!send.containsKey(peer)) { //TODO: Attention multi thread here
             send.put(peer, new LinkedList<>());
