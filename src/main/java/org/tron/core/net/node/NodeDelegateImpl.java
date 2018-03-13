@@ -5,7 +5,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -96,11 +95,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-
     LinkedList<BlockId> retBlockIds = new LinkedList<>();
-
     if (dbManager.getHeadBlockNum() == 0) {
-      return new LinkedList<>();
+      return retBlockIds;
     }
 
     BlockId unForkedBlockId = null;
@@ -112,19 +109,20 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      unForkedBlockId = blockChainSummary.stream()
-              .filter(blockId -> dbManager.containBlock(blockId))
-              .findFirst()
-              .orElseThrow(UnReachBlockException::new);
+      for (BlockId blockId : blockChainSummary) {
+        if (dbManager.containBlock(blockId)) {
+          unForkedBlockId = blockId;
+          break;
+        }
+      }
 
-//      if (unForkedBlockId == null) {
-//        throw new UnReachBlockException();
-//        //todo: can not find any same block form peer's summary and my db.
-//      }
+      if (unForkedBlockId == null) {
+        throw new UnReachBlockException();
+        //todo: can not find any same block form peer's summary and my db.
+      }
     }
 
     //todo: limit the count of block to send peer by one time.
-
     for (long num = unForkedBlockId.getNum();
         num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
       if (num > 0) {
@@ -132,7 +130,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
     }
     return retBlockIds;
-
   }
 
   @Override
