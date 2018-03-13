@@ -17,6 +17,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ValidateSignatureException;
 
 
 public class ManagerTest {
@@ -128,5 +131,95 @@ public class ManagerTest {
     });
     int sizeTis = dbManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
+  }
+
+  @Test
+  public void testGetBlockChainHashesOnFork() {
+    byte[] prikey = new byte[]{1, 2, 3, 4, 5};
+    ECKey ecKey = ECKey.fromPrivate(prikey);
+    byte[] address = ecKey.getAddress();
+
+    BlockCapsule blockCapsule = new BlockCapsule(1, ByteString
+        .copyFrom(dbManager.getGenesisBlockId().getBytes()), 0,
+        ByteString.copyFrom(address));
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(prikey);
+    BlockCapsule blockCapsule2 = new BlockCapsule(2, ByteString
+        .copyFrom(blockCapsule.getBlockId().getBytes()), 1,
+        ByteString.copyFrom(address));
+    blockCapsule2.setMerkleRoot();
+    blockCapsule2.sign(prikey);
+    BlockCapsule blockCapsule3 = new BlockCapsule(3, ByteString
+        .copyFrom(blockCapsule2.getBlockId().getBytes()), 2,
+        ByteString.copyFrom(address));
+    blockCapsule3.setMerkleRoot();
+    blockCapsule3.sign(prikey);
+    BlockCapsule blockCapsule4 = new BlockCapsule(3, ByteString
+        .copyFrom(blockCapsule2.getBlockId().getBytes()), 1,
+        ByteString.copyFrom(address));
+    blockCapsule4.setMerkleRoot();
+    blockCapsule4.sign(prikey);
+    BlockCapsule blockCapsule5 = new BlockCapsule(4, ByteString
+        .copyFrom(blockCapsule4.getBlockId().getBytes()), 1,
+        ByteString.copyFrom(address));
+    blockCapsule5.setMerkleRoot();
+    blockCapsule5.sign(prikey);
+    BlockCapsule blockCapsule6 = new BlockCapsule(4, ByteString
+        .copyFrom(blockCapsule3.getBlockId().getBytes()), 2,
+        ByteString.copyFrom(address));
+    blockCapsule6.setMerkleRoot();
+    blockCapsule6.sign(prikey);
+    try {
+      dbManager.pushBlock(blockCapsule);
+      dbManager.pushBlock(blockCapsule2);
+      dbManager.pushBlock(blockCapsule3);
+      dbManager.pushBlock(blockCapsule4);
+      dbManager.pushBlock(blockCapsule6);
+      dbManager.pushBlock(blockCapsule5);
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.assertTrue("pushBlock is error", false);
+    }
+    Assert.assertEquals(blockCapsule6.getBlockId(), dbManager.getHeadBlockId());
+    Assert.assertEquals(4, dbManager.getHeadBlockNum());
+    logger.info("{}", dbManager.getHeadBlockId());
+    Assert.assertTrue(
+        dbManager.getBlockChainHashesOnFork(blockCapsule5.getBlockId())
+            .contains(blockCapsule4.getBlockId())
+    );
+    Assert.assertTrue(
+        dbManager.getBlockChainHashesOnFork(blockCapsule5.getBlockId())
+            .contains(blockCapsule5.getBlockId())
+    );
+
+    dbManager.initHeadBlock(Sha256Hash.wrap(ByteArray
+        .fromHexString(blockCapsule5.getBlockId().toString())));
+    Assert.assertEquals(blockCapsule5.getBlockId(), dbManager.getHeadBlockId());
+  }
+
+  @Test
+  public void testGetGenesisBlockId() {
+    Assert.assertEquals("9d5daf1c368d84fe2731de78d3d073a8668893a68c3d989490eb745eaef9529c",
+        dbManager.getGenesisBlockId().toString());
+    logger.info("getGenesisBlock={}", dbManager.getGenesisBlock());
+  }
+
+  @Test
+  public void testGenerateBlock() {
+    byte[] prikey = new byte[]{1, 2, 3, 4, 5};
+
+    WitnessCapsule witnessCapsulef = new WitnessCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString("0x0011")), "www.tron.net/first");
+    witnessCapsulef.setIsJobs(true);
+    try {
+      BlockCapsule blockCapsule = dbManager.generateBlock(witnessCapsulef, 0, prikey);
+      Assert.assertEquals(blockCapsule, dbManager.getBlockById(blockCapsule.getBlockId()));
+    } catch (ValidateSignatureException e) {
+      Assert.assertTrue("generateBlock ValidateSignatureException", false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("generateBlock ContractValidateException", false);
+    } catch (ContractExeException e) {
+      Assert.assertTrue("generateBlock ContractExeException", false);
+    }
   }
 }

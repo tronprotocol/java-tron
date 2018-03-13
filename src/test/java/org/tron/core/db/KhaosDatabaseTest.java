@@ -61,5 +61,44 @@ public class KhaosDatabaseTest {
     Assert.assertNull("removeBlk is error", khaosDatabase.getBlock(blockCapsule2.getBlockId()));
   }
 
+  @Test
+  public void testGetBranch() {
+    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray
+                .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
+        )).build());
+    BlockCapsule blockCapsule2 = new BlockCapsule(2, ByteString
+        .copyFrom(blockCapsule.getBlockId().getBytes()), 1,
+        ByteString.copyFrom("1234567".getBytes()));
+    BlockCapsule blockCapsule3 = new BlockCapsule(2, ByteString
+        .copyFrom(blockCapsule.getBlockId().getBytes()), 1,
+        ByteString.copyFrom("6789".getBytes()));
+    BlockCapsule blockCapsule2Next = new BlockCapsule(3, ByteString
+        .copyFrom(blockCapsule2.getBlockId().getBytes()), 1,
+        ByteString.copyFrom("211111".getBytes()));
+    khaosDatabase.push(blockCapsule);
+    khaosDatabase.push(blockCapsule2);
+    khaosDatabase.push(blockCapsule3);
+    khaosDatabase.push(blockCapsule2Next);
+
+    int key1 = khaosDatabase.getBranch(blockCapsule2Next.getBlockId(), blockCapsule3.getBlockId())
+        .getKey().size();
+
+    Assert.assertEquals("getBranch is error", blockCapsule2Next, khaosDatabase
+        .getBranch(blockCapsule2Next.getBlockId(), blockCapsule3.getBlockId())
+        .getKey().get(key1 - 2));
+    Assert.assertEquals("getBranch is error", blockCapsule2, khaosDatabase
+        .getBranch(blockCapsule2Next.getBlockId(), blockCapsule3.getBlockId())
+        .getKey().get(key1 - 1));
+
+    int value1 = khaosDatabase.getBranch(blockCapsule2Next.getBlockId(), blockCapsule3.getBlockId())
+        .getValue().size();
+
+    Assert.assertEquals("getBranch is error", blockCapsule3, khaosDatabase
+        .getBranch(blockCapsule2Next.getBlockId(), blockCapsule3.getBlockId())
+        .getValue().get(value1 - 1));
+  }
+
 
 }
