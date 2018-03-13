@@ -4,12 +4,14 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferActuator extends AbstractActuator {
 
@@ -19,8 +21,9 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
 
+    long fee = calcFee();
     try {
       TransferContract transferContract = null;
       transferContract = contract.unpack(TransferContract.class);
@@ -29,14 +32,16 @@ public class TransferActuator extends AbstractActuator {
       dbManager.adjustBalance(transferContract.getToAddress().toByteArray(),
           transferContract.getAmount());
 
-      long fee = calcFee();
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
+      ret.setStatus(fee, code.SUCESS);
 
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
       e.printStackTrace();
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 

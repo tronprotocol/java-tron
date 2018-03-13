@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     boolean disableOnExit = disabled && forceEnable;
     if (forceEnable) {
-      enable();
+      disabled = false;
     }
 
     while (stack.size() > DEFAULT_STACK_MAX_SIZE) {
@@ -178,7 +179,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
     --activeDialog;
   }
@@ -215,7 +216,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
   }
 
@@ -339,6 +340,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @AllArgsConstructor
+  @EqualsAndHashCode
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

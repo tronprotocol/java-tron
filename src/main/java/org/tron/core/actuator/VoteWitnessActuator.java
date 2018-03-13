@@ -7,10 +7,12 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class VoteWitnessActuator extends AbstractActuator {
 
@@ -22,12 +24,15 @@ public class VoteWitnessActuator extends AbstractActuator {
 
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    long fee = calcFee();
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
       countVoteAccount(voteContract);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
     return true;
