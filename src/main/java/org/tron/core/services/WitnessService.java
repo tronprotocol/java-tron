@@ -165,13 +165,14 @@ public class WitnessService implements Service {
 
     DateTime scheduledTime = db.getSlotTime(slot);
 
-    //TODO:implement private and public key code, fake code first.
-
     if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
 
-    //TODO:implement private and public key code, fake code first.
+    if (!privateKeyMap.containsKey(scheduledWitness)) {
+      return BlockProductionCondition.NO_PRIVATE_KEY;
+    }
+
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
