@@ -22,8 +22,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -106,18 +104,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
 
-    Set<Entry<String, long[]>> entrySet =
-        utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
-
-    entrySet.forEach(entry -> {
-      String txId = entry.getKey();
-      long[] outs = entry.getValue();
-
-      Arrays.stream(outs)
-          .mapToObj(
-              out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
-          .forEachOrdered(txInputs::add);
-    });
+    utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs()
+      .forEach((txId, outs) ->
+        Arrays.stream(outs)
+          .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+          .forEachOrdered(txInputs::add));
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
     txOutputs

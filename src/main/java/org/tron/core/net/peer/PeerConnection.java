@@ -103,8 +103,6 @@ public class PeerConnection {
 
   private long unfetchSyncNum = 0L;
 
-  private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
-
   private boolean needSyncFromPeer;
 
   private boolean needSyncFromUs;
@@ -119,13 +117,6 @@ public class PeerConnection {
     this.advObjWeRequested = advObjWeRequested;
   }
 
-  public Queue<Sha256Hash> getChainIdsWeReqeuested() {
-    return chainIdsWeReqeuested;
-  }
-
-  public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
-    this.chainIdsWeReqeuested = chainIdsWeReqeuested;
-  }
 
   public void cleanInvGarbage() {
     //TODO: clean advObjSpreadToUs and advObjWeSpread.
@@ -198,6 +189,11 @@ public class PeerConnection {
     //this.needSyncFromPeer = true;
   }
 
+  public boolean isBusy() {
+    return !advObjWeRequested.isEmpty()
+        && !syncBlockRequested.isEmpty()
+        && syncChainRequested != null;
+  }
 
   public void sendMessage(Message message) {
     logger.info("Send message " + message + ", Peer:" + this);

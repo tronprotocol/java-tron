@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -60,7 +61,10 @@ public class NodeDelegateImpl implements NodeDelegate {
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
-    return new LinkedList<>();
+    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
+    return trx.stream()
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(LinkedList::new));
   }
 
 
@@ -138,7 +142,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (beginBLockId != getGenesisBlock().getBlockId()) {
+    if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
       if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
@@ -223,7 +227,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
-      return false;
+      return dbManager.getTransactionStore().has(hash.getBytes());
     }
     return false;
   }

@@ -247,16 +247,16 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getWitnesses().forEach(key -> {
-      final AccountCapsule accountCapsule = new AccountCapsule(ByteString.EMPTY,
-          AccountType.AssetIssue,
-          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
-          Long.valueOf(0));
+      byte[] keyAddress = ByteArray.fromHexString(key.getAddress());
+      ByteString address = ByteString.copyFrom(keyAddress);
+
+      final AccountCapsule accountCapsule = new AccountCapsule(
+              ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-          ByteString.copyFrom(ByteArray.fromHexString(key.getAddress())),
-          key.getVoteCount(), key.getUrl());
+              address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
-      this.accountStore.put(ByteArray.fromHexString(key.getAddress()), accountCapsule);
-      this.witnessStore.put(ByteArray.fromHexString(key.getAddress()), witnessCapsule);
+      this.accountStore.put(keyAddress, accountCapsule);
+      this.witnessStore.put(keyAddress, witnessCapsule);
       this.wits.add(witnessCapsule);
     });
   }
@@ -347,9 +347,9 @@ public class Manager {
         return;
       }
 
-      if (!block.calcMerklerRoot().equals(block.getMerklerRoot())) {
-        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerklerRoot()
-            + " , the headers is " + block.getMerklerRoot());
+      if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
+        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
+            + " , the headers is " + block.getMerkleRoot());
         return;
       }
 
@@ -589,7 +589,7 @@ public class Manager {
 
     logger.info("postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTrxs.size() + "]");
 
-    blockCapsule.setMerklerRoot();
+    blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     this.pushBlock(blockCapsule);

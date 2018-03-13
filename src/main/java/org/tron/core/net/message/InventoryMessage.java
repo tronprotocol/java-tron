@@ -1,9 +1,9 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -80,13 +80,9 @@ public class InventoryMessage extends Message {
   }
 
   public List<Sha256Hash> getHashList() {
-    Inventory inv = getInventory();
-    List<Sha256Hash> ret = new ArrayList<>();
-    for (ByteString hash :
-        inv.getIdsList()) {
-      ret.add(Sha256Hash.wrap(hash.toByteArray()));
-    }
-    return ret;
+    return getInventory().getIdsList().stream()
+            .map(hash -> Sha256Hash.wrap(hash.toByteArray()))
+            .collect(Collectors.toList());
   }
 
   private void pack() {
