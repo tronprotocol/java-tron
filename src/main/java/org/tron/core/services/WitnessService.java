@@ -18,7 +18,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -42,7 +41,6 @@ public class WitnessService implements Service {
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
-  private volatile boolean canceled = false;
 
   /**
    * Construction method.
@@ -57,6 +55,7 @@ public class WitnessService implements Service {
       () -> {
         if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
           logger.error("LocalWitnesses is null");
+          return;
         }
 
         while (isRunning) {
@@ -67,60 +66,54 @@ public class WitnessService implements Service {
           }
           try {
             DateTime nextTime = time.plus(timeToNextSecond);
-            logger.info("sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
+            logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
             Thread.sleep(timeToNextSecond);
             this.blockProductionLoop();
-
             this.updateWitnessSchedule();
+          } catch (InterruptedException ex) {
+            logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
-            logger.error("ProductionLoop error", ex);
+            logger.error("Unknown exception happened", ex);
+            throw ex;
           }
         }
       };
 
-  private void blockProductionLoop() throws CancelException {
-    BlockProductionCondition result;
-    try {
-      result = this.tryProduceBlock();
-    } catch (final CancelException ex) {
-      throw ex;
-    } catch (final Exception ex) {
-      logger.error("produce block error,", ex);
-      result = BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    }
+  private void blockProductionLoop() {
+    BlockProductionCondition result = this.tryProduceBlock();
 
     if (result == null) {
-      logger.warn("result is null");
+      logger.warn("Result is null");
       return;
     }
 
     switch (result) {
       case PRODUCED:
-        logger.info("Porduced");
+        logger.info("Produced");
         break;
       case NOT_SYNCED:
-        logger.info("not sync");
+        logger.info("Not sync");
         break;
       case NOT_MY_TURN:
         logger.info("It's not my turn");
         break;
       case NOT_TIME_YET:
-        logger.info("not time yet");
+        logger.info("Not time yet");
         break;
       case NO_PRIVATE_KEY:
-        logger.info("no pri key");
+        logger.info("No pri key");
         break;
       case LOW_PARTICIPATION:
-        logger.info("low part");
+        logger.info("Low part");
         break;
       case LAG:
-        logger.info("lag");
+        logger.info("Lag");
         break;
       case CONSECUTIVE:
-        logger.info("consecutive");
+        logger.info("Consecutive");
         break;
       case EXCEPTION_PRODUCING_BLOCK:
-        logger.info("excpetion");
+        logger.info("Exception");
         break;
       default:
         break;
@@ -128,10 +121,7 @@ public class WitnessService implements Service {
   }
 
 
-  private BlockProductionCondition tryProduceBlock()
-      throws CancelException {
-
-    this.checkCancelFlag();
+  private BlockProductionCondition tryProduceBlock() {
 
     if (this.needSyncCheck) {
       if (db.getSlotTime(1).isAfterNow()) { // check sync during first loop
@@ -150,7 +140,7 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(DateTime.now());
-    logger.debug("slot:" + slot);
+    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       return BlockProductionCondition.NOT_TIME_YET;
@@ -160,7 +150,7 @@ public class WitnessService implements Service {
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger
-          .info("scheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
+          .info("ScheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -187,25 +177,15 @@ public class WitnessService implements Service {
     } catch (ContractExeException e) {
       logger.error(e.getMessage());
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
-
-  }
-
-  private void checkCancelFlag() throws CancelException {
-    if (canceled) {
-      throw new CancelException();
-    }
   }
 
   private void broadcastBlock(BlockCapsule block) {
     try {
       tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
-      throw new RuntimeException("broadcastBlock error");
+      throw new RuntimeException("BroadcastBlock error");
     }
   }
 
@@ -221,7 +201,7 @@ public class WitnessService implements Service {
 
     long headBlockNum = db.getBlockStore().getHeadBlockNum();
     if (headBlockNum != 0 && headBlockNum % witnessStates.size() == 0) {
-      String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
+//      String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
       witnessStates = new RandomGenerator<WitnessCapsule>()
           .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
 //      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
@@ -246,7 +226,7 @@ public class WitnessService implements Service {
           .get(address);
       // need handle init witness
       if (null == witnessCapsule) {
-        logger.warn("witnessCapsule[" + address + "] is not in witnessStore");
+        logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
         witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
       }
 
