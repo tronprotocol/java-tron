@@ -39,7 +39,7 @@ public class ManagerTest {
             ECKey.fromPrivate(ByteArray.fromHexString(Args.getInstance().getPrivateKey()))
                 .getAddress()));
     blockCapsule2.setMerklerRoot();
-    blockCapsule2.sign(Args.getInstance().getPrivateKey().getBytes());
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
   }
 
   @AfterClass
