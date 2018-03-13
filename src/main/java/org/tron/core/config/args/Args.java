@@ -67,7 +67,7 @@ public class Args {
       if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
           && INSTANCE.privateKey.length() != 64) {
         throw new IllegalArgumentException(
-            "Private key(" + INSTANCE.privateKey + ") must be 66-bits hex string.");
+            "Private key(" + INSTANCE.privateKey + ") must be 64-bits hex string.");
       }
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
