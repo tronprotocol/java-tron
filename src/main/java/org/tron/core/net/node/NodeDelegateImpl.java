@@ -227,7 +227,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       //TODO: check it
-      return false;
+      return dbManager.getTransactionStore().has(hash.getBytes());
     }
     return false;
   }

@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import com.google.common.collect.Iterables;
 import io.scalecube.transport.Address;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -485,7 +486,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (!peer.isNeedSyncFromPeer()
         && !summaryChainIds.isEmpty()
-        && !del.contain(summaryChainIds.get(summaryChainIds.size() - 1), MessageTypes.BLOCK)) {
+        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
       startSyncWithPeer(peer);
     }
 

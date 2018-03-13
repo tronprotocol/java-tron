@@ -322,9 +322,9 @@ public class Manager {
         return;
       }
 
-      if (!block.calcMerklerRoot().equals(block.getMerklerRoot())) {
-        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerklerRoot()
-            + " , the headers is " + block.getMerklerRoot());
+      if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
+        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
+            + " , the headers is " + block.getMerkleRoot());
         return;
       }
 
@@ -520,7 +520,7 @@ public class Manager {
 
     logger.info("postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTrxs.size() + "]");
 
-    blockCapsule.setMerklerRoot();
+    blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     this.pushBlock(blockCapsule);
