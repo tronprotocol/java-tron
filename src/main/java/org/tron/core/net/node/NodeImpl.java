@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
@@ -102,6 +103,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isFetchActive;
 
+  private volatile boolean isHandleSyncBlockActive;
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -120,6 +122,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
 
   private Long unSyncNum = 0L;
+
+  private Thread handleSyncBlockLoop;
+
+  private Set<BlockMessage>
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -316,6 +322,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           sendPackage.sendFetch();
         }
       }
+
+
+
+    });
+
+    handleSyncBlockLoop = new Thread(() -> {
+      while (){
+
+      }
+
+      while (isHandleSyncBlockActive) {
+
+      }
+
     });
 
     advertiseLoopThread.start();
@@ -447,7 +467,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
     } catch (TronException e) {
       //should not go here.
-      logger.error(e.getMessage());
+      e.printStackTrace();
+      //logger.error(e.getMessage());
       return;
     }
 
