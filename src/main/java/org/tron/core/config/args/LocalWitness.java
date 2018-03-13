@@ -18,12 +18,24 @@ package org.tron.core.config.args;
 public class LocalWitness {
 
   private String privateKey;
-  
+
   public String getPrivateKey() {
     return this.privateKey;
   }
 
+  /**
+   * Private key of ECKey.
+   */
   public void setPrivateKey(final String privateKey) {
     this.privateKey = privateKey;
+
+    if (this.privateKey != null && this.privateKey.toUpperCase().startsWith("0X")) {
+      this.privateKey = this.privateKey.substring(2);
+    }
+
+    if (this.privateKey != null && this.privateKey.length() != 0
+        && this.privateKey.length() != 66) {
+      throw new IllegalArgumentException();
+    }
   }
 }
