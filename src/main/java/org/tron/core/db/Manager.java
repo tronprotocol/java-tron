@@ -27,6 +27,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
@@ -298,6 +299,7 @@ public class Manager {
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
       processTransaction(trx);
       pendingTrxs.add(trx);
+
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
@@ -332,6 +334,7 @@ public class Manager {
     if (block.getNum() != 0) {
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         this.processBlock(block);
+
         tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
@@ -413,16 +416,19 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
+    TransactionResultCapsule transRet;
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
 
     for (Actuator act : actuatorList) {
-      act.validate();
-      act.execute();
-    }
 
+      act.validate();
+      act.execute(ret);
+      trxCap.setResult(ret);
+    }
     return true;
   }
 
