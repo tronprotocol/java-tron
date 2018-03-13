@@ -24,6 +24,8 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
+import org.tron.core.exception.TronException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
@@ -410,12 +412,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             });
 
         getActivePeer().forEach(p -> p.cleanInvGarbage());
+        //rebroadcast
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
-      }  //TODO:unlinked block and call startSyncWithPeer(peer);
-
+      } catch (UnLinkedBlockException e) {
+        //reSync
+        startSyncWithPeer(peer);
+      }
     }
   }
 
@@ -439,6 +444,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       freshBlockId.offer(block.getBlockId());
     } catch (BadBlockException e) {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+    } catch (TronException e) {
+      //should not go here.
+      logger.error(e.getMessage());
+      return;
     }
 
     Deque<PeerConnection> needSync = new LinkedList<>();

@@ -19,6 +19,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -43,7 +44,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException {
+      throws BadBlockException, UnLinkedBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -56,7 +57,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception");
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
-    } //TODO:Add a unlinked exception here
+    }
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());

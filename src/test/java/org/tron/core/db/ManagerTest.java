@@ -17,6 +17,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.UnLinkedBlockException;
 
 
 public class ManagerTest {
@@ -63,16 +64,26 @@ public class ManagerTest {
 
   @Test
   public void pushBlock() {
+    boolean isUnlinked = false;
     try {
       dbManager.pushBlock(blockCapsule2);
+    } catch (UnLinkedBlockException e) {
+      isUnlinked = true;
     } catch (Exception e) {
       Assert.assertTrue("pushBlock is error", false);
     }
 
     Assert.assertTrue("containBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString(blockCapsule2.getBlockId().toString()))));
-    Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
-        dbManager.getBlockIdByNum(1).toString());
+
+    if (isUnlinked) {
+      Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(),
+          0);
+    } else {
+      Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
+          dbManager.getBlockIdByNum(1).toString());
+    }
+
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
 
     dbManager.deleteBlock(Sha256Hash.wrap(ByteArray
