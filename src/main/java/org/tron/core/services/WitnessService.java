@@ -255,7 +255,7 @@ public class WitnessService implements Service {
       witnessCapsule = new WitnessCapsule(ByteString.copyFrom(ecKey.getAddress()));
     }
     //
-
+    this.tronApp.getDbManager().updateWits();
     this.localWitnessState = witnessCapsule;
     this.witnessStates = this.db.getWitnesses();
   }

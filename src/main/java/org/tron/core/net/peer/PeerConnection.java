@@ -93,15 +93,15 @@ public class PeerConnection {
     return member.address();
   }
 
-  public int getNumUnfetchBlock() {
-    return numUnfetchBlock;
+  public long getUnfetchSyncNum() {
+    return unfetchSyncNum;
   }
 
-  public void setNumUnfetchBlock(int numUnfetchBlock) {
-    this.numUnfetchBlock = numUnfetchBlock;
+  public void setUnfetchSyncNum(long unfetchSyncNum) {
+    this.unfetchSyncNum = unfetchSyncNum;
   }
 
-  private int numUnfetchBlock = 0;
+  private long unfetchSyncNum = 0L;
 
   private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
 

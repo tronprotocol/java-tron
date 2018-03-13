@@ -1,18 +1,16 @@
 package org.tron.core.net.node;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -62,10 +60,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
-    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-    return trx.stream()
-            .map(TransactionCapsule::getHash)
-            .collect(Collectors.toCollection(LinkedList::new));
+    return new LinkedList<>();
   }
 
 
@@ -92,12 +87,13 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
 
-  public List<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
+    LinkedList<BlockId> retBlockIds = new LinkedList<>();
     if (dbManager.getHeadBlockNum() == 0) {
-      return new ArrayList<>();
+      return retBlockIds;
     }
 
     BlockId unForkedBlockId = null;
@@ -109,50 +105,54 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      unForkedBlockId = blockChainSummary.stream()
-              .filter(blockId -> dbManager.containBlock(blockId))
-              .findFirst()
-              .orElseThrow(UnReachBlockException::new);
+      for (BlockId blockId : blockChainSummary) {
+        if (dbManager.containBlock(blockId)) {
+          unForkedBlockId = blockId;
+          break;
+        }
+      }
 
-//      if (unForkedBlockId == null) {
-//        throw new UnReachBlockException();
-//        //todo: can not find any same block form peer's summary and my db.
-//      }
+      if (unForkedBlockId == null) {
+        throw new UnReachBlockException();
+        //todo: can not find any same block form peer's summary and my db.
+      }
     }
 
     //todo: limit the count of block to send peer by one time.
-    return LongStream.rangeClosed(unForkedBlockId.getNum(), dbManager.getHeadBlockNum())
-            .filter(num -> num > 0)
-            .mapToObj(num -> dbManager.getBlockIdByNum(num))
-            .collect(Collectors.toList());
+    for (long num = unForkedBlockId.getNum();
+        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
+      if (num > 0) {
+        retBlockIds.add(dbManager.getBlockIdByNum(num));
+      }
+    }
+    return retBlockIds;
   }
 
   @Override
   public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
-    long highBlkNum = 0;
+    long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0; //TODO：get this from db.
+    long lowBlkNum = 0;
 
-    List<BlockId> forkList = new ArrayList<>();
+    LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (beginBLockId != Sha256Hash.ZERO_HASH) {
-      //todo: get db's head num to check local db's block status.
+    if (beginBLockId != getGenesisBlock().getBlockId()) {
       if (dbManager.containBlock(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        int forkListSize = forkList.size();
-        BlockId blockId = forkList.get(forkListSize - 1);
-        highNoForkBlkNum = dbManager.getBlockNumById(blockId);
-        forkList.remove(blockId);
-        highBlkNum = highNoForkBlkNum + forkListSize;
+        highNoForkBlkNum = forkList.peekLast().getNum();
+        forkList.pollLast();
+        Collections.reverse(forkList);
+        highBlkNum = highNoForkBlkNum + forkList.size();
+        logger.info("highNum: " + highBlkNum);
+        logger.info("forkLastNum: " + forkList.peekLast().getNum());
       }
-
     } else {
-      highBlkNum = getBlockStoreDb().getHeadBlockNum();
+      highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
       if (highBlkNum == 0) {
         return retSummary;
@@ -181,7 +181,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         return new BlockMessage(dbManager.findBlockByHash(hash));
       case TRX:
         return new TransactionMessage(
-            dbManager.getTransactionStore().findTransactionByHash(hash.getBytes()));
+            dbManager.getTransactionStore().get(hash.getBytes()).getData());
       default:
         logger.info("message type not block or trx.");
         return null;
@@ -189,8 +189,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public void syncToCli() {
-
+  public void syncToCli(long unSyncNum) {
+    logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    //TODO: notify cli know how many block we need to sync
   }
 
 

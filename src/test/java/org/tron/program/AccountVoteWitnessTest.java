@@ -61,7 +61,7 @@ public class AccountVoteWitnessTest {
         }
     );
     witnessCapsuleList.forEach(witnessCapsule ->
-        dbManager.getWitnessStore().putWitness(witnessCapsule)
+        dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule)
     );
     dbManager.updateWitness();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
@@ -85,7 +85,7 @@ public class AccountVoteWitnessTest {
   }
 
   private void printWitness(final ByteString address) {
-    final WitnessCapsule witnessCapsule = dbManager.getWitnessStore().getWitness(address);
+    final WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address.toByteArray());
     if (null == witnessCapsule) {
       logger.info("address is {}  , winess is null", address.toStringUtf8());
       return;

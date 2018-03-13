@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -41,7 +40,8 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
 
   @Override
   public WitnessCapsule get(byte[] key) {
-    return null;
+    byte[] value = dbSource.getData(key);
+    return ArrayUtils.isEmpty(value) ? null : new WitnessCapsule(value);
   }
 
   @Override
@@ -67,26 +67,12 @@ public class WitnessStore extends TronDatabase<WitnessCapsule> {
     return instance;
   }
 
-  public WitnessCapsule getWitness(ByteString voteAddress) {
-    logger.info("voteAddress is {} ", voteAddress);
-
-    byte[] value = dbSource.getData(voteAddress.toByteArray());
-    if (null == value) {
-      return null;
-    }
-    return new WitnessCapsule(value);
-  }
-
-  public void putWitness(WitnessCapsule witnessCapsule) {
-    put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-  }
-
   /**
    * get all witnesses.
    */
   public List<WitnessCapsule> getAllWitnesses() {
     return dbSource.allValues().stream().map(bytes ->
-      new WitnessCapsule(bytes)
+        new WitnessCapsule(bytes)
     ).collect(Collectors.toList());
   }
 
