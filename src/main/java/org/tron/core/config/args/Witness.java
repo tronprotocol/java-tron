@@ -15,6 +15,9 @@
 
 package org.tron.core.config.args;
 
+import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.StringUtil;
+
 public class Witness {
 
   private String address;
@@ -27,15 +30,36 @@ public class Witness {
     return this.address;
   }
 
+  /**
+   * set address.
+   */
   public void setAddress(final String address) {
-    this.address = address;
+    if (null == address) {
+      throw new IllegalArgumentException(
+          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+    }
+
+    if (StringUtil.isHexString(address, 40)) {
+      this.address = address;
+    } else {
+      throw new IllegalArgumentException(
+          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+    }
   }
 
   public String getUrl() {
     return this.url;
   }
 
+  /**
+   * set url.
+   */
   public void setUrl(final String url) {
+    if (null == url || StringUtils.isBlank(url)) {
+      throw new IllegalArgumentException(
+          "The url(" + url + ") format error.");
+    }
+
     this.url = url;
   }
 
