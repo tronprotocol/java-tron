@@ -33,6 +33,11 @@ public abstract class Message {
 
   //public byte getCode() { return type; }
 
+  @Override
+  public int hashCode() {
+    return getMessageId().hashCode();
+  }
+
   public abstract MessageTypes getType();
 
 }
