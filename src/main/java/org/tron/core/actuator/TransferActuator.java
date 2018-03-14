@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
@@ -62,6 +63,11 @@ public class TransferActuator extends AbstractActuator {
       Preconditions.checkNotNull(transferContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(transferContract.getOwnerAddress().toByteArray());
+
+      long balance = accountCapsule.getBalance();
+      //long laststOperationTime = accountCapsule.get
 
       if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
