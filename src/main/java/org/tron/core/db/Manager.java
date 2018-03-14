@@ -293,7 +293,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
+  public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -533,7 +533,7 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
+  public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
 
