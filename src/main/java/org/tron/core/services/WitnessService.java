@@ -90,7 +90,7 @@ public class WitnessService implements Service {
   /**
    * Loop to generate blocks
    */
-  private void blockProductionLoop() {
+  private void blockProductionLoop() throws InterruptedException {
     BlockProductionCondition result = this.tryProduceBlock();
 
     if (result == null) {
@@ -135,15 +135,18 @@ public class WitnessService implements Service {
   /**
    * Generate and broadcast blocks
    */
-  private BlockProductionCondition tryProduceBlock() {
+  private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
     DateTime now = DateTime.now();
     if (this.needSyncCheck) {
       logger.info(new DateTime(db.getSlotTime(1)).toString());
       logger.info(now.toString());
 
-      if (db.getSlotTime(1) > now.getMillis()) { // check sync during first loop
+      long nexSlotTime = db.getSlotTime(1);
+      if (nexSlotTime > now.getMillis()) { // check sync during first loop
         needSyncCheck = false;
+        Thread.sleep(nexSlotTime - now.getMillis()); //Processing Time Drift later
+        now = DateTime.now();
       } else {
         return BlockProductionCondition.NOT_SYNCED;
       }
