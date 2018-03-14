@@ -48,7 +48,8 @@ public class Manager {
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
-  public static final long LOOP_INTERVAL = Args.getInstance().getBlockInterval(); // millisecond
+  public static final long LOOP_INTERVAL = Args.getInstance()
+      .getBlockInterval(); // must be divisible by 60. millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
