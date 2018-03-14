@@ -181,4 +181,21 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
     return true;
   }
+
+  /**
+   * add asset.
+   */
+  public boolean addAsset(String key, Long value) {
+    Map<String, Long> assetMap = this.account.toBuilder().getAssetMap();
+
+    if (assetMap.containsKey(key)) {
+      return false;
+    }
+
+    assetMap.put(key, value);
+
+    this.account = this.account.toBuilder().clearAsset().putAllAsset(assetMap).build();
+
+    return true;
+  }
 }

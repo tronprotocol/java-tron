@@ -21,6 +21,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
@@ -55,6 +57,15 @@ public class AssetIssueActuator extends AbstractActuator {
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
       dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
+
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(assetIssueContract.getOwnerAddress().toByteArray());
+
+      accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
+          assetIssueContract.getTotalSupply());
+
+      dbManager.getAccountStore()
+          .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractExeException();
     } catch (BalanceInsufficientException e) {

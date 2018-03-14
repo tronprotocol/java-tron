@@ -745,4 +745,41 @@ public class Manager {
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
     this.assetIssueStore = assetIssueStore;
   }
+
+  /**
+   * Close database.
+   */
+  public void close() {
+    if (this.accountStore != null) {
+      this.accountStore.close();
+    }
+
+    if (this.transactionStore != null) {
+      this.transactionStore.close();
+    }
+
+    if (this.blockStore != null) {
+      this.blockStore.close();
+    }
+
+    if (this.utxoStore != null) {
+      this.utxoStore.close();
+    }
+
+    if (this.witnessStore != null) {
+      this.witnessStore.close();
+    }
+
+    if (this.assetIssueStore != null) {
+      this.assetIssueStore.close();
+    }
+
+    if (this.dynamicPropertiesStore != null) {
+      this.dynamicPropertiesStore.close();
+    }
+
+    if (this.numHashCache != null) {
+      this.numHashCache.closeDB();
+    }
+  }
 }
