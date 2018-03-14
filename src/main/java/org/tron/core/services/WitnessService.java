@@ -70,8 +70,12 @@ public class WitnessService implements Service {
           }
           try {
             DateTime nextTime = time.plus(timeToNextSecond);
-            logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
-            Thread.sleep(timeToNextSecond);
+            if (this.needSyncCheck) {
+              Thread.sleep(500L);
+            } else {
+              logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
+              Thread.sleep(timeToNextSecond);
+            }
             this.blockProductionLoop();
             this.updateWitnessSchedule();
           } catch (InterruptedException ex) {
@@ -99,7 +103,7 @@ public class WitnessService implements Service {
         logger.info("Produced");
         break;
       case NOT_SYNCED:
-        logger.info("Not sync");
+//        logger.info("Not sync");
         break;
       case NOT_MY_TURN:
         logger.info("It's not my turn");
