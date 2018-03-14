@@ -5,6 +5,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -87,6 +88,6 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;//ChainConstant.TRANSFER_FEE;
+    return ChainConstant.TRANSFER_FEE;
   }
 }
