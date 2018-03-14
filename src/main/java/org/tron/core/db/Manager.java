@@ -247,6 +247,9 @@ public class Manager {
     });
   }
 
+  /**
+   * save witnesses into database.
+   */
   private void initWitness() {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
@@ -640,20 +643,35 @@ public class Manager {
       processTransaction(transactionCapsule);
       this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
-      if (this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= block
-          .getTimeStamp()) {
-        this.processMaintenance();
+
+      if (needMaintenance(block.getTimeStamp())) {
+        if (block.getNum() == 1) {
+          this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+        } else {
+          this.processMaintenance(block);
+        }
       }
     }
   }
 
+  /**
+   * Determine if the current time is maintenance time
+   */
+  public boolean needMaintenance(long blockTime) {
+    return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
+  }
+
+  //// To be added
   private void updateDynamicProperties(final BlockCapsule block) {
 
   }
 
-  private void processMaintenance() {
+  /**
+   * Perform maintenance
+   */
+  private void processMaintenance(BlockCapsule block) {
     this.updateWitness();
-    this.dynamicPropertiesStore.updateMaintenanceTime();
+    this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
 
 
@@ -728,6 +746,7 @@ public class Manager {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
+  // To be added
   private long getSkipSlotInMaintenance() {
     return 0;
   }
@@ -783,19 +802,19 @@ public class Manager {
       AccountCapsule witnessAccountCapsule = accountStore.get(witnessAddress.toByteArray());
       if (witnessAccountCapsule == null) {
         logger.warn("witnessAccount[" + witnessAddress + "] not exists");
+      } else {
+        if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
+          logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
+              .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
+        } else {
+          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          witnessCapsule.setIsJobs(false);
+          witnessCapsuleList.add(witnessCapsule);
+          this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
+              witnessCapsule.getVoteCount());
+        }
       }
-
-      if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-        logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
-            .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
-      }
-
-      witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-      witnessCapsule.setIsJobs(false);
-      witnessCapsuleList.add(witnessCapsule);
-      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-      logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
-          witnessCapsule.getVoteCount());
     });
     witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
