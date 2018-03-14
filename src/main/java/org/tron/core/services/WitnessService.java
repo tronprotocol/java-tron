@@ -64,16 +64,18 @@ public class WitnessService implements Service {
         }
 
         while (isRunning) {
-          DateTime time = DateTime.now();
-          long timeToNextSecond = Manager.LOOP_INTERVAL - time.getMillisOfSecond();
-          if (timeToNextSecond < 50) {
-            timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
-          }
           try {
-            DateTime nextTime = time.plus(timeToNextSecond);
             if (this.needSyncCheck) {
               Thread.sleep(500L);
             } else {
+              DateTime time = DateTime.now();
+              long timeToNextSecond = Manager.LOOP_INTERVAL
+                  - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
+                  % Manager.LOOP_INTERVAL;
+              if (timeToNextSecond < 50L) {
+                timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
+              }
+              DateTime nextTime = time.plus(timeToNextSecond);
               logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
               Thread.sleep(timeToNextSecond);
             }
@@ -138,16 +140,16 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
-    DateTime now = DateTime.now();
+    long now = DateTime.now().getMillis();
     if (this.needSyncCheck) {
-      logger.info(new DateTime(db.getSlotTime(1)).toString());
-      logger.info(now.toString());
+//      logger.info(new DateTime(db.getSlotTime(1)).toString());
+//      logger.info(now.toString());
 
       long nexSlotTime = db.getSlotTime(1);
-      if (nexSlotTime > now.getMillis()) { // check sync during first loop
+      if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
-        Thread.sleep(nexSlotTime - now.getMillis()); //Processing Time Drift later
-        now = DateTime.now();
+        Thread.sleep(nexSlotTime - now); //Processing Time Drift later
+        now = DateTime.now().getMillis();
       } else {
         return BlockProductionCondition.NOT_SYNCED;
       }
@@ -161,7 +163,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = db.getSlotAtTime(now.getMillis());
+    long slot = db.getSlotAtTime(now);
     logger.debug("Slot:" + slot);
 
     if (slot == 0) {
@@ -178,7 +180,7 @@ public class WitnessService implements Service {
 
     long scheduledTime = db.getSlotTime(slot);
 
-    if (scheduledTime - now.getMillis() > PRODUCE_TIME_OUT) {
+    if (scheduledTime - now > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
 
