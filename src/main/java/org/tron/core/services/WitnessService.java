@@ -20,6 +20,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -63,15 +64,21 @@ public class WitnessService implements Service {
         }
 
         while (isRunning) {
-          DateTime time = DateTime.now();
-          long timeToNextSecond = Manager.LOOP_INTERVAL - time.getMillisOfSecond();
-          if (timeToNextSecond < 50) {
-            timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
-          }
           try {
-            DateTime nextTime = time.plus(timeToNextSecond);
-            logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
-            Thread.sleep(timeToNextSecond);
+            if (this.needSyncCheck) {
+              Thread.sleep(500L);
+            } else {
+              DateTime time = DateTime.now();
+              long timeToNextSecond = Manager.LOOP_INTERVAL
+                  - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
+                  % Manager.LOOP_INTERVAL;
+              if (timeToNextSecond < 50L) {
+                timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
+              }
+              DateTime nextTime = time.plus(timeToNextSecond);
+              logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
+              Thread.sleep(timeToNextSecond);
+            }
             this.blockProductionLoop();
             this.updateWitnessSchedule();
           } catch (InterruptedException ex) {
@@ -86,7 +93,7 @@ public class WitnessService implements Service {
   /**
    * Loop to generate blocks
    */
-  private void blockProductionLoop() {
+  private void blockProductionLoop() throws InterruptedException {
     BlockProductionCondition result = this.tryProduceBlock();
 
     if (result == null) {
@@ -99,7 +106,7 @@ public class WitnessService implements Service {
         logger.info("Produced");
         break;
       case NOT_SYNCED:
-        logger.info("Not sync");
+//        logger.info("Not sync");
         break;
       case NOT_MY_TURN:
         logger.info("It's not my turn");
@@ -131,11 +138,18 @@ public class WitnessService implements Service {
   /**
    * Generate and broadcast blocks
    */
-  private BlockProductionCondition tryProduceBlock() {
+  private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
+    long now = DateTime.now().getMillis();
     if (this.needSyncCheck) {
-      if (db.getSlotTime(1).isAfterNow()) { // check sync during first loop
+//      logger.info(new DateTime(db.getSlotTime(1)).toString());
+//      logger.info(now.toString());
+
+      long nexSlotTime = db.getSlotTime(1);
+      if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
+        Thread.sleep(nexSlotTime - now); //Processing Time Drift later
+        now = DateTime.now().getMillis();
       } else {
         return BlockProductionCondition.NOT_SYNCED;
       }
@@ -149,7 +163,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = db.getSlotAtTime(DateTime.now());
+    long slot = db.getSlotAtTime(now);
     logger.debug("Slot:" + slot);
 
     if (slot == 0) {
@@ -164,9 +178,9 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
-    DateTime scheduledTime = db.getSlotTime(slot);
+    long scheduledTime = db.getSlotTime(slot);
 
-    if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
+    if (scheduledTime - now > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
 
@@ -179,17 +193,8 @@ public class WitnessService implements Service {
       logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
-    } catch (ValidateSignatureException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (ContractValidateException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (ContractExeException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (UnLinkedBlockException e) {
-      logger.error(e.getMessage());
+    } catch (TronException e) {
+      e.printStackTrace();
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
@@ -203,9 +208,9 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when, ByteString witnessAddress)
+  private BlockCapsule generateBlock(long when, ByteString witnessAddress)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when.getMillis(),
+    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
 

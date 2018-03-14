@@ -43,7 +43,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
+  public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
@@ -124,8 +124,10 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
 
     //todo: limit the count of block to send peer by one time.
+    long highLimit = unForkedBlockId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM;
     for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
+        num <= dbManager.getHeadBlockNum()
+            && num <= highLimit; ++num) {
       if (num > 0) {
         retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
@@ -159,9 +161,9 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-      if (highBlkNum == 0) {
-        return retSummary;
-      }
+//      if (highBlkNum == 0) {
+//        return retSummary;
+//      }
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();

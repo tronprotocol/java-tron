@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -49,7 +48,8 @@ public class Manager {
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
-  public static final long LOOP_INTERVAL = Args.getInstance().getBlockInterval(); // millisecond
+  public static final long LOOP_INTERVAL = Args.getInstance()
+      .getBlockInterval(); // must be divisible by 60. millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -335,10 +335,6 @@ public class Manager {
 
   }
 
-  void refreshHead() {
-
-  }
-
   /**
    * save a block.
    */
@@ -415,14 +411,24 @@ public class Manager {
       }
     }
 
+    //refresh
+    refreshHead(block);
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     // todo modify the dynamic head
-    this.head = this.khaosDb.getHead();
+    //this.head = this.khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
+  private void refreshHead(BlockCapsule block) {
+    this.head = block;
+    this.dynamicPropertiesStore
+        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+  }
 
   /**
    * Get the fork branch.
@@ -599,10 +605,6 @@ public class Manager {
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     this.pushBlock(blockCapsule);
-    this.dynamicPropertiesStore
-        .saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;
   }
 
@@ -705,46 +707,55 @@ public class Manager {
   /**
    * get slot at time.
    */
-  public long getSlotAtTime(DateTime when) {
-    DateTime firstSlotTime = getSlotTime(1);
-    if (when.isBefore(firstSlotTime)) {
+  public long getSlotAtTime(long when) {
+    long firstSlotTime = getSlotTime(1);
+    if (when < firstSlotTime) {
       return 0;
     }
-    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
+    return (when - firstSlotTime) / blockInterval() + 1;
   }
 
 
   /**
    * get slot time.
    */
-  public DateTime getSlotTime(long slotNum) {
+  public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
-      return DateTime.now();
+      return System.currentTimeMillis();
     }
     long interval = blockInterval();
-    BlockStore blockStore = getBlockStore();
-    DateTime genesisTime = blockStore.getGenesisTime();
-    if (blockStore.getHeadBlockNum() == 0) {
-      return genesisTime.plus(slotNum * interval);
+
+
+    if (getHeadBlockNum() == 0) {
+      return getGenesisBlock().getTimeStamp() + slotNum * interval;
     }
 
     if (lastHeadBlockIsMaintenance()) {
       slotNum += getSkipSlotInMaintenance();
     }
 
-    DateTime headSlotTime = blockStore.getHeadBlockTime();
+    //DateTime headSlotTime = blockStore.getHeadBlockTime();
 
     //align slot time
-    headSlotTime = headSlotTime
-        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+//    headSlotTime = headSlotTime
+//        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+//
+    long headSlotTime = getHeadBlockTimestamp();
+    headSlotTime = headSlotTime -
+        ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
-    return headSlotTime.plus(interval * slotNum);
+    return headSlotTime + interval * slotNum;
   }
 
 
   private boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
+
+  private long getHeadBlockTimestamp () {
+    return head.getTimeStamp();
+  }
+
 
   // To be added
   private long getSkipSlotInMaintenance() {
