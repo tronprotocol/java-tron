@@ -293,7 +293,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
+  public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -369,17 +369,10 @@ public class Manager {
           LinkedList<BlockCapsule> branch = binaryTree.getValue();
           Collections.reverse(branch);
           branch.forEach(item -> {
-            Dialog tmpDialog = revokingStore.buildDialog();
             // todo  process the exception carefully later
-            try {
+            try (Dialog tmpDialog = revokingStore.buildDialog()) {
               processBlock(item);
-              try {
-                tmpDialog.commit();
-
-
-              } catch (RevokingStoreIllegalStateException e) {
-                e.printStackTrace();
-              }
+              tmpDialog.commit();
               head = item;
               getDynamicPropertiesStore()
                   .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
@@ -390,6 +383,8 @@ public class Manager {
             } catch (ContractValidateException e) {
               e.printStackTrace();
             } catch (ContractExeException e) {
+              e.printStackTrace();
+            } catch (RevokingStoreIllegalStateException e) {
               e.printStackTrace();
             }
           });
@@ -544,7 +539,7 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
+  public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
 
