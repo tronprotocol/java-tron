@@ -360,9 +360,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       peer.getBlockInProc().add(msg.getBlockId());
                     })
                     .count() > 0)
-              .forEach(msg -> {
-                processSyncBlock(msg.getBlockCapsule());
-              });
+              .filter(msg -> !freshBlockId.contains(msg.getBlockId()))
+              .forEach(msg -> processSyncBlock(msg.getBlockCapsule()));
 
 
 
@@ -485,17 +484,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void processSyncBlock(BlockCapsule block) {
     //TODO: add processing backlog cache here, use multi thread
 
-    getActivePeer()
-        .forEach(peer -> {
-          if (!peer.getSyncBlockToFetch().isEmpty()
-              && peer.getSyncBlockToFetch().peek().equals(block.getBlockId())) {
-            peer.getSyncBlockToFetch().poll();
-          }
-        });
-
-    if (freshBlockId.contains(block.getBlockId())) {
-      return;
-    }
+//    getActivePeer()
+//        .forEach(peer -> {
+//          if (!peer.getSyncBlockToFetch().isEmpty()
+//              && peer.getSyncBlockToFetch().peek().equals(block.getBlockId())) {
+//            peer.getSyncBlockToFetch().poll();
+//          }
+//        });
 
     try {
       del.handleBlock(block, true);
