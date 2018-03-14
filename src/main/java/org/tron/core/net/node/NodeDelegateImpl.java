@@ -5,6 +5,8 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -91,14 +93,12 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-
   public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws UnReachBlockException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
-    LinkedList<BlockId> retBlockIds = new LinkedList<>();
     if (dbManager.getHeadBlockNum() == 0) {
-      return retBlockIds;
+      return new LinkedList<>();
     }
 
     BlockId unForkedBlockId = null;
@@ -110,29 +110,20 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (!blockChainSummary.isEmpty()) {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
-      for (BlockId blockId : blockChainSummary) {
-        if (dbManager.containBlock(blockId)) {
-          unForkedBlockId = blockId;
-          break;
-        }
-      }
-
-      if (unForkedBlockId == null) {
-        throw new UnReachBlockException();
-        //todo: can not find any same block form peer's summary and my db.
-      }
+      unForkedBlockId = blockChainSummary.stream()
+              .filter(blockId -> dbManager.containBlock(blockId))
+              .findFirst()
+              .orElseThrow(UnReachBlockException::new);
+      //todo: can not find any same block form peer's summary and my db.
     }
 
     //todo: limit the count of block to send peer by one time.
-    long highLimit = unForkedBlockId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM;
-    for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum()
-            && num <= highLimit; ++num) {
-      if (num > 0) {
-        retBlockIds.add(dbManager.getBlockIdByNum(num));
-      }
-    }
-    return retBlockIds;
+    long unForkedBlockIdNum = unForkedBlockId.getNum();
+    long len = Longs.min(dbManager.getHeadBlockNum(), unForkedBlockIdNum +NodeConstant.SYNC_FETCH_BATCH_NUM);
+    return LongStream.rangeClosed(unForkedBlockIdNum, len)
+            .filter(num -> num > 0)
+            .mapToObj(num -> dbManager.getBlockIdByNum(num))
+            .collect(Collectors.toCollection(LinkedList::new));
   }
 
   @Override
