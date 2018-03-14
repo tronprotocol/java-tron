@@ -5,10 +5,12 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class CreateAccountActuator extends AbstractActuator {
 
@@ -18,17 +20,22 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret)
+      throws ContractExeException {
+    long fee = calcFee();
     try {
+
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
       dbManager.getAccountStore()
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
+      ret.setStatus(fee, code.SUCESS);
+      return true;
     } catch (InvalidProtocolBufferException e) {
+      ret.setStatus(fee, code.FAILED);
       e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
-    return true;
   }
 
   @Override

@@ -118,9 +118,9 @@ public class ManagerTest {
           ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
     });
     logger.info("---------");
-    dbManager.getWitnessStore().putWitness(witnessCapsulef);
-    dbManager.getWitnessStore().putWitness(witnessCapsules);
-    dbManager.getWitnessStore().putWitness(witnessCapsulet);
+    dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
+    dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
+    dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
     dbManager.updateWits();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
       logger.info("witness address is {}",

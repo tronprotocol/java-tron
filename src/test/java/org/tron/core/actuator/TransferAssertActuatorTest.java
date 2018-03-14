@@ -27,7 +27,6 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -100,10 +99,8 @@ public class TransferAssertActuatorTest {
     TransferAssertActuator actuator = new TransferAssertActuator(contract, dbManager);
     try {
       actuator.validate();
-      actuator.execute();
+//      actuator.execute();
     } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (ContractExeException e) {
       e.printStackTrace();
     }
   }

@@ -24,12 +24,14 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class AssetIssueActuator extends AbstractActuator {
 
@@ -40,7 +42,8 @@ public class AssetIssueActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    long fee = calcFee();
     try {
       if (!this.contract.is(AssetIssueContract.class)) {
         throw new ContractExeException();
@@ -49,14 +52,13 @@ public class AssetIssueActuator extends AbstractActuator {
       if (dbManager == null) {
         throw new ContractExeException();
       }
-
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
-
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
-
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
-      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
+
+      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), fee);
+      ret.setStatus(fee, code.SUCESS);
 
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
@@ -67,11 +69,12 @@ public class AssetIssueActuator extends AbstractActuator {
       dbManager.getAccountStore()
           .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException();
     } catch (BalanceInsufficientException e) {
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException();
     }
-
     return true;
   }
 
