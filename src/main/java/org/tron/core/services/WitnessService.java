@@ -204,7 +204,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(DateTime when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException， UnLinkedBlockException{
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
     return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when.getMillis(),
         this.privateKeyMap.get(witnessAddress));
   }
