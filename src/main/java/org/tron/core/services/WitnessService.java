@@ -133,12 +133,12 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() {
 
+    DateTime now = DateTime.now();
     if (this.needSyncCheck) {
-      logger.info(db.getSlotTime(1).toString());
-      logger.info(DateTime.now().toString());
+      logger.info(new DateTime(db.getSlotTime(1)).toString());
+      logger.info(now.toString());
 
-      if (db.getSlotTime(1).isAfterNow()) { // check sync during first loop
-
+      if (db.getSlotTime(1) > now.getMillis()) { // check sync during first loop
         needSyncCheck = false;
       } else {
         return BlockProductionCondition.NOT_SYNCED;
@@ -153,7 +153,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = db.getSlotAtTime(DateTime.now());
+    long slot = db.getSlotAtTime(now.getMillis());
     logger.debug("Slot:" + slot);
 
     if (slot == 0) {
@@ -168,9 +168,9 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
-    DateTime scheduledTime = db.getSlotTime(slot);
+    long scheduledTime = db.getSlotTime(slot);
 
-    if (scheduledTime.getMillis() - DateTime.now().getMillis() > PRODUCE_TIME_OUT) {
+    if (scheduledTime - now.getMillis() > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
     }
 
@@ -207,9 +207,9 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(DateTime when, ByteString witnessAddress)
+  private BlockCapsule generateBlock(long when, ByteString witnessAddress)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when.getMillis(),
+    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
 

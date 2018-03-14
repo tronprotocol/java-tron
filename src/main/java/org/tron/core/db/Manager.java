@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -706,11 +705,11 @@ public class Manager {
    * get slot at time.
    */
   public long getSlotAtTime(long when) {
-    DateTime firstSlotTime = getSlotTime(1);
-    if (when.isBefore(firstSlotTime)) {
+    long firstSlotTime = getSlotTime(1);
+    if (when < firstSlotTime) {
       return 0;
     }
-    return (when.getMillis() - firstSlotTime.getMillis()) / blockInterval() + 1;
+    return (when - firstSlotTime) / blockInterval() + 1;
   }
 
 
