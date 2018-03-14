@@ -20,6 +20,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -190,17 +191,8 @@ public class WitnessService implements Service {
       logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
-    } catch (ValidateSignatureException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (ContractValidateException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (ContractExeException e) {
-      logger.error(e.getMessage());
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    } catch (UnLinkedBlockException e) {
-      logger.error(e.getMessage());
+    } catch (TronException e) {
+      e.printStackTrace();
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 

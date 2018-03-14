@@ -334,10 +334,6 @@ public class Manager {
 
   }
 
-  void refreshHead() {
-
-  }
-
   /**
    * save a block.
    */
@@ -414,14 +410,24 @@ public class Manager {
       }
     }
 
+    //refresh
+    refreshHead(block);
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     // todo modify the dynamic head
-    this.head = this.khaosDb.getHead();
+    //this.head = this.khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
+  private void refreshHead(BlockCapsule block) {
+    this.head = block;
+    this.dynamicPropertiesStore
+        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+  }
 
   /**
    * Get the fork branch.
@@ -598,10 +604,6 @@ public class Manager {
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     this.pushBlock(blockCapsule);
-    this.dynamicPropertiesStore
-        .saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;
   }
 
