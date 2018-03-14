@@ -15,7 +15,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
@@ -61,8 +60,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("Contract Exectute exception");
     }
 
-    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
     List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
     return trx.stream()
