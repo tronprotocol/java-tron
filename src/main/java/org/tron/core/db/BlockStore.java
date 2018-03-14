@@ -61,6 +61,7 @@ public class BlockStore extends TronDatabase<BlockCapsule> {
   /**
    * Get the head block's number.
    */
+  @Deprecated
   public long getHeadBlockNum() {
     return head == null ? 0 : head.getNum();
   }

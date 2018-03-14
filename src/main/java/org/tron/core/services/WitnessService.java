@@ -134,7 +134,11 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock() {
 
     if (this.needSyncCheck) {
+      logger.info(db.getSlotTime(1).toString());
+      logger.info(DateTime.now().toString());
+
       if (db.getSlotTime(1).isAfterNow()) { // check sync during first loop
+
         needSyncCheck = false;
       } else {
         return BlockProductionCondition.NOT_SYNCED;

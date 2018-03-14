@@ -705,7 +705,7 @@ public class Manager {
   /**
    * get slot at time.
    */
-  public long getSlotAtTime(DateTime when) {
+  public long getSlotAtTime(long when) {
     DateTime firstSlotTime = getSlotTime(1);
     if (when.isBefore(firstSlotTime)) {
       return 0;
@@ -717,34 +717,43 @@ public class Manager {
   /**
    * get slot time.
    */
-  public DateTime getSlotTime(long slotNum) {
+  public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
-      return DateTime.now();
+      return System.currentTimeMillis();
     }
     long interval = blockInterval();
-    BlockStore blockStore = getBlockStore();
-    DateTime genesisTime = blockStore.getGenesisTime();
-    if (blockStore.getHeadBlockNum() == 0) {
-      return genesisTime.plus(slotNum * interval);
+
+
+    if (getHeadBlockNum() == 0) {
+      return getGenesisBlock().getTimeStamp() + slotNum * interval;
     }
 
     if (lastHeadBlockIsMaintenance()) {
       slotNum += getSkipSlotInMaintenance();
     }
 
-    DateTime headSlotTime = blockStore.getHeadBlockTime();
+    //DateTime headSlotTime = blockStore.getHeadBlockTime();
 
     //align slot time
-    headSlotTime = headSlotTime
-        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+//    headSlotTime = headSlotTime
+//        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
+//
+    long headSlotTime = getHeadBlockTimestamp();
+    headSlotTime = headSlotTime -
+        ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
-    return headSlotTime.plus(interval * slotNum);
+    return headSlotTime + interval * slotNum;
   }
 
 
   private boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
+
+  private long getHeadBlockTimestamp () {
+    return head.getTimeStamp();
+  }
+
 
   // To be added
   private long getSkipSlotInMaintenance() {

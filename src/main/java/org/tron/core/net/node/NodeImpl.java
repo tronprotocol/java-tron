@@ -774,6 +774,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                 && !syncBlockIdWeRequested.containsKey(blockId)) {
               send.get(peer).add(blockId);
               request.add(blockId);
+              //TODO: check max block num to fetch from one peer.
 //              if (send.get(peer).size() > 200) { //Max Blocks peer get one time
 //                break;
 //              }
