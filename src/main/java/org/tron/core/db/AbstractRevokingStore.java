@@ -5,8 +5,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.SourceInter;
@@ -14,7 +18,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
-abstract class AbstractRevokingStore implements RevokingDatabase {
+@Getter // only for unit test
+public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
@@ -35,7 +40,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
 
     boolean disableOnExit = disabled && forceEnable;
     if (forceEnable) {
-      enable();
+      disabled = false;
     }
 
     while (stack.size() > DEFAULT_STACK_MAX_SIZE) {
@@ -174,7 +179,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
     --activeDialog;
   }
@@ -211,7 +216,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
   }
 
@@ -241,6 +246,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Slf4j
+  @Getter // only for unit test
   public static class Dialog implements AutoCloseable {
 
     private RevokingDatabase revokingDatabase;
@@ -325,14 +331,16 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @ToString
+  @Getter // only for unit test
   static class RevokingState {
 
-    HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
-    HashSet<RevokingTuple> newIds = new HashSet<>();
-    HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
+    Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
+    Set<RevokingTuple> newIds = new HashSet<>();
+    Map<RevokingTuple, byte[]> removed = new HashMap<>();
   }
 
   @AllArgsConstructor
+  @EqualsAndHashCode
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

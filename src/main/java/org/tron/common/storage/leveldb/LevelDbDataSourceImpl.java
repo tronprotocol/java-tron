@@ -213,15 +213,31 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     }
   }
 
+  @Override
+  public Set<byte[]> allValues() {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Set<byte[]> result = new HashSet<>();
+      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        result.add(iterator.peekNext().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
     try (WriteBatch batch = database.createWriteBatch()) {
-      for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
-        if (entry.getValue() == null) {
-          batch.delete(entry.getKey());
+      rows.forEach((key, value) -> {
+        if (value == null) {
+          batch.delete(key);
         } else {
-          batch.put(entry.getKey(), entry.getValue());
+          batch.put(key, value);
         }
-      }
+      });
       database.write(batch);
     }
   }

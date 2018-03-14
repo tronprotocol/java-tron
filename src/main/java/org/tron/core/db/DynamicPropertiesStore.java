@@ -1,12 +1,12 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.util.Optional;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
-
-import java.util.Optional;
+import org.tron.core.config.args.Args;
 
 public class DynamicPropertiesStore extends TronDatabase {
 
@@ -23,7 +23,9 @@ public class DynamicPropertiesStore extends TronDatabase {
 
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
-  private DateTime nextMaintenanceTime;
+
+  private DateTime nextMaintenanceTime = new DateTime(
+      Long.parseLong(Args.getInstance().getGenesisBlock().getTimeStamp()));
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
@@ -98,8 +100,8 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public long getLatestBlockHeaderTimestamp() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_TIMESTAMP))
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found latest block header timestamp"));
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found latest block header timestamp"));
   }
 
   /**
@@ -107,14 +109,14 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public long getLatestBlockHeaderNumber() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_NUMBER))
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
   public int getStateFlag() {
     return Optional.ofNullable(this.dbSource.getData(STATE_FLAG))
-            .map(ByteArray::toInt)
-            .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
+        .map(ByteArray::toInt)
+        .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
   }
 
   /**
@@ -122,8 +124,8 @@ public class DynamicPropertiesStore extends TronDatabase {
    */
   public ByteString getLatestBlockHeaderHash() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
-            .map(ByteString::copyFrom)
-            .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
+        .map(ByteString::copyFrom)
+        .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
   }
 
   /**
@@ -150,7 +152,7 @@ public class DynamicPropertiesStore extends TronDatabase {
     this.dbSource.putData(LATEST_BLOCK_HEADER_HASH, h.toByteArray());
   }
 
-  public void saveStateFlag(int n) {
+  private void saveStateFlag(int n) {
     logger.info("update state flag = {}", n);
     this.dbSource.putData(STATE_FLAG, ByteArray.fromInt(n));
   }
@@ -164,8 +166,18 @@ public class DynamicPropertiesStore extends TronDatabase {
     return nextMaintenanceTime;
   }
 
-  public void updateMaintenanceTime(){
-    nextMaintenanceTime = nextMaintenanceTime.plus(MAINTENANCE_TIME_INTERVAL);
+
+  private void setNextMaintenanceTime(DateTime nextMaintenanceTime) {
+    this.nextMaintenanceTime = nextMaintenanceTime;
+  }
+
+  public void updateNextMaintenanceTime(long blockTime) {
+
+    long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
+    DateTime nextMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - nextMaintenanceTime.getMillis()) / maintenanceTimeInterval;
+    setNextMaintenanceTime(nextMaintenanceTime.plus((round + 1) * maintenanceTimeInterval));
+
   }
 
 }

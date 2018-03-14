@@ -15,11 +15,13 @@
 
 package org.tron.core.db;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
 public class BlockStore extends TronDatabase<BlockCapsule> {
@@ -59,6 +61,7 @@ public class BlockStore extends TronDatabase<BlockCapsule> {
   /**
    * Get the head block's number.
    */
+  @Deprecated
   public long getHeadBlockNum() {
     return head == null ? 0 : head.getNum();
   }
@@ -76,30 +79,41 @@ public class BlockStore extends TronDatabase<BlockCapsule> {
     return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
   }
 
-
-  public void getUnspend(byte[] key) {
-
-  }
-
-
   @Override
   public void put(byte[] key, BlockCapsule item) {
+    logger.info("address is {},account is {}", key, item);
 
+    byte[] value = dbSource.getData(key);
+    if (ArrayUtils.isNotEmpty(value)) {
+      onModify(key, value);
+    }
+
+    logger.info("address is {} ", ByteArray.toHexString(key));
+    dbSource.putData(key, item.getData());
+
+    if (ArrayUtils.isEmpty(value)) {
+      onCreate(key);
+    }
   }
 
   @Override
   public void delete(byte[] key) {
-
+    // This should be called just before an object is removed.
+    onDelete(key);
+    dbSource.deleteData(key);
   }
 
   @Override
   public BlockCapsule get(byte[] key) {
-    return null;
+    byte[] value = dbSource.getData(key);
+    return ArrayUtils.isEmpty(value) ? null : new BlockCapsule(value);
   }
 
   @Override
   public boolean has(byte[] key) {
-    return false;
+    byte[] block = dbSource.getData(key);
+    logger.info("address is {}, block is {}", key, block);
+    return null != block;
   }
 
 }

@@ -3,12 +3,14 @@ package org.tron.core.db;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javafx.util.Pair;
-import org.tron.core.Sha256Hash;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.UnLinkedBlockException;
 
 public class KhaosDatabase extends TronDatabase {
 
@@ -155,7 +157,7 @@ public class KhaosDatabase extends TronDatabase {
     if (block != null) {
       return block.blk;
     } else {
-      KhaosBlock blockUnlinked = miniStore.getByHash(hash);
+      KhaosBlock blockUnlinked = miniUnlinkedStore.getByHash(hash);
       if (blockUnlinked != null) {
         return blockUnlinked.blk;
       } else {
@@ -167,16 +169,15 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Push the block in the KhoasDB.
    */
-  public BlockCapsule push(BlockCapsule blk) {
+  public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
         block.parent = kblock;
       } else {
-        //unlinked
         miniUnlinkedStore.insert(block);
-        return head.blk;
+        throw new UnLinkedBlockException();
       }
     }
 
@@ -208,11 +209,11 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
-  public Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> getBranch(BlockId block1,
+  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(BlockId block1,
       BlockId block2) {
-    ArrayList<BlockCapsule> list1 = new ArrayList<>();
-    ArrayList<BlockCapsule> list2 = new ArrayList<>();
-    Pair<ArrayList<BlockCapsule>, ArrayList<BlockCapsule>> ret = new Pair<>(list1, list2);
+    LinkedList<BlockCapsule> list1 = new LinkedList<>();
+    LinkedList<BlockCapsule> list2 = new LinkedList<>();
+    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
