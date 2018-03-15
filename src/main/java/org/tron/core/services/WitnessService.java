@@ -170,11 +170,6 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    if (CollectionUtils.isEmpty(db.getShuffledWitnessStates())) {
-      logger.info("ShuffledWitnesses is not initialized yet,waiting sync");
-      return BlockProductionCondition.NOT_SYNCED;
-    }
-
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
@@ -269,6 +264,8 @@ public class WitnessService implements Service {
     });
 
     this.db.updateWits();
+    this.db.setShuffledWitnessStates(db.getWitnesses());
+
   }
 
 
