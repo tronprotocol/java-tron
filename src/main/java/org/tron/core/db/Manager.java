@@ -133,7 +133,8 @@ public class Manager {
    * get ScheduledWitness by slot.
    */
   public ByteString getScheduledWitness(final long slot) {
-    final long currentSlot = this.blockStore.currentASlot() + slot;
+
+    final long currentSlot = getHeadSlot() + slot;
 
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
@@ -148,6 +149,10 @@ public class Manager {
     //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
 
     return scheduledWitness;
+  }
+
+  private long getHeadSlot() {
+    return (head.getTimeStamp() - genesisBlock.getTimeStamp()) / blockInterval();
   }
 
   public int calculateParticipationRate() {

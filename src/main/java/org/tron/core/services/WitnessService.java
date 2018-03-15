@@ -163,7 +163,7 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(now);
-    logger.info("Slot:" + slot);
+//    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       return BlockProductionCondition.NOT_TIME_YET;
