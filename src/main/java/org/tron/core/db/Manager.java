@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
@@ -364,7 +365,7 @@ public class Manager {
       //todo: In some case it need to switch the branch
     }
     if (useKhaoDB && block.getNum() != 0) {
-      if (!newBlock.getParentHash().equals(head.getBlockId())) {
+      if (!Objects.equals(newBlock.getParentHash(), head.getBlockId())) {
         if (newBlock.getNum() > head.getNum()) {
           Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
               .getBranch(newBlock.getBlockId(), head.getBlockId());
