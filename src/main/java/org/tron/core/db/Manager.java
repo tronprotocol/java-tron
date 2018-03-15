@@ -374,31 +374,31 @@ public class Manager {
             while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
               eraseBlock();
             }
-          }
 
-          LinkedList<BlockCapsule> branch = binaryTree.getKey();
-          Collections.reverse(branch);
-          branch.forEach(item -> {
-            // todo  process the exception carefully later
-            try (Dialog tmpDialog = revokingStore.buildDialog()) {
-              processBlock(item);
-              tmpDialog.commit();
-              head = item;
-              getDynamicPropertiesStore()
-                  .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-              getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-              getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
-            } catch (ValidateSignatureException e) {
-              e.printStackTrace();
-            } catch (ContractValidateException e) {
-              e.printStackTrace();
-            } catch (ContractExeException e) {
-              e.printStackTrace();
-            } catch (RevokingStoreIllegalStateException e) {
-              e.printStackTrace();
-            }
-          });
-          return;
+            LinkedList<BlockCapsule> branch = binaryTree.getKey();
+            Collections.reverse(branch);
+            branch.forEach(item -> {
+              // todo  process the exception carefully later
+              try (Dialog tmpDialog = revokingStore.buildDialog()) {
+                processBlock(item);
+                tmpDialog.commit();
+                head = item;
+                getDynamicPropertiesStore()
+                    .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
+                getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
+                getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
+              } catch (ValidateSignatureException e) {
+                e.printStackTrace();
+              } catch (ContractValidateException e) {
+                e.printStackTrace();
+              } catch (ContractExeException e) {
+                e.printStackTrace();
+              } catch (RevokingStoreIllegalStateException e) {
+                e.printStackTrace();
+              }
+            });
+            return;
+          }
         } else {
           // todo the error status
           return;
