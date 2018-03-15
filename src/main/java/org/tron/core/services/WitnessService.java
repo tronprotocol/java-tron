@@ -264,7 +264,6 @@ public class WitnessService implements Service {
 
     this.db.updateWits();
     this.db.setShuffledWitnessStates(db.getWitnesses());
-
   }
 
 

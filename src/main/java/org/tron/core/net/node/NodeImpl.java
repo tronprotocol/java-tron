@@ -314,17 +314,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       peer.getAdvObjWeRequested()
                           .put(idToFetch.getKey(), System.currentTimeMillis());
                     });
-//                for (PeerConnection peer :
-//                    getActivePeer()) {
-//                  //TODO: don't fetch too much obj from only one peer
-//                  if (!peer.isBusy()
-//                      && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())) {
-//                    sendPackage.add(idToFetch, peer);
-//                    advObjToFetch.remove(idToFetch.getKey());
-//                    peer.getAdvObjWeRequested().put(idToFetch.getKey(), System.currentTimeMillis());
-//                    break;
-//                  }
-//                }
               });
           sendPackage.sendFetch();
         }
@@ -345,9 +334,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         final boolean[] isBlockProc = {false};
 
         do {
-          blockWaitToProc.addAll(blockWaitToProcBak);
-          //need lock here
           synchronized (blockWaitToProcBak) {
+            blockWaitToProc.addAll(blockWaitToProcBak);
+            //need lock here
             blockWaitToProcBak.clear();
           }
 
@@ -491,14 +480,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void processSyncBlock(BlockCapsule block) {
     //TODO: add processing backlog cache here, use multi thread
-
-//    getActivePeer()
-//        .forEach(peer -> {
-//          if (!peer.getSyncBlockToFetch().isEmpty()
-//              && peer.getSyncBlockToFetch().peek().equals(block.getBlockId())) {
-//            peer.getSyncBlockToFetch().poll();
-//          }
-//        });
 
     try {
       del.handleBlock(block, true);
@@ -775,9 +756,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
-//              if (send.get(peer).size() > 200) { //Max Blocks peer get one time
-//                break;
-//              }
+              //if (send.get(peer).size() > 200) { //Max Blocks peer get one time
+              //  break;
+              //}
             }
           }
         });
