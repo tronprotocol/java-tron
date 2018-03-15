@@ -263,8 +263,11 @@ public class WitnessService implements Service {
     });
 
     this.db.updateWits();
+<<<<<<< HEAD
     this.db.setShuffledWitnessStates(db.getWitnesses());
 
+=======
+>>>>>>> 5780aecf55b9c1a9f92850177d05f0782b5fe3c5
   }
 
 

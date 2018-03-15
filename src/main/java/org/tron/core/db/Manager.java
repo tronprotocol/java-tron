@@ -139,7 +139,7 @@ public class Manager {
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnessStates();
+    final List<WitnessCapsule> currentShuffledWitnesses = this.getWitnesses();
     if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
