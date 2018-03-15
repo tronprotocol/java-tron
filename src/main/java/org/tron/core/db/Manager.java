@@ -843,6 +843,7 @@ public class Manager {
         wits.add(witnessCapsule);
       }
     });
+    wits.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
   }
 
   public AssetIssueStore getAssetIssueStore() {
