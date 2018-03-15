@@ -251,7 +251,7 @@ public class KhaosDatabase extends TronDatabase {
         }
       }
     }
-    
+
     return new Pair<>(list1, list2);
   }
 
