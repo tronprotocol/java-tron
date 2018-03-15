@@ -48,7 +48,7 @@ public class MerkleTree {
         return this;
     }
 
-    List<Leaf> createParentLeaves(List<Leaf> leaves) {
+    private List<Leaf> createParentLeaves(List<Leaf> leaves) {
         int step = 2;
         int len = leaves.size();
         return IntStream.iterate(0, i -> i + step)
@@ -60,7 +60,7 @@ public class MerkleTree {
                 }).collect(Collectors.toList());
     }
 
-    List<Leaf> createLeaves(List<Sha256Hash> hashList) {
+    private List<Leaf> createLeaves(List<Sha256Hash> hashList) {
         int step = 2;
         int len = hashList.size();
         return IntStream.iterate(0, i -> i + step)
