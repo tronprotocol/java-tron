@@ -2,8 +2,6 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Arrays;
-import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -72,8 +70,6 @@ public class ManagerTest {
     } catch (UnLinkedBlockException e) {
       isUnlinked = true;
     } catch (Exception e) {
-      Assert.fail(Arrays.toString(e.getStackTrace()));
-      TestCase.fail(Arrays.toString(e.getStackTrace()));
       Assert.assertTrue("pushBlock is error", false);
     }
 

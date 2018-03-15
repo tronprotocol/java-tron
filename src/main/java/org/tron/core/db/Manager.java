@@ -370,8 +370,10 @@ public class Manager {
           Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
               .getBranch(newBlock.getBlockId(), head.getBlockId());
 
-          while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
-            eraseBlock();
+          if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
+            while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
+              eraseBlock();
+            }
           }
 
           LinkedList<BlockCapsule> branch = binaryTree.getKey();
