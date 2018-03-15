@@ -232,7 +232,6 @@ public class KhaosDatabase extends TronDatabase {
       BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
@@ -252,7 +251,7 @@ public class KhaosDatabase extends TronDatabase {
         }
       }
     }
-    return ret;
+    return new Pair<>(list1, list2);
   }
 
   public boolean hasData() {
