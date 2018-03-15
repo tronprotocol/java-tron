@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -229,26 +230,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
             .map(TransactionCapsule::getHash)
             .collect(Collectors.toCollection(Vector::new));
 
-    int hashNum = ids.size();
-
-    while (hashNum > 1) {
-      int max = hashNum - (hashNum & 1);
-      int k = 0;
-      for (int i = 0; i < max; i += 2) {
-        ids.set(k++, Sha256Hash.of((ids.get(i).getByteString()
-                                .concat(ids.get(i + 1).getByteString()))
-                                .toByteArray()));
-      }
-
-      if (hashNum % 2 == 1) {
-        ids.set(k++, ids.get(max));
-      }
-      hashNum = k;
-    }
-
-    return ids.firstElement();
+    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }
-
 
   public void setMerkleRoot() {
     BlockHeader.raw blockHeaderRaw =

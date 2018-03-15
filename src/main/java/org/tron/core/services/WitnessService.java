@@ -36,13 +36,12 @@ public class WitnessService implements Service {
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
-  @Getter
-  protected List<WitnessCapsule> witnessStates;
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
+  private long tmpBlockNum = 0;
 
   /**
    * Construction method.
@@ -140,7 +139,7 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
-    long now = DateTime.now().getMillis();
+    long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
 //      logger.info(new DateTime(db.getSlotTime(1)).toString());
 //      logger.info(now.toString());
@@ -164,18 +163,17 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(now);
-    logger.debug("Slot:" + slot);
+//    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    final ByteString scheduledWitness = witnessStates.get((int) slot)
-        .getAddress();// this.db.getScheduledWitness(slot);
+    final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger
-          .info("ScheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
+      logger.info("ScheduledWitness[{}],slot[{}]",
+          ByteArray.toHexString(scheduledWitness.toByteArray()), slot);
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -191,7 +189,8 @@ public class WitnessService implements Service {
 
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
-      logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
+      logger.info("Block is generated successfully, Its Id is {},number{} ", block.getBlockId(),
+          block.getNum());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
@@ -221,13 +220,18 @@ public class WitnessService implements Service {
    */
   private void updateWitnessSchedule() {
 
-    long headBlockNum = db.getBlockStore().getHeadBlockNum();
-    if (headBlockNum != 0 && headBlockNum % witnessStates.size() == 0) {
-//      String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
-      witnessStates = new RandomGenerator<WitnessCapsule>()
-          .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
-//      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
-//          + getWitnessStringList(witnessStates));
+    long headBlockNum = db.getHeadBlockNum();
+    if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0
+        && tmpBlockNum != headBlockNum) {
+      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", db.getHeadBlockNum(),
+          db.getHeadBlockTimeStamp());
+      String witnessStringListBefore = getWitnessStringList(db.getWitnesses()).toString();
+      db.setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
+          .shuffle(db.getWitnesses(), db.getHeadBlockTimeStamp()));
+      ;
+      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",\nafter: "
+          + getWitnessStringList(db.getShuffledWitnessStates()));
+      tmpBlockNum = headBlockNum;
     }
   }
 
@@ -259,7 +263,8 @@ public class WitnessService implements Service {
     });
 
     this.db.updateWits();
-    this.witnessStates = this.db.getWitnesses();
+    this.db.setShuffledWitnessStates(db.getWitnesses());
+
   }
 
 
