@@ -346,7 +346,7 @@ public class Manager {
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    boolean useKhaoDB = false;
+    boolean useKhaoDB = true;
     BlockCapsule newBlock = this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -363,7 +363,7 @@ public class Manager {
 
       //todo: In some case it need to switch the branch
     }
-    if (useKhaoDB) {
+    if (useKhaoDB && block.getNum() != 0) {
       if (!newBlock.getParentHash().equals(head.getBlockId())) {
         if (newBlock.getNum() > head.getNum()) {
           Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
@@ -372,6 +372,7 @@ public class Manager {
           while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
             eraseBlock();
           }
+
           LinkedList<BlockCapsule> branch = binaryTree.getKey();
           Collections.reverse(branch);
           branch.forEach(item -> {
