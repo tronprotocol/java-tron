@@ -327,7 +327,6 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
-    head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
     try {
       revokingStore.pop();
       head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
