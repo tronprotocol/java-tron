@@ -374,7 +374,9 @@ public class Manager {
             while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
               eraseBlock();
             }
+          }
 
+          if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
             LinkedList<BlockCapsule> branch = binaryTree.getKey();
             Collections.reverse(branch);
             branch.forEach(item -> {
