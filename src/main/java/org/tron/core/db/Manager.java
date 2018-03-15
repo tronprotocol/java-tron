@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -67,6 +69,12 @@ public class Manager {
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
+
+  @Getter
+  @Setter
+  protected List<WitnessCapsule> shuffledWitnessStates;
+
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -94,7 +102,6 @@ public class Manager {
   private List<WitnessCapsule> wits = new ArrayList<>();
 
   // witness
-
   public List<WitnessCapsule> getWitnesses() {
     return this.wits;
   }
@@ -120,10 +127,6 @@ public class Manager {
     this.wits.add(witnessCapsule);
   }
 
-  public List<WitnessCapsule> getCurrentShuffledWitnesses() {
-    return this.getWitnesses();
-  }
-
 
   /**
    * get ScheduledWitness by slot.
@@ -134,7 +137,7 @@ public class Manager {
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getWitnesses();
+    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnessStates();
     if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,6 +170,11 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
+    if (CollectionUtils.isEmpty(db.getShuffledWitnessStates())) {
+      logger.info("ShuffledWitnesses is not initialized yet,waiting sync");
+      return BlockProductionCondition.NOT_SYNCED;
+    }
+
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
@@ -221,16 +227,16 @@ public class WitnessService implements Service {
   private void updateWitnessSchedule() {
 
     long headBlockNum = db.getHeadBlockNum();
-    db.getWitnessStore().getAllWitnesses();
     if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0
         && tmpBlockNum != headBlockNum) {
-      logger.info("updateWitnessSchedule number:{}\n,HeadBlockTimeStamp:{}", db.getHeadBlockNum(),
+      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", db.getHeadBlockNum(),
           db.getHeadBlockTimeStamp());
       String witnessStringListBefore = getWitnessStringList(db.getWitnesses()).toString();
-      db.setWitnesses(new RandomGenerator<WitnessCapsule>()
+      db.setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
           .shuffle(db.getWitnesses(), db.getHeadBlockTimeStamp()));
+      ;
       logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",\nafter: "
-          + getWitnessStringList(db.getWitnesses()));
+          + getWitnessStringList(db.getShuffledWitnessStates()));
       tmpBlockNum = headBlockNum;
     }
   }
