@@ -221,11 +221,11 @@ public class WitnessService implements Service {
     long headBlockNum = db.getHeadBlockNum();
     db.getWitnessStore().getAllWitnesses();
     if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0) {
-      logger.info("updateWitnessSchedule number:{}", db.getHeadBlockNum());
+      logger.info("updateWitnessSchedule number:{}\n,HeadBlockTimeStamp:{}", db.getHeadBlockNum(),db.getHeadBlockTimeStamp());
       String witnessStringListBefore = getWitnessStringList(db.getWitnesses()).toString();
       db.setWitnesses(new RandomGenerator<WitnessCapsule>()
-          .shuffle(db.getWitnesses(), db.getBlockStore().getHeadBlockTime()));
-      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
+          .shuffle(db.getWitnesses(), db.getHeadBlockTimeStamp()));
+      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",\nafter: "
           + getWitnessStringList(db.getWitnesses()));
     }
   }

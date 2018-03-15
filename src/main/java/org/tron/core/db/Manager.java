@@ -112,6 +112,10 @@ public class Manager {
     return this.head.getNum();
   }
 
+  public long getHeadBlockTimeStamp() {
+    return this.head.getTimeStamp();
+  }
+
   public void addWitness(final WitnessCapsule witnessCapsule) {
     this.wits.add(witnessCapsule);
   }
