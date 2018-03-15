@@ -41,6 +41,7 @@ public class WitnessService implements Service {
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
+  private long tmpBlockNum = 0;
 
   /**
    * Construction method.
@@ -188,7 +189,8 @@ public class WitnessService implements Service {
 
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
-      logger.info("Block is generated successfully, Its Id is " + block.getBlockId());
+      logger.info("Block is generated successfully, Its Id is {},number{} ", block.getBlockId(),
+          block.getNum());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
@@ -220,13 +222,16 @@ public class WitnessService implements Service {
 
     long headBlockNum = db.getHeadBlockNum();
     db.getWitnessStore().getAllWitnesses();
-    if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0) {
-      logger.info("updateWitnessSchedule number:{}\n,HeadBlockTimeStamp:{}", db.getHeadBlockNum(),db.getHeadBlockTimeStamp());
+    if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0
+        && tmpBlockNum != headBlockNum) {
+      logger.info("updateWitnessSchedule number:{}\n,HeadBlockTimeStamp:{}", db.getHeadBlockNum(),
+          db.getHeadBlockTimeStamp());
       String witnessStringListBefore = getWitnessStringList(db.getWitnesses()).toString();
       db.setWitnesses(new RandomGenerator<WitnessCapsule>()
           .shuffle(db.getWitnesses(), db.getHeadBlockTimeStamp()));
       logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",\nafter: "
           + getWitnessStringList(db.getWitnesses()));
+      tmpBlockNum = headBlockNum;
     }
   }
 
