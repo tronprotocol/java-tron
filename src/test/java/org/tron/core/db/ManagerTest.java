@@ -17,7 +17,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateSignatureException;
 
 
 public class ManagerTest {
@@ -63,16 +66,18 @@ public class ManagerTest {
   }
 
   @Test
-  public void pushBlock() {
+  public void pushBlock()
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
     boolean isUnlinked = false;
     try {
       dbManager.pushBlock(blockCapsule2);
     } catch (UnLinkedBlockException e) {
       isUnlinked = true;
-    } catch (Exception e) {
-      System.out.println(e);
-      Assert.assertTrue("pushBlock is error", false);
     }
+//    } catch (Exception e) {
+//      System.out.println(e);
+//      Assert.assertTrue("pushBlock is error", false);
+//    }
 
     Assert.assertTrue("containBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
         .fromHexString(blockCapsule2.getBlockId().toString()))));
