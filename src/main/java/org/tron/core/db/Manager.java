@@ -99,6 +99,10 @@ public class Manager {
     return this.wits;
   }
 
+  public void setWitnesses(List<WitnessCapsule> wits) {
+    this.wits = wits;
+  }
+
   public BlockId getHeadBlockId() {
     return head.getBlockId();
     //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
@@ -126,7 +130,7 @@ public class Manager {
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnesses();
+    final List<WitnessCapsule> currentShuffledWitnesses = this.getWitnesses();
     if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
@@ -142,16 +146,6 @@ public class Manager {
     return 100 * this.dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
         / BlockFilledSlots.SLOT_NUMBER;
   }
-
-  /**
-   * get shuffled witnesses.
-   */
-  public List<WitnessCapsule> getShuffledWitnesses() {
-    final List<WitnessCapsule> shuffleWits = this.getWitnesses();
-    //Collections.shuffle(shuffleWits);
-    return shuffleWits;
-  }
-
 
   /**
    * all db should be init here.
@@ -258,9 +252,9 @@ public class Manager {
       ByteString address = ByteString.copyFrom(keyAddress);
 
       final AccountCapsule accountCapsule = new AccountCapsule(
-              ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
+          ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-              address, key.getVoteCount(), key.getUrl());
+          address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
       this.accountStore.put(keyAddress, accountCapsule);
       this.witnessStore.put(keyAddress, witnessCapsule);
@@ -720,7 +714,6 @@ public class Manager {
     }
     long interval = blockInterval();
 
-
     if (getHeadBlockNum() == 0) {
       return getGenesisBlock().getTimeStamp() + slotNum * interval;
     }
@@ -747,7 +740,7 @@ public class Manager {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
-  private long getHeadBlockTimestamp () {
+  private long getHeadBlockTimestamp() {
     return head.getTimeStamp();
   }
 
