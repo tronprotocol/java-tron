@@ -139,7 +139,7 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
-    long now = DateTime.now().getMillis();
+    long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
 //      logger.info(new DateTime(db.getSlotTime(1)).toString());
 //      logger.info(now.toString());
@@ -163,7 +163,7 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(now);
-    logger.debug("Slot:" + slot);
+    logger.info("Slot:" + slot);
 
     if (slot == 0) {
       return BlockProductionCondition.NOT_TIME_YET;
@@ -172,8 +172,8 @@ public class WitnessService implements Service {
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger
-          .info("ScheduledWitness[" + ByteArray.toHexString(scheduledWitness.toByteArray()) + "]");
+      logger.info("ScheduledWitness[{}],slot[{}]",
+          ByteArray.toHexString(scheduledWitness.toByteArray()), slot);
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
