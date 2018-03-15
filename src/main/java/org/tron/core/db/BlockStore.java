@@ -66,10 +66,12 @@ public class BlockStore extends TronDatabase<BlockCapsule> {
     return head == null ? 0 : head.getNum();
   }
 
+  @Deprecated
   public DateTime getHeadBlockTime() {
     return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
   }
 
+  @Deprecated
   public long currentASlot() {
     return getHeadBlockNum(); // assume no missed slot
   }
