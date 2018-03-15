@@ -695,8 +695,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         } else if (!blockIdWeGet.isEmpty()) {
           while (!peer.getSyncBlockToFetch().isEmpty()) {
-            if (peer.getSyncBlockToFetch().peekLast() != blockIdWeGet.peekFirst()) {
-              peer.getSyncBlockToFetch().pop();
+            if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
+              blockIdWeGet.pop();
             } else {
               break;
             }
@@ -705,7 +705,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             updateBlockWeBothHave(peer, blockIdWeGet.peek());
           }
           //poll the block we both have.
-          blockIdWeGet.poll();
+          blockIdWeGet.pop();
         }
 
         //sew it

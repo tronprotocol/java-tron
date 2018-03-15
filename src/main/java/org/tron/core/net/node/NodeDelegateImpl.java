@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
@@ -59,8 +58,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("Contract Exectute exception");
     }
 
-    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-    dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     //TODO: get block's TRXs here and return
     List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
     return trx.stream()
@@ -124,8 +121,10 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
 
     //todo: limit the count of block to send peer by one time.
+    long highLimit = unForkedBlockId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM;
     for (long num = unForkedBlockId.getNum();
-        num <= dbManager.getHeadBlockNum() && num <= NodeConstant.SYNC_FETCH_BATCH_NUM; ++num) {
+        num <= dbManager.getHeadBlockNum()
+            && num <= highLimit; ++num) {
       if (num > 0) {
         retBlockIds.add(dbManager.getBlockIdByNum(num));
       }
@@ -159,9 +158,9 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-      if (highBlkNum == 0) {
-        return retSummary;
-      }
+//      if (highBlkNum == 0) {
+//        return retSummary;
+//      }
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();

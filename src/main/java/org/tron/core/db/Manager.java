@@ -287,7 +287,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
+  public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
@@ -329,10 +329,6 @@ public class Manager {
 
   }
 
-  void refreshHead() {
-
-  }
-
   /**
    * save a block.
    */
@@ -367,17 +363,10 @@ public class Manager {
           LinkedList<BlockCapsule> branch = binaryTree.getValue();
           Collections.reverse(branch);
           branch.forEach(item -> {
-            Dialog tmpDialog = revokingStore.buildDialog();
             // todo  process the exception carefully later
-            try {
+            try (Dialog tmpDialog = revokingStore.buildDialog()) {
               processBlock(item);
-              try {
-                tmpDialog.commit();
-
-
-              } catch (RevokingStoreIllegalStateException e) {
-                e.printStackTrace();
-              }
+              tmpDialog.commit();
               head = item;
               getDynamicPropertiesStore()
                   .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
@@ -388,6 +377,8 @@ public class Manager {
             } catch (ContractValidateException e) {
               e.printStackTrace();
             } catch (ContractExeException e) {
+              e.printStackTrace();
+            } catch (RevokingStoreIllegalStateException e) {
               e.printStackTrace();
             }
           });
@@ -409,14 +400,24 @@ public class Manager {
       }
     }
 
+    //refresh
+    refreshHead(block);
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     // todo modify the dynamic head
-    this.head = this.khaosDb.getHead();
+    //this.head = this.khaosDb.getHead();
     // blockDbDataSource.putData(blockHash, blockData);
   }
 
+  private void refreshHead(BlockCapsule block) {
+    this.head = block;
+    this.dynamicPropertiesStore
+        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+  }
 
   /**
    * Get the fork branch.
@@ -532,7 +533,7 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
+  public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
 
@@ -593,10 +594,6 @@ public class Manager {
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
     this.pushBlock(blockCapsule);
-    this.dynamicPropertiesStore
-        .saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     return blockCapsule;
   }
 
