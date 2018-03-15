@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import java.util.stream.Stream;
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,9 +74,8 @@ public class KhaosDatabase extends TronDatabase {
       KhaosBlock block = this.hashKblkMap.get(hash);
       //Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
       if (block != null) {
-        long num = block.num;
         //parentHash = block.getParentHash();
-        ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
+        ArrayList<KhaosBlock> listBlk = numKblkMap.get(block.num);
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id == hash);
         }
@@ -143,27 +144,18 @@ public class KhaosDatabase extends TronDatabase {
    * check if the id is contained in the KhoasDB.
    */
   public Boolean containBlock(Sha256Hash hash) {
-    if (miniStore.getByHash(hash) != null) {
-      return true;
-    }
-    return miniUnlinkedStore.getByHash(hash) != null;
+    return miniStore.getByHash(hash) != null || miniUnlinkedStore.getByHash(hash) != null;
   }
 
   /**
    * Get the Block form KhoasDB, if it doesn't exist ,return null.
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
-    KhaosBlock block = miniStore.getByHash(hash);
-    if (block != null) {
-      return block.blk;
-    } else {
-      KhaosBlock blockUnlinked = miniUnlinkedStore.getByHash(hash);
-      if (blockUnlinked != null) {
-        return blockUnlinked.blk;
-      } else {
-        return null;
-      }
-    }
+    return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
+            .filter(Objects::nonNull)
+            .map(khaosBlock -> khaosBlock.blk)
+            .findFirst()
+            .orElse(null);
   }
 
   /**
@@ -213,13 +205,11 @@ public class KhaosDatabase extends TronDatabase {
       BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
     if (kblk1 != null && kblk2 != null) {
       do {
-
         if (kblk1.num > kblk2.num) {
           list1.add(kblk1.blk);
           kblk1 = kblk1.parent;
@@ -236,7 +226,7 @@ public class KhaosDatabase extends TronDatabase {
         kblk2 = kblk2.parent;
       } while (kblk1 != kblk2);
     }
-    return ret;
+    return new Pair<>(list1, list2);
   }
 
   public boolean hasData() {
