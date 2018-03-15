@@ -822,7 +822,7 @@ public class Manager {
         }
       }
     });
-    witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
+    witnessCapsuleList.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
@@ -843,7 +843,7 @@ public class Manager {
         wits.add(witnessCapsule);
       }
     });
-    wits.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
+    wits.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
   }
 
   public AssetIssueStore getAssetIssueStore() {
