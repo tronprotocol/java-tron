@@ -346,7 +346,7 @@ public class Manager {
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    boolean useKhaoDB = true;
+    boolean useKhaoDB = false;
     BlockCapsule newBlock = this.khaosDb.push(block);
     //todo: check block's validity
     if (!block.generatedByMyself) {
