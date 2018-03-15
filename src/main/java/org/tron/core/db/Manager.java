@@ -364,7 +364,7 @@ public class Manager {
 
       //todo: In some case it need to switch the branch
     }
-    if (useKhaoDB && block.getNum() != 0) {
+    if (useKhaoDB && block.getNum() != 0 && head == null) {
       if (!Objects.equals(newBlock.getParentHash(), head.getBlockId())) {
         if (newBlock.getNum() > head.getNum()) {
           Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
