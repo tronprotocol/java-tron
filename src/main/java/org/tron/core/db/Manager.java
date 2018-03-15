@@ -13,8 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -67,6 +70,12 @@ public class Manager {
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
+
+  @Getter
+  @Setter
+  protected List<WitnessCapsule> shuffledWitnessStates;
+
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -94,9 +103,12 @@ public class Manager {
   private List<WitnessCapsule> wits = new ArrayList<>();
 
   // witness
-
   public List<WitnessCapsule> getWitnesses() {
     return this.wits;
+  }
+
+  public void setWitnesses(List<WitnessCapsule> wits) {
+    this.wits = wits;
   }
 
   public BlockId getHeadBlockId() {
@@ -108,12 +120,12 @@ public class Manager {
     return this.head.getNum();
   }
 
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    this.wits.add(witnessCapsule);
+  public long getHeadBlockTimeStamp() {
+    return this.head.getTimeStamp();
   }
 
-  public List<WitnessCapsule> getCurrentShuffledWitnesses() {
-    return this.getWitnesses();
+  public void addWitness(final WitnessCapsule witnessCapsule) {
+    this.wits.add(witnessCapsule);
   }
 
 
@@ -121,12 +133,13 @@ public class Manager {
    * get ScheduledWitness by slot.
    */
   public ByteString getScheduledWitness(final long slot) {
-    final long currentSlot = this.blockStore.currentASlot() + slot;
+
+    final long currentSlot = getHeadSlot() + slot;
 
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnesses();
+    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnessStates();
     if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
@@ -138,20 +151,14 @@ public class Manager {
     return scheduledWitness;
   }
 
+  private long getHeadSlot() {
+    return (head.getTimeStamp() - genesisBlock.getTimeStamp()) / blockInterval();
+  }
+
   public int calculateParticipationRate() {
     return 100 * this.dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
         / BlockFilledSlots.SLOT_NUMBER;
   }
-
-  /**
-   * get shuffled witnesses.
-   */
-  public List<WitnessCapsule> getShuffledWitnesses() {
-    final List<WitnessCapsule> shuffleWits = this.getWitnesses();
-    //Collections.shuffle(shuffleWits);
-    return shuffleWits;
-  }
-
 
   /**
    * all db should be init here.
@@ -258,9 +265,9 @@ public class Manager {
       ByteString address = ByteString.copyFrom(keyAddress);
 
       final AccountCapsule accountCapsule = new AccountCapsule(
-              ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
+          ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-              address, key.getVoteCount(), key.getUrl());
+          address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
       this.accountStore.put(keyAddress, accountCapsule);
       this.witnessStore.put(keyAddress, witnessCapsule);
@@ -707,6 +714,7 @@ public class Manager {
     if (when < firstSlotTime) {
       return 0;
     }
+    logger.warn("nextFirstSlotTime:[{}],now[{}]", new DateTime(firstSlotTime), new DateTime(when));
     return (when - firstSlotTime) / blockInterval() + 1;
   }
 
@@ -719,7 +727,6 @@ public class Manager {
       return System.currentTimeMillis();
     }
     long interval = blockInterval();
-
 
     if (getHeadBlockNum() == 0) {
       return getGenesisBlock().getTimeStamp() + slotNum * interval;
@@ -747,7 +754,7 @@ public class Manager {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
-  private long getHeadBlockTimestamp () {
+  private long getHeadBlockTimestamp() {
     return head.getTimeStamp();
   }
 
@@ -822,7 +829,7 @@ public class Manager {
         }
       }
     });
-    witnessCapsuleList.sort((a, b) -> (int) (a.getVoteCount() - b.getVoteCount()));
+    witnessCapsuleList.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
@@ -843,6 +850,7 @@ public class Manager {
         wits.add(witnessCapsule);
       }
     });
+    wits.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
   }
 
   public AssetIssueStore getAssetIssueStore() {
