@@ -168,8 +168,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    final ByteString scheduledWitness = db.getWitnesses().get((int) slot)
-        .getAddress();// this.db.getScheduledWitness(slot);
+    final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger
