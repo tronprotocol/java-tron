@@ -35,8 +35,6 @@ public class WitnessService implements Service {
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
-  @Getter
-  protected List<WitnessCapsule> witnessStates;
   private Thread generateThread;
   private Manager db;
   private volatile boolean isRunning = false;
@@ -228,11 +226,12 @@ public class WitnessService implements Service {
    */
   private void updateWitnessSchedule() {
 
-    long headBlockNum = db.getBlockStore().getHeadBlockNum();
-    if (headBlockNum != 0 && headBlockNum % witnessStates.size() == 0) {
+    long headBlockNum = db.getHeadBlockNum();
+    db.getWitnessStore().getAllWitnesses();
+    if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0) {
 //      String witnessStringListBefore = getWitnessStringList(witnessStates).toString();
-      witnessStates = new RandomGenerator<WitnessCapsule>()
-          .shuffle(witnessStates, db.getBlockStore().getHeadBlockTime());
+      db.setWitnesses(new RandomGenerator<WitnessCapsule>()
+          .shuffle(db.getWitnesses(), db.getBlockStore().getHeadBlockTime()));
 //      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",after: "
 //          + getWitnessStringList(witnessStates));
     }
@@ -266,7 +265,6 @@ public class WitnessService implements Service {
     });
 
     this.db.updateWits();
-    this.witnessStates = this.db.getWitnesses();
   }
 
 
