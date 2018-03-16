@@ -38,12 +38,8 @@ public class FullNode {
     Application application = ApplicationFactory.create(module);
     application.init(cfgArgs.getOutputDirectory(), cfgArgs);
 
-    WalletApi wallet = new WalletApi(
-      new Wallet(application),
-      application.getDbManager().getAccountStore(),
-      application.getDbManager().getWitnessStore()
-    );
-    RpcApiService rpcApiService = new RpcApiService(wallet, config.getInt("rpc.port"));
+    WalletApi walletApi = application.getInjector().getInstance(WalletApi.class);
+    RpcApiService rpcApiService = new RpcApiService(walletApi, config.getInt("rpc.port"));
     application.addService(rpcApiService);
 
     if (cfgArgs.isWitness()) {

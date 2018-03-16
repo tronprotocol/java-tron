@@ -42,6 +42,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
@@ -69,14 +70,13 @@ public class Wallet {
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
-
   /**
    * constructor.
    */
-  public Wallet(Application app) {
-    this.p2pnode = app.getP2pNode();
-    utxoStore = app.getDbManager().getUtxoStore();
-    dbManager = app.getDbManager();
+  public Wallet(NodeImpl nodeImpl, Manager manager) {
+    this.p2pnode = nodeImpl;
+    this.dbManager = manager;
+    this.utxoStore = manager.getUtxoStore();
     this.ecKey = new ECKey(Utils.getRandom());
   }
 

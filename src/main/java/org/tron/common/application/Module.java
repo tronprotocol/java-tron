@@ -21,6 +21,8 @@ import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.typesafe.config.Config;
@@ -31,7 +33,10 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.*;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.WitnessStore;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.core.services.RpcApiService;
 
@@ -143,4 +148,27 @@ public class Module extends AbstractModule {
     manager.init();
     return manager;
   }
+
+  @Provides
+  @Singleton
+  @Inject
+  public BlockStore buildBlockStore(Manager manager) {
+    return manager.getBlockStore();
+  }
+
+  @Provides
+  @Singleton
+  @Inject
+  public AccountStore buildAccountStore(Manager manager) {
+    return manager.getAccountStore();
+  }
+
+  @Provides
+  @Singleton
+  @Inject
+  public WitnessStore buildWitnessStore(Manager manager) {
+    return manager.getWitnessStore();
+  }
+
+
 }

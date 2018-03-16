@@ -47,9 +47,10 @@ public class ApplicationImpl implements Application {
   public void init(String path, Args args) {
     p2pNode = injector.getInstance(NodeImpl.class);
     dbManager = injector.getInstance(Manager.class);
-    blockStoreDb = dbManager.getBlockStore();
-    services = new ServiceContainer();
+    blockStoreDb = injector.getInstance(BlockStore.class);
     nodeDelegate = new NodeDelegateImpl(dbManager);
+
+    services = new ServiceContainer();
   }
 
   @Override
