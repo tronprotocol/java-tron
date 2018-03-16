@@ -44,8 +44,9 @@ public class Args {
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
-  private LocalWitness localWitness;
+  private LocalWitnesses localWitness;
   private long blockInterval;
+  private boolean needSyncCheck;
 
   private Args() {
 
@@ -78,9 +79,15 @@ public class Args {
         .orElse(config.getStringList("seed.node.ip.list")));
 
     if (config.hasPath("localwitness")) {
-      INSTANCE.localWitness = new LocalWitness();
-      INSTANCE.localWitness.setPrivateKey(config.getString("localwitness.priveteKey"));
+      INSTANCE.localWitness = new LocalWitnesses();
+      List<String> localwitness = config.getStringList("localwitness");
+      if (localwitness.size() > 1) {
+        logger.warn("localwitness size must be one,get the first one");
+        localwitness = localwitness.subList(0, 1);
+      }
+      INSTANCE.localWitness.setPrivateKeys(localwitness);
     }
+
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
@@ -99,6 +106,7 @@ public class Args {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
     INSTANCE.blockInterval = config.getLong("block.interval");
+    INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
   }
 
 
@@ -183,11 +191,11 @@ public class Args {
     return this.witness;
   }
 
-  public LocalWitness getLocalWitness() {
+  public LocalWitnesses getLocalWitnesses() {
     return this.localWitness;
   }
 
-  public void setLocalWitness(final LocalWitness localWitness) {
+  public void setLocalWitness(final LocalWitnesses localWitness) {
     this.localWitness = localWitness;
   }
 
@@ -197,5 +205,13 @@ public class Args {
 
   public void setBlockInterval(final long blockInterval) {
     this.blockInterval = blockInterval;
+  }
+
+  public boolean isNeedSyncCheck() {
+    return needSyncCheck;
+  }
+
+  public void setNeedSyncCheck(boolean needSyncCheck) {
+    this.needSyncCheck = needSyncCheck;
   }
 }

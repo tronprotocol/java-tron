@@ -15,6 +15,8 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
@@ -26,18 +28,15 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
-
-    private static final long serialVersionUID = 640048834186654213L;
 
     @Override
     public boolean equals(Object o) {
@@ -219,48 +218,31 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 //        : blockId;
   }
 
-  public Sha256Hash calcMerklerRoot() {
-    if (CollectionUtils.isEmpty(this.block.getTransactionsList())) {
+  public Sha256Hash calcMerkleRoot() {
+    List<Transaction> transactionsList = this.block.getTransactionsList();
+
+    if (CollectionUtils.isEmpty(transactionsList)) {
       return Sha256Hash.ZERO_HASH;
     }
 
-    Vector<Sha256Hash> ids = new Vector<Sha256Hash>();
-    this.block.getTransactionsList().forEach(trx -> {
-      TransactionCapsule transactionCapsule = new TransactionCapsule(trx);
-      ids.add(transactionCapsule.getHash());
-    });
+    Vector<Sha256Hash> ids = transactionsList.stream()
+            .map(TransactionCapsule::new)
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(Vector::new));
 
-    int hashNum = ids.size();
-
-    while (hashNum > 1) {
-      int max = hashNum - (hashNum & 1);
-      int k = 0;
-      for (int i = 0; i < max; i += 2) {
-        ids.set(k++, Sha256Hash
-            .of((ids.get(i).getByteString().concat(ids.get(i + 1).getByteString()))
-                .toByteArray()));
-      }
-
-      if (hashNum % 2 != 0) {
-        ids.set(k++, ids.get(max));
-      }
-      hashNum = k;
-    }
-
-    return ids.firstElement();
+    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }
 
-
-  public void setMerklerRoot() {
-    BlockHeader.raw blockHeaderRaw;
-    blockHeaderRaw = this.block.getBlockHeader().getRawData().toBuilder()
-        .setTxTrieRoot(calcMerklerRoot().getByteString()).build();
+  public void setMerkleRoot() {
+    BlockHeader.raw blockHeaderRaw =
+            this.block.getBlockHeader().getRawData().toBuilder()
+                    .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  public Sha256Hash getMerklerRoot() {
+  public Sha256Hash getMerkleRoot() {
     unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
   }
@@ -321,6 +303,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   @Override
   public String toString() {
     unPack();
-    return this.block.toString();
+    return "BlockCapsule{" +
+        "blockId=" + blockId +
+        ", num=" + getNum() +
+        ", parentId=" + getParentHash() +
+        ", generatedByMyself=" + generatedByMyself +
+        '}';
   }
 }

@@ -38,10 +38,25 @@ public class BlockCapsuleTest {
   }
 
   @Test
-  public void testCalcMerklerRoot() {
-    blockCapsule0.setMerklerRoot();
-    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
-        blockCapsule0.getMerklerRoot().toString());
+  public void testCalcMerkleRoot() {
+    blockCapsule0.setMerkleRoot();
+    Assert.assertEquals(
+            Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+            blockCapsule0.getMerkleRoot().toString());
+
+    logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
+
+    TransactionCapsule transactionCapsule1 = new TransactionCapsule("123", 1L);
+    TransactionCapsule transactionCapsule2 = new TransactionCapsule("124", 2L);
+    blockCapsule0.addTransaction(transactionCapsule1);
+    blockCapsule0.addTransaction(transactionCapsule2);
+    blockCapsule0.setMerkleRoot();
+
+    Assert.assertEquals(
+            "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
+            blockCapsule0.getMerkleRoot().toString());
+
+    logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }
 
   @Test
@@ -69,7 +84,6 @@ public class BlockCapsuleTest {
 
   @Test
   public void testGetInsHash() {
-    blockCapsule0.getInstance();
     Assert.assertEquals(1,
         blockCapsule0.getInstance().getBlockHeader().getRawData().getNumber());
     Assert.assertEquals(blockCapsule0.getParentHash(),

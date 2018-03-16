@@ -21,11 +21,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssertContract;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferAssertActuator extends AbstractActuator {
 
@@ -34,7 +36,8 @@ public class TransferAssertActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute() throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    long fee = calcFee();
     if (!this.contract.is(TransferAssertContract.class)) {
       throw new ContractExeException();
     }
@@ -46,29 +49,22 @@ public class TransferAssertActuator extends AbstractActuator {
     try {
       TransferAssertContract transferAssertContract = this.contract
           .unpack(TransferAssertContract.class);
-
       AccountStore accountStore = this.dbManager.getAccountStore();
       byte[] ownerKey = transferAssertContract.getOwnerAddress().toByteArray();
       byte[] toKey = transferAssertContract.getToAddress().toByteArray();
       ByteString assertName = transferAssertContract.getAssertName();
       long amount = transferAssertContract.getAmount();
-
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerKey);
-
       ownerAccountCapsule.reduceAssetAmount(assertName, amount);
-
       accountStore.put(ownerKey, ownerAccountCapsule);
-
       AccountCapsule toAccountCapsule = accountStore.get(toKey);
-
       toAccountCapsule.addAssetAmount(assertName, amount);
-
       accountStore.put(toKey, toAccountCapsule);
-
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException();
     }
-
     return true;
   }
 

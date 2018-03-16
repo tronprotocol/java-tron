@@ -33,7 +33,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public Dialog buildDialog(boolean forceEnable) {
+  public synchronized Dialog buildDialog(boolean forceEnable) {
     if (disabled && !forceEnable) {
       return new Dialog(this);
     }
@@ -53,7 +53,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onCreate(RevokingTuple tuple, byte[] value) {
+  public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -64,7 +64,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onModify(RevokingTuple tuple, byte[] value) {
+  public synchronized void onModify(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -79,7 +79,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onRemove(RevokingTuple tuple, byte[] value) {
+  public synchronized void onRemove(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -105,7 +105,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void merge() throws RevokingStoreIllegalStateException {
+  public synchronized void merge() throws RevokingStoreIllegalStateException {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -157,7 +157,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void revoke() throws RevokingStoreIllegalStateException {
+  public synchronized void revoke() throws RevokingStoreIllegalStateException {
     if (disabled) {
       return;
     }
@@ -185,7 +185,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void commit() throws RevokingStoreIllegalStateException {
+  public synchronized void commit() throws RevokingStoreIllegalStateException {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -194,23 +194,19 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void pop() throws RevokingStoreIllegalStateException {
+  public synchronized void pop() throws RevokingStoreIllegalStateException {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
 
     if (stack.isEmpty()) {
-      return;
+      throw new RevokingStoreIllegalStateException("stack is empty");
     }
 
     disable();
 
     try {
       RevokingState state = stack.peekLast();
-      if (Objects.isNull(state)) {
-        return;
-      }
-
       state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
       state.newIds.forEach(e -> e.database.deleteData(e.key));
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
@@ -221,7 +217,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public RevokingState head() {
+  public synchronized RevokingState head() {
     if (stack.isEmpty()) {
       return null;
     }
@@ -230,12 +226,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void enable() {
+  public synchronized void enable() {
     disabled = false;
   }
 
   @Override
-  public void disable() {
+  public synchronized void disable() {
     disabled = true;
   }
 

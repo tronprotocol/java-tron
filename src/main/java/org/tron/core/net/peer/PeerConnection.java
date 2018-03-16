@@ -6,8 +6,10 @@ import io.scalecube.transport.Address;
 import java.io.UnsupportedEncodingException;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import org.slf4j.Logger;
@@ -103,13 +105,21 @@ public class PeerConnection {
 
   private long unfetchSyncNum = 0L;
 
-  private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
-
   private boolean needSyncFromPeer;
 
   private boolean needSyncFromUs;
 
+  public Set<BlockId> getBlockInProc() {
+    return blockInProc;
+  }
+
+  public void setBlockInProc(Set<BlockId> blockInProc) {
+    this.blockInProc = blockInProc;
+  }
+
   private boolean banned;
+
+  private Set<BlockId> blockInProc = new HashSet<>();
 
   public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
     return advObjWeRequested;
@@ -119,13 +129,6 @@ public class PeerConnection {
     this.advObjWeRequested = advObjWeRequested;
   }
 
-  public Queue<Sha256Hash> getChainIdsWeReqeuested() {
-    return chainIdsWeReqeuested;
-  }
-
-  public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
-    this.chainIdsWeReqeuested = chainIdsWeReqeuested;
-  }
 
   public void cleanInvGarbage() {
     //TODO: clean advObjSpreadToUs and advObjWeSpread.
@@ -198,6 +201,11 @@ public class PeerConnection {
     //this.needSyncFromPeer = true;
   }
 
+  public boolean isBusy() {
+    return !advObjWeRequested.isEmpty()
+        && !syncBlockRequested.isEmpty()
+        && syncChainRequested != null;
+  }
 
   public void sendMessage(Message message) {
     logger.info("Send message " + message + ", Peer:" + this);
