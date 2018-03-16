@@ -18,20 +18,28 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import org.junit.Ignore;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Ignore
 public class TransferAssertActuatorTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
@@ -52,26 +60,29 @@ public class TransferAssertActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static final String dbPath = "contract-test";
 
   /**
    * Init data.
    */
-  @Ignore
-  public void create() {
-    Args.setParam(new String[]{"--storage-directory", "contract-test"},
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[]{"--storage-directory", dbPath},
         Configuration.getByPath("config-junit.conf"));
     dbManager = new Manager();
     dbManager.init();
+  }
 
-    contract = Any.pack(
-        Contract.TransferAssertContract
-            .newBuilder()
-            .setAssertName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setAmount(AMOUNT)
-            .build());
+  @Before
+  public void createCapsule() {
+    AccountCapsule ownerCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8("owner"), AccountType.AssetIssue);
+    ownerCapsule.addAsset(ASSET_NAME, 10000L);
 
+    AccountCapsule toAccountCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+        ByteString.copyFromUtf8("toAccount"), AccountType.Normal);
     AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
@@ -85,31 +96,110 @@ public class TransferAssertActuatorTest {
         .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
         .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
         .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+  }
 
-    AssetIssueCapsule capsule = new AssetIssueCapsule(assetIssueContract);
-
-
+  private Any getContract(long sendCoin) {
+    return Any.pack(
+        Contract.TransferAssertContract
+            .newBuilder()
+            .setAssertName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAmount(sendCoin)
+            .build());
   }
 
   /**
    * Unit test.
    */
-  @Ignore
-  public void right() {
-    TransferAssertActuator actuator = new TransferAssertActuator(contract, dbManager);
+  @Test
+  public void rightTransfer() {
+    TransferAssertActuator actuator = new TransferAssertActuator(getContract(100L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
-//      actuator.execute();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 9900L);
+      Assert.assertEquals(toAccount.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 100L);
     } catch (ContractValidateException e) {
-      e.printStackTrace();
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  /**
+   * Unit test.
+   */
+  @Test
+  public void perfectTransfer() {
+    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10000L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 0L);
+      Assert
+          .assertEquals(toAccount.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 10000L);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * Unit test.
+   */
+  @Test
+  public void wrongTransfer() {
+    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10001L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), 10000L);
+      Assert
+          .assertTrue(isNullOrZero(toAccount.getAssetMap().get(ASSET_NAME)));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  private boolean isNullOrZero(Long aLong) {
+    if (null == aLong || aLong == 0) {
+      return true;
+    }
+    return false;
   }
 
   /**
    * Release resources.
    */
-  @Ignore
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     if (dbManager != null) {
       dbManager.close();
     }
