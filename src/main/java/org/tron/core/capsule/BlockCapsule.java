@@ -306,7 +306,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return "BlockCapsule{" +
         "blockId=" + blockId +
         ", num=" + getNum() +
-        ", parentId" + getParentHash() +
+        ", parentId=" + getParentHash() +
         ", generatedByMyself=" + generatedByMyself +
         '}';
   }
