@@ -70,7 +70,6 @@ public class ManagerTest {
     } catch (UnLinkedBlockException e) {
       isUnlinked = true;
     } catch (Exception e) {
-      e.printStackTrace();
       Assert.assertTrue("pushBlock is error", false);
     }
 

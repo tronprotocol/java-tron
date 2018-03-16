@@ -903,6 +903,10 @@ public class Manager {
    * shuffle witnesses
    */
   private void updateWitnessSchedule() {
+    if(CollectionUtils.isEmpty(getWitnesses())){
+      logger.warn("Witnesses is empty");
+      return;
+    }
 
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
