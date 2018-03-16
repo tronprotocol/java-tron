@@ -47,9 +47,10 @@ public class WitnessService implements Service {
    * Construction method.
    */
   @Inject
-  public WitnessService(Node node, LocalWitnesses localWitnesses) {
+  public WitnessService(Node node, LocalWitnesses localWitnesses, Manager db) {
     this.node = node;
     this.localWitnesses = localWitnesses;
+    this.db = db;
     generateThread = new Thread(scheduleProductionLoop);
   }
 
