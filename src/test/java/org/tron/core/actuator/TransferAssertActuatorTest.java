@@ -60,7 +60,7 @@ public class TransferAssertActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static final String dbPath = "contract-test";
+  private static final String dbPath = "contract_test";
 
   /**
    * Init data.
@@ -200,9 +200,6 @@ public class TransferAssertActuatorTest {
    */
   @AfterClass
   public static void destroy() {
-    if (dbManager != null) {
-      dbManager.close();
-    }
 
     String filePath = Args.getInstance().getOutputDirectory() + "contract-test";
 

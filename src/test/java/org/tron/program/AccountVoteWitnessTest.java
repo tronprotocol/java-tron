@@ -28,12 +28,12 @@ public class AccountVoteWitnessTest {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     Args.setParam(new String[]{"-d", dbPath},
         Configuration.getByPath(Constant.TEST_CONF));
-
     dbManager.init();
   }
 
   @AfterClass
   public static void removeDb() {
+
     File dbFolder = new File(dbPath);
     if (deleteFolder(dbFolder)) {
       logger.info("Release resources successful.");
