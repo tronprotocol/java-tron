@@ -22,15 +22,33 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import javax.inject.Named;
+
+import com.typesafe.config.Config;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.api.WalletApi;
+import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 
+import java.nio.file.Path;
+
 public class Module extends AbstractModule {
+
+  private final Config config;
+
+  public Module(Config config) {
+    this.config = config;
+  }
 
   @Override
   protected void configure() {
 
+  }
+
+  @Provides
+  @Singleton
+  public Config buildConfig() {
+    return this.config;
   }
 
   /**
@@ -53,15 +71,15 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("block")
   public LevelDbDataSourceImpl buildBlockDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
-        BLOCK_DB_NAME);
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), BLOCK_DB_NAME);
     db.initDB();
     return db;
   }
 
-//  @Provides
-//  @Singleton
-//  public RpcApiService buildRpcApiService() {
-//
-//  }
+  @Provides
+  @Singleton
+  public RpcApiService buildRpcApiService(Config config) {
+    WalletApi wallet = new WalletApi(null);
+    return new RpcApiService(wallet, config.getInt("rpc.port"));
+  }
 }

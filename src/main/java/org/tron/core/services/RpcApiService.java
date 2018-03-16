@@ -12,12 +12,13 @@ import org.tron.core.api.WalletApi;
 public class RpcApiService implements Service {
 
   private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
-  private int port = 50051;
+  private int port;
   private Server apiServer;
   private WalletApi wallet;
 
-  public RpcApiService(WalletApi wallet) {
+  public RpcApiService(WalletApi wallet, int port) {
     this.wallet = wallet;
+    this.port = port;
   }
 
   @Override

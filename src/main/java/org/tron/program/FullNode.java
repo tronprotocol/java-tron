@@ -1,10 +1,12 @@
 package org.tron.program;
 
+import com.google.inject.Injector;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.Module;
 import org.tron.core.Constant;
 import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
@@ -21,6 +23,7 @@ public class FullNode {
    */
   public static void main(String[] args) {
     Config config = Configuration.getByPath(Constant.NORMAL_CONF);
+    Injector module = ApplicationFactory.buildGuice(config);
     Args.setParam(args, config);
     Args cfgArgs = Args.getInstance();
     if (cfgArgs.isHelp()) {
@@ -31,7 +34,8 @@ public class FullNode {
     logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
     Application appT = ApplicationFactory.create();
     appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
-    RpcApiService rpcApiService = new RpcApiService(new WalletApi(appT));
+
+    RpcApiService rpcApiService = module.getInstance(RpcApiService.class);
     appT.addService(rpcApiService);
 
     if (cfgArgs.isWitness()) {

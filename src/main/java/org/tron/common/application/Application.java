@@ -15,6 +15,7 @@
 
 package org.tron.common.application;
 
+import com.google.inject.Guice;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -25,6 +26,8 @@ public interface Application {
   void setArgs(Args args);
 
   void init(String path, Args args);
+
+  Guice getInjector();
 
   void initServices();
 
