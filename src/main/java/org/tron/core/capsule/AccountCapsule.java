@@ -141,11 +141,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   public long getShare() {
     return this.account.getBalance();
   }
-
-  public Map<String, Long> getAsset() {
-    return this.account.getAssetMap();
-  }
-
+  
   /**
    * reduce asset amount.
    */

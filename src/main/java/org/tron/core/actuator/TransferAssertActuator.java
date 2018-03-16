@@ -95,7 +95,7 @@ public class TransferAssertActuator extends AbstractActuator {
       long amount = transferAssertContract.getAmount();
 
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
-      Map<String, Long> asset = ownerAccount.getAsset();
+      Map<String, Long> asset = ownerAccount.getAssetMap();
 
       if (asset.isEmpty()) {
         throw new ContractValidateException();
