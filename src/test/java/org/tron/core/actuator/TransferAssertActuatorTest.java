@@ -46,6 +46,7 @@ public class TransferAssertActuatorTest {
 
   private static Manager dbManager;
   private static Any contract;
+  private static final String dbPath = "contract_test";
   private static final String ASSET_NAME = "trx";
   private static final String OWNER_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049150";
   private static final String TO_ADDRESS = "548794500882809695a8a687866e76d4271a146a";
@@ -60,14 +61,13 @@ public class TransferAssertActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static final String dbPath = "contract_test";
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--storage-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath},
         Configuration.getByPath("config-junit.conf"));
     dbManager = new Manager();
     dbManager.init();
@@ -176,6 +176,7 @@ public class TransferAssertActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
