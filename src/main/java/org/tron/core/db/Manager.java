@@ -178,9 +178,10 @@ public class Manager {
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
-    this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
+    this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTrxs = new ArrayList<>();
+
     try {
       this.initGenesis();
     } catch (ContractValidateException e) {
@@ -196,7 +197,9 @@ public class Manager {
       logger.error(e.getMessage());
       System.exit(-1);
     }
+
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
+    this.khaosDb.start(head);
   }
 
   public BlockId getGenesisBlockId() {
@@ -211,7 +214,8 @@ public class Manager {
    * init genesis block.
    */
   public void initGenesis()
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, UnLinkedBlockException {
+      throws ContractValidateException, ContractExeException,
+      ValidateSignatureException, UnLinkedBlockException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -324,6 +328,9 @@ public class Manager {
   }
 
 
+  /**
+   * when switch fork need erase blocks on fork branch.
+   */
   public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
@@ -342,86 +349,85 @@ public class Manager {
 
   }
 
+  private void switchFork(BlockCapsule newHead) {
+    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
+        .getBranch(newHead.getBlockId(), head.getBlockId());
+
+    while (!head.getBlockId().equals(binaryTree.getValue().pollLast().getBlockId())) {
+      eraseBlock();
+    }
+    LinkedList<BlockCapsule> branch = binaryTree.getValue();
+    Collections.reverse(branch);
+    branch.forEach(item -> {
+      // todo  process the exception carefully later
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        processBlock(item);
+        tmpDialog.commit();
+        head = item;
+        getDynamicPropertiesStore()
+            .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
+        getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
+        getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
+      } catch (ValidateSignatureException e) {
+        e.printStackTrace();
+      } catch (ContractValidateException e) {
+        e.printStackTrace();
+      } catch (ContractExeException e) {
+        e.printStackTrace();
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
+      }
+    });
+    return;
+
+    //TODO: if error need to rollback.
+  }
+
   /**
    * save a block.
    */
   public void pushBlock(final BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    boolean useKhaoDB = false;
-    BlockCapsule newBlock = this.khaosDb.push(block);
+      throws ValidateSignatureException, ContractValidateException,
+      ContractExeException, UnLinkedBlockException {
+
     //todo: check block's validity
     if (!block.generatedByMyself) {
       if (!block.validateSignature()) {
         logger.info("The siganature is not validated.");
+        //TODO: throw exception here.
         return;
       }
 
       if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
         logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
             + " , the headers is " + block.getMerkleRoot());
+        //TODO: throw exception here.
         return;
       }
-
-      //todo: In some case it need to switch the branch
-    }
-    if (useKhaoDB) {
-      if (!newBlock.getParentHash().equals(head.getBlockId())) {
-        if (newBlock.getNum() > head.getNum()) {
-          Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
-              .getBranch(newBlock.getBlockId(), head.getBlockId());
-
-          while (!head.getBlockId().equals(binaryTree.getValue().pollLast().getBlockId())) {
-            eraseBlock();
-          }
-          LinkedList<BlockCapsule> branch = binaryTree.getValue();
-          Collections.reverse(branch);
-          branch.forEach(item -> {
-            // todo  process the exception carefully later
-            try (Dialog tmpDialog = revokingStore.buildDialog()) {
-              processBlock(item);
-              tmpDialog.commit();
-              head = item;
-              getDynamicPropertiesStore()
-                  .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-              getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-              getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
-            } catch (ValidateSignatureException e) {
-              e.printStackTrace();
-            } catch (ContractValidateException e) {
-              e.printStackTrace();
-            } catch (ContractExeException e) {
-              e.printStackTrace();
-            } catch (RevokingStoreIllegalStateException e) {
-              e.printStackTrace();
-            }
-          });
-          return;
-        } else {
-          // todo the error status
-          return;
-        }
-      }
     }
 
-    if (block.getNum() != 0) {
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(block);
-
-        tmpDialog.commit();
-      } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
-      }
+    BlockCapsule newBlock = this.khaosDb.push(block);
+    //DB don't need lower block
+    if (!(head == null && newBlock.getNum() == 1)
+        || newBlock.getNum() <= head.getNum()) {
+      return;
     }
 
-    //refresh
-    refreshHead(block);
+    //switch fork
+    if (!newBlock.getParentHash().equals(head.getBlockId())) {
+      switchFork(newBlock);
+    }
+
+    try (Dialog tmpDialog = revokingStore.buildDialog()) {
+      this.processBlock(newBlock);
+      tmpDialog.commit();
+    } catch (RevokingStoreIllegalStateException e) {
+      e.printStackTrace();
+    }
 
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
-    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    // todo modify the dynamic head
-    //this.head = this.khaosDb.getHead();
-    // blockDbDataSource.putData(blockHash, blockData);
+    logger.info("save block: " + newBlock);
   }
 
   private void refreshHead(BlockCapsule block) {
@@ -548,7 +554,8 @@ public class Manager {
    */
   public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
+      throws ValidateSignatureException, ContractValidateException,
+      ContractExeException, UnLinkedBlockException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -645,8 +652,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
-      this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
+      this.refreshHead(block);
 
       if (needMaintenance(block.getTimeStamp())) {
         if (block.getNum() == 1) {
@@ -659,19 +666,14 @@ public class Manager {
   }
 
   /**
-   * Determine if the current time is maintenance time
+   * Determine if the current time is maintenance time.
    */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
   }
 
-  //// To be added
-  private void updateDynamicProperties(final BlockCapsule block) {
-
-  }
-
   /**
-   * Perform maintenance
+   * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
     this.updateWitness();
@@ -736,15 +738,9 @@ public class Manager {
       slotNum += getSkipSlotInMaintenance();
     }
 
-    //DateTime headSlotTime = blockStore.getHeadBlockTime();
-
-    //align slot time
-//    headSlotTime = headSlotTime
-//        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
-//
     long headSlotTime = getHeadBlockTimestamp();
-    headSlotTime = headSlotTime -
-        ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
+    headSlotTime = headSlotTime
+        - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
     return headSlotTime + interval * slotNum;
   }
