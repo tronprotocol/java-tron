@@ -658,7 +658,6 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
       this.updateSignedWitness(block);
-      this.refreshHead(block);
 
       if (needMaintenance(block.getTimeStamp())) {
         if (block.getNum() == 1) {
