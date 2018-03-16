@@ -24,20 +24,30 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
-import org.tron.core.config.args.Args;
+import org.tron.core.config.args.*;
 import org.tron.core.services.RpcApiService;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 public class Module extends AbstractModule {
 
-  private final Config config;
+  private static final Logger logger = LoggerFactory.getLogger("Module");
 
-  public Module(Config config) {
+
+  private final Config config;
+  private Args args;
+
+  public Module(Config config, Args args) {
     this.config = config;
+    this.args = args;
   }
 
   @Override
@@ -74,5 +84,65 @@ public class Module extends AbstractModule {
     LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), BLOCK_DB_NAME);
     db.initDB();
     return db;
+  }
+
+  @Provides
+  @Singleton
+  public Storage buildStorage() {
+    Storage storage = new Storage();
+    storage.setDirectory(Optional.ofNullable(args.getStorageDirectory())
+            .filter(StringUtils::isNotEmpty)
+            .orElse(config.getString("storage.directory")));
+    return storage;
+  }
+
+  @Provides
+  @Singleton
+  public Overlay buildOverlay() {
+    Overlay overlay = new Overlay();
+    overlay.setPort(Optional.ofNullable(args.getOverlayPort())
+            .filter(i -> 0 != i)
+            .orElse(config.getInt("overlay.port")));
+    return overlay;
+  }
+
+  @Provides
+  @Singleton
+  public SeedNode buildSeedNode() {
+    SeedNode seedNode = new SeedNode();
+    seedNode.setIpList(Optional.ofNullable(args.getSeedNodes())
+            .filter(s -> 0 != s.size())
+            .orElse(config.getStringList("seed.node.ip.list")));
+    return seedNode;
+  }
+
+  @Provides
+  @Singleton
+  public LocalWitnesses buildLocalWitnesses() {
+    LocalWitnesses localWitness = new LocalWitnesses();
+    List<String> localwitness = config.getStringList("localwitness");
+    if (localwitness.size() > 1) {
+      logger.warn("localwitness size must be one,get the first one");
+      localwitness = localwitness.subList(0, 1);
+    }
+    localWitness.setPrivateKeys(localwitness);
+    return localWitness;
+  }
+
+  public GenesisBlock buildGenesisBlock() {
+    GenesisBlock genesisBlock = new GenesisBlock();
+    genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+    genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
+    genesisBlock.setHash(config.getString("genesis.block.hash"));
+    genesisBlock.setNumber(config.getString("genesis.block.number"));
+
+    if (config.hasPath("genesis.block.assets")) {
+      genesisBlock.setAssets(Configuration.getAccountsFromConfig(config));
+    }
+    if (config.hasPath("genesis.block.witnesses")) {
+      genesisBlock.setWitnesses(Configuration.getWitnessesFromConfig(config));
+    }
+
+    return genesisBlock;
   }
 }

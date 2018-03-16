@@ -16,6 +16,7 @@
 package org.tron.core.config.args;
 
 import com.google.protobuf.ByteString;
+import com.typesafe.config.ConfigObject;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.AccountType;
@@ -90,5 +91,12 @@ public class Account {
 
   public void setAccountType(String accountType) {
     this.accountType = accountType;
+  }
+
+  public static Account buildFromConfig(final ConfigObject asset) {
+    final Account account = new Account();
+    account.setAddress(asset.get("address").unwrapped().toString());
+    account.setBalance(asset.get("balance").unwrapped().toString());
+    return account;
   }
 }

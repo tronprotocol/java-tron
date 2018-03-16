@@ -25,33 +25,34 @@ public class FullNode {
    */
   public static void main(String[] args) {
     Config config = Configuration.getByPath(Constant.NORMAL_CONF);
-    Injector module = ApplicationFactory.buildGuice(config);
     Args.setParam(args, config);
     Args cfgArgs = Args.getInstance();
+
+    Injector module = ApplicationFactory.buildGuice(config, cfgArgs);
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
 
     logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
-    Application appT = ApplicationFactory.create();
-    appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
+    Application application = ApplicationFactory.create();
+    application.init(cfgArgs.getOutputDirectory(), cfgArgs);
 
     WalletApi wallet = new WalletApi(
-      new Wallet(appT),
-      appT.getDbManager().getAccountStore(),
-      appT.getDbManager().getWitnessStore()
+      new Wallet(application),
+      application.getDbManager().getAccountStore(),
+      application.getDbManager().getWitnessStore()
     );
     RpcApiService rpcApiService = new RpcApiService(wallet, config.getInt("rpc.port"));
-    appT.addService(rpcApiService);
+    application.addService(rpcApiService);
 
     if (cfgArgs.isWitness()) {
-      appT.addService(new WitnessService(appT.getP2pNode(), appT.getDbManager()));
+      application.addService(new WitnessService(application.getP2pNode(), application.getDbManager()));
     }
 
-    appT.initServices();
-    appT.startServices();
-    appT.startup();
+    application.initServices();
+    application.startServices();
+    application.startup();
     rpcApiService.blockUntilShutdown();
   }
 }

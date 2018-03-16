@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import com.typesafe.config.ConfigObject;
+
 public class Witness {
 
   private String address;
@@ -45,5 +47,13 @@ public class Witness {
 
   public void setVoteCount(final long voteCount) {
     this.voteCount = voteCount;
+  }
+
+  public static Witness buildFromConfig(ConfigObject witnessAccount) {
+    final Witness witness = new Witness();
+    witness.setAddress(witnessAccount.get("address").unwrapped().toString());
+    witness.setUrl(witnessAccount.get("url").unwrapped().toString());
+    witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
+    return witness;
   }
 }

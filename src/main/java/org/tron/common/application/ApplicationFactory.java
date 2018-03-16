@@ -18,6 +18,7 @@ package org.tron.common.application;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.typesafe.config.Config;
+import org.tron.core.config.args.Args;
 
 public class ApplicationFactory {
 
@@ -26,8 +27,8 @@ public class ApplicationFactory {
    *
    * @return Guice
    */
-  public static Injector buildGuice(Config config) {
-    return Guice.createInjector(new Module(config));
+  public static Injector buildGuice(Config config, Args args) {
+    return Guice.createInjector(new Module(config, args));
   }
 
   /**
