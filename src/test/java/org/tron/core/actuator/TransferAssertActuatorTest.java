@@ -73,6 +73,9 @@ public class TransferAssertActuatorTest {
     dbManager.init();
   }
 
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule = new AccountCapsule(
@@ -188,8 +191,8 @@ public class TransferAssertActuatorTest {
     }
   }
 
-  private boolean isNullOrZero(Long aLong) {
-    if (null == aLong || aLong == 0) {
+  private boolean isNullOrZero(Long value) {
+    if (null == value || value == 0) {
       return true;
     }
     return false;

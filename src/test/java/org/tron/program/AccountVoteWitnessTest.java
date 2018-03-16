@@ -23,6 +23,9 @@ public class AccountVoteWitnessTest {
   private static Manager dbManager = new Manager();
   private static String dbPath = "output_witness";
 
+  /**
+   * init db.
+   */
   @BeforeClass
   public static void init() {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
@@ -31,6 +34,9 @@ public class AccountVoteWitnessTest {
     dbManager.init();
   }
 
+  /**
+   * remo db when after test.
+   */
   @AfterClass
   public static void removeDb() {
 
@@ -60,7 +66,8 @@ public class AccountVoteWitnessTest {
     final List<AccountCapsule> accountCapsuleList = this.getAccountList();
     final List<WitnessCapsule> witnessCapsuleList = this.getWitnessList();
     accountCapsuleList.forEach(accountCapsule -> {
-          dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+          dbManager.getAccountStore().put(accountCapsule.getAddress()
+              .toByteArray(), accountCapsule);
           this.printAccount(accountCapsule.getAddress());
         }
     );
