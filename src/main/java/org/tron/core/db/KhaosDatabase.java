@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import javafx.util.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -59,29 +61,21 @@ public class KhaosDatabase extends TronDatabase {
 
     public void insert(KhaosBlock block) {
       hashKblkMap.put(block.id, block);
-      //parentHashKblkMap.put(block.getParentHash(), block);
-      ArrayList<KhaosBlock> listBlk = numKblkMap.get(block.num);
-      if (listBlk == null) {
-        listBlk = new ArrayList<KhaosBlock>();
-      }
-      listBlk.add(block);
-      numKblkMap.put(block.num, listBlk);
+      numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>())
+                .add(block);
     }
 
     public boolean remove(Sha256Hash hash) {
-      KhaosBlock block = this.hashKblkMap.get(hash);
-      //Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
-      if (block != null) {
-        long num = block.num;
-        //parentHash = block.getParentHash();
-        ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
-        if (listBlk != null) {
-          listBlk.removeIf(b -> b.id == hash);
-        }
-        this.hashKblkMap.remove(hash);
-        return true;
-      }
-      return false;
+      hashKblkMap.computeIfPresent((BlockId) hash, (blockId, block) -> {
+        numKblkMap.computeIfPresent(block.num, (blockNum, listBlk) -> {
+                  listBlk.removeIf(b -> b.id == hash);
+                  return listBlk;
+                }
+        );
+        return null;
+      });
+
+      return !this.hashKblkMap.containsKey(hash);
     }
 
     public List<KhaosBlock> getBlockByNum(Long num) {
@@ -143,27 +137,18 @@ public class KhaosDatabase extends TronDatabase {
    * check if the id is contained in the KhoasDB.
    */
   public Boolean containBlock(Sha256Hash hash) {
-    if (miniStore.getByHash(hash) != null) {
-      return true;
-    }
-    return miniUnlinkedStore.getByHash(hash) != null;
+    return miniStore.getByHash(hash) != null || miniUnlinkedStore.getByHash(hash) != null;
   }
 
   /**
    * Get the Block form KhoasDB, if it doesn't exist ,return null.
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
-    KhaosBlock block = miniStore.getByHash(hash);
-    if (block != null) {
-      return block.blk;
-    } else {
-      KhaosBlock blockUnlinked = miniUnlinkedStore.getByHash(hash);
-      if (blockUnlinked != null) {
-        return blockUnlinked.blk;
-      } else {
-        return null;
-      }
-    }
+    return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
+            .filter(Objects::nonNull)
+            .map(block -> block.blk)
+            .findFirst()
+            .orElse(null);
   }
 
   /**
@@ -213,7 +198,6 @@ public class KhaosDatabase extends TronDatabase {
       BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
@@ -236,7 +220,7 @@ public class KhaosDatabase extends TronDatabase {
         kblk2 = kblk2.parent;
       } while (kblk1 != kblk2);
     }
-    return ret;
+    return new Pair<>(list1, list2);
   }
 
   public boolean hasData() {
