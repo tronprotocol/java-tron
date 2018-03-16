@@ -12,6 +12,7 @@ import org.tron.core.db.WitnessStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
+import javax.inject.Inject;
 import java.util.Iterator;
 
 public class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
@@ -20,6 +21,7 @@ public class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
   private Wallet wallet;
   private WitnessStore witnessStore;
 
+  @Inject
   public WalletApi(Wallet wallet, AccountStore accountStore, WitnessStore witnessStore) {
     this.witnessStore = witnessStore;
     this.accountStore = accountStore;

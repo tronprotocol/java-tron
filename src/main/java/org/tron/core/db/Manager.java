@@ -177,8 +177,7 @@ public class Manager {
     revokingStore = RevokingStore.getInstance();
     revokingStore.enable();
 
-    this.numHashCache = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
+    this.numHashCache = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
 
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
