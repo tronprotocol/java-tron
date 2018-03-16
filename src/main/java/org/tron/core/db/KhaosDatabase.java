@@ -68,10 +68,9 @@ public class KhaosDatabase extends TronDatabase {
     public boolean remove(Sha256Hash hash) {
       hashKblkMap.computeIfPresent((BlockId) hash, (blockId, block) -> {
         numKblkMap.computeIfPresent(block.num, (blockNum, listBlk) -> {
-                  listBlk.removeIf(b -> b.id == hash);
-                  return listBlk;
-                }
-        );
+          listBlk.removeIf(b -> b.id == hash);
+          return listBlk;
+        });
         return null;
       });
 
