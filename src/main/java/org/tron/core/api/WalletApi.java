@@ -4,10 +4,11 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.tron.api.GrpcAPI;
-import org.tron.common.application.Application;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.WitnessStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
@@ -15,12 +16,14 @@ import java.util.Iterator;
 
 public class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
 
-  private Application app;
+  private final AccountStore accountStore;
   private Wallet wallet;
+  private WitnessStore witnessStore;
 
-  public WalletApi(Application app) {
-    this.app = app;
-    this.wallet = new Wallet(this.app);
+  public WalletApi(Wallet wallet, AccountStore accountStore, WitnessStore witnessStore) {
+    this.witnessStore = witnessStore;
+    this.accountStore = accountStore;
+    this.wallet = wallet;
   }
 
 
@@ -96,8 +99,7 @@ public class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
     //send back to cli
     Preconditions.checkNotNull(req.getOwnerAddress(), "OwnerAddress is null");
 
-    AccountCapsule account = app.getDbManager().getAccountStore()
-        .get(req.getOwnerAddress().toByteArray());
+    AccountCapsule account = this.accountStore.get(req.getOwnerAddress().toByteArray());
 
     Preconditions.checkNotNull(account, "OwnerAddress[" + req.getOwnerAddress() + "] not exists");
 
@@ -111,8 +113,7 @@ public class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
     while (iterator.hasNext()) {
       Contract.VoteWitnessContract.Vote vote = iterator.next();
       ByteString voteAddress = vote.getVoteAddress();
-      WitnessCapsule witness = app.getDbManager().getWitnessStore()
-          .get(voteAddress.toByteArray());
+      WitnessCapsule witness = this.witnessStore.get(voteAddress.toByteArray());
       Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
 
       Preconditions.checkArgument(vote.getVoteCount() <= 0,
