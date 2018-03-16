@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -9,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -16,9 +16,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
-import org.tron.utils.FileUtils;
-import com.google.protobuf.ByteString;
 import org.tron.core.exception.UnLinkedBlockException;
+import com.google.protobuf.ByteString;
 
 
 public class ManagerTest {
@@ -46,8 +45,7 @@ public class ManagerTest {
 
   @AfterClass
   public static void removeDb() {
-    File dbFolder = new File(dbPath);
-    FileUtils.deleteFolder(dbFolder);
+    FileUtil.recursiveDelete(dbPath);
   }
 
   @Test

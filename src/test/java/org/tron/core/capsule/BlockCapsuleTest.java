@@ -1,6 +1,5 @@
 package org.tron.core.capsule;
 
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -8,11 +7,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
-import org.tron.utils.FileUtils;
 import com.google.protobuf.ByteString;
 
 
@@ -33,8 +32,7 @@ public class BlockCapsuleTest {
 
   @AfterClass
   public static void removeDb() {
-    File dbFolder = new File(dbPath);
-    FileUtils.deleteFolder(dbFolder);
+    FileUtil.recursiveDelete(dbPath);
   }
 
   @Test
