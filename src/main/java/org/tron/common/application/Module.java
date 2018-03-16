@@ -24,6 +24,7 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.RpcApiService;
 
 public class Module extends AbstractModule {
 
@@ -57,4 +58,10 @@ public class Module extends AbstractModule {
     db.initDB();
     return db;
   }
+
+//  @Provides
+//  @Singleton
+//  public RpcApiService buildRpcApiService() {
+//
+//  }
 }

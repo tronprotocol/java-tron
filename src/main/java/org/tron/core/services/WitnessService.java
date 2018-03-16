@@ -266,13 +266,6 @@ public class WitnessService implements Service {
     this.db.setShuffledWitnessStates(db.getWitnesses());
   }
 
-
-  @Override
-  public void init(Args args) {
-    //this.privateKey = args.getPrivateKeys();
-    init();
-  }
-
   @Override
   public void start() {
     isRunning = true;

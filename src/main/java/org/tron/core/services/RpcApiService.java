@@ -1,42 +1,23 @@
 package org.tron.core.services;
 
-import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.logging.Logger;
-import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
-import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.GrpcAPI.NodeList;
-import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.common.application.Application;
+
 import org.tron.common.application.Service;
-import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.args.Args;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
-import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Transaction;
+import org.tron.core.api.WalletApi;
 
 public class RpcApiService implements Service {
 
   private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
   private int port = 50051;
   private Server apiServer;
-  private Application app;
+  private WalletApi wallet;
 
-  public RpcApiService(Application app) {
-    this.app = app;
+  public RpcApiService(WalletApi wallet) {
+    this.wallet = wallet;
   }
 
   @Override
@@ -45,15 +26,10 @@ public class RpcApiService implements Service {
   }
 
   @Override
-  public void init(Args args) {
-
-  }
-
-  @Override
   public void start() {
     try {
       apiServer = ServerBuilder.forPort(port)
-          .addService(new WalletApi(app))
+          .addService(wallet)
           .build()
           .start();
     } catch (IOException e) {
@@ -67,162 +43,6 @@ public class RpcApiService implements Service {
       //server.this.stop();
       System.err.println("*** server shut down");
     }));
-  }
-
-  private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
-
-    private Application app;
-    private Wallet wallet;
-
-    private WalletApi(Application app) {
-      this.app = app;
-      this.wallet = new Wallet(this.app);
-    }
-
-
-    @Override
-    public void getBalance(Account req, StreamObserver<Account> responseObserver) {
-      ByteString addressBs = req.getAddress();
-      if (addressBs != null) {
-        //      byte[] addressBa = addressBs.toByteArray();
-        //     long balance = wallet.getBalance(addressBa);
-        //    Account reply = Account.newBuilder().setBalance(balance).build();
-        Account reply = wallet.getBalance(req);
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void createTransaction(TransferContract req,
-        StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getOwnerAddress();
-      ByteString toBs = req.getToAddress();
-      long amount = req.getAmount();
-      if (fromBs != null && toBs != null && amount > 0) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void broadcastTransaction(Transaction req,
-        StreamObserver<GrpcAPI.Return> responseObserver) {
-      boolean ret = wallet.broadcastTransaction(req);
-      GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
-      responseObserver.onNext(retur);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void createAccount(AccountCreateContract request,
-        StreamObserver<Transaction> responseObserver) {
-      if (request.getType() == null || request.getAccountName() == null
-          || request.getOwnerAddress() == null) {
-        responseObserver.onNext(null);
-      } else {
-        Transaction trx = wallet.createAccount(request);
-        responseObserver.onNext(trx);
-      }
-      responseObserver.onCompleted();
-    }
-
-
-    @Override
-    public void createAssetIssue(AssetIssueContract request,
-        StreamObserver<Transaction> responseObserver) {
-      ByteString owner = request.getOwnerAddress();
-      if (owner != null) {
-        Transaction trx = wallet.createTransaction(request);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    //refactor、test later
-    private void checkVoteWitnessAccount(VoteWitnessContract req) {
-
-      //send back to cli
-      Preconditions.checkNotNull(req.getOwnerAddress(), "OwnerAddress is null");
-
-      AccountCapsule account = app.getDbManager().getAccountStore()
-          .get(req.getOwnerAddress().toByteArray());
-
-      Preconditions.checkNotNull(account, "OwnerAddress[" + req.getOwnerAddress() + "] not exists");
-
-      Preconditions
-          .checkArgument(req.getVotesCount() <= 0, "VotesCount[" + req.getVotesCount() + "] <= 0");
-
-      Preconditions.checkArgument(account.getShare() < req.getVotesCount(),
-          "Share[" + account.getShare() + "] <  VotesCount[" + req.getVotesCount() + "]");
-
-      Iterator<Vote> iterator = req.getVotesList().iterator();
-      while (iterator.hasNext()) {
-        Vote vote = iterator.next();
-        ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore()
-            .get(voteAddress.toByteArray());
-        Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
-
-        Preconditions.checkArgument(vote.getVoteCount() <= 0,
-            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount()
-                + "] <= 0");
-      }
-    }
-
-    @Override
-    public void voteWitnessAccount(VoteWitnessContract req,
-        StreamObserver<Transaction> response) {
-
-      try {
-//        checkVoteWitnessAccount(req);//to be complemented later
-        Transaction trx = wallet.createTransaction(req);
-        response.onNext(trx);
-      } catch (Exception ex) {
-        response.onNext(null);
-      }
-      response.onCompleted();
-    }
-
-    @Override
-    public void createWitness(WitnessCreateContract req,
-        StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getOwnerAddress();
-
-      if (fromBs != null) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-
-    @Override
-    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
-      responseObserver.onNext(wallet.getAllAccounts());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
-      responseObserver.onNext(wallet.getWitnessList());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      // TODO: this.app.getP2pNode().getActiveNodes();
-      super.listNodes(request, responseObserver);
-    }
   }
 
   @Override

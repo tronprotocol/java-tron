@@ -40,9 +40,6 @@ public class ApplicationFactory {
   /**
    * Build a new cli application.
    */
-  //public CliApplication buildCli() {
-  //  return new CliApplication(buildGuice());
-  //}
   public static Application create() {
     return new ApplicationImpl();
   }

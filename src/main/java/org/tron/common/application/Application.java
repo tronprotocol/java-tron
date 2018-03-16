@@ -22,11 +22,13 @@ import org.tron.core.net.node.Node;
 
 public interface Application {
 
-  void setOptions(Args args);
+  void setArgs(Args args);
 
   void init(String path, Args args);
 
-  void initServices(Args args);
+  void initServices();
+
+  Args getArgs();
 
   void startup();
 

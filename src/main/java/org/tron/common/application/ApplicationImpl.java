@@ -18,6 +18,7 @@ public class ApplicationImpl implements Application {
   private BlockStore blockStoreDb;
   private ServiceContainer services;
   private NodeDelegate nodeDelegate;
+  private Args args;
 
   private Manager dbManager;
 
@@ -30,8 +31,8 @@ public class ApplicationImpl implements Application {
   }
   
   @Override
-  public void setOptions(Args args) {
-
+  public void setArgs(Args args) {
+    this.args = args;
   }
 
   @Override
@@ -50,8 +51,13 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(Args args) {
-    services.init(args);
+  public void initServices() {
+    services.init();
+  }
+
+  @Override
+  public Args getArgs() {
+    return args;
   }
 
   /**
