@@ -340,6 +340,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             blockWaitToProcBak.clear();
           }
 
+          isBlockProc[0] = false;
           Set<BlockMessage> pool = new HashSet<>();
           pool.addAll(blockWaitToProc);
           pool.forEach(msg -> {

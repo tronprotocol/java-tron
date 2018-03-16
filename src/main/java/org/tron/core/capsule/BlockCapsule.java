@@ -303,6 +303,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   @Override
   public String toString() {
     unPack();
-    return this.block.toString();
+    return "BlockCapsule{" +
+        "blockId=" + blockId +
+        ", num=" + getNum() +
+        ", parentId=" + getParentHash() +
+        ", generatedByMyself=" + generatedByMyself +
+        '}';
   }
 }
