@@ -408,25 +408,30 @@ public class Manager {
 
     BlockCapsule newBlock = this.khaosDb.push(block);
     //DB don't need lower block
-    if (!(head == null && newBlock.getNum() == 1)
-        || newBlock.getNum() <= head.getNum()) {
-      return;
-    }
+    if (head == null) {
+      if (newBlock.getNum() != 0) {
+        return;
+      }
+    } else {
+      if (newBlock.getNum() <= head.getNum()) {
+        return;
+      }
+      //switch fork
+      if (!newBlock.getParentHash().equals(head.getBlockId())) {
+        switchFork(newBlock);
+      }
 
-    //switch fork
-    if (!newBlock.getParentHash().equals(head.getBlockId())) {
-      switchFork(newBlock);
-    }
-
-    try (Dialog tmpDialog = revokingStore.buildDialog()) {
-      this.processBlock(newBlock);
-      tmpDialog.commit();
-    } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
+      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        this.processBlock(newBlock);
+        tmpDialog.commit();
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
+      }
     }
 
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    refreshHead(newBlock);
     logger.info("save block: " + newBlock);
   }
 
@@ -653,7 +658,6 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
       this.updateSignedWitness(block);
-      this.refreshHead(block);
 
       if (needMaintenance(block.getTimeStamp())) {
         if (block.getNum() == 1) {
