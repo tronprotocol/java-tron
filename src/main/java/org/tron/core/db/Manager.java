@@ -345,8 +345,6 @@ public class Manager {
 
   /**
    * validate witness schedule
-   * @param block
-   * @return
    */
   private boolean validateWitnessSchedule(BlockCapsule block) {
 
@@ -390,7 +388,6 @@ public class Manager {
       } catch (Exception ex) {
         logger.error("validateWitnessSchedule error", ex);
       }
-
 
       if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
         logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
@@ -867,7 +864,7 @@ public class Manager {
         }
       }
     });
-    witnessCapsuleList.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
+    sortWitness(witnessCapsuleList);
     if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
     }
@@ -877,6 +874,7 @@ public class Manager {
       this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
     });
   }
+
 
   /**
    * update wits sync to store.
@@ -888,7 +886,18 @@ public class Manager {
         wits.add(witnessCapsule);
       }
     });
-    wits.sort((a, b) -> (int) (b.getVoteCount() - a.getVoteCount()));
+    sortWitness(wits);
+  }
+
+
+  private void sortWitness(List<WitnessCapsule> list) {
+    list.sort((a, b) -> {
+      if (b.getVoteCount() != a.getVoteCount()) {
+        return (int) (b.getVoteCount() - a.getVoteCount());
+      } else {
+        return b.getAddress().hashCode() - a.getAddress().hashCode();
+      }
+    });
   }
 
   public AssetIssueStore getAssetIssueStore() {
@@ -903,7 +912,7 @@ public class Manager {
    * shuffle witnesses
    */
   private void updateWitnessSchedule() {
-    if(CollectionUtils.isEmpty(getWitnesses())){
+    if (CollectionUtils.isEmpty(getWitnesses())) {
       logger.warn("Witnesses is empty");
       return;
     }
@@ -925,4 +934,6 @@ public class Manager {
         .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
+
+
 }
