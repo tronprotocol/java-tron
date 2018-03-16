@@ -385,7 +385,12 @@ public class Manager {
         return;
       }
 
-      validateWitnessSchedule(block); // direct return ,need test
+      try {
+        validateWitnessSchedule(block); // direct return ,need test
+      } catch (Exception ex) {
+        logger.error("validateWitnessSchedule error", ex);
+      }
+
 
       if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
         logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
