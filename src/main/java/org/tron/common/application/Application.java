@@ -27,8 +27,6 @@ public interface Application {
 
   void init(String path, Args args);
 
-  Guice getInjector();
-
   void initServices();
 
   Args getArgs();
