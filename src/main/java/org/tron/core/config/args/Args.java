@@ -48,7 +48,6 @@ public class Args {
   private Storage storage;
   private GenesisBlock genesisBlock;
   private String chainId;
-  private LocalWitnesses localWitness;
   private long blockInterval;
   private boolean needSyncCheck;
 
@@ -72,9 +71,6 @@ public class Args {
 
     INSTANCE.storage = module.buildStorage();
 
-    if (config.hasPath("localwitness")) {
-      INSTANCE.localWitness = module.buildLocalWitnesses();
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -141,14 +137,6 @@ public class Args {
 
   public boolean isWitness() {
     return this.witness;
-  }
-
-  public LocalWitnesses getLocalWitnesses() {
-    return this.localWitness;
-  }
-
-  public void setLocalWitness(final LocalWitnesses localWitness) {
-    this.localWitness = localWitness;
   }
 
   public long getBlockInterval() {

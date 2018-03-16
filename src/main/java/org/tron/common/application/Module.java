@@ -15,35 +15,30 @@
 
 package org.tron.common.application;
 
-import static org.tron.core.Constant.BLOCK_DB_NAME;
-import static org.tron.core.Constant.TRANSACTION_DB_NAME;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.core.api.WalletApi;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.*;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.core.services.RpcApiService;
 
-import java.nio.file.Path;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 import java.util.Optional;
+
+import static org.tron.core.Constant.BLOCK_DB_NAME;
+import static org.tron.core.Constant.TRANSACTION_DB_NAME;
 
 public class Module extends AbstractModule {
 
@@ -60,7 +55,7 @@ public class Module extends AbstractModule {
 
   @Override
   protected void configure() {
-
+    bind(Node.class).to(NodeImpl.class);
   }
 
   @Provides

@@ -2,14 +2,10 @@ package org.tron.core.services;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -17,15 +13,17 @@ import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.LocalWitnesses;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.*;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.node.Node;
 import org.tron.core.witness.BlockProductionCondition;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class WitnessService implements Service {
@@ -33,8 +31,8 @@ public class WitnessService implements Service {
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
-  private final Manager manager;
   private final Node node;
+  private LocalWitnesses localWitnesses;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
@@ -48,9 +46,10 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Node node, Manager manager) {
+  @Inject
+  public WitnessService(Node node, LocalWitnesses localWitnesses) {
     this.node = node;
-    this.manager = manager;
+    this.localWitnesses = localWitnesses;
     generateThread = new Thread(scheduleProductionLoop);
   }
 
@@ -248,7 +247,7 @@ public class WitnessService implements Service {
    */
   @Override
   public void init() {
-    Args.getInstance().getLocalWitnesses().getPrivateKeys().forEach(key -> {
+    localWitnesses.getPrivateKeys().forEach(key -> {
       byte[] privateKey = ByteArray.fromHexString(key);
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] address = ecKey.getAddress();

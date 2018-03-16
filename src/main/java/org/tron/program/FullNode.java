@@ -43,7 +43,7 @@ public class FullNode {
     application.addService(rpcApiService);
 
     if (cfgArgs.isWitness()) {
-      application.addService(new WitnessService(application.getP2pNode(), application.getDbManager()));
+      application.addService(application.getInjector().getInstance(WitnessService.class));
     }
 
     application.initServices();
