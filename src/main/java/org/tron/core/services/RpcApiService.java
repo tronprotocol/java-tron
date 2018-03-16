@@ -19,6 +19,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
@@ -205,7 +206,18 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void updateWitness(Contract.WitnessUpdateContract req,
+                              StreamObserver<Transaction> responseObserver) {
+      if (req.getOwnerAddress() != null) {
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
 
+      responseObserver.onCompleted();
+    }
     @Override
     public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
       responseObserver.onNext(wallet.getAllAccounts());

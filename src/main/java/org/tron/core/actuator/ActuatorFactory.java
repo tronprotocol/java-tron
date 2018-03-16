@@ -64,6 +64,8 @@ public class ActuatorFactory {
         return new AssetIssueActuator(contract.getParameter(), manager);
       case DeployContract:
         break;
+      case WitnessUpdateContract:
+        return new WitnessUpdateActuator(contract.getParameter(), manager);
       default:
 
     }
