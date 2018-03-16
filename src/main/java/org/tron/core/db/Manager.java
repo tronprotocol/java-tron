@@ -404,18 +404,14 @@ public class Manager {
       }
     }
 
-    if (block.getNum() != 0) {
+    if (newBlock.getNum() > head.getNum()) {
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(block);
-
+        this.processBlock(newBlock);
         tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
     }
-
-    //refresh
-    refreshHead(block);
 
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
@@ -646,8 +642,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
-      this.updateDynamicProperties(block);
       this.updateSignedWitness(block);
+      this.refreshHead(block);
 
       if (needMaintenance(block.getTimeStamp())) {
         if (block.getNum() == 1) {
@@ -664,11 +660,6 @@ public class Manager {
    */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
-  }
-
-  //// To be added
-  private void updateDynamicProperties(final BlockCapsule block) {
-
   }
 
   /**
