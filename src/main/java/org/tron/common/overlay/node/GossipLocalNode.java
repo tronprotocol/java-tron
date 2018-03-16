@@ -41,8 +41,6 @@ public class GossipLocalNode implements LocalNode {
 
   private PeerConnectionDelegate peerDel;
 
-  private static final GossipLocalNode INSTANCE = new GossipLocalNode();
-
   //public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private ExecutorService executors;
@@ -113,10 +111,6 @@ public class GossipLocalNode implements LocalNode {
 
   public void setPeerDel(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;
-  }
-
-  public static GossipLocalNode getInstance() {
-    return INSTANCE;
   }
 
   private List<Address> getAddresses() {

@@ -48,6 +48,8 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Singleton
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
+
+
   class InvToSend {
 
     private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
@@ -139,6 +141,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   ExecutorLoop<Message> loopAdvertiseInv;
 
+  public NodeImpl(GossipLocalNode gossipNode) {
+    this.gossipNode = gossipNode;
+    this.gossipNode.setPeerDel(this);
+  }
+
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
     logger.info("Handle Message: " + msg);
@@ -204,8 +211,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
-    gossipNode = GossipLocalNode.getInstance();
-    gossipNode.setPeerDel(this);
     gossipNode.start();
     isAdvertiseActive = true;
     isFetchActive = true;

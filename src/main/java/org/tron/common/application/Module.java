@@ -29,6 +29,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
@@ -137,8 +138,9 @@ public class Module extends AbstractModule {
 
   @Provides
   @Singleton
-  public NodeImpl buildNodeImpl() {
-    return new NodeImpl();
+  @Inject
+  public NodeImpl buildNodeImpl(GossipLocalNode gossipLocalNode) {
+    return new NodeImpl(gossipLocalNode);
   }
 
   @Provides
