@@ -56,6 +56,7 @@ public class CreateAccountActuatorTest {
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
         ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND), AccountType.AssetIssue);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
   }
 
   private Any getContract(String name, String address) {
