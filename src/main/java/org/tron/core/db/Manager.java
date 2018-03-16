@@ -350,6 +350,19 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
     boolean useKhaoDB = false;
     BlockCapsule newBlock = this.khaosDb.push(block);
+
+    //DB don't need lower block
+    if (newBlock.getNum() <= head.getNum()) {
+      return;
+    }
+
+    try (Dialog tmpDialog = revokingStore.buildDialog()) {
+      this.processBlock(newBlock);
+      tmpDialog.commit();
+    } catch (RevokingStoreIllegalStateException e) {
+      e.printStackTrace();
+    }
+
     //todo: check block's validity
     if (!block.generatedByMyself) {
       if (!block.validateSignature()) {
@@ -404,21 +417,9 @@ public class Manager {
       }
     }
 
-    if (newBlock.getNum() > head.getNum()) {
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        this.processBlock(newBlock);
-        tmpDialog.commit();
-      } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
-      }
-    }
-
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
-    logger.info("save block, Its ID is " + block.getBlockId() + ", Its num is " + block.getNum());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    // todo modify the dynamic head
-    //this.head = this.khaosDb.getHead();
-    // blockDbDataSource.putData(blockHash, blockData);
+    logger.info("save block: " + newBlock);
   }
 
   private void refreshHead(BlockCapsule block) {
