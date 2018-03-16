@@ -15,8 +15,6 @@
 
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
@@ -32,10 +30,14 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
+
+    private static final long serialVersionUID = 640048834186654213L;
 
     @Override
     public boolean equals(Object o) {
@@ -239,7 +241,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
                 .toByteArray()));
       }
 
-      if (hashNum % 2 == 1) {
+      if (hashNum % 2 != 0) {
         ids.set(k++, ids.get(max));
       }
       hashNum = k;
