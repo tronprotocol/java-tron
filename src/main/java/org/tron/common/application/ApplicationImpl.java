@@ -45,9 +45,8 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void init(String path, Args args) {
-    p2pNode = new NodeImpl();
-    dbManager = new Manager();
-    dbManager.init();
+    p2pNode = injector.getInstance(NodeImpl.class);
+    dbManager = injector.getInstance(Manager.class);
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
     nodeDelegate = new NodeDelegateImpl(dbManager);

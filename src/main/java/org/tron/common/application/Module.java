@@ -31,6 +31,8 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.*;
+import org.tron.core.db.Manager;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.core.services.RpcApiService;
 
 import java.nio.file.Path;
@@ -68,8 +70,7 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("transaction")
   public LevelDbDataSourceImpl buildTransactionDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
-        TRANSACTION_DB_NAME);
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(args.getOutputDirectory(), TRANSACTION_DB_NAME);
     db.initDB();
     return db;
   }
@@ -81,7 +82,7 @@ public class Module extends AbstractModule {
   @Singleton
   @Named("block")
   public LevelDbDataSourceImpl buildBlockDb() {
-    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), BLOCK_DB_NAME);
+    LevelDbDataSourceImpl db = new LevelDbDataSourceImpl(args.getOutputDirectory(), BLOCK_DB_NAME);
     db.initDB();
     return db;
   }
@@ -129,20 +130,17 @@ public class Module extends AbstractModule {
     return localWitness;
   }
 
-  public GenesisBlock buildGenesisBlock() {
-    GenesisBlock genesisBlock = new GenesisBlock();
-    genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
-    genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-    genesisBlock.setHash(config.getString("genesis.block.hash"));
-    genesisBlock.setNumber(config.getString("genesis.block.number"));
+  @Provides
+  @Singleton
+  public NodeImpl buildNodeImpl() {
+    return new NodeImpl();
+  }
 
-    if (config.hasPath("genesis.block.assets")) {
-      genesisBlock.setAssets(Configuration.getAccountsFromConfig(config));
-    }
-    if (config.hasPath("genesis.block.witnesses")) {
-      genesisBlock.setWitnesses(Configuration.getWitnessesFromConfig(config));
-    }
-
-    return genesisBlock;
+  @Provides
+  @Singleton
+  public Manager buildManager() {
+    Manager manager = new Manager();
+    manager.init();
+    return manager;
   }
 }
