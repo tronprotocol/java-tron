@@ -235,8 +235,8 @@ public class Manager {
     genesisBlockArg.getAssets().forEach(account -> {
       account.setAccountType("Normal");//to be set in conf
       final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
-          account.getAccountType(),
           ByteString.copyFrom(account.getAddressBytes()),
+          account.getAccountType(),
           account.getBalance());
       this.accountStore.put(account.getAddressBytes(), accountCapsule);
     });
@@ -250,9 +250,9 @@ public class Manager {
       ByteString address = ByteString.copyFrom(keyAddress);
 
       final AccountCapsule accountCapsule = new AccountCapsule(
-              ByteString.EMPTY, AccountType.AssetIssue, address, 0L);
+          ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
-              address, key.getVoteCount(), key.getUrl());
+          address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
       this.accountStore.put(keyAddress, accountCapsule);
       this.witnessStore.put(keyAddress, witnessCapsule);

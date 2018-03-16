@@ -49,7 +49,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   /**
    * initial account capsule.
    */
-  public AccountCapsule(ByteString accountName, AccountType accountType, ByteString address,
+  public AccountCapsule(ByteString accountName, ByteString address, AccountType accountType,
       long balance) {
     this.account = Account.newBuilder()
         .setAccountName(accountName)
