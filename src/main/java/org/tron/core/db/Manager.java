@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.RandomGenerator;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -343,6 +344,34 @@ public class Manager {
   }
 
   /**
+   * validate witness schedule
+   * @param block
+   * @return
+   */
+  private boolean validateWitnessSchedule(BlockCapsule block) {
+
+    ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
+        .getWitnessAddress();
+    //to deal with other condition later
+    if (head.getBlockId().equals(block.getParentHash())) {
+      long slot = getSlotAtTime(block.getTimeStamp());
+      final ByteString scheduledWitness = getScheduledWitness(slot);
+      if (!scheduledWitness.equals(witnessAddress)) {
+        logger.warn(
+            "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
+            ByteArray.toHexString(scheduledWitness.toByteArray()),
+            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+            slot);
+        return false;
+      }
+    }
+
+    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
+        ByteArray.toHexString(witnessAddress.toByteArray()));
+    return true;
+  }
+
+  /**
    * save a block.
    */
   public void pushBlock(final BlockCapsule block)
@@ -355,6 +384,8 @@ public class Manager {
         logger.info("The siganature is not validated.");
         return;
       }
+
+      validateWitnessSchedule(block); // direct return ,need test
 
       if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
         logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
@@ -430,7 +461,9 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    updateWitnessSchedule();
   }
+
 
   /**
    * Get the fork branch.
@@ -859,5 +892,28 @@ public class Manager {
 
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
     this.assetIssueStore = assetIssueStore;
+  }
+
+  /**
+   * shuffle witnesses
+   */
+  private void updateWitnessSchedule() {
+
+    if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
+      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
+          getHeadBlockTimeStamp());
+      setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
+          .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
+
+      logger.debug(
+          "updateWitnessSchedule,before:{} ", getWitnessStringList(getWitnesses()).toString()
+              + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
+    }
+  }
+
+  private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
+    return witnessStates.stream()
+        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
+        .collect(Collectors.toList());
   }
 }
