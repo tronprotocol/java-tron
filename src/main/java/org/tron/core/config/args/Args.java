@@ -63,9 +63,9 @@ public class Args {
    */
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
 
-    Module module = new Module(config, INSTANCE);
-
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+
+    Module module = new Module(config, INSTANCE);
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
