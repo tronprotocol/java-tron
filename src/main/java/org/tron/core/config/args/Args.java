@@ -46,8 +46,6 @@ public class Args {
   private int overlayPort = 0;
 
   private Storage storage;
-  private Overlay overlay;
-  private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
   private LocalWitnesses localWitness;
@@ -73,8 +71,6 @@ public class Args {
     logger.info("private.key = {}", INSTANCE.privateKey);
 
     INSTANCE.storage = module.buildStorage();
-    INSTANCE.overlay = module.buildOverlay();
-    INSTANCE.seedNode = module.buildSeedNode();
 
     if (config.hasPath("localwitness")) {
       INSTANCE.localWitness = module.buildLocalWitnesses();
@@ -129,14 +125,6 @@ public class Args {
 
   public Storage getStorage() {
     return this.storage;
-  }
-
-  public Overlay getOverlay() {
-    return this.overlay;
-  }
-
-  public SeedNode getSeedNode() {
-    return this.seedNode;
   }
 
   public GenesisBlock getGenesisBlock() {

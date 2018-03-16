@@ -19,19 +19,23 @@ import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
 import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Overlay;
+import org.tron.core.config.args.SeedNode;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
+
+import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.core.config.args.Args;
-import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerConnectionDelegate;
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
 
 public class GossipLocalNode implements LocalNode {
 
@@ -47,6 +51,9 @@ public class GossipLocalNode implements LocalNode {
   
   private CompositeSubscription subscriptions = new CompositeSubscription();
 
+  private Overlay overlay;
+  private SeedNode seedNode;
+
 //  public Collection<PeerConnection> getValidPeer() {
 //    //TODO: maintain a valid peer list here by some methods
 //    return listPeer.values();
@@ -57,6 +64,13 @@ public class GossipLocalNode implements LocalNode {
 //    listPeer.forEach((id, peer) -> peer.sendMessage(message));
 //  }
 
+
+  @Inject
+  public GossipLocalNode(Overlay overlay, SeedNode seedNode) {
+    this.overlay = overlay;
+    this.seedNode = seedNode;
+  }
+
   @Override
   public void start() {
     logger.info("listener message");
@@ -64,7 +78,7 @@ public class GossipLocalNode implements LocalNode {
     ClusterConfig config = ClusterConfig.builder()
             .seedMembers(getAddresses())
             .portAutoIncrement(false)
-        .port(Args.getInstance().getOverlay().getPort())
+        .port(this.overlay.getPort())
         .syncGroup(Args.getInstance().getChainId())
             .build();
 
@@ -114,7 +128,7 @@ public class GossipLocalNode implements LocalNode {
   }
 
   private List<Address> getAddresses() {
-    return Args.getInstance().getSeedNode().getIpList().stream()
+    return this.seedNode.getIpList().stream()
             .map(ip -> ip.split(":"))
             .filter(ipSplit -> ipSplit.length > 1)
             .map(ipSplit -> Address.create(ipSplit[0], Integer.valueOf(ipSplit[1])))
