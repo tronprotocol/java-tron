@@ -55,11 +55,10 @@ public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-  private BlockStore db;
   private final ECKey ecKey;
+
   @Getter
   private UtxoStore utxoStore;
-  private Application app;
   private Node p2pnode;
   private Manager dbManager;
 
@@ -75,9 +74,7 @@ public class Wallet {
    * constructor.
    */
   public Wallet(Application app) {
-    this.app = app;
     this.p2pnode = app.getP2pNode();
-    this.db = app.getBlockStoreS();
     utxoStore = app.getDbManager().getUtxoStore();
     dbManager = app.getDbManager();
     this.ecKey = new ECKey(Utils.getRandom());
@@ -130,8 +127,7 @@ public class Wallet {
    */
   public Transaction createTransaction(byte[] address, String to, long amount) {
     long balance = getBalance(address);
-    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
-        utxoStore);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance, utxoStore);
     return transactionCapsule.getInstance();
   }
 

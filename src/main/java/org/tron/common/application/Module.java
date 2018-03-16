@@ -75,11 +75,4 @@ public class Module extends AbstractModule {
     db.initDB();
     return db;
   }
-
-  @Provides
-  @Singleton
-  public RpcApiService buildRpcApiService(Config config) {
-    WalletApi wallet = new WalletApi(null);
-    return new RpcApiService(wallet, config.getInt("rpc.port"));
-  }
 }

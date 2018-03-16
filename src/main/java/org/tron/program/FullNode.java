@@ -1,12 +1,16 @@
 package org.tron.program;
 
 import com.google.inject.Injector;
+import com.google.inject.Provides;
+import com.sun.org.apache.xpath.internal.Arg;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.api.WalletApi;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -33,11 +37,16 @@ public class FullNode {
     Application appT = ApplicationFactory.create();
     appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
 
-    RpcApiService rpcApiService = module.getInstance(RpcApiService.class);
+    WalletApi wallet = new WalletApi(
+      new Wallet(appT),
+      appT.getDbManager().getAccountStore(),
+      appT.getDbManager().getWitnessStore()
+    );
+    RpcApiService rpcApiService = new RpcApiService(wallet, config.getInt("rpc.port"));
     appT.addService(rpcApiService);
 
     if (cfgArgs.isWitness()) {
-      appT.addService(new WitnessService(appT));
+      appT.addService(new WitnessService(appT.getP2pNode(), appT.getDbManager()));
     }
 
     appT.initServices();

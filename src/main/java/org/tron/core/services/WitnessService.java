@@ -24,6 +24,7 @@ import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.node.Node;
 import org.tron.core.witness.BlockProductionCondition;
 
 
@@ -32,7 +33,8 @@ public class WitnessService implements Service {
   private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
-  private Application tronApp;
+  private final Manager manager;
+  private final Node node;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
@@ -46,9 +48,9 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp) {
-    this.tronApp = tronApp;
-    db = tronApp.getDbManager();
+  public WitnessService(Node node, Manager manager) {
+    this.node = node;
+    this.manager = manager;
     generateThread = new Thread(scheduleProductionLoop);
   }
 
@@ -202,7 +204,7 @@ public class WitnessService implements Service {
 
   private void broadcastBlock(BlockCapsule block) {
     try {
-      tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
+      this.node.broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
       throw new RuntimeException("BroadcastBlock error");
     }
