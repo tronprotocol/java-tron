@@ -35,20 +35,24 @@ public class AccountVoteWitnessTest {
   @AfterClass
   public static void removeDb() {
     File dbFolder = new File(dbPath);
-    deleteFolder(dbFolder);
+    if (deleteFolder(dbFolder)) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+
   }
 
-  private static void deleteFolder(File index) {
+  private static Boolean deleteFolder(File index) {
     if (!index.isDirectory() || index.listFiles().length <= 0) {
-      index.delete();
-      return;
+      return index.delete();
     }
     for (File file : index.listFiles()) {
-      if (null != file) {
-        deleteFolder(file);
+      if (null != file && !deleteFolder(file)) {
+        return false;
       }
     }
-    index.delete();
+    return index.delete();
   }
 
   @Test
