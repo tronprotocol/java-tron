@@ -15,7 +15,7 @@ import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class WitnessUpdateActuator extends AbstractActuator {
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
+  private static final Logger logger = LoggerFactory.getLogger("WitnessUpdateActuator");
 
   WitnessUpdateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
