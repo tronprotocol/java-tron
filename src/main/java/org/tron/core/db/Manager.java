@@ -212,7 +212,8 @@ public class Manager {
    * init genesis block.
    */
   public void initGenesis()
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, UnLinkedBlockException {
+      throws ContractValidateException, ContractExeException,
+      ValidateSignatureException, UnLinkedBlockException {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -325,6 +326,9 @@ public class Manager {
   }
 
 
+  /**
+   * when switch fork need erase blocks on fork branch.
+   */
   public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
@@ -381,7 +385,8 @@ public class Manager {
    * save a block.
    */
   public void pushBlock(final BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
+      throws ValidateSignatureException, ContractValidateException,
+      ContractExeException, UnLinkedBlockException {
 
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -546,7 +551,8 @@ public class Manager {
    */
   public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
+      throws ValidateSignatureException, ContractValidateException,
+      ContractExeException, UnLinkedBlockException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -657,14 +663,14 @@ public class Manager {
   }
 
   /**
-   * Determine if the current time is maintenance time
+   * Determine if the current time is maintenance time.
    */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
   }
 
   /**
-   * Perform maintenance
+   * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
     this.updateWitness();
@@ -729,15 +735,9 @@ public class Manager {
       slotNum += getSkipSlotInMaintenance();
     }
 
-    //DateTime headSlotTime = blockStore.getHeadBlockTime();
-
-    //align slot time
-//    headSlotTime = headSlotTime
-//        .minus((headSlotTime.getMillis() - genesisTime.getMillis()) % interval);
-//
     long headSlotTime = getHeadBlockTimestamp();
-    headSlotTime = headSlotTime -
-        ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
+    headSlotTime = headSlotTime
+        - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
     return headSlotTime + interval * slotNum;
   }
