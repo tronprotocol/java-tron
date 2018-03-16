@@ -15,12 +15,14 @@
 
 package org.tron.core.config.args;
 
+import java.util.List;
+
 public class LocalWitness {
 
-  private String privateKey;
+  private List<String> privateKeys;
 
-  public String getPrivateKey() {
-    return this.privateKey;
+  public List<String> getPrivateKeys() {
+    return this.privateKeys;
   }
 
   /**

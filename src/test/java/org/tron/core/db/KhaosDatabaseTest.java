@@ -11,6 +11,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -51,7 +52,11 @@ public class KhaosDatabaseTest {
                 .fromHexString("9938a342238077182498b464ac029222ae169360e540d1fd6aee7c2ae9575a06")))
         )).build());
     khaosDatabase.start(blockCapsule);
-    khaosDatabase.push(blockCapsule2);
+    try {
+      khaosDatabase.push(blockCapsule2);
+    } catch (UnLinkedBlockException e) {
+
+    }
 
     Assert.assertEquals(blockCapsule2, khaosDatabase.getBlock(blockCapsule2.getBlockId()));
     Assert.assertTrue("conatain is error", khaosDatabase.containBlock(blockCapsule2.getBlockId()));

@@ -65,8 +65,21 @@ public class TransferActuator extends AbstractActuator {
       Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
 
-      if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(transferContract.getOwnerAddress().toByteArray());
+
+      long balance = accountCapsule.getBalance();
+      long laststOperationTime = accountCapsule.getLatestOperationTime();
+      long now = System.currentTimeMillis();
+
+      //if (now - laststOperationTime < balance) {
+      //throw new ContractValidateException();
+      //}
+
+      {
+        if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
+          throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+        }
       }
       if (!dbManager.getAccountStore().has(transferContract.getToAddress().toByteArray())) {
         throw new ContractValidateException("Validate TransferContract error, no ToAccount.");
@@ -85,6 +98,7 @@ public class TransferActuator extends AbstractActuator {
 
     return true;
   }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {

@@ -9,13 +9,14 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
 public interface NodeDelegate {
 
-  LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws BadBlockException;
+  LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode) throws BadBlockException, UnLinkedBlockException;
 
   void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 

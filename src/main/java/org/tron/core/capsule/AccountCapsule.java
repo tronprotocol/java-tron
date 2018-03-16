@@ -109,6 +109,10 @@ public class AccountCapsule implements ProtoCapsule<Account> {
     return this.account.getBalance();
   }
 
+  public long getLatestOperationTime() {
+    return this.account.getLatestOprationTime();
+  }
+
   public void setBalance(long balance) {
     this.account = this.account.toBuilder().setBalance(balance).build();
   }

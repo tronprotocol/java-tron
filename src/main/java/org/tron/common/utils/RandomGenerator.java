@@ -24,7 +24,6 @@
 package org.tron.common.utils;
 
 import java.util.List;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +33,8 @@ public class RandomGenerator<T> {
 
   private static long RANDOM_GENERATOR_NUMBER = 2685821657736338717L;
 
-  public List<T> shuffle(List<T> list, DateTime time) {
-    long headBlockTimeHi = time.getMillis() << 32;
+  public List<T> shuffle(List<T> list, long time) {
+    long headBlockTimeHi = time << 32;
 
     for (int i = 0; i < list.size(); i++) {
       long v = headBlockTimeHi + i * RANDOM_GENERATOR_NUMBER;
