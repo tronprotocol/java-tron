@@ -78,6 +78,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
       AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
+        .setAccountName(accountName)
         .setAddress(address)
         .build();
   }
@@ -141,7 +142,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   public long getShare() {
     return this.account.getBalance();
   }
-  
+
   /**
    * reduce asset amount.
    */

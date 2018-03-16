@@ -49,7 +49,7 @@ public class AssetIssueActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath},
         Configuration.getByPath("config-junit.conf"));
     dbManager = new Manager();
     dbManager.init();
