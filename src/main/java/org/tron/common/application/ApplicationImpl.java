@@ -1,5 +1,7 @@
 package org.tron.common.application;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,12 @@ public class ApplicationImpl implements Application {
   private Manager dbManager;
 
   private boolean isProducer;
+
+  private Injector injector;
+
+  public ApplicationImpl(Injector injector) {
+    this.injector = injector;
+  }
 
   private void resetP2PNode() {
     p2pNode.listen();
@@ -96,6 +104,11 @@ public class ApplicationImpl implements Application {
   @Override
   public Manager getDbManager() {
     return dbManager;
+  }
+
+  @Override
+  public Injector getInjector() {
+    return injector;
   }
 
   public boolean isProducer() {

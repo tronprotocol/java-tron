@@ -35,7 +35,7 @@ public class FullNode {
     }
 
     logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
-    Application application = ApplicationFactory.create();
+    Application application = ApplicationFactory.create(module);
     application.init(cfgArgs.getOutputDirectory(), cfgArgs);
 
     WalletApi wallet = new WalletApi(

@@ -34,14 +34,14 @@ public class ApplicationFactory {
   /**
    * Build a new application.
    */
-  public Application build() {
-    return new ApplicationImpl();
+  public Application build(Injector injector) {
+    return new ApplicationImpl(injector);
   }
 
   /**
    * Build a new cli application.
    */
-  public static Application create() {
-    return new ApplicationImpl();
+  public static Application create(Injector injector) {
+    return new ApplicationImpl(injector);
   }
 }

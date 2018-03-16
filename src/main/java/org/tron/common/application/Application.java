@@ -16,6 +16,7 @@
 package org.tron.common.application;
 
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -46,4 +47,6 @@ public interface Application {
   void addService(Service service);
 
   Manager getDbManager();
+
+  Injector getInjector();
 }
