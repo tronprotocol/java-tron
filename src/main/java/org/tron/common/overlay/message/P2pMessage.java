@@ -15,36 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+package org.tron.common.overlay.message;
 
-package org.tron.core.net.p2p;
-
-import org.spongycastle.util.encoders.Hex;
 import org.tron.protos.Message.P2pMessageCode;
 
-public class PongMessage extends P2pMessage {
+public abstract class P2pMessage extends Message {
 
-  /**
-   * Pong message is always a the same single command payload.
-   */
-  private final static byte[] FIXED_PAYLOAD = Hex.decode("C0");
-
-  @Override
-  public byte[] getEncoded() {
-    return FIXED_PAYLOAD;
+  public P2pMessage() {
   }
 
-  @Override
-  public Class<?> getAnswerMessage() {
-    return null;
+  public P2pMessage(byte[] encoded) {
+    super(encoded);
   }
 
-  @Override
   public P2pMessageCode getCommand() {
-    return P2pMessageCode.PONG;
-  }
-
-  @Override
-  public String toString() {
-    return "[" + this.getCommand().name() + "]";
+    return P2pMessageCode.forNumber(code);
   }
 }

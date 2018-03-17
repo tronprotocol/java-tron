@@ -16,42 +16,39 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.net.p2p;
+package org.tron.common.overlay.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import org.tron.protos.Message;
 import org.tron.protos.Message.P2pMessageCode;
 
-public class PeersMessage extends P2pMessage {
+public class DisconnectMessage extends P2pMessage {
 
-  private boolean parsed = false;
+  private Message.DisconnectMessage disconnectMessage;
 
-  private Message.PeersMessage peersMessage;
-
-  public PeersMessage(byte[] payload) {
-    super(payload);
+  public DisconnectMessage(byte[] encoded) {
+    super(encoded);
   }
 
-  public PeersMessage(List<Message.Peer> peers) {
-    this.peersMessage = Message.PeersMessage
+  public DisconnectMessage(Message.ReasonCode reason) {
+    this.disconnectMessage = Message.DisconnectMessage
         .newBuilder()
-        .addAllPeers(peers)
+        .setReason(reason)
         .build();
     parsed = true;
   }
 
   private void parse() {
     try {
-      this.peersMessage = Message.PeersMessage.parseFrom(encoded);
+      this.disconnectMessage = Message.DisconnectMessage.parseFrom(encoded);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    this.parsed = true;
+    parsed = true;
   }
 
   private void encode() {
-    this.encoded = this.peersMessage.toByteArray();
+    this.encoded = this.disconnectMessage.toByteArray();
   }
 
   @Override
@@ -62,16 +59,9 @@ public class PeersMessage extends P2pMessage {
     return encoded;
   }
 
-  public List<Message.Peer> getPeers() {
-    if (!parsed) {
-      this.parse();
-    }
-    return this.peersMessage.getPeersList();
-  }
-
   @Override
   public P2pMessageCode getCommand() {
-    return P2pMessageCode.PEERS;
+    return P2pMessageCode.DISCONNECT;
   }
 
   @Override
@@ -79,15 +69,17 @@ public class PeersMessage extends P2pMessage {
     return null;
   }
 
+  public Message.ReasonCode getReason() {
+    if (!parsed) {
+      parse();
+    }
+    return this.disconnectMessage.getReason();
+  }
+
   public String toString() {
     if (!parsed) {
-      this.parse();
+      parse();
     }
-
-    StringBuilder sb = new StringBuilder();
-    for (Message.Peer peerData : this.getPeers()) {
-      sb.append("\n       ").append(peerData);
-    }
-    return "[" + this.getCommand().name() + sb.toString() + "]";
+    return "[" + this.getCommand().name() + " reason=" + this.getReason() + "]";
   }
 }
