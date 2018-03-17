@@ -515,7 +515,8 @@ public class Manager {
 
     //filter trxs
     pendingTrxsTmp.stream()
-        .filter(trx -> getTransactionStore().dbSource.getData(trx.getTransactionId().getBytes()) == null)
+        .filter(trx -> getTransactionStore().dbSource.getData(trx.getTransactionId().getBytes())
+            == null)
         .forEach(trx -> {
           try {
             pushTransactions(trx);
@@ -524,6 +525,8 @@ public class Manager {
           } catch (ContractValidateException e) {
             e.printStackTrace();
           } catch (ContractExeException e) {
+            e.printStackTrace();
+          } catch (ValidationException e) {
             e.printStackTrace();
           }
         });
