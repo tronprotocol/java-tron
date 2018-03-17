@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javax.xml.bind.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -21,6 +20,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -84,7 +84,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
-    } catch (ValidationException e) {
+    } catch (HighFreqException e) {
       logger.info(e.getMessage());
     }
   }
@@ -116,7 +116,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
-    long len = Longs.min(dbManager.getHeadBlockNum(), unForkedBlockIdNum +NodeConstant.SYNC_FETCH_BATCH_NUM);
+    long len = Longs
+        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
         .filter(num -> num > 0)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))

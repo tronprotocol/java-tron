@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
@@ -524,7 +523,8 @@ public class Manager {
           } catch (ContractValidateException e) {
             e.printStackTrace();
           } catch (ContractExeException e) {
-            e.printStackTrace();
+            e.printStackTrace
+                ();
           } catch (HighFreqException e) {
             e.printStackTrace();
           }
