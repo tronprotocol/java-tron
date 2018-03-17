@@ -41,7 +41,6 @@ public class WitnessService implements Service {
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
-  private long tmpBlockNum = 0;
 
   /**
    * Construction method.
@@ -79,7 +78,6 @@ public class WitnessService implements Service {
               Thread.sleep(timeToNextSecond);
             }
             this.blockProductionLoop();
-            this.updateWitnessSchedule();
           } catch (InterruptedException ex) {
             logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
@@ -215,31 +213,8 @@ public class WitnessService implements Service {
   }
 
 
-  /**
-   * shuffle witnesses after each cycle is completed
-   */
-  private void updateWitnessSchedule() {
 
-    long headBlockNum = db.getHeadBlockNum();
-    if (headBlockNum != 0 && headBlockNum % db.getWitnesses().size() == 0
-        && tmpBlockNum != headBlockNum) {
-      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", db.getHeadBlockNum(),
-          db.getHeadBlockTimeStamp());
-      String witnessStringListBefore = getWitnessStringList(db.getWitnesses()).toString();
-      db.setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
-          .shuffle(db.getWitnesses(), db.getHeadBlockTimeStamp()));
-      ;
-      logger.info("updateWitnessSchedule,before: " + witnessStringListBefore + ",\nafter: "
-          + getWitnessStringList(db.getShuffledWitnessStates()));
-      tmpBlockNum = headBlockNum;
-    }
-  }
 
-  private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
-    return witnessStates.stream()
-        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
-        .collect(Collectors.toList());
-  }
 
   /**
    * Initialize the local witnesses

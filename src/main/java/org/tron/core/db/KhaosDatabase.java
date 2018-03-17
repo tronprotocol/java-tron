@@ -33,6 +33,24 @@ public class KhaosDatabase extends TronDatabase {
     BlockId id;
     Boolean invalid;
     long num;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      KhaosBlock that = (KhaosBlock) o;
+      return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+
+      return Objects.hash(id);
+    }
   }
 
   private class KhaosStore {
@@ -205,24 +223,22 @@ public class KhaosDatabase extends TronDatabase {
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
     if (kblk1 != null && kblk2 != null) {
-      do {
-
+      while (!Objects.equals(kblk1, kblk2)) {
         if (kblk1.num > kblk2.num) {
           list1.add(kblk1.blk);
           kblk1 = kblk1.parent;
-          continue;
         } else if (kblk1.num < kblk2.num) {
           list2.add(kblk2.blk);
           kblk2 = kblk2.parent;
-          continue;
+        } else {
+          list1.add(kblk1.blk);
+          list2.add(kblk2.blk);
+          kblk1 = kblk1.parent;
+          kblk2 = kblk2.parent;
         }
-
-        list1.add(kblk1.blk);
-        list2.add(kblk2.blk);
-        kblk1 = kblk1.parent;
-        kblk2 = kblk2.parent;
-      } while (kblk1 != kblk2);
+      }
     }
+
     return new Pair<>(list1, list2);
   }
 

@@ -15,7 +15,11 @@
 
 package org.tron.core.config.args;
 
-public class Witness {
+import java.io.Serializable;
+
+public class Witness implements Serializable {
+
+  private static final long serialVersionUID = -7446501098542377380L;
 
   private String address;
 
