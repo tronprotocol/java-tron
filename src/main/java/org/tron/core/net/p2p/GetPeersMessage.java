@@ -19,6 +19,7 @@
 package org.tron.core.net.p2p;
 
 import org.spongycastle.util.encoders.Hex;
+import org.tron.protos.Message.P2pMessageCode;
 
 public class GetPeersMessage extends P2pMessage {
 
@@ -33,8 +34,8 @@ public class GetPeersMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.GET_PEERS;
+  public P2pMessageCode getCommand() {
+    return P2pMessageCode.GET_PEERS;
   }
 
   @Override

@@ -20,6 +20,7 @@ package org.tron.core.net.p2p;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.protos.Message.Capability;
 
 /**
  * This class models a peer in the network

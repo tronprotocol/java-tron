@@ -17,6 +17,8 @@
  */
 package org.tron.core.net.p2p;
 
+import org.tron.protos.Message.P2pMessageCode;
+
 public abstract class P2pMessage extends Message {
 
   public P2pMessage() {
@@ -26,7 +28,7 @@ public abstract class P2pMessage extends Message {
     super(encoded);
   }
 
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.fromByte(code);
+  public P2pMessageCode getCommand() {
+    return P2pMessageCode.forNumber(code);
   }
 }

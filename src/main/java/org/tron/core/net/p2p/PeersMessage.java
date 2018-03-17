@@ -21,6 +21,7 @@ package org.tron.core.net.p2p;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import org.tron.protos.Message;
+import org.tron.protos.Message.P2pMessageCode;
 
 public class PeersMessage extends P2pMessage {
 
@@ -69,8 +70,8 @@ public class PeersMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.PEERS;
+  public P2pMessageCode getCommand() {
+    return P2pMessageCode.PEERS;
   }
 
   @Override

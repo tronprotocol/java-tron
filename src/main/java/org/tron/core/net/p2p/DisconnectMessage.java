@@ -20,6 +20,7 @@ package org.tron.core.net.p2p;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.protos.Message;
+import org.tron.protos.Message.P2pMessageCode;
 
 public class DisconnectMessage extends P2pMessage {
 
@@ -59,8 +60,8 @@ public class DisconnectMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.DISCONNECT;
+  public P2pMessageCode getCommand() {
+    return P2pMessageCode.DISCONNECT;
   }
 
   @Override

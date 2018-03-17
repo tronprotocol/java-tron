@@ -22,6 +22,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import org.tron.protos.Message;
 import org.tron.protos.Message.HelloMessage.Builder;
+import org.tron.protos.Message.P2pMessageCode;
 
 public class HelloMessage extends P2pMessage {
 
@@ -103,8 +104,8 @@ public class HelloMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.HELLO;
+  public P2pMessageCode getCommand() {
+    return P2pMessageCode.HELLO;
   }
 
   public void setPeerId(String peerId) {
