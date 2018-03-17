@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
@@ -15,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
-import javax.xml.bind.ValidationException;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,6 +44,7 @@ import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -309,17 +311,13 @@ public class Manager {
    * push transaction into db.
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidationException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, HighFreqException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    try {
-      validateFreq(trx);
-    } catch (ValidationException e) {
-      throw new ValidationException("try later");
-    }
+    validateFreq(trx);
 
     if (!dialog.valid()) {
       dialog = DialogOptional.of(revokingStore.buildDialog());
@@ -339,28 +337,29 @@ public class Manager {
     return true;
   }
 
-  void validateFreq(TransactionCapsule trx) throws ValidationException {
+  void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
         .getContractList();
     for (Transaction.Contract contract : contracts) {
-      if (contract.getType() == TransferContract) {
+      if (contract.getType() == TransferContract ||
+          contract.getType() == TransferAssertContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         long balacne = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
-        int latstTrasNumberInBlock = this.head.getTransactions().size();
-        doValidateFreq(balacne, latstTrasNumberInBlock, latestOperationTime);
+        int latstTransNumberInBlock = this.head.getTransactions().size();
+        doValidateFreq(balacne, latstTransNumberInBlock, latestOperationTime);
       }
     }
   }
 
   void doValidateFreq(long balance, int transNumber, long latestOperationTime)
-      throws ValidationException {
+      throws HighFreqException {
     long now = System.currentTimeMillis();
     // todo: avoid ddos, design more smoothly formula later.
     if (balance < 1000000 * 1000) {
       if (now - latestOperationTime < 5 * 60 * 1000) {
-        throw new ValidationException("try later");
+        throw new HighFreqException("try later");
       }
     }
   }
@@ -526,7 +525,7 @@ public class Manager {
             e.printStackTrace();
           } catch (ContractExeException e) {
             e.printStackTrace();
-          } catch (ValidationException e) {
+          } catch (HighFreqException e) {
             e.printStackTrace();
           }
         });
