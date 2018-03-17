@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javafx.util.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -31,6 +32,24 @@ public class KhaosDatabase extends TronDatabase {
     BlockId id;
     Boolean invalid;
     long num;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      KhaosBlock that = (KhaosBlock) o;
+      return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+
+      return Objects.hash(id);
+    }
   }
 
   private class KhaosStore {
@@ -213,30 +232,27 @@ public class KhaosDatabase extends TronDatabase {
       BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> ret = new Pair<>(list1, list2);
     KhaosBlock kblk1 = miniStore.getByHash(block1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
 
     if (kblk1 != null && kblk2 != null) {
-      do {
-
+      while (!Objects.equals(kblk1, kblk2)) {
         if (kblk1.num > kblk2.num) {
           list1.add(kblk1.blk);
           kblk1 = kblk1.parent;
-          continue;
         } else if (kblk1.num < kblk2.num) {
           list2.add(kblk2.blk);
           kblk2 = kblk2.parent;
-          continue;
+        } else {
+          list1.add(kblk1.blk);
+          list2.add(kblk2.blk);
+          kblk1 = kblk1.parent;
+          kblk2 = kblk2.parent;
         }
-
-        list1.add(kblk1.blk);
-        list2.add(kblk2.blk);
-        kblk1 = kblk1.parent;
-        kblk2 = kblk2.parent;
-      } while (kblk1 != kblk2);
+      }
     }
-    return ret;
+    
+    return new Pair<>(list1, list2);
   }
 
   public boolean hasData() {

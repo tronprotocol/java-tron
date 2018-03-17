@@ -335,7 +335,6 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
-    head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
     try {
       revokingStore.pop();
       head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
@@ -354,35 +353,41 @@ public class Manager {
     Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
         .getBranch(newHead.getBlockId(), head.getBlockId());
 
-    while (!head.getBlockId().equals(binaryTree.getValue().pollLast().getBlockId())) {
-      eraseBlock();
-    }
-    LinkedList<BlockCapsule> branch = binaryTree.getValue();
-    Collections.reverse(branch);
-    branch.forEach(item -> {
-      // todo  process the exception carefully later
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        processBlock(item);
-        tmpDialog.commit();
-        head = item;
-        getDynamicPropertiesStore()
-            .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-        getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-        getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
-      } catch (ValidateSignatureException e) {
-        e.printStackTrace();
-      } catch (ContractValidateException e) {
-        e.printStackTrace();
-      } catch (ContractExeException e) {
-        e.printStackTrace();
-      } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
+    if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
+      while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
+        eraseBlock();
       }
-    });
-    return;
+    }
 
-    //TODO: if error need to rollback.
+    if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
+      LinkedList<BlockCapsule> branch = binaryTree.getKey();
+      Collections.reverse(branch);
+      branch.forEach(item -> {
+        // todo  process the exception carefully later
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          processBlock(item);
+          tmpDialog.commit();
+          head = item;
+          getDynamicPropertiesStore()
+              .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
+          getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
+          getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
+        } catch (ValidateSignatureException e) {
+          e.printStackTrace();
+        } catch (ContractValidateException e) {
+          e.printStackTrace();
+        } catch (ContractExeException e) {
+          e.printStackTrace();
+        } catch (RevokingStoreIllegalStateException e) {
+          e.printStackTrace();
+        }
+      });
+      return;
+    }
   }
+
+  //TODO: if error need to rollback.
+
 
   /**
    * validate witness schedule
