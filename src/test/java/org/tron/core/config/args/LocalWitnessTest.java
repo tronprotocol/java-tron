@@ -15,46 +15,52 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class LocalWitnessTest {
 
-  private LocalWitness localWitness = new LocalWitness();
+  private LocalWitnesses localWitness = new LocalWitnesses();
 
   @Before
   public void setLocalWitness() {
     localWitness
-        .setPrivateKey("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62");
+        .setPrivateKeys(
+            Lists.newArrayList(
+                "00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
   }
 
   @Test
   public void whenSetNullPrivateKey() {
-    localWitness.setPrivateKey(null);
+    localWitness.setPrivateKeys(null);
   }
 
   @Test
   public void whenSetEmptyPrivateKey() {
-    localWitness.setPrivateKey("");
+    localWitness.setPrivateKeys(Lists.newArrayList(""));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenSetBadFormatPrivateKey() {
-    localWitness.setPrivateKey("a111");
+    localWitness.setPrivateKeys(Lists.newArrayList("a111"));
   }
 
   @Test
   public void whenSetPrefixPrivateKey() {
     localWitness
-        .setPrivateKey("0x00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62");
+        .setPrivateKeys(Lists
+            .newArrayList("0x00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
     localWitness
-        .setPrivateKey("0X00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62");
+        .setPrivateKeys(Lists
+            .newArrayList("0X00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
   }
 
   @Test
   public void getPrivateKey() {
-    Assert.assertEquals("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
-        localWitness.getPrivateKey());
+    Assert.assertEquals(Lists
+            .newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+        localWitness.getPrivateKeys());
   }
 }

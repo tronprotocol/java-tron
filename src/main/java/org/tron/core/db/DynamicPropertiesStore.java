@@ -25,7 +25,7 @@ public class DynamicPropertiesStore extends TronDatabase {
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
 
   private DateTime nextMaintenanceTime = new DateTime(
-      Long.parseLong(Args.getInstance().getGenesisBlock().getTimeStamp()));
+      Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);

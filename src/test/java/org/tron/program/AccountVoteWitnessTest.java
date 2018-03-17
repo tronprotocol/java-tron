@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
@@ -30,7 +29,7 @@ public class AccountVoteWitnessTest {
   public static void init() {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Configuration.getByPath("config-junit.conf"));
     dbManager.init();
   }
 

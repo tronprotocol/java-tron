@@ -21,7 +21,7 @@ public class RandomGeneratorTest {
     final List<WitnessCapsule> witnessCapsuleListBefore = this.getWitnessList();
     logger.info("updateWitnessSchedule,before: " + getWitnessStringList(witnessCapsuleListBefore));
     final List<WitnessCapsule> witnessCapsuleListAfter = new RandomGenerator<WitnessCapsule>()
-        .shuffle(witnessCapsuleListBefore, DateTime.now());
+        .shuffle(witnessCapsuleListBefore, DateTime.now().getMillis());
     logger.info("updateWitnessSchedule,after: " + getWitnessStringList(witnessCapsuleListAfter));
   }
 
