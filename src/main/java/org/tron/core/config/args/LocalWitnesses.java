@@ -25,7 +25,25 @@ public class LocalWitnesses {
     return this.privateKeys;
   }
 
+  /**
+   * Private key of ECKey.
+   */
   public void setPrivateKeys(final List<String> privateKeys) {
+    if (null == privateKeys) {
+      return;
+    }
     this.privateKeys = privateKeys;
+    for (String privateKey : privateKeys) {
+      if (privateKey != null && privateKey.toUpperCase().startsWith("0X")) {
+        privateKey = privateKey.substring(2);
+      }
+
+      if (privateKey != null && privateKey.length() != 0
+          && privateKey.length() != 66) {
+        throw new IllegalArgumentException(
+            "Private key(" + privateKey + ") must be 66-bits hex string.");
+      }
+    }
+
   }
 }

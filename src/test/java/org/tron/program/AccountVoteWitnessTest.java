@@ -1,21 +1,20 @@
 package org.tron.program;
 
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
+import java.io.File;
 import java.util.List;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
 
 public class AccountVoteWitnessTest {
 
@@ -23,27 +22,51 @@ public class AccountVoteWitnessTest {
   private static Manager dbManager = new Manager();
   private static String dbPath = "output_witness";
 
+  /**
+   * init db.
+   */
   @BeforeClass
   public static void init() {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
-
+        Configuration.getByPath("config-junit.conf"));
     dbManager.init();
   }
 
+  /**
+   * remo db when after test.
+   */
   @AfterClass
   public static void removeDb() {
-    FileUtil.recursiveDelete(dbPath);
+
+    File dbFolder = new File(dbPath);
+    if (deleteFolder(dbFolder)) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+
   }
 
+  private static Boolean deleteFolder(File index) {
+    if (!index.isDirectory() || index.listFiles().length <= 0) {
+      return index.delete();
+    }
+    for (File file : index.listFiles()) {
+      if (null != file && !deleteFolder(file)) {
+        return false;
+      }
+    }
+    return index.delete();
+  }
 
   @Test
   public void testAccountVoteWitness() {
     final List<AccountCapsule> accountCapsuleList = this.getAccountList();
     final List<WitnessCapsule> witnessCapsuleList = this.getWitnessList();
     accountCapsuleList.forEach(accountCapsule -> {
-          dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+          dbManager.getAccountStore().put(accountCapsule.getAddress()
+              .toByteArray(), accountCapsule);
           this.printAccount(accountCapsule.getAddress());
         }
     );

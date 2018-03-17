@@ -28,13 +28,13 @@ public class TransferActuator extends AbstractActuator {
     try {
       TransferContract transferContract = null;
       transferContract = contract.unpack(TransferContract.class);
+      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
+      ret.setStatus(fee, code.SUCESS);
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
           -transferContract.getAmount());
       dbManager.adjustBalance(transferContract.getToAddress().toByteArray(),
           transferContract.getAmount());
 
-      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
-      ret.setStatus(fee, code.SUCESS);
 
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
@@ -59,7 +59,8 @@ public class TransferActuator extends AbstractActuator {
       }
 
       TransferContract transferContract = this.contract.unpack(TransferContract.class);
-
+      AccountCapsule ownerAccount = dbManager.getAccountStore()
+          .get(transferContract.getOwnerAddress().toByteArray());
       Preconditions.checkNotNull(transferContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
@@ -82,6 +83,9 @@ public class TransferActuator extends AbstractActuator {
       }
       if (!dbManager.getAccountStore().has(transferContract.getToAddress().toByteArray())) {
         throw new ContractValidateException("Validate TransferContract error, no ToAccount.");
+      }
+      if (ownerAccount.getBalance() < calcFee()) {
+        throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
       }
       long amount = transferContract.getAmount();
       if (amount < 0) {

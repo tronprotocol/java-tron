@@ -16,6 +16,7 @@
 package org.tron.core.capsule;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
@@ -48,7 +49,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   /**
    * initial account capsule.
    */
-  public AccountCapsule(ByteString accountName, AccountType accountType, ByteString address,
+  public AccountCapsule(ByteString accountName, ByteString address, AccountType accountType,
       long balance) {
     this.account = Account.newBuilder()
         .setAccountName(accountName)
@@ -77,6 +78,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
       AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
+        .setAccountName(accountName)
         .setAddress(address)
         .build();
   }
@@ -145,21 +147,17 @@ public class AccountCapsule implements ProtoCapsule<Account> {
     return this.account.getBalance();
   }
 
-  public Map<String, Long> getAsset() {
-    return this.account.getAssetMap();
-  }
-
   /**
    * reduce asset amount.
    */
   public boolean reduceAssetAmount(ByteString name, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
 
-    String nameKey = ByteArray.toHexString(name.toByteArray());
+    String nameKey = ByteArray.toStr(name.toByteArray());
 
     Long currentAmount = assetMap.get(nameKey);
 
-    if (amount > 0 && amount <= currentAmount) {
+    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
       this.account = this.account.toBuilder().putAsset(nameKey, currentAmount - amount).build();
       return true;
     }
@@ -173,7 +171,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   public boolean addAssetAmount(ByteString name, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
 
-    String nameKey = ByteArray.toHexString(name.toByteArray());
+    String nameKey = ByteArray.toStr(name.toByteArray());
 
     Long currentAmount = assetMap.get(nameKey);
 
@@ -184,5 +182,36 @@ public class AccountCapsule implements ProtoCapsule<Account> {
     this.account = this.account.toBuilder().putAsset(nameKey, currentAmount + amount).build();
 
     return true;
+  }
+
+  /**
+   * add asset.
+   */
+  public boolean addAsset(String key, Long value) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    if (assetMap.isEmpty()) {
+      assetMap = Maps.newHashMap();
+    } else {
+      if (assetMap.containsKey(key)) {
+        return false;
+      }
+    }
+    assetMap.put(key, value);
+
+    this.account = this.account.toBuilder().clearAsset().putAllAsset(assetMap).build();
+
+    return true;
+  }
+
+  /**
+   * add asset.
+   */
+  public Map<String, Long> getAssetMap() {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    if (assetMap.isEmpty()) {
+      assetMap = Maps.newHashMap();
+    }
+
+    return assetMap;
   }
 }
