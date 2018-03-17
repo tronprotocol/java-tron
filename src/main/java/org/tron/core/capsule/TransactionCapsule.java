@@ -105,10 +105,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     long spendableOutputs = balance;
 
     utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs()
-      .forEach((txId, outs) ->
-        Arrays.stream(outs)
-          .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
-          .forEachOrdered(txInputs::add));
+        .forEach((txId, outs) ->
+            Arrays.stream(outs)
+                .mapToObj(out -> TxInputUtil
+                    .newTxInput(ByteArray.fromHexString(txId), out, null, address))
+                .forEachOrdered(txInputs::add));
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
     txOutputs
@@ -185,9 +186,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public TransactionCapsule(Contract.WitnessUpdateContract witnessUpdateContract) {
 
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-            TransactionType.ContractType).addContract(
-            Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
-                    Any.pack(witnessUpdateContract)).build());
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
+            Any.pack(witnessUpdateContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
@@ -245,7 +246,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-
+  // todo mv this static function to capsule util
   public static byte[] getOwner(Transaction.Contract contract) {
     ByteString owner;
     try {
@@ -281,6 +282,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case DeployContract:
           owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class)
               .getOwnerAddress();
+          // todo add other contract
           break;
         default:
           return null;
@@ -329,6 +331,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     return true;
   }
+
 
   public Sha256Hash getTransactionId() {
     return Sha256Hash.of(this.transaction.toByteArray());

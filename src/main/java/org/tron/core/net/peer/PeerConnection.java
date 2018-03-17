@@ -131,7 +131,8 @@ public class PeerConnection {
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread.
+    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy 
+
   }
 
   public boolean isBanned() {
