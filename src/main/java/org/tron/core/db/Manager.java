@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.xml.bind.ValidationException;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,6 +47,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
 
 public class Manager {
 
@@ -305,28 +309,61 @@ public class Manager {
    * push transaction into db.
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidationException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
+    }
+
+    try {
+      validateFreq(trx);
+    } catch (ValidationException e) {
+      throw new ValidationException("try later");
     }
 
     if (!dialog.valid()) {
       dialog = DialogOptional.of(revokingStore.buildDialog());
     }
 
-    try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+    try (
+        RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
       processTransaction(trx);
       pendingTrxs.add(trx);
 
       tmpDialog.merge();
-    } catch (RevokingStoreIllegalStateException e) {
+    } catch (
+        RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
     getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
   }
 
+  void validateFreq(TransactionCapsule trx) throws ValidationException {
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
+        .getContractList();
+    for (Transaction.Contract contract : contracts) {
+      if (contract.getType() == TransferContract) {
+        byte[] address = TransactionCapsule.getOwner(contract);
+        AccountCapsule accountCapsule = this.getAccountStore().get(address);
+        long balacne = accountCapsule.getBalance();
+        long latestOperationTime = accountCapsule.getLatestOperationTime();
+        int latstTrasNumberInBlock = this.head.getTransactions().size();
+        doValidateFreq(balacne, latstTrasNumberInBlock, latestOperationTime);
+      }
+    }
+  }
+
+  void doValidateFreq(long balance, int transNumber, long latestOperationTime)
+      throws ValidationException {
+    long now = System.currentTimeMillis();
+    // todo: avoid ddos, design more smoothly formula later.
+    if (balance < 1000000 * 1000) {
+      if (now - latestOperationTime < 5 * 60 * 1000) {
+        throw new ValidationException("try later");
+      }
+    }
+  }
 
   /**
    * when switch fork need erase blocks on fork branch.
