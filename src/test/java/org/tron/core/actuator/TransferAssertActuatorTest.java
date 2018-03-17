@@ -46,7 +46,7 @@ public class TransferAssertActuatorTest {
 
   private static Manager dbManager;
   private static Any contract;
-  private static final String dbPath = "contract_test";
+  private static final String dbPath = "output_contract_test";
   private static final String ASSET_NAME = "trx";
   private static final String OWNER_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049150";
   private static final String TO_ADDRESS = "548794500882809695a8a687866e76d4271a146a";

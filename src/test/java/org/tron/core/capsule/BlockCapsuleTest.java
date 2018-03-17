@@ -22,7 +22,7 @@ public class BlockCapsuleTest {
       .copyFrom(ByteArray
           .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
       ByteString.copyFrom("1234567".getBytes()));
-  private static String dbPath = "output_bloackcapsule";
+  private static String dbPath = "output_bloackcapsule_test";
 
   @BeforeClass
   public static void init() {
