@@ -11,9 +11,14 @@ import org.tron.core.capsule.AccountCapsule;
 
 public class AccountStore extends TronDatabase<AccountCapsule> {
 
-  private static final String ACCOUNT_SUN_ADDRESS = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
+  private static final String ACCOUNT_SUN_ADDRESS
+      = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
+
   private static final String ACCOUNT_COLLAPSAR_ADDRESS
       = "548794500882809695a8a687866e76d4271a146a";
+
+  private static final String ACCOUNT_FOUNDATION_ADDRESS
+      = "55ddae14564f82d5b94c7a131b5fcfd31ad6515a";
 
   private static final Logger logger = LoggerFactory.getLogger("AccountStore");
   private static AccountStore instance;
@@ -109,6 +114,18 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   public AccountCapsule getCollapsar() {
     byte[] data = dbSource.getData(
         ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_COLLAPSAR_ADDRESS))
+            .toByteArray());
+
+    AccountCapsule accountCapsule = new AccountCapsule(data);
+    return accountCapsule;
+  }
+
+  /**
+   * Get foundation account info.
+   */
+  public AccountCapsule getFoundation() {
+    byte[] data = dbSource.getData(
+        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_FOUNDATION_ADDRESS))
             .toByteArray());
 
     AccountCapsule accountCapsule = new AccountCapsule(data);
