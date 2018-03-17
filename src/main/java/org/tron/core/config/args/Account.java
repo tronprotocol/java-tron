@@ -15,12 +15,15 @@
 
 package org.tron.core.config.args;
 
-import com.google.protobuf.ByteString;
+import java.io.Serializable;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.AccountType;
+import com.google.protobuf.ByteString;
 
-public class Account {
+public class Account implements Serializable {
+
+  private static final long serialVersionUID = 2674206490063656846L;
 
   private String accountName;
 

@@ -50,3 +50,5 @@ src/main/resources/META-INF/
 # output directory
 /output-directory/
 
+/output_manager/
+/output_witness/
