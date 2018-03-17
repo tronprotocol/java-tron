@@ -525,6 +525,8 @@ public class Manager {
             e.printStackTrace();
           } catch (ContractExeException e) {
             e.printStackTrace();
+          } catch (ValidationException e) {
+            e.printStackTrace();
           }
         });
 
