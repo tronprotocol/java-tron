@@ -451,12 +451,22 @@ public class Manager {
     return true;
   }
 
+  private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {
+
+  }
+
   /**
    * save a block.
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException {
+
+    List<TransactionCapsule> pendingTrxsTmp = new LinkedList<>();
+    //TODO: optimize performance here.
+    pendingTrxsTmp.addAll(pendingTrxs);
+    pendingTrxs.clear();
+    dialog.reset();
 
     //todo: check block's validity
     if (!block.generatedByMyself) {
@@ -503,11 +513,27 @@ public class Manager {
       }
     }
 
+    //filter trxs
+    pendingTrxsTmp.stream()
+        .filter(trx -> getTransactionStore().dbSource.getData(trx.getTransactionId().getBytes()) == null)
+        .forEach(trx -> {
+          try {
+            pushTransactions(trx);
+          } catch (ValidateSignatureException e) {
+            e.printStackTrace();
+          } catch (ContractValidateException e) {
+            e.printStackTrace();
+          } catch (ContractExeException e) {
+            e.printStackTrace();
+          }
+        });
+
     this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     refreshHead(newBlock);
     logger.info("save block: " + newBlock);
   }
+
 
   private void refreshHead(BlockCapsule block) {
     this.head = block;
