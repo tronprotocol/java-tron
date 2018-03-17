@@ -87,8 +87,9 @@ public class GossipLocalNode implements LocalNode {
     executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
         new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
-    Subscription messageSubscription =
-            cluster.listen().subscribe(msg -> executors.submit(new StartWorker(msg, peerDel, cluster)));
+    Subscription messageSubscription = cluster
+            .listen()
+            .subscribe(msg -> executors.submit(new StartWorker(msg, peerDel)));
 
     subscriptions.add(membershipListener);
     subscriptions.add(messageSubscription);
