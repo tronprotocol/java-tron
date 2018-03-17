@@ -15,18 +15,10 @@
 
 package org.tron.common.overlay.node;
 
-import io.scalecube.cluster.Cluster;
-import java.io.UnsupportedEncodingException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.Message;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.MessageRegistry;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+
+import java.io.UnsupportedEncodingException;
 
 public class StartWorker implements Runnable {
 
@@ -34,66 +26,26 @@ public class StartWorker implements Runnable {
 
   private PeerConnectionDelegate peerDel;
 
-  private Cluster cluster;
-
   /**
    * Handle the received message.
    */
-  public StartWorker(io.scalecube.transport.Message msg, final PeerConnectionDelegate peerDel, final Cluster cluster) {
+  public StartWorker(io.scalecube.transport.Message msg, final PeerConnectionDelegate peerDel) {
     this.msg = msg;
     this.peerDel = peerDel;
-    this.cluster = cluster;
   }
 
   @Override
   public void run() {
-    byte[] newValueBytes = null;
-    String key = "";
     try {
-      key = msg.header("type");
-      newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
+      String key = msg.header("type");
+      byte[] newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
+
+      org.tron.core.net.message.Message message = MessageRegistry.getMessageByKey(key, newValueBytes);
+
+      peerDel.onMessage(peerDel.getPeer(msg), message);
+
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
-
-    org.tron.core.net.message.Message message = getMessageByKey(key, newValueBytes);
-    //peerDel.onMessage(listPeer.get(cluster.member(msg.sender()).get().hashCode()), message);
-    peerDel.onMessage(peerDel.getPeer(msg),message);
-  }
-
-  private Message getMessageByKey(String key, byte[] content) {
-    Message message = null;
-
-    switch (MessageTypes.valueOf(key)) {
-      case BLOCK:
-        message = new BlockMessage(content);
-        break;
-      case TRX:
-        message = new TransactionMessage(content);
-        break;
-      case SYNC_BLOCK_CHAIN:
-        message = new SyncBlockChainMessage(content);
-        break;
-      case FETCH_INV_DATA:
-        message = new FetchInvDataMessage(content);
-        break;
-      case BLOCK_INVENTORY:
-        message = new BlockInventoryMessage(content);
-        break;
-      case BLOCK_CHAIN_INVENTORY:
-        message = new ChainInventoryMessage(content);
-        break;
-      case INVENTORY:
-        message = new InventoryMessage(content);
-        break;
-      default:
-        try {
-          throw new IllegalArgumentException("No such message");
-        } catch (IllegalArgumentException e) {
-          e.printStackTrace();
-        }
-    }
-
-    return message;
   }
 }

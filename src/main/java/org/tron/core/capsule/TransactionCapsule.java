@@ -182,6 +182,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
+  public TransactionCapsule(Contract.WitnessUpdateContract witnessUpdateContract) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+            TransactionType.ContractType).addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
+                    Any.pack(witnessUpdateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
     //this.getInstance().toBuilder(). (transactionResultCapsule.getInstance());
   }
