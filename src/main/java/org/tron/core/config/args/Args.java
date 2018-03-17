@@ -21,7 +21,7 @@ public class Args {
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
 
-  @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
+  @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
   private boolean help = false;
 
   @Parameter(names = {"-w", "--witness"})
@@ -52,12 +52,30 @@ public class Args {
 
   }
 
+  public static void clearParam() {
+    INSTANCE.outputDirectory = "output-directory";
+    INSTANCE.help = false;
+    INSTANCE.witness = false;
+    INSTANCE.seedNodes = new ArrayList<>();
+    INSTANCE.privateKey = "";
+    INSTANCE.storageDirectory = "";
+    INSTANCE.overlayPort = 0;
+    INSTANCE.storage = null;
+    INSTANCE.overlay = null;
+    INSTANCE.seedNode = null;
+    INSTANCE.genesisBlock = null;
+    INSTANCE.chainId = null;
+    INSTANCE.localWitness = null;
+    INSTANCE.blockInterval = 0L;
+    INSTANCE.needSyncCheck = false;
+  }
+
   /**
    * set parameters.
    */
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
-    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
 
+    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
 

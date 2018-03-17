@@ -204,10 +204,8 @@ public class TransferAssertActuatorTest {
    */
   @AfterClass
   public static void destroy() {
-
-    String filePath = Args.getInstance().getOutputDirectory() + "contract-test";
-
-    if (FileUtil.deleteDir(new File(filePath))) {
+    Args.clearParam();
+    if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
