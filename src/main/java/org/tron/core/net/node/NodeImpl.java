@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
+import com.google.inject.Singleton;
 import io.scalecube.transport.Address;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +45,10 @@ import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 
+@Singleton
 public class NodeImpl extends PeerConnectionDelegate implements Node {
+
+
 
   class InvToSend {
 
@@ -137,6 +141,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   ExecutorLoop<Message> loopAdvertiseInv;
 
+  public NodeImpl(GossipLocalNode gossipNode) {
+    this.gossipNode = gossipNode;
+    this.gossipNode.setPeerDel(this);
+  }
+
   @Override
   public void onMessage(PeerConnection peer, Message msg) {
     logger.info("Handle Message: " + msg);
@@ -202,8 +211,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
-    gossipNode = GossipLocalNode.getInstance();
-    gossipNode.setPeerDel(this);
     gossipNode.start();
     isAdvertiseActive = true;
     isFetchActive = true;

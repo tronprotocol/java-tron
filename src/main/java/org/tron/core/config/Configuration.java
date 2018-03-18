@@ -21,6 +21,13 @@ package org.tron.core.config;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.typesafe.config.ConfigFactory;
+import org.tron.core.config.args.Account;
+import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Witness;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Configuration {
 
@@ -42,5 +49,18 @@ public class Configuration {
     }
 
     return config;
+  }
+
+  public static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
+    return config.getObjectList("genesis.block.assets").stream()
+            .map(Account::buildFromConfig)
+            .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+
+  public static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
+    return config.getObjectList("genesis.block.witnesses").stream()
+            .map(Witness::buildFromConfig)
+            .collect(Collectors.toCollection(ArrayList::new));
   }
 }

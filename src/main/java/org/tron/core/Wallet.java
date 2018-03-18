@@ -42,6 +42,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -56,11 +57,10 @@ public class Wallet {
 
   private static final Logger logger = LoggerFactory.getLogger("Wallet");
 
-  private BlockStore db;
   private final ECKey ecKey;
+
   @Getter
   private UtxoStore utxoStore;
-  private Application app;
   private Node p2pnode;
   private Manager dbManager;
 
@@ -71,16 +71,13 @@ public class Wallet {
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
-
   /**
    * constructor.
    */
-  public Wallet(Application app) {
-    this.app = app;
-    this.p2pnode = app.getP2pNode();
-    this.db = app.getBlockStoreS();
-    utxoStore = app.getDbManager().getUtxoStore();
-    dbManager = app.getDbManager();
+  public Wallet(NodeImpl nodeImpl, Manager manager) {
+    this.p2pnode = nodeImpl;
+    this.dbManager = manager;
+    this.utxoStore = manager.getUtxoStore();
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
@@ -131,8 +128,7 @@ public class Wallet {
    */
   public Transaction createTransaction(byte[] address, String to, long amount) {
     long balance = getBalance(address);
-    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance,
-        utxoStore);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(address, to, amount, balance, utxoStore);
     return transactionCapsule.getInstance();
   }
 

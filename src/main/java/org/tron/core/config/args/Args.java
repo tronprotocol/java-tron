@@ -8,9 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import lombok.experimental.var;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.application.Module;
+
+import static org.tron.core.config.Configuration.getAccountsFromConfig;
+import static org.tron.core.config.Configuration.getWitnessesFromConfig;
 
 public class Args {
 
@@ -40,11 +46,8 @@ public class Args {
   private int overlayPort = 0;
 
   private Storage storage;
-  private Overlay overlay;
-  private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
-  private LocalWitnesses localWitness;
   private long blockInterval;
   private boolean needSyncCheck;
 
@@ -56,7 +59,10 @@ public class Args {
    * set parameters.
    */
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
+
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+
+    Module module = new Module(config, INSTANCE);
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
@@ -73,30 +79,8 @@ public class Args {
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
-    INSTANCE.storage = new Storage();
-    INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.directory")));
+    INSTANCE.storage = module.buildStorage();
 
-    INSTANCE.overlay = new Overlay();
-    INSTANCE.overlay.setPort(Optional.ofNullable(INSTANCE.overlayPort)
-        .filter(i -> 0 != i)
-        .orElse(config.getInt("overlay.port")));
-
-    INSTANCE.seedNode = new SeedNode();
-    INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
-        .filter(seedNode -> 0 != seedNode.size())
-        .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("localwitness")) {
-      INSTANCE.localWitness = new LocalWitnesses();
-      List<String> localwitness = config.getStringList("localwitness");
-      if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one,get the first one");
-        localwitness = localwitness.subList(0, 1);
-      }
-      INSTANCE.localWitness.setPrivateKeys(localwitness);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -115,36 +99,6 @@ public class Args {
     }
     INSTANCE.blockInterval = config.getLong("block.interval");
     INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
-  }
-
-
-  private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
-    return config.getObjectList("genesis.block.witnesses").stream()
-        .map(Args::createWitness)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  private static Witness createWitness(final ConfigObject witnessAccount) {
-    final Witness witness = new Witness();
-    witness.setAddress(witnessAccount.get("address").unwrapped().toString());
-    witness.setUrl(witnessAccount.get("url").unwrapped().toString());
-    witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
-    return witness;
-  }
-
-  private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
-    return config.getObjectList("genesis.block.assets").stream()
-        .map(Args::createAccount)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  private static Account createAccount(final ConfigObject asset) {
-    final Account account = new Account();
-    account.setAccountName(asset.get("accountName").unwrapped().toString());
-    account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(asset.get("address").unwrapped().toString());
-    account.setBalance(asset.get("balance").unwrapped().toString());
-    return account;
   }
 
   public static Args getInstance() {
@@ -177,14 +131,6 @@ public class Args {
     return this.storage;
   }
 
-  public Overlay getOverlay() {
-    return this.overlay;
-  }
-
-  public SeedNode getSeedNode() {
-    return this.seedNode;
-  }
-
   public GenesisBlock getGenesisBlock() {
     return this.genesisBlock;
   }
@@ -199,14 +145,6 @@ public class Args {
 
   public boolean isWitness() {
     return this.witness;
-  }
-
-  public LocalWitnesses getLocalWitnesses() {
-    return this.localWitness;
-  }
-
-  public void setLocalWitness(final LocalWitnesses localWitness) {
-    this.localWitness = localWitness;
   }
 
   public long getBlockInterval() {
@@ -224,4 +162,14 @@ public class Args {
   public void setNeedSyncCheck(boolean needSyncCheck) {
     this.needSyncCheck = needSyncCheck;
   }
+
+  public String getStorageDirectory() {
+    return storageDirectory;
+  }
+
+  public int getOverlayPort() {
+    return overlayPort;
+  }
+
+
 }

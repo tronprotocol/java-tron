@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import com.google.protobuf.ByteString;
+import com.typesafe.config.ConfigObject;
 import java.io.Serializable;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
@@ -156,5 +158,12 @@ public class Account implements Serializable {
       default:
         throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }
+  }
+
+  public static Account buildFromConfig(final ConfigObject asset) {
+    final Account account = new Account();
+    account.setAddress(asset.get("address").unwrapped().toString());
+    account.setBalance(asset.get("balance").unwrapped().toString());
+    return account;
   }
 }

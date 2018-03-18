@@ -6,6 +6,7 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +51,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
+@Singleton
 public class Manager {
 
   private static final Logger logger = LoggerFactory.getLogger("Manager");
@@ -182,8 +184,7 @@ public class Manager {
     revokingStore = RevokingStore.getInstance();
     revokingStore.enable();
 
-    this.numHashCache = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
+    this.numHashCache = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 

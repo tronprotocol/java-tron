@@ -1,5 +1,7 @@
 package org.tron.common.application;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +20,17 @@ public class ApplicationImpl implements Application {
   private BlockStore blockStoreDb;
   private ServiceContainer services;
   private NodeDelegate nodeDelegate;
+  private Args args;
 
   private Manager dbManager;
 
   private boolean isProducer;
+
+  private Injector injector;
+
+  public ApplicationImpl(Injector injector) {
+    this.injector = injector;
+  }
 
   private void resetP2PNode() {
     p2pNode.listen();
@@ -30,18 +39,18 @@ public class ApplicationImpl implements Application {
   }
   
   @Override
-  public void setOptions(Args args) {
-
+  public void setArgs(Args args) {
+    this.args = args;
   }
 
   @Override
   public void init(String path, Args args) {
-    p2pNode = new NodeImpl();
-    dbManager = new Manager();
-    dbManager.init();
-    blockStoreDb = dbManager.getBlockStore();
-    services = new ServiceContainer();
+    p2pNode = injector.getInstance(NodeImpl.class);
+    dbManager = injector.getInstance(Manager.class);
+    blockStoreDb = injector.getInstance(BlockStore.class);
     nodeDelegate = new NodeDelegateImpl(dbManager);
+
+    services = new ServiceContainer();
   }
 
   @Override
@@ -50,8 +59,13 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(Args args) {
-    services.init(args);
+  public void initServices() {
+    services.init();
+  }
+
+  @Override
+  public Args getArgs() {
+    return args;
   }
 
   /**
@@ -90,6 +104,11 @@ public class ApplicationImpl implements Application {
   @Override
   public Manager getDbManager() {
     return dbManager;
+  }
+
+  @Override
+  public Injector getInjector() {
+    return injector;
   }
 
   public boolean isProducer() {

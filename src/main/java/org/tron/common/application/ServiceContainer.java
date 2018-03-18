@@ -32,18 +32,10 @@ public class ServiceContainer {
     this.services.add(service);
   }
 
-
   public void init() {
     for (Service service : this.services) {
       logger.debug("Initing " + service.getClass().getSimpleName());
       service.init();
-    }
-  }
-
-  public void init(Args args) {
-    for (Service service : this.services) {
-      logger.debug("Initing " + service.getClass().getSimpleName());
-      service.init(args);
     }
   }
 

@@ -33,10 +33,6 @@ public class ArgsTest {
 
     Assert.assertEquals("database-test", args.getStorage().getDirectory());
 
-    Assert.assertEquals(7080, args.getOverlay().getPort());
-
-    Assert.assertEquals(7, args.getSeedNode().getIpList().size());
-
     GenesisBlock genesisBlock = args.getGenesisBlock();
 
     Assert.assertEquals(3, genesisBlock.getAssets().size());
@@ -47,10 +43,6 @@ public class ArgsTest {
 
     Assert.assertEquals("0x0000000000000000000000000000000000000000000000000000000000000000",
         genesisBlock.getParentHash());
-
-    Assert.assertEquals(
-        Lists.newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
-        args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertEquals(5000, args.getBlockInterval());
   }

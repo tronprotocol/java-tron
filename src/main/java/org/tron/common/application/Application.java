@@ -15,6 +15,8 @@
 
 package org.tron.common.application;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -22,11 +24,13 @@ import org.tron.core.net.node.Node;
 
 public interface Application {
 
-  void setOptions(Args args);
+  void setArgs(Args args);
 
   void init(String path, Args args);
 
-  void initServices(Args args);
+  void initServices();
+
+  Args getArgs();
 
   void startup();
 
@@ -43,4 +47,6 @@ public interface Application {
   void addService(Service service);
 
   Manager getDbManager();
+
+  Injector getInjector();
 }
