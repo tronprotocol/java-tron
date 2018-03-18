@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with the ethereumJ
  * library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.utils;
 
 import java.io.BufferedReader;
@@ -103,5 +104,21 @@ public class FileUtil {
       return 0;
     }
     return len;
+  }
+
+  /**
+   * delete directory.
+   */
+  public static boolean deleteDir(File dir) {
+    if (dir.isDirectory()) {
+      String[] children = dir.list();
+      for (int i = 0; i < children.length; i++) {
+        boolean success = deleteDir(new File(dir, children[i]));
+        if (!success) {
+          return false;
+        }
+      }
+    }
+    return dir.delete();
   }
 }

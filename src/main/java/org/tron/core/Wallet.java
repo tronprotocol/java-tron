@@ -43,6 +43,7 @@ import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
@@ -184,6 +185,11 @@ public class Wallet {
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
+    return transactionCapsule.getInstance();
+  }
+
+  public Transaction createTransaction(WitnessUpdateContract witnessUpdateContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(witnessUpdateContract);
     return transactionCapsule.getInstance();
   }
 

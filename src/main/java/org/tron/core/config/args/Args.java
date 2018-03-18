@@ -66,6 +66,16 @@ public class Args {
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.toUpperCase().startsWith("0X")) {
+        INSTANCE.privateKey = INSTANCE.privateKey.substring(2);
+      }
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
+          && INSTANCE.privateKey.length() != 64) {
+        throw new IllegalArgumentException(
+            "Private key(" + INSTANCE.privateKey + ") must be 64-bits hex string.");
+      }
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
@@ -75,10 +85,8 @@ public class Args {
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
-      INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+      INSTANCE.genesisBlock.setTimestamp(config.getString("genesis.block.timestamp"));
       INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-      INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-      INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));

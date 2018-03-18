@@ -8,6 +8,19 @@ import java.util.logging.Logger;
 
 import org.tron.common.application.Service;
 import org.tron.core.api.WalletApi;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.VoteWitnessContract.Vote;
+import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
 
 public class RpcApiService implements Service {
 

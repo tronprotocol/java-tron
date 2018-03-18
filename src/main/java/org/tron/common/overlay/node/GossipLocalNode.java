@@ -17,6 +17,7 @@ package org.tron.common.overlay.node;
 
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.ClusterConfig;
+import io.scalecube.cluster.membership.MembershipEvent;
 import io.scalecube.cluster.membership.MembershipEvent.Type;
 import io.scalecube.transport.Address;
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class GossipLocalNode implements LocalNode {
   //public HashMap<Integer, PeerConnection> listPeer = new HashMap<>();
 
   private ExecutorService executors;
-  
+
   private CompositeSubscription subscriptions = new CompositeSubscription();
 
   private Overlay overlay;
@@ -93,24 +94,27 @@ public class GossipLocalNode implements LocalNode {
     //liston peer's change
     Subscription membershipListener = cluster
             .listenMembership()
-            .subscribe(event -> {
-              if (event.type() == Type.REMOVED) {
-                PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
-                peerDel.disconnectPeer(peer);
-              } else {
-                PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
-                peerDel.connectPeer(peer);
-              }
-            });
+        .subscribe(event -> onEvent(event));
 
     executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
         new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
 
-    Subscription messageSubscription =
-            cluster.listen().subscribe(msg -> executors.submit(new StartWorker(msg, peerDel, cluster)));
+    Subscription messageSubscription = cluster
+            .listen()
+            .subscribe(msg -> executors.submit(new StartWorker(msg, peerDel)));
 
     subscriptions.add(membershipListener);
     subscriptions.add(messageSubscription);
+  }
+
+  private void onEvent(MembershipEvent event) {
+    if (event.type() == Type.REMOVED) {
+      PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
+      peerDel.disconnectPeer(peer);
+    } else {
+      PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
+      peerDel.connectPeer(peer);
+    }
   }
 
   /**
