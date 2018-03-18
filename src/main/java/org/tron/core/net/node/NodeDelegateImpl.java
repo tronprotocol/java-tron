@@ -21,6 +21,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -84,8 +85,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
-    } catch (ValidationException e) {
-      logger.info(e.getMessage());
+    } catch (HighFreqException e) {
+      e.printStackTrace();
     }
   }
 
@@ -168,7 +169,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     return retSummary;
   }
 
-
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
@@ -188,7 +188,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
     //TODO: notify cli know how many block we need to sync
   }
-
 
   @Override
   public long getBlockTime(BlockId id) {
@@ -225,7 +224,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public BlockCapsule getGenesisBlock() {
-    //TODO return a genissBlock
+    //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
 }
