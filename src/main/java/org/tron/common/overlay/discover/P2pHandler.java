@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.server;
+package org.tron.common.overlay.discover;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -24,8 +24,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.server.Channel;
+import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TransactionsMessage;
 
 import java.util.ArrayList;
@@ -70,9 +73,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     @Autowired
     EthereumListener ethereumListener;
-
-    @Autowired
-    ConfigCapabilities configCapabilities;
 
     @Autowired
     SystemProperties config;

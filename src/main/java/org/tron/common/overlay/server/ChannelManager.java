@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.node.Node;
 import org.tron.core.db.ByteArrayWrapper;
@@ -71,10 +72,13 @@ public class ChannelManager {
 
     private PeerServer peerServer;
 
+    private PeerClient peerClient;
+
     @Autowired
-    private ChannelManager(final SystemProperties config, final PeerServer peerServer) {
+    private ChannelManager(final SystemProperties config, final PeerClient peerClient, final PeerServer peerServer) {
         this.config = config;
         //this.syncManager = syncManager;
+        this.peerClient = peerClient;
         this.peerServer = peerServer;
         maxActivePeers = config.maxActivePeers();
         //trustedPeers = config.peerTrusted();
@@ -106,6 +110,8 @@ public class ChannelManager {
         }
 
         //todo ethereum.connect(node);
+        peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
+
     }
 
     public Set<String> nodesInUse() {
@@ -232,7 +238,7 @@ public class ChannelManager {
 
         for (Channel channel : allPeers) {
             try {
-                channel.dropConnection();
+                //channel.dropConnection();
             } catch (Exception e) {
                 logger.warn("Problems disconnecting channel " + channel, e);
             }

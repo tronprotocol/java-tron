@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.Channel;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;

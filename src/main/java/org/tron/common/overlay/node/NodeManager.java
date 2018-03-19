@@ -18,20 +18,18 @@
 package org.tron.common.overlay.node;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.crypto.ECKey;
-import org.ethereum.db.PeerSource;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.rlpx.*;
-import org.ethereum.net.rlpx.discover.table.NodeTable;
-import org.ethereum.util.CollectionUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.DiscoverListener;
 import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.PeerConnectionTester;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;

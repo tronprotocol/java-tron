@@ -19,24 +19,18 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.eth.message.EthMessage;
-import org.ethereum.net.message.Message;
-import org.ethereum.net.message.ReasonCode;
-import org.ethereum.net.p2p.DisconnectMessage;
-import org.ethereum.net.p2p.PingMessage;
-import org.ethereum.net.server.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.message.DisconnectMessage;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.message.ReasonCode;
 
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.ethereum.net.message.StaticMessages.DISCONNECT_MESSAGE;
 
 /**
  * This class contains the logic for sending messages in a queue
@@ -70,9 +64,9 @@ public class MessageQueue {
     private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
     private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
     private ChannelHandlerContext ctx = null;
-
-    @Autowired
-    EthereumListener ethereumListener;
+//
+//    @Autowired
+//    EthereumListener ethereumListener;
     boolean hasPing = false;
     private ScheduledFuture<?> timerTask;
     private Channel channel;
@@ -122,7 +116,7 @@ public class MessageQueue {
 
     public void receivedMessage(Message msg) throws InterruptedException {
 
-        ethereumListener.trace("[Recv: " + msg + "]");
+        //ethereumListener.trace("[Recv: " + msg + "]");
 
         if (requestQueue.peek() != null) {
             MessageRoundtrip messageRoundtrip = requestQueue.peek();
