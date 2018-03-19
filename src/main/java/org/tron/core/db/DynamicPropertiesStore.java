@@ -12,7 +12,7 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
 
-  private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
+  private static final long MAINTENANCE_TIME_INTERVAL = 1 * 60 * 1000;// (ms)
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -174,10 +174,16 @@ public class DynamicPropertiesStore extends TronDatabase {
   public void updateNextMaintenanceTime(long blockTime) {
 
     long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime nextMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - nextMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    setNextMaintenanceTime(nextMaintenanceTime.plus((round + 1) * maintenanceTimeInterval));
+    DateTime currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
+    DateTime nextMaintenanceTime = currentMaintenanceTime
+        .plus((round + 1) * maintenanceTimeInterval);
+    setNextMaintenanceTime(nextMaintenanceTime);
 
+    logger.info("currentMaintenanceTime:{}, blockTime:{},updateNextMaintenanceTime:{}",
+        new DateTime(currentMaintenanceTime), new DateTime(blockTime),
+        new DateTime(nextMaintenanceTime)
+    );
   }
 
 }

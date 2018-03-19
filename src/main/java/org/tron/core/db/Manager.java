@@ -876,7 +876,7 @@ public class Manager {
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
       logger.info("there is account ,account address is {}",
-          ByteArray.toHexString(account.getAddress().toByteArray()));
+          account.createReadableString());
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
@@ -894,7 +894,7 @@ public class Manager {
           });
         } else {
           logger.info(
-              "account" + account.getAddress() + ",share[" + account.getShare() + "] > voteSum["
+              "account" + account.createReadableString() + ",share[" + account.getShare() + "] > voteSum["
                   + sum.get() + "]");
         }
       }
@@ -903,7 +903,7 @@ public class Manager {
     witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
       witnessCapsule.setVoteCount(0);
       witnessCapsule.setIsJobs(false);
-      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
@@ -914,26 +914,27 @@ public class Manager {
     }
 
     countWitness.forEach((address, voteCount) -> {
-      final WitnessCapsule witnessCapsule = this.witnessStore.get(address.toByteArray());
+      final WitnessCapsule witnessCapsule = this.witnessStore.get(createDbKey(address));
       if (null == witnessCapsule) {
-        logger.warn("witnessCapsule is null.address is {}", address);
+        logger.warn("witnessCapsule is null.address is {}", createReadableString(address));
         return;
       }
 
       ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
-      AccountCapsule witnessAccountCapsule = accountStore.get(witnessAddress.toByteArray());
+      AccountCapsule witnessAccountCapsule = accountStore.get(createDbKey(witnessAddress));
       if (witnessAccountCapsule == null) {
-        logger.warn("witnessAccount[" + witnessAddress + "] not exists");
+        logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] not exists");
       } else {
         if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-          logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
+          logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] has balance["
+              + witnessAccountCapsule
               .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
         } else {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
           witnessCapsuleList.add(witnessCapsule);
-          this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-          logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
+          this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
         }
       }
@@ -941,16 +942,24 @@ public class Manager {
     sortWitness(witnessCapsuleList);
     if (witnessCapsuleList.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
-    }else{
+    } else {
       this.wits = witnessCapsuleList;
     }
 
     this.wits.forEach(witnessCapsule -> {
       witnessCapsule.setIsJobs(true);
-      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
   }
 
+
+  private byte[] createDbKey(ByteString string) {
+    return string.toByteArray();
+  }
+
+  public String createReadableString(ByteString string) {
+    return ByteArray.toHexString(string.toByteArray());
+  }
 
   /**
    * update wits sync to store.

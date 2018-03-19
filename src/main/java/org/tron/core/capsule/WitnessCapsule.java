@@ -61,11 +61,11 @@ public class WitnessCapsule implements ProtoCapsule<Witness> {
     return this.witness.getAddress();
   }
 
-  public byte[] createDbKey(){
+  public byte[] createDbKey() {
     return getAddress().toByteArray();
   }
 
-  public String createReadableString(){
+  public String createReadableString() {
     return ByteArray.toHexString(getAddress().toByteArray());
   }
 

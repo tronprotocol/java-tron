@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -78,10 +79,14 @@ public class VoteWitnessActuator extends AbstractActuator {
         .get(voteContract.getOwnerAddress().toByteArray());
 
     voteContract.getVotesList().forEach(vote -> {
-      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
+      logger.info("countVoteAccount,address[{}]",
+          vote.getVoteAddress().toStringUtf8());
+      accountCapsule.addVotes(
+          ByteString.copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())),
+          vote.getVoteCount());
     });
 
-    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
   @Override
