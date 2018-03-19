@@ -61,7 +61,7 @@ public class BlockInventoryMessage extends Message {
     blockIds.forEach(blockId -> {
       BlockInventory.BlockId.Builder b = BlockInventory.BlockId.newBuilder();
       b.setHash(blockId.getByteString());
-      b.setNumber(blockId.getNum());
+      b.setNumber(blockId.getNumber());
       invBuilder.addIds(b);
     });
 

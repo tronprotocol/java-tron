@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -15,20 +16,15 @@ import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
-
 public class BlockCapsuleTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
-      .copyFrom(ByteArray
-          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
-      ByteString.copyFrom("1234567".getBytes()));
-  private static String dbPath = "output_bloackcapsule_test";
+  private static String dbPath = "block_capsule_test_database";
+  private BlockCapsule blockCapsule;
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{"-d", dbPath}, Configuration.getByPath(Constant.TEST_CONF));
   }
 
   @AfterClass
@@ -37,62 +33,76 @@ public class BlockCapsuleTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-  @Test
-  public void testCalcMerkleRoot() {
-    blockCapsule0.setMerkleRoot();
-    Assert.assertEquals(
-        Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
-        blockCapsule0.getMerkleRoot().toString());
+  @Before
+  public void setup() {
+    this.blockCapsule = createBlockCapsule();
+  }
 
-    logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
+  @Test
+  public void calculateMerkleRoot_ok() {
+    blockCapsule.setMerkleRoot();
+    Assert.assertEquals(Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+        blockCapsule.getMerkleRoot().toString());
+
+    logger.info("Transaction[X] Merkle Root : {}", blockCapsule.getMerkleRoot().toString());
 
     TransactionCapsule transactionCapsule1 = new TransactionCapsule("123", 1L);
     TransactionCapsule transactionCapsule2 = new TransactionCapsule("124", 2L);
-    blockCapsule0.addTransaction(transactionCapsule1);
-    blockCapsule0.addTransaction(transactionCapsule2);
-    blockCapsule0.setMerkleRoot();
+    blockCapsule.addTransaction(transactionCapsule1.getInstance());
+    blockCapsule.addTransaction(transactionCapsule2.getInstance());
+    blockCapsule.setMerkleRoot();
 
-    Assert.assertEquals(
-        "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
-        blockCapsule0.getMerkleRoot().toString());
+    Assert.assertEquals("fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
+        blockCapsule.getMerkleRoot().toString());
 
-    logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
+    logger.info("Transaction[O] Merkle Root : {}", blockCapsule.getMerkleRoot().toString());
   }
 
   @Test
-  public void testAddTransaction() {
+  public void addTransaction_ok() {
     TransactionCapsule transactionCapsule = new TransactionCapsule("123", 1L);
-    blockCapsule0.addTransaction(transactionCapsule);
-    Assert.assertArrayEquals(blockCapsule0.getTransactions().get(0).getHash().getBytes(),
+    blockCapsule.addTransaction(transactionCapsule.getInstance());
+
+    Assert.assertArrayEquals(blockCapsule.getTransactions().get(0).getHash().getBytes(),
         transactionCapsule.getHash().getBytes());
     Assert.assertEquals(transactionCapsule.getInstance().getRawData().getVout(0).getValue(),
-        blockCapsule0.getTransactions().get(0).getInstance().getRawData().getVout(0).getValue());
+        blockCapsule.getTransactions().get(0).getInstance().getRawData().getVout(0).getValue());
   }
 
   @Test
-  public void testGetData() {
-    blockCapsule0.getData();
-    byte[] b = blockCapsule0.getData();
-    BlockCapsule blockCapsule1 = new BlockCapsule(b);
-    Assert.assertEquals(blockCapsule0.getBlockId(), blockCapsule1.getBlockId());
+  public void createBlockFromByteArray_ok() {
+    byte[] data = blockCapsule.getData();
+    BlockCapsule newBlockCapsule = new BlockCapsule(data);
+    Assert.assertEquals(blockCapsule.getBlockId(), newBlockCapsule.getBlockId());
+    Assert.assertEquals(blockCapsule.getNumber(), newBlockCapsule.getNumber());
+    Assert.assertEquals(blockCapsule.getParentHash(), newBlockCapsule.getParentHash());
+    Assert.assertEquals(blockCapsule.isGeneratedByMyself(),
+        newBlockCapsule.isGeneratedByMyself());
   }
 
   @Test
-  public void testValidate() {
-    Assert.assertTrue(blockCapsule0.validate());
-  }
-
-  @Test
-  public void testGetInsHash() {
+  public void getNumber_ok() {
     Assert.assertEquals(1,
-        blockCapsule0.getInstance().getBlockHeader().getRawData().getNumber());
-    Assert.assertEquals(blockCapsule0.getParentHash(),
-        Sha256Hash.wrap(blockCapsule0.getParentHashStr()));
+        blockCapsule.getInstance().getBlockHeader().getRawData().getNumber());
   }
 
   @Test
-  public void testGetTimeStamp() {
-    Assert.assertEquals(1234L, blockCapsule0.getTimeStamp());
+  public void wrapParentHash_ok() {
+    Assert.assertEquals(blockCapsule.getHashedParentHash(),
+        Sha256Hash.wrap(blockCapsule.getParentHash()));
+  }
+
+  @Test
+  public void getTimestamp_ok() {
+    Assert.assertEquals(1234L, blockCapsule.getTimestamp());
+  }
+
+  private static BlockCapsule createBlockCapsule() {
+    return new BlockCapsule(1, ByteString
+        .copyFrom(ByteArray
+            .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")),
+        1234,
+        ByteString.copyFrom("1234567".getBytes()));
   }
 
 }

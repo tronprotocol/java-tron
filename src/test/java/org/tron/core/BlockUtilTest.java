@@ -53,10 +53,10 @@ public class BlockUtilTest {
     Sha256Hash sha256Hash = Sha256Hash.wrap(ByteArray
         .fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000"));
 
-    Assert.assertEquals(0, blockCapsule1.getTimeStamp());
+    Assert.assertEquals(0, blockCapsule1.getTimestamp());
     Assert.assertEquals(sha256Hash,
-        blockCapsule1.getParentHash());
-    Assert.assertEquals(0, blockCapsule1.getNum());
+        blockCapsule1.getHashedParentHash());
+    Assert.assertEquals(0, blockCapsule1.getNumber());
 
     //test isParentOf method: create blockCapsule2 and blockCapsule3
     // blockCapsule3.setParentHash() equals blockCapsule2.getBlockId

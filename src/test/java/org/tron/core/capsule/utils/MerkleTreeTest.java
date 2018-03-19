@@ -97,9 +97,9 @@ public class MerkleTreeTest {
     }
 
     private Vector<Sha256Hash> getSha256Hashes(BlockCapsule blockCapsule) {
-        blockCapsule.addTransaction(transactionCapsule1);
-        blockCapsule.addTransaction(transactionCapsule2);
-        blockCapsule.addTransaction(transactionCapsule3);
+        blockCapsule.addTransaction(transactionCapsule1.getInstance());
+        blockCapsule.addTransaction(transactionCapsule2.getInstance());
+        blockCapsule.addTransaction(transactionCapsule3.getInstance());
 
         List<Protocol.Transaction> transactionList = blockCapsule.getInstance().getTransactionsList();
 

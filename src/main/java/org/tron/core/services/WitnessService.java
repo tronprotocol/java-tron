@@ -2,9 +2,7 @@ package org.tron.core.services;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -13,7 +11,6 @@ import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.RandomGenerator;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -188,7 +185,7 @@ public class WitnessService implements Service {
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info("Block is generated successfully, Its Id is {},number{} ", block.getBlockId(),
-          block.getNum());
+          block.getNumber());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {

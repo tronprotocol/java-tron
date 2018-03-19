@@ -19,13 +19,13 @@ public class KhaosDatabase extends TronDatabase {
   private class KhaosBlock {
 
     public Sha256Hash getParentHash() {
-      return this.blk.getParentHash();
+      return this.blk.getHashedParentHash();
     }
 
     public KhaosBlock(BlockCapsule blk) {
       this.blk = blk;
       this.id = blk.getBlockId();
-      this.num = blk.getNum();
+      this.num = blk.getNumber();
     }
 
     BlockCapsule blk;
@@ -88,7 +88,7 @@ public class KhaosDatabase extends TronDatabase {
       //Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
       if (block != null) {
         long num = block.num;
-        //parentHash = block.getParentHash();
+        //parentHash = block.getHashedParentHash();
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id == hash);

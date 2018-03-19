@@ -22,9 +22,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
@@ -34,9 +35,212 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class BlockCapsule implements ProtoCapsule<Block> {
 
+  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
+  private byte[] data;
+  private Block block;
+
+  @Getter
+  @Setter
+  public boolean generatedByMyself = false;
+
+  public BlockCapsule(Block block) {
+    this.block = block;
+  }
+
+  public BlockCapsule(final byte[] data) {
+    this.data = data;
+    parseToBlockIfNotNull();
+  }
+
+  public BlockCapsule(final long number, final ByteString hash, final long when,
+      final ByteString witnessAddress) {
+    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setNumber(number)
+        .setParentHash(hash)
+        .setTimestamp(when)
+        .setWitnessAddress(witnessAddress).build();
+
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    Block.Builder blockBuilder = Block.newBuilder();
+    this.block = blockBuilder.setBlockHeader(blockHeader).build();
+  }
+
+  public BlockCapsule(final long timestamp, final ByteString parentHash, final long number,
+      final List<Transaction> transactionList) {
+
+    BlockHeader.raw.Builder blockHeaderRawBuilder = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuilder
+        .setTimestamp(timestamp)
+        .setParentHash(parentHash)
+        .setNumber(number)
+        .build();
+
+    BlockHeader.Builder blockHeaderBuilder = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuilder.setRawData(blockHeaderRaw).build();
+
+    Block.Builder blockBuilder = Block.newBuilder();
+    transactionList.forEach(blockBuilder::addTransactions);
+    this.block = blockBuilder.setBlockHeader(blockHeader).build();
+  }
+
+  public void sign(final byte[] privateKey) {
+    // TODO private_key == null
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
+
+    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
+        .build();
+
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  public boolean validateSignature() throws ValidateSignatureException {
+    try {
+      return Arrays
+          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
+              this.block.getBlockHeader().getWitnessSignature().toStringUtf8()),
+              getBlockHeaderRawData().getWitnessAddress().toByteArray());
+    } catch (SignatureException e) {
+      throw new ValidateSignatureException(e.getMessage());
+    }
+  }
+
+  public Sha256Hash calculateMerkleRoot() {
+    List<Transaction> transactionsList = this.block.getTransactionsList();
+
+    if (CollectionUtils.isEmpty(transactionsList)) {
+      return Sha256Hash.ZERO_HASH;
+    }
+
+    Vector<Sha256Hash> ids = transactionsList.stream()
+            .map(TransactionCapsule::new)
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(Vector::new));
+
+    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+  }
+
+  public Sha256Hash getMerkleRoot() {
+    return Sha256Hash.wrap(getBlockHeaderRawData().getTxTrieRoot());
+  }
+
+  public void setMerkleRoot() {
+    BlockHeader.raw blockHeaderRaw = getBlockHeaderRawData().toBuilder()
+                                                            .setTxTrieRoot(calculateMerkleRoot()
+                                                                .getByteString()).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+
+  public BlockId getBlockId() {
+    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNumber());
+    }
+
+    return blockId;
+  }
+
+  public void addTransaction(final Transaction pendingTrx) {
+    this.block = this.block.toBuilder().addTransactions(pendingTrx).build();
+  }
+
+  public List<TransactionCapsule> getTransactions() {
+    return this.block.getTransactionsList().stream()
+                     .map(TransactionCapsule::new)
+                     .collect(Collectors.toList());
+  }
+
+  private Sha256Hash getRawHash() {
+    return Sha256Hash.of(getBlockHeaderRawData().toByteArray());
+  }
+
+  public Sha256Hash getHashedParentHash() {
+    return Sha256Hash.wrap(getBlockHeaderRawData().getParentHash());
+  }
+
+  public ByteString getParentHash() {
+    return getBlockHeaderRawData().getParentHash();
+  }
+
+  public long getNumber() {
+    return getBlockHeaderRawData().getNumber();
+  }
+
+  public long getTimestamp() {
+    return getBlockHeaderRawData().getTimestamp();
+  }
+
+  private BlockHeader.raw getBlockHeaderRawData() {
+    return this.block.getBlockHeader().getRawData();
+  }
+
+  @Override
+  public byte[] getData() {
+    return this.block.toByteArray();
+  }
+
+  @Override
+  public Block getInstance() {
+    return this.block;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockCapsule{" +
+        "blockId=" + blockId +
+        ", number=" + getNumber() +
+        ", parentId=" + getHashedParentHash() +
+        ", generatedByMyself=" + generatedByMyself +
+        '}';
+  }
+
+  private synchronized void parseToBlockIfNotNull() {
+    if (null != this.block) {
+      return;
+    }
+
+    try {
+      this.block = Block.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      log.debug(e.getMessage());
+    }
+  }
+
   public static class BlockId extends Sha256Hash {
+
+    @Getter
+    private long number;
+
+    public BlockId() {
+      super(Sha256Hash.ZERO_HASH.getBytes());
+      number = 0;
+    }
+
+    /**
+     * Use {@link #wrap(byte[])} instead.
+     */
+    public BlockId(Sha256Hash hash, long number) {
+      super(hash.getBytes());
+      this.number = number;
+    }
+
+    public BlockId(byte[] hash, long number) {
+      super(hash);
+      this.number = number;
+    }
+
+    public BlockId(ByteString hash, long number) {
+      super(hash.toByteArray());
+      this.number = number;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -62,252 +266,14 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     @Override
     public int compareTo(Sha256Hash other) {
       if (other.getClass().equals(BlockId.class)) {
-        long otherNum = ((BlockId) other).getNum();
-        if (num > otherNum) {
+        long otherNum = ((BlockId) other).getNumber();
+        if (number > otherNum) {
           return 1;
-        } else if (otherNum < num) {
+        } else if (otherNum < number) {
           return -1;
         }
       }
       return super.compareTo(other);
     }
-
-    private long num;
-
-    public BlockId() {
-      super(Sha256Hash.ZERO_HASH.getBytes());
-      num = 0;
-    }
-
-    /**
-     * Use {@link #wrap(byte[])} instead.
-     */
-    public BlockId(Sha256Hash hash, long num) {
-      super(hash.getBytes());
-      this.num = num;
-    }
-
-    public BlockId(byte[] hash, long num) {
-      super(hash);
-      this.num = num;
-    }
-
-    public BlockId(ByteString hash, long num) {
-      super(hash.toByteArray());
-      this.num = num;
-    }
-
-    public long getNum() {
-      return num;
-    }
-  }
-
-  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
-
-  protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
-
-  private byte[] data;
-
-  private Block block;
-
-  private boolean unpacked;
-
-  public boolean generatedByMyself = false;
-
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-
-    try {
-      this.block = Block.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
-
-    unpacked = true;
-  }
-
-  public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setNumber(number)
-        .setParentHash(hash)
-        .setTimestamp(when)
-        .setWitnessAddress(witnessAddress).build();
-
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
-
-    // block
-    Block.Builder blockBuild = Block.newBuilder();
-    this.block = blockBuild.setBlockHeader(blockHeader).build();
-    unpacked = true;
-  }
-
-  public BlockCapsule(long timestamp, ByteString parentHash, long number,
-      List<Transaction> transactionList) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setTimestamp(timestamp)
-        .setParentHash(parentHash)
-        .setNumber(number)
-        .build();
-
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
-
-    // block
-    Block.Builder blockBuild = Block.newBuilder();
-    transactionList.forEach(trx -> blockBuild.addTransactions(trx));
-    this.block = blockBuild.setBlockHeader(blockHeader).build();
-    unpacked = true;
-  }
-
-  public void addTransaction(TransactionCapsule pendingTrx) {
-    this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
-  }
-
-  public List<TransactionCapsule> getTransactions() {
-    return this.block.getTransactionsList().stream()
-        .map(trx -> new TransactionCapsule(trx))
-        .collect(Collectors.toList());
-  }
-
-  public void sign(byte[] privateKey) {
-    // TODO private_key == null
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
-
-    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
-        .build();
-
-    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
-  }
-
-  private Sha256Hash getRawHash() {
-    unPack();
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
-  }
-
-  public boolean validateSignature() throws ValidateSignatureException {
-    try {
-      return Arrays
-          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
-              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
-              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    } catch (SignatureException e) {
-      throw new ValidateSignatureException(e.getMessage());
-    }
-  }
-
-  public BlockId getBlockId() {
-    unPack();
-    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
-    }
-
-    return blockId;
-//    return blockId.equals(Sha256Hash.ZERO_HASH)
-//        ? blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum())
-//        : blockId;
-  }
-
-  public Sha256Hash calcMerkleRoot() {
-    List<Transaction> transactionsList = this.block.getTransactionsList();
-
-    if (CollectionUtils.isEmpty(transactionsList)) {
-      return Sha256Hash.ZERO_HASH;
-    }
-
-    Vector<Sha256Hash> ids = transactionsList.stream()
-            .map(TransactionCapsule::new)
-            .map(TransactionCapsule::getHash)
-            .collect(Collectors.toCollection(Vector::new));
-
-    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
-  }
-
-  public void setMerkleRoot() {
-    BlockHeader.raw blockHeaderRaw =
-            this.block.getBlockHeader().getRawData().toBuilder()
-                    .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
-
-    this.block = this.block.toBuilder().setBlockHeader(
-        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
-  }
-
-  public Sha256Hash getMerkleRoot() {
-    unPack();
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
-  }
-
-
-  private void pack() {
-    if (data == null) {
-      this.data = this.block.toByteArray();
-    }
-  }
-
-  public boolean validate() {
-    unPack();
-    return true;
-  }
-
-  public BlockCapsule(Block block) {
-    this.block = block;
-    unpacked = true;
-  }
-
-  public BlockCapsule(byte[] data) {
-    this.data = data;
-    unPack();
-  }
-
-  @Override
-  public byte[] getData() {
-    pack();
-    return data;
-  }
-
-  @Override
-  public Block getInstance() {
-    return this.block;
-  }
-
-  public Sha256Hash getParentHash() {
-    unPack();
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
-  }
-
-  public ByteString getParentHashStr() {
-    unPack();
-    return this.block.getBlockHeader().getRawData().getParentHash();
-  }
-
-  public long getNum() {
-    unPack();
-    return this.block.getBlockHeader().getRawData().getNumber();
-  }
-
-  public long getTimeStamp() {
-    unPack();
-    return this.block.getBlockHeader().getRawData().getTimestamp();
-  }
-
-  @Override
-  public String toString() {
-    unPack();
-    return "BlockCapsule{" +
-        "blockId=" + blockId +
-        ", num=" + getNum() +
-        ", parentId=" + getParentHash() +
-        ", generatedByMyself=" + generatedByMyself +
-        '}';
   }
 }

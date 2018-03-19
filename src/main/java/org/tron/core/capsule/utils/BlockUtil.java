@@ -48,7 +48,7 @@ public class BlockUtil {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
-    blockCapsule.generatedByMyself = true;
+    blockCapsule.setGeneratedByMyself(true);
 
     return blockCapsule;
   }
@@ -58,6 +58,6 @@ public class BlockUtil {
    */
   public static boolean isParentOf(BlockCapsule blockCapsule1, BlockCapsule
       blockCapsule2) {
-    return blockCapsule1.getBlockId().equals(blockCapsule2.getParentHash());
+    return blockCapsule1.getBlockId().equals(blockCapsule2.getHashedParentHash());
   }
 }
