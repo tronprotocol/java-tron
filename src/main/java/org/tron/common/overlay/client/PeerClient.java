@@ -24,14 +24,13 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.server.EthereumChannelInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.server.EthereumChannelInitializer;
 
 import java.io.IOException;
 import java.util.concurrent.ThreadFactory;
@@ -53,9 +52,6 @@ public class PeerClient {
 
     @Autowired
     private ApplicationContext ctx;
-
-    @Autowired
-    EthereumListener ethereumListener;
 
     private EventLoopGroup workerGroup;
 
@@ -102,7 +98,6 @@ public class PeerClient {
     }
 
     public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
-        ethereumListener.trace("Connecting to: " + host + ":" + port);
 
         EthereumChannelInitializer ethereumChannelInitializer = ctx.getBean(EthereumChannelInitializer.class, remoteId);
         ethereumChannelInitializer.setPeerDiscoveryMode(discoveryMode);
