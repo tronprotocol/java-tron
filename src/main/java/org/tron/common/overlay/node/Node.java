@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.rlpx;
+package org.tron.common.overlay.node;
 
 import org.ethereum.crypto.ECKey;
 import org.ethereum.util.RLP;

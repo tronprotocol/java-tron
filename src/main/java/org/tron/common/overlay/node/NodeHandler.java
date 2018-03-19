@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.node;
 
 import org.ethereum.net.rlpx.*;
 import org.ethereum.net.rlpx.discover.table.KademliaOptions;
 import org.ethereum.net.swarm.Util;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.DiscoveryEvent;
 
 import java.net.InetSocketAddress;
 import java.util.List;

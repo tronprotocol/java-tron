@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.node;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.ethereum.config.SystemProperties;
@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.DiscoverListener;
+import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.overlay.discover.PeerConnectionTester;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
