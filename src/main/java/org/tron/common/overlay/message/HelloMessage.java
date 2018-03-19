@@ -144,6 +144,6 @@ public class HelloMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return null;
+    return MessageTypes.P2P_HELLO;
   }
 }

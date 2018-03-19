@@ -25,6 +25,6 @@ public class SyncPeersMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return null;
+    return MessageTypes.P2P_SYNC_PEERS;
   }
 }

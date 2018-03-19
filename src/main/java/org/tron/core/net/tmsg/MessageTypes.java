@@ -33,6 +33,20 @@ public enum MessageTypes {
 
   TRX_INVENTORY(0x13),
 
+  P2P_HELLO(0x20),
+
+  P2P_DISCONNECT(0x21),
+
+  P2P_PING(0x22),
+
+  P2P_PONG(0x23),
+
+  P2P_FETCH_PEERS(0x24),
+
+  P2P_SYNC_PEERS(0x25),
+
+  P2P_USER(0x26),
+
   LAST(0xFF);
 
   private final int type;
@@ -76,6 +90,8 @@ public enum MessageTypes {
         return "SYNC_BLOCK_CHAIN";
       case 11:
         return "BLOCK_INVENTORY";
+      default:
+        break;
     }
     return super.toString();
   }
