@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.message;
+package org.tron.common.overlay.discover.message;
 
 import org.ethereum.config.SystemProperties;
 import org.ethereum.net.client.Capability;

@@ -22,7 +22,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.net.tmsg.BlockMessage;
+import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
 

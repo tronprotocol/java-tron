@@ -2,7 +2,7 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.tmsg.MessageTypes;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Message;
 import org.tron.protos.Message.HelloMessage.Builder;
 import org.tron.protos.Message.P2pMessageCode;

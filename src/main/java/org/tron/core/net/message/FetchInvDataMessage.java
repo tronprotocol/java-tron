@@ -1,4 +1,4 @@
-package org.tron.core.net.tmsg;
+package org.tron.core.net.message;
 
 import java.util.List;
 import org.tron.common.utils.Sha256Hash;

@@ -1,4 +1,4 @@
-package org.tron.core.net.tmsg;
+package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
