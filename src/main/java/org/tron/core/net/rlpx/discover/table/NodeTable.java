@@ -17,7 +17,8 @@
  */
 package org.tron.core.net.rlpx.discover.table;
 
-import org.ethereum.net.rlpx.Node;
+
+import org.tron.core.net.rlpx.Node;
 
 import java.util.*;
 

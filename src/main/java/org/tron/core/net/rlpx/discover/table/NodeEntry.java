@@ -17,7 +17,7 @@
  */
 package org.tron.core.net.rlpx.discover.table;
 
-import org.ethereum.net.rlpx.Node;
+import org.tron.core.net.rlpx.Node;
 
 /**
  * Created by kest on 5/25/15.
