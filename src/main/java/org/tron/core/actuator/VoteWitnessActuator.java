@@ -79,7 +79,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         .get(voteContract.getOwnerAddress().toByteArray());
 
     voteContract.getVotesList().forEach(vote -> {
-      logger.info("countVoteAccount,address[{}]",
+      logger.debug("countVoteAccount,address[{}]",
           vote.getVoteAddress().toStringUtf8());
       accountCapsule.addVotes(
           ByteString.copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())),
