@@ -58,7 +58,7 @@ public class Witness implements Serializable {
    * set url.
    */
   public void setUrl(final String url) {
-    if (null == url || StringUtils.isBlank(url)) {
+    if (StringUtils.isBlank(url)) {
       throw new IllegalArgumentException(
           "The url(" + url + ") format error.");
     }
