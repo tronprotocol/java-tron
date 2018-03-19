@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 
 public class SafeMessageMap {
 
