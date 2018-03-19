@@ -92,7 +92,7 @@ public class ManagerTest {
         transactionCapsule.getInstance().getRawData().getVout(0).getValue());
   }
 
-//  @Test
+  //  @Test
   public void updateWits() {
     int sizePrv = dbManager.getWitnesses().size();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
