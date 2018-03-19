@@ -11,16 +11,18 @@ public class TransactionMessage extends Message {
 
   public TransactionMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.TRX.asByte();
   }
 
   public TransactionMessage(Transaction trx) {
     this.trx = trx;
     unpacked = true;
+    this.type = MessageTypes.TRX.asByte();
   }
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.TRX;
+    return MessageTypes.fromByte(this.type);
   }
 
   @Override

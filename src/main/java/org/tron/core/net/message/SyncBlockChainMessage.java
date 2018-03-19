@@ -8,14 +8,16 @@ public class SyncBlockChainMessage extends BlockInventoryMessage {
 
   public SyncBlockChainMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.SYNC_BLOCK_CHAIN.asByte();
   }
 
   public SyncBlockChainMessage(List<BlockId> blockIds) {
     super(blockIds, Type.SYNC);
+    this.type = MessageTypes.SYNC_BLOCK_CHAIN.asByte();
   }
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.SYNC_BLOCK_CHAIN;
+    return MessageTypes.fromByte(this.type);
   }
 }

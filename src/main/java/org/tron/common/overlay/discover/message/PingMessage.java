@@ -8,6 +8,10 @@ public class PingMessage extends P2pMessage {
 
   private static final byte[] FIXED_PAYLOAD = Hex.decode("C0");
 
+  public PingMessage() {
+    this.type = MessageTypes.P2P_PING.asByte();
+  }
+
   @Override
   public byte[] getData() {
     return FIXED_PAYLOAD;
@@ -25,6 +29,6 @@ public class PingMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_PING;
+    return MessageTypes.fromByte(this.type);
   }
 }

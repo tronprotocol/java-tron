@@ -15,6 +15,7 @@ public class HelloMessage extends P2pMessage {
 
   public HelloMessage(byte[] encoded) {
     super(encoded);
+    this.type = MessageTypes.P2P_HELLO.asByte();
   }
 
   /**
@@ -33,6 +34,7 @@ public class HelloMessage extends P2pMessage {
 
     this.helloMessage = builder.build();
     this.unpacked = true;
+    this.type = MessageTypes.P2P_HELLO.asByte();
   }
 
   private void unPack() {
@@ -145,6 +147,6 @@ public class HelloMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_HELLO;
+    return MessageTypes.fromByte(this.type);
   }
 }

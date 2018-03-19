@@ -11,6 +11,7 @@ public class DisconnectMessage extends P2pMessage {
 
   public DisconnectMessage(byte[] encoded) {
     super(encoded);
+    this.type = MessageTypes.P2P_DISCONNECT.asByte();
   }
 
   /**
@@ -22,6 +23,7 @@ public class DisconnectMessage extends P2pMessage {
         .setReason(reason)
         .build();
     unpacked = true;
+    this.type = MessageTypes.P2P_DISCONNECT.asByte();
   }
 
   private void unPack() {
@@ -72,6 +74,6 @@ public class DisconnectMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_DISCONNECT;
+    return MessageTypes.fromByte(this.type);
   }
 }
