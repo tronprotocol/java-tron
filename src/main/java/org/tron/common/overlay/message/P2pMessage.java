@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.message;
 
-
 public abstract class P2pMessage extends Message {
 
     public P2pMessage() {

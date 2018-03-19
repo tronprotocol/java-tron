@@ -2,11 +2,11 @@ package org.tron.common.overlay.message;
 
 import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.protos.Message;
 import org.tron.protos.Message.HelloMessage.Builder;
 import org.tron.protos.Message.P2pMessageCode;
-
-import java.util.List;
 
 public class HelloMessage extends P2pMessage {
 
@@ -108,8 +108,8 @@ public class HelloMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCode getCommand() {
-    return P2pMessageCode.HELLO;
+  public P2pMessageCodes getCommand() {
+    return P2pMessageCodes.fromByte(this.type);
   }
 
   /**

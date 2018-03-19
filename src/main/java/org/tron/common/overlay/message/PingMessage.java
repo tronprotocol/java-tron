@@ -2,7 +2,6 @@ package org.tron.common.overlay.message;
 
 import org.spongycastle.util.encoders.Hex;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Message.P2pMessageCode;
 
 public class PingMessage extends P2pMessage {
 
@@ -18,8 +17,8 @@ public class PingMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCode getCommand() {
-    return P2pMessageCode.PING;
+  public P2pMessageCodes getCommand() {
+    return P2pMessageCodes.fromByte(this.type);
   }
 
   @Override
