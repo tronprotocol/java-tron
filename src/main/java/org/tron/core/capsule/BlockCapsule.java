@@ -39,7 +39,6 @@ import org.tron.protos.Protocol.Transaction;
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
-  private byte[] data;
   private Block block;
 
   @Getter
@@ -51,8 +50,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public BlockCapsule(final byte[] data) {
-    this.data = data;
-    parseToBlockIfNotNull();
+    try {
+      this.block = Block.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      log.debug(e.getMessage());
+    }
   }
 
   public BlockCapsule(final long number, final ByteString hash, final long when,
@@ -200,18 +202,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         ", parentId=" + getHashedParentHash() +
         ", generatedByMyself=" + generatedByMyself +
         '}';
-  }
-
-  private synchronized void parseToBlockIfNotNull() {
-    if (null != this.block) {
-      return;
-    }
-
-    try {
-      this.block = Block.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      log.debug(e.getMessage());
-    }
   }
 
   public static class BlockId extends Sha256Hash {
