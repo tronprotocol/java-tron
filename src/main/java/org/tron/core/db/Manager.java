@@ -306,6 +306,7 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+
   /**
    * push transaction into db.
    */
@@ -787,9 +788,9 @@ public class Manager {
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
 
-
   /**
-   * update signed witness.
+   * @param block the block update signed witness.  set witness who signed block the 1. the latest
+   * block num 2. pay the trx to witness. 3. (TODO)the latest slot num.
    */
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
@@ -797,14 +798,23 @@ public class Manager {
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
 
     long latestSlotNum = 0L;
-
-    //    dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
-
+    // dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
         .build();
+    AccountCapsule sun = accountStore.getSun();
 
-    processFee();
+    try {
+      adjustBalance(sun.getAddress().toByteArray(), -3);
+    } catch (BalanceInsufficientException e) {
+
+    }
+    try {
+      adjustBalance(witnessCapsule.getAddress().toByteArray(), 3);
+    } catch (BalanceInsufficientException e) {
+      e.printStackTrace();
+    }
+
   }
 
   private void processFee() {
