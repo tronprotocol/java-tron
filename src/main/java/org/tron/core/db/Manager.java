@@ -523,8 +523,7 @@ public class Manager {
           } catch (ContractValidateException e) {
             e.printStackTrace();
           } catch (ContractExeException e) {
-            e.printStackTrace
-                ();
+            e.printStackTrace();
           } catch (HighFreqException e) {
             e.printStackTrace();
           }
