@@ -5,7 +5,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-public class TransactionInventoryMessage extends InventoryMessage  {
+public class TransactionInventoryMessage extends InventoryMessage {
 
   public TransactionInventoryMessage(byte[] packed) {
     super(packed);

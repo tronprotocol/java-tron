@@ -7,7 +7,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.Block;
 
-
 public class BlockMessage extends Message {
 
   private Block block;
