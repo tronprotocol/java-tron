@@ -4,9 +4,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Message.P2pMessageCode;
 
-public class PongMessage extends P2pMessage {
+public class SyncPeersMessage extends P2pMessage {
 
-  private static final byte[] FIXED_PAYLOAD = Hex.decode("C0");
+  private static final byte[] FIXED_PAYLOAD = Hex.decode("C104");
 
   @Override
   public byte[] getData() {
@@ -15,7 +15,7 @@ public class PongMessage extends P2pMessage {
 
   @Override
   public P2pMessageCode getCommand() {
-    return P2pMessageCode.PONG;
+    return P2pMessageCode.GET_PEERS;
   }
 
   @Override

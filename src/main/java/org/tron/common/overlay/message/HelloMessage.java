@@ -1,25 +1,9 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.overlay.message;
 
 import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Message;
 import org.tron.protos.Message.HelloMessage.Builder;
 import org.tron.protos.Message.P2pMessageCode;
@@ -32,6 +16,9 @@ public class HelloMessage extends P2pMessage {
     super(encoded);
   }
 
+  /**
+   * Create hello message.
+   */
   public HelloMessage(byte p2pVersion, String clientId,
       List<Message.Capability> capabilities, int listenPort, String peerId) {
 
@@ -44,61 +31,76 @@ public class HelloMessage extends P2pMessage {
     builder.setPeerId(peerId);
 
     this.helloMessage = builder.build();
-    this.parsed = true;
+    this.unpacked = true;
   }
 
-  private void parse() {
+  private void unPack() {
     try {
-      this.helloMessage = Message.HelloMessage.parseFrom(encoded);
+      this.helloMessage = Message.HelloMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    this.parsed = true;
+    this.unpacked = true;
   }
 
-  private void encode() {
-    this.encoded = this.helloMessage.toByteArray();
+  private void pack() {
+    this.data = this.helloMessage.toByteArray();
   }
 
   @Override
-  public byte[] getEncoded() {
-    if (encoded == null) {
-      encode();
+  public byte[] getData() {
+    if (this.data == null) {
+      this.pack();
     }
-    return encoded;
+    return this.data;
   }
 
+  /**
+   * Get the version of p2p protocol.
+   */
   public byte getP2PVersion() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return (byte) this.helloMessage.getP2PVersion();
   }
 
+  /**
+   * Get client ID.
+   */
   public String getClientId() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return this.helloMessage.getClientId();
   }
 
+  /**
+   * Get capabilities.
+   */
   public List<Message.Capability> getCapabilities() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return this.helloMessage.getCapabilitiesList();
   }
 
+  /**
+   * Get listen port.
+   */
   public int getListenPort() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return this.helloMessage.getListenPort();
   }
 
+  /**
+   * Get peer ID.
+   */
   public String getPeerId() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return this.helloMessage.getPeerId();
   }
@@ -108,31 +110,40 @@ public class HelloMessage extends P2pMessage {
     return P2pMessageCode.HELLO;
   }
 
+  /**
+   * Set peer ID.
+   */
   public void setPeerId(String peerId) {
     Builder builder = this.helloMessage.toBuilder();
     builder.setPeerId(peerId);
     this.helloMessage = builder.build();
   }
 
+  /**
+   * Set version of p2p protocol.
+   */
   public void setP2pVersion(byte p2pVersion) {
     Builder builder = this.helloMessage.toBuilder();
     builder.setP2PVersion(p2pVersion);
     this.helloMessage = builder.build();
   }
 
-  @Override
-  public Class<?> getAnswerMessage() {
-    return null;
-  }
-
+  /**
+   * Get string.
+   */
   public String toString() {
-    if (!parsed) {
-      parse();
+    if (!this.unpacked) {
+      this.unPack();
     }
     return "[" + this.getCommand().name() + " p2pVersion="
         + this.getP2PVersion() + " clientId=" + this.getClientId()
         + " capabilities=[" + Joiner.on(" ").join(this.getCapabilities())
         + "]" + " peerPort=" + this.getListenPort() + " peerId="
         + this.getPeerId() + "]";
+  }
+
+  @Override
+  public MessageTypes getType() {
+    return null;
   }
 }
