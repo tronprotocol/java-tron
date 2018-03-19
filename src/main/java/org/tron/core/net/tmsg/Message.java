@@ -1,5 +1,6 @@
 package org.tron.core.net.tmsg;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
@@ -26,6 +27,10 @@ public abstract class Message {
   }
 
   public abstract byte[] getData();
+
+  public byte[] getSendData() {
+    return ArrayUtils.add(this.data, 0, this.type);
+  }
 
   public String toString() {
     return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";
