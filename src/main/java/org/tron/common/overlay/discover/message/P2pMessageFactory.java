@@ -17,19 +17,35 @@
  */
 package org.tron.common.overlay.discover.message;
 
-
 import org.tron.common.overlay.message.Message;
 
-public abstract class P2pMessage extends Message {
+/**
+ * P2P message factory
+ *
+ * @author Mikhail Kalinin
+ * @since 20.08.2015
+ */
+public class P2pMessageFactory implements MessageFactory {
 
-    public P2pMessage() {
-    }
+    @Override
+    public Message create(byte code, byte[] encoded) {
 
-    public P2pMessage(byte[] encoded) {
-        super(encoded);
-    }
-
-    public P2pMessageCodes getCommand() {
-        return P2pMessageCodes.fromByte(type);
+        P2pMessageCodes receivedCommand = P2pMessageCodes.fromByte(code);
+        switch (receivedCommand) {
+            case HELLO:
+                return new HelloMessage(encoded);
+            case DISCONNECT:
+                return new DisconnectMessage(encoded);
+            case PING:
+                return StaticMessages.PING_MESSAGE;
+            case PONG:
+                return StaticMessages.PONG_MESSAGE;
+            case GET_PEERS:
+                return StaticMessages.GET_PEERS_MESSAGE;
+            case PEERS:
+                return new PeersMessage(encoded);
+            default:
+                throw new IllegalArgumentException("No such message");
+        }
     }
 }

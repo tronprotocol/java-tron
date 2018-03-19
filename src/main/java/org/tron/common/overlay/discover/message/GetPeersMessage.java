@@ -17,19 +17,32 @@
  */
 package org.tron.common.overlay.discover.message;
 
+import org.spongycastle.util.encoders.Hex;
 
-import org.tron.common.overlay.message.Message;
+public class GetPeersMessage extends P2pMessage {
 
-public abstract class P2pMessage extends Message {
+    /**
+     * GetPeers message is always a the same single command payload
+     */
+    private final static byte[] FIXED_PAYLOAD = Hex.decode("C104");
 
-    public P2pMessage() {
+    @Override
+    public byte[] getEncoded() {
+        return FIXED_PAYLOAD;
     }
 
-    public P2pMessage(byte[] encoded) {
-        super(encoded);
-    }
-
+    @Override
     public P2pMessageCodes getCommand() {
-        return P2pMessageCodes.fromByte(type);
+        return P2pMessageCodes.GET_PEERS;
+    }
+
+    @Override
+    public Class<PeersMessage> getAnswerMessage() {
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + this.getCommand().name() + "]";
     }
 }

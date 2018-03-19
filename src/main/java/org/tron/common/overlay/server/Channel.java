@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.HandshakeHandler;
 import org.tron.common.overlay.discover.message.HelloMessage;
+import org.tron.common.overlay.discover.message.P2pMessageFactory;
 import org.tron.common.overlay.discover.message.StaticMessages;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
@@ -38,7 +39,6 @@ import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.message.MessageFactory;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 

@@ -19,37 +19,21 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.core.Block;
-import org.ethereum.core.Transaction;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.client.Capability;
-import org.ethereum.net.client.ConfigCapabilities;
-import org.ethereum.net.eth.message.NewBlockMessage;
-import org.ethereum.net.eth.message.TransactionsMessage;
-import org.ethereum.net.message.ReasonCode;
-import org.ethereum.net.message.StaticMessages;
-import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.swarm.Util;
-import org.ethereum.net.swarm.bzz.BzzHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.message.*;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.core.net.message.TransactionsMessage;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.ethereum.net.eth.EthVersion.*;
-import static org.ethereum.net.eth.EthVersion.fromCode;
-import static org.ethereum.net.message.StaticMessages.*;
-import static org.ethereum.net.message.StaticMessages.PING_MESSAGE;
-import static org.ethereum.net.message.StaticMessages.PONG_MESSAGE;
 
 /**
  * Process the basic protocol messages between every peer on the network.

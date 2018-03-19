@@ -179,15 +179,16 @@ public class ChannelManager {
     }
 
     private void process(Channel peer) {
-        if(peer.hasEthStatusSucceeded()) {
+//        if(peer.hasEthStatusSucceeded()) {
 //            // prohibit transactions processing until main sync is done
 //            if (syncManager.isSyncDone()) {
 //                peer.onSyncDone(true);
 //                // So we could perform some tasks on recently connected peer
 //                newActivePeers.add(peer);
 //            }
+        newActivePeers.add(peer);
             activePeers.put(peer.getNodeIdWrapper(), peer);
-        }
+//        }
     }
 
 
