@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.HighFreqException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
@@ -84,8 +85,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
-    } catch (ValidationException e) {
+    } catch (HighFreqException e) {
       logger.info(e.getMessage());
+      e.printStackTrace();
     }
   }
 
