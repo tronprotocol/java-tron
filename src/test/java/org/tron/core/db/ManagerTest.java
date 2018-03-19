@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -17,7 +18,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
-import com.google.protobuf.ByteString;
 
 
 public class ManagerTest {
@@ -103,12 +103,21 @@ public class ManagerTest {
     WitnessCapsule witnessCapsulef = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString("0x0011")), "www.tron.net/first");
     witnessCapsulef.setIsJobs(true);
+    logger.info("witness address is {}",
+        ByteArray.toHexString(witnessCapsulef.getAddress().toByteArray()));
+
     WitnessCapsule witnessCapsules = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString("0x0012")), "www.tron.net/second");
     witnessCapsules.setIsJobs(true);
+    logger.info("witness address is {}",
+        ByteArray.toHexString(witnessCapsules.getAddress().toByteArray()));
+
     WitnessCapsule witnessCapsulet = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString("0x0013")), "www.tron.net/three");
     witnessCapsulet.setIsJobs(false);
+    logger.info("witness address is {}",
+        ByteArray.toHexString(witnessCapsulet.getAddress().toByteArray()));
+
 
     dbManager.getWitnesses().forEach(witnessCapsule -> {
       logger.info("witness address is {}",
@@ -120,8 +129,9 @@ public class ManagerTest {
     dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
     dbManager.updateWits();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
-      logger.info("witness address is {}",
-          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+      logger.info("witness address is {}.isJob :{}",
+          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()),
+          witnessCapsule.getIsJobs());
     });
     int sizeTis = dbManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
