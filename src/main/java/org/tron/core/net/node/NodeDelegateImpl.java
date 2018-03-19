@@ -169,7 +169,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     return retSummary;
   }
 
-
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
@@ -189,7 +188,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
     //TODO: notify cli know how many block we need to sync
   }
-
 
   @Override
   public long getBlockTime(BlockId id) {
@@ -226,7 +224,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public BlockCapsule getGenesisBlock() {
-    //TODO return a genissBlock
+    //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
 }
