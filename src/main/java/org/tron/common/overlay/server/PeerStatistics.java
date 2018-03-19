@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.server;
+package org.tron.common.overlay.server;
 
 /**
  * @author Mikhail Kalinin
