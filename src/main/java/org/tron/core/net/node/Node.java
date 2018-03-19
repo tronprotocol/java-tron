@@ -1,7 +1,7 @@
 package org.tron.core.net.node;
 
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 
 public interface Node {
 

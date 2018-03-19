@@ -15,9 +15,9 @@
 
 package org.tron.common.overlay.node;
 
-import org.tron.core.net.tmsg.MessageRegistry;
+import org.tron.core.net.message.MessageRegistry;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 
 import java.io.UnsupportedEncodingException;
 
