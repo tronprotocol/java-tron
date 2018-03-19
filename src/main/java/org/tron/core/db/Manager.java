@@ -761,13 +761,13 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
       this.updateSignedWitness(block);
+    }
+    if (needMaintenance(block.getTimeStamp())) {
 
-      if (needMaintenance(block.getTimeStamp())) {
-        if (block.getNum() == 1) {
-          this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-        } else {
-          this.processMaintenance(block);
-        }
+      if (block.getNum() == 1) {
+        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+      } else {
+        this.processMaintenance(block);
       }
     }
   }
@@ -907,6 +907,12 @@ public class Manager {
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
+
+    //Only possible during the initialization phase
+    if (countWitness.size() == 0) {
+      witnessCapsuleList.addAll(this.witnessStore.getAllWitnesses());
+    }
+
     countWitness.forEach((address, voteCount) -> {
       final WitnessCapsule witnessCapsule = this.witnessStore.get(address.toByteArray());
       if (null == witnessCapsule) {
@@ -933,11 +939,13 @@ public class Manager {
       }
     });
     sortWitness(witnessCapsuleList);
-    if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
+    if (witnessCapsuleList.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
+    }else{
+      this.wits = witnessCapsuleList;
     }
 
-    witnessCapsuleList.forEach(witnessCapsule -> {
+    this.wits.forEach(witnessCapsule -> {
       witnessCapsule.setIsJobs(true);
       this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
     });
