@@ -33,13 +33,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 
-/**
- * This class establishes a listener for incoming connections.
- * See <a href="http://netty.io">http://netty.io</a>.
- *
- * @author Roman Mandeleil
- * @since 01.11.2014
- */
 @Component
 public class PeerServer {
 
@@ -48,8 +41,6 @@ public class PeerServer {
     private SystemProperties config;
 
     private ApplicationContext ctx;
-
-    private EthereumListener ethereumListener;
 
     public EthereumChannelInitializer ethereumChannelInitializer;
 
@@ -60,11 +51,9 @@ public class PeerServer {
     ChannelFuture channelFuture;
 
     @Autowired
-    public PeerServer(final SystemProperties config, final ApplicationContext ctx,
-                      final EthereumListener ethereumListener) {
+    public PeerServer(final SystemProperties config, final ApplicationContext ctx) {
         this.ctx = ctx;
         this.config = config;
-        this.ethereumListener = ethereumListener;
     }
 
     public void start(int port) {
@@ -73,9 +62,6 @@ public class PeerServer {
         workerGroup = new NioEventLoopGroup();
 
         ethereumChannelInitializer = ctx.getBean(EthereumChannelInitializer.class, "");
-
-        ethereumListener.trace("Listening on port " + port);
-
 
         try {
             ServerBootstrap b = new ServerBootstrap();

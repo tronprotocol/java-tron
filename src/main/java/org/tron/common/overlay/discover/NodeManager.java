@@ -15,22 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.node;
+package org.ethereum.net.rlpx.discover;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.ethereum.config.SystemProperties;
+import org.ethereum.crypto.ECKey;
+import org.ethereum.db.PeerSource;
+import org.ethereum.listener.EthereumListener;
+import org.ethereum.net.rlpx.*;
+import org.ethereum.net.rlpx.discover.table.NodeTable;
+import org.ethereum.util.CollectionUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.discover.DiscoverListener;
-import org.tron.common.overlay.discover.DiscoveryEvent;
-import org.tron.common.overlay.discover.NodeHandler;
-import org.tron.common.overlay.discover.PeerConnectionTester;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
-import org.tron.common.overlay.discover.table.NodeTable;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -41,6 +39,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static java.lang.Math.min;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -433,7 +433,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     public static void main(String[] args){
         try {
             logger.info(InetAddress.getLocalHost().toString());
-            ServerSocket ss = new ServerSocket(7080);
+            java.net.ServerSocket ss = new java.net.ServerSocket(7080);
             DatagramSocket socket = new DatagramSocket(7080);
             logger.info(ss.getInetAddress().toString());
             logger.info(ss.getLocalSocketAddress().toString());

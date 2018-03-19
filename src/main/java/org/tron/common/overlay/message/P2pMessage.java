@@ -15,10 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover.message;
-
-
-import org.tron.common.overlay.message.Message;
+package org.tron.common.overlay.message;
 
 public abstract class P2pMessage extends Message {
 
