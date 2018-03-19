@@ -1,7 +1,7 @@
 package org.tron.common.overlay.message;
 
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.tmsg.MessageTypes;
 import org.tron.protos.Message.P2pMessageCode;
 
 public class SyncPeersMessage extends P2pMessage {
