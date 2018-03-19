@@ -15,8 +15,9 @@
 
 package org.tron.common.overlay.node;
 
-import org.tron.core.net.message.MessageRegistry;
+import org.tron.core.net.tmsg.MessageRegistry;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.core.net.tmsg.Message;
 
 import java.io.UnsupportedEncodingException;
 
@@ -40,7 +41,7 @@ public class StartWorker implements Runnable {
       String key = msg.header("type");
       byte[] newValueBytes = msg.data().toString().getBytes("ISO-8859-1");
 
-      org.tron.core.net.message.Message message = MessageRegistry.getMessageByKey(key, newValueBytes);
+      Message message = MessageRegistry.getMessageByKey(key, newValueBytes);
 
       peerDel.onMessage(peerDel.getPeer(msg), message);
 
