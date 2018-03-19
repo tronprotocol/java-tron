@@ -174,10 +174,16 @@ public class DynamicPropertiesStore extends TronDatabase {
   public void updateNextMaintenanceTime(long blockTime) {
 
     long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime nextMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - nextMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    setNextMaintenanceTime(nextMaintenanceTime.plus((round + 1) * maintenanceTimeInterval));
+    DateTime currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
+    DateTime nextMaintenanceTime = currentMaintenanceTime
+        .plus((round + 1) * maintenanceTimeInterval);
+    setNextMaintenanceTime(nextMaintenanceTime);
 
+    logger.debug("currentMaintenanceTime:{}, blockTime:{},updateNextMaintenanceTime:{}",
+        new DateTime(currentMaintenanceTime), new DateTime(blockTime),
+        new DateTime(nextMaintenanceTime)
+    );
   }
 
 }

@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
 
 public class WitnessCapsule implements ProtoCapsule<Witness> {
@@ -58,6 +59,14 @@ public class WitnessCapsule implements ProtoCapsule<Witness> {
 
   public ByteString getAddress() {
     return this.witness.getAddress();
+  }
+
+  public byte[] createDbKey() {
+    return getAddress().toByteArray();
+  }
+
+  public String createReadableString() {
+    return ByteArray.toHexString(getAddress().toByteArray());
   }
 
   @Override
