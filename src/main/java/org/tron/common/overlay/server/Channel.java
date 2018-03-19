@@ -17,47 +17,29 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.core.Block;
-import org.ethereum.core.BlockHeaderWrapper;
-import org.ethereum.core.Transaction;
-import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.net.client.Capability;
-import org.ethereum.net.eth.EthVersion;
-import org.ethereum.net.eth.handler.Eth;
-import org.ethereum.net.eth.handler.EthAdapter;
-import org.ethereum.net.eth.handler.EthHandler;
-import org.ethereum.net.eth.handler.EthHandlerFactory;
-import org.ethereum.net.eth.message.Eth62MessageFactory;
-import org.ethereum.net.eth.message.Eth63MessageFactory;
-import org.ethereum.net.message.MessageFactory;
-import org.ethereum.net.message.ReasonCode;
-import org.ethereum.net.message.StaticMessages;
-import org.ethereum.net.p2p.HelloMessage;
-import org.ethereum.net.p2p.P2pHandler;
-import org.ethereum.net.p2p.P2pMessageFactory;
-import org.ethereum.net.rlpx.*;
-import org.ethereum.net.rlpx.discover.NodeManager;
-import org.ethereum.net.rlpx.discover.NodeStatistics;
-import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.shh.ShhMessageFactory;
-import org.ethereum.net.swarm.bzz.BzzHandler;
-import org.ethereum.net.swarm.bzz.BzzMessageFactory;
-import org.ethereum.sync.SyncStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.discover.HandshakeHandler;
+import org.tron.common.overlay.discover.message.HelloMessage;
+import org.tron.common.overlay.discover.message.StaticMessages;
+import org.tron.common.overlay.message.MessageCodec;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.node.NodeManager;
+import org.tron.common.overlay.node.NodeStatistics;
+import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.message.MessageFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -80,12 +62,6 @@ public class Channel {
     private P2pHandler p2pHandler;
 
     @Autowired
-    private ShhHandler shhHandler;
-
-    @Autowired
-    private BzzHandler bzzHandler;
-
-    @Autowired
     private MessageCodec messageCodec;
 
     @Autowired
@@ -95,17 +71,12 @@ public class Channel {
     private NodeManager nodeManager;
 
     @Autowired
-    private EthHandlerFactory ethHandlerFactory;
-
-    @Autowired
     private StaticMessages staticMessages;
 
     @Autowired
     private WireTrafficStats stats;
 
     private ChannelManager channelManager;
-
-    private Eth eth = new EthAdapter();
 
     private InetSocketAddress inetSocketAddress;
 
@@ -148,86 +119,55 @@ public class Channel {
         p2pHandler.setMsgQueue(msgQueue);
         messageCodec.setP2pMessageFactory(new P2pMessageFactory());
 
-        shhHandler.setMsgQueue(msgQueue);
-        messageCodec.setShhMessageFactory(new ShhMessageFactory());
-
-        bzzHandler.setMsgQueue(msgQueue);
-        messageCodec.setBzzMessageFactory(new BzzMessageFactory());
     }
 
     public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, FrameCodec frameCodec,
                                             HelloMessage helloRemote) throws IOException, InterruptedException {
 
-        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
-
-        messageCodec.setSupportChunkedFrames(false);
-
-        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
-        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
-
-        if (SnappyCodec.isSupported(Math.min(config.defaultP2PVersion(), helloRemote.getP2PVersion()))) {
-            ctx.pipeline().addLast("snappyCodec", new SnappyCodec(this));
-            logger.debug("{}: use snappy compression", ctx.channel());
-        }
-
-        ctx.pipeline().addLast("messageCodec", messageCodec);
-        ctx.pipeline().addLast(Capability.P2P, p2pHandler);
-
-        p2pHandler.setChannel(this);
-        p2pHandler.setHandshake(helloRemote, ctx);
-
-        getNodeStatistics().rlpxHandshake.add();
-    }
-
-    public void sendHelloMessage(ChannelHandlerContext ctx, FrameCodec frameCodec,
-                                 String nodeId) throws IOException, InterruptedException {
-
-        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
-
-        ByteBuf byteBufMsg = ctx.alloc().buffer();
-        frameCodec.writeFrame(new FrameCodec.Frame(helloMessage.getCode(), helloMessage.getEncoded()), byteBufMsg);
-        ctx.writeAndFlush(byteBufMsg).sync();
-
-        if (logger.isDebugEnabled())
-            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
-        getNodeStatistics().rlpxOutHello.add();
+//        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
+//
+//        messageCodec.setSupportChunkedFrames(false);
+//
+//        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
+//        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
+//
+//        if (SnappyCodec.isSupported(Math.min(config.defaultP2PVersion(), helloRemote.getP2PVersion()))) {
+//            ctx.pipeline().addLast("snappyCodec", new SnappyCodec(this));
+//            logger.debug("{}: use snappy compression", ctx.channel());
+//        }
+//
+//        ctx.pipeline().addLast("messageCodec", messageCodec);
+//        ctx.pipeline().addLast("p2p", p2pHandler);
+//
+//        p2pHandler.setChannel(this);
+//        //p2pHandler.setHandshake(helloRemote, ctx);
+//
+//        getNodeStatistics().rlpxHandshake.add();
     }
 
     public void activateEth(ChannelHandlerContext ctx, EthVersion version) {
-        EthHandler handler = ethHandlerFactory.create(version);
-        MessageFactory messageFactory = createEthMessageFactory(version);
-        messageCodec.setEthVersion(version);
-        messageCodec.setEthMessageFactory(messageFactory);
-
-        logger.debug("Eth{} [ address = {} | id = {} ]", handler.getVersion(), inetSocketAddress, getPeerIdShort());
-
-        ctx.pipeline().addLast(Capability.ETH, handler);
-
-        handler.setMsgQueue(msgQueue);
-        handler.setChannel(this);
-        handler.setPeerDiscoveryMode(discoveryMode);
-
-        handler.activate();
-
-        eth = handler;
+//        EthHandler handler = ethHandlerFactory.create(version);
+//        MessageFactory messageFactory = createEthMessageFactory(version);
+//        messageCodec.setEthVersion(version);
+//        messageCodec.setEthMessageFactory(messageFactory);
+//
+//        ctx.pipeline().addLast("data", handler);
+//
+//        handler.setMsgQueue(msgQueue);
+//        handler.setChannel(this);
+//        handler.setPeerDiscoveryMode(discoveryMode);
+//
+//        handler.activate();
+//
+//        eth = handler;
     }
 
-    private MessageFactory createEthMessageFactory(EthVersion version) {
-        switch (version) {
-            case V62:   return new Eth62MessageFactory();
-            case V63:   return new Eth63MessageFactory();
-            default:    throw new IllegalArgumentException("Eth " + version + " is not supported");
-        }
-    }
-
-    public void activateShh(ChannelHandlerContext ctx) {
-        ctx.pipeline().addLast(Capability.SHH, shhHandler);
-        shhHandler.activate();
-    }
-
-    public void activateBzz(ChannelHandlerContext ctx) {
-        ctx.pipeline().addLast(Capability.BZZ, bzzHandler);
-        bzzHandler.activate();
+    private MessageFactory createEthMessageFactory() {
+//        switch (version) {
+//            case V62:   return new Eth62MessageFactory();
+//            case V63:   return new Eth63MessageFactory();
+//            default:    throw new IllegalArgumentException("Eth " + version + " is not supported");
+//        }
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -254,13 +194,9 @@ public class Channel {
         return node;
     }
 
-    public void initMessageCodes(List<Capability> caps) {
-        messageCodec.initMessageCodes(caps);
-    }
-
-    public boolean isProtocolsInitialized() {
-        return eth.hasStatusPassed();
-    }
+//    public boolean isProtocolsInitialized() {
+//        return eth.hasStatusPassed();
+//    }
 
     public void onDisconnect() {
         isDisconnected = true;
@@ -271,14 +207,14 @@ public class Channel {
     }
 
     public void onSyncDone(boolean done) {
-
-        if (done) {
-            eth.enableTransactions();
-        } else {
-            eth.disableTransactions();
-        }
-
-        eth.onSyncDone(done);
+//
+//        if (done) {
+//            eth.enableTransactions();
+//        } else {
+//            eth.disableTransactions();
+//        }
+//
+//        eth.onSyncDone(done);
     }
 
     public boolean isDiscoveryMode() {
@@ -323,73 +259,53 @@ public class Channel {
 
     // ETH sub protocol
 
-    public void fetchBlockBodies(List<BlockHeaderWrapper> headers) {
-        eth.fetchBodies(headers);
-    }
+//    public Eth getEthHandler() {
+//        return eth;
+//    }
 
-    public boolean isEthCompatible(Channel peer) {
-        return peer != null && peer.getEthVersion().isCompatible(getEthVersion());
-    }
+//    public boolean hasEthStatusSucceeded() {
+//        return eth.hasStatusSucceeded();
+//    }
 
-    public Eth getEthHandler() {
-        return eth;
-    }
+//    public String logSyncStats() {
+//        return eth.getSyncStats();
+//    }
+//
+//    public BigInteger getTotalDifficulty() {
+//        return getEthHandler().getTotalDifficulty();
+//    }
+//
+//    public SyncStatistics getSyncStats() {
+//        return eth.getStats();
+//    }
+//
+//    public boolean isHashRetrievingDone() {
+//        return eth.isHashRetrievingDone();
+//    }
+//
+//    public boolean isHashRetrieving() {
+//        return eth.isHashRetrieving();
+//    }
+//
+//    public boolean isMaster() {
+//        return eth.isHashRetrieving() || eth.isHashRetrievingDone();
+//    }
+//
+//    public boolean isIdle() {
+//        return eth.isIdle();
+//    }
+//
+//    public void prohibitTransactionProcessing() {
+//        eth.disableTransactions();
+//    }
+//
+//    public EthVersion getEthVersion() {
+//        return eth.getVersion();
+//    }
 
-    public boolean hasEthStatusSucceeded() {
-        return eth.hasStatusSucceeded();
-    }
-
-    public String logSyncStats() {
-        return eth.getSyncStats();
-    }
-
-    public BigInteger getTotalDifficulty() {
-        return getEthHandler().getTotalDifficulty();
-    }
-
-    public SyncStatistics getSyncStats() {
-        return eth.getStats();
-    }
-
-    public boolean isHashRetrievingDone() {
-        return eth.isHashRetrievingDone();
-    }
-
-    public boolean isHashRetrieving() {
-        return eth.isHashRetrieving();
-    }
-
-    public boolean isMaster() {
-        return eth.isHashRetrieving() || eth.isHashRetrievingDone();
-    }
-
-    public boolean isIdle() {
-        return eth.isIdle();
-    }
-
-    public void prohibitTransactionProcessing() {
-        eth.disableTransactions();
-    }
-
-    public void sendTransaction(List<Transaction> tx) {
-        eth.sendTransaction(tx);
-    }
-
-    public void sendNewBlock(Block block) {
-        eth.sendNewBlock(block);
-    }
-
-    public void sendNewBlockHashes(Block block) {
-        eth.sendNewBlockHashes(block);
-    }
-
-    public EthVersion getEthVersion() {
-        return eth.getVersion();
-    }
-
-    public void dropConnection() {
-        eth.dropConnection();
-    }
+//    public void dropConnection() {
+//        eth.dropConnection();
+//    }
 
     public ChannelManager getChannelManager() {
         return channelManager;
