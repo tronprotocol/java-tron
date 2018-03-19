@@ -333,7 +333,6 @@ public class Manager {
         RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
-    getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
   }
 
@@ -461,9 +460,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException {
 
-    List<TransactionCapsule> pendingTrxsTmp = new LinkedList<>();
+    List<TransactionCapsule> pendingTrxsTmp = new ArrayList<>(pendingTrxs);
     //TODO: optimize performance here.
-    pendingTrxsTmp.addAll(pendingTrxs);
     pendingTrxs.clear();
     dialog.reset();
 
@@ -514,8 +512,7 @@ public class Manager {
 
     //filter trxs
     pendingTrxsTmp.stream()
-        .filter(trx -> getTransactionStore().dbSource.getData(trx.getTransactionId().getBytes())
-            == null)
+        .filter(trx -> transactionStore.get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
             pushTransactions(trx);
@@ -530,7 +527,7 @@ public class Manager {
           }
         });
 
-    this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    blockStore.put(block.getBlockId().getBytes(), block);
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     refreshHead(newBlock);
     logger.info("save block: " + newBlock);
@@ -565,11 +562,11 @@ public class Manager {
    */
   public boolean containBlock(final Sha256Hash blockHash) {
     return this.khaosDb.containBlock(blockHash)
-        || this.getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+        || blockStore.get(blockHash.getBytes()) != null;
   }
 
   public boolean containBlockInMainChain(BlockId blockId) {
-    return getBlockStore().dbSource.getData(blockId.getBytes()) != null;
+    return blockStore.get(blockId.getBytes()) != null;
   }
 
   /**
@@ -577,7 +574,7 @@ public class Manager {
    */
   public byte[] findBlockByHash(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash).getData()
-        : this.getBlockStore().dbSource.getData(hash.getBytes());
+        : blockStore.get(hash.getBytes()).getData();
   }
 
   /**
@@ -586,7 +583,7 @@ public class Manager {
 
   public BlockCapsule getBlockById(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash)
-        : new BlockCapsule(this.getBlockStore().dbSource.getData(hash.getBytes()));
+        : blockStore.get(hash.getBytes());
   }
 
   /**
@@ -596,7 +593,7 @@ public class Manager {
   public void deleteBlock(final Sha256Hash blockHash) {
     final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
-    this.getBlockStore().dbSource.deleteData(blockHash.getBytes());
+    blockStore.delete(blockHash.getBytes());
     this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
     this.head = this.khaosDb.getHead();
   }
@@ -605,7 +602,7 @@ public class Manager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return this.getBlockStore().dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
+    return blockStore.dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
   }
 
   /**
@@ -627,6 +624,7 @@ public class Manager {
       act.execute(ret);
       trxCap.setResult(ret);
     }
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
 
@@ -649,7 +647,7 @@ public class Manager {
     }
 
     //TODO: optimize here
-    final byte[] blockByte = this.getBlockStore().dbSource.getData(hash.getBytes());
+    final byte[] blockByte = blockStore.get(hash.getBytes()).getData();
     return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
   }
 

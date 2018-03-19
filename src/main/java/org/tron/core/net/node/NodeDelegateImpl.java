@@ -40,7 +40,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStoreDb() {
+  protected BlockStore getBlockStore() {
     return dbManager.getBlockStore();
   }
 
