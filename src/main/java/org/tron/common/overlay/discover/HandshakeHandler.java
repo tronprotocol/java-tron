@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.message;
+package org.tron.common.overlay.discover;
 
 import com.google.common.io.ByteStreams;
 import io.netty.buffer.ByteBuf;
@@ -39,6 +39,8 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.FrameCodec;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.net.rlpx.EncryptionHandshake;
 
 import java.io.IOException;
