@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
-public class PeerConnection {
+public class PeerConnection extends P2pConnection{
 
   @Override
   public int hashCode() {
