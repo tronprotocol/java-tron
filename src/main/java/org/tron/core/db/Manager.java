@@ -333,7 +333,6 @@ public class Manager {
         RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
-    getTransactionStore().dbSource.putData(trx.getTransactionId().getBytes(), trx.getData());
     return true;
   }
 
@@ -461,9 +460,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException {
 
-    List<TransactionCapsule> pendingTrxsTmp = new LinkedList<>();
+    List<TransactionCapsule> pendingTrxsTmp = new ArrayList<>(pendingTrxs);
     //TODO: optimize performance here.
-    pendingTrxsTmp.addAll(pendingTrxs);
     pendingTrxs.clear();
     dialog.reset();
 
@@ -514,8 +512,7 @@ public class Manager {
 
     //filter trxs
     pendingTrxsTmp.stream()
-        .filter(trx -> getTransactionStore().dbSource.getData(trx.getTransactionId().getBytes())
-            == null)
+        .filter(trx -> transactionStore.get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
             pushTransactions(trx);
@@ -530,7 +527,7 @@ public class Manager {
           }
         });
 
-    this.getBlockStore().dbSource.putData(block.getBlockId().getBytes(), block.getData());
+    blockStore.put(block.getBlockId().getBytes(), block);
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
     refreshHead(newBlock);
     logger.info("save block: " + newBlock);
@@ -565,11 +562,11 @@ public class Manager {
    */
   public boolean containBlock(final Sha256Hash blockHash) {
     return this.khaosDb.containBlock(blockHash)
-        || this.getBlockStore().dbSource.getData(blockHash.getBytes()) != null;
+        || blockStore.get(blockHash.getBytes()) != null;
   }
 
   public boolean containBlockInMainChain(BlockId blockId) {
-    return getBlockStore().dbSource.getData(blockId.getBytes()) != null;
+    return blockStore.get(blockId.getBytes()) != null;
   }
 
   /**
@@ -577,7 +574,7 @@ public class Manager {
    */
   public byte[] findBlockByHash(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash).getData()
-        : this.getBlockStore().dbSource.getData(hash.getBytes());
+        : blockStore.get(hash.getBytes()).getData();
   }
 
   /**
@@ -586,7 +583,7 @@ public class Manager {
 
   public BlockCapsule getBlockById(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash)
-        : new BlockCapsule(this.getBlockStore().dbSource.getData(hash.getBytes()));
+        : blockStore.get(hash.getBytes());
   }
 
   /**
@@ -596,7 +593,7 @@ public class Manager {
   public void deleteBlock(final Sha256Hash blockHash) {
     final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
-    this.getBlockStore().dbSource.deleteData(blockHash.getBytes());
+    blockStore.delete(blockHash.getBytes());
     this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
     this.head = this.khaosDb.getHead();
   }
@@ -605,7 +602,7 @@ public class Manager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return this.getBlockStore().dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
+    return blockStore.dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
   }
 
   /**
@@ -627,6 +624,7 @@ public class Manager {
       act.execute(ret);
       trxCap.setResult(ret);
     }
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
 
@@ -649,7 +647,7 @@ public class Manager {
     }
 
     //TODO: optimize here
-    final byte[] blockByte = this.getBlockStore().dbSource.getData(hash.getBytes());
+    final byte[] blockByte = blockStore.get(hash.getBytes()).getData();
     return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
   }
 
@@ -762,6 +760,7 @@ public class Manager {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
     }
+
     this.updateSignedWitness(block);
 
     if (needMaintenance(block.getTimeStamp())) {
@@ -796,9 +795,7 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-
-    long latestSlotNum =
-        dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+    long latestSlotNum = 0;
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
         .build();
@@ -882,7 +879,7 @@ public class Manager {
     logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
       logger.info("there is account ,account address is {}",
-          ByteArray.toHexString(account.getAddress().toByteArray()));
+          account.createReadableString());
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
@@ -900,7 +897,8 @@ public class Manager {
           });
         } else {
           logger.info(
-              "account" + account.getAddress() + ",share[" + account.getShare() + "] > voteSum["
+              "account" + account.createReadableString() + ",share[" + account.getShare()
+                  + "] > voteSum["
                   + sum.get() + "]");
         }
       }
@@ -909,46 +907,63 @@ public class Manager {
     witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
       witnessCapsule.setVoteCount(0);
       witnessCapsule.setIsJobs(false);
-      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
     logger.info("countWitnessMap size is {}", countWitness.keySet().size());
+
+    //Only possible during the initialization phase
+    if (countWitness.size() == 0) {
+      witnessCapsuleList.addAll(this.witnessStore.getAllWitnesses());
+    }
+
     countWitness.forEach((address, voteCount) -> {
-      final WitnessCapsule witnessCapsule = this.witnessStore.get(address.toByteArray());
+      final WitnessCapsule witnessCapsule = this.witnessStore.get(createDbKey(address));
       if (null == witnessCapsule) {
-        logger.warn("witnessCapsule is null.address is {}", address);
+        logger.warn("witnessCapsule is null.address is {}", createReadableString(address));
         return;
       }
 
       ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
-      AccountCapsule witnessAccountCapsule = accountStore.get(witnessAddress.toByteArray());
+      AccountCapsule witnessAccountCapsule = accountStore.get(createDbKey(witnessAddress));
       if (witnessAccountCapsule == null) {
-        logger.warn("witnessAccount[" + witnessAddress + "] not exists");
+        logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] not exists");
       } else {
         if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-          logger.warn("witnessAccount[" + witnessAddress + "] has balance[" + witnessAccountCapsule
+          logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] has balance["
+              + witnessAccountCapsule
               .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
         } else {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
           witnessCapsuleList.add(witnessCapsule);
-          this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-          logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
+          this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
         }
       }
     });
     sortWitness(witnessCapsuleList);
-    if (this.wits.size() > MAX_ACTIVE_WITNESS_NUM) {
+    if (witnessCapsuleList.size() > MAX_ACTIVE_WITNESS_NUM) {
       this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
+    } else {
+      this.wits = witnessCapsuleList;
     }
 
-    witnessCapsuleList.forEach(witnessCapsule -> {
+    this.wits.forEach(witnessCapsule -> {
       witnessCapsule.setIsJobs(true);
-      this.witnessStore.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
   }
 
+
+  private byte[] createDbKey(ByteString string) {
+    return string.toByteArray();
+  }
+
+  public String createReadableString(ByteString string) {
+    return ByteArray.toHexString(string.toByteArray());
+  }
 
   /**
    * update wits sync to store.

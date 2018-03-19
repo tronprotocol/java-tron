@@ -25,7 +25,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     final WitnessCapsule witnessCapsule = new WitnessCapsule(witnessUpdateContract.getOwnerAddress(),
             0, witnessUpdateContract.getUpdateUrl().toString());
 
-    this.dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),
+    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(),
             witnessCapsule);
   }
 
