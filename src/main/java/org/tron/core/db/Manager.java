@@ -332,7 +332,6 @@ public class Manager {
         RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
-    transactionStore.put(trx.getTransactionId().getBytes(), trx);
     return true;
   }
 
