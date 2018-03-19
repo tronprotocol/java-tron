@@ -761,14 +761,14 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       processTransaction(transactionCapsule);
-      this.updateSignedWitness(block);
+    }
+    this.updateSignedWitness(block);
 
-      if (needMaintenance(block.getTimeStamp())) {
-        if (block.getNum() == 1) {
-          this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-        } else {
-          this.processMaintenance(block);
-        }
+    if (needMaintenance(block.getTimeStamp())) {
+      if (block.getNum() == 1) {
+        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+      } else {
+        this.processMaintenance(block);
       }
     }
   }
@@ -797,8 +797,8 @@ public class Manager {
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
 
-    long latestSlotNum = 0L;
-    // dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
+    long latestSlotNum =
+        dynamicPropertiesStore.current_aslot + getSlotAtTime(new DateTime(block.getTimeStamp()));
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
         .build();
@@ -814,10 +814,6 @@ public class Manager {
     } catch (BalanceInsufficientException e) {
       e.printStackTrace();
     }
-
-  }
-
-  private void processFee() {
 
   }
 
