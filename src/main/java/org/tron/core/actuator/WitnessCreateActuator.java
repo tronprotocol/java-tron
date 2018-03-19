@@ -79,7 +79,7 @@ public class WitnessCreateActuator extends AbstractActuator {
         witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toString());
 
 
-    this.dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
   }
 
 }
