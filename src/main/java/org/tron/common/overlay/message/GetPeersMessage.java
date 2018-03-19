@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.net.p2p;
+package org.tron.common.overlay.message;
 
 import org.spongycastle.util.encoders.Hex;
 import org.tron.protos.Message.P2pMessageCode;
