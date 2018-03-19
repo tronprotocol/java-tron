@@ -11,15 +11,18 @@ public class BlocksMessage extends Message {
 
   public BlocksMessage() {
     super();
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public BlocksMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public BlocksMessage(List<Block> blocks) {
     this.blocks = blocks;
     unpacked = true;
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public List<Block> getBlocks() {
@@ -39,7 +42,7 @@ public class BlocksMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCKS;
+    return MessageTypes.fromByte(this.type);
   }
 
   private synchronized void unPack() {

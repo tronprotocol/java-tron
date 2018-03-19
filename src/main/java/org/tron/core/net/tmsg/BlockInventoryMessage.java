@@ -14,6 +14,7 @@ public class BlockInventoryMessage extends Message {
 
   public BlockInventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCK_INVENTORY.asByte();
   }
 
   @Override
@@ -67,6 +68,7 @@ public class BlockInventoryMessage extends Message {
 
     invBuilder.setType(type);
     blockInventory = invBuilder.build();
+    this.type = MessageTypes.BLOCK_INVENTORY.asByte();
     unpacked = true;
   }
 
@@ -78,7 +80,7 @@ public class BlockInventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 
   //public List<BlockId> getBlockIds()

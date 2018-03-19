@@ -12,6 +12,7 @@ public class FetchPeersMessage extends P2pMessage {
 
   public FetchPeersMessage(byte[] payload) {
     super(payload);
+    this.type = MessageTypes.P2P_FETCH_PEERS.asByte();
   }
 
   /**
@@ -23,6 +24,7 @@ public class FetchPeersMessage extends P2pMessage {
         .addAllPeers(peers)
         .build();
     this.unpacked = true;
+    this.type = MessageTypes.P2P_FETCH_PEERS.asByte();
   }
 
   private void unPack() {
@@ -78,6 +80,6 @@ public class FetchPeersMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_FETCH_PEERS;
+    return MessageTypes.fromByte(this.type);
   }
 }

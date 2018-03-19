@@ -12,6 +12,7 @@ public class ChainInventoryMessage extends Message {
 
   public ChainInventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   protected ChainInventory chainInventory;
@@ -28,6 +29,7 @@ public class ChainInventoryMessage extends Message {
     invBuilder.setRemainNum(remainNum);
     chainInventory = invBuilder.build();
     unpacked = true;
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   @Override
@@ -78,6 +80,6 @@ public class ChainInventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_CHAIN_INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 }

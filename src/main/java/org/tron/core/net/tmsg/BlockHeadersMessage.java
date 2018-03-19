@@ -1,11 +1,10 @@
 package org.tron.core.net.tmsg;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.protos.Protocol.BlockHeader;
-import org.tron.protos.Protocol.Items;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.Items;
 
 
 public class BlockHeadersMessage extends Message {
@@ -14,10 +13,12 @@ public class BlockHeadersMessage extends Message {
 
   public BlockHeadersMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCKHEADERS.asByte();
   }
 
   public BlockHeadersMessage(List<BlockHeader> blockHeaders) {
     this.blockHeaders = blockHeaders;
+    this.type = MessageTypes.BLOCKHEADERS.asByte();
     unpacked = true;
   }
 
@@ -28,7 +29,7 @@ public class BlockHeadersMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCKHEADERS;
+    return MessageTypes.fromByte(this.type);
   }
 
   @Override

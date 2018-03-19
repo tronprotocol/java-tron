@@ -1,12 +1,11 @@
 package org.tron.core.net.tmsg;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class InventoryMessage extends Message {
@@ -15,14 +14,17 @@ public class InventoryMessage extends Message {
 
   public InventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public InventoryMessage() {
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public InventoryMessage(Inventory inv) {
     this.inv = inv;
     unpacked = true;
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public InventoryMessage(List<Sha256Hash> hashList, InventoryType type) {
@@ -35,6 +37,7 @@ public class InventoryMessage extends Message {
     invBuilder.setType(type);
     inv = invBuilder.build();
     unpacked = true;
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   @Override
@@ -47,7 +50,7 @@ public class InventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 
   public Inventory getInventory() {

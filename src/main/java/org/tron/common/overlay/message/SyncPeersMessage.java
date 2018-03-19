@@ -8,6 +8,10 @@ public class SyncPeersMessage extends P2pMessage {
 
   private static final byte[] FIXED_PAYLOAD = Hex.decode("C104");
 
+  public SyncPeersMessage() {
+    this.type = MessageTypes.P2P_SYNC_PEERS.asByte();
+  }
+
   @Override
   public byte[] getData() {
     return FIXED_PAYLOAD;
@@ -25,6 +29,6 @@ public class SyncPeersMessage extends P2pMessage {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_SYNC_PEERS;
+    return MessageTypes.fromByte(this.type);
   }
 }

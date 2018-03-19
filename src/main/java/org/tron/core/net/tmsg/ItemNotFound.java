@@ -13,6 +13,7 @@ public class ItemNotFound extends Message {
     Protocol.Items.Builder itemsBuilder = Protocol.Items.newBuilder();
     itemsBuilder.setType(Protocol.Items.ItemType.ERR);
     notFound = itemsBuilder.build();
+    this.type = MessageTypes.ITEM_NOT_FOUND.asByte();
   }
 
   @Override
@@ -27,6 +28,6 @@ public class ItemNotFound extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.ITEM_NOT_FOUND;
+    return MessageTypes.fromByte(this.type);
   }
 }

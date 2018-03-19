@@ -22,6 +22,17 @@ public abstract class Message {
 
   }
 
+  public Message(byte[] data, boolean isSendData) {
+    if (isSendData) {
+      this.data = ArrayUtils.subarray(data, 1, data.length);
+      this.type = data[0];
+    } else {
+      this.data = data;
+    }
+
+    unpacked = false;
+  }
+
   public Sha256Hash getMessageId() {
     return Sha256Hash.of(getData());
   }

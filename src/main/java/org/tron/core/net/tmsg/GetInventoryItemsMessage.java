@@ -9,15 +9,18 @@ public class GetInventoryItemsMessage extends Message {
 
   public GetInventoryItemsMessage() {
     super();
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public GetInventoryItemsMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public GetInventoryItemsMessage(org.tron.protos.TronInventoryItems.InventoryItems items) {
     this.items = items;
     unpacked = true;
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   @Override
@@ -35,7 +38,7 @@ public class GetInventoryItemsMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 
   private synchronized void unPack() {
