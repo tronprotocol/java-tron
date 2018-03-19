@@ -20,7 +20,7 @@ public class AccountVoteWitnessTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
-  private static String dbPath = "output_witness";
+  private static String dbPath = "output_witness_test";
 
   /**
    * init db.
@@ -38,6 +38,7 @@ public class AccountVoteWitnessTest {
    */
   @AfterClass
   public static void removeDb() {
+    Args.clearParam();
 
     File dbFolder = new File(dbPath);
     if (deleteFolder(dbFolder)) {

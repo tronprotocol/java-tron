@@ -40,7 +40,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStoreDb() {
+  protected BlockStore getBlockStore() {
     return dbManager.getBlockStore();
   }
 
@@ -85,7 +85,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
     } catch (HighFreqException e) {
-      e.printStackTrace();
+      logger.info(e.getMessage());
     }
   }
 
@@ -116,7 +116,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
-    long len = Longs.min(dbManager.getHeadBlockNum(), unForkedBlockIdNum +NodeConstant.SYNC_FETCH_BATCH_NUM);
+    long len = Longs
+        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
         .filter(num -> num > 0)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))

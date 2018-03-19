@@ -16,6 +16,7 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,11 @@ public class BlockUtilTest {
   @Before
   public void initConfiguration() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+  }
+
+  @After
+  public void destroy() {
+    Args.clearParam();
   }
 
   @Test
