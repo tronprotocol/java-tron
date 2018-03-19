@@ -511,8 +511,7 @@ public class Manager {
 
     //filter trxs
     pendingTrxsTmp.stream()
-        .filter(trx -> transactionStore.get(trx.getTransactionId().getBytes())
-            == null)
+        .filter(trx -> transactionStore.get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
             pushTransactions(trx);
