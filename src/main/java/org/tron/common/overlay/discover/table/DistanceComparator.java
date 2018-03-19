@@ -15,35 +15,31 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.rlpx.discover;
+package org.tron.common.overlay.discover.table;
 
+import java.util.Comparator;
 
-import org.ethereum.net.rlpx.Message;
+/**
+ * Created by kest on 5/26/15.
+ */
+public class DistanceComparator implements Comparator<NodeEntry>  {
+    byte[] targetId;
 
-import java.net.InetSocketAddress;
-
-public class DiscoveryEvent {
-    private Message message;
-    private InetSocketAddress address;
-
-    public DiscoveryEvent(Message m, InetSocketAddress a) {
-        message = m;
-        address = a;
+    DistanceComparator(byte[] targetId) {
+        this.targetId = targetId;
     }
 
-    public Message getMessage() {
-        return message;
-    }
+    @Override
+    public int compare(NodeEntry e1, NodeEntry e2) {
+        int d1 = NodeEntry.distance(targetId, e1.getNode().getId());
+        int d2 = NodeEntry.distance(targetId, e2.getNode().getId());
 
-    public void setMessage(Message message) {
-        this.message = message;
-    }
-
-    public InetSocketAddress getAddress() {
-        return address;
-    }
-
-    public void setAddress(InetSocketAddress address) {
-        this.address = address;
+        if (d1 > d2) {
+            return 1;
+        } else if (d1 < d2) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.tron.core.net.tmsg;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Items;
 

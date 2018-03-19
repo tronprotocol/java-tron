@@ -1,9 +1,10 @@
-package org.tron.core.net.tmsg;
+package org.tron.common.overlay.message;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.net.tmsg.MessageTypes;
 
 public abstract class Message {
 

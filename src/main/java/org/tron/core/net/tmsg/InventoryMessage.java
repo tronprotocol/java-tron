@@ -1,6 +1,7 @@
 package org.tron.core.net.tmsg;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;

@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.net.tmsg.MessageTypes;
 
 import java.io.UnsupportedEncodingException;

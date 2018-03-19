@@ -35,7 +35,7 @@ import org.tron.core.net.tmsg.ChainInventoryMessage;
 import org.tron.core.net.tmsg.FetchInvDataMessage;
 import org.tron.core.net.tmsg.InventoryMessage;
 import org.tron.core.net.tmsg.ItemNotFound;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.net.tmsg.MessageTypes;
 import org.tron.core.net.tmsg.SyncBlockChainMessage;
 import org.tron.core.net.tmsg.TransactionMessage;

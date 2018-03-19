@@ -15,20 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.rlpx.discover;
+package org.tron.common.overlay.discover;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import org.ethereum.config.SystemProperties;
+import org.ethereum.net.rlpx.Node;
+import org.ethereum.net.server.WireTrafficStats;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
-import org.tron.core.net.rlpx.Node;
-import org.tron.core.net.server.WireTrafficStats;
 
 import java.net.BindException;
 import java.util.ArrayList;

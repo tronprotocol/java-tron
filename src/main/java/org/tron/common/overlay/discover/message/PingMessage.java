@@ -1,10 +1,10 @@
-package org.tron.common.overlay.message;
+package org.tron.common.overlay.discover.message;
 
 import org.spongycastle.util.encoders.Hex;
 import org.tron.core.net.tmsg.MessageTypes;
 import org.tron.protos.Message.P2pMessageCode;
 
-public class PongMessage extends P2pMessage {
+public class PingMessage extends P2pMessage {
 
   private static final byte[] FIXED_PAYLOAD = Hex.decode("C0");
 
@@ -15,16 +15,16 @@ public class PongMessage extends P2pMessage {
 
   @Override
   public P2pMessageCode getCommand() {
-    return P2pMessageCode.PONG;
+    return P2pMessageCode.PING;
   }
 
   @Override
   public String toString() {
-    return "[" + this.getCommand().name() + "]";
+    return "[" + getCommand().name() + "]";
   }
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.P2P_PONG;
+    return MessageTypes.P2P_PING;
   }
 }

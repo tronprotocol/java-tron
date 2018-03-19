@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.net.rlpx.discover;
+package org.tron.common.overlay.discover;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.ethereum.config.SystemProperties;
@@ -30,8 +30,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -424,5 +426,21 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
                 }
             }
         }
+    }
+
+    public static void main(String[] args){
+        try {
+            logger.info(InetAddress.getLocalHost().toString());
+            ServerSocket ss = new ServerSocket(7080);
+            DatagramSocket socket = new DatagramSocket(7080);
+            logger.info(ss.getInetAddress().toString());
+            logger.info(ss.getLocalSocketAddress().toString());
+            logger.info(ss.getLocalPort() + "");
+
+
+        }catch (Exception e){
+            logger.info("aaa", e);
+        }
+        System.out.println(111);
     }
 }

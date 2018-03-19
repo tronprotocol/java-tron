@@ -1,10 +1,11 @@
-package org.tron.common.overlay.message;
+package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import org.tron.core.net.tmsg.MessageTypes;
 import org.tron.protos.Message;
 import org.tron.protos.Message.P2pMessageCode;
+
+import java.util.List;
 
 public class FetchPeersMessage extends P2pMessage {
 

@@ -1,5 +1,7 @@
 package org.tron.core.net.tmsg;
 
+import org.tron.common.overlay.message.Message;
+
 /**
  * msg factory.
  */

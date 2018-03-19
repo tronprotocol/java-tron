@@ -1,4 +1,4 @@
-package org.tron.common.overlay.message;
+package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.tmsg.MessageTypes;

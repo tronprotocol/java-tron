@@ -24,7 +24,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.tmsg.BlockMessage;
-import org.tron.core.net.tmsg.Message;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.net.tmsg.MessageTypes;
 import org.tron.core.net.tmsg.TransactionMessage;
 
