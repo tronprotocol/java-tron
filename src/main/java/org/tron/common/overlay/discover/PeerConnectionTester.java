@@ -19,12 +19,13 @@ package org.tron.common.overlay.discover;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.codec.binary.Hex;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.net.client.PeerClient;
-import org.ethereum.net.rlpx.Node;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.node.NodeManager;
 
 import java.math.BigInteger;
 import java.util.*;

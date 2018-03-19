@@ -15,17 +15,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover.message;
+package org.tron.common.overlay.message;
 
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.dht.Peer;
-import org.tron.common.utils.ByteUtil;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 public class PeersMessage extends P2pMessage {

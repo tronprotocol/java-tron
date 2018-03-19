@@ -22,7 +22,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import org.ethereum.net.rlpx.Message;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 

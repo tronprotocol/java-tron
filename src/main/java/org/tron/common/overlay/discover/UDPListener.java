@@ -22,13 +22,14 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.net.rlpx.Node;
-import org.ethereum.net.server.WireTrafficStats;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.node.NodeManager;
+import org.tron.common.overlay.server.WireTrafficStats;
 
 import java.net.BindException;
 import java.util.ArrayList;
