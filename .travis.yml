@@ -5,4 +5,4 @@ jdk: oraclejdk8
 
 script:
   - ./gradlew lint
-  - ./gradlew test --info
+  - ./gradlew test
