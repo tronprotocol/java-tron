@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import com.google.protobuf.ByteString;
+import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -12,7 +14,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
-import com.google.protobuf.ByteString;
 
 
 public class BlockCapsuleTest {
@@ -22,7 +23,7 @@ public class BlockCapsuleTest {
       .copyFrom(ByteArray
           .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
       ByteString.copyFrom("1234567".getBytes()));
-  private static String dbPath = "output_bloackcapsule";
+  private static String dbPath = "output_bloackcapsule_test";
 
   @BeforeClass
   public static void init() {
@@ -32,15 +33,16 @@ public class BlockCapsuleTest {
 
   @AfterClass
   public static void removeDb() {
-    FileUtil.recursiveDelete(dbPath);
+    Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
   public void testCalcMerkleRoot() {
     blockCapsule0.setMerkleRoot();
     Assert.assertEquals(
-            Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
-            blockCapsule0.getMerkleRoot().toString());
+        Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
 
@@ -51,8 +53,8 @@ public class BlockCapsuleTest {
     blockCapsule0.setMerkleRoot();
 
     Assert.assertEquals(
-            "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
-            blockCapsule0.getMerkleRoot().toString());
+        "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }

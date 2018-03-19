@@ -120,6 +120,7 @@ public class CreateAccountActuatorTest {
    */
   @AfterClass
   public static void destroy() {
+    Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {

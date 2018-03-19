@@ -16,11 +16,17 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.config.Configuration;
 
 public class ArgsTest {
+
+  @After
+  public void destroy() {
+    Args.clearParam();
+  }
 
   @Test
   public void get() {
