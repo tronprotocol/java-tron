@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
@@ -23,32 +22,42 @@ public class AccountVoteWitnessTest {
   private static Manager dbManager = new Manager();
   private static String dbPath = "output_witness";
 
+  /**
+   * init db.
+   */
   @BeforeClass
   public static void init() {
     //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
-
+        Configuration.getByPath("config-junit.conf"));
     dbManager.init();
   }
 
+  /**
+   * remo db when after test.
+   */
   @AfterClass
   public static void removeDb() {
+
     File dbFolder = new File(dbPath);
-    deleteFolder(dbFolder);
+    if (deleteFolder(dbFolder)) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+
   }
 
-  private static void deleteFolder(File index) {
+  private static Boolean deleteFolder(File index) {
     if (!index.isDirectory() || index.listFiles().length <= 0) {
-      index.delete();
-      return;
+      return index.delete();
     }
     for (File file : index.listFiles()) {
-      if (null != file) {
-        deleteFolder(file);
+      if (null != file && !deleteFolder(file)) {
+        return false;
       }
     }
-    index.delete();
+    return index.delete();
   }
 
   @Test
@@ -56,12 +65,13 @@ public class AccountVoteWitnessTest {
     final List<AccountCapsule> accountCapsuleList = this.getAccountList();
     final List<WitnessCapsule> witnessCapsuleList = this.getWitnessList();
     accountCapsuleList.forEach(accountCapsule -> {
-          dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+          dbManager.getAccountStore().put(accountCapsule.getAddress()
+              .toByteArray(), accountCapsule);
           this.printAccount(accountCapsule.getAddress());
         }
     );
     witnessCapsuleList.forEach(witnessCapsule ->
-        dbManager.getWitnessStore().putWitness(witnessCapsule)
+        dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule)
     );
     dbManager.updateWitness();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
@@ -85,7 +95,7 @@ public class AccountVoteWitnessTest {
   }
 
   private void printWitness(final ByteString address) {
-    final WitnessCapsule witnessCapsule = dbManager.getWitnessStore().getWitness(address);
+    final WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address.toByteArray());
     if (null == witnessCapsule) {
       logger.info("address is {}  , winess is null", address.toStringUtf8());
       return;

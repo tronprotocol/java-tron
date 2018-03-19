@@ -44,8 +44,9 @@ public class Args {
   private SeedNode seedNode;
   private GenesisBlock genesisBlock;
   private String chainId;
-  private LocalWitness localWitness;
+  private LocalWitnesses localWitness;
   private long blockInterval;
+  private boolean needSyncCheck;
 
   private Args() {
 
@@ -59,6 +60,16 @@ public class Args {
 
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.toUpperCase().startsWith("0X")) {
+        INSTANCE.privateKey = INSTANCE.privateKey.substring(2);
+      }
+
+      if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
+          && INSTANCE.privateKey.length() != 64) {
+        throw new IllegalArgumentException(
+            "Private key(" + INSTANCE.privateKey + ") must be 64-bits hex string.");
+      }
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
@@ -78,16 +89,20 @@ public class Args {
         .orElse(config.getStringList("seed.node.ip.list")));
 
     if (config.hasPath("localwitness")) {
-      INSTANCE.localWitness = new LocalWitness();
-      INSTANCE.localWitness.setPrivateKey(config.getString("localwitness.priveteKey"));
+      INSTANCE.localWitness = new LocalWitnesses();
+      List<String> localwitness = config.getStringList("localwitness");
+      if (localwitness.size() > 1) {
+        logger.warn("localwitness size must be one,get the first one");
+        localwitness = localwitness.subList(0, 1);
+      }
+      INSTANCE.localWitness.setPrivateKeys(localwitness);
     }
+
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
-      INSTANCE.genesisBlock.setTimeStamp(config.getString("genesis.block.timestamp"));
+      INSTANCE.genesisBlock.setTimestamp(config.getString("genesis.block.timestamp"));
       INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
-      INSTANCE.genesisBlock.setHash(config.getString("genesis.block.hash"));
-      INSTANCE.genesisBlock.setNumber(config.getString("genesis.block.number"));
 
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
@@ -99,6 +114,7 @@ public class Args {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
     INSTANCE.blockInterval = config.getLong("block.interval");
+    INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
   }
 
 
@@ -124,6 +140,8 @@ public class Args {
 
   private static Account createAccount(final ConfigObject asset) {
     final Account account = new Account();
+    account.setAccountName(asset.get("accountName").unwrapped().toString());
+    account.setAccountType(asset.get("accountType").unwrapped().toString());
     account.setAddress(asset.get("address").unwrapped().toString());
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
@@ -183,11 +201,11 @@ public class Args {
     return this.witness;
   }
 
-  public LocalWitness getLocalWitness() {
+  public LocalWitnesses getLocalWitnesses() {
     return this.localWitness;
   }
 
-  public void setLocalWitness(final LocalWitness localWitness) {
+  public void setLocalWitness(final LocalWitnesses localWitness) {
     this.localWitness = localWitness;
   }
 
@@ -197,5 +215,13 @@ public class Args {
 
   public void setBlockInterval(final long blockInterval) {
     this.blockInterval = blockInterval;
+  }
+
+  public boolean isNeedSyncCheck() {
+    return needSyncCheck;
+  }
+
+  public void setNeedSyncCheck(boolean needSyncCheck) {
+    this.needSyncCheck = needSyncCheck;
   }
 }

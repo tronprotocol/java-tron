@@ -17,12 +17,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
@@ -54,6 +53,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public TransactionCapsule(Transaction trx) {
     this.transaction = trx;
+  }
+
+  /**
+   * get account from bytes data.
+   */
+  public TransactionCapsule(byte[] data) {
+    try {
+      this.transaction = Transaction.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
   }
 
   public TransactionCapsule(String key, long value) {
@@ -94,18 +104,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     List<TXOutput> txOutputs = new ArrayList<>();
     long spendableOutputs = balance;
 
-    Set<Entry<String, long[]>> entrySet =
-        utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs().entrySet();
-
-    entrySet.forEach(entry -> {
-      String txId = entry.getKey();
-      long[] outs = entry.getValue();
-
-      Arrays.stream(outs)
-          .mapToObj(
-              out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
-          .forEachOrdered(txInputs::add);
-    });
+    utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs()
+      .forEach((txId, outs) ->
+        Arrays.stream(outs)
+          .mapToObj(out -> TxInputUtil.newTxInput(ByteArray.fromHexString(txId), out, null, address))
+          .forEachOrdered(txInputs::add));
 
     txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
     txOutputs
@@ -177,6 +180,20 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             Any.pack(witnessCreateContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(Contract.WitnessUpdateContract witnessUpdateContract) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+            TransactionType.ContractType).addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
+                    Any.pack(witnessUpdateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public void setResult(TransactionResultCapsule transactionResultCapsule) {
+    //this.getInstance().toBuilder(). (transactionResultCapsule.getInstance());
   }
 
   public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {

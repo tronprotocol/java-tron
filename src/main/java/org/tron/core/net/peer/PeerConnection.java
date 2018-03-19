@@ -3,19 +3,17 @@ package org.tron.core.net.peer;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
-import java.io.UnsupportedEncodingException;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.message.Message;
-import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.tmsg.Message;
+import org.tron.core.net.tmsg.MessageTypes;
+
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class PeerConnection {
@@ -93,23 +91,31 @@ public class PeerConnection {
     return member.address();
   }
 
-  public int getNumUnfetchBlock() {
-    return numUnfetchBlock;
+  public long getUnfetchSyncNum() {
+    return unfetchSyncNum;
   }
 
-  public void setNumUnfetchBlock(int numUnfetchBlock) {
-    this.numUnfetchBlock = numUnfetchBlock;
+  public void setUnfetchSyncNum(long unfetchSyncNum) {
+    this.unfetchSyncNum = unfetchSyncNum;
   }
 
-  private int numUnfetchBlock = 0;
-
-  private Queue<Sha256Hash> chainIdsWeReqeuested = new LinkedBlockingQueue<>();
+  private long unfetchSyncNum = 0L;
 
   private boolean needSyncFromPeer;
 
   private boolean needSyncFromUs;
 
+  public Set<BlockId> getBlockInProc() {
+    return blockInProc;
+  }
+
+  public void setBlockInProc(Set<BlockId> blockInProc) {
+    this.blockInProc = blockInProc;
+  }
+
   private boolean banned;
+
+  private Set<BlockId> blockInProc = new HashSet<>();
 
   public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
     return advObjWeRequested;
@@ -119,13 +125,6 @@ public class PeerConnection {
     this.advObjWeRequested = advObjWeRequested;
   }
 
-  public Queue<Sha256Hash> getChainIdsWeReqeuested() {
-    return chainIdsWeReqeuested;
-  }
-
-  public void setChainIdsWeReqeuested(Queue<Sha256Hash> chainIdsWeReqeuested) {
-    this.chainIdsWeReqeuested = chainIdsWeReqeuested;
-  }
 
   public void cleanInvGarbage() {
     //TODO: clean advObjSpreadToUs and advObjWeSpread.
@@ -198,6 +197,11 @@ public class PeerConnection {
     //this.needSyncFromPeer = true;
   }
 
+  public boolean isBusy() {
+    return !advObjWeRequested.isEmpty()
+        && !syncBlockRequested.isEmpty()
+        && syncChainRequested != null;
+  }
 
   public void sendMessage(Message message) {
     logger.info("Send message " + message + ", Peer:" + this);

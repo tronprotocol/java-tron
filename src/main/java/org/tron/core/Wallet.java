@@ -39,9 +39,10 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.net.message.Message;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.tmsg.Message;
+import org.tron.core.net.tmsg.TransactionMessage;
 import org.tron.core.net.node.Node;
+import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
@@ -188,6 +189,11 @@ public class Wallet {
 
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessCreateContract);
+    return transactionCapsule.getInstance();
+  }
+
+  public Transaction createTransaction(WitnessUpdateContract witnessUpdateContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(witnessUpdateContract);
     return transactionCapsule.getInstance();
   }
 

@@ -1,7 +1,5 @@
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -9,10 +7,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import com.google.protobuf.ByteString;
 
 
 public class BlockCapsuleTest {
@@ -32,28 +32,29 @@ public class BlockCapsuleTest {
 
   @AfterClass
   public static void removeDb() {
-    File dbFolder = new File(dbPath);
-    deleteFolder(dbFolder);
-  }
-
-  private static void deleteFolder(File index) {
-    if (!index.isDirectory() || index.listFiles().length <= 0) {
-      index.delete();
-      return;
-    }
-    for (File file : index.listFiles()) {
-      if (null != file) {
-        deleteFolder(file);
-      }
-    }
-    index.delete();
+    FileUtil.recursiveDelete(dbPath);
   }
 
   @Test
-  public void testCalcMerklerRoot() {
-    blockCapsule0.setMerklerRoot();
-    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
-        blockCapsule0.getMerklerRoot().toString());
+  public void testCalcMerkleRoot() {
+    blockCapsule0.setMerkleRoot();
+    Assert.assertEquals(
+            Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+            blockCapsule0.getMerkleRoot().toString());
+
+    logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
+
+    TransactionCapsule transactionCapsule1 = new TransactionCapsule("123", 1L);
+    TransactionCapsule transactionCapsule2 = new TransactionCapsule("124", 2L);
+    blockCapsule0.addTransaction(transactionCapsule1);
+    blockCapsule0.addTransaction(transactionCapsule2);
+    blockCapsule0.setMerkleRoot();
+
+    Assert.assertEquals(
+            "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
+            blockCapsule0.getMerkleRoot().toString());
+
+    logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }
 
   @Test
@@ -81,7 +82,6 @@ public class BlockCapsuleTest {
 
   @Test
   public void testGetInsHash() {
-    blockCapsule0.getInstance();
     Assert.assertEquals(1,
         blockCapsule0.getInstance().getBlockHeader().getRawData().getNumber());
     Assert.assertEquals(blockCapsule0.getParentHash(),

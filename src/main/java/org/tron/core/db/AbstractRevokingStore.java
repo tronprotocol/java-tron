@@ -5,8 +5,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +19,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 @Getter // only for unit test
-abstract class AbstractRevokingStore implements RevokingDatabase {
+public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
@@ -30,14 +33,14 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public Dialog buildDialog(boolean forceEnable) {
+  public synchronized Dialog buildDialog(boolean forceEnable) {
     if (disabled && !forceEnable) {
       return new Dialog(this);
     }
 
     boolean disableOnExit = disabled && forceEnable;
     if (forceEnable) {
-      enable();
+      disabled = false;
     }
 
     while (stack.size() > DEFAULT_STACK_MAX_SIZE) {
@@ -50,7 +53,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onCreate(RevokingTuple tuple, byte[] value) {
+  public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -61,7 +64,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onModify(RevokingTuple tuple, byte[] value) {
+  public synchronized void onModify(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -76,7 +79,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void onRemove(RevokingTuple tuple, byte[] value) {
+  public synchronized void onRemove(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
     }
@@ -102,7 +105,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void merge() throws RevokingStoreIllegalStateException {
+  public synchronized void merge() throws RevokingStoreIllegalStateException {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -154,7 +157,7 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void revoke() throws RevokingStoreIllegalStateException {
+  public synchronized void revoke() throws RevokingStoreIllegalStateException {
     if (disabled) {
       return;
     }
@@ -176,13 +179,13 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
     --activeDialog;
   }
 
   @Override
-  public void commit() throws RevokingStoreIllegalStateException {
+  public synchronized void commit() throws RevokingStoreIllegalStateException {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -191,34 +194,30 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void pop() throws RevokingStoreIllegalStateException {
+  public synchronized void pop() throws RevokingStoreIllegalStateException {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
 
     if (stack.isEmpty()) {
-      return;
+      throw new RevokingStoreIllegalStateException("stack is empty");
     }
 
     disable();
 
     try {
       RevokingState state = stack.peekLast();
-      if (Objects.isNull(state)) {
-        return;
-      }
-
       state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
       state.newIds.forEach(e -> e.database.deleteData(e.key));
       state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
-      enable();
+      disabled = false;
     }
   }
 
   @Override
-  public RevokingState head() {
+  public synchronized RevokingState head() {
     if (stack.isEmpty()) {
       return null;
     }
@@ -227,12 +226,12 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void enable() {
+  public synchronized void enable() {
     disabled = false;
   }
 
   @Override
-  public void disable() {
+  public synchronized void disable() {
     disabled = true;
   }
 
@@ -331,12 +330,13 @@ abstract class AbstractRevokingStore implements RevokingDatabase {
   @Getter // only for unit test
   static class RevokingState {
 
-    HashMap<RevokingTuple, byte[]> oldValues = new HashMap<>();
-    HashSet<RevokingTuple> newIds = new HashSet<>();
-    HashMap<RevokingTuple, byte[]> removed = new HashMap<>();
+    Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
+    Set<RevokingTuple> newIds = new HashSet<>();
+    Map<RevokingTuple, byte[]> removed = new HashMap<>();
   }
 
   @AllArgsConstructor
+  @EqualsAndHashCode
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

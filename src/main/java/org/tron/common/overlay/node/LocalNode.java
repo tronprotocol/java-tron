@@ -14,7 +14,7 @@
  */
 package org.tron.common.overlay.node;
 
-import org.tron.core.net.message.Message;
+import org.tron.core.net.tmsg.Message;
 
 public interface LocalNode {
 

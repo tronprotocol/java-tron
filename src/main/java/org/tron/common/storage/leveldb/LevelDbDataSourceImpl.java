@@ -231,13 +231,13 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
   private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
     try (WriteBatch batch = database.createWriteBatch()) {
-      for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
-        if (entry.getValue() == null) {
-          batch.delete(entry.getKey());
+      rows.forEach((key, value) -> {
+        if (value == null) {
+          batch.delete(key);
         } else {
-          batch.put(entry.getKey(), entry.getValue());
+          batch.put(key, value);
         }
-      }
+      });
       database.write(batch);
     }
   }

@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
@@ -42,7 +41,7 @@ public class LevelDbDataSourceImplTest {
 
   @Before
   public void initDb() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{}, Configuration.getByPath("config-junit.conf"));
     dataSourceTest = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
         "test_levelDb");
   }
@@ -134,7 +133,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.resetDb();
   }
 
-  @Test(timeout = 100)
+  @Test(timeout = 1000)
   public void testLockReleased() {
     dataSourceTest.initDB();
     // normal close
