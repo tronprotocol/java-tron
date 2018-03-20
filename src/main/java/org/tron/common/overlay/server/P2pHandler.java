@@ -19,11 +19,6 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +27,12 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.message.P2pMessageCodes;
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.core.net.message.TransactionsMessage;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+//import org.tron.common.overlay.server.MessageQueue;
 
 
 /**
@@ -63,13 +63,10 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     private boolean peerDiscoveryMode = false;
 
-    private HelloMessage handshakeHelloMessage = null;
+    //private HelloMessage handshakeHelloMessage = null;
 
     private int ethInbound;
     private int ethOutbound;
-
-    @Autowired
-    EthereumListener ethereumListener;
 
     @Autowired
     SystemProperties config;
@@ -98,7 +95,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         logger.debug("P2P protocol activated");
 //        msgQueue.activate(ctx);
-        ethereumListener.trace("P2P protocol activated");
+        //ethereumListener.trace("P2P protocol activated");
         startTimers();
     }
 
@@ -109,7 +106,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         if (P2pMessageCodes.inRange(msg.getCommand().asByte()))
             logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
 
-        ethereumListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
+       // ethereumListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case HELLO:
@@ -229,17 +226,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
      *
      * @param tx - fresh transaction object
      */
-    public void sendTransaction(Transaction tx) {
-
-        TransactionsMessage msg = new TransactionsMessage(tx);
-//        msgQueue.sendMessage(msg);
-    }
-
-    public void sendNewBlock(Block block) {
-
-        NewBlockMessage msg = new NewBlockMessage(block, block.getDifficulty());
-//        msgQueue.sendMessage(msg);
-    }
 
     public void sendDisconnect() {
 //        msgQueue.disconnect();
@@ -265,45 +251,13 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 //        msgQueue.close();
     }
 
-//    public void setMsgQueue(MessageQueue msgQueue) {
+
+    public void setMsgQueue(MessageQueue msgQueue) {
 //        this.msgQueue = msgQueue;
-//    }
+    }
 
     public void setChannel(Channel channel) {
         this.channel = channel;
-    }
-
-    public List<Capability> getSupportedCapabilities(HelloMessage hello) {
-        List<Capability> configCaps = configCapabilities.getConfigCapabilities();
-        List<Capability> supported = new ArrayList<>();
-
-        List<Capability> eths = new ArrayList<>();
-
-        for (Capability cap : hello.getCapabilities()) {
-            if (configCaps.contains(cap)) {
-                if (cap.isEth()) {
-                    eths.add(cap);
-                } else {
-                    supported.add(cap);
-                }
-            }
-        }
-
-        if (eths.isEmpty()) {
-            return supported;
-        }
-
-        // we need to pick up
-        // the most recent Eth version
-        Capability highest = null;
-        for (Capability eth : eths) {
-            if (highest == null || highest.getVersion() < eth.getVersion()) {
-                highest = eth;
-            }
-        }
-
-        supported.add(highest);
-        return supported;
     }
 
 }

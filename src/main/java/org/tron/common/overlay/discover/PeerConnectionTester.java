@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.discover;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -101,16 +99,16 @@ public class PeerConnectionTester {
 
     @Autowired
     public PeerConnectionTester(final SystemProperties config) {
-        this.config = config;
-        ConnectThreads = config.peerDiscoveryWorkers();
-        ReconnectPeriod = config.peerDiscoveryTouchPeriod() * 1000;
-        ReconnectMaxPeers = config.peerDiscoveryTouchMaxNodes();
-        peerConnectionPool = new ThreadPoolExecutor(ConnectThreads,
-                ConnectThreads, 0L, TimeUnit.SECONDS,
-                new MutablePriorityQueue<>((Comparator<ConnectTask>) (h1, h2) ->
-                        h2.nodeHandler.getNodeStatistics().getReputation() -
-                                h1.nodeHandler.getNodeStatistics().getReputation()),
-                new ThreadFactoryBuilder().setDaemon(true).setNameFormat("discovery-tester-%d").build());
+//        this.config = config;
+//        ConnectThreads = config.peerDiscoveryWorkers();
+//        ReconnectPeriod = config.peerDiscoveryTouchPeriod() * 1000;
+//        ReconnectMaxPeers = config.peerDiscoveryTouchMaxNodes();
+//        peerConnectionPool = new ThreadPoolExecutor(ConnectThreads,
+//                ConnectThreads, 0L, TimeUnit.SECONDS,
+//                new MutablePriorityQueue<>((Comparator<ConnectTask>) (h1, h2) ->
+//                        h2.nodeHandler.getNodeStatistics().getReputation() -
+//                                h1.nodeHandler.getNodeStatistics().getReputation()),
+//                new ThreadFactoryBuilder().setDaemon(true).setNameFormat("discovery-tester-%d").build());
     }
 
     public void close() {

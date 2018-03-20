@@ -22,9 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 
 import java.net.DatagramSocket;
@@ -337,31 +335,13 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     }
 
     public void close() {
-        peerConnectionManager.close();
         try {
+            peerConnectionManager.close();
             nodeManagerTasksTimer.cancel();
-            if (PERSIST) {
-                try {
-                    dbWrite();
-                } catch (Throwable e) {     // IllegalAccessError is expected
-                    // NOTE: logback stops context right after shutdown initiated. It is problematic to see log output
-                    // System out could help
-                    logger.warn("Problem during NodeManager persist in close: " + e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Problems canceling nodeManagerTasksTimer", e);
-        }
-        try {
-            logger.info("Cancelling pongTimer");
             pongTimer.shutdownNow();
-        } catch (Exception e) {
-            logger.warn("Problems cancelling pongTimer", e);
-        }
-        try {
             logStatsTimer.cancel();
         } catch (Exception e) {
-            logger.warn("Problems canceling logStatsTimer", e);
+            logger.warn("close failed.", e);
         }
     }
 
