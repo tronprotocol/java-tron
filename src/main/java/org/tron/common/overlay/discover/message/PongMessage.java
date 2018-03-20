@@ -14,9 +14,9 @@ public class PongMessage extends Message {
     unPack();
   }
 
-  public PongMessage(ByteString toAddresss, int toPort, int echo, int timestamp) {
+  public PongMessage(ByteString toAddress, int toPort, int echo, long timestamp) {
     this.pongMessage = Discover.PongMessage.newBuilder()
-        .setTo(Endpoint.newBuilder().setAddress(toAddresss).setTcpPort(toPort).setUdpPort(toPort)
+        .setTo(Endpoint.newBuilder().setAddress(toAddress).setTcpPort(toPort).setUdpPort(toPort)
             .build())
         .setEcho(echo)
         .setTimestamp(timestamp)

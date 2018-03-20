@@ -16,7 +16,6 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.common.overlay.discover;
-
 import java.util.ArrayList;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -28,10 +27,6 @@ public class RefreshTask extends DiscoverTask {
     public RefreshTask(NodeManager nodeManager) {
         super(nodeManager);
     }
-//
-//    RefreshTask(Channel channel, ECKey key, NodeTable table) {
-//        super(getNodeId(), channel, key, table);
-//    }
 
     public static byte[] getNodeId() {
         Random gen = new Random();

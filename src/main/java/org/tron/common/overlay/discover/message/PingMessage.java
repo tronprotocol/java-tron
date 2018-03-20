@@ -22,7 +22,7 @@ public class PingMessage extends Message {
   }
 
   public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
-      int toPort, int timestamp) {
+      int toPort, long timestamp) {
     Builder builder = Discover.PingMessage.newBuilder()
         .setVersion(version)
         .setTimestamp(timestamp);
