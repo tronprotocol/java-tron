@@ -1,15 +1,16 @@
 package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.Node;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Neighbour;
 import org.tron.protos.Discover.Neighbours;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NeighborsMessage extends Message {
-
-
 
   private Discover.Neighbours neighbours;
 
@@ -32,6 +33,14 @@ public class NeighborsMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
+  }
+
+  public List<Node> getNode(){
+    List<Node> nodes = new ArrayList<>();
+    neighbours.getNeighboursList().forEach(neighbour -> nodes.add(
+            new Node(neighbour.getNodeId().toByteArray(),
+                    neighbour.getEndpoint().getAddress().toString(),
+                    neighbour.getEndpoint())));
   }
 
   public Neighbours getNeighbours() {
