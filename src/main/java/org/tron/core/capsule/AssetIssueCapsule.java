@@ -59,4 +59,10 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   public ByteString getName() {
     return this.assetIssueContract.getName();
   }
+
+  public  int getNum() {return this.assetIssueContract.getNum();}
+
+  public int getTrxNum() {
+    return this.assetIssueContract.getTrxNum();
+  }
 }
