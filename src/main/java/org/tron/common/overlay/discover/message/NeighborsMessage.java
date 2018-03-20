@@ -17,14 +17,14 @@ public class NeighborsMessage extends DiscoverMessage {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] data) {
-    super(data, MessageTypes.DISCOVER_PEERS);
+  public NeighborsMessage(byte[] rawData) {
+    super(MessageTypes.DISCOVER_PEERS.asByte(), rawData);
     unPack();
   }
 
   @Override
-  public byte[] getData() {
-    return this.data;
+  public byte[] getRawData() {
+    return this.rawData;
   }
 
   public NeighborsMessage(List<Node> neighbours) {
@@ -48,12 +48,12 @@ public class NeighborsMessage extends DiscoverMessage {
 
     this.neighbours = builder.build();
 
-    this.data = this.neighbours.toByteArray();
+    this.rawData = this.neighbours.toByteArray();
   }
 
   private void unPack() {
     try {
-      this.neighbours = Discover.Neighbours.parseFrom(data);
+      this.neighbours = Discover.Neighbours.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }

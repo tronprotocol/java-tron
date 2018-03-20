@@ -16,24 +16,30 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.message;
+package org.tron.common.overlay.discover.message;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.MessageFactory;
+import org.tron.common.overlay.message.PingMessage;
+import org.tron.common.overlay.message.PongMessage;
 import org.tron.core.net.message.MessageTypes;
 
-public class P2pMessageFactory extends MessageFactory {
+public class DiscoverMessageFactory extends MessageFactory {
 
   @Override
   protected Message create(byte type, byte[] rawData) {
     MessageTypes messageType = MessageTypes.fromByte(type);
     switch (messageType) {
-      case P2P_HELLO:
+      case DISCOVER_PING:
         return new HelloMessage(type, rawData);
-      case P2P_DISCONNECT:
+      case DISCOVER_PONG:
         return new DisconnectMessage(type, rawData);
-      case P2P_PING:
+      case DISCOVER_PEERS:
         return new PingMessage(type, rawData);
-      case P2P_PONG:
+      case DISCOVER_FIND_PEER:
         return new PongMessage(type, rawData);
       default:
         throw new IllegalArgumentException("No such message");

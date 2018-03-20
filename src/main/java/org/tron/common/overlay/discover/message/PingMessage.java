@@ -12,14 +12,14 @@ public class PingMessage extends DiscoverMessage {
 
   private Discover.PingMessage pingMessage;
 
-  public PingMessage(byte[] data) {
-    super(data, MessageTypes.DISCOVER_PING);
+  public PingMessage(byte[] rawData) {
+    super(MessageTypes.DISCOVER_PING.asByte(), rawData);
     unPack();
   }
 
   @Override
-  public byte[] getData() {
-    return this.data;
+  public byte[] getRawData() {
+    return this.rawData;
   }
 
   public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
@@ -41,12 +41,12 @@ public class PingMessage extends DiscoverMessage {
         .build();
 
     this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
-    this.data = this.pingMessage.toByteArray();
+    this.rawData = this.pingMessage.toByteArray();
   }
 
   private void unPack() {
     try {
-      this.pingMessage = Discover.PingMessage.parseFrom(data);
+      this.pingMessage = Discover.PingMessage.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }

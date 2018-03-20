@@ -12,22 +12,24 @@ public abstract class Message {
 
   protected boolean unpacked;
   protected byte[] data;
+  protected byte[] rawData;
   protected byte type;
 
   public Message() {
   }
 
-  public Message(byte[] packed) {
-    this.data = packed;
+  public Message(byte[] rawData) {
+    this.rawData = rawData;
     unpacked = false;
-
   }
 
-  public Message(byte[] data, MessageTypes type) {
+  public Message(byte type, byte[] rawData) {
 
-    this.data = data;
+    this.type = type;
 
-    this.type = type.asByte();
+    this.rawData = rawData;
+
+    this.data = ArrayUtils.add(rawData, 0, type);
 
     unpacked = false;
   }
@@ -36,10 +38,10 @@ public abstract class Message {
     return Sha256Hash.of(getData());
   }
 
-  public abstract byte[] getData();
+  public abstract byte[] getRawData();
 
-  public byte[] getSendData() {
-    return ArrayUtils.add(this.data, 0, this.type);
+  public byte[] getData() {
+    return this.data;
   }
 
   public String toString() {
