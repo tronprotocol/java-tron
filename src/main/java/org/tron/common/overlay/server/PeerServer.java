@@ -42,7 +42,7 @@ public class PeerServer {
 
     private ApplicationContext ctx;
 
-    public EthereumChannelInitializer ethereumChannelInitializer;
+    public TronChannelInitializer tronChannelInitializer;
 
     private boolean listening;
 
@@ -61,7 +61,7 @@ public class PeerServer {
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
 
-        ethereumChannelInitializer = ctx.getBean(EthereumChannelInitializer.class, "");
+        tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
 
         try {
             ServerBootstrap b = new ServerBootstrap();
@@ -74,7 +74,7 @@ public class PeerServer {
             b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.peerConnectionTimeout());
 
             b.handler(new LoggingHandler());
-            b.childHandler(ethereumChannelInitializer);
+            b.childHandler(tronChannelInitializer);
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);

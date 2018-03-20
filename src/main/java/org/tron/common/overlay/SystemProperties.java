@@ -21,25 +21,35 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigRenderOptions;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.message.MessageCodec;
-import org.tron.common.utils.ByteUtil;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.Node;
 
 /**
  * Utility class to retrieve property values from the ethereumj.conf files
@@ -303,72 +313,9 @@ public class SystemProperties {
         return (T) config.getAnyRef(propName);
     }
 
-    public BlockchainNetConfig getBlockchainConfig() {
-        if (blockchainConfig == null) {
-            GenesisJson genesisJson = getGenesisJson();
-            if (genesisJson.getConfig() != null && genesisJson.getConfig().isCustomConfig()) {
-                blockchainConfig = new JsonNetConfig(genesisJson.getConfig());
-            } else {
-                if (config.hasPath("blockchain.config.name") && config.hasPath("blockchain.config.class")) {
-                    throw new RuntimeException("Only one of two options should be defined: 'blockchain.config.name' and 'blockchain.config.class'");
-                }
-                if (config.hasPath("blockchain.config.name")) {
-                    switch (config.getString("blockchain.config.name")) {
-                        case "main":
-                            blockchainConfig = new MainNetConfig();
-                            break;
-                        case "olympic":
-                            blockchainConfig = new OlympicConfig();
-                            break;
-                        case "morden":
-                            blockchainConfig = new MordenNetConfig();
-                            break;
-                        case "ropsten":
-                            blockchainConfig = new RopstenNetConfig();
-                            break;
-                        case "testnet":
-                            blockchainConfig = new TestNetConfig();
-                            break;
-                        default:
-                            throw new RuntimeException("Unknown value for 'blockchain.config.name': '" + config.getString("blockchain.config.name") + "'");
-                    }
-                } else {
-                    String className = config.getString("blockchain.config.class");
-                    try {
-                        Class<? extends BlockchainNetConfig> aClass = (Class<? extends BlockchainNetConfig>) classLoader.loadClass(className);
-                        blockchainConfig = aClass.newInstance();
-                    } catch (ClassNotFoundException e) {
-                        throw new RuntimeException("The class specified via blockchain.config.class '" + className + "' not found", e);
-                    } catch (ClassCastException e) {
-                        throw new RuntimeException("The class specified via blockchain.config.class '" + className + "' is not instance of org.ethereum.config.BlockchainForkConfig", e);
-                    } catch (InstantiationException | IllegalAccessException e) {
-                        throw new RuntimeException("The class specified via blockchain.config.class '" + className + "' couldn't be instantiated (check for default constructor and its accessibility)", e);
-                    }
-                }
-            }
-
-            if (genesisJson.getConfig() != null && genesisJson.getConfig().headerValidators != null) {
-                for (GenesisConfig.HashValidator validator : genesisJson.getConfig().headerValidators) {
-                    BlockHeaderValidator headerValidator = new BlockHeaderValidator(new BlockCustomHashRule(ByteUtil.hexStringToBytes(validator.hash)));
-                    blockchainConfig.getConfigForBlock(validator.number).headerValidators().add(
-                            Pair.of(validator.number, headerValidator));
-                }
-            }
-        }
-        return blockchainConfig;
-    }
-
-    public void setBlockchainConfig(BlockchainNetConfig config) {
-        blockchainConfig = config;
-    }
-
     @ValidateMe
     public boolean peerDiscovery() {
         return discoveryEnabled == null ? config.getBoolean("peer.discovery.enabled") : discoveryEnabled;
-    }
-
-    public void setDiscoveryEnabled(Boolean discoveryEnabled) {
-        this.discoveryEnabled = discoveryEnabled;
     }
 
     @ValidateMe
@@ -376,64 +323,16 @@ public class SystemProperties {
         return config.getBoolean("peer.discovery.persist");
     }
 
-    @ValidateMe
-    public int peerDiscoveryWorkers() {
-        return config.getInt("peer.discovery.workers");
-    }
-
-    @ValidateMe
-    public int peerDiscoveryTouchPeriod() {
-        return config.getInt("peer.discovery.touchPeriod");
-    }
-
-    @ValidateMe
-    public int peerDiscoveryTouchMaxNodes() {
-        return config.getInt("peer.discovery.touchMaxNodes");
-    }
 
     @ValidateMe
     public int peerConnectionTimeout() {
         return config.getInt("peer.connection.timeout") * 1000;
     }
 
-    @ValidateMe
-    public int defaultP2PVersion() {
-        return config.hasPath("peer.p2p.version") ? config.getInt("peer.p2p.version") : P2pHandler.VERSION;
-    }
-
-    @ValidateMe
-    public int rlpxMaxFrameSize() {
-        return config.hasPath("peer.p2p.framing.maxSize") ? config.getInt("peer.p2p.framing.maxSize") : MessageCodec.NO_FRAMING;
-    }
-
-
-    @ValidateMe
-    public int transactionApproveTimeout() {
-        return config.getInt("transaction.approve.timeout") * 1000;
-    }
 
     @ValidateMe
     public List<String> peerDiscoveryIPList() {
         return config.getStringList("peer.discovery.ip.list");
-    }
-
-    @ValidateMe
-    public boolean databaseReset() {
-        return databaseReset == null ? config.getBoolean("database.reset") : databaseReset;
-    }
-
-    public void setDatabaseReset(Boolean reset) {
-        databaseReset = reset;
-    }
-
-    @ValidateMe
-    public long databaseResetBlock() {
-        return config.getLong("database.resetBlock");
-    }
-
-    @ValidateMe
-    public int databasePruneDepth() {
-        return config.getBoolean("database.prune.enabled") ? config.getInt("database.prune.maxDepth") : -1;
     }
 
     @ValidateMe
@@ -476,67 +375,8 @@ public class SystemProperties {
     }
 
     @ValidateMe
-    public NodeFilter peerTrusted() {
-        List<? extends ConfigObject> list = config.getObjectList("peer.trusted");
-        NodeFilter ret = new NodeFilter();
-
-        for (ConfigObject configObject : list) {
-            byte[] nodeId = null;
-            String ipMask = null;
-            if (configObject.get("nodeId") != null) {
-                nodeId = Hex.decode(configObject.toConfig().getString("nodeId").trim());
-            }
-            if (configObject.get("ip") != null) {
-                ipMask = configObject.toConfig().getString("ip").trim();
-            }
-            ret.add(nodeId, ipMask);
-        }
-        return ret;
-    }
-
-
-    @ValidateMe
-    public Integer blockQueueSize() {
-        return config.getInt("cache.blockQueueSize") * 1024 * 1024;
-    }
-    @ValidateMe
-    public Integer headerQueueSize() {
-        return config.getInt("cache.headerQueueSize") * 1024 * 1024;
-    }
-
-    @ValidateMe
     public Integer peerChannelReadTimeout() {
         return config.getInt("peer.channel.read.timeout");
-    }
-
-    @ValidateMe
-    public Integer traceStartBlock() {
-        return config.getInt("trace.startblock");
-    }
-
-    @ValidateMe
-    public boolean recordBlocks() {
-        return config.getBoolean("record.blocks");
-    }
-
-    @ValidateMe
-    public boolean dumpFull() {
-        return config.getBoolean("dump.full");
-    }
-
-    @ValidateMe
-    public String dumpDir() {
-        return config.getString("dump.dir");
-    }
-
-    @ValidateMe
-    public String dumpStyle() {
-        return config.getString("dump.style");
-    }
-
-    @ValidateMe
-    public int dumpBlock() {
-        return config.getInt("dump.block");
     }
 
     @ValidateMe
@@ -544,104 +384,6 @@ public class SystemProperties {
         return databaseDir == null ? config.getString("database.dir") : databaseDir;
     }
 
-    public String ethashDir() {
-        return config.hasPath("ethash.dir") ? config.getString("ethash.dir") : databaseDir();
-    }
-
-    public void setDataBaseDir(String dataBaseDir) {
-        this.databaseDir = dataBaseDir;
-    }
-
-    @ValidateMe
-    public boolean dumpCleanOnRestart() {
-        return config.getBoolean("dump.clean.on.restart");
-    }
-
-    @ValidateMe
-    public boolean playVM() {
-        return config.getBoolean("play.vm");
-    }
-
-    @ValidateMe
-    public boolean blockChainOnly() {
-        return config.getBoolean("blockchain.only");
-    }
-
-    @ValidateMe
-    public int syncPeerCount() {
-        return config.getInt("sync.peer.count");
-    }
-
-    public Integer syncVersion() {
-        if (!config.hasPath("sync.version")) {
-            return null;
-        }
-        return config.getInt("sync.version");
-    }
-
-    @ValidateMe
-    public boolean exitOnBlockConflict() {
-        return config.getBoolean("sync.exitOnBlockConflict");
-    }
-
-    @ValidateMe
-    public String projectVersion() {
-        return projectVersion;
-    }
-
-    @ValidateMe
-    public Integer databaseVersion() {
-        return databaseVersion;
-    }
-
-    @ValidateMe
-    public String projectVersionModifier() {
-        return projectVersionModifier;
-    }
-
-    @ValidateMe
-    public String helloPhrase() {
-        return config.getString("hello.phrase");
-    }
-
-    @ValidateMe
-    public String rootHashStart() {
-        return config.hasPath("root.hash.start") ? config.getString("root.hash.start") : null;
-    }
-
-    @ValidateMe
-    public List<String> peerCapabilities() {
-        return config.getStringList("peer.capabilities");
-    }
-
-    @ValidateMe
-    public boolean vmTrace() {
-        return vmTrace == null ? (vmTrace = config.getBoolean("vm.structured.trace")) : vmTrace;
-    }
-
-    @ValidateMe
-    public boolean vmTraceCompressed() {
-        return config.getBoolean("vm.structured.compressed");
-    }
-
-    @ValidateMe
-    public int vmTraceInitStorageLimit() {
-        return config.getInt("vm.structured.initStorageLimit");
-    }
-
-    @ValidateMe
-    public int cacheFlushBlocks() {
-        return config.getInt("cache.flush.blocks");
-    }
-
-    @ValidateMe
-    public String vmTraceDir() {
-        return config.getString("vm.structured.dir");
-    }
-
-    public String customSolcPath() {
-        return config.hasPath("solc.path") ? config.getString("solc.path"): null;
-    }
 
     public String privateKey() {
         if (config.hasPath("peer.privateKey")) {
@@ -770,170 +512,5 @@ public class SystemProperties {
     }
 
     @ValidateMe
-    public String getKeyValueDataSource() {
-        return config.getString("keyvalue.datasource");
-    }
-
-    @ValidateMe
-    public boolean isSyncEnabled() {
-        return this.syncEnabled == null ? config.getBoolean("sync.enabled") : syncEnabled;
-    }
-
-    public void setSyncEnabled(Boolean syncEnabled) {
-        this.syncEnabled = syncEnabled;
-    }
-
-    @ValidateMe
-    public boolean isFastSyncEnabled() {
-        return isSyncEnabled() && config.getBoolean("sync.fast.enabled");
-    }
-
-    @ValidateMe
-    public byte[] getFastSyncPivotBlockHash() {
-        if (!config.hasPath("sync.fast.pivotBlockHash")) return null;
-        byte[] ret = Hex.decode(config.getString("sync.fast.pivotBlockHash"));
-        if (ret.length != 32) throw new RuntimeException("Invalid block hash length: " + Hex.toHexString(ret));
-        return ret;
-    }
-
-    @ValidateMe
     public boolean isPublicHomeNode() { return config.getBoolean("peer.discovery.public.home.node");}
-
-    @ValidateMe
-    public String genesisInfo() {
-        return genesisInfo == null ? config.getString("genesis") : genesisInfo;
-    }
-
-    @ValidateMe
-    public int txOutdatedThreshold() {
-        return config.getInt("transaction.outdated.threshold");
-    }
-
-    public void setGenesisInfo(String genesisInfo){
-        this.genesisInfo = genesisInfo;
-    }
-
-    @ValidateMe
-    public boolean minerStart() {
-        return config.getBoolean("mine.start");
-    }
-
-    @ValidateMe
-    public byte[] getMinerCoinbase() {
-        String sc = config.getString("mine.coinbase");
-        byte[] c = ByteUtil.hexStringToBytes(sc);
-        if (c.length != 20) throw new RuntimeException("mine.coinbase has invalid value: '" + sc + "'");
-        return c;
-    }
-
-    @ValidateMe
-    public byte[] getMineExtraData() {
-        byte[] bytes;
-        if (config.hasPath("mine.extraDataHex")) {
-            bytes = Hex.decode(config.getString("mine.extraDataHex"));
-        } else {
-            bytes = config.getString("mine.extraData").getBytes();
-        }
-        if (bytes.length > 32) throw new RuntimeException("mine.extraData exceed 32 bytes length: " + bytes.length);
-        return bytes;
-    }
-
-    @ValidateMe
-    public BigInteger getMineMinGasPrice() {
-        return new BigInteger(config.getString("mine.minGasPrice"));
-    }
-
-    @ValidateMe
-    public long getMineMinBlockTimeoutMsec() {
-        return config.getLong("mine.minBlockTimeoutMsec");
-    }
-
-    @ValidateMe
-    public int getMineCpuThreads() {
-        return config.getInt("mine.cpuMineThreads");
-    }
-
-    @ValidateMe
-    public boolean isMineFullDataset() {
-        return config.getBoolean("mine.fullDataSet");
-    }
-
-    @ValidateMe
-    public String getCryptoProviderName() {
-        return config.getString("crypto.providerName");
-    }
-
-    @ValidateMe
-    public boolean recordInternalTransactionsData() {
-        if (recordInternalTransactionsData == null) {
-            recordInternalTransactionsData = config.getBoolean("record.internal.transactions.data");
-        }
-        return recordInternalTransactionsData;
-    }
-
-    public void setRecordInternalTransactionsData(Boolean recordInternalTransactionsData) {
-        this.recordInternalTransactionsData = recordInternalTransactionsData;
-    }
-
-    @ValidateMe
-    public String getHash256AlgName() {
-        return config.getString("crypto.hash.alg256");
-    }
-    
-    @ValidateMe
-    public String getHash512AlgName() {
-        return config.getString("crypto.hash.alg512");
-    }
-    
-    private GenesisJson getGenesisJson() {
-        if (genesisJson == null) {
-            genesisJson = GenesisLoader.loadGenesisJson(this, classLoader);
-        }
-        return genesisJson;
-    }
-
-    public Genesis getGenesis() {
-        if (genesis == null) {
-            genesis = GenesisLoader.parseGenesis(getBlockchainConfig(), getGenesisJson());
-        }
-        return genesis;
-    }
-
-    /**
-     * Method used in StandaloneBlockchain.
-     */
-    public Genesis useGenesis(InputStream inputStream) {
-        genesisJson = GenesisLoader.loadGenesisJson(inputStream);
-        genesis = GenesisLoader.parseGenesis(getBlockchainConfig(), getGenesisJson());
-        return genesis;
-    }
-
-    public String dump() {
-        return config.root().render(ConfigRenderOptions.defaults().setComments(false));
-    }
-
-    /*
-     *
-     * Testing
-     *
-     */
-    public boolean vmTestLoadLocal() {
-        return config.hasPath("GitHubTests.VMTest.loadLocal") ?
-                config.getBoolean("GitHubTests.VMTest.loadLocal") : DEFAULT_VMTEST_LOAD_LOCAL;
-    }
-
-    public String blocksLoader() {
-        return config.hasPath("blocks.loader") ?
-                config.getString("blocks.loader") : DEFAULT_BLOCKS_LOADER;
-    }
-
-    public String githubTestsPath() {
-        return config.hasPath("GitHubTests.testPath") ?
-                config.getString("GitHubTests.testPath") : "";
-    }
-
-    public boolean githubTestsLoadLocal() {
-        return config.hasPath("GitHubTests.testPath") &&
-                !config.getString("GitHubTests.testPath").isEmpty();
-    }
 }

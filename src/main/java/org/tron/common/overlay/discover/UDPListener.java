@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
@@ -84,15 +83,6 @@ public class UDPListener {
     public UDPListener(String address, int port) {
         this.address = address;
         this.port = port;
-    }
-
-    public static Node parseNode(String s) {
-        int idx1 = s.indexOf('@');
-        int idx2 = s.indexOf(':');
-        String id = s.substring(0, idx1);
-        String host = s.substring(idx1 + 1, idx2);
-        int port = Integer.parseInt(s.substring(idx2+1));
-        return new Node(Hex.decode(id), host, port);
     }
 
     public void start(String[] args) throws Exception {

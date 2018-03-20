@@ -17,13 +17,10 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
-
 import java.util.ArrayList;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RefreshTask extends DiscoverTask {
     private static final Logger logger = LoggerFactory.getLogger("discover");
