@@ -15,20 +15,18 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.ethereum.net.rlpx.discover;
+package org.tron.common.overlay.discover;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.crypto.ECKey;
-import org.ethereum.db.PeerSource;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.rlpx.*;
-import org.ethereum.net.rlpx.discover.table.NodeTable;
-import org.ethereum.util.CollectionUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.node.NodeStatistics;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -39,8 +37,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import static java.lang.Math.min;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -63,17 +59,16 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     static final int NODES_TRIM_THRESHOLD = 3000;
 
     PeerConnectionTester peerConnectionManager;
-    PeerSource peerSource;
-    EthereumListener ethereumListener;
+    //EthereumListener ethereumListener;
     SystemProperties config = SystemProperties.getDefault();
 
     Consumer<DiscoveryEvent> messageSender;
 
     NodeTable table;
     private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-    final ECKey key;
-    final Node homeNode;
-    private List<Node> bootNodes;
+    //final ECKey key;
+    final Star homeStar;
+    private List<Star> bootStars;
 
     // option to handle inbounds only from known peers (i.e. which were discovered by ourselves)
     boolean inboundOnlyFromKnownNodes = false;
@@ -88,19 +83,17 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     private ScheduledExecutorService pongTimer;
 
     @Autowired
-    public NodeManager(SystemProperties config, EthereumListener ethereumListener,
+    public NodeManager(SystemProperties config,
                        ApplicationContext ctx, PeerConnectionTester peerConnectionManager) {
         this.config = config;
-        this.ethereumListener = ethereumListener;
+        //this.ethereumListener = ethereumListener;
         this.peerConnectionManager = peerConnectionManager;
 
         PERSIST = config.peerDiscoveryPersist();
-        if (PERSIST) peerSource = ctx.getBean(PeerSource.class);
         discoveryEnabled = config.peerDiscovery();
 
-        key = config.getMyKey();
-        homeNode = new Node(config.nodeId(), config.externalIp(), config.listenPort());
-        table = new NodeTable(homeNode, config.isPublicHomeNode());
+        homeStar = new Star(config.nodeId(), config.externalIp(), config.listenPort());
+        table = new NodeTable(homeStar, config.isPublicHomeNode());
 
         logStatsTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -110,8 +103,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         }, 1 * 1000, 60 * 1000);
 
         this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-        for (Node node : config.peerActive()) {
-            getNodeHandler(node).getNodeStatistics().setPredefined(true);
+        for (Star star : config.peerActive()) {
+            getNodeHandler(star).getNodeStatistics().setPredefined(true);
         }
     }
 
@@ -119,8 +112,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return pongTimer;
     }
 
-    void setBootNodes(List<Node> bootNodes) {
-        this.bootNodes = bootNodes;
+    void setBootStars(List<Star> bootStars) {
+        this.bootStars = bootStars;
     }
 
     void channelActivated() {
@@ -139,49 +132,17 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
                 }
             }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
-            if (PERSIST) {
-                dbRead();
-                nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        dbWrite();
-                    }
-                }, DB_COMMIT_RATE, DB_COMMIT_RATE);
-            }
-
-            for (Node node : bootNodes) {
-                getNodeHandler(node);
+            for (Star star : bootStars) {
+                getNodeHandler(star);
             }
         }
-    }
-
-    private void dbRead() {
-        logger.info("Reading Node statistics from DB: " + peerSource.getNodes().size() + " nodes.");
-        for (Pair<Node, Integer> nodeElement : peerSource.getNodes()) {
-            getNodeHandler(nodeElement.getLeft()).getNodeStatistics().setPersistedReputation(nodeElement.getRight());
-        }
-    }
-
-    private void dbWrite() {
-        List<Pair<Node, Integer>> batch = new ArrayList<>();
-        synchronized (this) {
-            for (NodeHandler handler : nodeHandlerMap.values()) {
-                batch.add(Pair.of(handler.getNode(), handler.getNodeStatistics().getPersistedReputation()));
-            }
-        }
-        peerSource.clear();
-        for (Pair<Node, Integer> nodeElement : batch) {
-            peerSource.getNodes().add(nodeElement);
-        }
-        peerSource.getNodes().flush();
-        logger.info("Write Node statistics to DB: " + peerSource.getNodes().size() + " nodes.");
     }
 
     public void setMessageSender(Consumer<DiscoveryEvent> messageSender) {
         this.messageSender = messageSender;
     }
 
-    private String getKey(Node n) {
+    private String getKey(Star n) {
         return getKey(new InetSocketAddress(n.getHost(), n.getPort()));
     }
 
@@ -191,7 +152,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return (addr == null ? address.getHostString() : addr.getHostAddress()) + ":" + address.getPort();
     }
 
-    public synchronized NodeHandler getNodeHandler(Node n) {
+    public synchronized NodeHandler getNodeHandler(Star n) {
         String key = getKey(n);
         NodeHandler ret = nodeHandlerMap.get(key);
         if (ret == null) {
@@ -199,15 +160,15 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
             ret = new NodeHandler(n ,this);
             nodeHandlerMap.put(key, ret);
             logger.debug(" +++ New node: " + ret + " " + n);
-            if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+            if (!n.isDiscovery() && !n.getHexId().equals(homeStar.getHexId())) {
+                ethereumListener.onNodeDiscovered(ret.getStar());
             }
-        } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
+        } else if (ret.getStar().isDiscovery() && !n.isDiscovery()) {
             // we found discovery node with same host:port,
             // replace node with correct nodeId
-            ret.node = n;
-            if (!n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+            ret.star = n;
+            if (!n.getHexId().equals(homeStar.getHexId())) {
+                ethereumListener.onNodeDiscovered(ret.getStar());
             }
             logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
         }
@@ -223,14 +184,14 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
             sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
             for (NodeHandler handler : sorted) {
-                nodeHandlerMap.remove(getKey(handler.getNode()));
+                nodeHandlerMap.remove(getKey(handler.getStar()));
                 if (nodeHandlerMap.size() <= MAX_NODES) break;
             }
         }
     }
 
 
-    boolean hasNodeHandler(Node n) {
+    boolean hasNodeHandler(Star n) {
         return nodeHandlerMap.containsKey(getKey(n));
     }
 
@@ -238,7 +199,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return table;
     }
 
-    public NodeStatistics getNodeStatistics(Node n) {
+    public NodeStatistics getNodeStatistics(Star n) {
         return getNodeHandler(n).getNodeStatistics();
     }
 
@@ -251,7 +212,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         Message m = discoveryEvent.getMessage();
         InetSocketAddress sender = discoveryEvent.getAddress();
 
-        Node n = new Node(m.getNodeId(), sender.getHostString(), sender.getPort());
+        Star n = new Star(m.getNodeId(), sender.getHostString(), sender.getPort());
 
         if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
             logger.debug("=/=> (" + sender + "): inbound packet from unknown peer rejected due to config option.");
@@ -369,9 +330,9 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     /**
      * @return home node if config defines it as public, otherwise null
      */
-    Node getPublicHomeNode() {
+    Star getPublicHomeNode() {
         if (config.isPublicHomeNode()) {
-            return homeNode;
+            return homeStar;
         }
         return null;
     }
@@ -433,7 +394,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     public static void main(String[] args){
         try {
             logger.info(InetAddress.getLocalHost().toString());
-            java.net.ServerSocket ss = new java.net.ServerSocket(7080);
+            ServerSocket ss = new ServerSocket(7080);
             DatagramSocket socket = new DatagramSocket(7080);
             logger.info(ss.getInetAddress().toString());
             logger.info(ss.getLocalSocketAddress().toString());

@@ -22,20 +22,17 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
-import org.tron.common.overlay.server.WireTrafficStats;
-
 import java.net.BindException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.server.WireTrafficStats;
 
 @Component
 public class UDPListener {
@@ -89,13 +86,13 @@ public class UDPListener {
         this.port = port;
     }
 
-    public static Node parseNode(String s) {
+    public static Star parseNode(String s) {
         int idx1 = s.indexOf('@');
         int idx2 = s.indexOf(':');
         String id = s.substring(0, idx1);
         String host = s.substring(idx1 + 1, idx2);
         int port = Integer.parseInt(s.substring(idx2+1));
-        return new Node(Hex.decode(id), host, port);
+        return new Star(Hex.decode(id), host, port);
     }
 
     public void start(String[] args) throws Exception {
@@ -103,14 +100,14 @@ public class UDPListener {
         logger.info("Discovery UDPListener started");
         NioEventLoopGroup group = new NioEventLoopGroup(1);
 
-        final List<Node> bootNodes = new ArrayList<>();
+        final List<Star> bootStars = new ArrayList<>();
 
         for (String boot: args) {
             // since discover IP list has no NodeIds we will generate random but persistent
-            bootNodes.add(Node.instanceOf(boot));
+            bootStars.add(Star.instanceOf(boot));
         }
 
-        nodeManager.setBootNodes(bootNodes);
+        nodeManager.setBootStars(bootStars);
 
 
         try {

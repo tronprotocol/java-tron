@@ -74,9 +74,9 @@ public class PeerConnectionTester {
                 if (nodeHandler != null) {
                     nodeHandler.getNodeStatistics().rlpxConnectionAttempts.add();
                     logger.debug("Trying node connection: " + nodeHandler);
-                    Node node = nodeHandler.getNode();
-                    peerClient.connect(node.getHost(), node.getPort(),
-                            Hex.encodeHexString(node.getId()), true);
+                    Star star = nodeHandler.getStar();
+                    peerClient.connect(star.getHost(), star.getPort(),
+                            Hex.encodeHexString(star.getId()), true);
                     logger.debug("Terminated node connection: " + nodeHandler);
                     nodeHandler.getNodeStatistics().disconnected();
                     if (!nodeHandler.getNodeStatistics().getEthTotalDifficulty().equals(BigInteger.ZERO) &&
@@ -133,7 +133,7 @@ public class PeerConnectionTester {
         if (peerConnectionPool.isShutdown()) return;
         if (connectedCandidates.size() < NodeManager.MAX_NODES
                 && !connectedCandidates.containsKey(nodeHandler)
-                && !nodeHandler.getNode().isDiscoveryNode()) {
+                && !nodeHandler.getStar().isDiscovery()) {
             logger.debug("Submitting node for RLPx connection : " + nodeHandler);
             connectedCandidates.put(nodeHandler, null);
             peerConnectionPool.execute(new ConnectTask(nodeHandler));

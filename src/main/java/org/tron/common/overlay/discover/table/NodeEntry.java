@@ -17,7 +17,7 @@
  */
 package org.tron.common.overlay.discover.table;
 
-import org.ethereum.net.rlpx.Node;
+import org.tron.common.overlay.node.Node;
 
 /**
  * Created by kest on 5/25/15.

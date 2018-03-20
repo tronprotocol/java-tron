@@ -19,6 +19,8 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
 import org.tron.common.overlay.discover.message.PingMessage;
 import org.tron.common.overlay.discover.message.PongMessage;
 import org.tron.common.overlay.discover.table.KademliaOptions;
@@ -122,7 +124,7 @@ public class NodeHandler {
         NonActive
     }
 
-    Node node;
+    Star star;
     NodeManager nodeManager;
     private NodeStatistics nodeStatistics;
 
@@ -132,18 +134,18 @@ public class NodeHandler {
     int pingTrials = 3;
     NodeHandler replaceCandidate;
 
-    public NodeHandler(Node node, NodeManager nodeManager) {
-        this.node = node;
+    public NodeHandler(Star star, NodeManager nodeManager) {
+        this.star = star;
         this.nodeManager = nodeManager;
         changeState(State.Discovered);
     }
 
     public InetSocketAddress getInetSocketAddress() {
-        return new InetSocketAddress(node.getHost(), node.getPort());
+        return new InetSocketAddress(star.getHost(), star.getPort());
     }
 
-    public Node getNode() {
-        return node;
+    public Star getStar() {
+        return star;
     }
 
     public State getState() {
@@ -152,7 +154,7 @@ public class NodeHandler {
 
     public NodeStatistics getNodeStatistics() {
         if (nodeStatistics == null) {
-            nodeStatistics = new NodeStatistics(node);
+            nodeStatistics = new NodeStatistics(star);
         }
         return nodeStatistics;
     }
@@ -169,9 +171,9 @@ public class NodeHandler {
             // will wait for Pong to assume this alive
             sendPing();
         }
-        if (!node.isDiscoveryNode()) {
+        if (!star.isDiscovery()) {
             if (newState == State.Alive) {
-                Node evictCandidate = nodeManager.table.addNode(this.node);
+                Star evictCandidate = nodeManager.table.addNode(this.star);
                 if (evictCandidate == null) {
                     newState = State.Active;
                 } else {
@@ -184,7 +186,7 @@ public class NodeHandler {
             if (newState == State.Active) {
                 if (oldState == State.Alive) {
                     // new node won the challenge
-                    nodeManager.table.addNode(node);
+                    nodeManager.table.addNode(star);
                 } else if (oldState == State.EvictCandidate) {
                     // nothing to do here the node is already in the table
                 } else {
@@ -196,7 +198,7 @@ public class NodeHandler {
                 if (oldState == State.EvictCandidate) {
                     // lost the challenge
                     // Removing ourselves from the table
-                    nodeManager.table.dropNode(node);
+                    nodeManager.table.dropNode(star);
                     // Congratulate the winner
                     replaceCandidate.changeState(State.Active);
                 } else if (oldState == State.Alive) {
@@ -224,7 +226,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [PING] " + this);
         getNodeStatistics().discoverInPing.add();
-        if (!nodeManager.table.getNode().equals(node)) {
+        if (!nodeManager.table.getNode().equals(star)) {
             sendPong(msg.getMdc());
         }
     }
@@ -245,7 +247,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
-        for (Node n : msg.getNodes()) {
+        for (Star n : msg.getNodes()) {
             nodeManager.getNodeHandler(n);
         }
     }
@@ -254,12 +256,12 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [FIND_NODE] " + this);
         getNodeStatistics().discoverInFind.add();
-        List<Node> closest = nodeManager.table.getClosestNodes(msg.getTarget());
+        List<Star> closest = nodeManager.table.getClosestNodes(msg.getTarget());
 
-        Node publicHomeNode = nodeManager.getPublicHomeNode();
-        if (publicHomeNode != null) {
+        Star publicHomeStar = nodeManager.getPublicHomeNode();
+        if (publicHomeStar != null) {
             if (closest.size() == KademliaOptions.BUCKET_SIZE) closest.remove(closest.size() - 1);
-            closest.add(publicHomeNode);
+            closest.add(publicHomeStar);
         }
 
         sendNeighbours(closest);
@@ -286,7 +288,7 @@ public class NodeHandler {
         }
 //        logMessage("<===  [PING] " + this);
 
-        Message ping = PingMessage.create(nodeManager.table.getNode(), getNode(), nodeManager.key);
+        Message ping = PingMessage.create(nodeManager.table.getNode(), getStar(), nodeManager.key);
         logMessage(ping, false);
         waitForPong = true;
         pingSent = Util.curTime();
@@ -308,13 +310,13 @@ public class NodeHandler {
 
     void sendPong(byte[] mdc) {
 //        logMessage("<===  [PONG] " + this);
-        Message pong = PongMessage.create(mdc, node, nodeManager.key);
+        Message pong = PongMessage.create(mdc, star, nodeManager.key);
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
     }
 
-    void sendNeighbours(List<Node> neighbours) {
+    void sendNeighbours(List<Star> neighbours) {
 //        logMessage("<===  [NEIGHBOURS] " + this);
         NeighborsMessage neighbors = NeighborsMessage.create(neighbours, nodeManager.key);
         logMessage(neighbors, false);
@@ -336,8 +338,8 @@ public class NodeHandler {
 
     @Override
     public String toString() {
-        return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort() + ", id="
-                + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
+        return "NodeHandler[state: " + state + ", node: " + star.getHost() + ":" + star.getPort() + ", id="
+                + (star.getId().length > 0 ? Hex.toHexString(star.getId(), 0, 4) : "empty") + "]";
     }
 
 
