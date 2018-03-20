@@ -15,9 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.node;
+package org.tron.common.overlay.discover;
 
-import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.utils.ByteUtil;
 
@@ -64,7 +63,7 @@ public class NodeStatistics {
     public final StatHandler discoverOutFind = new StatHandler();
     public final StatHandler discoverInNeighbours = new StatHandler();
     public final StatHandler discoverOutNeighbours = new StatHandler();
-    public final Statter.SimpleStatter discoverMessageLatency;
+    public final SimpleStatter discoverMessageLatency;
     public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
 
     // rlpx stat
@@ -81,8 +80,6 @@ public class NodeStatistics {
 
     private String clientId = "";
 
-    public final List<Capability> capabilities = new ArrayList<>();
-
     private ReasonCode rlpxLastRemoteDisconnectReason = null;
     private ReasonCode rlpxLastLocalDisconnectReason = null;
     private long lastDisconnectedTime = 0;
@@ -94,14 +91,9 @@ public class NodeStatistics {
     private StatusMessage ethLastInboundStatusMsg = null;
     private BigInteger ethTotalDifficulty = BigInteger.ZERO;
 
-    // Eth63 stat
-    public final StatHandler eth63NodesRequested = new StatHandler();
-    public final StatHandler eth63NodesReceived = new StatHandler();
-    public final StatHandler eth63NodesRetrieveTime = new StatHandler();
-
     public NodeStatistics(Node node) {
         this.node = node;
-        discoverMessageLatency = (Statter.SimpleStatter) Statter.create(getStatName() + ".discoverMessageLatency");
+        discoverMessageLatency = new SimpleStatter(node.getId().toString());
     }
 
     private int getSessionReputation() {
@@ -181,11 +173,11 @@ public class NodeStatistics {
     }
 
 
-    public void ethHandshake(StatusMessage ethInboundStatus) {
-        this.ethLastInboundStatusMsg = ethInboundStatus;
-        this.ethTotalDifficulty = ethInboundStatus.getTotalDifficultyAsBigInt();
-        ethHandshake.add();
-    }
+//    public void ethHandshake(StatusMessage ethInboundStatus) {
+//        this.ethLastInboundStatusMsg = ethInboundStatus;
+//        this.ethTotalDifficulty = ethInboundStatus.getTotalDifficultyAsBigInt();
+//        ethHandshake.add();
+//    }
 
     public BigInteger getEthTotalDifficulty() {
         return ethTotalDifficulty;
@@ -211,9 +203,9 @@ public class NodeStatistics {
         return isPredefined;
     }
 
-    public StatusMessage getEthLastInboundStatusMsg() {
-        return ethLastInboundStatusMsg;
-    }
+//    public StatusMessage getEthLastInboundStatusMsg() {
+//        return ethLastInboundStatusMsg;
+//    }
 
     private String getStatName() {
         return "ethj.discover.nodes." + node.getHost() + ":" + node.getPort();
@@ -238,12 +230,49 @@ public class NodeStatistics {
                 ", rlpx: " + rlpxHandshake + "/" + rlpxAuthMessagesSent + "/" + rlpxConnectionAttempts + " " +
                 rlpxInMessages + "/" + rlpxOutMessages +
                 ", eth: " + ethHandshake + "/" + ethInbound + "/" + ethOutbound + " " +
-                (ethLastInboundStatusMsg != null ? ByteUtil.toHexString(ethLastInboundStatusMsg.getTotalDifficulty()) : "-") + " " +
                 (wasDisconnected() ? "X " : "") +
                 (rlpxLastLocalDisconnectReason != null ? ("<=" + rlpxLastLocalDisconnectReason) : " ") +
                 (rlpxLastRemoteDisconnectReason != null ? ("=>" + rlpxLastRemoteDisconnectReason) : " ")  +
                 "[" + clientId + "]";
     }
 
+    public class SimpleStatter {
+
+        private final String name;
+        private volatile double last;
+        private volatile double sum;
+        private volatile int count;
+
+        public SimpleStatter(String name) {
+            this.name = name;
+        }
+
+        public void add(double value) {
+            last = value;
+            sum += value;
+            count++;
+        }
+
+        public double getLast() {
+            return last;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public double getSum() {
+            return sum;
+        }
+
+        public double getAvrg() {
+            return getSum() / getCount();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+    }
 
 }

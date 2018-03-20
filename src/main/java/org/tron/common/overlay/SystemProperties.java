@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.utils.ByteUtil;
 

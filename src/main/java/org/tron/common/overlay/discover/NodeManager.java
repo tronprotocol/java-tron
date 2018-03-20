@@ -41,7 +41,6 @@ import org.tron.common.overlay.discover.message.FindNodeMessage;
 import org.tron.common.overlay.discover.message.NeighborsMessage;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.node.NodeStatistics;
 
 /**
  * The central class for Peer Discovery machinery.

@@ -34,7 +34,7 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.node.Node;
 import org.tron.common.overlay.node.NodeManager;
-import org.tron.common.overlay.node.NodeStatistics;
+import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.message.MessageFactory;
 
