@@ -14,7 +14,7 @@ public class FindNodeMessage extends Message {
     unPack();
   }
 
-  public FindNodeMessage(ByteString target, int timestamp) {
+  public FindNodeMessage(ByteString target, long timestamp) {
     this.findNeighbours = FindNeighbours.newBuilder()
         .setTarget(target)
         .setTimestamp(timestamp)
@@ -45,8 +45,6 @@ public class FindNodeMessage extends Message {
 
   @Override
   public String toString() {
-
-    long currTime = System.currentTimeMillis() / 1000;
 
     String out = String.format("[FindNodeMessage] \n");
 

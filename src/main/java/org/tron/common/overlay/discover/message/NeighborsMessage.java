@@ -15,7 +15,7 @@ public class NeighborsMessage extends Message {
     unPack();
   }
 
-  public NeighborsMessage(List<Neighbour> neighbours, int timestamp) {
+  public NeighborsMessage(List<Neighbour> neighbours, long timestamp) {
     this.neighbours = Neighbours.newBuilder()
         .addAllNeighbours(neighbours)
         .setTimestamp(timestamp)
