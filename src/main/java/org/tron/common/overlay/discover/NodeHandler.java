@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.common.overlay.node.NodeStatistics;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -231,8 +230,8 @@ public class NodeHandler {
         if (waitForPong) {
             waitForPong = false;
             getNodeStatistics().discoverInPong.add();
-            getNodeStatistics().discoverMessageLatency.add(Util.curTime() - pingSent);
-            getNodeStatistics().lastPongReplyTime.set(Util.curTime());
+            getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
+            getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
             changeState(State.Alive);
         }
     }
@@ -250,7 +249,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [FIND_NODE] " + this);
         getNodeStatistics().discoverInFind.add();
-        List<Node> closest = nodeManager.table.getClosestNodes(msg.getTarget());
+        List<Node> closest = nodeManager.table.getClosestNodes(msg.getMessageId());
 
         Node publicHomeNode = nodeManager.getPublicHomeNode();
         if (publicHomeNode != null) {

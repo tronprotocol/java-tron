@@ -12,20 +12,15 @@ public class PingMessage extends Message {
   private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) {
-      super(data);
+      super(data, Message.TYPE_PING);
       unPack();
   }
 
-  public PingMessage(Discover.PingMessage pingMessage){
-      this.pingMessage = pingMessage;
-      pack();
-  }
-
   public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
-      int toPort, long timestamp) {
+      int toPort) {
     Builder builder = Discover.PingMessage.newBuilder()
         .setVersion(version)
-        .setTimestamp(timestamp);
+        .setTimestamp(System.currentTimeMillis());
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setAddress(fromAddress)
@@ -40,7 +35,7 @@ public class PingMessage extends Message {
         .build();
 
     this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
-    pack();
+    this.data = this.pingMessage.toByteArray();
   }
 
   private void unPack() {
@@ -49,10 +44,6 @@ public class PingMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-  }
-
-  private void pack() {
-    this.data = this.pingMessage.toByteArray();
   }
 
   public String getFromHost() {
@@ -74,10 +65,8 @@ public class PingMessage extends Message {
   @Override
   public String toString() {
 
-    String out = String.format("[PingMessage] \n %s:%d ==> %s:%d\n",
+    return String.format("[PingMessage] \n %s:%d ==> %s:%d\n",
         this.getFromHost(), this.getFromPort(), this.getToHost(), this.getToPort());
-
-    return out;
   }
 
 }

@@ -10,18 +10,18 @@ public class PongMessage extends Message {
   private Discover.PongMessage pongMessage;
 
   public PongMessage(byte[] data) {
-    super(data);
+    super(data, Message.TYPE_PONG);
     unPack();
   }
 
-  public PongMessage(ByteString toAddress, int toPort, int echo, long timestamp) {
+  public PongMessage(ByteString toAddress, int toPort, int echo) {
+    this.data = this.pongMessage.toByteArray();
     this.pongMessage = Discover.PongMessage.newBuilder()
         .setTo(Endpoint.newBuilder().setAddress(toAddress).setTcpPort(toPort).setUdpPort(toPort)
             .build())
         .setEcho(echo)
-        .setTimestamp(timestamp)
+        .setTimestamp(System.currentTimeMillis())
         .build();
-    pack();
   }
 
   private void unPack() {
@@ -30,31 +30,11 @@ public class PongMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    unpacked = true;
-  }
-
-  private void pack() {
-    this.data = this.pongMessage.toByteArray();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
-    return this.data;
-  }
-
-  @Override
-  public byte getType() {
-    return this.type;
   }
 
   @Override
   public String toString() {
-
-    String out = String.format("[PongMessage]\n");
-
-    return out;
+    return String.format("[PongMessage]\n");
   }
+
 }

@@ -36,8 +36,8 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.StaticMessages;
-import org.tron.common.overlay.node.NodeStatistics;
 import org.tron.core.db.ByteArrayWrapper;
 
 /**
