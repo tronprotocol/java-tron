@@ -24,6 +24,7 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
@@ -31,6 +32,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
@@ -45,7 +47,9 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.TransferAssertContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TransferTokenToAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
@@ -199,13 +203,13 @@ public class Wallet {
     return transactionCapsule.getInstance();
   }
 
-  public Block getNowBlock(){
+  public Block getNowBlock() {
     Sha256Hash headBlockId = dbManager.getHeadBlockId();
     Block block = dbManager.getBlockById(headBlockId).getInstance();
     return block;
   }
 
-  public Block getBlockByNum(long blockNum){
+  public Block getBlockByNum(long blockNum) {
     Sha256Hash headBlockId = dbManager.getBlockIdByNum(blockNum);
     Block block = dbManager.getBlockById(headBlockId).getInstance();
     return block;
@@ -225,6 +229,26 @@ public class Wallet {
     List<WitnessCapsule> witnessCapsules = dbManager.getWitnessStore().getAllWitnesses();
     WitnessList.Builder builder = WitnessList.newBuilder();
     witnessCapsules.forEach(witnessCapsule -> {
+      builder.addWitnesses(witnessCapsule.getInstance());
+    });
+    return builder.build();
+  }
+
+  public Transaction createTransaction(TransferAssertContract transferAssertContract) {
+    //TODO
+    return null;
+  }
+
+  public Transaction createTransaction(TransferTokenToAssetContract transferTokenToAssetContract) {
+    //TODO
+    return null;
+  }
+
+  public AssetIssueList getAssetIssueList() {
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    assetIssueCapsuleList.forEach(witnessCapsule -> {
       builder.addWitnesses(witnessCapsule.getInstance());
     });
     return builder.build();
