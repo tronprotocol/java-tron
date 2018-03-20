@@ -86,13 +86,13 @@ public class UDPListener {
         this.port = port;
     }
 
-    public static Star parseNode(String s) {
+    public static Node parseNode(String s) {
         int idx1 = s.indexOf('@');
         int idx2 = s.indexOf(':');
         String id = s.substring(0, idx1);
         String host = s.substring(idx1 + 1, idx2);
         int port = Integer.parseInt(s.substring(idx2+1));
-        return new Star(Hex.decode(id), host, port);
+        return new Node(Hex.decode(id), host, port);
     }
 
     public void start(String[] args) throws Exception {
@@ -100,14 +100,14 @@ public class UDPListener {
         logger.info("Discovery UDPListener started");
         NioEventLoopGroup group = new NioEventLoopGroup(1);
 
-        final List<Star> bootStars = new ArrayList<>();
+        final List<Node> bootNodes = new ArrayList<>();
 
         for (String boot: args) {
             // since discover IP list has no NodeIds we will generate random but persistent
-            bootStars.add(Star.instanceOf(boot));
+            bootNodes.add(Node.instanceOf(boot));
         }
 
-        nodeManager.setBootStars(bootStars);
+        nodeManager.setBootNodes(bootNodes);
 
 
         try {

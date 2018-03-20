@@ -1,13 +1,12 @@
 package org.tron.common.overlay.discover;
 
+import static org.tron.common.crypto.Hash.sha3;
+
+import java.io.Serializable;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.Sha256Hash;
 
-import java.io.Serializable;
-
-import static org.tron.common.crypto.Hash.sha3;
-
-public class Star implements Serializable {
+public class Node implements Serializable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
@@ -19,15 +18,15 @@ public class Star implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public static Star instanceOf(String address) {
+  public static Node instanceOf(String address) {
     final ECKey key = ECKey.fromPrivate(sha3(address.getBytes()));
     final Sha256Hash StartId = Sha256Hash.wrap(key.getNodeId());
-    final Star star = new Star(StartId, address);
-    star.isFakeNodeId = true;
-    return star;
+    final Node node = new Node(StartId, address);
+    node.isFakeNodeId = true;
+    return node;
   }
 
-  public Star(Sha256Hash id, String address) {
+  public Node(Sha256Hash id, String address) {
     this.id = id;
 
     int colon = address.indexOf(":");//TODO: throw exception here.
@@ -92,8 +91,8 @@ public class Star implements Serializable {
       return true;
     }
 
-    if (o instanceof Star) {
-      return getId().equals(((Star) o).getId());
+    if (o instanceof Node) {
+      return getId().equals(((Node) o).getId());
     }
 
     return false;

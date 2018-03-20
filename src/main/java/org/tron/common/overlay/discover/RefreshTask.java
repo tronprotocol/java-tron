@@ -45,6 +45,6 @@ public class RefreshTask extends DiscoverTask {
 
     @Override
     public void run() {
-        discover(getNodeId(), 0, new ArrayList<Star>());
+        discover(getNodeId(), 0, new ArrayList<Node>());
     }
 }

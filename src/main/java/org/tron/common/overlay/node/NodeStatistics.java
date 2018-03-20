@@ -17,7 +17,7 @@
  */
 package org.tron.common.overlay.node;
 
-import org.tron.common.overlay.discover.Star;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.utils.ByteUtil;
 
@@ -49,7 +49,7 @@ public class NodeStatistics {
         public String toString() {return count.toString();}
     }
 
-    private final Star star;
+    private final Node node;
 
     private boolean isPredefined = false;
 
@@ -99,8 +99,8 @@ public class NodeStatistics {
     public final StatHandler eth63NodesReceived = new StatHandler();
     public final StatHandler eth63NodesRetrieveTime = new StatHandler();
 
-    public NodeStatistics(Star star) {
-        this.star = star;
+    public NodeStatistics(Node node) {
+        this.node = node;
         discoverMessageLatency = (Statter.SimpleStatter) Statter.create(getStatName() + ".discoverMessageLatency");
     }
 
@@ -216,7 +216,7 @@ public class NodeStatistics {
     }
 
     private String getStatName() {
-        return "ethj.discover.nodes." + star.getHost() + ":" + star.getPort();
+        return "ethj.discover.nodes." + node.getHost() + ":" + node.getPort();
     }
 
     public int getPersistedReputation() {
