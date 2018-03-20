@@ -12,6 +12,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -27,6 +28,7 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 public class RpcApiService implements Service {
@@ -218,6 +220,17 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
+
+    public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver){
+      responseObserver.onNext(wallet.getNowBlock());
+      responseObserver.onCompleted();
+    }
+
+    public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver){
+      responseObserver.onNext(wallet.getBlockByNum(request.getNum()));
+      responseObserver.onCompleted();
+    }
+
     @Override
     public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
       responseObserver.onNext(wallet.getAllAccounts());

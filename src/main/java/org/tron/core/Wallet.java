@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -42,13 +43,14 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
-import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
@@ -196,6 +198,19 @@ public class Wallet {
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessUpdateContract);
     return transactionCapsule.getInstance();
   }
+
+  public Block getNowBlock(){
+    Sha256Hash headBlockId = dbManager.getHeadBlockId();
+    Block block = dbManager.getBlockById(headBlockId).getInstance();
+    return block;
+  }
+
+  public Block getBlockByNum(long blockNum){
+    Sha256Hash headBlockId = dbManager.getBlockIdByNum(blockNum);
+    Block block = dbManager.getBlockById(headBlockId).getInstance();
+    return block;
+  }
+
 
   public AccountList getAllAccounts() {
     List<AccountCapsule> allAccounts = dbManager.getAccountStore().getAllAccounts();
