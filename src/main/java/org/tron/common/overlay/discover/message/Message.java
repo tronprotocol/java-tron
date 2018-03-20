@@ -7,34 +7,42 @@ import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {
 
-    protected static final Logger logger = LoggerFactory.getLogger("Net");
+  protected static final Logger logger = LoggerFactory.getLogger("Net");
 
-    protected byte[] data;
-    protected byte type;
+  protected byte[] data;
+  protected byte type;
 
-    public Sha256Hash getMessageId() {
-        return Sha256Hash.of(getData());
-    }
+  public Message() {
 
-    public byte[] getData() {
-        return this.data;
-    }
+  }
 
-    public byte[] getSendData() {
-        return ArrayUtils.add(this.data, 0, this.type);
-    }
+  public Message(byte[] data) {
+    this.data = data;
+  }
 
-    public byte getType() {
-        return type;
-    }
+  public Sha256Hash getMessageId() {
+    return Sha256Hash.of(getData());
+  }
 
-    @Override
-    public String toString() {
-        return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";
-    }
+  public byte[] getData() {
+    return this.data;
+  }
 
-    @Override
-    public int hashCode() {
-        return getMessageId().hashCode();
-    }
+  public byte[] getSendData() {
+    return ArrayUtils.add(this.data, 0, this.type);
+  }
+
+  public byte getType() {
+    return type;
+  }
+
+  @Override
+  public String toString() {
+    return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";
+  }
+
+  @Override
+  public int hashCode() {
+    return getMessageId().hashCode();
+  }
 }
