@@ -2,8 +2,6 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.List;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.net.message.MessageTypes;
@@ -12,6 +10,9 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbour;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NeighborsMessage extends DiscoverMessage {
 
@@ -57,6 +58,10 @@ public class NeighborsMessage extends DiscoverMessage {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
+  }
+
+  public static NeighborsMessage create(List<Node> nodes){
+
   }
 
   public List<Node> getNodes(){
