@@ -17,10 +17,6 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.ethereum.crypto.ECKey;
-import org.ethereum.util.RLP;
-import org.ethereum.util.RLPList;
-import org.ethereum.util.Utils;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.Serializable;
@@ -28,10 +24,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
-import static org.ethereum.crypto.HashUtil.sha3;
-import static org.ethereum.util.ByteUtil.*;
+import static org.tron.common.crypto.Hash.sha3;
 
 public class Node implements Serializable {
+
     private static final long serialVersionUID = -4267600517925770636L;
 
     byte[] id;
@@ -55,8 +51,8 @@ public class Node implements Serializable {
             // continue
         }
 
-        final ECKey generatedNodeKey = ECKey.fromPrivate(sha3(addressOrEnode.getBytes()));
-        final String generatedNodeId = Hex.toHexString(generatedNodeKey.getNodeId());
+        //final ECKey generatedNodeKey = ECKey.fromPrivate(sha3(addressOrEnode.getBytes()));
+        final String generatedNodeId = Hex.toHexString(sha3(addressOrEnode.getBytes()));
         final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
         node.isFakeNodeId = true;
         return node;
@@ -82,29 +78,6 @@ public class Node implements Serializable {
         this.port = port;
     }
 
-
-    public Node(byte[] rlp) {
-
-        RLPList nodeRLP = RLP.decode2(rlp);
-        nodeRLP = (RLPList) nodeRLP.get(0);
-
-        byte[] hostB = nodeRLP.get(0).getRLPData();
-        byte[] portB = nodeRLP.get(1).getRLPData();
-        byte[] idB;
-
-        if (nodeRLP.size() > 3) {
-            idB = nodeRLP.get(3).getRLPData();
-        } else {
-            idB = nodeRLP.get(2).getRLPData();
-        }
-
-        int port = byteArrayToInt(portB);
-
-        this.host = bytesToIp(hostB);
-        this.port = port;
-        this.id = idB;
-    }
-
     /**
      * @return true if this node is endpoint for discovery loaded from config
      */
@@ -119,10 +92,6 @@ public class Node implements Serializable {
 
     public String getHexId() {
         return Hex.toHexString(id);
-    }
-
-    public String getHexIdShort() {
-        return Utils.getNodeIdShort(getHexId());
     }
 
     public void setId(byte[] id) {
@@ -148,6 +117,7 @@ public class Node implements Serializable {
     public void setDiscoveryNode(boolean isDiscoveryNode) {
         isFakeNodeId = isDiscoveryNode;
     }
+
     @Override
     public String toString() {
         return "Node{" +

@@ -38,10 +38,6 @@ public class Peer {
         this.id= ip;
     }
 
-    public Peer() {
-        HashUtil.randomPeerId();
-    }
-
     public byte nextBit(String startPattern) {
 
         if (this.toBinaryString().startsWith(startPattern + "1"))

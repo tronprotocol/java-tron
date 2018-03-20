@@ -18,23 +18,25 @@
 package org.tron.common.overlay.discover;
 
 
+import org.tron.common.overlay.discover.message.DiscoverMessage;
+
 import java.net.InetSocketAddress;
 
 public class DiscoveryEvent {
 
-    private org.ethereum.net.rlpx.DiscoverMessage message;
+    private DiscoverMessage message;
     private InetSocketAddress address;
 
-    public DiscoveryEvent(org.ethereum.net.rlpx.DiscoverMessage m, InetSocketAddress a) {
+    public DiscoveryEvent(DiscoverMessage m, InetSocketAddress a) {
         message = m;
         address = a;
     }
 
-    public org.ethereum.net.rlpx.DiscoverMessage getMessage() {
+    public DiscoverMessage getMessage() {
         return message;
     }
 
-    public void setMessage(org.ethereum.net.rlpx.DiscoverMessage message) {
+    public void setMessage(DiscoverMessage message) {
         this.message = message;
     }
 
