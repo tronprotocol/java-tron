@@ -6,19 +6,25 @@ import java.util.ArrayList;
 import java.util.List;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbour;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-public class NeighborsMessage extends Message {
+public class NeighborsMessage extends DiscoverMessage {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] data) {
-    super(data, Message.TYPE_PEERS);
+  public NeighborsMessage(byte[] rawData) {
+    super(MessageTypes.DISCOVER_PEERS.asByte(), rawData);
     unPack();
+  }
+
+  @Override
+  public byte[] getRawData() {
+    return this.rawData;
   }
 
   public NeighborsMessage(List<Node> neighbours) {
@@ -42,12 +48,12 @@ public class NeighborsMessage extends Message {
 
     this.neighbours = builder.build();
 
-    this.data = this.neighbours.toByteArray();
+    this.rawData = this.neighbours.toByteArray();
   }
 
   private void unPack() {
     try {
-      this.neighbours = Discover.Neighbours.parseFrom(data);
+      this.neighbours = Discover.Neighbours.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -70,6 +76,11 @@ public class NeighborsMessage extends Message {
   @Override
   public String toString() {
     return String.format("[NeighborsMessage] \n");
+  }
+
+  @Override
+  public MessageTypes getType() {
+    return MessageTypes.fromByte(this.type);
   }
 
 }

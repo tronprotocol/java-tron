@@ -3,17 +3,23 @@ package org.tron.common.overlay.discover.message;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.PingMessage.Builder;
 
-public class PingMessage extends Message {
+public class PingMessage extends DiscoverMessage {
 
   private Discover.PingMessage pingMessage;
 
-  public PingMessage(byte[] data) {
-      super(data, Message.TYPE_PING);
-      unPack();
+  public PingMessage(byte[] rawData) {
+    super(MessageTypes.DISCOVER_PING.asByte(), rawData);
+    unPack();
+  }
+
+  @Override
+  public byte[] getRawData() {
+    return this.rawData;
   }
 
   public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
@@ -35,12 +41,12 @@ public class PingMessage extends Message {
         .build();
 
     this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
-    this.data = this.pingMessage.toByteArray();
+    this.rawData = this.pingMessage.toByteArray();
   }
 
   private void unPack() {
     try {
-      this.pingMessage = Discover.PingMessage.parseFrom(data);
+      this.pingMessage = Discover.PingMessage.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -67,6 +73,11 @@ public class PingMessage extends Message {
 
     return String.format("[PingMessage] \n %s:%d ==> %s:%d\n",
         this.getFromHost(), this.getFromPort(), this.getToHost(), this.getToPort());
+  }
+
+  @Override
+  public MessageTypes getType() {
+    return MessageTypes.fromByte(this.type);
   }
 
 }

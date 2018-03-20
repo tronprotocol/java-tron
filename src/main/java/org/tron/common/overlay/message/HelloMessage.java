@@ -9,9 +9,13 @@ public class HelloMessage extends P2pMessage {
 
   Message.HelloMessage helloMessage;
 
-  public HelloMessage(byte[] encoded) {
-    super(encoded);
+  public HelloMessage(byte[] rawData) {
+    super(rawData);
     this.type = MessageTypes.P2P_HELLO.asByte();
+  }
+
+  public HelloMessage(byte type, byte[] rawData) {
+    super(type, rawData);
   }
 
   /**
@@ -33,7 +37,7 @@ public class HelloMessage extends P2pMessage {
 
   private void unPack() {
     try {
-      this.helloMessage = Message.HelloMessage.parseFrom(data);
+      this.helloMessage = Message.HelloMessage.parseFrom(this.rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -45,11 +49,11 @@ public class HelloMessage extends P2pMessage {
   }
 
   @Override
-  public byte[] getData() {
-    if (this.data == null) {
+  public byte[] getRawData() {
+    if (this.rawData == null) {
       this.pack();
     }
-    return this.data;
+    return this.rawData;
   }
 
   /**
