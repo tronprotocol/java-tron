@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.joda.time.DateTime;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -40,7 +41,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
     try {
       Contract.ParticipateAssetIssueContract token2AssetContract =
-              contract.unpack(Contract.ParticipateAssetIssueContract.class);
+          contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
       int cost = token2AssetContract.getAmount();
 
@@ -51,14 +52,14 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule =
-              this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
-      int exchangeAmount = cost * assetIssueCapsule.getTrxNum() / assetIssueCapsule.getNum();
-
+          this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
+      int exchangeAmount = cost / assetIssueCapsule.getTrxNum() * assetIssueCapsule.getNum();
+      ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
       //add to to_address
       byte[] toAddressBytes = token2AssetContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
-      toAccount.setBalance(toAccount.getBalance() + exchangeAmount);
-
+      toAccount.setBalance(toAccount.getBalance() + cost);
+      toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
       //write to db
       dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
       dbManager.getAccountStore().put(toAddressBytes, toAccount);
@@ -66,8 +67,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
 
       return true;
-    }
-    catch (InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
       e.printStackTrace();
       throw new ContractExeException(e.getMessage());
@@ -81,46 +81,53 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     }
 
     try {
-      final Contract.ParticipateAssetIssueContract token2AssetContract =
-              this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
+      final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
+          this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
-      Preconditions.checkNotNull(token2AssetContract.getOwnerAddress(), "OwnerAddress is null");
-      Preconditions.checkNotNull(token2AssetContract.getToAddress(), "ToAddress is null");
-      Preconditions.checkNotNull(token2AssetContract.getAssetName(), "trx name is null");
-      if(token2AssetContract.getAmount() < 0){
+      Preconditions
+          .checkNotNull(participateAssetIssueContract.getOwnerAddress(), "OwnerAddress is null");
+      Preconditions.checkNotNull(participateAssetIssueContract.getToAddress(), "ToAddress is null");
+      Preconditions.checkNotNull(participateAssetIssueContract.getAssetName(), "trx name is null");
+      if (participateAssetIssueContract.getAmount() < 0) {
         throw new ContractValidateException("Trx Num can not be negative!");
       }
 
-      byte[] addressBytes = token2AssetContract.getOwnerAddress().toByteArray();
+      byte[] addressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       //Whether the account exist
-      if (! this.dbManager.getAccountStore().has(addressBytes)) {
+      if (!this.dbManager.getAccountStore().has(addressBytes)) {
         throw new ContractValidateException("Account does not exist!");
       }
 
       AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
       //Whether the balance is enough
-      if(ac.getBalance() < token2AssetContract.getAmount()){
+      if (ac.getBalance() < participateAssetIssueContract.getAmount()) {
         throw new ContractValidateException();
       }
 
       //Whether have the mapping
-      if( !this.dbManager.getAssetIssueStore().has(token2AssetContract.getAssetName().toByteArray()) ){
+      if (!this.dbManager.getAssetIssueStore()
+          .has(participateAssetIssueContract.getAssetName().toByteArray())) {
         throw new ContractValidateException();
       }
 
       //Whether the exchange can be processed: to see if the exchange can be the exact int
-      int cost = token2AssetContract.getAmount();
+      int cost = participateAssetIssueContract.getAmount();
       AssetIssueCapsule assetIssueCapsule =
-                this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
+          this.dbManager.getAssetIssueStore()
+              .get(participateAssetIssueContract.getAssetName().toByteArray());
+      DateTime now = DateTime.now();
+      if (now.getMillis() >= assetIssueCapsule.getEndTime() || now.getMillis() < assetIssueCapsule
+          .getStartTime()) {
+        throw new ContractValidateException("No longer valid period!");
+      }
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
-      int exchangeAmount = cost * trxNum / num;
-      float preciseExchangeAmount = (float)cost * (float)trxNum / (float)num;
-      if(preciseExchangeAmount - exchangeAmount >= 0.000001f){
-          throw new ContractValidateException("Can not process the exchange!");
+      int exchangeAmount = cost / trxNum * num;
+      float preciseExchangeAmount = (float) cost / (float) trxNum * (float) num;
+      if (preciseExchangeAmount - exchangeAmount >= 0.000001f) {
+        throw new ContractValidateException("Can not process the exchange!");
       }
-    }
-    catch (InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException();
     }
 

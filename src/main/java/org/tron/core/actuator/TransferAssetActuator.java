@@ -30,9 +30,9 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class TransferAssertActuator extends AbstractActuator {
+public class TransferAssetActuator extends AbstractActuator {
 
-  TransferAssertActuator(Any contract, Manager dbManager) {
+  TransferAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
