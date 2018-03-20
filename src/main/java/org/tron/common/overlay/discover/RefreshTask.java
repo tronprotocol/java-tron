@@ -19,8 +19,6 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -31,10 +29,6 @@ public class RefreshTask extends DiscoverTask {
     public RefreshTask(NodeManager nodeManager) {
         super(nodeManager);
     }
-//
-//    RefreshTask(Channel channel, ECKey key, NodeTable table) {
-//        super(getNodeId(), channel, key, table);
-//    }
 
     public static byte[] getNodeId() {
         Random gen = new Random();
