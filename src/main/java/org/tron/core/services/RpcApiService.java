@@ -269,7 +269,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void transferTokenToAsset(ParticipateAssetIssueContract request,
+    public void participateAssetIssue(ParticipateAssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = request.getOwnerAddress();
 
