@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.ChainConstant.IRREVERSIBLE_THRESHOLD;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
@@ -761,8 +762,9 @@ public class Manager {
       processTransaction(transactionCapsule);
     }
 
+    // todo set reverking db max size.
     this.updateSignedWitness(block);
-
+    this.updateLastConfirmedBlock();
     if (needMaintenance(block.getTimestamp())) {
       if (block.getNumber() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimestamp());
@@ -770,6 +772,16 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+
+  }
+
+  public void updateLastConfirmedBlock() {
+    List<Long> numbers = wits.stream()
+        .map(wit -> wit.getLatestBlockNum())
+        .sorted()
+        .collect(Collectors.toList());
+    long lastConfirmedNumber = numbers.get((int) (wits.size() * IRREVERSIBLE_THRESHOLD));
+    getDynamicPropertiesStore().setLatestConfirmedBlockNum(lastConfirmedNumber);
   }
 
   /**
@@ -1005,7 +1017,7 @@ public class Manager {
       logger.warn("Witnesses is empty");
       return;
     }
-
+    // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
           getHeadBlockTimeStamp());
