@@ -11,6 +11,7 @@ public abstract class Message {
 
   protected byte[] data;
   protected byte type;
+  protected boolean unpacked;
 
   public Message() {
 
