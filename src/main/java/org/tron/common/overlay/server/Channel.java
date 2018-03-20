@@ -98,6 +98,7 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
                 new ReadTimeoutHandler(config.peerChannelReadTimeout(), TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
+        //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
@@ -121,25 +122,20 @@ public class Channel {
 
     public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
-//        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
-//
-//        messageCodec.setSupportChunkedFrames(false);
-//
+        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
+
+        messageCodec.setSupportChunkedFrames(false);
+
 //        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
 //        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
-//
-//        if (SnappyCodec.isSupported(Math.min(config.defaultP2PVersion(), helloRemote.getP2PVersion()))) {
-//            ctx.pipeline().addLast("snappyCodec", new SnappyCodec(this));
-//            logger.debug("{}: use snappy compression", ctx.channel());
-//        }
-//
-//        ctx.pipeline().addLast("messageCodec", messageCodec);
-//        ctx.pipeline().addLast("p2p", p2pHandler);
-//
-//        p2pHandler.setChannel(this);
-//        //p2pHandler.setHandshake(helloRemote, ctx);
-//
-//        getNodeStatistics().rlpxHandshake.add();
+        //TODO: use messageCodec handle bytes to message directly
+        ctx.pipeline().addLast("messageCodec", messageCodec);
+        ctx.pipeline().addLast("p2p", p2pHandler);
+
+        p2pHandler.setChannel(this);
+        //p2pHandler.setHandshake(helloRemote, ctx);
+
+        getNodeStatistics().rlpxHandshake.add();
     }
 
     public void activateEth(ChannelHandlerContext ctx) {

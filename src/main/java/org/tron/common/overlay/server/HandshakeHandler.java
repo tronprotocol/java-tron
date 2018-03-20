@@ -17,20 +17,22 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.ethereum.net.rlpx.FrameCodec.Frame;
+import static org.ethereum.util.ByteUtil.bigEndianToShort;
+
 import com.google.common.io.ByteStreams;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.timeout.ReadTimeoutException;
-import org.ethereum.config.SystemProperties;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.List;
 import org.ethereum.crypto.ECIESCoder;
-import org.ethereum.crypto.ECKey;
 import org.ethereum.net.p2p.DisconnectMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.p2p.P2pMessageCodes;
 import org.ethereum.net.p2p.P2pMessageFactory;
-import org.ethereum.net.rlpx.discover.NodeManager;
-import org.ethereum.net.server.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.InvalidCipherTextException;
@@ -39,17 +41,12 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.FrameCodec;
 import org.tron.common.overlay.message.Message;
+import org.tron.core.config.SystemProperties;
 import org.tron.core.net.rlpx.EncryptionHandshake;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.List;
-
-import static org.ethereum.net.rlpx.FrameCodec.Frame;
-import static org.ethereum.util.ByteUtil.bigEndianToShort;
 
 /**
  * The Netty handler which manages initial negotiation with peer
@@ -70,11 +67,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");
     private static final Logger loggerNet = LoggerFactory.getLogger("net");
 
-    private FrameCodec frameCodec;
     private final ECKey myKey;
     private byte[] nodeId;
     private byte[] remoteId;
-    private EncryptionHandshake handshake;
     private byte[] initiatePacket;
     private Channel channel;
     private boolean isHandshakeDone;
@@ -97,7 +92,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
             channel.initWithNode(remoteId);
             initiate(ctx);
         } else {
-            handshake = new EncryptionHandshake();
             nodeId = myKey.getNodeId();
         }
     }
@@ -117,18 +111,16 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
         nodeId = myKey.getNodeId();
 
-        handshake = new EncryptionHandshake(ECKey.fromNodeId(this.remoteId).getPubKeyPoint());
-
         Object msg;
-        if (config.eip8()) {
-            AuthInitiateMessageV4 initiateMessage = handshake.createAuthInitiateV4(myKey);
-            initiatePacket = handshake.encryptAuthInitiateV4(initiateMessage);
-            msg = initiateMessage;
-        } else {
-            AuthInitiateMessage initiateMessage = handshake.createAuthInitiate(null, myKey);
-            initiatePacket = handshake.encryptAuthMessage(initiateMessage);
-            msg = initiateMessage;
-        }
+//        if (config.eip8()) {
+//            AuthInitiateMessageV4 initiateMessage = handshake.createAuthInitiateV4(myKey);
+//            initiatePacket = handshake.encryptAuthInitiateV4(initiateMessage);
+//            msg = initiateMessage;
+//        } else {
+//            AuthInitiateMessage initiateMessage = handshake.createAuthInitiate(null, myKey);
+//            initiatePacket = handshake.encryptAuthMessage(initiateMessage);
+//            msg = initiateMessage;
+//        }
 
         final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
         byteBufMsg.writeBytes(initiatePacket);
@@ -288,27 +280,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
                 channel.getNodeStatistics().rlpxInHello.add();
             }
         }
-    }
-
-    private byte[] readEIP8Packet(ByteBuf buffer, byte[] plainPacket) {
-
-        int size = bigEndianToShort(plainPacket);
-        if (size < plainPacket.length)
-            throw new IllegalArgumentException("AuthResponse packet size is too low");
-
-        int bytesLeft = size - plainPacket.length + 2;
-        byte[] restBytes = new byte[bytesLeft];
-
-        if (!buffer.isReadable(restBytes.length))
-            return null;
-
-        buffer.readBytes(restBytes);
-
-        byte[] fullResponse = new byte[size + 2];
-        System.arraycopy(plainPacket, 0, fullResponse, 0, plainPacket.length);
-        System.arraycopy(restBytes, 0, fullResponse, plainPacket.length, restBytes.length);
-
-        return fullResponse;
     }
 
     public void setRemoteId(String remoteId, Channel channel){
