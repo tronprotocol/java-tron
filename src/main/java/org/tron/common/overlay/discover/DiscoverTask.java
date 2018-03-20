@@ -34,15 +34,15 @@ public class DiscoverTask implements Runnable {
 
     public DiscoverTask(NodeManager nodeManager) {
         this.nodeManager = nodeManager;
-        nodeId = nodeManager.homeNode.getId();
+        nodeId = nodeManager.homeStar.getId();
     }
 
     @Override
     public void run() {
-        discover(nodeId, 0, new ArrayList<Node>());
+        discover(nodeId, 0, new ArrayList<Star>());
     }
 
-    public synchronized void discover(byte[] nodeId, int round, List<Node> prevTried) {
+    public synchronized void discover(byte[] nodeId, int round, List<Star> prevTried) {
 
         try {
 //        if (!channel.isOpen() || round == KademliaOptions.MAX_STEPS) {
@@ -57,10 +57,10 @@ public class DiscoverTask implements Runnable {
                 return;
             }
 
-            List<Node> closest = nodeManager.getTable().getClosestNodes(nodeId);
-            List<Node> tried = new ArrayList<>();
+            List<Star> closest = nodeManager.getTable().getClosestNodes(nodeId);
+            List<Star> tried = new ArrayList<>();
 
-            for (Node n : closest) {
+            for (Star n : closest) {
                 if (!tried.contains(n) && !prevTried.contains(n)) {
                     try {
                         nodeManager.getNodeHandler(n).sendFindNode(nodeId);

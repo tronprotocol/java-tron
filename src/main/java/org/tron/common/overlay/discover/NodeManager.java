@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -68,8 +67,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     NodeTable table;
     private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
     //final ECKey key;
-    final Node homeNode;
-    private List<Node> bootNodes;
+    final Star homeStar;
+    private List<Star> bootStars;
 
     // option to handle inbounds only from known peers (i.e. which were discovered by ourselves)
     boolean inboundOnlyFromKnownNodes = false;
@@ -93,8 +92,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         PERSIST = config.peerDiscoveryPersist();
         discoveryEnabled = config.peerDiscovery();
 
-        homeNode = new Node(config.nodeId(), config.externalIp(), config.listenPort());
-        table = new NodeTable(homeNode, config.isPublicHomeNode());
+        homeStar = new Star(config.nodeId(), config.externalIp(), config.listenPort());
+        table = new NodeTable(homeStar, config.isPublicHomeNode());
 
         logStatsTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -104,8 +103,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         }, 1 * 1000, 60 * 1000);
 
         this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-        for (Node node : config.peerActive()) {
-            getNodeHandler(node).getNodeStatistics().setPredefined(true);
+        for (Star star : config.peerActive()) {
+            getNodeHandler(star).getNodeStatistics().setPredefined(true);
         }
     }
 
@@ -113,8 +112,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return pongTimer;
     }
 
-    void setBootNodes(List<Node> bootNodes) {
-        this.bootNodes = bootNodes;
+    void setBootStars(List<Star> bootStars) {
+        this.bootStars = bootStars;
     }
 
     void channelActivated() {
@@ -133,8 +132,8 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
                 }
             }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
-            for (Node node : bootNodes) {
-                getNodeHandler(node);
+            for (Star star : bootStars) {
+                getNodeHandler(star);
             }
         }
     }
@@ -143,7 +142,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         this.messageSender = messageSender;
     }
 
-    private String getKey(Node n) {
+    private String getKey(Star n) {
         return getKey(new InetSocketAddress(n.getHost(), n.getPort()));
     }
 
@@ -153,7 +152,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return (addr == null ? address.getHostString() : addr.getHostAddress()) + ":" + address.getPort();
     }
 
-    public synchronized NodeHandler getNodeHandler(Node n) {
+    public synchronized NodeHandler getNodeHandler(Star n) {
         String key = getKey(n);
         NodeHandler ret = nodeHandlerMap.get(key);
         if (ret == null) {
@@ -161,15 +160,15 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
             ret = new NodeHandler(n ,this);
             nodeHandlerMap.put(key, ret);
             logger.debug(" +++ New node: " + ret + " " + n);
-            if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+            if (!n.isDiscovery() && !n.getHexId().equals(homeStar.getHexId())) {
+                ethereumListener.onNodeDiscovered(ret.getStar());
             }
-        } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
+        } else if (ret.getStar().isDiscovery() && !n.isDiscovery()) {
             // we found discovery node with same host:port,
             // replace node with correct nodeId
-            ret.node = n;
-            if (!n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+            ret.star = n;
+            if (!n.getHexId().equals(homeStar.getHexId())) {
+                ethereumListener.onNodeDiscovered(ret.getStar());
             }
             logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
         }
@@ -185,14 +184,14 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
             sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
             for (NodeHandler handler : sorted) {
-                nodeHandlerMap.remove(getKey(handler.getNode()));
+                nodeHandlerMap.remove(getKey(handler.getStar()));
                 if (nodeHandlerMap.size() <= MAX_NODES) break;
             }
         }
     }
 
 
-    boolean hasNodeHandler(Node n) {
+    boolean hasNodeHandler(Star n) {
         return nodeHandlerMap.containsKey(getKey(n));
     }
 
@@ -200,7 +199,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         return table;
     }
 
-    public NodeStatistics getNodeStatistics(Node n) {
+    public NodeStatistics getNodeStatistics(Star n) {
         return getNodeHandler(n).getNodeStatistics();
     }
 
@@ -213,7 +212,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         Message m = discoveryEvent.getMessage();
         InetSocketAddress sender = discoveryEvent.getAddress();
 
-        Node n = new Node(m.getNodeId(), sender.getHostString(), sender.getPort());
+        Star n = new Star(m.getNodeId(), sender.getHostString(), sender.getPort());
 
         if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
             logger.debug("=/=> (" + sender + "): inbound packet from unknown peer rejected due to config option.");
@@ -331,9 +330,9 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     /**
      * @return home node if config defines it as public, otherwise null
      */
-    Node getPublicHomeNode() {
+    Star getPublicHomeNode() {
         if (config.isPublicHomeNode()) {
-            return homeNode;
+            return homeStar;
         }
         return null;
     }
