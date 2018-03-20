@@ -155,7 +155,7 @@ public class Channel {
         getNodeStatistics().rlpxOutHello.add();
     }
 
-    public void activateEth(ChannelHandlerContext ctx) {
+    public void activateTron(ChannelHandlerContext ctx) {
 //        EthHandler handler = ethHandlerFactory.create(version);
 //        MessageFactory messageFactory = createEthMessageFactory(version);
 //        messageCodec.setEthVersion(version);

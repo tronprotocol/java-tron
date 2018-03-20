@@ -101,7 +101,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         logger.debug("P2P protocol activated");
 //        msgQueue.activate(ctx);
-        tronListener.trace("P2P protocol activated");
+        //tronListener.trace("P2P protocol activated");
 
         startTimers();
     }
@@ -113,7 +113,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         if (P2pMessageCodes.inRange(msg.getCommand().asByte()))
             logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
 
-        tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
+        //tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case HELLO:
@@ -128,22 +128,12 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
                 break;
             case PING:
 //                msgQueue.receivedMessage(msg);
-                ctx.writeAndFlush(PONG_MESSAGE);
+                //TODO: send pong message
+                //ctx.writeAndFlush(PONG_MESSAGE);
                 break;
             case PONG:
 //                msgQueue.receivedMessage(msg);
-                channel.getNodeStatistics().lastPongReplyTime.set(Util.curTime());
-                break;
-            case PEERS:
-//                msgQueue.receivedMessage(msg);
-
-                if (peerDiscoveryMode ||
-                        !handshakeHelloMessage.getCapabilities().contains(Capability.ETH)) {
-                    disconnect(ReasonCode.REQUESTED);
-                    killTimers();
-                    ctx.close().sync();
-                    ctx.disconnect().sync();
-                }
+                channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
                 break;
             default:
                 ctx.fireChannelRead(msg);
@@ -193,53 +183,32 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     public void setHandshake(HelloMessage msg, ChannelHandlerContext ctx) {
 
+
         channel.getNodeStatistics().setClientId(msg.getClientId());
-        channel.getNodeStatistics().capabilities.clear();
-        channel.getNodeStatistics().capabilities.addAll(msg.getCapabilities());
+//        channel.getNodeStatistics().capabilities.clear();
+//        channel.getNodeStatistics().capabilities.addAll(msg.getCapabilities());
 
         this.ethInbound = (int) channel.getNodeStatistics().ethInbound.get();
         this.ethOutbound = (int) channel.getNodeStatistics().ethOutbound.get();
 
-        this.handshakeHelloMessage = msg;
+//        this.handshakeHelloMessage = msg;
 
-        List<Capability> capInCommon = getSupportedCapabilities(msg);
-        channel.initMessageCodes(capInCommon);
-        for (Capability capability : capInCommon) {
-            if (capability.getName().equals(Capability.ETH)) {
+//        List<Capability> capInCommon = getSupportedCapabilities(msg);
+//        channel.initMessageCodes(capInCommon);
 
-                // Activate EthHandler for this peer
-                channel.activateEth(ctx, fromCode(capability.getVersion()));
-            } else if
-               (capability.getName().equals(Capability.SHH) &&
-                capability.getVersion() == ShhHandler.VERSION) {
+        channel.activateTron(ctx);
 
-                // Activate ShhHandler for this peer
-                channel.activateShh(ctx);
-            } else if
-               (capability.getName().equals(Capability.BZZ) &&
-                capability.getVersion() == BzzHandler.VERSION) {
-
-                // Activate ShhHandler for this peer
-                channel.activateBzz(ctx);
-            }
-        }
-
-        //todo calculate the Offsets
-        ethereumListener.onHandShakePeer(channel, msg);
+        //todo: init peer's block status and sync
+        //tronListener.onHandShakePeer(channel, msg);
     }
 
     /**
      * submit transaction to the network
      *
-     * @param tx - fresh transaction object
      */
 
     public void sendDisconnect() {
 //        msgQueue.disconnect();
-    }
-
-    public HelloMessage getHandshakeHelloMessage() {
-        return handshakeHelloMessage;
     }
 
     private void startTimers() {
