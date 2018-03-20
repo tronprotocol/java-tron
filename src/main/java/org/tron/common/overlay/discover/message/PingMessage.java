@@ -10,7 +10,13 @@ public class PingMessage extends Message {
   private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) {
-    super(data);
+      super(data);
+      unPack();
+  }
+
+  public PingMessage(Discover.PingMessage pingMessage){
+      this.pingMessage = pingMessage;
+      pack();
   }
 
   private void unPack() {
@@ -19,38 +25,25 @@ public class PingMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    unpacked = true;
   }
 
   private void pack() {
     this.data = this.pingMessage.toByteArray();
   }
 
-  @Override
-  public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
-    return this.data;
-  }
-
   public String getFromHost() {
-    this.unPack();
     return ByteArray.toHexString(this.pingMessage.getFrom().getAddress().toByteArray());
   }
 
   public int getFromPort() {
-    this.unPack();
     return this.pingMessage.getFrom().getUdpPort();
   }
 
   public String getToHost() {
-    this.unPack();
     return ByteArray.toHexString(this.pingMessage.getTo().getAddress().toByteArray());
   }
 
   public int getToPort() {
-    this.unPack();
     return this.pingMessage.getTo().getUdpPort();
   }
 
@@ -63,8 +56,4 @@ public class PingMessage extends Message {
     return out;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return null;
-  }
 }
