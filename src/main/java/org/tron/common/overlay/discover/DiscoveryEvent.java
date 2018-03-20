@@ -17,9 +17,8 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.tron.common.overlay.discover.message.Message;
-
 import java.net.InetSocketAddress;
+import org.tron.common.overlay.message.Message;
 
 public class DiscoveryEvent {
 
