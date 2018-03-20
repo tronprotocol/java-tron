@@ -2,12 +2,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -15,10 +14,8 @@ import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
-
+@Slf4j
 public class BlockCapsuleTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
   private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
       .copyFrom(ByteArray
           .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,

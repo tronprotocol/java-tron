@@ -2,16 +2,14 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public class DynamicPropertiesStore extends TronDatabase {
-
-  private static final Logger logger = LoggerFactory.getLogger("DynamicPropertiesStore");
-
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"

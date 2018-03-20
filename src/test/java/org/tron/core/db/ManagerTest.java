@@ -2,12 +2,12 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -20,10 +20,8 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
 
-
+@Slf4j
 public class ManagerTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";

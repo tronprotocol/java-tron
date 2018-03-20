@@ -3,13 +3,11 @@ package org.tron.common.crypto;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class SymmEncoder {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SymmEncoder.class);
-
   public static SecretKey restoreSecretKey(byte[] secretBytes, String algorithm) {
     SecretKey secretKey = new SecretKeySpec(secretBytes, algorithm);
     return secretKey;
@@ -17,11 +15,11 @@ public class SymmEncoder {
 
   public static byte[] AES128EcbEnc(byte[] plain, byte[] aesKey) {
     if (aesKey == null || aesKey.length != 16) {
-      LOG.error("AesKey need 16 bytes !!!");
+      logger.error("AesKey need 16 bytes !!!");
       return null;
     }
     if (plain == null || (plain.length & 0x0F) != 0) {
-      LOG.error("The length of encoded must be a multiple of 16 !!!");
+      logger.error("The length of encoded must be a multiple of 16 !!!");
       return null;
     }
 
@@ -31,11 +29,11 @@ public class SymmEncoder {
 
   public static byte[] AES128EcbDec(byte[] encoded, byte[] aesKey) {
     if (aesKey == null || aesKey.length != 16) {
-      LOG.error("AesKey need 16 bytes !!!");
+      logger.error("AesKey need 16 bytes !!!");
       return null;
     }
     if (encoded == null || (encoded.length & 0x0F) != 0) {
-      LOG.error("The length of encoded must be a multiple of 16 !!!");
+      logger.error("The length of encoded must be a multiple of 16 !!!");
       return null;
     }
 

@@ -1,15 +1,12 @@
 package org.tron.core.db;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 
+@Slf4j
 public class TransactionStore extends TronDatabase<TransactionCapsule> {
-
-  private static final Logger logger = LoggerFactory.getLogger("TransactionStore");
-
   private TransactionStore(String dbName) {
     super(dbName);
   }

@@ -2,17 +2,15 @@ package org.tron.core.db;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AssetIssueCapsule;
 
+@Slf4j
 public class AssetIssueStore extends TronDatabase<AssetIssueCapsule> {
-
-  private static final Logger logger = LoggerFactory.getLogger("AssetIssueStore");
   private static AssetIssueStore instance;
-
 
   private AssetIssueStore(String dbName) {
     super(dbName);

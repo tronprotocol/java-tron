@@ -15,17 +15,14 @@
 
 package org.tron.core.capsule.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class TransactionUtil {
-
-  private static final Logger logger = LoggerFactory.getLogger("TransactionUtil");
-
   public static Transaction newGenesisTransaction(String key, long value) {
     return new TransactionCapsule(key, value).getInstance();
   }

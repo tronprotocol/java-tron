@@ -27,21 +27,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
-
-  private static final Logger logger = LoggerFactory.getLogger("dbStore");
   String dataBaseName;
   DB database;
   boolean alive;
