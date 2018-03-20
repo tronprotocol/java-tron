@@ -28,9 +28,9 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
-public class TransferTokenToAssetActuator extends AbstractActuator {
+public class ParticipateAssetIssueActuator extends AbstractActuator {
 
-  TransferTokenToAssetActuator(Any contract, Manager dbManager) {
+  ParticipateAssetIssueActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -39,10 +39,10 @@ public class TransferTokenToAssetActuator extends AbstractActuator {
     long fee = calcFee();
 
     try {
-      Contract.TransferTokenToAssetContract token2AssetContract =
-              contract.unpack(Contract.TransferTokenToAssetContract.class);
+      Contract.ParticipateAssetIssueContract token2AssetContract =
+              contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
-      int cost = token2AssetContract.getTrxNum();
+      int cost = token2AssetContract.getAmount();
 
       //subtract from owner address
       byte[] ownerAddressBytes = token2AssetContract.getOwnerAddress().toByteArray();
@@ -51,8 +51,7 @@ public class TransferTokenToAssetActuator extends AbstractActuator {
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule =
-              this.dbManager.getAssetIssueStore().get(token2AssetContract.getName().toByteArray());
-      //the exchangeAmount will actually be a floating-point?
+              this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
       int exchangeAmount = cost * assetIssueCapsule.getTrxNum() / assetIssueCapsule.getNum();
 
       //add to to_address
@@ -77,18 +76,18 @@ public class TransferTokenToAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(Contract.TransferTokenToAssetContract.class)) {
+    if (!this.contract.is(Contract.ParticipateAssetIssueContract.class)) {
       throw new ContractValidateException();
     }
 
     try {
-      final Contract.TransferTokenToAssetContract token2AssetContract =
-              this.contract.unpack(Contract.TransferTokenToAssetContract.class);
+      final Contract.ParticipateAssetIssueContract token2AssetContract =
+              this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
       Preconditions.checkNotNull(token2AssetContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(token2AssetContract.getToAddress(), "ToAddress is null");
-      Preconditions.checkNotNull(token2AssetContract.getName(), "trx name is null");
-      if(token2AssetContract.getTrxNum() < 0){
+      Preconditions.checkNotNull(token2AssetContract.getAssetName(), "trx name is null");
+      if(token2AssetContract.getAmount() < 0){
         throw new ContractValidateException("Trx Num can not be negative!");
       }
 
@@ -100,13 +99,25 @@ public class TransferTokenToAssetActuator extends AbstractActuator {
 
       AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
       //Whether the balance is enough
-      if(ac.getBalance() < token2AssetContract.getTrxNum()){
+      if(ac.getBalance() < token2AssetContract.getAmount()){
         throw new ContractValidateException();
       }
 
       //Whether have the mapping
-      if( !this.dbManager.getAssetIssueStore().has(token2AssetContract.getName().toByteArray()) ){
+      if( !this.dbManager.getAssetIssueStore().has(token2AssetContract.getAssetName().toByteArray()) ){
         throw new ContractValidateException();
+      }
+
+      //Whether the exchange can be processed: to see if the exchange can be the exact int
+      int cost = token2AssetContract.getAmount();
+      AssetIssueCapsule assetIssueCapsule =
+                this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
+      int trxNum = assetIssueCapsule.getTrxNum();
+      int num = assetIssueCapsule.getNum();
+      int exchangeAmount = cost * trxNum / num;
+      float preciseExchangeAmount = (float)cost * (float)trxNum / (float)num;
+      if(preciseExchangeAmount - exchangeAmount >= 0.000001f){
+          throw new ContractValidateException("Can not process the exchange!");
       }
     }
     catch (InvalidProtocolBufferException e) {
