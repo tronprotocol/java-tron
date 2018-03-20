@@ -15,33 +15,56 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.message;
 
-import org.tron.core.net.message.MessageFactory;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.net.message.MessageTypes;
 
-/**
- * P2P message factory
- *
- * @author Mikhail Kalinin
- * @since 20.08.2015
- */
 public class P2pMessageFactory extends MessageFactory {
 
-    @Override
-    public Message create(byte code, byte[] encoded) {
+  @Override
+  protected Message create(byte type, byte[] rawData) {
+    MessageTypes messageType = MessageTypes.fromByte(type);
+    switch (messageType) {
+      case P2P_HELLO:
+        break;
+      case P2P_DISCONNECT:
+        break;
+      case P2P_PING:
+        break;
+      case P2P_PONG:
+        break;
+      default:
+        throw new IllegalArgumentException("No such message");
 
-        P2pMessageCodes receivedCommand = P2pMessageCodes.fromByte(code);
-        switch (receivedCommand) {
-            case HELLO:
-                return new HelloMessage(encoded);
-            case DISCONNECT:
-                return new DisconnectMessage(encoded);
-            case PING:
-                return StaticMessages.PING_MESSAGE;
-            case PONG:
-                return StaticMessages.PONG_MESSAGE;
-            default:
-                throw new IllegalArgumentException("No such message");
-        }
     }
+    return null;
+  }
+
+  @Override
+  protected Message create(byte[] data) {
+    byte type = data[0];
+    byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
+    create(type, rawData);
+    return null;
+  }
+//
+//  @Override
+//  public Message create(byte code, byte[] data) {
+//
+//    P2pMessageCodes receivedCommand = P2pMessageCodes.fromByte(code);
+//    switch (receivedCommand) {
+//      case HELLO:
+//        return new HelloMessage(encoded);
+//      case DISCONNECT:
+//        return new DisconnectMessage(encoded);
+//      case PING:
+//        return StaticMessages.PING_MESSAGE;
+//      case PONG:
+//        return StaticMessages.PONG_MESSAGE;
+//      default:
+//        throw new IllegalArgumentException("No such message");
+//    }
+//  }
 }

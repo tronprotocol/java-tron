@@ -65,7 +65,7 @@ public class PeerClient {
         });
     }
 
-    public void x(String host, int port, String remoteId) {
+    public void connect(String host, int port, String remoteId) {
         connect(host, port, remoteId, false);
     }
 

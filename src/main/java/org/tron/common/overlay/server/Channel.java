@@ -31,12 +31,12 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
+import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.discover.P2pHandler;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 
@@ -53,8 +53,8 @@ public class Channel {
     @Autowired
     SystemProperties config;
 
-    @Autowired
-    private MessageQueue msgQueue;
+//    @Autowired
+//    private MessageQueue msgQueue;
 
     @Autowired
     private P2pHandler p2pHandler;
@@ -113,9 +113,9 @@ public class Channel {
 
         messageCodec.setChannel(this);
 
-        msgQueue.setChannel(this);
+//        msgQueue.setChannel(this);
 
-        p2pHandler.setMsgQueue(msgQueue);
+//        p2pHandler.setMsgQueue(msgQueue);
         messageCodec.setP2pMessageFactory(new P2pMessageFactory());
 
     }
@@ -228,7 +228,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-        msgQueue.disconnect(reason);
+//        msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {

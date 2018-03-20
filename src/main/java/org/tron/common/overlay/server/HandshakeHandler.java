@@ -199,38 +199,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
                 byte[] responsePacket;
 
-                try {
-
-                    // trying to decode as pre-EIP-8
-                    AuthInitiateMessage initiateMessage = handshake.decryptAuthInitiate(authInitPacket, myKey);
-                    loggerNet.debug("From: {}    Recv:  {}", ctx.channel().remoteAddress(), initiateMessage);
-
-                    AuthResponseMessage response = handshake.makeAuthInitiate(initiateMessage, myKey);
-                    loggerNet.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), response);
-                    responsePacket = handshake.encryptAuthResponse(response);
-
-                } catch (Throwable t) {
-
-                    // it must be format defined by EIP-8 then
-                    try {
-
-                        authInitPacket = readEIP8Packet(buffer, authInitPacket);
-
-                        if (authInitPacket == null) return;
-
-                        AuthInitiateMessageV4 initiateMessage = handshake.decryptAuthInitiateV4(authInitPacket, myKey);
-                        loggerNet.debug("From: {}    Recv:  {}", ctx.channel().remoteAddress(), initiateMessage);
-
-                        AuthResponseMessageV4 response = handshake.makeAuthInitiateV4(initiateMessage, myKey);
-                        loggerNet.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), response);
-                        responsePacket = handshake.encryptAuthResponseV4(response);
-
-                    } catch (InvalidCipherTextException ce) {
-                        loggerNet.warn("Can't decrypt AuthInitiateMessage from " + ctx.channel().remoteAddress() +
-                                ". Most likely the remote peer used wrong public key (NodeID) to encrypt message.");
-                        return;
-                    }
-                }
 
                 handshake.agreeSecret(authInitPacket, responsePacket);
 

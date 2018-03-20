@@ -283,7 +283,7 @@ public class NodeHandler {
         Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
-        pingSent = TIMER.curTime();
+        pingSent = System.currentTimeMillis();
         sendMessage(ping);
         getNodeStatistics().discoverOutPing.add();
 

@@ -32,8 +32,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageCodes;
-import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.net.message.TransactionsMessage;
 
 
@@ -61,7 +59,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     private static ScheduledExecutorService pingTimer =
             Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
 
-    private MessageQueue msgQueue;
+//    private MessageQueue msgQueue;
 
     private boolean peerDiscoveryMode = false;
 
@@ -85,10 +83,10 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         this.peerDiscoveryMode = false;
     }
 
-    public P2pHandler(MessageQueue msgQueue, boolean peerDiscoveryMode) {
-        this.msgQueue = msgQueue;
-        this.peerDiscoveryMode = peerDiscoveryMode;
-    }
+//    public P2pHandler(MessageQueue msgQueue, boolean peerDiscoveryMode) {
+//        this.msgQueue = msgQueue;
+//        this.peerDiscoveryMode = peerDiscoveryMode;
+//    }
 
 
     public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
@@ -99,7 +97,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         logger.debug("P2P protocol activated");
-        msgQueue.activate(ctx);
+//        msgQueue.activate(ctx);
         ethereumListener.trace("P2P protocol activated");
         startTimers();
     }
@@ -115,25 +113,25 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
         switch (msg.getCommand()) {
             case HELLO:
-                msgQueue.receivedMessage(msg);
+//                msgQueue.receivedMessage(msg);
                 setHandshake((HelloMessage) msg, ctx);
 //                sendGetPeers();
                 break;
             case DISCONNECT:
-                msgQueue.receivedMessage(msg);
+//                msgQueue.receivedMessage(msg);
                 channel.getNodeStatistics().nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
                 processDisconnect(ctx, (DisconnectMessage) msg);
                 break;
             case PING:
-                msgQueue.receivedMessage(msg);
+//                msgQueue.receivedMessage(msg);
                 ctx.writeAndFlush(PONG_MESSAGE);
                 break;
             case PONG:
-                msgQueue.receivedMessage(msg);
+//                msgQueue.receivedMessage(msg);
                 channel.getNodeStatistics().lastPongReplyTime.set(Util.curTime());
                 break;
             case PEERS:
-                msgQueue.receivedMessage(msg);
+//                msgQueue.receivedMessage(msg);
 
                 if (peerDiscoveryMode ||
                         !handshakeHelloMessage.getCapabilities().contains(Capability.ETH)) {
@@ -150,7 +148,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     }
 
     private void disconnect(ReasonCode reasonCode) {
-        msgQueue.sendMessage(new DisconnectMessage(reasonCode));
+//        msgQueue.sendMessage(new DisconnectMessage(reasonCode));
         channel.getNodeStatistics().nodeDisconnectedLocal(reasonCode);
     }
 
@@ -185,7 +183,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     }
 
     private void sendGetPeers() {
-        msgQueue.sendMessage(StaticMessages.GET_PEERS_MESSAGE);
+//        msgQueue.sendMessage(StaticMessages.GET_PEERS_MESSAGE);
     }
 
 
@@ -234,17 +232,17 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     public void sendTransaction(Transaction tx) {
 
         TransactionsMessage msg = new TransactionsMessage(tx);
-        msgQueue.sendMessage(msg);
+//        msgQueue.sendMessage(msg);
     }
 
     public void sendNewBlock(Block block) {
 
         NewBlockMessage msg = new NewBlockMessage(block, block.getDifficulty());
-        msgQueue.sendMessage(msg);
+//        msgQueue.sendMessage(msg);
     }
 
     public void sendDisconnect() {
-        msgQueue.disconnect();
+//        msgQueue.disconnect();
     }
 
     public HelloMessage getHandshakeHelloMessage() {
@@ -255,7 +253,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         // sample for pinging in background
         pingTask = pingTimer.scheduleAtFixedRate(() -> {
             try {
-                msgQueue.sendMessage(PING_MESSAGE);
+//                msgQueue.sendMessage(PING_MESSAGE);
             } catch (Throwable t) {
                 logger.error("Unhandled exception", t);
             }
@@ -264,13 +262,12 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     public void killTimers() {
         pingTask.cancel(false);
-        msgQueue.close();
+//        msgQueue.close();
     }
 
-
-    public void setMsgQueue(MessageQueue msgQueue) {
-        this.msgQueue = msgQueue;
-    }
+//    public void setMsgQueue(MessageQueue msgQueue) {
+//        this.msgQueue = msgQueue;
+//    }
 
     public void setChannel(Channel channel) {
         this.channel = channel;

@@ -41,11 +41,13 @@ public enum MessageTypes {
 
   P2P_PONG(0x23),
 
-  P2P_FETCH_PEERS(0x24),
+  DISCOVER_PING(0x30),
 
-  P2P_SYNC_PEERS(0x25),
+  DISCOVER_PONG(0x31),
 
-  P2P_USER(0x26),
+  DISCOVER_FIND_PEER(0x32),
+
+  DISCOVER_PEERS(0x33),
 
   LAST(0xFF);
 
