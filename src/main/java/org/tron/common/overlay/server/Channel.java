@@ -133,7 +133,7 @@ public class Channel {
         ctx.pipeline().addLast("p2p", p2pHandler);
 
         p2pHandler.setChannel(this);
-        //p2pHandler.setHandshake(helloRemote, ctx);
+        p2pHandler.setHandshake(helloRemote, ctx);
 
         getNodeStatistics().rlpxHandshake.add();
     }

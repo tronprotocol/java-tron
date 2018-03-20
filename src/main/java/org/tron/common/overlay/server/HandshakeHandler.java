@@ -18,7 +18,6 @@
 package org.tron.common.overlay.server;
 
 import static org.ethereum.net.rlpx.FrameCodec.Frame;
-import static org.ethereum.util.ByteUtil.bigEndianToShort;
 
 import com.google.common.io.ByteStreams;
 import io.netty.buffer.ByteBuf;
@@ -30,9 +29,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import org.ethereum.crypto.ECIESCoder;
 import org.ethereum.net.p2p.DisconnectMessage;
-import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.p2p.P2pMessageCodes;
-import org.ethereum.net.p2p.P2pMessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.InvalidCipherTextException;
@@ -44,7 +41,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.FrameCodec;
+import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.core.config.SystemProperties;
 import org.tron.core.net.rlpx.EncryptionHandshake;
 

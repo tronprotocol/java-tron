@@ -21,6 +21,7 @@ import static java.lang.Math.min;
 import static org.ethereum.net.rlpx.FrameCodec.Frame;
 
 import com.google.common.io.ByteStreams;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
 import java.io.IOException;
@@ -54,7 +55,7 @@ import org.tron.core.net.message.MessageFactory;
  */
 @Component
 @Scope("prototype")
-public class MessageCodec extends MessageToMessageCodec<Frame, Message> {
+public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
 
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");
     private static final Logger loggerNet = LoggerFactory.getLogger("net");
@@ -173,6 +174,36 @@ public class MessageCodec extends MessageToMessageCodec<Frame, Message> {
         return msg;
     }
 
+    private Message decodeMessage(ChannelHandlerContext ctx, ByteBuf buffer) throws IOException {
+        long frameType = frames.get(0).getType();
+
+        byte[] payload = new byte[frames.size() == 1 ? frames.get(0).getSize() : frames.get(0).totalFrameSize];
+        int pos = 0;
+        for (Frame frame : frames) {
+            pos += ByteStreams.read(frame.getStream(), payload, pos, frame.getSize());
+        }
+
+        if (loggerWire.isDebugEnabled())
+            loggerWire.debug("Recv: Encoded: {} [{}]", frameType, Hex.toHexString(payload));
+
+        Message msg;
+        try {
+            msg = createMessage((byte) frameType, payload);
+        } catch (Exception ex) {
+            loggerNet.debug("Incorrectly encoded message from: \t{}, dropping peer", channel);
+            channel.disconnect(ReasonCode.BAD_PROTOCOL);
+            return null;
+        }
+
+        if (loggerNet.isDebugEnabled())
+            loggerNet.debug("From: {}    Recv:  {}", channel, msg.toString());
+
+        ethereumListener.onRecvMessage(channel, msg);
+
+        channel.getNodeStatistics().rlpxInMessages.add();
+        return msg;
+    }
+
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
         String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
@@ -191,6 +222,15 @@ public class MessageCodec extends MessageToMessageCodec<Frame, Message> {
         out.addAll(frames);
 
         channel.getNodeStatistics().rlpxOutMessages.add();
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out)
+        throws Exception {
+
+        Message message = decodeMessage(ctx, Collections.singletonList(frame));
+            out.add(message);
+
     }
 
     private List<Frame> splitMessageToFrames(Message msg) {
@@ -262,25 +302,11 @@ public class MessageCodec extends MessageToMessageCodec<Frame, Message> {
             return ethMessageFactory.create(resolved, payload);
         }
 
-        resolved = messageCodesResolver.resolveShh(code);
-        if (shhMessageFactory != null && ShhMessageCodes.inRange(resolved)) {
-            return shhMessageFactory.create(resolved, payload);
-        }
-
-        resolved = messageCodesResolver.resolveBzz(code);
-        if (bzzMessageFactory != null && BzzMessageCodes.inRange(resolved)) {
-            return bzzMessageFactory.create(resolved, payload);
-        }
-
         throw new IllegalArgumentException("No such message: " + code + " [" + Hex.toHexString(payload) + "]");
     }
 
     public void setChannel(Channel channel){
         this.channel = channel;
-    }
-
-    public void setEthVersion(EthVersion ethVersion) {
-        this.ethVersion = ethVersion;
     }
 
     public void setMaxFramePayloadSize(int maxFramePayloadSize) {
@@ -293,17 +319,5 @@ public class MessageCodec extends MessageToMessageCodec<Frame, Message> {
 
     public void setP2pMessageFactory(MessageFactory p2pMessageFactory) {
         this.p2pMessageFactory = p2pMessageFactory;
-    }
-
-    public void setEthMessageFactory(MessageFactory ethMessageFactory) {
-        this.ethMessageFactory = ethMessageFactory;
-    }
-
-    public void setShhMessageFactory(MessageFactory shhMessageFactory) {
-        this.shhMessageFactory = shhMessageFactory;
-    }
-
-    public void setBzzMessageFactory(MessageFactory bzzMessageFactory) {
-        this.bzzMessageFactory = bzzMessageFactory;
     }
 }
