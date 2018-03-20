@@ -17,6 +17,8 @@
  */
 package org.tron.common.overlay;
 
+import static org.tron.common.crypto.Hash.sha3;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
@@ -69,18 +71,9 @@ import org.tron.common.overlay.discover.Node;
 public class SystemProperties {
     private static Logger logger = LoggerFactory.getLogger("general");
 
-    public final static String PROPERTY_DB_DIR = "database.dir";
-    public final static String PROPERTY_LISTEN_PORT = "peer.listen.port";
-    public final static String PROPERTY_PEER_ACTIVE = "peer.active";
-    public final static String PROPERTY_DB_RESET = "database.reset";
-    public final static String PROPERTY_PEER_DISCOVERY_ENABLED = "peer.discovery.enabled";
-
-    /* Testing */
-    private final static Boolean DEFAULT_VMTEST_LOAD_LOCAL = false;
-    private final static String DEFAULT_BLOCKS_LOADER = "";
-
     private static SystemProperties CONFIG;
     private static boolean useOnlySpringConfig = false;
+    private final String projectVersionModifier = "dev";
     private String generatedNodePrivateKey;
 
     /**
@@ -103,23 +96,6 @@ public class SystemProperties {
         return CONFIG;
     }
 
-    public static void resetToDefault() {
-        CONFIG = null;
-    }
-
-    /**
-     * Used mostly for testing purposes to ensure the application
-     * refers only to the config passed as a Spring bean.
-     * If this property is set to true {@link #getDefault()} returns null
-     */
-    public static void setUseOnlySpringConfig(boolean useOnlySpringConfig) {
-        SystemProperties.useOnlySpringConfig = useOnlySpringConfig;
-    }
-
-    static boolean isUseOnlySpringConfig() {
-        return useOnlySpringConfig;
-    }
-
     /**
      * Marks config accessor methods which need to be called (for value validation)
      * upon config creation or modification
@@ -133,24 +109,12 @@ public class SystemProperties {
 
     // mutable options for tests
     private String databaseDir = null;
-    private Boolean databaseReset = null;
     private String projectVersion = null;
-    private String projectVersionModifier = null;
     protected Integer databaseVersion = null;
-
-    private String genesisInfo = null;
 
     private String bindIp = null;
     private String externalIp = null;
-
-    private Boolean syncEnabled = null;
     private Boolean discoveryEnabled = null;
-
-    private GenesisJson genesisJson;
-    private BlockchainNetConfig blockchainConfig;
-    private Genesis genesis;
-    private Boolean vmTrace;
-    private Boolean recordInternalTransactionsData;
 
     private final ClassLoader classLoader;
 
@@ -222,8 +186,6 @@ public class SystemProperties {
                 this.projectVersion = this.projectVersion.replaceAll("'", "");
 
                 if (this.projectVersion == null) this.projectVersion = "-.-.-";
-
-                this.projectVersionModifier = "master".equals(BuildInfo.buildBranch) ? "RELEASE" : "SNAPSHOT";
 
                 this.databaseVersion = Integer.valueOf(props.getProperty("databaseVersion"));
                 break;
@@ -437,18 +399,8 @@ public class SystemProperties {
     }
 
     @ValidateMe
-    public int networkId() {
-        return config.getInt("peer.networkId");
-    }
-
-    @ValidateMe
     public int maxActivePeers() {
         return config.getInt("peer.maxActivePeers");
-    }
-
-    @ValidateMe
-    public boolean eip8() {
-        return config.getBoolean("peer.p2p.eip8");
     }
 
     @ValidateMe

@@ -17,9 +17,19 @@
  */
 package org.tron.common.overlay.message;
 
+import static java.lang.Math.min;
+import static org.ethereum.net.rlpx.FrameCodec.Frame;
+
 import com.google.common.io.ByteStreams;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ethereum.config.SystemProperties;
@@ -27,10 +37,6 @@ import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.client.Capability;
 import org.ethereum.net.eth.EthVersion;
 import org.ethereum.net.eth.message.EthMessageCodes;
-import org.ethereum.net.message.MessageFactory;
-import org.ethereum.net.message.ReasonCode;
-import org.ethereum.net.p2p.P2pMessageCodes;
-import org.ethereum.net.server.Channel;
 import org.ethereum.net.shh.ShhMessageCodes;
 import org.ethereum.net.swarm.bzz.BzzMessageCodes;
 import org.slf4j.Logger;
@@ -39,13 +45,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.lang.Math.min;
-import static org.ethereum.net.rlpx.FrameCodec.Frame;
+import org.springframework.validation.MessageCodesResolver;
+import org.tron.common.overlay.server.Channel;
+import org.tron.core.net.message.MessageFactory;
 
 /**
  * The Netty codec which encodes/decodes RPLx frames to subprotocol Messages

@@ -39,6 +39,10 @@ public interface Utils {
     return bb.array();
   }
 
+  public static String getIdShort(String Id) {
+    return Id == null ? "<null>" : Id.substring(0, 8);
+  }
+
   static char[] getChars(byte[] bytes) {
     Charset cs = Charset.forName("UTF-8");
     ByteBuffer bb = ByteBuffer.allocate(bytes.length);
