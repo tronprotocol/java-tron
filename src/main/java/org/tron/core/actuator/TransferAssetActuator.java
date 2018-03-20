@@ -27,11 +27,12 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class TransferAssetActuator extends AbstractActuator {
+public class TransferAssertActuator extends AbstractActuator {
 
-  TransferAssetActuator(Any contract, Manager dbManager) {
+  TransferAssertActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -82,9 +83,12 @@ public class TransferAssetActuator extends AbstractActuator {
         throw new ContractValidateException();
       }
 
-      byte[] toKey = transferAssetContract.getToAddress().toByteArray();
-      if (!this.dbManager.getAccountStore().has(toKey)) {
-        throw new ContractValidateException();
+      // if account with to_address is not existed,  create it.
+      ByteString toAddress = transferAssetContract.getToAddress();
+      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
+        AccountCapsule account = new AccountCapsule(toAddress, null,
+            AccountType.Normal);
+        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 
       byte[] nameKey = transferAssetContract.getAssetName().toByteArray();

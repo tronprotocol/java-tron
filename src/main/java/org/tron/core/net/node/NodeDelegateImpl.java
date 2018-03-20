@@ -40,13 +40,14 @@ public class NodeDelegateImpl implements NodeDelegate {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStoreDb() {
+  protected BlockStore getBlockStore() {
     return dbManager.getBlockStore();
   }
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
+    // TODO timestamp shouble be consistent.
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -60,12 +61,14 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
     }
-
-    //TODO: get block's TRXs here and return
-    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-    return trx.stream()
-        .map(TransactionCapsule::getHash)
-        .collect(Collectors.toCollection(LinkedList::new));
+    if (!syncMode) {
+      List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
+      return trx.stream()
+          .map(TransactionCapsule::getHash)
+          .collect(Collectors.toCollection(LinkedList::new));
+    } else {
+      return null;
+    }
   }
 
 
