@@ -1,12 +1,9 @@
 package org.tron.common.overlay.message;
 
-import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Message;
 import org.tron.protos.Message.HelloMessage.Builder;
-import org.tron.protos.Message.P2pMessageCode;
 
 public class HelloMessage extends P2pMessage {
 
@@ -20,14 +17,12 @@ public class HelloMessage extends P2pMessage {
   /**
    * Create hello message.
    */
-  public HelloMessage(byte p2pVersion, String clientId,
-      List<Message.Capability> capabilities, int listenPort, String peerId) {
+  public HelloMessage(byte p2pVersion, String clientId, int listenPort, String peerId) {
 
     Builder builder = this.helloMessage.toBuilder();
 
     builder.setP2PVersion(p2pVersion);
     builder.setClientId(clientId);
-    builder.addAllCapabilities(capabilities);
     builder.setListenPort(listenPort);
     builder.setPeerId(peerId);
 
@@ -75,16 +70,6 @@ public class HelloMessage extends P2pMessage {
       this.unPack();
     }
     return this.helloMessage.getClientId();
-  }
-
-  /**
-   * Get capabilities.
-   */
-  public List<Message.Capability> getCapabilities() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
-    return this.helloMessage.getCapabilitiesList();
   }
 
   /**
@@ -139,8 +124,7 @@ public class HelloMessage extends P2pMessage {
     }
     return "[" + this.getCommand().name() + " p2pVersion="
         + this.getP2PVersion() + " clientId=" + this.getClientId()
-        + " capabilities=[" + Joiner.on(" ").join(this.getCapabilities())
-        + "]" + " peerPort=" + this.getListenPort() + " peerId="
+        + " peerPort=" + this.getListenPort() + " peerId="
         + this.getPeerId() + "]";
   }
 
