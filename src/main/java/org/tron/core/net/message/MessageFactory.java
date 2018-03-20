@@ -13,7 +13,8 @@ public class MessageFactory {
    * @param packed msg data
    * @return
    */
-  public Message create(byte type, byte[] packed) {
+
+  protected Message create(byte type, byte[] packed) {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     switch (receivedTypes) {
       case TRX:

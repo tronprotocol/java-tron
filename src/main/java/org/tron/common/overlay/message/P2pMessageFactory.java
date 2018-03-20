@@ -17,13 +17,15 @@
  */
 package org.tron.common.overlay.message;
 
+import org.tron.core.net.message.MessageFactory;
+
 /**
  * P2P message factory
  *
  * @author Mikhail Kalinin
  * @since 20.08.2015
  */
-public class P2pMessageFactory implements MessageFactory {
+public class P2pMessageFactory extends MessageFactory {
 
     @Override
     public Message create(byte code, byte[] encoded) {
@@ -38,10 +40,6 @@ public class P2pMessageFactory implements MessageFactory {
                 return StaticMessages.PING_MESSAGE;
             case PONG:
                 return StaticMessages.PONG_MESSAGE;
-            case GET_PEERS:
-                return StaticMessages.GET_PEERS_MESSAGE;
-            case PEERS:
-                return new PeersMessage(encoded);
             default:
                 throw new IllegalArgumentException("No such message");
         }

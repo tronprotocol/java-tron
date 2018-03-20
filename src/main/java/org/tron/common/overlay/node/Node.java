@@ -149,32 +149,6 @@ public class Node implements Serializable {
         isFakeNodeId = isDiscoveryNode;
     }
 
-    /**
-     * Full RLP
-     * [host, udpPort, tcpPort, nodeId]
-     * @return RLP-encoded node data
-     */
-    public byte[] getRLP() {
-        byte[] rlphost = RLP.encodeElement(hostToBytes(host));
-        byte[] rlpTCPPort = RLP.encodeInt(port);
-        byte[] rlpUDPPort = RLP.encodeInt(port);
-        byte[] rlpId = RLP.encodeElement(id);
-
-        return RLP.encodeList(rlphost, rlpUDPPort, rlpTCPPort, rlpId);
-    }
-
-    /**
-     * RLP without nodeId
-     * [host, udpPort, tcpPort]
-     * @return RLP-encoded node data
-     */
-    public byte[] getBriefRLP() {
-        byte[] rlphost = RLP.encodeElement(hostToBytes(host));
-        byte[] rlpTCPPort = RLP.encodeInt(port);
-        byte[] rlpUDPPort = RLP.encodeInt(port);
-
-        return RLP.encodeList(rlphost, rlpUDPPort, rlpTCPPort);
-    }
 
     @Override
     public String toString() {
