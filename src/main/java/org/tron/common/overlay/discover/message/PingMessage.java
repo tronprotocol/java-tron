@@ -3,11 +3,11 @@ package org.tron.common.overlay.discover.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Message;
+import org.tron.protos.Discover;
 
-public class PingMessage extends DiscoverMessage {
+public class PingMessage extends Message {
 
-  private Message.PingMessage pingMessage;
+  private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) {
     super(data);
@@ -15,7 +15,7 @@ public class PingMessage extends DiscoverMessage {
 
   private void unPack() {
     try {
-      this.pingMessage = Message.PingMessage.parseFrom(data);
+      this.pingMessage = Discover.PingMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }

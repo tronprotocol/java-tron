@@ -55,7 +55,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
     @Override
     public void accept(DiscoveryEvent discoveryEvent) {
         InetSocketAddress address = discoveryEvent.getAddress();
-        sendPacket(discoveryEvent.getMessage().getPacket(), address);
+        sendPacket(discoveryEvent.getMessage().getSendData(), address);
     }
 
     void sendPacket(byte[] wire, InetSocketAddress address) {

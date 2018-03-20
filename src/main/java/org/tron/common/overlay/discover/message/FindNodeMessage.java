@@ -2,11 +2,11 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Message;
+import org.tron.protos.Discover;
 
-public class FindNodeMessage extends DiscoverMessage {
+public class FindNodeMessage extends Message {
 
-  private Message.FindNeighbours findNeighbours;
+  private Discover.FindNeighbours findNeighbours;
 
   public FindNodeMessage(byte[] data) {
     super(data);
@@ -14,7 +14,7 @@ public class FindNodeMessage extends DiscoverMessage {
 
   private void unPack() {
     try {
-      this.findNeighbours = Message.FindNeighbours.parseFrom(data);
+      this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }

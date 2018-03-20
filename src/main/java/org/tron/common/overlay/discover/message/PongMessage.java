@@ -2,11 +2,11 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Message;
+import org.tron.protos.Discover;
 
-public class PongMessage extends DiscoverMessage {
+public class PongMessage extends Message {
 
-  private Message.PongMessage pongMessage;
+  private Discover.PongMessage pongMessage;
 
   public PongMessage(byte[] data) {
     super(data);
@@ -14,7 +14,7 @@ public class PongMessage extends DiscoverMessage {
 
   private void unPack() {
     try {
-      this.pongMessage = Message.PongMessage.parseFrom(data);
+      this.pongMessage = Discover.PongMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
