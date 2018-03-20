@@ -17,7 +17,7 @@
  */
 package org.tron.common.overlay.discover.table;
 
-import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.discover.Node;
 
 import java.util.*;
 
