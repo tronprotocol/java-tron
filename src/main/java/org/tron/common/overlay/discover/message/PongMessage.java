@@ -2,8 +2,9 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.node.Node;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 
@@ -21,22 +22,32 @@ public class PongMessage extends DiscoverMessage {
     return this.rawData;
   }
 
-  public PongMessage(ByteString toAddress, int toPort, int echo) {
+  public PongMessage(Node to, int echo, long timestamp) {
+    Endpoint toEndpoint = Endpoint.newBuilder()
+        .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
+        .setPort(to.getPort())
+        .setNodeId(ByteString.copyFrom(to.getId()))
+        .build();
+
     this.pongMessage = Discover.PongMessage.newBuilder()
-        .setTo(Endpoint.newBuilder().setAddress(toAddress).setTcpPort(toPort).setUdpPort(toPort)
-            .build())
+        .setTo(toEndpoint)
         .setEcho(echo)
-        .setTimestamp(System.currentTimeMillis())
+        .setTimestamp(timestamp)
         .build();
     this.rawData = this.pongMessage.toByteArray();
   }
 
-  public static PongMessage create(Node from){
-
+  public static PongMessage create(Node from, int echo) {
+    return new PongMessage(from, echo, System.currentTimeMillis());
   }
 
   public Node getFrom(){
+    Endpoint from = this.pongMessage.getTo();
 
+    Node node = new Node(from.getNodeId().toByteArray(),
+        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
+
+    return node;
   }
 
 
