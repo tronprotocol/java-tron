@@ -24,6 +24,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.message.Message;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
         byte[] encoded = new byte[buf.readableBytes()];
         buf.readBytes(encoded);
         try {
-            Message msg = Message.decode(encoded);
+            Message msg = new Message(encoded);
             DiscoveryEvent event = new DiscoveryEvent(msg, packet.sender());
             out.add(event);
         } catch (Exception e) {

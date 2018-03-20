@@ -24,8 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -133,7 +131,7 @@ public class PeerConnectionTester {
         if (peerConnectionPool.isShutdown()) return;
         if (connectedCandidates.size() < NodeManager.MAX_NODES
                 && !connectedCandidates.containsKey(nodeHandler)
-                && !nodeHandler.getNode().isDiscovery()) {
+                && !nodeHandler.getNode().isDiscoveryNode()) {
             logger.debug("Submitting node for RLPx connection : " + nodeHandler);
             connectedCandidates.put(nodeHandler, null);
             peerConnectionPool.execute(new ConnectTask(nodeHandler));

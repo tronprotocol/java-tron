@@ -1,16 +1,19 @@
 package org.tron.common.overlay.discover;
 
-import static org.tron.common.crypto.Hash.sha3;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
 
 import java.io.Serializable;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.Sha256Hash;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import static org.tron.common.crypto.Hash.sha3;
 
 public class Node implements Serializable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
-  private Sha256Hash id;
+  private byte[] id;
 
   private String host;
 
@@ -18,15 +21,44 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public static Node instanceOf(String address) {
-    final ECKey key = ECKey.fromPrivate(sha3(address.getBytes()));
-    final Sha256Hash StartId = Sha256Hash.wrap(key.getNodeId());
-    final Node node = new Node(StartId, address);
+  public static Node instanceOf(String addressOrEnode) {
+    try {
+      URI uri = new URI(addressOrEnode);
+      if (uri.getScheme().equals("enode")) {
+        return new Node(addressOrEnode);
+      }
+    } catch (URISyntaxException e) {
+      // continue
+    }
+
+    final ECKey generatedNodeKey = ECKey.fromPrivate(sha3(addressOrEnode.getBytes()));
+    final String generatedNodeId = Hex.toHexString(generatedNodeKey.getNodeId());
+    final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
     node.isFakeNodeId = true;
     return node;
   }
 
-  public Node(Sha256Hash id, String address) {
+  public Node(String enodeURL) {
+    try {
+      URI uri = new URI(enodeURL);
+      if (!uri.getScheme().equals("enode")) {
+        throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
+      }
+      this.id = Hex.decode(uri.getUserInfo());
+      this.host = uri.getHost();
+      this.port = uri.getPort();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT", e);
+    }
+  }
+
+  public Node(byte[] id, String host, int port) {
+    this.id = id;
+    this.host = host;
+    this.port = port;
+  }
+
+  public Node(byte[] id, String address) {
     this.id = id;
 
     int colon = address.indexOf(":");//TODO: throw exception here.
@@ -35,15 +67,15 @@ public class Node implements Serializable {
     this.port = Integer.parseInt(address.substring(colon, address.length() - 1));
   }
 
-  public boolean isDiscovery() {
+  public boolean isDiscoveryNode() {
     return isFakeNodeId;
   }
 
-  public Sha256Hash getId() {
+  public byte[] getId() {
     return id;
   }
 
-  public void setId(Sha256Hash id) {
+  public void setId(byte[] id) {
     this.id = id;
   }
 
