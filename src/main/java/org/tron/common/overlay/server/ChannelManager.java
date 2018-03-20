@@ -147,7 +147,7 @@ public class ChannelManager {
 
             logger.debug("Processing new peer: " + peer);
 
-            if(peer.isProtocolsInitialized()) {
+            //if(peer.isProtocolsInitialized()) {
 
                 logger.debug("Protocols initialized");
 
@@ -169,7 +169,7 @@ public class ChannelManager {
                 }
 
                 processed.add(peer);
-            }
+            //}
         }
 
         if (addCnt > 0) {

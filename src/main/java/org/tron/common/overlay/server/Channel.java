@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -136,6 +137,22 @@ public class Channel {
         p2pHandler.setHandshake(helloRemote, ctx);
 
         getNodeStatistics().rlpxHandshake.add();
+    }
+
+    public void sendHelloMessage(ChannelHandlerContext ctx,
+        String nodeId) throws IOException, InterruptedException {
+
+        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
+
+        ByteBuf byteBufMsg = ctx.alloc().buffer();
+
+        //TODO: flush send message into byteBufMsg
+        //frameCodec.writeFrame(new FrameCodec.Frame(helloMessage.getCode(), helloMessage.getEncoded()), byteBufMsg);
+        ctx.writeAndFlush(byteBufMsg).sync();
+
+        if (logger.isDebugEnabled())
+            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
+        getNodeStatistics().rlpxOutHello.add();
     }
 
     public void activateEth(ChannelHandlerContext ctx) {

@@ -24,7 +24,7 @@ import org.tron.core.net.message.MessageTypes;
 public class P2pMessageFactory extends MessageFactory {
 
   @Override
-  protected Message create(byte type, byte[] rawData) {
+  public P2pMessage create(byte type, byte[] rawData) {
     MessageTypes messageType = MessageTypes.fromByte(type);
     switch (messageType) {
       case P2P_HELLO:
@@ -41,7 +41,7 @@ public class P2pMessageFactory extends MessageFactory {
   }
 
   @Override
-  protected Message create(byte[] data) {
+  public P2pMessage create(byte[] data) {
     byte type = data[0];
     byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
     return create(type, rawData);

@@ -30,8 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageCodes;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.net.message.TransactionsMessage;
 
 
@@ -69,7 +72,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     private int ethOutbound;
 
     @Autowired
-    EthereumListener ethereumListener;
+    TronChannelInitializer tronListener;
 
     @Autowired
     SystemProperties config;
@@ -98,7 +101,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         logger.debug("P2P protocol activated");
 //        msgQueue.activate(ctx);
-        ethereumListener.trace("P2P protocol activated");
+        tronListener.trace("P2P protocol activated");
         startTimers();
     }
 
@@ -109,7 +112,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         if (P2pMessageCodes.inRange(msg.getCommand().asByte()))
             logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
 
-        ethereumListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
+        tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case HELLO:
