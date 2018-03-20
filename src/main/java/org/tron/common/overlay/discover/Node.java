@@ -1,13 +1,13 @@
 package org.tron.common.overlay.discover;
 
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
+import static org.tron.common.crypto.Hash.sha3;
 
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import static org.tron.common.crypto.Hash.sha3;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.Utils;
 
 public class Node implements Serializable {
 
@@ -65,6 +65,14 @@ public class Node implements Serializable {
     this.host = address.substring(0, colon - 1);
     //TODO: throw exception here
     this.port = Integer.parseInt(address.substring(colon, address.length() - 1));
+  }
+
+  public String getHexId() {
+    return Hex.toHexString(id);
+  }
+
+  public String getHexIdShort() {
+    return Utils.getIdShort(getHexId());
   }
 
   public boolean isDiscoveryNode() {

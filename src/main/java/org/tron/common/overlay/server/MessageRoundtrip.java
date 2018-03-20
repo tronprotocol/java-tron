@@ -17,7 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
-import org.ethereum.net.message.Message;
+import org.tron.common.overlay.message.Message;
 
 /**
  * Utility wraps around a message to keep track of the number of times it has

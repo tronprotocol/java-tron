@@ -20,27 +20,25 @@ package org.tron.common.overlay.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.P2pHandler;
-import org.tron.common.overlay.discover.message.HelloMessage;
-import org.tron.common.overlay.discover.message.P2pMessageFactory;
-import org.tron.common.overlay.discover.message.StaticMessages;
+import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
+import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
+import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
-import org.tron.core.net.message.MessageFactory;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman Mandeleil
@@ -121,8 +119,7 @@ public class Channel {
 
     }
 
-    public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, FrameCodec frameCodec,
-                                            HelloMessage helloRemote) throws IOException, InterruptedException {
+    public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
 //        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
 //
@@ -145,7 +142,7 @@ public class Channel {
 //        getNodeStatistics().rlpxHandshake.add();
     }
 
-    public void activateEth(ChannelHandlerContext ctx, EthVersion version) {
+    public void activateEth(ChannelHandlerContext ctx) {
 //        EthHandler handler = ethHandlerFactory.create(version);
 //        MessageFactory messageFactory = createEthMessageFactory(version);
 //        messageCodec.setEthVersion(version);
@@ -160,14 +157,6 @@ public class Channel {
 //        handler.activate();
 //
 //        eth = handler;
-    }
-
-    private MessageFactory createEthMessageFactory() {
-//        switch (version) {
-//            case V62:   return new Eth62MessageFactory();
-//            case V63:   return new Eth63MessageFactory();
-//            default:    throw new IllegalArgumentException("Eth " + version + " is not supported");
-//        }
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -194,9 +183,6 @@ public class Channel {
         return node;
     }
 
-//    public boolean isProtocolsInitialized() {
-//        return eth.hasStatusPassed();
-//    }
 
     public void onDisconnect() {
         isDisconnected = true;
@@ -257,56 +243,6 @@ public class Channel {
         return peerStats;
     }
 
-    // ETH sub protocol
-
-//    public Eth getEthHandler() {
-//        return eth;
-//    }
-
-//    public boolean hasEthStatusSucceeded() {
-//        return eth.hasStatusSucceeded();
-//    }
-
-//    public String logSyncStats() {
-//        return eth.getSyncStats();
-//    }
-//
-//    public BigInteger getTotalDifficulty() {
-//        return getEthHandler().getTotalDifficulty();
-//    }
-//
-//    public SyncStatistics getSyncStats() {
-//        return eth.getStats();
-//    }
-//
-//    public boolean isHashRetrievingDone() {
-//        return eth.isHashRetrievingDone();
-//    }
-//
-//    public boolean isHashRetrieving() {
-//        return eth.isHashRetrieving();
-//    }
-//
-//    public boolean isMaster() {
-//        return eth.isHashRetrieving() || eth.isHashRetrievingDone();
-//    }
-//
-//    public boolean isIdle() {
-//        return eth.isIdle();
-//    }
-//
-//    public void prohibitTransactionProcessing() {
-//        eth.disableTransactions();
-//    }
-//
-//    public EthVersion getEthVersion() {
-//        return eth.getVersion();
-//    }
-
-//    public void dropConnection() {
-//        eth.dropConnection();
-//    }
-
     public ChannelManager getChannelManager() {
         return channelManager;
     }
@@ -333,6 +269,6 @@ public class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s | %s", getPeerIdShort(), inetSocketAddress);
+        return String.format("%s | %s", getPeerId(), inetSocketAddress);
     }
 }

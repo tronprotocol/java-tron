@@ -1,8 +1,13 @@
 package org.tron.common.overlay.discover.message;
 
+import java.security.SignatureException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.BigIntegers;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {

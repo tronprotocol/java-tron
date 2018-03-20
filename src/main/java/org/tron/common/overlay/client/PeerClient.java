@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.server.EthereumChannelInitializer;
+import org.tron.common.overlay.server.TronChannelInitializer;
 
 import java.io.IOException;
 import java.util.concurrent.ThreadFactory;
@@ -99,8 +99,8 @@ public class PeerClient {
 
     public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
 
-        EthereumChannelInitializer ethereumChannelInitializer = ctx.getBean(EthereumChannelInitializer.class, remoteId);
-        ethereumChannelInitializer.setPeerDiscoveryMode(discoveryMode);
+        TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, remoteId);
+        tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
 
         Bootstrap b = new Bootstrap();
         b.group(workerGroup);
@@ -111,7 +111,7 @@ public class PeerClient {
         b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.peerConnectionTimeout());
         b.remoteAddress(host, port);
 
-        b.handler(ethereumChannelInitializer);
+        b.handler(tronChannelInitializer);
 
         // Start the client.
         return b.connect();
