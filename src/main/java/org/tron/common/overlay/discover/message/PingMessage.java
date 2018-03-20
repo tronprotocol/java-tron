@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.node.Node;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.PingMessage.Builder;
@@ -52,20 +53,16 @@ public class PingMessage extends DiscoverMessage {
     }
   }
 
-  public String getFromHost() {
-    return ByteArray.toHexString(this.pingMessage.getFrom().getAddress().toByteArray());
+  public static PingMessage create(Node from, Node to){
+
   }
 
-  public int getFromPort() {
-    return this.pingMessage.getFrom().getUdpPort();
+  public Node getFrom (){
+
   }
 
-  public String getToHost() {
-    return ByteArray.toHexString(this.pingMessage.getTo().getAddress().toByteArray());
-  }
+  public Node getTo(){
 
-  public int getToPort() {
-    return this.pingMessage.getTo().getUdpPort();
   }
 
   @Override

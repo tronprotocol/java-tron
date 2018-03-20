@@ -20,12 +20,12 @@ public class FindNodeMessage extends DiscoverMessage {
     return this.rawData;
   }
 
-  public FindNodeMessage(ByteString target) {
-    this.findNeighbours = FindNeighbours.newBuilder()
-        .setTarget(target)
-        .setTimestamp(System.currentTimeMillis())
-        .build();
-    this.rawData = this.findNeighbours.toByteArray();
+  public create(byte[] targetId) {
+//    this.findNeighbours = FindNeighbours.newBuilder()
+//        .setTarget(target)
+//        .setTimestamp(System.currentTimeMillis())
+//        .build();
+//    this.rawData = this.findNeighbours.toByteArray();
   }
 
   private void unPack() {
@@ -34,6 +34,10 @@ public class FindNodeMessage extends DiscoverMessage {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
+  }
+
+  public byte[] getTargetId(){
+      return null;
   }
 
   @Override

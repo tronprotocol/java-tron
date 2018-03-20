@@ -22,10 +22,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.message.Message;
+
+import java.util.List;
 
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");

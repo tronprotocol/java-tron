@@ -3,6 +3,7 @@ package org.tron.common.overlay.discover.message;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.node.Node;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 
@@ -29,6 +30,16 @@ public class PongMessage extends DiscoverMessage {
         .build();
     this.rawData = this.pongMessage.toByteArray();
   }
+
+  public static PongMessage create(Node from){
+
+  }
+
+  public Node getFrom(){
+
+  }
+
+
 
   private void unPack() {
     try {
