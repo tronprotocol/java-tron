@@ -235,13 +235,13 @@ public class Wallet {
   }
 
   public Transaction createTransaction(TransferAssertContract transferAssertContract) {
-    //TODO
-    return null;
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transferAssertContract);
+    return transactionCapsule.getInstance();
   }
 
   public Transaction createTransaction(TransferTokenToAssetContract transferTokenToAssetContract) {
-    //TODO
-    return null;
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transferTokenToAssetContract);
+    return transactionCapsule.getInstance();
   }
 
   public AssetIssueList getAssetIssueList() {

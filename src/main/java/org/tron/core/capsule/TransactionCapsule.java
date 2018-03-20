@@ -35,7 +35,9 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.TransferAssertContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TransferTokenToAssetContract;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
@@ -189,6 +191,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
             Any.pack(witnessUpdateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(TransferAssertContract transferAssertContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferAssertContract).setParameter(
+            Any.pack(transferAssertContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(TransferTokenToAssetContract transferTokenToAssetContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferTokenToAssetContract)
+            .setParameter(
+                Any.pack(transferTokenToAssetContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
