@@ -24,9 +24,9 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TransferTokenToAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
@@ -269,7 +269,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void transferTokenToAsset(TransferTokenToAssetContract request,
+    public void transferTokenToAsset(ParticipateAssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       ByteString fromBs = request.getOwnerAddress();
 

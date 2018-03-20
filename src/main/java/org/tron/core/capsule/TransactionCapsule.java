@@ -35,9 +35,9 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TransferTokenToAssetContract;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
@@ -204,12 +204,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
-  public TransactionCapsule(TransferTokenToAssetContract transferTokenToAssetContract) {
+  public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
-        Transaction.Contract.newBuilder().setType(ContractType.TransferTokenToAssetContract)
+        Transaction.Contract.newBuilder().setType(ContractType.ParticipateAssetIssueContract)
             .setParameter(
-                Any.pack(transferTokenToAssetContract)).build());
+                Any.pack(participateAssetIssueContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
