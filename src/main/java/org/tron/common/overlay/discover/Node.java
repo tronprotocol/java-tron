@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.node;
+package org.tron.common.overlay.discover;
 
 import org.ethereum.crypto.ECKey;
 import org.ethereum.util.RLP;
@@ -148,34 +148,6 @@ public class Node implements Serializable {
     public void setDiscoveryNode(boolean isDiscoveryNode) {
         isFakeNodeId = isDiscoveryNode;
     }
-
-    /**
-     * Full RLP
-     * [host, udpPort, tcpPort, nodeId]
-     * @return RLP-encoded node data
-     */
-    public byte[] getRLP() {
-        byte[] rlphost = RLP.encodeElement(hostToBytes(host));
-        byte[] rlpTCPPort = RLP.encodeInt(port);
-        byte[] rlpUDPPort = RLP.encodeInt(port);
-        byte[] rlpId = RLP.encodeElement(id);
-
-        return RLP.encodeList(rlphost, rlpUDPPort, rlpTCPPort, rlpId);
-    }
-
-    /**
-     * RLP without nodeId
-     * [host, udpPort, tcpPort]
-     * @return RLP-encoded node data
-     */
-    public byte[] getBriefRLP() {
-        byte[] rlphost = RLP.encodeElement(hostToBytes(host));
-        byte[] rlpTCPPort = RLP.encodeInt(port);
-        byte[] rlpUDPPort = RLP.encodeInt(port);
-
-        return RLP.encodeList(rlphost, rlpUDPPort, rlpTCPPort);
-    }
-
     @Override
     public String toString() {
         return "Node{" +

@@ -17,16 +17,12 @@
  */
 package org.tron.common.overlay.node;
 
-import org.ethereum.net.client.Capability;
-import org.ethereum.net.eth.message.StatusMessage;
-import org.ethereum.net.message.ReasonCode;
-import org.ethereum.net.rlpx.Node;
-import org.ethereum.net.swarm.Statter;
-import org.ethereum.util.ByteUtil;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.utils.ByteUtil;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.min;

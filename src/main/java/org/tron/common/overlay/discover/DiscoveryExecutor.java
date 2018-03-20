@@ -17,7 +17,7 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.ethereum.net.rlpx.discover.table.KademliaOptions;
+import org.tron.common.overlay.discover.table.KademliaOptions;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

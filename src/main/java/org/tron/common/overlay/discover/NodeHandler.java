@@ -19,6 +19,8 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
 import org.tron.common.overlay.discover.message.PingMessage;
 import org.tron.common.overlay.discover.message.PongMessage;
 import org.tron.common.overlay.discover.table.KademliaOptions;

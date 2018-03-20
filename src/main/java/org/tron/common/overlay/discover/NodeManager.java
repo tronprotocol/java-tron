@@ -15,20 +15,19 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.ethereum.net.rlpx.discover;
+package org.tron.common.overlay.discover;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.crypto.ECKey;
-import org.ethereum.db.PeerSource;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.net.rlpx.*;
-import org.ethereum.net.rlpx.discover.table.NodeTable;
-import org.ethereum.util.CollectionUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.overlay.node.Node;
+import org.tron.common.overlay.node.NodeStatistics;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -39,8 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import static java.lang.Math.min;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -63,15 +60,14 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     static final int NODES_TRIM_THRESHOLD = 3000;
 
     PeerConnectionTester peerConnectionManager;
-    PeerSource peerSource;
-    EthereumListener ethereumListener;
+    //EthereumListener ethereumListener;
     SystemProperties config = SystemProperties.getDefault();
 
     Consumer<DiscoveryEvent> messageSender;
 
     NodeTable table;
     private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-    final ECKey key;
+    //final ECKey key;
     final Node homeNode;
     private List<Node> bootNodes;
 
@@ -88,17 +84,15 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     private ScheduledExecutorService pongTimer;
 
     @Autowired
-    public NodeManager(SystemProperties config, EthereumListener ethereumListener,
+    public NodeManager(SystemProperties config,
                        ApplicationContext ctx, PeerConnectionTester peerConnectionManager) {
         this.config = config;
-        this.ethereumListener = ethereumListener;
+        //this.ethereumListener = ethereumListener;
         this.peerConnectionManager = peerConnectionManager;
 
         PERSIST = config.peerDiscoveryPersist();
-        if (PERSIST) peerSource = ctx.getBean(PeerSource.class);
         discoveryEnabled = config.peerDiscovery();
 
-        key = config.getMyKey();
         homeNode = new Node(config.nodeId(), config.externalIp(), config.listenPort());
         table = new NodeTable(homeNode, config.isPublicHomeNode());
 
@@ -139,42 +133,10 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
                 }
             }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
-            if (PERSIST) {
-                dbRead();
-                nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        dbWrite();
-                    }
-                }, DB_COMMIT_RATE, DB_COMMIT_RATE);
-            }
-
             for (Node node : bootNodes) {
                 getNodeHandler(node);
             }
         }
-    }
-
-    private void dbRead() {
-        logger.info("Reading Node statistics from DB: " + peerSource.getNodes().size() + " nodes.");
-        for (Pair<Node, Integer> nodeElement : peerSource.getNodes()) {
-            getNodeHandler(nodeElement.getLeft()).getNodeStatistics().setPersistedReputation(nodeElement.getRight());
-        }
-    }
-
-    private void dbWrite() {
-        List<Pair<Node, Integer>> batch = new ArrayList<>();
-        synchronized (this) {
-            for (NodeHandler handler : nodeHandlerMap.values()) {
-                batch.add(Pair.of(handler.getNode(), handler.getNodeStatistics().getPersistedReputation()));
-            }
-        }
-        peerSource.clear();
-        for (Pair<Node, Integer> nodeElement : batch) {
-            peerSource.getNodes().add(nodeElement);
-        }
-        peerSource.getNodes().flush();
-        logger.info("Write Node statistics to DB: " + peerSource.getNodes().size() + " nodes.");
     }
 
     public void setMessageSender(Consumer<DiscoveryEvent> messageSender) {
@@ -433,7 +395,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
     public static void main(String[] args){
         try {
             logger.info(InetAddress.getLocalHost().toString());
-            java.net.ServerSocket ss = new java.net.ServerSocket(7080);
+            ServerSocket ss = new ServerSocket(7080);
             DatagramSocket socket = new DatagramSocket(7080);
             logger.info(ss.getInetAddress().toString());
             logger.info(ss.getLocalSocketAddress().toString());
