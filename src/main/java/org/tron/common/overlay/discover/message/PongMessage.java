@@ -10,14 +10,14 @@ public class PongMessage extends DiscoverMessage {
 
   private Discover.PongMessage pongMessage;
 
-  public PongMessage(byte[] data) {
-    super(data, MessageTypes.DISCOVER_PONG);
+  public PongMessage(byte[] rawData) {
+    super(MessageTypes.DISCOVER_PONG.asByte(), rawData);
     unPack();
   }
 
   @Override
-  public byte[] getData() {
-    return this.data;
+  public byte[] getRawData() {
+    return this.rawData;
   }
 
   public PongMessage(ByteString toAddress, int toPort, int echo) {
@@ -27,12 +27,12 @@ public class PongMessage extends DiscoverMessage {
         .setEcho(echo)
         .setTimestamp(System.currentTimeMillis())
         .build();
-    this.data = this.pongMessage.toByteArray();
+    this.rawData = this.pongMessage.toByteArray();
   }
 
   private void unPack() {
     try {
-      this.pongMessage = Discover.PongMessage.parseFrom(data);
+      this.pongMessage = Discover.PongMessage.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }

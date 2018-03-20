@@ -8,9 +8,13 @@ public class DisconnectMessage extends P2pMessage {
 
   private Message.DisconnectMessage disconnectMessage;
 
-  public DisconnectMessage(byte[] encoded) {
-    super(encoded);
+  public DisconnectMessage(byte[] rawData) {
+    super(rawData);
     this.type = MessageTypes.P2P_DISCONNECT.asByte();
+  }
+
+  public DisconnectMessage(byte type, byte[] rawData) {
+    super(type, rawData);
   }
 
   /**
@@ -27,7 +31,7 @@ public class DisconnectMessage extends P2pMessage {
 
   private void unPack() {
     try {
-      this.disconnectMessage = Message.DisconnectMessage.parseFrom(data);
+      this.disconnectMessage = Message.DisconnectMessage.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -35,15 +39,15 @@ public class DisconnectMessage extends P2pMessage {
   }
 
   private void pack() {
-    this.data = this.disconnectMessage.toByteArray();
+    this.rawData = this.disconnectMessage.toByteArray();
   }
 
   @Override
-  public byte[] getData() {
-    if (this.data == null) {
+  public byte[] getRawData() {
+    if (this.rawData == null) {
       this.pack();
     }
-    return this.data;
+    return this.rawData;
   }
 
   @Override

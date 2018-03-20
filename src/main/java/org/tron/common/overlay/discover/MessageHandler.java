@@ -23,10 +23,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
+import org.slf4j.LoggerFactory;
 
 
 public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
@@ -55,7 +54,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
     @Override
     public void accept(DiscoveryEvent discoveryEvent) {
         InetSocketAddress address = discoveryEvent.getAddress();
-        sendPacket(discoveryEvent.getMessage().getSendData(), address);
+        sendPacket(discoveryEvent.getMessage().getData(), address);
     }
 
     void sendPacket(byte[] wire, InetSocketAddress address) {
