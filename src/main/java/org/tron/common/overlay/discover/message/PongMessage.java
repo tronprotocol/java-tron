@@ -32,11 +32,11 @@ public class PongMessage extends DiscoverMessage {
   }
 
   public static PongMessage create(Node from){
-
+    return null;
   }
 
   public Node getFrom(){
-
+    return null;
   }
 
 

@@ -19,14 +19,16 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.discover.message.*;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.discover.message.PongMessage;
 import org.tron.common.overlay.discover.table.KademliaOptions;
+import org.tron.common.overlay.message.Message;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.spongycastle.asn1.eac.EACTags.TIMER;
 
 /**
  * The instance of this class responsible for discovery messages exchange with the specified Node
@@ -220,7 +222,7 @@ public class NodeHandler {
 //        logMessage(" ===> [PING] " + this);
         getNodeStatistics().discoverInPing.add();
         if (!nodeManager.table.getNode().equals(node)) {
-            sendPong(msg.getMdc());
+            sendPong();
         }
     }
 
@@ -280,7 +282,7 @@ public class NodeHandler {
             logger.trace("<=/=  [PING] (Waiting for pong) " + this);
         }
 
-        Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
+        Message ping = PingMessage.create(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
         pingSent = System.currentTimeMillis();
@@ -300,9 +302,9 @@ public class NodeHandler {
         }, PingTimeout, TimeUnit.MILLISECONDS);
     }
 
-    void sendPong(byte[] mdc) {
+    void sendPong() {
 //        logMessage("<===  [PONG] " + this);
-        Message pong = PongMessage.create(mdc, node, nodeManager.key);
+        Message pong = PongMessage.create(node);
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
@@ -318,7 +320,7 @@ public class NodeHandler {
 
     void sendFindNode(byte[] target) {
 //        logMessage("<===  [FIND_NODE] " + this);
-        Message findNode = FindNodeMessage.create(target, nodeManager.key);
+        Message findNode = FindNodeMessage.create(target, node);
         logMessage(findNode, false);
         sendMessage(findNode);
         getNodeStatistics().discoverOutFind.add();

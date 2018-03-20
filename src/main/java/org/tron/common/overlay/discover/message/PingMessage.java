@@ -54,15 +54,15 @@ public class PingMessage extends DiscoverMessage {
   }
 
   public static PingMessage create(Node from, Node to){
-
+    return null;
   }
 
   public Node getFrom (){
-
+    return null;
   }
 
   public Node getTo(){
-
+    return null;
   }
 
   @Override
