@@ -66,6 +66,8 @@ public class ActuatorFactory {
         break;
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
+      case TransferTokenToAssetContract:
+        return new TransferTokenToAssetActuator(contract.getParameter(), manager);
       default:
 
     }
