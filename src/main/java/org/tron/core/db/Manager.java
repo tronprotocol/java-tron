@@ -1005,7 +1005,7 @@ public class Manager {
       logger.warn("Witnesses is empty");
       return;
     }
-
+    // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
           getHeadBlockTimeStamp());
