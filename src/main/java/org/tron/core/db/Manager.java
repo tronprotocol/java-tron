@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.ChainConstant.IRREVERSIBLE_THRESHOLD;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
@@ -761,8 +762,9 @@ public class Manager {
       processTransaction(transactionCapsule);
     }
 
+    // todo set reverking db max size.
     this.updateSignedWitness(block);
-
+    this.updateLastConfirmedBlock();
     if (needMaintenance(block.getTimeStamp())) {
       if (block.getNum() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
@@ -770,6 +772,16 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+
+  }
+
+  public void updateLastConfirmedBlock() {
+    List<Long> numbers = wits.stream()
+        .map(wit -> wit.getLatestBlockNum())
+        .sorted()
+        .collect(Collectors.toList());
+    long lastConfirmedNumber = numbers.get((int) (wits.size() * IRREVERSIBLE_THRESHOLD));
+    getDynamicPropertiesStore().setLatestConfirmedBlockNum(lastConfirmedNumber);
   }
 
   /**
