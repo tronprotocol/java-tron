@@ -27,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssertContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferAssertActuator extends AbstractActuator {
@@ -82,9 +83,12 @@ public class TransferAssertActuator extends AbstractActuator {
         throw new ContractValidateException();
       }
 
-      byte[] toKey = transferAssertContract.getToAddress().toByteArray();
-      if (!this.dbManager.getAccountStore().has(toKey)) {
-        throw new ContractValidateException();
+      // if account with to_address is not existed,  create it.
+      ByteString toAddress = transferAssertContract.getToAddress();
+      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
+        AccountCapsule account = new AccountCapsule(toAddress, null,
+            AccountType.Normal);
+        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 
       byte[] nameKey = transferAssertContract.getAssertName().toByteArray();
