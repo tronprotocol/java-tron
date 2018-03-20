@@ -1,26 +1,29 @@
 package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Neighbour;
 import org.tron.protos.Discover.Neighbours;
 
+import java.util.List;
+
 public class NeighborsMessage extends Message {
+
+
 
   private Discover.Neighbours neighbours;
 
   public NeighborsMessage(byte[] data) {
-    super(data);
+    super(data, Message.TYPE_PEERS);
     unPack();
   }
 
-  public NeighborsMessage(List<Neighbour> neighbours, long timestamp) {
+  public NeighborsMessage(List<Neighbour> neighbours) {
+    this.data = this.neighbours.toByteArray();
     this.neighbours = Neighbours.newBuilder()
         .addAllNeighbours(neighbours)
-        .setTimestamp(timestamp)
+        .setTimestamp(System.currentTimeMillis())
         .build();
-    pack();
   }
 
   private void unPack() {
@@ -29,32 +32,15 @@ public class NeighborsMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    unpacked = true;
   }
 
-  private void pack() {
-    this.data = this.neighbours.toByteArray();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
-    return this.data;
+  public Neighbours getNeighbours() {
+    return neighbours;
   }
 
   @Override
   public String toString() {
-
-    String out = String
-        .format("[NeighborsMessage] \n");
-
-    return out;
+    return String.format("[NeighborsMessage] \n");
   }
 
-  @Override
-  public byte getType() {
-    return this.type;
-  }
 }

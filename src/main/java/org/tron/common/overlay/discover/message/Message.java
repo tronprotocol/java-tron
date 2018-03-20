@@ -1,29 +1,25 @@
 package org.tron.common.overlay.discover.message;
 
-import java.security.SignatureException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.BigIntegers;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {
 
   protected static final Logger logger = LoggerFactory.getLogger("Net");
 
+  public static byte TYPE_PING = 1;
+  public static byte TYPE_PONG = 2;
+  public static byte TYPE_FIND_PEER = 3;
+  public static byte TYPE_PEERS = 4;
+
   protected byte[] data;
   protected byte type;
-  protected boolean unpacked;
 
-  public Message() {
-
-  }
-
-  public Message(byte[] data) {
+  public Message(byte[] data, byte type) {
     this.data = data;
+    this.type = type;
   }
 
   public Sha256Hash getMessageId() {
@@ -34,12 +30,29 @@ public abstract class Message {
     return this.data;
   }
 
+  public byte getType() {
+    return type;
+  }
+
   public byte[] getSendData() {
     return ArrayUtils.add(this.data, 0, this.type);
   }
 
-  public byte getType() {
-    return type;
+  public static Message parse(byte[] data){
+    byte[] wire = new byte[data.length - 1];
+    System.arraycopy(data, 1, wire, 0, data.length - 1);
+      switch (data[0]){
+        case 1:
+          return new PingMessage(wire);
+        case 2:
+          return new PongMessage(wire);
+        case 3:
+          return new FindNodeMessage(wire);
+        case 4:
+          return new NeighborsMessage(wire);
+        default:
+            throw new RuntimeException("Bad message");
+      }
   }
 
   @Override

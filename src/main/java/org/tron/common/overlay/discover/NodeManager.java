@@ -164,15 +164,15 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
             ret = new NodeHandler(n ,this);
             nodeHandlerMap.put(key, ret);
             logger.debug(" +++ New node: " + ret + " " + n);
-            if (!n.isDiscovery() && !n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+            if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
+                //ethereumListener.onNodeDiscovered(ret.getNode());
             }
-        } else if (ret.getNode().isDiscovery() && !n.isDiscovery()) {
+        } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
             // we found discovery node with same host:port,
             // replace node with correct nodeId
             ret.node = n;
             if (!n.getHexId().equals(homeNode.getHexId())) {
-                ethereumListener.onNodeDiscovered(ret.getNode());
+                //ethereumListener.onNodeDiscovered(ret.getNode());
             }
             logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
         }

@@ -10,16 +10,16 @@ public class FindNodeMessage extends Message {
   private Discover.FindNeighbours findNeighbours;
 
   public FindNodeMessage(byte[] data) {
-    super(data);
+    super(data, Message.TYPE_FIND_PEER);
     unPack();
   }
 
-  public FindNodeMessage(ByteString target, long timestamp) {
+  public FindNodeMessage(ByteString target) {
+    this.data = this.findNeighbours.toByteArray();
     this.findNeighbours = FindNeighbours.newBuilder()
         .setTarget(target)
-        .setTimestamp(timestamp)
+        .setTimestamp(System.currentTimeMillis())
         .build();
-    pack();
   }
 
   private void unPack() {
@@ -28,32 +28,13 @@ public class FindNodeMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    unpacked = true;
-  }
-
-  private void pack() {
-    this.data = this.findNeighbours.toByteArray();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
-    return this.data;
   }
 
   @Override
   public String toString() {
 
-    String out = String.format("[FindNodeMessage] \n");
+    return String.format("[FindNodeMessage] \n");
 
-    return out;
-  }
-
-  @Override
-  public byte getType() {
-    return this.type;
   }
 
 }

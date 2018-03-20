@@ -18,10 +18,8 @@
 package org.tron.common.overlay.discover;
 
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.utils.ByteUtil;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.min;
@@ -88,7 +86,7 @@ public class NodeStatistics {
     public final StatHandler ethHandshake = new StatHandler();
     public final StatHandler ethInbound = new StatHandler();
     public final StatHandler ethOutbound = new StatHandler();
-    private StatusMessage ethLastInboundStatusMsg = null;
+    //private StatusMessage ethLastInboundStatusMsg = null;
     private BigInteger ethTotalDifficulty = BigInteger.ZERO;
 
     public NodeStatistics(Node node) {
