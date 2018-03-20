@@ -17,26 +17,25 @@
  */
 package org.tron.common.overlay.discover;
 
-
-import org.tron.common.overlay.discover.message.DiscoverMessage;
+import org.tron.common.overlay.discover.message.Message;
 
 import java.net.InetSocketAddress;
 
 public class DiscoveryEvent {
 
-    private DiscoverMessage message;
+    private Message message;
     private InetSocketAddress address;
 
-    public DiscoveryEvent(DiscoverMessage m, InetSocketAddress a) {
+    public DiscoveryEvent(Message m, InetSocketAddress a) {
         message = m;
         address = a;
     }
 
-    public DiscoverMessage getMessage() {
+    public Message getMessage() {
         return message;
     }
 
-    public void setMessage(DiscoverMessage message) {
+    public void setMessage(Message message) {
         this.message = message;
     }
 

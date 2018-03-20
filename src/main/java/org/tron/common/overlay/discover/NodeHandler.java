@@ -19,19 +19,15 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.node.Node;
-import org.tron.common.overlay.node.NodeManager;
 import org.tron.common.overlay.node.NodeStatistics;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.spongycastle.asn1.eac.EACTags.TIMER;
 
 /**
  * The instance of this class responsible for discovery messages exchange with the specified Node
@@ -52,16 +48,16 @@ public class NodeHandler {
     // but could be interesting when discovery just starts
     private void logMessage(Message msg, boolean inbound) {
         String s = String.format("%s[%s (%s)] %s", inbound ? " ===>  " : "<===  ", msg.getClass().getSimpleName(),
-                msg.getPacket().length, this);
+                msg.getData().length, this);
         if (msgInCount > 1024) {
             logger.trace(s);
         } else {
             logger.debug(s);
         }
 
-        if (!inbound && msg.getPacket().length > WARN_PACKET_SIZE) {
+        if (!inbound && msg.getData().length > WARN_PACKET_SIZE) {
             logger.warn("Sending UDP packet exceeding safe size of {} bytes, actual: {} bytes",
-                    WARN_PACKET_SIZE, msg.getPacket().length);
+                    WARN_PACKET_SIZE, msg.getData().length);
             logger.warn(s);
         }
 
@@ -171,7 +167,7 @@ public class NodeHandler {
             // will wait for Pong to assume this alive
             sendPing();
         }
-        if (!node.isDiscovery()) {
+        if (!node.isDiscoveryNode()) {
             if (newState == State.Alive) {
                 Node evictCandidate = nodeManager.table.addNode(this.node);
                 if (evictCandidate == null) {
@@ -286,12 +282,11 @@ public class NodeHandler {
         if (waitForPong) {
             logger.trace("<=/=  [PING] (Waiting for pong) " + this);
         }
-//        logMessage("<===  [PING] " + this);
 
-        Message ping = PingMessage.create(nodeManager.table.getNode(), getNode(), nodeManager.key);
+        Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
-        pingSent = Util.curTime();
+        pingSent = TIMER.curTime();
         sendMessage(ping);
         getNodeStatistics().discoverOutPing.add();
 
