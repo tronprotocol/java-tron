@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.protos.Discover;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -241,7 +240,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
-        for (Discover.Neighbours n : msg.Neighbours()) {
+        for (Node n : msg.getNodes()) {
             nodeManager.getNodeHandler(n);
         }
     }
@@ -284,7 +283,7 @@ public class NodeHandler {
         Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
-        pingSent = TIMER.curTime();
+        pingSent = System.currentTimeMillis();
         sendMessage(ping);
         getNodeStatistics().discoverOutPing.add();
 

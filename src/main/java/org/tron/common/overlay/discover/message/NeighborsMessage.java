@@ -36,7 +36,7 @@ public class NeighborsMessage extends Message {
     }
   }
 
-  public List<Node> getNode(){
+  public List<Node> getNodes(){
     List<Node> nodes = new ArrayList<>();
     neighbours.getNeighboursList().forEach(neighbour -> nodes.add(
             new Node(neighbour.getNodeId().toByteArray(),

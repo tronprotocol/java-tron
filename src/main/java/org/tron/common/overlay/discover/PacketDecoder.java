@@ -37,10 +37,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
         byte[] encoded = new byte[buf.readableBytes()];
         buf.readBytes(encoded);
         try {
-            byte[] wire = new byte[encoded.length - 1];
-            System.arraycopy(encoded, 1, wire, 0, data.length - 1);
-
-            Message msg = Message.;
+            Message msg = Message.parse(encoded);
             DiscoveryEvent event = new DiscoveryEvent(msg, packet.sender());
             out.add(event);
         } catch (Exception e) {
