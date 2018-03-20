@@ -124,7 +124,7 @@ public class NodeHandler {
         NonActive
     }
 
-    Star star;
+    Node node;
     NodeManager nodeManager;
     private NodeStatistics nodeStatistics;
 
@@ -134,18 +134,18 @@ public class NodeHandler {
     int pingTrials = 3;
     NodeHandler replaceCandidate;
 
-    public NodeHandler(Star star, NodeManager nodeManager) {
-        this.star = star;
+    public NodeHandler(Node node, NodeManager nodeManager) {
+        this.node = node;
         this.nodeManager = nodeManager;
         changeState(State.Discovered);
     }
 
     public InetSocketAddress getInetSocketAddress() {
-        return new InetSocketAddress(star.getHost(), star.getPort());
+        return new InetSocketAddress(node.getHost(), node.getPort());
     }
 
-    public Star getStar() {
-        return star;
+    public Node getNode() {
+        return node;
     }
 
     public State getState() {
@@ -154,7 +154,7 @@ public class NodeHandler {
 
     public NodeStatistics getNodeStatistics() {
         if (nodeStatistics == null) {
-            nodeStatistics = new NodeStatistics(star);
+            nodeStatistics = new NodeStatistics(node);
         }
         return nodeStatistics;
     }
@@ -171,9 +171,9 @@ public class NodeHandler {
             // will wait for Pong to assume this alive
             sendPing();
         }
-        if (!star.isDiscovery()) {
+        if (!node.isDiscovery()) {
             if (newState == State.Alive) {
-                Star evictCandidate = nodeManager.table.addNode(this.star);
+                Node evictCandidate = nodeManager.table.addNode(this.node);
                 if (evictCandidate == null) {
                     newState = State.Active;
                 } else {
@@ -186,7 +186,7 @@ public class NodeHandler {
             if (newState == State.Active) {
                 if (oldState == State.Alive) {
                     // new node won the challenge
-                    nodeManager.table.addNode(star);
+                    nodeManager.table.addNode(node);
                 } else if (oldState == State.EvictCandidate) {
                     // nothing to do here the node is already in the table
                 } else {
@@ -198,7 +198,7 @@ public class NodeHandler {
                 if (oldState == State.EvictCandidate) {
                     // lost the challenge
                     // Removing ourselves from the table
-                    nodeManager.table.dropNode(star);
+                    nodeManager.table.dropNode(node);
                     // Congratulate the winner
                     replaceCandidate.changeState(State.Active);
                 } else if (oldState == State.Alive) {
@@ -226,7 +226,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [PING] " + this);
         getNodeStatistics().discoverInPing.add();
-        if (!nodeManager.table.getNode().equals(star)) {
+        if (!nodeManager.table.getNode().equals(node)) {
             sendPong(msg.getMdc());
         }
     }
@@ -247,7 +247,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
-        for (Star n : msg.getNodes()) {
+        for (Node n : msg.getNodes()) {
             nodeManager.getNodeHandler(n);
         }
     }
@@ -256,12 +256,12 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [FIND_NODE] " + this);
         getNodeStatistics().discoverInFind.add();
-        List<Star> closest = nodeManager.table.getClosestNodes(msg.getTarget());
+        List<Node> closest = nodeManager.table.getClosestNodes(msg.getTarget());
 
-        Star publicHomeStar = nodeManager.getPublicHomeNode();
-        if (publicHomeStar != null) {
+        Node publicHomeNode = nodeManager.getPublicHomeNode();
+        if (publicHomeNode != null) {
             if (closest.size() == KademliaOptions.BUCKET_SIZE) closest.remove(closest.size() - 1);
-            closest.add(publicHomeStar);
+            closest.add(publicHomeNode);
         }
 
         sendNeighbours(closest);
@@ -288,7 +288,7 @@ public class NodeHandler {
         }
 //        logMessage("<===  [PING] " + this);
 
-        Message ping = PingMessage.create(nodeManager.table.getNode(), getStar(), nodeManager.key);
+        Message ping = PingMessage.create(nodeManager.table.getNode(), getNode(), nodeManager.key);
         logMessage(ping, false);
         waitForPong = true;
         pingSent = Util.curTime();
@@ -310,13 +310,13 @@ public class NodeHandler {
 
     void sendPong(byte[] mdc) {
 //        logMessage("<===  [PONG] " + this);
-        Message pong = PongMessage.create(mdc, star, nodeManager.key);
+        Message pong = PongMessage.create(mdc, node, nodeManager.key);
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
     }
 
-    void sendNeighbours(List<Star> neighbours) {
+    void sendNeighbours(List<Node> neighbours) {
 //        logMessage("<===  [NEIGHBOURS] " + this);
         NeighborsMessage neighbors = NeighborsMessage.create(neighbours, nodeManager.key);
         logMessage(neighbors, false);
@@ -338,8 +338,8 @@ public class NodeHandler {
 
     @Override
     public String toString() {
-        return "NodeHandler[state: " + state + ", node: " + star.getHost() + ":" + star.getPort() + ", id="
-                + (star.getId().length > 0 ? Hex.toHexString(star.getId(), 0, 4) : "empty") + "]";
+        return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort() + ", id="
+                + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
     }
 
 
