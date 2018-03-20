@@ -1,9 +1,11 @@
 package org.tron.common.overlay.discover.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
+import org.tron.protos.Discover.Endpoint;
+import org.tron.protos.Discover.PingMessage.Builder;
 
 public class PingMessage extends Message {
 
@@ -17,6 +19,28 @@ public class PingMessage extends Message {
   public PingMessage(Discover.PingMessage pingMessage){
       this.pingMessage = pingMessage;
       pack();
+  }
+
+  public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
+      int toPort, int timestamp) {
+    Builder builder = Discover.PingMessage.newBuilder()
+        .setVersion(version)
+        .setTimestamp(timestamp);
+
+    Endpoint fromEndpoint = Endpoint.newBuilder()
+        .setAddress(fromAddress)
+        .setTcpPort(fromPort)
+        .setUdpPort(fromPort)
+        .build();
+
+    Endpoint toEndpoint = Endpoint.newBuilder()
+        .setAddress(toAddress)
+        .setTcpPort(toPort)
+        .setUdpPort(toPort)
+        .build();
+
+    this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
+    pack();
   }
 
   private void unPack() {
