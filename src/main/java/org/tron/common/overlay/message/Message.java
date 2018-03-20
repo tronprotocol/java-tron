@@ -23,13 +23,11 @@ public abstract class Message {
 
   }
 
-  public Message(byte[] data, boolean isSendData) {
-    if (isSendData) {
-      this.data = ArrayUtils.subarray(data, 1, data.length);
-      this.type = data[0];
-    } else {
-      this.data = data;
-    }
+  public Message(byte[] data, MessageTypes type) {
+
+    this.data = data;
+
+    this.type = type.asByte();
 
     unpacked = false;
   }
