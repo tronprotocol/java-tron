@@ -1,7 +1,6 @@
 package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 
 public class FindNodeMessage extends Message {
@@ -10,6 +9,7 @@ public class FindNodeMessage extends Message {
 
   public FindNodeMessage(byte[] data) {
     super(data);
+    unPack();
   }
 
   private void unPack() {
@@ -44,8 +44,8 @@ public class FindNodeMessage extends Message {
   }
 
   @Override
-  public MessageTypes getType() {
-    return null;
+  public byte getType() {
+    return this.type;
   }
 
 }
