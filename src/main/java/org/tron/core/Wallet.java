@@ -47,9 +47,9 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TransferTokenToAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
@@ -239,8 +239,9 @@ public class Wallet {
     return transactionCapsule.getInstance();
   }
 
-  public Transaction createTransaction(TransferTokenToAssetContract transferTokenToAssetContract) {
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transferTokenToAssetContract);
+  public Transaction createTransaction(
+      ParticipateAssetIssueContract participateAssetIssueContract) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(participateAssetIssueContract);
     return transactionCapsule.getInstance();
   }
 
