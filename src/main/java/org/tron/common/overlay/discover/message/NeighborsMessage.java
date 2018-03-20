@@ -1,8 +1,10 @@
 package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.message.MessageTypes;
+import java.util.List;
 import org.tron.protos.Discover;
+import org.tron.protos.Discover.Neighbour;
+import org.tron.protos.Discover.Neighbours;
 
 public class NeighborsMessage extends Message {
 
@@ -10,6 +12,15 @@ public class NeighborsMessage extends Message {
 
   public NeighborsMessage(byte[] data) {
     super(data);
+    unPack();
+  }
+
+  public NeighborsMessage(List<Neighbour> neighbours, int timestamp) {
+    this.neighbours = Neighbours.newBuilder()
+        .addAllNeighbours(neighbours)
+        .setTimestamp(timestamp)
+        .build();
+    pack();
   }
 
   private void unPack() {
@@ -43,7 +54,7 @@ public class NeighborsMessage extends Message {
   }
 
   @Override
-  public MessageTypes getType() {
-    return null;
+  public byte getType() {
+    return this.type;
   }
 }

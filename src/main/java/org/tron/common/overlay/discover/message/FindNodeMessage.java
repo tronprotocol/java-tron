@@ -1,8 +1,9 @@
 package org.tron.common.overlay.discover.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
+import org.tron.protos.Discover.FindNeighbours;
 
 public class FindNodeMessage extends Message {
 
@@ -10,6 +11,15 @@ public class FindNodeMessage extends Message {
 
   public FindNodeMessage(byte[] data) {
     super(data);
+    unPack();
+  }
+
+  public FindNodeMessage(ByteString target, int timestamp) {
+    this.findNeighbours = FindNeighbours.newBuilder()
+        .setTarget(target)
+        .setTimestamp(timestamp)
+        .build();
+    pack();
   }
 
   private void unPack() {
@@ -44,8 +54,8 @@ public class FindNodeMessage extends Message {
   }
 
   @Override
-  public MessageTypes getType() {
-    return null;
+  public byte getType() {
+    return this.type;
   }
 
 }

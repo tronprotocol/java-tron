@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.discover.HandshakeHandler;
 import org.tron.common.overlay.discover.P2pHandler;
 import org.tron.common.overlay.discover.message.HelloMessage;
 import org.tron.common.overlay.discover.message.P2pMessageFactory;

@@ -1,16 +1,46 @@
 package org.tron.common.overlay.discover.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
+import org.tron.protos.Discover.Endpoint;
+import org.tron.protos.Discover.PingMessage.Builder;
 
 public class PingMessage extends Message {
 
   private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) {
-    super(data);
+      super(data);
+      unPack();
+  }
+
+  public PingMessage(Discover.PingMessage pingMessage){
+      this.pingMessage = pingMessage;
+      pack();
+  }
+
+  public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
+      int toPort, int timestamp) {
+    Builder builder = Discover.PingMessage.newBuilder()
+        .setVersion(version)
+        .setTimestamp(timestamp);
+
+    Endpoint fromEndpoint = Endpoint.newBuilder()
+        .setAddress(fromAddress)
+        .setTcpPort(fromPort)
+        .setUdpPort(fromPort)
+        .build();
+
+    Endpoint toEndpoint = Endpoint.newBuilder()
+        .setAddress(toAddress)
+        .setTcpPort(toPort)
+        .setUdpPort(toPort)
+        .build();
+
+    this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
+    pack();
   }
 
   private void unPack() {
@@ -19,38 +49,25 @@ public class PingMessage extends Message {
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    unpacked = true;
   }
 
   private void pack() {
     this.data = this.pingMessage.toByteArray();
   }
 
-  @Override
-  public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
-    return this.data;
-  }
-
   public String getFromHost() {
-    this.unPack();
     return ByteArray.toHexString(this.pingMessage.getFrom().getAddress().toByteArray());
   }
 
   public int getFromPort() {
-    this.unPack();
     return this.pingMessage.getFrom().getUdpPort();
   }
 
   public String getToHost() {
-    this.unPack();
     return ByteArray.toHexString(this.pingMessage.getTo().getAddress().toByteArray());
   }
 
   public int getToPort() {
-    this.unPack();
     return this.pingMessage.getTo().getUdpPort();
   }
 
@@ -63,8 +80,4 @@ public class PingMessage extends Message {
     return out;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return null;
-  }
 }
