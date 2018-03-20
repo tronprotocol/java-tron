@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -25,7 +26,7 @@ public class ManagerTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
-  private static String dbPath = "output_manager";
+  private static String dbPath = "output_manager_test";
 
   @BeforeClass
   public static void init() {
@@ -40,26 +41,13 @@ public class ManagerTest {
             ECKey.fromPrivate(ByteArray.fromHexString(Args.getInstance().getPrivateKey()))
                 .getAddress()));
     blockCapsule2.setMerkleRoot();
-    blockCapsule2.sign(Args.getInstance().getPrivateKey().getBytes());
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
   }
 
   @AfterClass
   public static void removeDb() {
-    File dbFolder = new File(dbPath);
-    deleteFolder(dbFolder);
-  }
-
-  private static void deleteFolder(File index) {
-    if (!index.isDirectory() || index.listFiles().length <= 0) {
-      index.delete();
-      return;
-    }
-    for (File file : index.listFiles()) {
-      if (null != file) {
-        deleteFolder(file);
-      }
-    }
-    index.delete();
+    Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -106,7 +94,7 @@ public class ManagerTest {
         transactionCapsule.getInstance().getRawData().getVout(0).getValue());
   }
 
-  @Test
+  //  @Test
   public void updateWits() {
     int sizePrv = dbManager.getWitnesses().size();
     dbManager.getWitnesses().forEach(witnessCapsule -> {

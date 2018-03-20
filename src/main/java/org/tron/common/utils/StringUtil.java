@@ -13,18 +13,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.command;
+package org.tron.common.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class StringUtil {
 
-public class CliTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
-  //    @Test
-  //    public void testCli() {
-  //        Cli cli = new Cli();
-  //        cli.run(Peer.getInstance(Peer.PEER_NORMAL));
-  //    }
+  /**
+   * n-bits hex string.
+   *
+   * @param str target string
+   * @param bits string bits
+   */
+  public static boolean isHexString(String str, int bits) {
+    String regex = "^[A-Fa-f0-9]{" + bits + "}$";
+    if (str.matches(regex)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

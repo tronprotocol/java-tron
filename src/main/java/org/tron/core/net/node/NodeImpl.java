@@ -340,6 +340,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             blockWaitToProcBak.clear();
           }
 
+          isBlockProc[0] = false;
           Set<BlockMessage> pool = new HashSet<>();
           pool.addAll(blockWaitToProc);
           pool.forEach(msg -> {
@@ -423,16 +424,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
-    if (peer.getAdvObjWeRequested().containsKey(blkMsg.getBlockId())) {
+    HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
+    HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
+    BlockId blockId = blkMsg.getBlockId();
+
+    if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
-      peer.getAdvObjWeRequested().remove(blkMsg.getBlockId());
+      advObjWeRequested.remove(blockId);
       processAdvBlock(peer, blkMsg.getBlockCapsule());
       startFetchItem();
-    } else if (peer.getSyncBlockRequested().containsKey(blkMsg.getBlockId())) {
+    } else if (syncBlockRequested.containsKey(blockId)) {
       //sync mode
-      peer.getSyncBlockRequested().remove(blkMsg.getBlockId());
-      //peer.getSyncBlockToFetch().remove(blkMsg.getBlockId());
-      syncBlockIdWeRequested.remove(blkMsg.getBlockId());
+      syncBlockRequested.remove(blockId);
+      //peer.getSyncBlockToFetch().remove(blockId);
+      syncBlockIdWeRequested.remove(blockId);
       //TODO: maybe use consume pipe here better
       blockWaitToProcBak.add(blkMsg);
       //processSyncBlock(blkMsg.getBlockCapsule());

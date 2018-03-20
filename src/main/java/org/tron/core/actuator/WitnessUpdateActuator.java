@@ -11,26 +11,31 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class WitnessCreateActuator extends AbstractActuator {
+public class WitnessUpdateActuator extends AbstractActuator {
+  private static final Logger logger = LoggerFactory.getLogger("WitnessUpdateActuator");
 
-
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
-
-  WitnessCreateActuator(final Any contract, final Manager dbManager) {
+  WitnessUpdateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
 
+  private void updateWitness(final WitnessUpdateContract witnessUpdateContract) {
+    final WitnessCapsule witnessCapsule = new WitnessCapsule(witnessUpdateContract.getOwnerAddress(),
+            0, witnessUpdateContract.getUpdateUrl().toString());
+
+    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(),
+            witnessCapsule);
+  }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final WitnessCreateContract witnessCreateContract = this.contract
-          .unpack(WitnessCreateContract.class);
-      this.createWitness(witnessCreateContract);
+      final WitnessUpdateContract witnessUpdateContract = this.contract
+          .unpack(WitnessUpdateContract.class);
+      this.updateWitness(witnessUpdateContract);
       ret.setStatus(fee, code.SUCESS);
     } catch (final InvalidProtocolBufferException e) {
       e.printStackTrace();
@@ -43,43 +48,32 @@ public class WitnessCreateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     try {
-      if (!this.contract.is(WitnessCreateContract.class)) {
+      if (!this.contract.is(WitnessUpdateContract.class)) {
         throw new ContractValidateException(
-            "contract type error,expected type [AccountCreateContract],real type[" + this.contract
+            "contract type error,expected type [WitnessUpdateContract],real type[" + this.contract
                 .getClass() + "]");
       }
 
-      final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
-
+      final WitnessUpdateContract contract = this.contract.unpack(WitnessUpdateContract.class);
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
-
-      if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) != null) {
-        throw new ContractValidateException("Witness has existed");
+      if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
+        throw new ContractValidateException("Witness not existed");
       }
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
+
     return true;
   }
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(WitnessCreateContract.class).getOwnerAddress();
+    return contract.unpack(WitnessUpdateContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
     return 0;
   }
-
-  private void createWitness(final WitnessCreateContract witnessCreateContract) {
-    //Create Witness by witnessCreateContract
-    final WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toStringUtf8());
-
-    logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
-    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
-  }
-
 }

@@ -15,6 +15,9 @@
 
 package org.tron.core.config.args;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 
 public class LocalWitnesses {
@@ -25,7 +28,24 @@ public class LocalWitnesses {
     return this.privateKeys;
   }
 
+  /**
+   * Private key of ECKey.
+   */
   public void setPrivateKeys(final List<String> privateKeys) {
+    if (CollectionUtils.isEmpty(privateKeys)) {
+      return;
+    }
     this.privateKeys = privateKeys;
+    for (String privateKey : privateKeys) {
+      if (StringUtils.startsWithIgnoreCase(privateKey, "0X")) {
+        privateKey = privateKey.substring(2);
+      }
+
+      if (StringUtils.isNotBlank(privateKey) && privateKey.length() != 66) {
+        throw new IllegalArgumentException(
+            "Private key(" + privateKey + ") must be 66-bits hex string.");
+      }
+    }
+
   }
 }

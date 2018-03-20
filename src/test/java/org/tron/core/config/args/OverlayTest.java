@@ -13,20 +13,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.utils;
+package org.tron.core.config.args;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class LoggerTest {
-  private static final Logger logger = LoggerFactory.getLogger("Test");
+public class OverlayTest {
+
+  private Overlay overlay = new Overlay();
+
+  @Before
+  public void setOverlay() {
+    overlay.setPort(8080);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void whenSetOutOfBoundsPort() {
+    overlay.setPort(-1);
+  }
 
   @Test
-  public void testLogger() {
-    logger.debug("test debug: {}", "success");
-    logger.info("test info: {}", "success");
-    logger.warn("test warn: {}", "success");
-    logger.error("test error: {}", "success");
+  public void getOverlay() {
+    Assert.assertEquals(8080, overlay.getPort());
   }
 }

@@ -43,7 +43,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       if (this == o) {
         return true;
       }
-      if (o == null || (getClass() != o.getClass() && !o.getClass().equals(Sha256Hash.class))) {
+      if (o == null || (getClass() != o.getClass() && !(o instanceof Sha256Hash))) {
         return false;
       }
       return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
@@ -303,6 +303,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   @Override
   public String toString() {
     unPack();
-    return this.block.toString();
+    return "BlockCapsule{" +
+        "blockId=" + blockId +
+        ", num=" + getNum() +
+        ", parentId=" + getParentHash() +
+        ", generatedByMyself=" + generatedByMyself +
+        '}';
   }
 }

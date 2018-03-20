@@ -54,12 +54,15 @@ public class TransferAssertActuator extends AbstractActuator {
       byte[] toKey = transferAssertContract.getToAddress().toByteArray();
       ByteString assertName = transferAssertContract.getAssertName();
       long amount = transferAssertContract.getAmount();
+
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerKey);
       ownerAccountCapsule.reduceAssetAmount(assertName, amount);
       accountStore.put(ownerKey, ownerAccountCapsule);
+
       AccountCapsule toAccountCapsule = accountStore.get(toKey);
       toAccountCapsule.addAssetAmount(assertName, amount);
       accountStore.put(toKey, toAccountCapsule);
+
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
@@ -92,14 +95,14 @@ public class TransferAssertActuator extends AbstractActuator {
       long amount = transferAssertContract.getAmount();
 
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
-      Map<String, Long> asset = ownerAccount.getAsset();
+      Map<String, Long> asset = ownerAccount.getAssetMap();
 
       if (asset.isEmpty()) {
         throw new ContractValidateException();
       }
 
-      Long assetAmount = asset.get(ByteArray.toHexString(nameKey));
-      if (amount > assetAmount || amount <= 0 || assetAmount <= 0) {
+      Long assetAmount = asset.get(ByteArray.toStr(nameKey));
+      if (amount <= 0 || null == assetAmount || amount > assetAmount || assetAmount <= 0) {
         throw new ContractValidateException();
       }
     } catch (InvalidProtocolBufferException e) {

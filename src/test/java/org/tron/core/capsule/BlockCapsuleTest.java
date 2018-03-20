@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
@@ -22,7 +23,7 @@ public class BlockCapsuleTest {
       .copyFrom(ByteArray
           .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
       ByteString.copyFrom("1234567".getBytes()));
-  private static String dbPath = "output_bloackcapsule";
+  private static String dbPath = "output_bloackcapsule_test";
 
   @BeforeClass
   public static void init() {
@@ -32,29 +33,16 @@ public class BlockCapsuleTest {
 
   @AfterClass
   public static void removeDb() {
-    File dbFolder = new File(dbPath);
-    deleteFolder(dbFolder);
-  }
-
-  private static void deleteFolder(File index) {
-    if (!index.isDirectory() || index.listFiles().length <= 0) {
-      index.delete();
-      return;
-    }
-    for (File file : index.listFiles()) {
-      if (null != file) {
-        deleteFolder(file);
-      }
-    }
-    index.delete();
+    Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
   public void testCalcMerkleRoot() {
     blockCapsule0.setMerkleRoot();
     Assert.assertEquals(
-            Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
-            blockCapsule0.getMerkleRoot().toString());
+        Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
 
@@ -65,8 +53,8 @@ public class BlockCapsuleTest {
     blockCapsule0.setMerkleRoot();
 
     Assert.assertEquals(
-            "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
-            blockCapsule0.getMerkleRoot().toString());
+        "fbf357d2f8c5db313e87bf0cb67dc69db4e11aef31bdfe6c2faa4519d91372a1",
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }

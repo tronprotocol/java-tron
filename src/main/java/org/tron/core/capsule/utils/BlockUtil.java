@@ -39,7 +39,7 @@ public class BlockUtil {
             .add(TransactionUtil
                 .newGenesisTransaction(key.getAddress(), key.getBalance())));
 
-    long timestamp = Long.parseLong(genesisBlockArg.getTimeStamp());
+    long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());
     ByteString parentHash = ByteString
         .copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash()));
     long number = Long.parseLong(genesisBlockArg.getNumber());
@@ -47,7 +47,7 @@ public class BlockUtil {
     BlockCapsule blockCapsule = new BlockCapsule(timestamp, parentHash, number, transactionList);
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.sign(Args.getInstance().getPrivateKey().getBytes());
+    blockCapsule.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
     blockCapsule.generatedByMyself = true;
 
     return blockCapsule;
