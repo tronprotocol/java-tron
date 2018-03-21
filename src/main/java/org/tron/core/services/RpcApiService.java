@@ -10,8 +10,10 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -22,11 +24,14 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 public class RpcApiService implements Service {
@@ -82,7 +87,7 @@ public class RpcApiService implements Service {
 
 
     @Override
-    public void getBalance(Account req, StreamObserver<Account> responseObserver) {
+    public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         //      byte[] addressBa = addressBs.toByteArray();
@@ -208,7 +213,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void updateWitness(Contract.WitnessUpdateContract req,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       if (req.getOwnerAddress() != null) {
         Transaction trx = wallet.createTransaction(req);
         responseObserver.onNext(trx);
@@ -218,6 +223,19 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
+      responseObserver.onNext(wallet.getNowBlock());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
+      responseObserver.onNext(wallet.getBlockByNum(request.getNum()));
+      responseObserver.onCompleted();
+    }
+
     @Override
     public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
       responseObserver.onNext(wallet.getAllAccounts());
@@ -234,6 +252,41 @@ public class RpcApiService implements Service {
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
       // TODO: this.app.getP2pNode().getActiveNodes();
       super.listNodes(request, responseObserver);
+    }
+
+    @Override
+    public void transferAsset(TransferAssetContract request,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = request.getOwnerAddress();
+
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void participateAssetIssue(ParticipateAssetIssueContract request,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString fromBs = request.getOwnerAddress();
+
+      if (fromBs != null) {
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueList(EmptyMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      responseObserver.onNext(wallet.getAssetIssueList());
+      responseObserver.onCompleted();
     }
   }
 
