@@ -177,6 +177,8 @@ public class ManagerTest {
           blockCapsule1.getParentHash());
       Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      Assert.assertEquals(dbManager.getHead().getBlockId().getByteString(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
       e.printStackTrace();
     }
