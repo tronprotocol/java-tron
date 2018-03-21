@@ -17,14 +17,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Contract.AssetIssueContract;
 
+@Slf4j
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
-
-  protected static final Logger logger = LoggerFactory.getLogger("AssetIssueCapsule");
-
   private AssetIssueContract assetIssueContract;
 
   /**
@@ -58,5 +55,21 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   public ByteString getName() {
     return this.assetIssueContract.getName();
+  }
+
+  public int getNum() {
+    return this.assetIssueContract.getNum();
+  }
+
+  public int getTrxNum() {
+    return this.assetIssueContract.getTrxNum();
+  }
+
+  public long getStartTime() {
+    return this.assetIssueContract.getStartTime();
+  }
+
+  public long getEndTime() {
+    return this.assetIssueContract.getEndTime();
   }
 }

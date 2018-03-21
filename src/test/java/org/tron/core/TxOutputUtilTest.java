@@ -15,18 +15,15 @@
 
 package org.tron.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.protos.Protocol.TXOutput;
 
+@Slf4j
 public class TxOutputUtilTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testNewTxOutput() {
     long value = 123456L;

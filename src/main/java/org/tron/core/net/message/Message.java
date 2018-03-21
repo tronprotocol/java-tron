@@ -1,13 +1,10 @@
 package org.tron.core.net.message;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 
+@Slf4j
 public abstract class Message {
-
-  protected static final Logger logger = LoggerFactory.getLogger("net");
-
   protected boolean unpacked;
   protected byte[] data;
   protected byte type;
@@ -18,7 +15,6 @@ public abstract class Message {
   public Message(byte[] packed) {
     this.data = packed;
     unpacked = false;
-
   }
 
   public Sha256Hash getMessageId() {

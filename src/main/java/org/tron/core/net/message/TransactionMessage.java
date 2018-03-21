@@ -1,9 +1,11 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class TransactionMessage extends Message {
 
   private Transaction trx;

@@ -22,8 +22,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -35,6 +34,8 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
@@ -42,10 +43,8 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
+@Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
-
-  private static final Logger logger = LoggerFactory.getLogger("Transaction");
-
   private Transaction transaction;
 
   /**
@@ -148,12 +147,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return; //The balance is not enough
     }
 
-    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
-
-    if (to == null) {
-      return; //to is invalid
-    }
-
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
@@ -189,6 +182,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
             Any.pack(witnessUpdateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(TransferAssetContract transferAssetContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferAssetContract).setParameter(
+            Any.pack(transferAssetContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.ParticipateAssetIssueContract)
+            .setParameter(
+                Any.pack(participateAssetIssueContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
@@ -259,9 +271,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferContract.class)
               .getOwnerAddress();
           break;
-        case TransferAssertContract:
+        case TransferAssetContract:
           owner = contract.getParameter()
-              .unpack(org.tron.protos.Contract.TransferAssertContract.class).getOwnerAddress();
+              .unpack(org.tron.protos.Contract.TransferAssetContract.class).getOwnerAddress();
           break;
         case VoteAssetContract:
           owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteAssetContract.class)
