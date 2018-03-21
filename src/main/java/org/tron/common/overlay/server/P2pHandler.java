@@ -41,50 +41,46 @@ import java.util.concurrent.TimeUnit;
 /**
  * Process the basic protocol messages between every peer on the network.
  *
- * Peers can send/receive
- * <ul>
- *  <li>HELLO       :   Announce themselves to the network</li>
- *  <li>DISCONNECT  :   Disconnect themselves from the network</li>
- *  <li>GET_PEERS   :   Request a list of other knows peers</li>
- *  <li>PEERS       :   Send a list of known peers</li>
- *  <li>PING        :   Check if another peer is still alive</li>
- *  <li>PONG        :   Confirm that they themselves are still alive</li>
- * </ul>
+ * Peers can send/receive <ul> <li>HELLO       :   Announce themselves to the network</li>
+ * <li>DISCONNECT  :   Disconnect themselves from the network</li> <li>GET_PEERS   :   Request a
+ * list of other knows peers</li> <li>PEERS       :   Send a list of known peers</li> <li>PING
+ *  :   Check if another peer is still alive</li> <li>PONG        :   Confirm that they themselves
+ * are still alive</li> </ul>
  */
 @Component
 @Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
-    public final static byte VERSION = 5;
+  public final static byte VERSION = 5;
 
-    private final static Logger logger = LoggerFactory.getLogger("net");
+  private final static Logger logger = LoggerFactory.getLogger("net");
 
-    private static ScheduledExecutorService pingTimer =
-            Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
+  private static ScheduledExecutorService pingTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
 
 //    private MessageQueue msgQueue;
 
-    private boolean peerDiscoveryMode = false;
+  private boolean peerDiscoveryMode = false;
 
-    //private HelloMessage handshakeHelloMessage = null;
+  //private HelloMessage handshakeHelloMessage = null;
 
-    private int ethInbound;
-    private int ethOutbound;
+  private int ethInbound;
+  private int ethOutbound;
 
-    @Autowired
-    TronChannelInitializer tronListener;
+  @Autowired
+  TronChannelInitializer tronListener;
 
-    @Autowired
-    SystemProperties config;
+  @Autowired
+  SystemProperties config;
 
-    private Channel channel;
-    private ScheduledFuture<?> pingTask;
+  private Channel channel;
+  private ScheduledFuture<?> pingTask;
 
 
-    public P2pHandler() {
+  public P2pHandler() {
 
-        this.peerDiscoveryMode = false;
-    }
+    this.peerDiscoveryMode = false;
+  }
 
 //    public P2pHandler(MessageQueue msgQueue, boolean peerDiscoveryMode) {
 //        this.msgQueue = msgQueue;
@@ -92,148 +88,148 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 //    }
 
 
-    public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
-        this.peerDiscoveryMode = peerDiscoveryMode;
-    }
+  public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
+    this.peerDiscoveryMode = peerDiscoveryMode;
+  }
 
 
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("P2P protocol activated");
+  @Override
+  public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+    logger.debug("P2P protocol activated");
 //        msgQueue.activate(ctx);
-        //tronListener.trace("P2P protocol activated");
+    //tronListener.trace("P2P protocol activated");
 
-        startTimers();
+    startTimers();
+  }
+
+
+  @Override
+  public void channelRead0(final ChannelHandlerContext ctx, P2pMessage msg)
+      throws InterruptedException {
+
+    if (P2pMessageCodes.inRange(msg.getCommand().asByte())) {
+      logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
     }
 
+    //tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
-    @Override
-    public void channelRead0(final ChannelHandlerContext ctx, P2pMessage msg) throws InterruptedException {
-
-        if (P2pMessageCodes.inRange(msg.getCommand().asByte()))
-            logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
-
-        //tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
-
-        switch (msg.getCommand()) {
-            case HELLO:
+    switch (msg.getCommand()) {
+      case HELLO:
 //                msgQueue.receivedMessage(msg);
-                setHandshake((HelloMessage) msg, ctx);
+        setHandshake((HelloMessage) msg, ctx);
 //                sendGetPeers();
-                break;
-            case DISCONNECT:
+        break;
+      case DISCONNECT:
 //                msgQueue.receivedMessage(msg);
-                channel.getNodeStatistics().nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
-                processDisconnect(ctx, (DisconnectMessage) msg);
-                break;
-            case PING:
+        channel.getNodeStatistics().nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
+        processDisconnect(ctx, (DisconnectMessage) msg);
+        break;
+      case PING:
 //                msgQueue.receivedMessage(msg);
-                //TODO: send pong message
-                //ctx.writeAndFlush(PONG_MESSAGE);
-                break;
-            case PONG:
+        //TODO: send pong message
+        //ctx.writeAndFlush(PONG_MESSAGE);
+        break;
+      case PONG:
 //                msgQueue.receivedMessage(msg);
-                channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
-                break;
-            default:
-                ctx.fireChannelRead(msg);
-                break;
-        }
+        channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
+        break;
+      default:
+        ctx.fireChannelRead(msg);
+        break;
     }
+  }
 
-    private void disconnect(ReasonCode reasonCode) {
+  private void disconnect(ReasonCode reasonCode) {
 //        msgQueue.sendMessage(new DisconnectMessage(reasonCode));
-        channel.getNodeStatistics().nodeDisconnectedLocal(reasonCode);
+    channel.getNodeStatistics().nodeDisconnectedLocal(reasonCode);
+  }
+
+  @Override
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    logger.debug("channel inactive: ", ctx.toString());
+    this.killTimers();
+  }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    logger.warn("P2p handling failed", cause);
+    ctx.close();
+    killTimers();
+  }
+
+  private void processDisconnect(ChannelHandlerContext ctx, DisconnectMessage msg) {
+
+    if (logger.isInfoEnabled() && msg.getReason() == ReasonCode.USELESS_PEER) {
+
+      if (channel.getNodeStatistics().ethInbound.get() - ethInbound > 1 ||
+          channel.getNodeStatistics().ethOutbound.get() - ethOutbound > 1) {
+
+        // it means that we've been disconnected
+        // after some incorrect action from our peer
+        // need to log this moment
+        logger.debug("From: \t{}\t [DISCONNECT reason=BAD_PEER_ACTION]", channel);
+      }
     }
+    ctx.close();
+    killTimers();
+  }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("channel inactive: ", ctx.toString());
-        this.killTimers();
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.warn("P2p handling failed", cause);
-        ctx.close();
-        killTimers();
-    }
-
-    private void processDisconnect(ChannelHandlerContext ctx, DisconnectMessage msg) {
-
-        if (logger.isInfoEnabled() && msg.getReason() == ReasonCode.USELESS_PEER) {
-
-            if (channel.getNodeStatistics().ethInbound.get() - ethInbound > 1 ||
-                    channel.getNodeStatistics().ethOutbound.get() - ethOutbound > 1) {
-
-                // it means that we've been disconnected
-                // after some incorrect action from our peer
-                // need to log this moment
-                logger.debug("From: \t{}\t [DISCONNECT reason=BAD_PEER_ACTION]", channel);
-            }
-        }
-        ctx.close();
-        killTimers();
-    }
-
-    private void sendGetPeers() {
+  private void sendGetPeers() {
 //        msgQueue.sendMessage(StaticMessages.GET_PEERS_MESSAGE);
-    }
+  }
 
 
-    public void setHandshake(HelloMessage msg, ChannelHandlerContext ctx) {
+  public void setHandshake(HelloMessage msg, ChannelHandlerContext ctx) {
 
-
-        channel.getNodeStatistics().setClientId(msg.getClientId());
+    channel.getNodeStatistics().setClientId(msg.getClientId());
 //        channel.getNodeStatistics().capabilities.clear();
 //        channel.getNodeStatistics().capabilities.addAll(msg.getCapabilities());
 
-        this.ethInbound = (int) channel.getNodeStatistics().ethInbound.get();
-        this.ethOutbound = (int) channel.getNodeStatistics().ethOutbound.get();
+    this.ethInbound = (int) channel.getNodeStatistics().ethInbound.get();
+    this.ethOutbound = (int) channel.getNodeStatistics().ethOutbound.get();
 
 //        this.handshakeHelloMessage = msg;
 
 //        List<Capability> capInCommon = getSupportedCapabilities(msg);
 //        channel.initMessageCodes(capInCommon);
 
-        channel.activateTron(ctx);
+    channel.activateTron(ctx);
 
-        //todo: init peer's block status and sync
-        //tronListener.onHandShakePeer(channel, msg);
-    }
+    //todo: init peer's block status and sync
+    //tronListener.onHandShakePeer(channel, msg);
+  }
 
-    /**
-     * submit transaction to the network
-     *
-     */
+  /**
+   * submit transaction to the network
+   */
 
-    public void sendDisconnect() {
+  public void sendDisconnect() {
 //        msgQueue.disconnect();
-    }
+  }
 
-    private void startTimers() {
-        // sample for pinging in background
-        pingTask = pingTimer.scheduleAtFixedRate(() -> {
-            try {
+  private void startTimers() {
+    // sample for pinging in background
+    pingTask = pingTimer.scheduleAtFixedRate(() -> {
+      try {
 //                msgQueue.sendMessage(PING_MESSAGE);
-            } catch (Throwable t) {
-                logger.error("Unhandled exception", t);
-            }
-        }, 2, config.getProperty("peer.p2p.pingInterval", 5L), TimeUnit.SECONDS);
-    }
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
+    }, 2, config.getProperty("peer.p2p.pingInterval", 5L), TimeUnit.SECONDS);
+  }
 
-    public void killTimers() {
-        pingTask.cancel(false);
+  public void killTimers() {
+    pingTask.cancel(false);
 //        msgQueue.close();
-    }
+  }
 
 
-    public void setMsgQueue(MessageQueue msgQueue) {
+  public void setMsgQueue(MessageQueue msgQueue) {
 //        this.msgQueue = msgQueue;
-    }
+  }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
+  public void setChannel(Channel channel) {
+    this.channel = channel;
+  }
 
 }

@@ -33,7 +33,6 @@ import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
-import org.tron.common.overlay.discover.P2pHandler;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.P2pMessageFactory;
