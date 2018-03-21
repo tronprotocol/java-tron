@@ -22,9 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
@@ -34,6 +33,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
@@ -103,8 +103,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
-
-  protected static final Logger logger = LoggerFactory.getLogger("BlockCapsule");
 
   private byte[] data;
 

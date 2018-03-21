@@ -12,22 +12,19 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
-
+@Slf4j
 public class PeerConnection {
 
   @Override
   public int hashCode() {
     return member.hashCode();
   }
-
-  private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
   //private
   private Member member;

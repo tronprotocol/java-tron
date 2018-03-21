@@ -4,17 +4,15 @@ import com.beust.jcommander.internal.Lists;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.WitnessCapsule;
 
+@Slf4j
 @Ignore
 public class RandomGeneratorTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
 
   @Test
   public void shuffle() {

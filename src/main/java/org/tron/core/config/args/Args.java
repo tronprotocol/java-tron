@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 @NoArgsConstructor
 public class Args {
-
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")

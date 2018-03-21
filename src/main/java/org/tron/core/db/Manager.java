@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.ChainConstant.IRREVERSIBLE_THRESHOLD;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
@@ -18,11 +19,10 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -50,10 +50,8 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class Manager {
-
-  private static final Logger logger = LoggerFactory.getLogger("Manager");
-
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
@@ -761,8 +759,9 @@ public class Manager {
       processTransaction(transactionCapsule);
     }
 
+    // todo set reverking db max size.
     this.updateSignedWitness(block);
-
+    this.updateLastConfirmedBlock();
     if (needMaintenance(block.getTimeStamp())) {
       if (block.getNum() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
@@ -770,6 +769,16 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+
+  }
+
+  public void updateLastConfirmedBlock() {
+    List<Long> numbers = wits.stream()
+        .map(wit -> wit.getLatestBlockNum())
+        .sorted()
+        .collect(Collectors.toList());
+    long lastConfirmedNumber = numbers.get((int) (wits.size() * IRREVERSIBLE_THRESHOLD));
+    getDynamicPropertiesStore().setLatestConfirmedBlockNum(lastConfirmedNumber);
   }
 
   /**

@@ -1,7 +1,6 @@
 package org.tron.program;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
@@ -10,10 +9,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
+@Slf4j
 public class FullNode {
-
-  private static final Logger logger = LoggerFactory.getLogger("FullNode");
-
   /**
    * Start the FullNode.
    */
