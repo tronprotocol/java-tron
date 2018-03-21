@@ -17,7 +17,10 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.*;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.core.net.node.Node;
+import org.tron.core.net.node.NodeImpl;
 
 /**
  * @author Roman Mandeleil
@@ -43,8 +46,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     @Autowired
     ChannelManager channelManager;
 
-    @Autowired
-    private Node p2pNode;
+    private NodeImpl p2pNode;
 
     private String remoteId;
 
@@ -69,7 +71,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
             }
 
             final Channel channel = ctx.getBean(Channel.class);
-            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager);
+            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             if(!peerDiscoveryMode) {
                 channelManager.add(channel);
@@ -98,5 +100,9 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
     public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
         this.peerDiscoveryMode = peerDiscoveryMode;
+    }
+
+    public void setNodeImpl(NodeImpl p2pNode) {
+        this.p2pNode = p2pNode;
     }
 }

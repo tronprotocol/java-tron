@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.node.NodeImpl;
 
 @Component
 public class PeerServer {
@@ -45,6 +46,9 @@ public class PeerServer {
     public TronChannelInitializer tronChannelInitializer;
 
     private boolean listening;
+
+    @Autowired
+    private NodeImpl p2pNode;
 
     EventLoopGroup bossGroup;
     EventLoopGroup workerGroup;
@@ -62,6 +66,7 @@ public class PeerServer {
         workerGroup = new NioEventLoopGroup();
 
         tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
+        tronChannelInitializer.setNodeImpl(p2pNode);
 
         try {
             ServerBootstrap b = new ServerBootstrap();

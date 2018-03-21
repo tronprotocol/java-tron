@@ -121,7 +121,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
       if (msg instanceof HelloMessage) {
         isHandshakeDone = true;
-        this.channel.publicRLPxHandshakeFinished(ctx, (HelloMessage) msg);
+        this.channel.publicHandshakeFinished(ctx, (HelloMessage) msg);
       } else {
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
@@ -145,7 +145,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
       channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
       isHandshakeDone = true;
-      this.channel.publicRLPxHandshakeFinished(ctx, inboundHelloMessage);
+      this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
     }
   }

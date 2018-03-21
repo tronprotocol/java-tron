@@ -38,6 +38,7 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
 
 
@@ -82,8 +83,9 @@ public class Channel {
     private InetSocketAddress inetSocketAddress;
 
     private PeerConnection node;
-    private NodeStatistics nodeStatistics;
+    private PeerConnectionDelegate peerDel;
 
+    private NodeStatistics nodeStatistics;
     private boolean discoveryMode;
     private boolean isActive;
     private boolean isDisconnected;
@@ -92,7 +94,8 @@ public class Channel {
 
     private PeerStatistics peerStats = new PeerStatistics();
 
-    public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode, ChannelManager channelManager) {
+    public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
+        ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
 
@@ -105,12 +108,14 @@ public class Channel {
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
+        this.peerDel = peerDel;
 
         if (discoveryMode) {
             // temporary key/nodeId to not accidentally smear our reputation with
             // unexpected disconnect
 //            handshakeHandler.generateTempKey();
         }
+
 
         handshakeHandler.setRemoteId(remoteId, this);
 
@@ -122,7 +127,7 @@ public class Channel {
 
     }
 
-    public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
+    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
         logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
 
@@ -158,7 +163,7 @@ public class Channel {
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setChannel(this);
         tronHandler.setPeerDiscoveryMode(discoveryMode);
-        tronHandler.setPeerDel();
+        tronHandler.setPeerDel(peerDel);
 //        EthHandler handler = ethHandlerFactory.create(version);
 //        MessageFactory messageFactory = createEthMessageFactory(version);
 //        messageCodec.setEthVersion(version);

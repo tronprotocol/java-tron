@@ -69,9 +69,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   private int ethOutbound;
 
   @Autowired
-  TronChannelInitializer tronListener;
-
-  @Autowired
   Args args;
 
   private Channel channel;

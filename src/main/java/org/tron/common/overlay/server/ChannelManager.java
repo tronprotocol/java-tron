@@ -46,6 +46,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.node.NodeImpl;
 
 /**
  * @author Roman Mandeleil
@@ -85,13 +86,16 @@ public class ChannelManager {
 
     private PeerClient peerClient;
 
+    private NodeImpl peerDel;
+
     @Autowired
     private ChannelManager(final Args args, final PeerClient peerClient,
-        final PeerServer peerServer) {
+        final PeerServer peerServer, final NodeImpl peerDel) {
         this.args = args;
         //this.syncManager = syncManager;
         this.peerClient = peerClient;
         this.peerServer = peerServer;
+        this.peerDel = peerDel;
         maxActivePeers = args.getNodeMaxActiveNodes();
         //trustedPeers = config.peerTrusted();
         mainWorker.scheduleWithFixedDelay(() -> {
