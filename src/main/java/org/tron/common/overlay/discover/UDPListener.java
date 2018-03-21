@@ -165,14 +165,12 @@ public class UDPListener {
     }
 
     public static void main(String[] args) throws Exception {
-        ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
-        String address = "0.0.0.0";
-        int port = 30303;
-        if (args.length >= 2) {
-            address = args[0];
-            port = Integer.parseInt(args[1]);
+
+        ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        while (true){
+            Thread.sleep(10000);
         }
-        new UDPListener(address, port).start(Arrays.copyOfRange(args, 2, args.length));
+
     }
 }

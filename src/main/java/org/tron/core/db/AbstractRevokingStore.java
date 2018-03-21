@@ -337,6 +337,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @AllArgsConstructor
   @EqualsAndHashCode
+  @Getter
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

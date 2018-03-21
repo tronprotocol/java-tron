@@ -22,7 +22,7 @@ public class FindNodeMessage extends Message {
   }
 
   public FindNodeMessage(Node from, byte[] targetId) {
-    super(Message.PING, null);
+    super(Message.FINE_PEERS, null);
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .setPort(from.getPort())
@@ -45,4 +45,8 @@ public class FindNodeMessage extends Message {
       return this.findNeighbours.getFrom().getNodeId().toByteArray();
   }
 
+  @Override
+  public String toString() {
+    return "[findNeighbours: " + findNeighbours;
+  }
 }

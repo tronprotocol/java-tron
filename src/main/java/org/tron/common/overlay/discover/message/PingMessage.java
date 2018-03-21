@@ -59,4 +59,9 @@ public class PingMessage extends Message {
     return this.pingMessage.getFrom().getNodeId().toByteArray();
   }
 
+  @Override
+  public String toString() {
+    return "[pingMessage: " + pingMessage;
+  }
+
 }
