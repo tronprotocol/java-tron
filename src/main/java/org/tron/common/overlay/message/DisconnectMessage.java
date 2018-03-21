@@ -63,11 +63,14 @@ public class DisconnectMessage extends P2pMessage {
   /**
    * Get reason of disconnect.
    */
-  public Message.ReasonCode getReason() {
+  public ReasonCode getReason() {
     if (!this.unpacked) {
       this.unPack();
     }
-    return this.disconnectMessage.getReason();
+
+    //TODO: fix this
+    return ReasonCode.USER_REASON;
+    //return this.disconnectMessage.getReason();
   }
 
   /**

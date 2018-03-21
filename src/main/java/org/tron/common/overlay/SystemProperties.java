@@ -23,16 +23,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigRenderOptions;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.discover.Node;
-import org.tron.common.overlay.message.MessageCodec;
-import org.tron.common.utils.ByteUtil;
-
-import java.io.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -32,10 +33,8 @@ import org.tron.common.overlay.SystemProperties;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
-import org.tron.common.overlay.discover.P2pHandler;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
-import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
@@ -98,6 +97,7 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
                 new ReadTimeoutHandler(config.peerChannelReadTimeout(), TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
+        //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
@@ -115,34 +115,42 @@ public class Channel {
 //        msgQueue.setChannel(this);
 
 //        p2pHandler.setMsgQueue(msgQueue);
-        messageCodec.setP2pMessageFactory(new P2pMessageFactory());
 
     }
 
     public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
-//        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
-//
-//        messageCodec.setSupportChunkedFrames(false);
-//
+        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
+
 //        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
 //        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
-//
-//        if (SnappyCodec.isSupported(Math.min(config.defaultP2PVersion(), helloRemote.getP2PVersion()))) {
-//            ctx.pipeline().addLast("snappyCodec", new SnappyCodec(this));
-//            logger.debug("{}: use snappy compression", ctx.channel());
-//        }
-//
-//        ctx.pipeline().addLast("messageCodec", messageCodec);
-//        ctx.pipeline().addLast("p2p", p2pHandler);
-//
-//        p2pHandler.setChannel(this);
-//        //p2pHandler.setHandshake(helloRemote, ctx);
-//
-//        getNodeStatistics().rlpxHandshake.add();
+        //TODO: use messageCodec handle bytes to message directly
+        ctx.pipeline().addLast("messageCodec", messageCodec);
+        ctx.pipeline().addLast("p2p", p2pHandler);
+
+        p2pHandler.setChannel(this);
+        p2pHandler.setHandshake(helloRemote, ctx);
+
+        getNodeStatistics().rlpxHandshake.add();
     }
 
-    public void activateEth(ChannelHandlerContext ctx) {
+    public void sendHelloMessage(ChannelHandlerContext ctx,
+        String nodeId) throws IOException, InterruptedException {
+
+        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
+
+        ByteBuf byteBufMsg = ctx.alloc().buffer();
+
+        //TODO: flush send message into byteBufMsg
+        //frameCodec.writeFrame(new FrameCodec.Frame(helloMessage.getCode(), helloMessage.getEncoded()), byteBufMsg);
+        ctx.writeAndFlush(byteBufMsg).sync();
+
+        if (logger.isDebugEnabled())
+            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
+        getNodeStatistics().rlpxOutHello.add();
+    }
+
+    public void activateTron(ChannelHandlerContext ctx) {
 //        EthHandler handler = ethHandlerFactory.create(version);
 //        MessageFactory messageFactory = createEthMessageFactory(version);
 //        messageCodec.setEthVersion(version);
