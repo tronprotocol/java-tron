@@ -7,8 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -29,24 +28,22 @@ import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
-
+@Slf4j
 public class NodeDelegateImpl implements NodeDelegate {
-
-  private static final Logger logger = LoggerFactory.getLogger("NodeDelegateImpl");
-
   private Manager dbManager;
 
   public NodeDelegateImpl(Manager dbManager) {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStoreDb() {
+  protected BlockStore getBlockStore() {
     return dbManager.getBlockStore();
   }
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
+    // TODO timestamp shouble be consistent.
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -60,12 +57,14 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
     }
-
-    //TODO: get block's TRXs here and return
-    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-    return trx.stream()
-        .map(TransactionCapsule::getHash)
-        .collect(Collectors.toCollection(LinkedList::new));
+    if (!syncMode) {
+      List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
+      return trx.stream()
+          .map(TransactionCapsule::getHash)
+          .collect(Collectors.toCollection(LinkedList::new));
+    } else {
+      return null;
+    }
   }
 
 

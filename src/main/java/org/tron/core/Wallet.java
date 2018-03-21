@@ -21,8 +21,7 @@ package org.tron.core;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
@@ -52,10 +51,8 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class Wallet {
-
-  private static final Logger logger = LoggerFactory.getLogger("Wallet");
-
   private BlockStore db;
   private final ECKey ecKey;
   @Getter

@@ -3,12 +3,12 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
+@Slf4j
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static final String ACCOUNT_SUN_ADDRESS
@@ -20,7 +20,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private static final String ACCOUNT_ZION_ADDRESS
       = "55ddae14564f82d5b94c7a131b5fcfd31ad6515a";
 
-  private static final Logger logger = LoggerFactory.getLogger("AccountStore");
   private static AccountStore instance;
 
 

@@ -1,9 +1,8 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -16,8 +15,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class MerkleTreeTest {
-    private static final Logger logger = LoggerFactory.getLogger("Test");
     private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
             .copyFrom(ByteArray
                     .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,

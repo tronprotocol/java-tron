@@ -48,7 +48,7 @@ public class GenesisBlock implements Serializable {
     this.assets = assets;
 
     if (assets == null) {
-      this.assets = Collections.EMPTY_LIST;
+      this.assets = Collections.emptyList();
     }
   }
 
@@ -110,7 +110,7 @@ public class GenesisBlock implements Serializable {
     this.witnesses = witnesses;
 
     if (witnesses == null) {
-      this.witnesses = Collections.EMPTY_LIST;
+      this.witnesses = Collections.emptyList();
     }
   }
 }

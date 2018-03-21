@@ -22,18 +22,15 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 
+@Slf4j
 public class WalletTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testWallet() {
     Wallet wallet = new Wallet();

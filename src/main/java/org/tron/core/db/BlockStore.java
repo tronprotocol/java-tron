@@ -15,17 +15,16 @@
 
 package org.tron.core.db;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
+@Slf4j
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
-  public static final Logger logger = LoggerFactory.getLogger("BlockStore");
 
   private BlockCapsule head;
 
