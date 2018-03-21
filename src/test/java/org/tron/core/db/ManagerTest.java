@@ -141,6 +141,8 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(witnessCapsule);
+    dbManager.addWitness(witnessCapsule);
+    dbManager.addWitness(witnessCapsule);
     IntStream.range(0, 5).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);

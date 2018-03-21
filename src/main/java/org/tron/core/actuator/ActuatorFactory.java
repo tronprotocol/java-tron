@@ -50,8 +50,8 @@ public class ActuatorFactory {
         return new CreateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager);
-      case TransferAssertContract:
-        return new TransferAssertActuator(contract.getParameter(), manager);
+      case TransferAssetContract:
+        return new TransferAssetActuator(contract.getParameter(), manager);
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
@@ -64,6 +64,8 @@ public class ActuatorFactory {
         break;
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
+      case ParticipateAssetIssueContract:
+        return new ParticipateAssetIssueActuator(contract.getParameter(), manager);
       default:
 
     }
