@@ -1,7 +1,7 @@
 package org.tron.core.net.peer;
 
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.overlay.message.Message;
+import org.tron.core.net.message.Message;
 
 public abstract class PeerConnectionDelegate extends P2pNode {
 

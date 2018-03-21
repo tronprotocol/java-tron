@@ -17,7 +17,7 @@ package org.tron.common.overlay.node;
 
 import org.tron.core.net.message.MessageRegistry;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.common.overlay.message.Message;
+import org.tron.core.net.message.Message;
 
 import java.io.UnsupportedEncodingException;
 

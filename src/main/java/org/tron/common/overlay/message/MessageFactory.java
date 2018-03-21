@@ -14,6 +14,8 @@
  */
 package org.tron.common.overlay.message;
 
+import org.tron.core.net.message.Message;
+
 public abstract class MessageFactory {
 
   protected abstract Message create(byte type, byte[] rawData);

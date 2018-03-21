@@ -17,15 +17,11 @@
  */
 package org.tron.common.overlay.message;
 
-import org.ethereum.config.SystemProperties;
-import org.ethereum.net.client.Capability;
-import org.ethereum.net.client.ConfigCapabilities;
-import org.ethereum.net.p2p.*;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.SystemProperties;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,12 +38,8 @@ public class StaticMessages {
     @Autowired
     SystemProperties config;
 
-    @Autowired
-    ConfigCapabilities configCapabilities;
-
     public final static PingMessage PING_MESSAGE = new PingMessage();
     public final static PongMessage PONG_MESSAGE = new PongMessage();
-    public final static GetPeersMessage GET_PEERS_MESSAGE = new GetPeersMessage();
     public final static DisconnectMessage DISCONNECT_MESSAGE = new DisconnectMessage(ReasonCode.REQUESTED);
 
     public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
@@ -59,7 +51,6 @@ public class StaticMessages {
 
         String helloAnnouncement = buildHelloAnnouncement();
         byte p2pVersion = (byte) config.defaultP2PVersion();
-        List<Capability> capabilities = configCapabilities.getConfigCapabilities();
 
         return new HelloMessage(p2pVersion, helloAnnouncement,
                 capabilities, listenPort, peerId);
