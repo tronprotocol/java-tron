@@ -17,7 +17,9 @@
  */
 package org.tron.common.overlay.server;
 
+import com.sun.tools.javac.comp.Todo;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -34,6 +36,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
@@ -141,8 +144,10 @@ public class Channel {
 
         ByteBuf byteBufMsg = ctx.alloc().buffer();
 
-        //TODO: flush send message into byteBufMsg
+        //TODO#p2p: flush send message into byteBufMsg
+
         //frameCodec.writeFrame(new FrameCodec.Frame(helloMessage.getCode(), helloMessage.getEncoded()), byteBufMsg);
+        byteBufMsg.
         ctx.writeAndFlush(byteBufMsg).sync();
 
         if (logger.isDebugEnabled())
@@ -151,21 +156,35 @@ public class Channel {
     }
 
     public void activateTron(ChannelHandlerContext ctx) {
-//        EthHandler handler = ethHandlerFactory.create(version);
-//        MessageFactory messageFactory = createEthMessageFactory(version);
-//        messageCodec.setEthVersion(version);
-//        messageCodec.setEthMessageFactory(messageFactory);
-//
-//        ctx.pipeline().addLast("data", handler);
-//
-//        handler.setMsgQueue(msgQueue);
-//        handler.setChannel(this);
-//        handler.setPeerDiscoveryMode(discoveryMode);
-//
-//        handler.activate();
-//
-//        eth = handler;
+        EthHandler handler = ethHandlerFactory.create(version);
+        MessageFactory messageFactory = createEthMessageFactory(version);
+        messageCodec.setEthVersion(version);
+        messageCodec.setEthMessageFactory(messageFactory);
+
+        ctx.pipeline().addLast("data", handler);
+
+        handler.setMsgQueue(msgQueue);
+        handler.setChannel(this);
+        handler.setPeerDiscoveryMode(discoveryMode);
+
+        handler.activate();
+
+        eth = handler;
     }
+
+    private void sendMessage(Message msg) {
+
+        getNodeStatistics().ethOutbound.add();
+
+         //TODO: here let local node know.
+         //ethereumListener.onSendMessage(channel, msg);
+            ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            if (msg.getAnswerMessage() != null) {
+                messageRoundtrip.incRetryTimes();
+                messageRoundtrip.saveTime();
+            }
+    }
+
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
         this.inetSocketAddress = inetSocketAddress;

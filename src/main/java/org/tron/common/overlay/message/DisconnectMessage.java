@@ -20,13 +20,13 @@ public class DisconnectMessage extends P2pMessage {
   /**
    * The reason of disconnect.
    */
-  public DisconnectMessage(Message.ReasonCode reason) {
-    this.disconnectMessage = Message.DisconnectMessage
-        .newBuilder()
-        .setReason(reason)
-        .build();
-    unpacked = true;
-    this.type = MessageTypes.P2P_DISCONNECT.asByte();
+  public DisconnectMessage(ReasonCode reason) {
+//    this.disconnectMessage = Message.DisconnectMessage
+//        .newBuilder()
+//        .setReason(reason)
+//        .build();
+//    unpacked = true;
+//    this.type = MessageTypes.P2P_DISCONNECT.asByte();
   }
 
   private void unPack() {
