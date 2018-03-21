@@ -1,19 +1,15 @@
 package org.tron.core.net.message;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.MessageFactory;
 
 /**
  * msg factory.
  */
-public class MessageFactory {
+public class TronMessageFactory extends MessageFactory {
 
-  /**
-   * create msg.
-   * @param type msg type
-   * @param packed msg data
-   * @return
-   */
-
+  @Override
   protected Message create(byte type, byte[] packed) {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     switch (receivedTypes) {
@@ -32,5 +28,12 @@ public class MessageFactory {
       default:
         throw new IllegalArgumentException("No such message");
     }
+  }
+
+  @Override
+  protected Message create(byte[] data) {
+    byte type = data[0];
+    byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
+    return create(type, rawData);
   }
 }
