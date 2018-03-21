@@ -401,9 +401,6 @@ public class Manager {
           this.numHashCache.putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
           head = item;
-          getDynamicPropertiesStore().saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-          getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-          getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
         } catch (ValidateSignatureException e) {
           e.printStackTrace();
         } catch (ContractValidateException e) {
