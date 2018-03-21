@@ -147,12 +147,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return; //The balance is not enough
     }
 
-    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
-
-    if (to == null) {
-      return; //to is invalid
-    }
-
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(

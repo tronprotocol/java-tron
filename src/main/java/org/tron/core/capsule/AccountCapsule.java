@@ -80,6 +80,16 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .build();
   }
 
+  /**
+   * get account from address and account name.
+   */
+  public AccountCapsule(ByteString address,
+      AccountType accountType) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAddress(address)
+        .build();
+  }
   public AccountCapsule(Account account) {
     this.account = account;
   }
