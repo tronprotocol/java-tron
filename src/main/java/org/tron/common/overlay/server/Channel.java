@@ -35,7 +35,6 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
-import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
@@ -116,15 +115,12 @@ public class Channel {
 //        msgQueue.setChannel(this);
 
 //        p2pHandler.setMsgQueue(msgQueue);
-        messageCodec.setP2pMessageFactory(new P2pMessageFactory());
 
     }
 
     public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
         logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
-
-        messageCodec.setSupportChunkedFrames(false);
 
 //        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
 //        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
