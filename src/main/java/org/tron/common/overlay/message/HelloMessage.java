@@ -56,6 +56,11 @@ public class HelloMessage extends P2pMessage {
     return this.rawData;
   }
 
+  @Override
+  public byte[] getNodeId() {
+    return new byte[0];
+  }
+
   /**
    * Get the version of p2p protocol.
    */

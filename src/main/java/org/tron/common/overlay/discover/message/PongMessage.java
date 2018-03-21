@@ -22,20 +22,26 @@ public class PongMessage extends DiscoverMessage {
     return this.rawData;
   }
 
+  @Override
+  public byte[] getNodeId() {
+    return this.pongMessage.getFrom().getNodeId().toByteArray();
+  }
+
   public PongMessage(Node from) {
 
     Endpoint toEndpoint = Endpoint.newBuilder()
-        .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
+        .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .setPort(from.getPort())
         .setNodeId(ByteString.copyFrom(from.getId()))
         .build();
 
     this.pongMessage = Discover.PongMessage.newBuilder()
-        .setTo(toEndpoint)
+        .setFrom(toEndpoint)
         .setEcho(1)
         .setTimestamp(System.currentTimeMillis())
         .build();
 
+    this.type = MessageTypes.DISCOVER_PONG.asByte();
     this.rawData = this.pongMessage.toByteArray();
   }
 
@@ -44,7 +50,7 @@ public class PongMessage extends DiscoverMessage {
   }
 
   public Node getFrom(){
-    Endpoint from = this.pongMessage.getTo();
+    Endpoint from = this.pongMessage.getFrom();
     Node node = new Node(from.getNodeId().toByteArray(),
         ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
     return node;
