@@ -19,6 +19,7 @@
 package org.tron.core.config;
 
 import com.typesafe.config.Config;
+import lombok.Getter;
 
 public class SystemProperties {
 
@@ -26,6 +27,8 @@ public class SystemProperties {
   private static SystemProperties CONFIG;
   private static boolean useOnlySpringConfig = false;
   private String databaseDir = null;
+
+  @Getter
   private Config config;
 
   public static SystemProperties getDefault() {
@@ -37,10 +40,6 @@ public class SystemProperties {
       CONFIG = new SystemProperties();
     }
     return CONFIG;
-  }
-
-  public Config getConfig() {
-    return config;
   }
 
   public String blocksLoader() {
