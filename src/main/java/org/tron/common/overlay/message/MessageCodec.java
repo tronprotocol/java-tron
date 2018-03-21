@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.config.args.Args;
 
 
 /**
@@ -48,7 +48,7 @@ public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
     @Autowired
     //EthereumListener ethereumListener;
 
-    private SystemProperties config;
+    private Args args;
     private boolean supportChunkedFrames = false;
 
 
@@ -56,8 +56,8 @@ public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
     }
 
     @Autowired
-    private MessageCodec(final SystemProperties config) {
-        this.config = config;
+    private MessageCodec(final Args args) {
+        this.args = args;
         //setMaxFramePayloadSize(config.rlpxMaxFrameSize());
     }
 

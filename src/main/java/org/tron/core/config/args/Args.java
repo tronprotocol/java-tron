@@ -1,22 +1,40 @@
 package org.tron.core.config.args;
 
+import static org.tron.common.crypto.Hash.sha3;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.ConfigObject;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.Node;
 
 @Slf4j
 @NoArgsConstructor
 public class Args {
+
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
@@ -72,6 +90,50 @@ public class Args {
   @Setter
   private boolean needSyncCheck;
 
+  @Getter
+  @Setter
+  private boolean nodeDiscoveryEnable;
+
+  @Getter
+  @Setter
+  private boolean nodeDiscoveryPersist;
+
+  @Getter
+  @Setter
+  private int nodeConnectionTimeout;
+
+  @Getter
+  @Setter
+  private List<Node> nodeActive;
+
+  @Getter
+  @Setter
+  private int nodeChannelReadTimeout;
+
+  @Getter
+  @Setter
+  private int nodeMaxActiveNodes;
+
+  @Getter
+  @Setter
+  private int nodeListenPort;
+
+  @Getter
+  @Setter
+  private String nodeDiscoveryBindIp;
+
+  @Getter
+  @Setter
+  private String nodeExternalIp;
+
+  @Getter
+  @Setter
+  private boolean nodeDiscoveryPublicHomeNode;
+
+  @Getter
+  @Setter
+  private long nodeP2pPingInterval;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -88,6 +150,17 @@ public class Args {
     INSTANCE.localWitnesses = null;
     INSTANCE.blockInterval = 0L;
     INSTANCE.needSyncCheck = false;
+    INSTANCE.nodeDiscoveryEnable = false;
+    INSTANCE.nodeDiscoveryPersist = false;
+    INSTANCE.nodeConnectionTimeout = 0;
+    INSTANCE.nodeActive = Collections.EMPTY_LIST;
+    INSTANCE.nodeChannelReadTimeout = 0;
+    INSTANCE.nodeMaxActiveNodes = 0;
+    INSTANCE.nodeListenPort = 0;
+    INSTANCE.nodeDiscoveryBindIp = "";
+    INSTANCE.nodeExternalIp = "";
+    INSTANCE.nodeDiscoveryPublicHomeNode = false;
+    INSTANCE.nodeP2pPingInterval = 0L;
   }
 
   /**
@@ -96,18 +169,8 @@ public class Args {
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
 
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
-      INSTANCE.privateKey = config.getString("private.key");
-
-      if (INSTANCE.privateKey != null && INSTANCE.privateKey.toUpperCase().startsWith("0X")) {
-        INSTANCE.privateKey = INSTANCE.privateKey.substring(2);
-      }
-
-      if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
-          && INSTANCE.privateKey.length() != 64) {
-        throw new IllegalArgumentException(
-            "Private key(" + INSTANCE.privateKey + ") must be 64-bits hex string.");
-      }
+    if (StringUtils.isBlank(INSTANCE.privateKey)) {
+      privateKey(config);
     }
     logger.info("private.key = {}", INSTANCE.privateKey);
 
@@ -153,6 +216,43 @@ public class Args {
     }
     INSTANCE.blockInterval = config.getLong("block.interval");
     INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
+
+    if (config.hasPath("node.discovery.enable")) {
+      INSTANCE.nodeDiscoveryEnable = config.getBoolean("node.discovery.enable");
+    }
+
+    if (config.hasPath("node.discovery.persist")) {
+      INSTANCE.nodeDiscoveryPersist = config.getBoolean("node.discovery.persist");
+    }
+
+    if (config.hasPath("node.connection.timeout")) {
+      INSTANCE.nodeConnectionTimeout = config.getInt("node.connection.timeout") * 1000;
+    }
+
+    INSTANCE.nodeActive = nodeActive(config);
+
+    if (config.hasPath("node.channel.read.timeout")) {
+      INSTANCE.nodeChannelReadTimeout = config.getInt("node.channel.read.timeout");
+    }
+
+    if (config.hasPath("node.maxActiveNodes")) {
+      INSTANCE.nodeMaxActiveNodes = config.getInt("node.maxActiveNodes");
+    }
+
+    if (config.hasPath("node.listen.port")) {
+      INSTANCE.nodeListenPort = config.getInt("node.listen.port");
+    }
+
+    bindIp(config);
+    externalIp(config);
+
+    if (config.hasPath("node.discovery.public.home.node")) {
+      INSTANCE.nodeDiscoveryPublicHomeNode = config.getBoolean("node.discovery.public.home.node");
+    }
+
+    if (config.hasPath("node.p2p.pingInterval")) {
+      INSTANCE.nodeP2pPingInterval = config.getLong("node.p2p.pingInterval");
+    }
   }
 
 
@@ -197,5 +297,145 @@ public class Args {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+
+  private static List<Node> nodeActive(final com.typesafe.config.Config config) {
+    if (!config.hasPath("node.active")) {
+      return Collections.EMPTY_LIST;
+    }
+    List<Node> ret = new ArrayList<>();
+    List<? extends ConfigObject> list = config.getObjectList("node.active");
+    for (ConfigObject configObject : list) {
+      Node n;
+      if (configObject.get("url") != null) {
+        String url = configObject.toConfig().getString("url");
+        n = new Node(url.startsWith("enode://") ? url : "enode://" + url);
+      } else if (configObject.get("ip") != null) {
+        String ip = configObject.toConfig().getString("ip");
+        int port = configObject.toConfig().getInt("port");
+        byte[] nodeId;
+        if (configObject.toConfig().hasPath("nodeId")) {
+          nodeId = Hex.decode(configObject.toConfig().getString("nodeId").trim());
+          if (nodeId.length != 64) {
+            throw new RuntimeException("Invalid config nodeId '" + nodeId + "' at " + configObject);
+          }
+        } else {
+          if (configObject.toConfig().hasPath("nodeName")) {
+            String nodeName = configObject.toConfig().getString("nodeName").trim();
+            // FIXME should be keccak-512 here ?
+            nodeId = ECKey.fromPrivate(sha3(nodeName.getBytes())).getNodeId();
+          } else {
+            throw new RuntimeException(
+                "Either nodeId or nodeName should be specified: " + configObject);
+          }
+        }
+        n = new Node(nodeId, ip, port);
+      } else {
+        throw new RuntimeException(
+            "Unexpected element within 'peer.active' config list: " + configObject);
+      }
+      ret.add(n);
+    }
+    return ret;
+  }
+
+  private static void privateKey(final com.typesafe.config.Config config) {
+    if (config.hasPath("private.key")) {
+      INSTANCE.privateKey = config.getString("private.key");
+      if (INSTANCE.privateKey.length() != 64) {
+        throw new RuntimeException(
+            "The peer.privateKey needs to be Hex encoded and 32 byte length");
+      }
+    } else {
+      INSTANCE.privateKey = getGeneratedNodePrivateKey();
+    }
+  }
+
+  private static String getGeneratedNodePrivateKey() {
+    String nodeId;
+    try {
+      File file = new File(INSTANCE.storageDirectory, "nodeId.properties");
+      Properties props = new Properties();
+      if (file.canRead()) {
+        try (Reader r = new FileReader(file)) {
+          props.load(r);
+        }
+      } else {
+        ECKey key = new ECKey();
+        props.setProperty("nodeIdPrivateKey", Hex.toHexString(key.getPrivKeyBytes()));
+        props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
+        file.getParentFile().mkdirs();
+        try (Writer w = new FileWriter(file)) {
+          props.store(w,
+              "Generated NodeID. To use your own nodeId please refer to 'peer.privateKey' config option.");
+        }
+        logger.info("New nodeID generated: " + props.getProperty("nodeId"));
+        logger.info("Generated nodeID and its private key stored in " + file);
+      }
+      nodeId = props.getProperty("nodeIdPrivateKey");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return nodeId;
+  }
+
+  private static void bindIp(final com.typesafe.config.Config config) {
+    if (!config.hasPath("node.discovery.bind.ip") || config.getString("node.discovery.bind.ip")
+        .trim().isEmpty()) {
+      if (INSTANCE.nodeDiscoveryBindIp == null) {
+        logger.info("Bind address wasn't set, Punching to identify it...");
+        try {
+          Socket s = new Socket("www.google.com", 80);
+          INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
+          logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
+        } catch (IOException e) {
+          logger.warn("Can't get bind IP. Fall back to 0.0.0.0: " + e);
+          INSTANCE.nodeDiscoveryBindIp = "0.0.0.0";
+        }
+      }
+    } else {
+      INSTANCE.nodeDiscoveryBindIp = config.getString("node.discovery.bind.ip").trim();
+    }
+  }
+
+  private static void externalIp(final com.typesafe.config.Config config) {
+    if (!config.hasPath("node.discovery.external.ip") || config
+        .getString("node.discovery.external.ip").trim().isEmpty()) {
+      if (INSTANCE.nodeExternalIp == null) {
+        logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
+        try {
+          BufferedReader in = new BufferedReader(new InputStreamReader(
+              new URL("http://checkip.amazonaws.com").openStream()));
+          INSTANCE.nodeExternalIp = in.readLine();
+          if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
+            throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
+          }
+          try {
+            InetAddress.getByName(INSTANCE.nodeExternalIp);
+          } catch (Exception e) {
+            throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
+          }
+          logger.info("External address identified: {}", INSTANCE.nodeExternalIp);
+        } catch (IOException e) {
+          INSTANCE.nodeExternalIp = INSTANCE.nodeDiscoveryBindIp;
+          logger.warn(
+              "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
+                  + e);
+        }
+      }
+    } else {
+      INSTANCE.nodeExternalIp = config.getString("node.discovery.external.ip").trim();
+    }
+  }
+
+  public ECKey getMyKey() {
+    return ECKey.fromPrivate(Hex.decode(INSTANCE.privateKey));
+  }
+
+  /**
+   * Home NodeID calculated from 'peer.privateKey' property
+   */
+  public byte[] nodeId() {
+    return getMyKey().getNodeId();
   }
 }

@@ -36,7 +36,7 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageCodes;
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.config.args.Args;
 
 
 /**
@@ -72,7 +72,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   TronChannelInitializer tronListener;
 
   @Autowired
-  SystemProperties config;
+  Args args;
 
   private Channel channel;
   private ScheduledFuture<?> pingTask;
@@ -210,7 +210,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
-    }, 2, config.getProperty("peer.p2p.pingInterval", 5L), TimeUnit.SECONDS);
+    }, 2, args.getNodeP2pPingInterval(), TimeUnit.SECONDS);
   }
 
   public void killTimers() {

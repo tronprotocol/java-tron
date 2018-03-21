@@ -22,6 +22,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import java.net.BindException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -29,13 +34,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.SystemProperties;
-
-import java.net.BindException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import org.tron.core.config.args.Args;
 
 @Component
 public class UDPListener {
@@ -49,7 +48,7 @@ public class UDPListener {
     private NodeManager nodeManager;
 
     @Autowired
-    SystemProperties config = SystemProperties.getDefault();
+    Args args = Args.getInstance();
 
     @Autowired
     WireTrafficStats stats;
@@ -59,16 +58,16 @@ public class UDPListener {
     private DiscoveryExecutor discoveryExecutor;
 
     @Autowired
-    public UDPListener(final SystemProperties config, final NodeManager nodeManager) {
-        this.config = config;
+    public UDPListener(final Args args, final NodeManager nodeManager) {
+        this.args = args;
         this.nodeManager = nodeManager;
 
-        this.address = config.bindIp();
-        port = config.listenPort();
-        if (config.peerDiscovery()) {
-            bootPeers = config.peerDiscoveryIPList().toArray(new String[0]);
+        this.address = args.getNodeDiscoveryBindIp();
+        port = args.getNodeListenPort();
+        if (args.isNodeDiscoveryEnable()) {
+            bootPeers = args.getSeedNodes().toArray(new String[0]);
         }
-        if (config.peerDiscovery()) {
+        if (args.isNodeDiscoveryEnable()) {
             if (port == 0) {
                 logger.error("Discovery can't be started while listen port == 0");
             } else {

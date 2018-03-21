@@ -19,7 +19,6 @@ package org.tron.core.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -32,9 +31,4 @@ public class CommonConfig {
     private static final Logger logger = LoggerFactory.getLogger("general");
 
     private static CommonConfig defaultInstance;
-
-    @Bean
-    public SystemProperties systemProperties() {
-        return SystemProperties.getSpringDefault();
-    }
 }

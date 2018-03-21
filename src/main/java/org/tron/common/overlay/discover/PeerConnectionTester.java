@@ -17,18 +17,22 @@
  */
 package org.tron.common.overlay.discover;
 
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.client.PeerClient;
-
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import org.tron.core.config.args.Args;
 
 /**
  * Makes test RLPx connection to the peers to acquire statistics
@@ -46,7 +50,7 @@ public class PeerConnectionTester {
     @Autowired
     private PeerClient peerClient;
 
-    private SystemProperties config = SystemProperties.getDefault();
+    private Args args = Args.getInstance();
 
     // NodeHandler instance should be unique per Node instance
     private Map<NodeHandler, ?> connectedCandidates = Collections.synchronizedMap(new IdentityHashMap());
@@ -98,7 +102,7 @@ public class PeerConnectionTester {
     }
 
     @Autowired
-    public PeerConnectionTester(final SystemProperties config) {
+    public PeerConnectionTester(final Args args) {
 //        this.config = config;
 //        ConnectThreads = config.peerDiscoveryWorkers();
 //        ReconnectPeriod = config.peerDiscoveryTouchPeriod() * 1000;
