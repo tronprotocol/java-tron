@@ -22,8 +22,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -44,10 +43,8 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
+@Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
-
-  private static final Logger logger = LoggerFactory.getLogger("Transaction");
-
   private Transaction transaction;
 
   /**

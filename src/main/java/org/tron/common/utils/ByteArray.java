@@ -20,21 +20,17 @@ package org.tron.common.utils;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 
+@Slf4j
 public class ByteArray {
-
-  private static final Logger logger = LoggerFactory.getLogger("ByteArray");
-
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
   public static String toHexString(byte[] data) {

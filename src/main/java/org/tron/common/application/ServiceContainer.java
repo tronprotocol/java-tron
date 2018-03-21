@@ -15,13 +15,12 @@
 package org.tron.common.application;
 
 import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public class ServiceContainer {
-
-  private static final Logger logger = LoggerFactory.getLogger("Services");
   private ArrayList<Service> services;
 
   public ServiceContainer() {

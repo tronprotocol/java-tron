@@ -2,16 +2,13 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
 
+@Slf4j
 public class WitnessCapsule implements ProtoCapsule<Witness> {
-
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCapsule");
-
   public static final long MIN_BALANCE = 100;
 
   private Witness witness;

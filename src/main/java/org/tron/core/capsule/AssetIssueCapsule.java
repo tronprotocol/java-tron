@@ -17,14 +17,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Contract.AssetIssueContract;
 
+@Slf4j
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
-
-  protected static final Logger logger = LoggerFactory.getLogger("AssetIssueCapsule");
-
   private AssetIssueContract assetIssueContract;
 
   /**
