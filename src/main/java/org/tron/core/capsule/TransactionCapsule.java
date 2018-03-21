@@ -45,6 +45,7 @@ import org.tron.protos.Protocol.Transaction.TransactionType;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
+
   private Transaction transaction;
 
   /**
@@ -294,8 +295,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case DeployContract:
           owner = contract.getParameter().unpack(org.tron.protos.Contract.AssetIssueContract.class)
               .getOwnerAddress();
-          // todo add other contract
           break;
+        case ParticipateAssetIssueContract:
+          owner = contract.getParameter()
+              .unpack(org.tron.protos.Contract.ParticipateAssetIssueContract.class)
+              .getOwnerAddress();
+          break;
+        // todo add other contract
         default:
           return null;
       }
