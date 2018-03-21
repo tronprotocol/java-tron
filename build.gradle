@@ -208,3 +208,9 @@ shadowJar {
     classifier = null
     version = null
 }
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
