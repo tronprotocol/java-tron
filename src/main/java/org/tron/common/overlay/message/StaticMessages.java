@@ -21,12 +21,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
-<<<<<<< HEAD
-=======
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
->>>>>>> 304536ded667ec71f406dbd836be9cc81f7afb81
 
 /**
  * This class contains static values of messages on the network. These message

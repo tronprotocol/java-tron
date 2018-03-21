@@ -17,9 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import com.sun.tools.javac.comp.Todo;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -36,11 +33,11 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.HelloMessage;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
+
 
 /**
  * @author Roman Mandeleil
@@ -55,8 +52,8 @@ public class Channel {
     @Autowired
     SystemProperties config;
 
-//    @Autowired
-//    private MessageQueue msgQueue;
+    @Autowired
+    private MessageQueue msgQueue;
 
     @Autowired
     private P2pHandler p2pHandler;
@@ -115,9 +112,9 @@ public class Channel {
 
         messageCodec.setChannel(this);
 
-//        msgQueue.setChannel(this);
+        msgQueue.setChannel(this);
 
-//        p2pHandler.setMsgQueue(msgQueue);
+        p2pHandler.setMsgQueue(msgQueue);
 
     }
 
@@ -141,14 +138,8 @@ public class Channel {
         String nodeId) throws IOException, InterruptedException {
 
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
-
-        ByteBuf byteBufMsg = ctx.alloc().buffer();
-
-        //TODO#p2p: flush send message into byteBufMsg
-
-        //frameCodec.writeFrame(new FrameCodec.Frame(helloMessage.getCode(), helloMessage.getEncoded()), byteBufMsg);
-        byteBufMsg.
-        ctx.writeAndFlush(byteBufMsg).sync();
+        //ByteBuf byteBufMsg = ctx.alloc().buffer();
+        ctx.writeAndFlush(helloMessage).sync();
 
         if (logger.isDebugEnabled())
             logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
@@ -156,33 +147,21 @@ public class Channel {
     }
 
     public void activateTron(ChannelHandlerContext ctx) {
-        EthHandler handler = ethHandlerFactory.create(version);
-        MessageFactory messageFactory = createEthMessageFactory(version);
-        messageCodec.setEthVersion(version);
-        messageCodec.setEthMessageFactory(messageFactory);
-
-        ctx.pipeline().addLast("data", handler);
-
-        handler.setMsgQueue(msgQueue);
-        handler.setChannel(this);
-        handler.setPeerDiscoveryMode(discoveryMode);
-
-        handler.activate();
-
-        eth = handler;
-    }
-
-    private void sendMessage(Message msg) {
-
-        getNodeStatistics().ethOutbound.add();
-
-         //TODO: here let local node know.
-         //ethereumListener.onSendMessage(channel, msg);
-            ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-            if (msg.getAnswerMessage() != null) {
-                messageRoundtrip.incRetryTimes();
-                messageRoundtrip.saveTime();
-            }
+        //TODO: use tron handle here.
+//        EthHandler handler = ethHandlerFactory.create(version);
+//        MessageFactory messageFactory = createEthMessageFactory(version);
+//        messageCodec.setEthVersion(version);
+//        messageCodec.setEthMessageFactory(messageFactory);
+//
+//        ctx.pipeline().addLast("data", handler);
+//
+//        handler.setMsgQueue(msgQueue);
+//        handler.setChannel(this);
+//        handler.setPeerDiscoveryMode(discoveryMode);
+//
+//        handler.activate();
+//
+//        eth = handler;
     }
 
 

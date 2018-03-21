@@ -19,8 +19,6 @@ package org.tron.common.overlay.server;
 
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
-
-import com.sun.org.apache.xml.internal.security.signature.NodeFilter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +66,7 @@ public class ChannelManager {
     private ScheduledExecutorService mainWorker = Executors.newSingleThreadScheduledExecutor();
     private int maxActivePeers;
     private Map<InetAddress, Date> recentlyDisconnected = Collections.synchronizedMap(new LRUMap<InetAddress, Date>(500));
-    private NodeFilter trustedPeers;
+    //private NodeFilter trustedPeers;
 
     /**
      * Queue with new blocks from other peers
