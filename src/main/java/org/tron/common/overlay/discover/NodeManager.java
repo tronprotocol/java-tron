@@ -90,7 +90,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     PERSIST = args.isNodeDiscoveryPersist();
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(args.nodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+    homeNode = new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
 
     logger.info(homeNode.toString());
     table = new NodeTable(homeNode, args.isNodeDiscoveryPublicHomeNode());

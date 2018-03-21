@@ -34,6 +34,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {
         ByteBuf buf = packet.content();
         byte[] encoded = new byte[buf.readableBytes()];
+        buf.readBytes(encoded);
         try {
             DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
             out.add(event);
