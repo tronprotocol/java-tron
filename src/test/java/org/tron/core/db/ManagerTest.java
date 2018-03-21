@@ -168,17 +168,31 @@ public class ManagerTest {
       logger.error("******2*******" + "block2 id:" + blockCapsule2.getBlockId());
       dbManager.pushBlock(blockCapsule1);
       dbManager.pushBlock(blockCapsule2);
-      logger.error("******in blockStore block size:" + dbManager.getBlockStore().dbSource.allKeys().size());
-      logger.error("******in blockStore block:" + dbManager.getBlockStore().dbSource.allKeys().stream().map(ByteArray::toHexString).collect(Collectors.toList()));
+      logger.error("******in blockStore block size:"
+          + dbManager.getBlockStore().dbSource.allKeys().size());
+      logger.error("******in blockStore block:"
+          + dbManager.getBlockStore().dbSource.allKeys().stream().map(ByteArray::toHexString)
+          .collect(Collectors.toList()));
+
+      Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule1.getBlockId().getBytes()));
+      Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()));
+
+      Assert.assertEquals(
+          dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
+          blockCapsule1.getBlockId());
+
       Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 6);
+
       Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
           blockCapsule1.getBlockId());
       Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
           blockCapsule1.getParentHash());
+
       Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
       Assert.assertEquals(dbManager.getHead().getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
       e.printStackTrace();
     }
