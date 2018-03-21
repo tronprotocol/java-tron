@@ -46,6 +46,11 @@ public class ChainInventoryMessage extends Message {
     return data;
   }
 
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
   private void pack() {
     this.data = this.chainInventory.toByteArray();
   }

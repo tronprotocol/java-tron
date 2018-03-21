@@ -31,12 +31,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageCodes;
 import org.tron.common.overlay.message.ReasonCode;
+import org.tron.core.config.SystemProperties;
 
 
 /**
@@ -120,7 +120,8 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         break;
       case DISCONNECT:
         msgQueue.receivedMessage(msg);
-        channel.getNodeStatistics().nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
+        channel.getNodeStatistics()
+            .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
         processDisconnect(ctx, (DisconnectMessage) msg);
         break;
       case PING:
@@ -157,7 +158,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   private void processDisconnect(ChannelHandlerContext ctx, DisconnectMessage msg) {
 
-    if (logger.isInfoEnabled() && msg.getReason() == ReasonCode.USELESS_PEER) {
+    if (logger.isInfoEnabled() && ReasonCode.fromInt(msg.getReason()) == ReasonCode.USELESS_PEER) {
 
       if (channel.getNodeStatistics().ethInbound.get() - ethInbound > 1 ||
           channel.getNodeStatistics().ethOutbound.get() - ethOutbound > 1) {

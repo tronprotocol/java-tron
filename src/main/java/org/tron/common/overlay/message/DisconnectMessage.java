@@ -77,6 +77,11 @@ public class DisconnectMessage extends P2pMessage {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
     return MessageTypes.fromByte(this.type);
   }

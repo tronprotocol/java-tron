@@ -24,6 +24,11 @@ public class GetDataMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
     return null;
   }

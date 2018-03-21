@@ -36,6 +36,11 @@ public class BlockInventoryMessage extends Message {
     return super.toString();
   }
 
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
   private BlockInventory getBlockInventory() {
     unPack();
     return blockInventory;

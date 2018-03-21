@@ -33,6 +33,11 @@ public class TransactionMessage extends Message {
     return data;
   }
 
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
   public Transaction getTransaction() {
     unPack();
     return trx;

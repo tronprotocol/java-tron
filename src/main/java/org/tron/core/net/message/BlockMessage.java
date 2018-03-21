@@ -42,6 +42,11 @@ public class BlockMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public Sha256Hash getMessageId() {
     return getBlockCapsule().getBlockId();
     //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());

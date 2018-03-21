@@ -50,6 +50,11 @@ public class InventoryMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
     return MessageTypes.fromByte(this.type);
   }

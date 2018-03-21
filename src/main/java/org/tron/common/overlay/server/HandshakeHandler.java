@@ -31,12 +31,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.core.config.SystemProperties;
 
 /**
  * The Netty handler which manages initial negotiation with peer (when either we initiating
@@ -123,7 +124,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         this.channel.publicRLPxHandshakeFinished(ctx, (HelloMessage) msg);
       } else {
         channel.getNodeStatistics()
-            .nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
+            .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
       }
 
     } else {
