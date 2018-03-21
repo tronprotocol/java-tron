@@ -148,7 +148,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return; //The balance is not enough
     }
 
-        createTransaction(contract, ContractType.TransferContract);
+    createTransaction(contract, ContractType.TransferContract);
   }
 
   public TransactionCapsule(VoteWitnessContract voteWitnessContract) {
@@ -183,7 +183,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
-                Any.pack(message)).build());
+            Any.pack(message)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
