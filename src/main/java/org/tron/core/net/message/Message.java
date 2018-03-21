@@ -1,51 +1,32 @@
 package org.tron.core.net.message;
 
-import org.apache.commons.lang3.ArrayUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 
+@Slf4j
 public abstract class Message {
 
   protected static final Logger logger = LoggerFactory.getLogger("Net");
 
   protected boolean unpacked;
   protected byte[] data;
-  protected byte[] rawData;
   protected byte type;
 
   public Message() {
   }
 
-  public Message(byte[] rawData) {
-    this.rawData = rawData;
+  public Message(byte[] packed) {
+    this.data = packed;
     unpacked = false;
   }
-
-  public Message(byte type, byte[] rawData) {
-
-    this.type = type;
-
-    this.rawData = rawData;
-
-    this.data = ArrayUtils.add(rawData, 0, type);
-
-    unpacked = false;
-  }
-
-  public abstract Class<?> getAnswerMessage();
 
   public Sha256Hash getMessageId() {
     return Sha256Hash.of(getData());
   }
 
-  public abstract byte[] getRawData();
-
-  public byte[] getData() {
-    return this.data;
-  }
-
-  public abstract byte[] getNodeId();
+  public abstract byte[] getData();
 
   public String toString() {
     return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";

@@ -20,7 +20,6 @@ package org.tron.common.overlay.message;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
 
 /**
  * This class contains static values of messages on the network. These message
@@ -29,6 +28,9 @@ import org.tron.common.overlay.SystemProperties;
  * @author Roman Mandeleil
  * @since 13.04.14
  */
+
+import org.tron.core.config.SystemProperties;
+
 @Component
 public class StaticMessages {
 

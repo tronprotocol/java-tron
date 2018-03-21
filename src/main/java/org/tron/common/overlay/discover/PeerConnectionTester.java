@@ -21,7 +21,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
+import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.client.PeerClient;
 
 import java.math.BigInteger;
