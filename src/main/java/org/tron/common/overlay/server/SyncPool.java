@@ -254,6 +254,8 @@ public class SyncPool {
     final Set<String> nodesInUse = nodesInUse();
     nodesInUse.add(Hex.toHexString(config.nodeId()));   // exclude home node
 
+
+    //TODO: here can only use TCP connect seed peer.
     List<NodeHandler> newNodes;
     newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
 
