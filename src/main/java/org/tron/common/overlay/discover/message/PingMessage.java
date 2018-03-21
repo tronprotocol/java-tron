@@ -2,12 +2,11 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.node.Node;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
-import org.tron.protos.Discover.PingMessage.Builder;
 
 public class PingMessage extends DiscoverMessage {
 
@@ -23,25 +22,26 @@ public class PingMessage extends DiscoverMessage {
     return this.rawData;
   }
 
-  public PingMessage(int version, ByteString fromAddress, int fromPort, ByteString toAddress,
-      int toPort) {
-    Builder builder = Discover.PingMessage.newBuilder()
-        .setVersion(version)
-        .setTimestamp(System.currentTimeMillis());
-
+  public PingMessage(int version, Node from, Node to,
+      long timestamp) {
     Endpoint fromEndpoint = Endpoint.newBuilder()
-        .setAddress(fromAddress)
-        .setTcpPort(fromPort)
-        .setUdpPort(fromPort)
+        .setNodeId(ByteString.copyFrom(from.getId()))
+        .setPort(from.getPort())
+        .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .build();
 
     Endpoint toEndpoint = Endpoint.newBuilder()
-        .setAddress(toAddress)
-        .setTcpPort(toPort)
-        .setUdpPort(toPort)
+        .setNodeId(ByteString.copyFrom(to.getId()))
+        .setPort(to.getPort())
+        .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
         .build();
 
-    this.pingMessage = builder.setFrom(fromEndpoint).setTo(toEndpoint).build();
+    this.pingMessage = Discover.PingMessage.newBuilder().setVersion(version)
+        .setFrom(fromEndpoint)
+        .setTo(toEndpoint)
+        .setTimestamp(timestamp)
+        .build();
+
     this.rawData = this.pingMessage.toByteArray();
   }
 
@@ -58,18 +58,27 @@ public class PingMessage extends DiscoverMessage {
   }
 
   public Node getFrom (){
-    return null;
+    Endpoint from = this.pingMessage.getFrom();
+
+    Node node = new Node(from.getNodeId().toByteArray(),
+        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
+
+    return node;
   }
 
   public Node getTo(){
-    return null;
+    Endpoint to = this.pingMessage.getTo();
+
+    Node node = new Node(to.getNodeId().toByteArray(),
+        ByteArray.toStr(to.getAddress().toByteArray()), to.getPort());
+
+    return node;
   }
 
   @Override
   public String toString() {
 
-    return String.format("[PingMessage] \n %s:%d ==> %s:%d\n",
-        this.getFromHost(), this.getFromPort(), this.getToHost(), this.getToPort());
+    return String.format("[PingMessage] \n");
   }
 
   @Override
