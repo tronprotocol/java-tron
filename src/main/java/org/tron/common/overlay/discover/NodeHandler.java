@@ -19,12 +19,8 @@ package org.tron.common.overlay.discover;
 
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.common.overlay.message.Message;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -251,7 +247,7 @@ public class NodeHandler {
         logMessage(msg, true);
 //        logMessage(" ===> [FIND_NODE] " + this);
         getNodeStatistics().discoverInFind.add();
-        List<Node> closest = nodeManager.table.getClosestNodes(msg.getMessageId());
+        List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
 
         Node publicHomeNode = nodeManager.getPublicHomeNode();
         if (publicHomeNode != null) {
@@ -281,8 +277,7 @@ public class NodeHandler {
         if (waitForPong) {
             logger.trace("<=/=  [PING] (Waiting for pong) " + this);
         }
-
-        Message ping = PingMessage.create(nodeManager.table.getNode(), getNode());
+        Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
         pingSent = System.currentTimeMillis();
@@ -304,7 +299,7 @@ public class NodeHandler {
 
     void sendPong() {
 //        logMessage("<===  [PONG] " + this);
-        Message pong = PongMessage.create(node);
+        Message pong = new PongMessage(node);
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
@@ -312,7 +307,7 @@ public class NodeHandler {
 
     void sendNeighbours(List<Node> neighbours) {
 //        logMessage("<===  [NEIGHBOURS] " + this);
-        NeighborsMessage neighbors = NeighborsMessage.create(neighbours, nodeManager.key);
+        Message neighbors = new NeighborsMessage(node, neighbours);
         logMessage(neighbors, false);
         sendMessage(neighbors);
         getNodeStatistics().discoverOutNeighbours.add();
@@ -320,7 +315,7 @@ public class NodeHandler {
 
     void sendFindNode(byte[] target) {
 //        logMessage("<===  [FIND_NODE] " + this);
-        Message findNode = FindNodeMessage.create(target, node);
+        Message findNode = new FindNodeMessage(node, target);
         logMessage(findNode, false);
         sendMessage(findNode);
         getNodeStatistics().discoverOutFind.add();

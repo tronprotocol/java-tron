@@ -2,36 +2,31 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.List;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-public class NeighborsMessage extends DiscoverMessage {
+import java.util.ArrayList;
+import java.util.List;
+
+public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] rawData) {
-    super(MessageTypes.DISCOVER_PEERS.asByte(), rawData);
-    unPack();
-  }
-
-  @Override
-  public byte[] getRawData() {
-    return this.rawData;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return this.neighbours.getFrom().getNodeId().toByteArray();
+  public NeighborsMessage(byte[] data) {
+    super(Message.GET_PEERS, data);
+    try {
+      this.neighbours = Discover.Neighbours.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
+    super(Message.GET_PEERS, null);
     Builder builder = Neighbours.newBuilder()
         .setTimestamp(System.currentTimeMillis());
 
@@ -55,21 +50,7 @@ public class NeighborsMessage extends DiscoverMessage {
 
     this.neighbours = builder.build();
 
-    this.type = MessageTypes.DISCOVER_PEERS.asByte();
-    this.rawData = this.neighbours.toByteArray();
-  }
-
-  private void unPack() {
-    try {
-      this.neighbours = Discover.Neighbours.parseFrom(rawData);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public static NeighborsMessage create(Node from, List<Node> nodes) {
-    NeighborsMessage neighborsMessage = new NeighborsMessage(from, nodes);
-    return neighborsMessage;
+    this.data = this.neighbours.toByteArray();
   }
 
   public List<Node> getNodes(){
@@ -78,22 +59,12 @@ public class NeighborsMessage extends DiscoverMessage {
             new Node(neighbour.getNodeId().toByteArray(),
                 ByteArray.toStr(neighbour.getAddress().toByteArray()),
                 neighbour.getPort())));
-
     return nodes;
   }
 
-  public Neighbours getNeighbours() {
-    return neighbours;
-  }
-
   @Override
-  public String toString() {
-    return String.format("[NeighborsMessage] \n");
-  }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
+  public byte[] getNodeId() {
+    return this.neighbours.getFrom().getNodeId().toByteArray();
   }
 
 }
