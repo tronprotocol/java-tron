@@ -42,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
+import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;

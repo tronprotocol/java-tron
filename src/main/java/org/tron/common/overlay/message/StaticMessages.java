@@ -20,7 +20,7 @@ package org.tron.common.overlay.message;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
+import org.tron.core.config.SystemProperties;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

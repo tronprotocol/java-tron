@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.SystemProperties;
+import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.server.WireTrafficStats;
 
 @Component
