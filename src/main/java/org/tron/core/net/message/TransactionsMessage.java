@@ -3,9 +3,12 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.Items;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class TransactionsMessage extends Message {
 
   private List<Transaction> trxs = new ArrayList<Transaction>();

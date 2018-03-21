@@ -24,13 +24,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.jce.TronCastleProvider;
 
+@Slf4j
 public class Hash {
-
-  private static final Logger LOG = LoggerFactory.getLogger(Hash.class);
   private static final Provider CRYPTO_PROVIDER;
 
   private static final String HASH_256_ALGORITHM_NAME;
@@ -46,7 +44,7 @@ public class Hash {
     try {
       sha256digest = MessageDigest.getInstance("SHA-256");
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("Can't initialize HashUtils", e);
+      logger.error("Can't initialize HashUtils", e);
       throw new RuntimeException(e); // Can't happen.
     }
 
@@ -68,7 +66,7 @@ public class Hash {
       digest.update(input);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("Can't find such algorithm", e);
+      logger.error("Can't find such algorithm", e);
       throw new RuntimeException(e);
     }
 
@@ -83,7 +81,7 @@ public class Hash {
       digest.update(input2, 0, input2.length);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("Can't find such algorithm", e);
+      logger.error("Can't find such algorithm", e);
       throw new RuntimeException(e);
     }
   }
@@ -104,7 +102,7 @@ public class Hash {
       digest.update(input, start, length);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("Can't find such algorithm", e);
+      logger.error("Can't find such algorithm", e);
       throw new RuntimeException(e);
     }
   }
@@ -117,7 +115,7 @@ public class Hash {
       digest.update(input);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("Can't find such algorithm", e);
+      logger.error("Can't find such algorithm", e);
       throw new RuntimeException(e);
     }
   }

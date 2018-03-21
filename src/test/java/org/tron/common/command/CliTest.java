@@ -15,13 +15,10 @@
 
 package org.tron.common.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CliTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   //      @Test
   //      public void testCli() {
   //          Cli cli = new Cli();

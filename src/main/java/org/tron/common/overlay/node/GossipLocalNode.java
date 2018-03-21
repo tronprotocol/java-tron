@@ -21,8 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -34,10 +33,8 @@ import io.scalecube.transport.Address;
 import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
+@Slf4j
 public class GossipLocalNode implements LocalNode {
-
-  private static final Logger logger = LoggerFactory.getLogger("GossipLocalNode");
-
   private Cluster cluster = null;
 
   private PeerConnectionDelegate peerDel;

@@ -40,8 +40,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 import javax.crypto.KeyAgreement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.asn1.ASN1InputStream;
 import org.spongycastle.asn1.ASN1Integer;
 import org.spongycastle.asn1.DLSequence;
@@ -77,6 +77,7 @@ import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
 
+@Slf4j
 public class ECKey implements Serializable {
 
   /**
@@ -95,7 +96,6 @@ public class ECKey implements Serializable {
    */
 
   public static final BigInteger HALF_CURVE_ORDER;
-  private static final Logger logger = LoggerFactory.getLogger(ECKey.class);
   private static final BigInteger SECP256K1N =
       new BigInteger("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16);
   private static final SecureRandom secureRandom;

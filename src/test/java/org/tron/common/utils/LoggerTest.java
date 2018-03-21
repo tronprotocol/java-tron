@@ -15,13 +15,11 @@
 
 package org.tron.common.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class LoggerTest {
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testLogger() {
     logger.debug("test debug: {}", "success");
