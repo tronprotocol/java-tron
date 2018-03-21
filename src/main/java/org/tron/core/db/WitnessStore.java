@@ -7,32 +7,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.WitnessCapsule;
 
 @Slf4j
-public class WitnessStore extends TronDatabase<WitnessCapsule> {
+public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
+
   protected WitnessStore(String dbName) {
     super(dbName);
-  }
-
-  @Override
-  public void put(byte[] key, WitnessCapsule item) {
-    logger.info("voteAddress is {} ", item.getAddress());
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override

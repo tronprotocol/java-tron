@@ -15,6 +15,7 @@
 
 package org.tron.core.config.args;
 
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -22,11 +23,8 @@ import java.util.List;
 
 public class LocalWitnesses {
 
+  @Getter
   private List<String> privateKeys;
-
-  public List<String> getPrivateKeys() {
-    return this.privateKeys;
-  }
 
   /**
    * Private key of ECKey.

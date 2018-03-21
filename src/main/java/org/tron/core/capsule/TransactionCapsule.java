@@ -34,6 +34,8 @@ import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.TXInput;
 import org.tron.protos.Protocol.TXOutput;
@@ -145,25 +147,62 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return; //The balance is not enough
     }
 
-    AccountCapsule to = accountStore.get(contract.getToAddress().toByteArray());
-
-    if (to == null) {
-      return; //to is invalid
-    }
-
-    createTransaction(contract, ContractType.TransferContract);
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
+            Any.pack(contract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
   public TransactionCapsule(Contract.VoteWitnessContract voteWitnessContract) {
-    createTransaction(voteWitnessContract, ContractType.VoteWitnessContract);
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.VoteWitnessContract).setParameter(
+            Any.pack(voteWitnessContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+
   }
 
   public TransactionCapsule(Contract.WitnessCreateContract witnessCreateContract) {
-    createTransaction(witnessCreateContract, ContractType.WitnessCreateContract);
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.WitnessCreateContract).setParameter(
+            Any.pack(witnessCreateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
   public TransactionCapsule(Contract.WitnessUpdateContract witnessUpdateContract) {
-    createTransaction(witnessUpdateContract, ContractType.WitnessUpdateContract);
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.WitnessUpdateContract).setParameter(
+            Any.pack(witnessUpdateContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(TransferAssetContract transferAssetContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferAssetContract).setParameter(
+            Any.pack(transferAssetContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+  public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.ParticipateAssetIssueContract)
+            .setParameter(
+                Any.pack(participateAssetIssueContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
@@ -171,14 +210,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public TransactionCapsule(Contract.AssetIssueContract assetIssueContract) {
-    createTransaction(assetIssueContract, ContractType.AssetIssueContract);
-  }
 
-  private void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
-        Transaction.Contract.newBuilder().setType(contractType).setParameter(
-                Any.pack(message)).build());
+        Transaction.Contract.newBuilder().setType(ContractType.AssetIssueContract).setParameter(
+            Any.pack(assetIssueContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
@@ -235,9 +271,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contract.getParameter().unpack(org.tron.protos.Contract.TransferContract.class)
               .getOwnerAddress();
           break;
-        case TransferAssertContract:
+        case TransferAssetContract:
           owner = contract.getParameter()
-              .unpack(org.tron.protos.Contract.TransferAssertContract.class).getOwnerAddress();
+              .unpack(org.tron.protos.Contract.TransferAssetContract.class).getOwnerAddress();
           break;
         case VoteAssetContract:
           owner = contract.getParameter().unpack(org.tron.protos.Contract.VoteAssetContract.class)

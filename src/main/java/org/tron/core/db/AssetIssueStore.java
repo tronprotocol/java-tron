@@ -2,35 +2,17 @@ package org.tron.core.db;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AssetIssueCapsule;
 
 @Slf4j
-public class AssetIssueStore extends TronDatabase<AssetIssueCapsule> {
+public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
+
   private static AssetIssueStore instance;
 
   private AssetIssueStore(String dbName) {
     super(dbName);
-  }
-
-  @Override
-  public void put(byte[] key, AssetIssueCapsule item) {
-    logger.info("asset issue is {}, asset issue is {}", key, item);
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    logger.info("name is {} ", ByteArray.toHexString(key));
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
   }
 
   /**
@@ -47,13 +29,6 @@ public class AssetIssueStore extends TronDatabase<AssetIssueCapsule> {
       }
     }
     return instance;
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override
