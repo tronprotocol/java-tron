@@ -4,11 +4,10 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
@@ -16,11 +15,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
 
+@Slf4j
 public class AccountVoteWitnessTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
-  private static String dbPath = "output_witness";
+  private static String dbPath = "output_witness_test";
 
   /**
    * init db.
@@ -38,6 +36,7 @@ public class AccountVoteWitnessTest {
    */
   @AfterClass
   public static void removeDb() {
+    Args.clearParam();
 
     File dbFolder = new File(dbPath);
     if (deleteFolder(dbFolder)) {

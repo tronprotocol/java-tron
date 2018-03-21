@@ -4,8 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
@@ -14,15 +13,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class WitnessCreateActuator extends AbstractActuator {
-
-
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
-
   WitnessCreateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
-
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
@@ -76,9 +71,10 @@ public class WitnessCreateActuator extends AbstractActuator {
   private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0, "");
+        witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toStringUtf8());
 
-    this.dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+    logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
+    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
   }
 
 }

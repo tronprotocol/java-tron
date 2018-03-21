@@ -18,13 +18,12 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -40,17 +39,15 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class TransferAssertActuatorTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
+@Slf4j
+public class TransferAssetActuatorTest {
 
   private static Manager dbManager;
   private static Any contract;
-  private static final String dbPath = "contract_test";
+  private static final String dbPath = "output_contract_test";
   private static final String ASSET_NAME = "trx";
   private static final String OWNER_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049150";
   private static final String TO_ADDRESS = "548794500882809695a8a687866e76d4271a146a";
-  private static final long AMOUNT = 100L;
 
   private static final long TOTAL_SUPPLY = 10L;
   private static final int TRX_NUM = 10;
@@ -108,9 +105,9 @@ public class TransferAssertActuatorTest {
 
   private Any getContract(long sendCoin) {
     return Any.pack(
-        Contract.TransferAssertContract
+        Contract.TransferAssetContract
             .newBuilder()
-            .setAssertName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAmount(sendCoin)
@@ -122,7 +119,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void rightTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(100L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -146,7 +143,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void perfectTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10000L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(10000L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -171,7 +168,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void wrongTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10001L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(10001L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -204,10 +201,8 @@ public class TransferAssertActuatorTest {
    */
   @AfterClass
   public static void destroy() {
-
-    String filePath = Args.getInstance().getOutputDirectory() + "contract-test";
-
-    if (FileUtil.deleteDir(new File(filePath))) {
+    Args.clearParam();
+    if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");

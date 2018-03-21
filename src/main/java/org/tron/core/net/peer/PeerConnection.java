@@ -3,27 +3,28 @@ package org.tron.core.net.peer;
 import io.scalecube.cluster.Cluster;
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
+import java.io.UnsupportedEncodingException;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.common.overlay.message.Message;
+import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-
-
+@Slf4j
 public class PeerConnection {
 
   @Override
   public int hashCode() {
     return member.hashCode();
   }
-
-  private static final Logger logger = LoggerFactory.getLogger("PeerConnection");
 
   //private
   private Member member;
@@ -127,7 +128,8 @@ public class PeerConnection {
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread.
+    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy 
+
   }
 
   public boolean isBanned() {

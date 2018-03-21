@@ -1,14 +1,13 @@
 package org.tron.core.net.node;
 
+import com.google.common.primitives.Longs;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import com.google.common.primitives.Longs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -20,6 +19,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -28,24 +28,22 @@ import org.tron.common.overlay.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
-
+@Slf4j
 public class NodeDelegateImpl implements NodeDelegate {
-
-  private static final Logger logger = LoggerFactory.getLogger("NodeDelegateImpl");
-
   private Manager dbManager;
 
   public NodeDelegateImpl(Manager dbManager) {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStoreDb() {
+  protected BlockStore getBlockStore() {
     return dbManager.getBlockStore();
   }
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
+    // TODO timestamp shouble be consistent.
     long gap = System.currentTimeMillis() - block.getTimeStamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
@@ -59,12 +57,14 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
     }
-
-    //TODO: get block's TRXs here and return
-    List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-    return trx.stream()
-            .map(TransactionCapsule::getHash)
-            .collect(Collectors.toCollection(LinkedList::new));
+    if (!syncMode) {
+      List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
+      return trx.stream()
+          .map(TransactionCapsule::getHash)
+          .collect(Collectors.toCollection(LinkedList::new));
+    } else {
+      return null;
+    }
   }
 
 
@@ -75,20 +75,17 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
       logger.info("Contract validate failed");
-      // TODO stores failed trans in db for inquiry.
-      dbManager.getTransactionStore().getDbSource().putData(trx.getTransactionId().getBytes(), trx.getData());
       e.printStackTrace();
       throw new BadTransactionException();
     } catch (ContractExeException e) {
       logger.info("Contract execute failed");
-      // TODO stores failed trans in db for inquiry.
-      dbManager.getTransactionStore().getDbSource().putData(trx.getTransactionId().getBytes(), trx.getData());
       e.printStackTrace();
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
+    } catch (HighFreqException e) {
+      logger.info(e.getMessage());
     }
-
   }
 
   @Override
@@ -110,19 +107,20 @@ public class NodeDelegateImpl implements NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-              .filter(blockId -> dbManager.containBlock(blockId))
-              .findFirst()
-              .orElseThrow(UnReachBlockException::new);
+          .filter(blockId -> dbManager.containBlock(blockId))
+          .findFirst()
+          .orElseThrow(UnReachBlockException::new);
       //todo: can not find any same block form peer's summary and my db.
     }
 
     //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
-    long len = Longs.min(dbManager.getHeadBlockNum(), unForkedBlockIdNum +NodeConstant.SYNC_FETCH_BATCH_NUM);
+    long len = Longs
+        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
-            .filter(num -> num > 0)
-            .mapToObj(num -> dbManager.getBlockIdByNum(num))
-            .collect(Collectors.toCollection(LinkedList::new));
+        .filter(num -> num > 0)
+        .mapToObj(num -> dbManager.getBlockIdByNum(num))
+        .collect(Collectors.toCollection(LinkedList::new));
   }
 
   @Override
@@ -170,7 +168,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     return retSummary;
   }
 
-
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
@@ -190,7 +187,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
     //TODO: notify cli know how many block we need to sync
   }
-
 
   @Override
   public long getBlockTime(BlockId id) {
@@ -227,7 +223,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public BlockCapsule getGenesisBlock() {
-    //TODO return a genissBlock
+    //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
 }

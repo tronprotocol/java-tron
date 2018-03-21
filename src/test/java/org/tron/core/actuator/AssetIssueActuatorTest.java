@@ -5,13 +5,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -26,10 +25,8 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class AssetIssueActuatorTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_assetIssue_test";
@@ -140,6 +137,7 @@ public class AssetIssueActuatorTest {
    */
   @AfterClass
   public static void destroy() {
+    Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {

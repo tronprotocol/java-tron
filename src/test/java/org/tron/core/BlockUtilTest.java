@@ -16,11 +16,11 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -31,13 +31,16 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
 
+@Slf4j
 public class BlockUtilTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Before
   public void initConfiguration() {
     Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+  }
+
+  @After
+  public void destroy() {
+    Args.clearParam();
   }
 
   @Test

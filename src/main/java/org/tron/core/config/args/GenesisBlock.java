@@ -3,6 +3,7 @@ package org.tron.core.config.args;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import lombok.Getter;
 
 public class GenesisBlock implements Serializable {
 
@@ -12,10 +13,19 @@ public class GenesisBlock implements Serializable {
   public static final String DEFAULT_TIMESTAMP = "0";
   public static final String DEFAULT_PARENT_HASH = "0";
 
+  @Getter
   private List<Account> assets;
+
+  @Getter
   private List<Witness> witnesses;
+
+  @Getter
   private String timestamp;
+
+  @Getter
   private String parentHash;
+
+  @Getter
   private String number;
 
   public GenesisBlock() {
@@ -37,10 +47,6 @@ public class GenesisBlock implements Serializable {
     return genesisBlock;
   }
 
-  public List<Account> getAssets() {
-    return this.assets;
-  }
-
   /**
    * Empty assets.
    */
@@ -48,12 +54,8 @@ public class GenesisBlock implements Serializable {
     this.assets = assets;
 
     if (assets == null) {
-      this.assets = Collections.EMPTY_LIST;
+      this.assets = Collections.emptyList();
     }
-  }
-
-  public String getTimestamp() {
-    return this.timestamp;
   }
 
   /**
@@ -76,10 +78,6 @@ public class GenesisBlock implements Serializable {
     }
   }
 
-  public String getParentHash() {
-    return this.parentHash;
-  }
-
   /**
    * Set parent hash.
    */
@@ -91,16 +89,8 @@ public class GenesisBlock implements Serializable {
     }
   }
 
-  public String getNumber() {
-    return this.number;
-  }
-
   public void setNumber(final String number) {
     this.number = "0";
-  }
-
-  public List<Witness> getWitnesses() {
-    return this.witnesses;
   }
 
   /**
@@ -110,7 +100,7 @@ public class GenesisBlock implements Serializable {
     this.witnesses = witnesses;
 
     if (witnesses == null) {
-      this.witnesses = Collections.EMPTY_LIST;
+      this.witnesses = Collections.emptyList();
     }
   }
 }

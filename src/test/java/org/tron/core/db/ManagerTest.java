@@ -1,11 +1,13 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
+import java.io.File;
+
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -17,15 +19,12 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
-import com.google.protobuf.ByteString;
 
-
+@Slf4j
 public class ManagerTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
-  private static String dbPath = "output_manager";
+  private static String dbPath = "output_manager_test";
 
   @BeforeClass
   public static void init() {
@@ -45,7 +44,8 @@ public class ManagerTest {
 
   @AfterClass
   public static void removeDb() {
-    FileUtil.recursiveDelete(dbPath);
+    Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -92,7 +92,7 @@ public class ManagerTest {
         transactionCapsule.getInstance().getRawData().getVout(0).getValue());
   }
 
-  @Test
+  //  @Test
   public void updateWits() {
     int sizePrv = dbManager.getWitnesses().size();
     dbManager.getWitnesses().forEach(witnessCapsule -> {

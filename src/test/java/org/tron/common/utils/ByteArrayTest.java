@@ -18,16 +18,12 @@ package org.tron.common.utils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
-
+@Slf4j
 public class ByteArrayTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testToHexString() {
     //logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString(new byte[]{16}));
@@ -74,7 +70,5 @@ public class ByteArrayTest {
     byte[] bss = new byte[]{8, 9, 12, 13, 14, 15, 16};
     assertEquals("ByteArray.toHexString is not equals Hex.toHexString", ByteArray.toHexString(bss),
         Hex.toHexString(bss));
-
-
   }
 }

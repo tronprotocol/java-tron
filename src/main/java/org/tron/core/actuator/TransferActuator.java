@@ -12,6 +12,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferActuator extends AbstractActuator {
@@ -28,6 +29,7 @@ public class TransferActuator extends AbstractActuator {
     try {
       TransferContract transferContract = null;
       transferContract = contract.unpack(TransferContract.class);
+
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
       ret.setStatus(fee, code.SUCESS);
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
@@ -81,9 +83,15 @@ public class TransferActuator extends AbstractActuator {
           throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
         }
       }
-      if (!dbManager.getAccountStore().has(transferContract.getToAddress().toByteArray())) {
-        throw new ContractValidateException("Validate TransferContract error, no ToAccount.");
+
+      // if account with to_address is not existed,  create it.
+      ByteString toAddress = transferContract.getToAddress();
+      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
+        AccountCapsule account = new AccountCapsule(toAddress,
+            AccountType.Normal);
+        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
+
       if (ownerAccount.getBalance() < calcFee()) {
         throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
       }

@@ -26,19 +26,20 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.TransferAssertContract;
+import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class TransferAssertActuator extends AbstractActuator {
+public class TransferAssetActuator extends AbstractActuator {
 
-  TransferAssertActuator(Any contract, Manager dbManager) {
+  TransferAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-    if (!this.contract.is(TransferAssertContract.class)) {
+    if (!this.contract.is(TransferAssetContract.class)) {
       throw new ContractExeException();
     }
 
@@ -47,13 +48,13 @@ public class TransferAssertActuator extends AbstractActuator {
     }
 
     try {
-      TransferAssertContract transferAssertContract = this.contract
-          .unpack(TransferAssertContract.class);
+      TransferAssetContract transferAssetContract = this.contract
+          .unpack(TransferAssetContract.class);
       AccountStore accountStore = this.dbManager.getAccountStore();
-      byte[] ownerKey = transferAssertContract.getOwnerAddress().toByteArray();
-      byte[] toKey = transferAssertContract.getToAddress().toByteArray();
-      ByteString assertName = transferAssertContract.getAssertName();
-      long amount = transferAssertContract.getAmount();
+      byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
+      byte[] toKey = transferAssetContract.getToAddress().toByteArray();
+      ByteString assertName = transferAssetContract.getAssetName();
+      long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerKey);
       ownerAccountCapsule.reduceAssetAmount(assertName, amount);
@@ -74,25 +75,28 @@ public class TransferAssertActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     try {
-      TransferAssertContract transferAssertContract = this.contract
-          .unpack(TransferAssertContract.class);
+      TransferAssetContract transferAssetContract = this.contract
+          .unpack(TransferAssetContract.class);
 
-      byte[] ownerKey = transferAssertContract.getOwnerAddress().toByteArray();
+      byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
       if (!this.dbManager.getAccountStore().has(ownerKey)) {
         throw new ContractValidateException();
       }
 
-      byte[] toKey = transferAssertContract.getToAddress().toByteArray();
-      if (!this.dbManager.getAccountStore().has(toKey)) {
-        throw new ContractValidateException();
+      // if account with to_address is not existed,  create it.
+      ByteString toAddress = transferAssetContract.getToAddress();
+      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
+        AccountCapsule account = new AccountCapsule(toAddress, null,
+            AccountType.Normal);
+        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 
-      byte[] nameKey = transferAssertContract.getAssertName().toByteArray();
+      byte[] nameKey = transferAssetContract.getAssetName().toByteArray();
       if (!this.dbManager.getAssetIssueStore().has(nameKey)) {
         throw new ContractValidateException();
       }
 
-      long amount = transferAssertContract.getAmount();
+      long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
       Map<String, Long> asset = ownerAccount.getAssetMap();

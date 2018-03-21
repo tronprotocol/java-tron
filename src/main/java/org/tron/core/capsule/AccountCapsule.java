@@ -21,18 +21,15 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
 
+@Slf4j
 public class AccountCapsule implements ProtoCapsule<Account> {
-
-  protected static final Logger logger = LoggerFactory.getLogger("AccountCapsule");
-
   private Account account;
 
   /**
@@ -83,6 +80,16 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .build();
   }
 
+  /**
+   * get account from address and account name.
+   */
+  public AccountCapsule(ByteString address,
+      AccountType accountType) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAddress(address)
+        .build();
+  }
   public AccountCapsule(Account account) {
     this.account = account;
   }
@@ -98,6 +105,14 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
   public ByteString getAddress() {
     return this.account.getAddress();
+  }
+
+  public byte[] createDbKey() {
+    return getAddress().toByteArray();
+  }
+
+  public String createReadableString() {
+    return ByteArray.toHexString(getAddress().toByteArray());
   }
 
   public AccountType getType() {
@@ -214,4 +229,5 @@ public class AccountCapsule implements ProtoCapsule<Account> {
 
     return assetMap;
   }
+
 }

@@ -2,13 +2,10 @@ package org.tron.core.services;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-
 import java.util.Map;
-
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
@@ -25,10 +22,8 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
-
+@Slf4j
 public class WitnessService implements Service {
-
-  private static final Logger logger = LoggerFactory.getLogger(WitnessService.class);
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;

@@ -23,27 +23,42 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public class LevelDbDataSourceImplTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
+  private static final String dbPath = "output-levelDb-test";
   LevelDbDataSourceImpl dataSourceTest;
 
   @Before
   public void initDb() {
-    Args.setParam(new String[]{}, Configuration.getByPath("config-junit.conf"));
-    dataSourceTest = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(),
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Configuration.getByPath("config-junit.conf"));
+    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator,
         "test_levelDb");
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   @Test

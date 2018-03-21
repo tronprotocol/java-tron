@@ -19,8 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -33,10 +32,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class AssetIssueActuator extends AbstractActuator {
-
-  private static final Logger logger = LoggerFactory.getLogger("AssetIssueActuator");
-
   AssetIssueActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }

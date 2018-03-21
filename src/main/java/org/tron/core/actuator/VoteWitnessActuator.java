@@ -4,8 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -14,10 +14,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class VoteWitnessActuator extends AbstractActuator {
-
-  private static final Logger logger = LoggerFactory.getLogger("VoteWitnessActuator");
-
   VoteWitnessActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -78,10 +76,14 @@ public class VoteWitnessActuator extends AbstractActuator {
         .get(voteContract.getOwnerAddress().toByteArray());
 
     voteContract.getVotesList().forEach(vote -> {
-      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
+      logger.debug("countVoteAccount,address[{}]",
+          vote.getVoteAddress().toStringUtf8());
+      accountCapsule.addVotes(
+          ByteString.copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())),
+          vote.getVoteCount());
     });
 
-    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
   @Override

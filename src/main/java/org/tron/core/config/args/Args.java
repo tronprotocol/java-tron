@@ -8,28 +8,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
+@NoArgsConstructor
 public class Args {
-
-  private static final Logger logger = LoggerFactory.getLogger("Args");
-
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
 
-  @Parameter(names = {"-h", "--help"}, help = true, description = "Directory")
+  @Getter
+  @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
   private boolean help = false;
 
+  @Getter
   @Parameter(names = {"-w", "--witness"})
   private boolean witness = false;
 
+  @Getter
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
+  @Getter
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
 
@@ -39,25 +44,58 @@ public class Args {
   @Parameter(names = {"--overlay-port"}, description = "Overlay port")
   private int overlayPort = 0;
 
+  @Getter
   private Storage storage;
+
+  @Getter
   private Overlay overlay;
+
+  @Getter
   private SeedNode seedNode;
+
+  @Getter
   private GenesisBlock genesisBlock;
+
+  @Getter
+  @Setter
   private String chainId;
-  private LocalWitnesses localWitness;
+
+  @Getter
+  @Setter
+  private LocalWitnesses localWitnesses;
+
+  @Getter
+  @Setter
   private long blockInterval;
+
+  @Getter
+  @Setter
   private boolean needSyncCheck;
 
-  private Args() {
-
+  public static void clearParam() {
+    INSTANCE.outputDirectory = "output-directory";
+    INSTANCE.help = false;
+    INSTANCE.witness = false;
+    INSTANCE.seedNodes = new ArrayList<>();
+    INSTANCE.privateKey = "";
+    INSTANCE.storageDirectory = "";
+    INSTANCE.overlayPort = 0;
+    INSTANCE.storage = null;
+    INSTANCE.overlay = null;
+    INSTANCE.seedNode = null;
+    INSTANCE.genesisBlock = null;
+    INSTANCE.chainId = null;
+    INSTANCE.localWitnesses = null;
+    INSTANCE.blockInterval = 0L;
+    INSTANCE.needSyncCheck = false;
   }
 
   /**
    * set parameters.
    */
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
-    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
 
+    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
 
@@ -89,13 +127,13 @@ public class Args {
         .orElse(config.getStringList("seed.node.ip.list")));
 
     if (config.hasPath("localwitness")) {
-      INSTANCE.localWitness = new LocalWitnesses();
+      INSTANCE.localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList("localwitness");
       if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one,get the first one");
+        logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);
       }
-      INSTANCE.localWitness.setPrivateKeys(localwitness);
+      INSTANCE.localWitnesses.setPrivateKeys(localwitness);
     }
 
     if (config.hasPath("genesis.block")) {
@@ -159,69 +197,5 @@ public class Args {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
-  }
-
-  public boolean isHelp() {
-    return this.help;
-  }
-
-  public List<String> getSeedNodes() {
-    return this.seedNodes;
-  }
-
-  public String getPrivateKey() {
-    return this.privateKey;
-  }
-
-  public Storage getStorage() {
-    return this.storage;
-  }
-
-  public Overlay getOverlay() {
-    return this.overlay;
-  }
-
-  public SeedNode getSeedNode() {
-    return this.seedNode;
-  }
-
-  public GenesisBlock getGenesisBlock() {
-    return this.genesisBlock;
-  }
-
-  public String getChainId() {
-    return this.chainId;
-  }
-
-  public void setChainId(final String chainId) {
-    this.chainId = chainId;
-  }
-
-  public boolean isWitness() {
-    return this.witness;
-  }
-
-  public LocalWitnesses getLocalWitnesses() {
-    return this.localWitness;
-  }
-
-  public void setLocalWitness(final LocalWitnesses localWitness) {
-    this.localWitness = localWitness;
-  }
-
-  public long getBlockInterval() {
-    return this.blockInterval;
-  }
-
-  public void setBlockInterval(final long blockInterval) {
-    this.blockInterval = blockInterval;
-  }
-
-  public boolean isNeedSyncCheck() {
-    return needSyncCheck;
-  }
-
-  public void setNeedSyncCheck(boolean needSyncCheck) {
-    this.needSyncCheck = needSyncCheck;
   }
 }

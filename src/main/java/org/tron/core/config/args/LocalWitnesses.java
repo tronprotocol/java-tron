@@ -15,31 +15,31 @@
 
 package org.tron.core.config.args;
 
+import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 
 public class LocalWitnesses {
 
+  @Getter
   private List<String> privateKeys;
-
-  public List<String> getPrivateKeys() {
-    return this.privateKeys;
-  }
 
   /**
    * Private key of ECKey.
    */
   public void setPrivateKeys(final List<String> privateKeys) {
-    if (null == privateKeys) {
+    if (CollectionUtils.isEmpty(privateKeys)) {
       return;
     }
     this.privateKeys = privateKeys;
     for (String privateKey : privateKeys) {
-      if (privateKey != null && privateKey.toUpperCase().startsWith("0X")) {
+      if (StringUtils.startsWithIgnoreCase(privateKey, "0X")) {
         privateKey = privateKey.substring(2);
       }
 
-      if (privateKey != null && privateKey.length() != 0
-          && privateKey.length() != 66) {
+      if (StringUtils.isNotBlank(privateKey) && privateKey.length() != 66) {
         throw new IllegalArgumentException(
             "Private key(" + privateKey + ") must be 66-bits hex string.");
       }

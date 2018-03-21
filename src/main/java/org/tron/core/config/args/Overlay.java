@@ -1,18 +1,19 @@
 package org.tron.core.config.args;
 
+import lombok.Getter;
+import org.apache.commons.lang3.Range;
+
 public class Overlay {
 
+  @Getter
   private int port;
-
-  public int getPort() {
-    return port;
-  }
 
   /**
    * Monitor port number.
    */
-  public void setPort(int port) {
-    if (port < 0 || port > 65535) {
+  public void setPort(final int port) {
+    Range<Integer> range = Range.between(0, 65535);
+    if (!range.contains(port)) {
       throw new IllegalArgumentException("Port(" + port + ") must in [0, 65535]");
     }
 
