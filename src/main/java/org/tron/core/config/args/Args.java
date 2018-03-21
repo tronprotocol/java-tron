@@ -134,6 +134,10 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
+  @Getter
+  @Setter
+  private long syncNodeCount;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -161,6 +165,7 @@ public class Args {
     INSTANCE.nodeExternalIp = "";
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
     INSTANCE.nodeP2pPingInterval = 0L;
+    INSTANCE.syncNodeCount = 0;
   }
 
   /**
@@ -252,6 +257,10 @@ public class Args {
 
     if (config.hasPath("node.p2p.pingInterval")) {
       INSTANCE.nodeP2pPingInterval = config.getLong("node.p2p.pingInterval");
+    }
+
+    if (config.hasPath("syn.node.count")) {
+      INSTANCE.syncNodeCount = config.getLong("syn.node.count");
     }
   }
 

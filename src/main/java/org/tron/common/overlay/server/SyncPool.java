@@ -42,7 +42,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.config.args.Args;
 
 /**
  * <p>Encapsulates logic which manages peers involved in blockchain sync</p>
@@ -73,7 +73,7 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private SystemProperties config;
+  private Args args;
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -81,8 +81,8 @@ public class SyncPool {
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
   @Autowired
-  public SyncPool(final SystemProperties config) {
-    this.config = config;
+  public SyncPool(final Args args) {
+    this.args = args;
   }
 
   public void init(final ChannelManager channelManager) {
@@ -256,11 +256,11 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = config.maxActivePeers() - channelManager.getActivePeers().size();
+    int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = nodesInUse();
-    nodesInUse.add(Hex.toHexString(config.nodeId()));   // exclude home node
+    nodesInUse.add(Hex.toHexString(args.nodeId()));   // exclude home node
 
     List<NodeHandler> newNodes;
     newNodes = nodeManager.getNodes(new NodeSelector(lowerUsefulDifficulty, nodesInUse), lackSize);
@@ -295,7 +295,7 @@ public class SyncPool {
 //    active.sort((c1, c2) -> c2.getTotalDifficulty().compareTo(c1.getTotalDifficulty()));
 //
 //    BigInteger highestDifficulty = active.get(0).getTotalDifficulty();
-    int thresholdIdx = min(config.syncPeerCount(), active.size()) - 1;
+    int thresholdIdx = (int) (min(args.getSyncNodeCount(), active.size()) - 1);
 //
 //    for (int i = thresholdIdx; i >= 0; i--) {
 //      if (isIn20PercentRange(active.get(i).getTotalDifficulty(), highestDifficulty)) {
