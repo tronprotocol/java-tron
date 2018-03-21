@@ -266,6 +266,16 @@ public class Channel {
         return this == channel;
     }
 
+    public boolean isIdle() {
+      // TODO: use peer's status.
+        return  true;
+    }
+
+    public String logSyncStats() {
+        //TODO: return tron sync status here.
+        return "tron sync stats";
+    }
+
     @Override
     public int hashCode() {
         int result = inetSocketAddress != null ? inetSocketAddress.hashCode() : 0;
