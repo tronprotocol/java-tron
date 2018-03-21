@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.Parameter.ChainConstant.IRREVERSIBLE_THRESHOLD;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
+import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
@@ -19,11 +19,10 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -51,9 +50,8 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class Manager {
-
-  private static final Logger logger = LoggerFactory.getLogger("Manager");
 
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
@@ -73,6 +71,7 @@ public class Manager {
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
+  @Getter
   private BlockCapsule head;
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
@@ -312,7 +311,8 @@ public class Manager {
    * push transaction into db.
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, HighFreqException {
+      throws ValidateSignatureException, ContractValidateException,
+      ContractExeException, HighFreqException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -330,8 +330,7 @@ public class Manager {
       pendingTrxs.add(trx);
 
       tmpDialog.merge();
-    } catch (
-        RevokingStoreIllegalStateException e) {
+    } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
     return true;
@@ -341,8 +340,8 @@ public class Manager {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
         .getContractList();
     for (Transaction.Contract contract : contracts) {
-      if (contract.getType() == TransferContract ||
-          contract.getType() == TransferAssertContract) {
+      if (contract.getType() == TransferContract
+          || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         long balacne = accountCapsule.getBalance();
@@ -373,9 +372,6 @@ public class Manager {
     try {
       revokingStore.pop();
       head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
-      getDynamicPropertiesStore().saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-      getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-      getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
     } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
@@ -401,12 +397,10 @@ public class Manager {
         // todo  process the exception carefully later
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           processBlock(item);
+          blockStore.put(item.getBlockId().getBytes(), item);
+          this.numHashCache.putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
           head = item;
-          getDynamicPropertiesStore()
-              .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-          getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-          getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
         } catch (ValidateSignatureException e) {
           e.printStackTrace();
         } catch (ContractValidateException e) {
@@ -425,7 +419,7 @@ public class Manager {
 
 
   /**
-   * validate witness schedule
+   * validate witness schedule.
    */
   private boolean validateWitnessSchedule(BlockCapsule block) {
 
@@ -530,11 +524,20 @@ public class Manager {
 
     blockStore.put(block.getBlockId().getBytes(), block);
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
-    refreshHead(newBlock);
+    //refreshHead(newBlock);
     logger.info("save block: " + newBlock);
   }
 
+  public void updateDynamicProperties(BlockCapsule block) {
+    this.head = block;
+    this.dynamicPropertiesStore
+        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    updateWitnessSchedule();
+  }
 
+  @Deprecated
   private void refreshHead(BlockCapsule block) {
     this.head = block;
     this.dynamicPropertiesStore
@@ -763,8 +766,10 @@ public class Manager {
     }
 
     // todo set reverking db max size.
+    this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
-    this.updateLastConfirmedBlock();
+    this.updateLatestSolidifiedBlock();
+
     if (needMaintenance(block.getTimeStamp())) {
       if (block.getNum() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
@@ -775,13 +780,19 @@ public class Manager {
 
   }
 
-  public void updateLastConfirmedBlock() {
+  /**
+   * update the latest solidified block.
+   */
+  public void updateLatestSolidifiedBlock() {
     List<Long> numbers = wits.stream()
         .map(wit -> wit.getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
-    long lastConfirmedNumber = numbers.get((int) (wits.size() * IRREVERSIBLE_THRESHOLD));
-    getDynamicPropertiesStore().setLatestConfirmedBlockNum(lastConfirmedNumber);
+
+    int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+
+    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
   }
 
   /**
@@ -803,6 +814,7 @@ public class Manager {
    * @param block the block update signed witness.  set witness who signed block the 1. the latest
    * block num 2. pay the trx to witness. 3. (TODO)the latest slot num.
    */
+
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
@@ -1035,6 +1047,4 @@ public class Manager {
         .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
-
-
 }

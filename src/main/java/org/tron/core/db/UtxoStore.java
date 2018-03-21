@@ -23,20 +23,16 @@ import java.util.Set;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.TXOutputs;
 
-
+@Slf4j
 public class UtxoStore extends TronDatabase {
-
-  public static final Logger logger = LoggerFactory.getLogger("UTXOStore");
-
   private UtxoStore(String dbName) {
     super(dbName);
   }

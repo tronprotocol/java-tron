@@ -1,41 +1,14 @@
 package org.tron.core.db;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 
-public class TransactionStore extends TronDatabase<TransactionCapsule> {
-
-  private static final Logger logger = LoggerFactory.getLogger("TransactionStore");
+@Slf4j
+public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   private TransactionStore(String dbName) {
     super(dbName);
-  }
-
-  @Override
-  public void put(byte[] key, TransactionCapsule item) {
-    logger.info("address is {},transaction is {}", key, item);
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    logger.info("address is {} ", ByteArray.toHexString(key));
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override

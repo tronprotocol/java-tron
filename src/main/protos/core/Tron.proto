@@ -73,13 +73,14 @@ message Transaction {
     enum ContractType {
       AccountCreateContract = 0;
       TransferContract = 1;
-      TransferAssertContract = 2;
+      TransferAssetContract = 2;
       VoteAssetContract = 3;
       VoteWitnessContract = 4;
       WitnessCreateContract = 5;
       AssetIssueContract = 6;
       DeployContract = 7;
       WitnessUpdateContract = 8;
+      ParticipateAssetIssueContract = 9;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

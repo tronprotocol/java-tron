@@ -1,7 +1,6 @@
 package org.tron.common.application;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -11,9 +10,8 @@ import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public class ApplicationImpl implements Application {
-
-  private static final Logger logger = LoggerFactory.getLogger("ApplicationImpl");
   private Node p2pNode;
   private BlockStore blockStoreDb;
   private ServiceContainer services;

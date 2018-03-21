@@ -16,6 +16,7 @@
 package org.tron.core.config.args;
 
 import java.io.Serializable;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
@@ -31,16 +32,12 @@ public class Account implements Serializable {
   private static final String ACCOUNT_TYPE_CONTRACT = "CONTRACT";
 
   private String accountName;
-
   private String accountType;
 
+  @Getter
   private String address;
 
   private String balance;
-
-  public String getAddress() {
-    return address;
-  }
 
   public byte[] getAddressBytes() {
     return ByteArray.fromHexString(this.address);
@@ -49,7 +46,7 @@ public class Account implements Serializable {
   /**
    * Account address is a 40-bits hex string.
    */
-  public void setAddress(String address) {
+  public void setAddress(final String address) {
     if (null == address) {
       throw new IllegalArgumentException(
           "The address(" + address + ") must be a 40-bit hexadecimal string.");
@@ -64,13 +61,13 @@ public class Account implements Serializable {
   }
 
   public long getBalance() {
-    return Long.parseLong(balance);
+    return Long.parseLong(this.balance);
   }
 
   /**
    * Account balance is a long type.
    */
-  public void setBalance(String balance) {
+  public void setBalance(final String balance) {
     try {
       Long.parseLong(balance);
     } catch (NumberFormatException e) {
@@ -112,7 +109,7 @@ public class Account implements Serializable {
   /**
    * Account type: Normal/AssetIssue/Contract.
    */
-  public void setAccountType(String accountType) {
+  public void setAccountType(final String accountType) {
     if (!this.isAccountType(accountType)) {
       throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }
@@ -123,7 +120,7 @@ public class Account implements Serializable {
   /**
    * judge account type.
    */
-  public boolean isAccountType(String accountType) {
+  public boolean isAccountType(final String accountType) {
     if (accountType == null) {
       return false;
     }
@@ -141,7 +138,7 @@ public class Account implements Serializable {
   /**
    * Normal/AssetIssue/Contract.
    */
-  public AccountType getAccountTypeByString(String accountType) {
+  public AccountType getAccountTypeByString(final String accountType) {
     if (accountType == null) {
       throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
     }

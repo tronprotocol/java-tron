@@ -9,7 +9,7 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
     long WITNESS_PAY_PER_BLOCK = 3000000;  // 3trx
-    double IRREVERSIBLE_THRESHOLD = 0.3;
+    double SOLIDIFIED_THRESHOLD = 0.3;
   }
 
   interface NodeConstant {
