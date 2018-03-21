@@ -1,6 +1,6 @@
 package org.tron.core.db;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssertContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
@@ -341,7 +341,7 @@ public class Manager {
         .getContractList();
     for (Transaction.Contract contract : contracts) {
       if (contract.getType() == TransferContract ||
-          contract.getType() == TransferAssertContract) {
+          contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         long balacne = accountCapsule.getBalance();

@@ -40,7 +40,7 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-public class TransferAssertActuatorTest {
+public class TransferAssetActuatorTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
@@ -108,9 +108,9 @@ public class TransferAssertActuatorTest {
 
   private Any getContract(long sendCoin) {
     return Any.pack(
-        Contract.TransferAssertContract
+        Contract.TransferAssetContract
             .newBuilder()
-            .setAssertName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAmount(sendCoin)
@@ -122,7 +122,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void rightTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(100L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -146,7 +146,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void perfectTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10000L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(10000L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -171,7 +171,7 @@ public class TransferAssertActuatorTest {
    */
   @Test
   public void wrongTransfer() {
-    TransferAssertActuator actuator = new TransferAssertActuator(getContract(10001L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(10001L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
