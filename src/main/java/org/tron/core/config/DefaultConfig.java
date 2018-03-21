@@ -18,9 +18,6 @@ public class DefaultConfig {
     @Autowired
     CommonConfig commonConfig;
 
-    @Autowired
-    SystemProperties config;
-
     public DefaultConfig() {
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
     }

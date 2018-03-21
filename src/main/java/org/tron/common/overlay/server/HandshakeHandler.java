@@ -37,7 +37,7 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.config.args.Args;
 
 /**
  * The Netty handler which manages initial negotiation with peer (when either we initiating
@@ -66,14 +66,14 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private boolean isHandshakeDone;
   private boolean isInitiator = false;
 
-  private final SystemProperties config;
+  private final Args args;
   private final NodeManager nodeManager;
 
   @Autowired
-  public HandshakeHandler(final SystemProperties config, final NodeManager nodeManager) {
-    this.config = config;
+  public HandshakeHandler(final Args args, final NodeManager nodeManager) {
+    this.args = args;
     this.nodeManager = nodeManager;
-    myKey = config.getMyKey();
+    myKey = args.getMyKey();
   }
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {

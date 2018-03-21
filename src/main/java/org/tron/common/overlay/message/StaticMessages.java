@@ -20,22 +20,21 @@ package org.tron.common.overlay.message;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.config.args.Args;
 
 /**
- * This class contains static values of messages on the network. These message
- * will always be the same and therefore don't need to be created each time.
+ * This class contains static values of messages on the network. These message will always be the
+ * same and therefore don't need to be created each time.
  *
  * @author Roman Mandeleil
  * @since 13.04.14
  */
 
-import org.tron.core.config.SystemProperties;
-
 @Component
 public class StaticMessages {
 
     @Autowired
-    SystemProperties config;
+    Args args;
 
     public final static PingMessage PING_MESSAGE = new PingMessage();
     public final static PongMessage PONG_MESSAGE = new PongMessage();
@@ -44,7 +43,7 @@ public class StaticMessages {
     public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
 
     public HelloMessage createHelloMessage(String peerId) {
-        return createHelloMessage(peerId, config.listenPort());
+        return createHelloMessage(peerId, args.getNodeListenPort());
     }
     public HelloMessage createHelloMessage(String peerId, int listenPort) {
 

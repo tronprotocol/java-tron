@@ -31,14 +31,14 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.config.args.Args;
 
 @Component
 public class PeerServer {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
 
-    private SystemProperties config;
+    private Args args;
 
     private ApplicationContext ctx;
 
@@ -51,9 +51,9 @@ public class PeerServer {
     ChannelFuture channelFuture;
 
     @Autowired
-    public PeerServer(final SystemProperties config, final ApplicationContext ctx) {
+    public PeerServer(final Args args, final ApplicationContext ctx) {
         this.ctx = ctx;
-        this.config = config;
+        this.args = args;
     }
 
     public void start(int port) {
@@ -71,14 +71,14 @@ public class PeerServer {
 
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.peerConnectionTimeout());
+            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, args.getNodeConnectionTimeout());
 
             b.handler(new LoggingHandler());
             b.childHandler(tronChannelInitializer);
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);
-            logger.info("NodeId: [{}] ", Hex.toHexString(config.nodeId()));
+            logger.info("NodeId: [{}] ", Hex.toHexString(args.nodeId()));
 
             channelFuture = b.bind(port).sync();
 

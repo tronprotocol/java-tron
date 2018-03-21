@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
@@ -36,6 +35,7 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 
 
@@ -50,7 +50,7 @@ public class Channel {
     private final static Logger logger = LoggerFactory.getLogger("net");
 
     @Autowired
-    SystemProperties config;
+    Args args;
 
     @Autowired
     private MessageQueue msgQueue;
@@ -95,7 +95,7 @@ public class Channel {
         isActive = remoteId != null && !remoteId.isEmpty();
 
         pipeline.addLast("readTimeoutHandler",
-                new ReadTimeoutHandler(config.peerChannelReadTimeout(), TimeUnit.SECONDS));
+            new ReadTimeoutHandler(args.getNodeChannelReadTimeout(), TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);

@@ -19,6 +19,7 @@ package org.tron.common.overlay.server;
 
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
+
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,10 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 
 /**
@@ -78,19 +79,20 @@ public class ChannelManager {
      */
     private BlockingQueue<Channel> newActivePeers = new LinkedBlockingQueue<>();
 
-    private SystemProperties config;
+    private Args args;
 
     private PeerServer peerServer;
 
     private PeerClient peerClient;
 
     @Autowired
-    private ChannelManager(final SystemProperties config, final PeerClient peerClient, final PeerServer peerServer) {
-        this.config = config;
+    private ChannelManager(final Args args, final PeerClient peerClient,
+        final PeerServer peerServer) {
+        this.args = args;
         //this.syncManager = syncManager;
         this.peerClient = peerClient;
         this.peerServer = peerServer;
-        maxActivePeers = config.maxActivePeers();
+        maxActivePeers = args.getNodeMaxActiveNodes();
         //trustedPeers = config.peerTrusted();
         mainWorker.scheduleWithFixedDelay(() -> {
             try {
@@ -100,8 +102,8 @@ public class ChannelManager {
             }
         }, 0, 1, TimeUnit.SECONDS);
 
-        if (config.listenPort() > 0) {
-            new Thread(() -> peerServer.start(config.listenPort()),
+        if (args.getNodeListenPort() > 0) {
+            new Thread(() -> peerServer.start(args.getNodeListenPort()),
             "PeerServerThread").start();
         }
     }

@@ -15,20 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.core.config;
+package org.tron.core.net.message;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.tron.common.overlay.message.Message;
 
-@Configuration
-@EnableTransactionManagement
-@ComponentScan(basePackages = "org.tron")
-public class CommonConfig {
+public abstract class TronMessage extends Message {
 
-    private static final Logger logger = LoggerFactory.getLogger("general");
+  public TronMessage() {
+  }
 
-    private static CommonConfig defaultInstance;
+  public TronMessage(byte[] rawData) {
+    super(rawData);
+  }
+
+  public TronMessage(byte type, byte[] rawData) {
+    super(type, rawData);
+  }
 }

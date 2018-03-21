@@ -24,17 +24,16 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import java.io.IOException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
 import org.tron.common.overlay.server.TronChannelInitializer;
-
-import java.io.IOException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.tron.core.config.args.Args;
 
 
 /**
@@ -46,9 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PeerClient {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
-
-    @Autowired
-    SystemProperties config;
 
     @Autowired
     private ApplicationContext ctx;
@@ -108,7 +104,8 @@ public class PeerClient {
 
         b.option(ChannelOption.SO_KEEPALIVE, true);
         b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.peerConnectionTimeout());
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+            Args.getInstance().getNodeConnectionTimeout());
         b.remoteAddress(host, port);
 
         b.handler(tronChannelInitializer);
