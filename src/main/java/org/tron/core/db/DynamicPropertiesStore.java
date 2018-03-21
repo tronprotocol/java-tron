@@ -20,6 +20,7 @@ public class DynamicPropertiesStore extends TronDatabase {
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes();// 1 : is maintenance, 0 : is not maintenance
+  private static final byte[] IRREVERSIBLE_THRESHOLD = "IRREVERSIBLE_THRESHOLD".getBytes();
 
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
@@ -58,7 +59,7 @@ public class DynamicPropertiesStore extends TronDatabase {
 
   @Override
   public void put(byte[] key, Object item) {
-
+    //this.dbSource.putData(key, item);
   }
 
   @Override
@@ -94,6 +95,14 @@ public class DynamicPropertiesStore extends TronDatabase {
     return instance;
   }
 
+
+  public void setLatestConfirmedBlockNum(long number) {
+    this.dbSource.putData(this.IRREVERSIBLE_THRESHOLD, ByteArray.fromLong(number));
+  }
+
+  public long getLatestConfirmedBlockNum() {
+    return ByteArray.toLong(this.dbSource.getData(this.IRREVERSIBLE_THRESHOLD));
+  }
 
   /**
    * get timestamp of creating global latest block.
@@ -174,10 +183,16 @@ public class DynamicPropertiesStore extends TronDatabase {
   public void updateNextMaintenanceTime(long blockTime) {
 
     long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime nextMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - nextMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    setNextMaintenanceTime(nextMaintenanceTime.plus((round + 1) * maintenanceTimeInterval));
+    DateTime currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
+    DateTime nextMaintenanceTime = currentMaintenanceTime
+        .plus((round + 1) * maintenanceTimeInterval);
+    setNextMaintenanceTime(nextMaintenanceTime);
 
+    logger.debug("currentMaintenanceTime:{}, blockTime:{},updateNextMaintenanceTime:{}",
+        new DateTime(currentMaintenanceTime), new DateTime(blockTime),
+        new DateTime(nextMaintenanceTime)
+    );
   }
 
 }
