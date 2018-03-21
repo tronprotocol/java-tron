@@ -9,7 +9,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
 @Slf4j
-public class AccountStore extends TronDatabase<AccountCapsule> {
+public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static final String ACCOUNT_SUN_ADDRESS
       = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
@@ -41,31 +41,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
       }
     }
     return instance;
-  }
-
-
-  @Override
-  public void put(byte[] key, AccountCapsule item) {
-    logger.info("address is {},account is {}", key, item);
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    logger.info("address is {} ", ByteArray.toHexString(key));
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override
