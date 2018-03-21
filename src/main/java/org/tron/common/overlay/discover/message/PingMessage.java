@@ -12,9 +12,7 @@ public class PingMessage extends Message {
   private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) {
-    super(data);
-    this.type = Message.PING;
-    this.data = data;
+    super(Message.PING, data);
     try {
       this.pingMessage = Discover.PingMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
@@ -22,26 +20,23 @@ public class PingMessage extends Message {
     }
   }
 
-  public PingMessage(int version, Node from, Node to, long timestamp) {
+  public PingMessage(Node from, Node to) {
     super(Message.PING, null);
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
         .setPort(from.getPort())
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .build();
-
     Endpoint toEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(to.getId()))
         .setPort(to.getPort())
         .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
         .build();
-
-    this.pingMessage = Discover.PingMessage.newBuilder().setVersion(version)
+    this.pingMessage = Discover.PingMessage.newBuilder().setVersion(Message.verison)
         .setFrom(fromEndpoint)
         .setTo(toEndpoint)
-        .setTimestamp(timestamp)
+        .setTimestamp(System.currentTimeMillis())
         .build();
-
     this.data = this.pingMessage.toByteArray();
   }
 

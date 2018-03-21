@@ -22,12 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.SystemProperties;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.CollectionUtils;
 
 import java.net.DatagramSocket;
@@ -192,7 +188,6 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
         }
     }
 
-
     boolean hasNodeHandler(Node n) {
         return nodeHandlerMap.containsKey(getKey(n));
     }
@@ -224,7 +219,7 @@ public class NodeManager implements Consumer<DiscoveryEvent>{
 
         logger.trace("===> ({}) {} [{}] {}", sender, m.getClass().getSimpleName(), nodeHandler, m);
 
-        byte type = m.getType().asByte();
+        byte type = m.getType();
         switch (type) {
             case 1:
                 nodeHandler.handlePing((PingMessage) m);
