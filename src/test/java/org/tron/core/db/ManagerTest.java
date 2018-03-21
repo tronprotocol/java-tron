@@ -1,24 +1,39 @@
 package org.tron.core.db;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.services.RpcApiService;
+import org.tron.core.services.WitnessService;
 
 
 public class ManagerTest {
@@ -127,5 +142,46 @@ public class ManagerTest {
     });
     int sizeTis = dbManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
+  }
+
+  @Test
+  public void fork() {
+    Args.setParam(new String[]{"--witness"}, Configuration.getByPath(Constant.NORMAL_CONF));
+    String key = "00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    byte[] privateKey = ByteArray.fromHexString(key);
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    IntStream.range(0, 10).forEach(i -> {
+      try {
+        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+      } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+        e.printStackTrace();
+      }
+    });
+
+    try {
+      BlockCapsule blockCapsule1 = new BlockCapsule(10,
+              dbManager.getHead().getParentHash().getByteString(),
+              System.currentTimeMillis(),
+              witnessCapsule.getAddress());
+      blockCapsule1.generatedByMyself = true;
+      BlockCapsule blockCapsule2 = new BlockCapsule(11,
+              blockCapsule1.getBlockId().getByteString(),
+              System.currentTimeMillis(),
+              witnessCapsule.getAddress());
+      blockCapsule2.generatedByMyself = true;
+
+      logger.error("******1*******" + "block1 id:" + blockCapsule1.getBlockId());
+      logger.error("******2*******" + "block2 id:" + blockCapsule2.getBlockId());
+      dbManager.pushBlock(blockCapsule1);
+      dbManager.pushBlock(blockCapsule2);
+      logger.error("******in blockStore block size:" + dbManager.getBlockStore().dbSource.allKeys().size());
+      logger.error("******in blockStore block:" + dbManager.getBlockStore().dbSource.allKeys().stream().map(ByteArray::toHexString).collect(Collectors.toList()));
+      Assert.assertEquals("blockStore size is not 12", dbManager.getBlockStore().dbSource.allKeys().size(), 12);
+      Assert.assertEquals("not equals", dbManager.getBlockIdByNum(10), blockCapsule1.getBlockId());
+    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+      e.printStackTrace();
+    }
   }
 }

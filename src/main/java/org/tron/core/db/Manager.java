@@ -72,6 +72,7 @@ public class Manager {
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
+  @Getter
   private BlockCapsule head;
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
@@ -400,10 +401,11 @@ public class Manager {
         // todo  process the exception carefully later
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           processBlock(item);
+          blockStore.put(item.getBlockId().getBytes(), item);
+          this.numHashCache.putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
           head = item;
-          getDynamicPropertiesStore()
-              .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
+          getDynamicPropertiesStore().saveLatestBlockHeaderHash(head.getBlockId().getByteString());
           getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
           getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
         } catch (ValidateSignatureException e) {
