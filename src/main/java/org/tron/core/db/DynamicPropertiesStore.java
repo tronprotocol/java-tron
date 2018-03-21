@@ -20,7 +20,7 @@ public class DynamicPropertiesStore extends TronDatabase {
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes();// 1 : is maintenance, 0 : is not maintenance
-  private static final byte[] IRREVERSIBLE_THRESHOLD = "IRREVERSIBLE_THRESHOLD".getBytes();
+  private static final byte[] SOLIDIFIED_THRESHOLD = "SOLIDIFIED_THRESHOLD".getBytes();
 
 
   private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
@@ -60,6 +60,7 @@ public class DynamicPropertiesStore extends TronDatabase {
   @Override
   public void put(byte[] key, Object item) {
     //this.dbSource.putData(key, item);
+
   }
 
   @Override
@@ -96,12 +97,12 @@ public class DynamicPropertiesStore extends TronDatabase {
   }
 
 
-  public void setLatestConfirmedBlockNum(long number) {
-    this.dbSource.putData(this.IRREVERSIBLE_THRESHOLD, ByteArray.fromLong(number));
+  public void setLatestSolidifiedBlockNum(long number) {
+    this.dbSource.putData(this.SOLIDIFIED_THRESHOLD, ByteArray.fromLong(number));
   }
 
   public long getLatestConfirmedBlockNum() {
-    return ByteArray.toLong(this.dbSource.getData(this.IRREVERSIBLE_THRESHOLD));
+    return ByteArray.toLong(this.dbSource.getData(this.SOLIDIFIED_THRESHOLD));
   }
 
   /**
