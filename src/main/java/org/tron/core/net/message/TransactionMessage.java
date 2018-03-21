@@ -1,27 +1,28 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
 public class TransactionMessage extends Message {
 
   private Transaction trx;
 
   public TransactionMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.TRX.asByte();
   }
 
   public TransactionMessage(Transaction trx) {
     this.trx = trx;
     unpacked = true;
+    this.type = MessageTypes.TRX.asByte();
   }
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.TRX;
+    return MessageTypes.fromByte(this.type);
   }
 
   @Override
@@ -30,6 +31,11 @@ public class TransactionMessage extends Message {
       pack();
     }
     return data;
+  }
+
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
   }
 
   public Transaction getTransaction() {

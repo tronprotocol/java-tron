@@ -2,27 +2,28 @@ package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Items;
 
-@Slf4j
 public class BlocksMessage extends Message {
 
   private List<Block> blocks;
 
   public BlocksMessage() {
     super();
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public BlocksMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public BlocksMessage(List<Block> blocks) {
     this.blocks = blocks;
     unpacked = true;
+    this.type = MessageTypes.BLOCKS.asByte();
   }
 
   public List<Block> getBlocks() {
@@ -41,8 +42,13 @@ public class BlocksMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCKS;
+    return MessageTypes.fromByte(this.type);
   }
 
   private synchronized void unPack() {

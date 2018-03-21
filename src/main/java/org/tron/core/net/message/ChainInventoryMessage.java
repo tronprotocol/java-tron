@@ -4,17 +4,16 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.ChainInventory;
 
-@Slf4j
 public class ChainInventoryMessage extends Message {
 
   public ChainInventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   protected ChainInventory chainInventory;
@@ -31,6 +30,7 @@ public class ChainInventoryMessage extends Message {
     invBuilder.setRemainNum(remainNum);
     chainInventory = invBuilder.build();
     unpacked = true;
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   @Override
@@ -44,6 +44,11 @@ public class ChainInventoryMessage extends Message {
       pack();
     }
     return data;
+  }
+
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
   }
 
   private void pack() {
@@ -81,6 +86,6 @@ public class ChainInventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_CHAIN_INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 }

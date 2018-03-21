@@ -10,10 +10,12 @@ public class FetchInvDataMessage extends InventoryMessage {
 
   public FetchInvDataMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }
 
   public FetchInvDataMessage(Inventory inv) {
     super(inv);
+    this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }
 
   public FetchInvDataMessage(List<Sha256Hash> hashList, InventoryType type) {
@@ -26,6 +28,7 @@ public class FetchInvDataMessage extends InventoryMessage {
     invBuilder.setType(type);
     inv = invBuilder.build();
     unpacked = true;
+    this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }
 
   @Override
@@ -38,8 +41,8 @@ public class FetchInvDataMessage extends InventoryMessage {
   }
 
   @Override
-  public org.tron.core.net.message.MessageTypes getType() {
-    return MessageTypes.FETCH_INV_DATA;
+  public MessageTypes getType() {
+    return MessageTypes.fromByte(this.type);
   }
 
 }

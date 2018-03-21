@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
@@ -34,7 +35,6 @@ import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
@@ -205,6 +205,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
+    activeTronPump();
   }
 
   @Override
@@ -223,6 +224,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void connectToP2PNetWork() {
 
+  }
+
+
+  private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");

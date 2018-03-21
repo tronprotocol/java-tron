@@ -13,9 +13,9 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 
 @Slf4j

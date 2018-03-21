@@ -1,24 +1,27 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 
-@Slf4j
+
 public class GetInventoryItemsMessage extends Message {
 
   private org.tron.protos.TronInventoryItems.InventoryItems items;
 
   public GetInventoryItemsMessage() {
     super();
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public GetInventoryItemsMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   public GetInventoryItemsMessage(org.tron.protos.TronInventoryItems.InventoryItems items) {
     this.items = items;
     unpacked = true;
+    this.type = MessageTypes.INVENTORY.asByte();
   }
 
   @Override
@@ -35,8 +38,13 @@ public class GetInventoryItemsMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
-    return MessageTypes.INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 
   private synchronized void unPack() {

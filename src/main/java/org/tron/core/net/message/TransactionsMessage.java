@@ -3,12 +3,10 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol.Items;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
 public class TransactionsMessage extends Message {
 
   private List<Transaction> trxs = new ArrayList<Transaction>();
@@ -16,13 +14,16 @@ public class TransactionsMessage extends Message {
   public TransactionsMessage(List<Transaction> trxs) {
     this.trxs = trxs;
     unpacked = true;
+    this.type = MessageTypes.TRXS.asByte();
   }
 
   public TransactionsMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.TRXS.asByte();
   }
 
   public TransactionsMessage() {
+    this.type = MessageTypes.TRXS.asByte();
   }
 
   @Override
@@ -39,8 +40,13 @@ public class TransactionsMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
-    return MessageTypes.TRXS;
+    return MessageTypes.fromByte(this.type);
   }
 
   public List<Transaction> getTransactions() {
