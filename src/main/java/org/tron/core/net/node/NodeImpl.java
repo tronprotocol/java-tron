@@ -205,6 +205,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
+    activeTronPump();
   }
 
   @Override
@@ -223,6 +224,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void connectToP2PNetWork() {
 
+  }
+
+
+  private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
