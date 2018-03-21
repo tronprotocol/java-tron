@@ -19,6 +19,7 @@ package org.tron.core.net.peer;
  */
 
 
+import com.sun.javafx.runtime.SystemProperties;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
-import org.tron.core.config.SystemProperties;
+import org.tron.core.net.message.TronMessage;
 import org.tron.protos.Protocal.Block;
 
 /**
@@ -35,7 +36,7 @@ import org.tron.protos.Protocal.Block;
  * delegating version specific stuff to its descendants
  *
  */
-public abstract class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
+public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private final static Logger logger = LoggerFactory.getLogger("net");
 
@@ -56,13 +57,16 @@ public abstract class TronHandler extends SimpleChannelInboundHandler<TronMessag
   }
 
   public void setPeerDel(PeerConnectionDelegate peerDel) {
-
+    this.peerDel = peerDel;
   }
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws InterruptedException {
     channel.getNodeStatistics().ethInbound.add();
     msgQueue.receivedMessage(msg);
+
+    //handle message
+    peerDel.onMessage(channel.getPeer(), msg);
   }
 
   @Override
@@ -74,14 +78,14 @@ public abstract class TronHandler extends SimpleChannelInboundHandler<TronMessag
   @Override
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
     logger.debug("handlerRemoved: kill timers in EthHandler");
-    ethereumListener.removeListener(listener);
-    onShutdown();
+//    ethereumListener.removeListener(listener);
+//    onShutdown();
   }
 
   public void activate() {
     logger.debug("ETH protocol activated");
-    ethereumListener.trace("ETH protocol activated");
-    sendStatus();
+//    ethereumListener.trace("ETH protocol activated");
+//    sendStatus();
   }
 
   protected void disconnect(ReasonCode reason) {
@@ -89,7 +93,7 @@ public abstract class TronHandler extends SimpleChannelInboundHandler<TronMessag
     channel.getNodeStatistics().nodeDisconnectedLocal(reason);
   }
 
-  protected void sendMessage(EthMessage message) {
+  protected void sendMessage(TronMessage message) {
     msgQueue.sendMessage(message);
     channel.getNodeStatistics().ethOutbound.add();
   }

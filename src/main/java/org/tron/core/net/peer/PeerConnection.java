@@ -1,9 +1,5 @@
 package org.tron.core.net.peer;
 
-import io.scalecube.cluster.Cluster;
-import io.scalecube.cluster.Member;
-import io.scalecube.transport.Address;
-import java.io.UnsupportedEncodingException;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,23 +9,24 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.MessageQueue;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.message.MessageTypes;
 
 @Slf4j
-public class PeerConnection {
+public class PeerConnection extends Node{
 
   @Override
   public int hashCode() {
-    return member.hashCode();
+    return super.hashCode();
   }
 
-  //private
-  private Member member;
+  private MessageQueue messageQueue;
 
-  private Cluster cluster;
+  private NodeStatistics nodeStatistics;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -86,10 +83,6 @@ public class PeerConnection {
   public void setSyncBlockRequested(
       HashMap<BlockId, Long> syncBlockRequested) {
     this.syncBlockRequested = syncBlockRequested;
-  }
-
-  public Address getAddress() {
-    return member.address();
   }
 
   public long getUnfetchSyncNum() {
@@ -193,10 +186,16 @@ public class PeerConnection {
   }
 
 
-  public PeerConnection(Cluster cluster, Member member) {
-    this.cluster = cluster;
-    this.member = member;
-    //this.needSyncFromPeer = true;
+  public PeerConnection(byte[] id, String host, int port) {
+    super(id, host, port);
+  }
+
+  public void setMessageQueue(MessageQueue messageQueue) {
+    this.messageQueue = messageQueue;
+  }
+
+  public void setNodeStatistics(NodeStatistics nodeStatistics) {
+    this.nodeStatistics = nodeStatistics;
   }
 
   public boolean isBusy() {
@@ -206,39 +205,12 @@ public class PeerConnection {
   }
 
   public void sendMessage(Message message) {
-    logger.info("Send message " + message + ", Peer:" + this);
-
-    if (message == null) {
-      logger.error("send message = null");
-      return;
-    }
-
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      logger.error("cluster is null");
-      return;
-    }
-
-    try {
-      io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-          .data(new String(value, "ISO-8859-1"))
-          .header("type", type.toString())
-          .build();
-
-      //logger.info("send message to member");
-      cluster.send(member, msg);
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-    }
+    messageQueue.sendMessage(message);
+    nodeStatistics.ethOutbound.add();
   }
-
 
   @Override
   public String toString() {
-    return "PeerConnection{" +
-        "member=" + member +
-        '}';
+    return nodeStatistics.toString();
   }
 }

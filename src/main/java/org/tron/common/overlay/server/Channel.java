@@ -37,6 +37,7 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.peer.PeerConnection;
 
 
 /**
@@ -77,7 +78,7 @@ public class Channel {
 
     private InetSocketAddress inetSocketAddress;
 
-    private Node node;
+    private PeerConnection node;
     private NodeStatistics nodeStatistics;
 
     private boolean discoveryMode;
@@ -177,7 +178,9 @@ public class Channel {
      * Set node and register it in NodeManager if it is not registered yet.
      */
     public void initWithNode(byte[] nodeId, int remotePort) {
-        node = new Node(nodeId, inetSocketAddress.getHostString(), remotePort);
+        node = new PeerConnection(nodeId, inetSocketAddress.getHostString(), remotePort);
+        node.setNodeStatistics(nodeStatistics);
+        node.setMessageQueue(msgQueue);
         nodeStatistics = nodeManager.getNodeStatistics(node);
     }
 
@@ -189,6 +192,9 @@ public class Channel {
         return node;
     }
 
+    public PeerConnection getPeer() {
+        return node;
+    }
 
     public void onDisconnect() {
         isDisconnected = true;
@@ -238,7 +244,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-//        msgQueue.disconnect(reason);
+         msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {
