@@ -27,6 +27,10 @@ public abstract class Message {
   protected byte type;
   protected byte[] data;
 
+  public Message(byte[] data) {
+    this.data = data;
+  }
+
   public Message(byte type, byte[] data) {
     this.type = type;
     this.data = data;

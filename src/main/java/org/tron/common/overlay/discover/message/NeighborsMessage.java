@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
@@ -17,6 +16,7 @@ public class NeighborsMessage extends Message {
   private Discover.Neighbours neighbours;
 
   public NeighborsMessage(byte[] data) {
+    super(data);
     this.type = Message.GET_PEERS;
     this.data = data;
     try {
@@ -27,6 +27,7 @@ public class NeighborsMessage extends Message {
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
+    super(Message.GET_PEERS, null);
     Builder builder = Neighbours.newBuilder()
         .setTimestamp(System.currentTimeMillis());
 
@@ -49,8 +50,6 @@ public class NeighborsMessage extends Message {
     builder.setFrom(fromEndpoint);
 
     this.neighbours = builder.build();
-
-    this.type = Message.GET_PEERS;
 
     this.data = this.neighbours.toByteArray();
   }

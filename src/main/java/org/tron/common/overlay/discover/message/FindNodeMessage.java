@@ -13,6 +13,7 @@ public class FindNodeMessage extends Message {
   private Discover.FindNeighbours findNeighbours;
 
   public FindNodeMessage(byte[] data) {
+    super(data);
     this.type = Message.FINE_PEERS;
     this.data = data;
     try {
@@ -23,6 +24,7 @@ public class FindNodeMessage extends Message {
   }
 
   public FindNodeMessage(Node from, byte[] targetId) {
+    super(Message.PING, null);
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
@@ -35,8 +37,6 @@ public class FindNodeMessage extends Message {
         .setTargetId(ByteString.copyFrom(targetId))
         .setTimestamp(System.currentTimeMillis())
         .build();
-
-    this.type = Message.PING;
 
     this.data = this.findNeighbours.toByteArray();
   }
