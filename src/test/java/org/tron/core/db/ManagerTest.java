@@ -1,27 +1,19 @@
 package org.tron.core.db;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -32,8 +24,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.WitnessService;
 
 
 public class ManagerTest {
@@ -179,7 +169,9 @@ public class ManagerTest {
       logger.error("******in blockStore block size:" + dbManager.getBlockStore().dbSource.allKeys().size());
       logger.error("******in blockStore block:" + dbManager.getBlockStore().dbSource.allKeys().stream().map(ByteArray::toHexString).collect(Collectors.toList()));
       Assert.assertEquals("blockStore size is not 12", dbManager.getBlockStore().dbSource.allKeys().size(), 12);
-      Assert.assertEquals("not equals", dbManager.getBlockIdByNum(10), blockCapsule1.getBlockId());
+      Assert.assertEquals(dbManager.getBlockIdByNum(10), blockCapsule1.getBlockId());
+      Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
       e.printStackTrace();
     }
