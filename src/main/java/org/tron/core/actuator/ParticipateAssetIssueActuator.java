@@ -40,23 +40,24 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     long fee = calcFee();
 
     try {
-      Contract.ParticipateAssetIssueContract token2AssetContract =
+      Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
-      int cost = token2AssetContract.getAmount();
+      long cost = participateAssetIssueContract.getAmount();
 
       //subtract from owner address
-      byte[] ownerAddressBytes = token2AssetContract.getOwnerAddress().toByteArray();
+      byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
       ownerAccount.setBalance(ownerAccount.getBalance() - cost);
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule =
-          this.dbManager.getAssetIssueStore().get(token2AssetContract.getAssetName().toByteArray());
-      int exchangeAmount = cost / assetIssueCapsule.getTrxNum() * assetIssueCapsule.getNum();
+          this.dbManager.getAssetIssueStore()
+              .get(participateAssetIssueContract.getAssetName().toByteArray());
+      long exchangeAmount = cost / assetIssueCapsule.getTrxNum() * assetIssueCapsule.getNum();
       ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
       //add to to_address
-      byte[] toAddressBytes = token2AssetContract.getToAddress().toByteArray();
+      byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
       toAccount.setBalance(toAccount.getBalance() + cost);
       toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
@@ -111,7 +112,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       //Whether the exchange can be processed: to see if the exchange can be the exact int
-      int cost = participateAssetIssueContract.getAmount();
+      long cost = participateAssetIssueContract.getAmount();
       AssetIssueCapsule assetIssueCapsule =
           this.dbManager.getAssetIssueStore()
               .get(participateAssetIssueContract.getAssetName().toByteArray());
@@ -122,7 +123,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
-      int exchangeAmount = cost / trxNum * num;
+      long exchangeAmount = cost / trxNum * num;
       float preciseExchangeAmount = (float) cost / (float) trxNum * (float) num;
       if (preciseExchangeAmount - exchangeAmount >= 0.000001f) {
         throw new ContractValidateException("Can not process the exchange!");
