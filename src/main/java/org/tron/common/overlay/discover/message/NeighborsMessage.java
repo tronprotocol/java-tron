@@ -12,23 +12,18 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-public class NeighborsMessage extends DiscoverMessage {
+public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] rawData) {
-    super(MessageTypes.DISCOVER_PEERS.asByte(), rawData);
-    unPack();
-  }
-
-  @Override
-  public byte[] getRawData() {
-    return this.rawData;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return this.neighbours.getFrom().getNodeId().toByteArray();
+  public NeighborsMessage(byte[] data) {
+    this.type = Message.GET_PEERS;
+    this.data = data;
+    try {
+      this.neighbours = Discover.Neighbours.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
@@ -55,21 +50,9 @@ public class NeighborsMessage extends DiscoverMessage {
 
     this.neighbours = builder.build();
 
-    this.type = MessageTypes.DISCOVER_PEERS.asByte();
-    this.rawData = this.neighbours.toByteArray();
-  }
+    this.type = Message.GET_PEERS;
 
-  private void unPack() {
-    try {
-      this.neighbours = Discover.Neighbours.parseFrom(rawData);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public static NeighborsMessage create(Node from, List<Node> nodes) {
-    NeighborsMessage neighborsMessage = new NeighborsMessage(from, nodes);
-    return neighborsMessage;
+    this.data = this.neighbours.toByteArray();
   }
 
   public List<Node> getNodes(){
@@ -78,22 +61,12 @@ public class NeighborsMessage extends DiscoverMessage {
             new Node(neighbour.getNodeId().toByteArray(),
                 ByteArray.toStr(neighbour.getAddress().toByteArray()),
                 neighbour.getPort())));
-
     return nodes;
   }
 
-  public Neighbours getNeighbours() {
-    return neighbours;
-  }
-
   @Override
-  public String toString() {
-    return String.format("[NeighborsMessage] \n");
-  }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
+  public byte[] getNodeId() {
+    return this.neighbours.getFrom().getNodeId().toByteArray();
   }
 
 }

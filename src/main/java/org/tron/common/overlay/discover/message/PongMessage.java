@@ -8,23 +8,18 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 
-public class PongMessage extends DiscoverMessage {
+public class PongMessage extends Message {
 
   private Discover.PongMessage pongMessage;
 
-  public PongMessage(byte[] rawData) {
-    super(MessageTypes.DISCOVER_PONG.asByte(), rawData);
-    unPack();
-  }
-
-  @Override
-  public byte[] getRawData() {
-    return this.rawData;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return this.pongMessage.getFrom().getNodeId().toByteArray();
+  public PongMessage(byte[] data) {
+    this.type = Message.PONG;
+    this.data = data;
+    try {
+      this.pongMessage = Discover.PongMessage.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
   }
 
   public PongMessage(Node from) {
@@ -41,12 +36,9 @@ public class PongMessage extends DiscoverMessage {
         .setTimestamp(System.currentTimeMillis())
         .build();
 
-    this.type = MessageTypes.DISCOVER_PONG.asByte();
-    this.rawData = this.pongMessage.toByteArray();
-  }
+    this.type = Message.PONG;;
 
-  public static PongMessage create(Node from) {
-    return new PongMessage(from);
+    this.data = this.pongMessage.toByteArray();
   }
 
   public Node getFrom(){
@@ -56,22 +48,8 @@ public class PongMessage extends DiscoverMessage {
     return node;
   }
 
-  private void unPack() {
-    try {
-      this.pongMessage = Discover.PongMessage.parseFrom(rawData);
-    } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
-    }
-  }
-
   @Override
-  public String toString() {
-    return String.format("[PongMessage]\n");
+  public byte[] getNodeId() {
+    return this.pongMessage.getFrom().getNodeId().toByteArray();
   }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
-
 }
