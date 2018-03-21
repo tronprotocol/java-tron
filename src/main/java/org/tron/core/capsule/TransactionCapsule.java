@@ -132,12 +132,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return; // Account isexit
     }
 
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TransactionType.ContractType).addContract(
-        Transaction.Contract.newBuilder().setType(ContractType.AccountCreateContract).setParameter(
-            Any.pack(contract)).build());
-    logger.info("Transaction create succeeded！");
-    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+    createTransaction(contract, ContractType.AccountCreateContract);
   }
 
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
