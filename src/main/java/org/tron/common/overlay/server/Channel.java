@@ -38,6 +38,7 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.TronHandler;
 
 
 /**
@@ -73,6 +74,8 @@ public class Channel {
 
     @Autowired
     private WireTrafficStats stats;
+
+    private TronHandler tronHandler;
 
     private ChannelManager channelManager;
 
@@ -149,6 +152,13 @@ public class Channel {
 
     public void activateTron(ChannelHandlerContext ctx) {
         //TODO: use tron handle here.
+
+        tronHandler = new TronHandler();
+        ctx.pipeline().addLast("data", tronHandler);
+        tronHandler.setMsgQueue(msgQueue);
+        tronHandler.setChannel(this);
+        tronHandler.setPeerDiscoveryMode(discoveryMode);
+        tronHandler.setPeerDel();
 //        EthHandler handler = ethHandlerFactory.create(version);
 //        MessageFactory messageFactory = createEthMessageFactory(version);
 //        messageCodec.setEthVersion(version);

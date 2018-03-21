@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.core.net.node.Node;
 
 /**
  * @author Roman Mandeleil
@@ -41,6 +42,9 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
     @Autowired
     ChannelManager channelManager;
+
+    @Autowired
+    private Node p2pNode;
 
     private String remoteId;
 

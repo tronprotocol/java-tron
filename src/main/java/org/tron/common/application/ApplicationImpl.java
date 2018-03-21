@@ -1,18 +1,20 @@
 package org.tron.common.application;
 
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
-import org.tron.core.net.node.NodeImpl;
-import org.tron.core.config.args.Args;
 
 @Slf4j
 public class ApplicationImpl implements Application {
+
+  @Autowired
   private Node p2pNode;
+
   private BlockStore blockStoreDb;
   private ServiceContainer services;
   private NodeDelegate nodeDelegate;
@@ -34,7 +36,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void init(String path, Args args) {
-    p2pNode = new NodeImpl();
+    //p2pNode = new NodeImpl();
     dbManager = new Manager();
     dbManager.init();
     blockStoreDb = dbManager.getBlockStore();

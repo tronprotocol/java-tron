@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.utils.ExecutorLoop;
@@ -43,6 +44,7 @@ import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
+@Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   class InvToSend {

@@ -56,7 +56,7 @@ public class PeerClient {
             AtomicInteger cnt = new AtomicInteger(0);
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(r, "EthJClientWorker-" + cnt.getAndIncrement());
+                return new Thread(r, "TronJClientWorker-" + cnt.getAndIncrement());
             }
         });
     }

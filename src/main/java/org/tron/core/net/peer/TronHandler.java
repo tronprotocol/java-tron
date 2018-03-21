@@ -19,7 +19,6 @@ package org.tron.core.net.peer;
  */
 
 
-import com.sun.javafx.runtime.SystemProperties;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -40,8 +39,6 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private final static Logger logger = LoggerFactory.getLogger("net");
 
-  protected SystemProperties config;
-
   protected Channel channel;
 
   private MessageQueue msgQueue = null;
@@ -52,8 +49,8 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   public PeerConnectionDelegate peerDel;
 
-  protected TronHandler(final SystemProperties config) {
-    this.config = config;
+  public TronHandler() {
+
   }
 
   public void setPeerDel(PeerConnectionDelegate peerDel) {
