@@ -3,7 +3,7 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
-
+import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol.Items;
 import org.tron.protos.Protocol.Transaction;
 

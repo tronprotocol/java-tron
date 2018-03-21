@@ -17,8 +17,6 @@
  */
 package org.tron.common.overlay.message;
 
-import org.tron.core.net.message.Message;
-
 public abstract class P2pMessage extends Message {
 
     public P2pMessage() {

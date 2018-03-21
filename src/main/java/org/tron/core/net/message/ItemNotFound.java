@@ -1,5 +1,6 @@
 package org.tron.core.net.message;
 
+import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol;
 
 public class ItemNotFound extends Message {

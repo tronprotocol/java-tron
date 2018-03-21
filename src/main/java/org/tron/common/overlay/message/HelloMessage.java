@@ -1,12 +1,13 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.HelloMessage.Builder;
 
 public class HelloMessage extends P2pMessage {
 
-  Message.HelloMessage helloMessage;
+  Protocol.HelloMessage helloMessage;
 
   public HelloMessage(byte[] rawData) {
     super(rawData);
@@ -15,11 +16,6 @@ public class HelloMessage extends P2pMessage {
 
   public HelloMessage(byte type, byte[] rawData) {
     super(type, rawData);
-  }
-
-  @Override
-  public Class<?> getAnswerMessage() {
-    return null;
   }
 
   /**
@@ -41,7 +37,7 @@ public class HelloMessage extends P2pMessage {
 
   private void unPack() {
     try {
-      this.helloMessage = Message.HelloMessage.parseFrom(this.rawData);
+      this.helloMessage = Protocol.HelloMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -53,16 +49,11 @@ public class HelloMessage extends P2pMessage {
   }
 
   @Override
-  public byte[] getRawData() {
-    if (this.rawData == null) {
+  public byte[] getData() {
+    if (this.data == null) {
       this.pack();
     }
-    return this.rawData;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return new byte[0];
+    return this.data;
   }
 
   /**

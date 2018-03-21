@@ -16,13 +16,8 @@ public class PongMessage extends P2pMessage {
   }
 
   @Override
-  public byte[] getRawData() {
+  public byte[] getData() {
     return FIXED_PAYLOAD;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return new byte[0];
   }
 
   @Override

@@ -1,5 +1,7 @@
 package org.tron.core.net.message;
 
+import org.tron.common.overlay.message.Message;
+
 public class GetDataMessage extends Message {
 
   public GetDataMessage() {

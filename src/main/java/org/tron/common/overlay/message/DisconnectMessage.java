@@ -1,7 +1,6 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Message;
 
@@ -21,18 +20,18 @@ public class DisconnectMessage extends P2pMessage {
   /**
    * The reason of disconnect.
    */
-  public DisconnectMessage(ReasonCode reason) {
-//    this.disconnectMessage = Message.DisconnectMessage
-//        .newBuilder()
-//        .setReason(reason)
-//        .build();
-//    unpacked = true;
-//    this.type = MessageTypes.P2P_DISCONNECT.asByte();
+  public DisconnectMessage(ReasonCode reasonCode) {
+    this.disconnectMessage = Message.DisconnectMessage
+        .newBuilder()
+        .setReason(Message.ReasonCode.forNumber(reasonCode.asByte()))
+        .build();
+    unpacked = true;
+    this.type = MessageTypes.P2P_DISCONNECT.asByte();
   }
 
   private void unPack() {
     try {
-      this.disconnectMessage = Message.DisconnectMessage.parseFrom(rawData);
+      this.disconnectMessage = Message.DisconnectMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
@@ -40,20 +39,15 @@ public class DisconnectMessage extends P2pMessage {
   }
 
   private void pack() {
-    this.rawData = this.disconnectMessage.toByteArray();
+    this.data = this.disconnectMessage.toByteArray();
   }
 
   @Override
-  public byte[] getRawData() {
-    if (this.rawData == null) {
+  public byte[] getData() {
+    if (this.data == null) {
       this.pack();
     }
-    return this.rawData;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return new byte[0];
+    return this.data;
   }
 
   @Override
@@ -64,14 +58,12 @@ public class DisconnectMessage extends P2pMessage {
   /**
    * Get reason of disconnect.
    */
-  public ReasonCode getReason() {
+  public byte getReason() {
     if (!this.unpacked) {
       this.unPack();
     }
 
-    //TODO: fix this
-    return ReasonCode.USER_REASON;
-    //return this.disconnectMessage.getReason();
+    return ReasonCode.fromInt(this.disconnectMessage.getReason().getNumber()).asByte();
   }
 
   /**

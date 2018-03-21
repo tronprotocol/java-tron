@@ -1,9 +1,10 @@
-package org.tron.core.net.message;
+package org.tron.common.overlay.message;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.net.message.MessageTypes;
 
 @Slf4j
 public abstract class Message {
@@ -18,6 +19,12 @@ public abstract class Message {
   }
 
   public Message(byte[] packed) {
+    this.data = packed;
+    unpacked = false;
+  }
+
+  public Message(byte type, byte[] packed) {
+    this.type = type;
     this.data = packed;
     unpacked = false;
   }

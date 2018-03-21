@@ -16,18 +16,8 @@ public class PingMessage extends P2pMessage {
   }
 
   @Override
-  public Class<?> getAnswerMessage() {
-    return null;
-  }
-
-  @Override
-  public byte[] getRawData() {
+  public byte[] getData() {
     return FIXED_PAYLOAD;
-  }
-
-  @Override
-  public byte[] getNodeId() {
-    return new byte[0];
   }
 
   @Override
