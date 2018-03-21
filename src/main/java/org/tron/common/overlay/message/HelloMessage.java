@@ -17,6 +17,11 @@ public class HelloMessage extends P2pMessage {
     super(type, rawData);
   }
 
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
   /**
    * Create hello message.
    */

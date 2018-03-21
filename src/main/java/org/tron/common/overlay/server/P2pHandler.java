@@ -17,6 +17,9 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.util.concurrent.Executors;
@@ -34,8 +37,6 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageCodes;
 import org.tron.common.overlay.message.ReasonCode;
-import sun.jvm.hotspot.utilities.MessageQueue;
-//import org.tron.common.overlay.server.MessageQueue;
 
 
 /**
@@ -58,7 +59,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   private static ScheduledExecutorService pingTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
 
-//    private MessageQueue msgQueue;
+  private MessageQueue msgQueue;
 
   private boolean peerDiscoveryMode = false;
 
@@ -78,14 +79,13 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
 
   public P2pHandler() {
-
     this.peerDiscoveryMode = false;
   }
 
-//    public P2pHandler(MessageQueue msgQueue, boolean peerDiscoveryMode) {
-//        this.msgQueue = msgQueue;
-//        this.peerDiscoveryMode = peerDiscoveryMode;
-//    }
+    public P2pHandler(MessageQueue msgQueue, boolean peerDiscoveryMode) {
+        this.msgQueue = msgQueue;
+        this.peerDiscoveryMode = peerDiscoveryMode;
+    }
 
 
   public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
@@ -96,7 +96,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   @Override
   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
     logger.debug("P2P protocol activated");
-//        msgQueue.activate(ctx);
+    msgQueue.activate(ctx);
     //tronListener.trace("P2P protocol activated");
 
     startTimers();
@@ -115,22 +115,20 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     switch (msg.getCommand()) {
       case HELLO:
-//                msgQueue.receivedMessage(msg);
+        msgQueue.receivedMessage(msg);
         setHandshake((HelloMessage) msg, ctx);
-//                sendGetPeers();
         break;
       case DISCONNECT:
-//                msgQueue.receivedMessage(msg);
+        msgQueue.receivedMessage(msg);
         channel.getNodeStatistics().nodeDisconnectedRemote(((DisconnectMessage) msg).getReason());
         processDisconnect(ctx, (DisconnectMessage) msg);
         break;
       case PING:
-//                msgQueue.receivedMessage(msg);
-        //TODO: send pong message
-        //ctx.writeAndFlush(PONG_MESSAGE);
+        msgQueue.receivedMessage(msg);
+        ctx.writeAndFlush(PONG_MESSAGE);
         break;
       case PONG:
-//                msgQueue.receivedMessage(msg);
+        msgQueue.receivedMessage(msg);
         channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
         break;
       default:
@@ -140,7 +138,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   }
 
   private void disconnect(ReasonCode reasonCode) {
-//        msgQueue.sendMessage(new DisconnectMessage(reasonCode));
+    msgQueue.sendMessage(new DisconnectMessage(reasonCode));
     channel.getNodeStatistics().nodeDisconnectedLocal(reasonCode);
   }
 
@@ -174,10 +172,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     killTimers();
   }
 
-  private void sendGetPeers() {
-//        msgQueue.sendMessage(StaticMessages.GET_PEERS_MESSAGE);
-  }
-
 
   public void setHandshake(HelloMessage msg, ChannelHandlerContext ctx) {
 
@@ -204,14 +198,14 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
    */
 
   public void sendDisconnect() {
-//        msgQueue.disconnect();
+        msgQueue.disconnect();
   }
 
   private void startTimers() {
     // sample for pinging in background
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       try {
-//                msgQueue.sendMessage(PING_MESSAGE);
+         msgQueue.sendMessage(PING_MESSAGE);
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -220,12 +214,12 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   public void killTimers() {
     pingTask.cancel(false);
-//        msgQueue.close();
+      msgQueue.close();
   }
 
 
   public void setMsgQueue(MessageQueue msgQueue) {
-//        this.msgQueue = msgQueue;
+        this.msgQueue = msgQueue;
   }
 
   public void setChannel(Channel channel) {

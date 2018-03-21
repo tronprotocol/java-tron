@@ -20,6 +20,15 @@ package org.tron.common.overlay.message;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+/**
+ * This class contains static values of messages on the network. These message
+ * will always be the same and therefore don't need to be created each time.
+ *
+ * @author Roman Mandeleil
+ * @since 13.04.14
+ */
+
 import org.tron.core.config.SystemProperties;
 
 @Component
