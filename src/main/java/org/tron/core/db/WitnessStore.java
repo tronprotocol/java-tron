@@ -2,15 +2,12 @@ package org.tron.core.db;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.core.capsule.WitnessCapsule;
 
+@Slf4j
 public class WitnessStore extends TronDatabase<WitnessCapsule> {
-
-  private static final Logger logger = LoggerFactory.getLogger("WitnessStore");
-
   protected WitnessStore(String dbName) {
     super(dbName);
   }

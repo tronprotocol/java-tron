@@ -4,12 +4,11 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -25,10 +24,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 
-
+@Slf4j
 public class ManagerTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
@@ -137,12 +134,14 @@ public class ManagerTest {
   @Test
   public void fork() {
     Args.setParam(new String[]{"--witness"}, Configuration.getByPath(Constant.NORMAL_CONF));
+    long size = dbManager.getBlockStore().dbSource.allKeys().size();
     String key = "00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    IntStream.range(0, 10).forEach(i -> {
+    dbManager.addWitness(witnessCapsule);
+    IntStream.range(0, 5).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
       } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
@@ -151,12 +150,13 @@ public class ManagerTest {
     });
 
     try {
-      BlockCapsule blockCapsule1 = new BlockCapsule(10,
+      long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+      BlockCapsule blockCapsule1 = new BlockCapsule(num,
               dbManager.getHead().getParentHash().getByteString(),
               System.currentTimeMillis(),
               witnessCapsule.getAddress());
       blockCapsule1.generatedByMyself = true;
-      BlockCapsule blockCapsule2 = new BlockCapsule(11,
+      BlockCapsule blockCapsule2 = new BlockCapsule(num + 1,
               blockCapsule1.getBlockId().getByteString(),
               System.currentTimeMillis(),
               witnessCapsule.getAddress());
@@ -168,12 +168,16 @@ public class ManagerTest {
       dbManager.pushBlock(blockCapsule2);
       logger.error("******in blockStore block size:" + dbManager.getBlockStore().dbSource.allKeys().size());
       logger.error("******in blockStore block:" + dbManager.getBlockStore().dbSource.allKeys().stream().map(ByteArray::toHexString).collect(Collectors.toList()));
-      Assert.assertEquals("blockStore size is not 12", dbManager.getBlockStore().dbSource.allKeys().size(), 12);
-      Assert.assertEquals(dbManager.getBlockIdByNum(10), blockCapsule1.getBlockId());
+      Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 6);
+      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
+          blockCapsule1.getBlockId());
+      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
+          blockCapsule1.getParentHash());
       Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
       e.printStackTrace();
     }
+    dbManager.getWitnesses().clear();
   }
 }

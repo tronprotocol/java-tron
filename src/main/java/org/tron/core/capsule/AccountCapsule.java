@@ -21,18 +21,15 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
 
+@Slf4j
 public class AccountCapsule implements ProtoCapsule<Account> {
-
-  protected static final Logger logger = LoggerFactory.getLogger("AccountCapsule");
-
   private Account account;
 
   /**

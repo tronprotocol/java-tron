@@ -22,15 +22,11 @@ import static org.tron.common.utils.TypeConversion.bytesToLong;
 import static org.tron.common.utils.TypeConversion.hexStringToBytes;
 import static org.tron.common.utils.TypeConversion.longToBytes;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
+@Slf4j
 public class TypeConversionTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testLongToBytes() {
     byte[] result = longToBytes(123L);

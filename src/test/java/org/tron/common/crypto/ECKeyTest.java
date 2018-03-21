@@ -1,17 +1,13 @@
 package org.tron.common.crypto;
 
 import static org.junit.Assert.assertEquals;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 
+@Slf4j
 public class ECKeyTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
-
   @Test
   public void testGeClientTestEcKey() {
     final ECKey key = ECKey.fromPrivate(
