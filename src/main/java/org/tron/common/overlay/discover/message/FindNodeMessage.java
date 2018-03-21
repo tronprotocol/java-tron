@@ -30,11 +30,19 @@ public class FindNodeMessage extends DiscoverMessage {
         .setTargetId(ByteString.copyFrom(targetId))
         .setTimestamp(timestamp)
         .build();
+
+    this.type = MessageTypes.DISCOVER_FIND_PEER.asByte();
+    this.rawData = this.findNeighbours.toByteArray();
   }
 
   @Override
   public byte[] getRawData() {
     return this.rawData;
+  }
+
+  @Override
+  public byte[] getNodeId() {
+    return this.findNeighbours.getFrom().getNodeId().toByteArray();
   }
 
   public FindNodeMessage create(Node from, byte[] targetId) {

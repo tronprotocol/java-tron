@@ -21,6 +21,11 @@ public class PongMessage extends P2pMessage {
   }
 
   @Override
+  public byte[] getNodeId() {
+    return new byte[0];
+  }
+
+  @Override
   public P2pMessageCodes getCommand() {
     return P2pMessageCodes.fromByte(this.type);
   }

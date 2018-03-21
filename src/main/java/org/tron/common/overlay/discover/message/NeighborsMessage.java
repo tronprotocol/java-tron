@@ -26,6 +26,11 @@ public class NeighborsMessage extends DiscoverMessage {
     return this.rawData;
   }
 
+  @Override
+  public byte[] getNodeId() {
+    return this.neighbours.getFrom().getNodeId().toByteArray();
+  }
+
   public NeighborsMessage(Node from, List<Node> neighbours) {
     Builder builder = Neighbours.newBuilder()
         .setTimestamp(System.currentTimeMillis());
@@ -50,6 +55,7 @@ public class NeighborsMessage extends DiscoverMessage {
 
     this.neighbours = builder.build();
 
+    this.type = MessageTypes.DISCOVER_PEERS.asByte();
     this.rawData = this.neighbours.toByteArray();
   }
 

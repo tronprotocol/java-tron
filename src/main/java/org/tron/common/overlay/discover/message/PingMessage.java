@@ -22,6 +22,11 @@ public class PingMessage extends DiscoverMessage {
     return this.rawData;
   }
 
+  @Override
+  public byte[] getNodeId() {
+    return this.pingMessage.getFrom().getNodeId().toByteArray();
+  }
+
   public PingMessage(int version, Node from, Node to,
       long timestamp) {
     Endpoint fromEndpoint = Endpoint.newBuilder()
@@ -42,6 +47,7 @@ public class PingMessage extends DiscoverMessage {
         .setTimestamp(timestamp)
         .build();
 
+    this.type = MessageTypes.DISCOVER_PING.asByte();
     this.rawData = this.pingMessage.toByteArray();
   }
 
@@ -54,7 +60,7 @@ public class PingMessage extends DiscoverMessage {
   }
 
   public static PingMessage create(Node from, Node to){
-    return null;
+    return new PingMessage(1, from, to, System.currentTimeMillis());
   }
 
   public Node getFrom (){
