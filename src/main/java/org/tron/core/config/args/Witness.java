@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.StringUtil;
 import java.io.Serializable;
@@ -23,15 +25,15 @@ public class Witness implements Serializable {
 
   private static final long serialVersionUID = -7446501098542377380L;
 
+  @Getter
   private String address;
 
+  @Getter
   private String url;
 
+  @Getter
+  @Setter
   private long voteCount;
-
-  public String getAddress() {
-    return this.address;
-  }
 
   /**
    * set address.
@@ -50,10 +52,6 @@ public class Witness implements Serializable {
     }
   }
 
-  public String getUrl() {
-    return this.url;
-  }
-
   /**
    * set url.
    */
@@ -64,13 +62,5 @@ public class Witness implements Serializable {
     }
 
     this.url = url;
-  }
-
-  public long getVoteCount() {
-    return this.voteCount;
-  }
-
-  public void setVoteCount(final long voteCount) {
-    this.voteCount = voteCount;
   }
 }
