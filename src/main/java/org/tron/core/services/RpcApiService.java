@@ -288,6 +288,19 @@ public class RpcApiService implements Service {
       responseObserver.onNext(wallet.getAssetIssueList());
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getAssetIssueByAccount(Account request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      ByteString fromBs = request.getAccountName();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAssetIssueByAccount(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   @Override

@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -59,6 +60,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class Wallet {
+
   private BlockStore db;
   private final ECKey ecKey;
   @Getter
@@ -249,6 +251,18 @@ public class Wallet {
     assetIssueCapsuleList.forEach(witnessCapsule -> {
       builder.addAssetIssue(witnessCapsule.getInstance());
     });
+    return builder.build();
+  }
+
+  public AssetIssueList getAssetIssueByAccount(ByteString accountName) {
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    assetIssueCapsuleList.stream()
+        .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(accountName))
+        .forEach(witnessCapsule -> {
+          builder.addAssetIssue(witnessCapsule.getInstance());
+        });
     return builder.build();
   }
 }
