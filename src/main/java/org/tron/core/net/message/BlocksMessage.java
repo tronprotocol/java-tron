@@ -2,11 +2,10 @@ package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
-import org.tron.common.overlay.message.Message;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Items;
 
-public class BlocksMessage extends Message {
+public class BlocksMessage extends TronMessage {
 
   private List<Block> blocks;
 

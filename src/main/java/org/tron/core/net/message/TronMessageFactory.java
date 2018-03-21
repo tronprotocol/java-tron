@@ -1,7 +1,6 @@
 package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.MessageFactory;
 
 /**
@@ -10,7 +9,7 @@ import org.tron.common.overlay.message.MessageFactory;
 public class TronMessageFactory extends MessageFactory {
 
   @Override
-  protected Message create(byte type, byte[] packed) {
+  protected TronMessage create(byte type, byte[] packed) {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     switch (receivedTypes) {
       case TRX:
@@ -31,7 +30,7 @@ public class TronMessageFactory extends MessageFactory {
   }
 
   @Override
-  protected Message create(byte[] data) {
+  protected TronMessage create(byte[] data) {
     byte type = data[0];
     byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
     return create(type, rawData);

@@ -1,13 +1,12 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.Block;
 
-public class BlockMessage extends Message {
+public class BlockMessage extends TronMessage {
 
   private Block block;
 

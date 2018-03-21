@@ -1,10 +1,9 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.common.overlay.message.Message;
 
 
-public class GetInventoryItemsMessage extends Message {
+public class GetInventoryItemsMessage extends TronMessage {
 
   private org.tron.protos.TronInventoryItems.InventoryItems items;
 
