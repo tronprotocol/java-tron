@@ -22,16 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.SystemProperties;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-/**
- * This class contains static values of messages on the network. These message
- * will always be the same and therefore don't need to be created each time.
- *
- * @author Roman Mandeleil
- * @since 13.04.14
- */
 @Component
 public class StaticMessages {
 
@@ -50,28 +40,31 @@ public class StaticMessages {
     public HelloMessage createHelloMessage(String peerId, int listenPort) {
 
         String helloAnnouncement = buildHelloAnnouncement();
-        byte p2pVersion = (byte) config.defaultP2PVersion();
-
+        //TODO#p2p : get version from config here
+        byte p2pVersion = 0;
+        //byte p2pVersion = (byte) config.defaultP2PVersion();
+        //List<Capability> capabilities = configCapabilities.getConfigCapabilities();
         return new HelloMessage(p2pVersion, helloAnnouncement,
-                capabilities, listenPort, peerId);
+                listenPort, peerId);
     }
 
     private String buildHelloAnnouncement() {
-        String version = config.projectVersion();
-        String numberVersion = version;
-        Pattern pattern = Pattern.compile("^\\d+(\\.\\d+)*");
-        Matcher matcher = pattern.matcher(numberVersion);
-        if (matcher.find()) {
-            numberVersion = numberVersion.substring(matcher.start(), matcher.end());
-        }
-        String system = System.getProperty("os.name");
-        if (system.contains(" "))
-            system = system.substring(0, system.indexOf(" "));
-        if (System.getProperty("java.vm.vendor").contains("Android"))
-            system = "Android";
-        String phrase = config.helloPhrase();
-
-        return String.format("Ethereum(J)/v%s/%s/%s/Java/%s", numberVersion, system,
-                config.projectVersionModifier().equalsIgnoreCase("release") ? "Release" : "Dev", phrase);
+        return "java-tron";
+//        String version = config.projectVersion();
+//        String numberVersion = version;
+//        Pattern pattern = Pattern.compile("^\\d+(\\.\\d+)*");
+//        Matcher matcher = pattern.matcher(numberVersion);
+//        if (matcher.find()) {
+//            numberVersion = numberVersion.substring(matcher.start(), matcher.end());
+//        }
+//        String system = System.getProperty("os.name");
+//        if (system.contains(" "))
+//            system = system.substring(0, system.indexOf(" "));
+//        if (System.getProperty("java.vm.vendor").contains("Android"))
+//            system = "Android";
+//        String phrase = config.helloPhrase();
+//
+//        return String.format("Ethereum(J)/v%s/%s/%s/Java/%s", numberVersion, system,
+//                config.projectVersionModifier().equalsIgnoreCase("release") ? "Release" : "Dev", phrase);
     }
 }

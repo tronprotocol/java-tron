@@ -103,6 +103,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
     byteBufMsg.writeBytes(initiatePacket);
     ctx.writeAndFlush(byteBufMsg).sync();
+    channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
+
 
     channel.getNodeStatistics().rlpxAuthMessagesSent.add();
   }

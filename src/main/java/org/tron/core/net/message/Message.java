@@ -33,6 +33,8 @@ public abstract class Message {
     unpacked = false;
   }
 
+  public abstract Class<?> getAnswerMessage();
+
   public Sha256Hash getMessageId() {
     return Sha256Hash.of(getData());
   }

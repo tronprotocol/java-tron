@@ -22,16 +22,20 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.server.WireTrafficStats;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.SystemProperties;
+
 import java.net.BindException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tron.core.config.SystemProperties;
-import org.tron.common.overlay.server.WireTrafficStats;
 
 @Component
 public class UDPListener {
@@ -162,6 +166,8 @@ public class UDPListener {
     }
 
     public static void main(String[] args) throws Exception {
+        ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+
         String address = "0.0.0.0";
         int port = 30303;
         if (args.length >= 2) {
