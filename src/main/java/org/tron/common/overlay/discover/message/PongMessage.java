@@ -22,35 +22,33 @@ public class PongMessage extends DiscoverMessage {
     return this.rawData;
   }
 
-  public PongMessage(Node to, int echo, long timestamp) {
+  public PongMessage(Node from) {
+
     Endpoint toEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
-        .setPort(to.getPort())
-        .setNodeId(ByteString.copyFrom(to.getId()))
+        .setPort(from.getPort())
+        .setNodeId(ByteString.copyFrom(from.getId()))
         .build();
 
     this.pongMessage = Discover.PongMessage.newBuilder()
         .setTo(toEndpoint)
-        .setEcho(echo)
-        .setTimestamp(timestamp)
+        .setEcho(1)
+        .setTimestamp(System.currentTimeMillis())
         .build();
+
     this.rawData = this.pongMessage.toByteArray();
   }
 
-  public static PongMessage create(Node from, int echo) {
-    return new PongMessage(from, echo, System.currentTimeMillis());
+  public static PongMessage create(Node from) {
+    return new PongMessage(from);
   }
 
   public Node getFrom(){
     Endpoint from = this.pongMessage.getTo();
-
     Node node = new Node(from.getNodeId().toByteArray(),
         ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
-
     return node;
   }
-
-
 
   private void unPack() {
     try {

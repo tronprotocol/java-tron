@@ -54,7 +54,7 @@ public class PingMessage extends DiscoverMessage {
   }
 
   public static PingMessage create(Node from, Node to){
-    return new PingMessage(4, from, to, System.currentTimeMillis());
+    return null;
   }
 
   public Node getFrom (){
