@@ -87,7 +87,7 @@ public class RpcApiService implements Service {
 
 
     @Override
-    public void getBalance(Account req, StreamObserver<Account> responseObserver) {
+    public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         //      byte[] addressBa = addressBs.toByteArray();
