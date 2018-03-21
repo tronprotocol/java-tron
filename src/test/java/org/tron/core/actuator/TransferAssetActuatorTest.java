@@ -18,8 +18,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-
-import lombok.extern.slf4j.Slf4j;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -43,6 +41,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class TransferAssetActuatorTest {
+
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_contract_test";
