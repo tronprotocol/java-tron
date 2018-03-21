@@ -15,8 +15,6 @@
 
 package org.tron.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.application.CliApplication;
@@ -27,8 +25,11 @@ import org.tron.peer.Peer;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
-public class SendCommand extends Command {
-  private static final Logger logger = LoggerFactory.getLogger("Command");
+import static org.fusesource.jansi.Ansi.ansi;
+
+@Deprecated
+public class SendCommand implements ExecutableCommand {
+  private static final Logger logger = LoggerFactory.getLogger("ExecutableCommand");
 
   public SendCommand() {
   }
@@ -82,8 +83,7 @@ public class SendCommand extends Command {
   }
 
 
-  @Override
-  public boolean check(String[] parameters) {
+  private boolean check(String[] parameters) {
     if (parameters.length < 2) {
       logger.error("missing parameters");
       return false;

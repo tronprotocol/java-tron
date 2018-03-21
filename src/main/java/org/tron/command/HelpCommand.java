@@ -15,18 +15,15 @@
 
 package org.tron.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import org.tron.application.CliApplication;
 
-public class HelpCommand extends Command {
+import static org.fusesource.jansi.Ansi.ansi;
 
-  public HelpCommand() {
-  }
+@Deprecated
+public class HelpCommand implements ExecutableCommand {
 
   @Override
   public void execute(CliApplication app, String[] parameters) {
-
     if (parameters.length == 0) {
       usage();
       return;
@@ -63,7 +60,6 @@ public class HelpCommand extends Command {
         break;
     }
   }
-
   @Override
   public void usage() {
     System.out.println("");
@@ -113,8 +109,4 @@ public class HelpCommand extends Command {
     System.out.println("");
   }
 
-  @Override
-  public boolean check(String[] parameters) {
-    return true;
-  }
 }

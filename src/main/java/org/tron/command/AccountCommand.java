@@ -15,14 +15,13 @@
 
 package org.tron.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import org.tron.application.CliApplication;
 import org.tron.utils.ByteArray;
 
-public class AccountCommand extends Command {
-  public AccountCommand() {
-  }
+import static org.fusesource.jansi.Ansi.ansi;
+
+@CliCommand(commands = "account", description = "Get your wallet address")
+public class AccountCommand implements ExecutableCommand {
 
   @Override
   public void execute(CliApplication app, String[] parameters) {
@@ -34,20 +33,15 @@ public class AccountCommand extends Command {
     System.out.println("");
 
     System.out.println(ansi().eraseScreen().render(
-        "@|magenta,bold USAGE|@\n\t@|bold account|@"
+            "@|magenta,bold USAGE|@\n\t@|bold account|@"
     ));
 
     System.out.println("");
 
     System.out.println(ansi().eraseScreen().render(
-        "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
+            "@|magenta,bold DESCRIPTION|@\n\t@|bold The command 'account' get your wallet address.|@"
     ));
 
     System.out.println("");
-  }
-
-  @Override
-  public boolean check(String[] parameters) {
-    return true;
   }
 }
