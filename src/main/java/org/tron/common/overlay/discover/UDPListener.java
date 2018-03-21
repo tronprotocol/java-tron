@@ -22,19 +22,21 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import java.net.BindException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.WireTrafficStats;
+import org.tron.core.Constant;
+import org.tron.core.config.Configuration;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+
+import java.net.BindException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class UDPListener {
@@ -166,7 +168,7 @@ public class UDPListener {
 
     public static void main(String[] args) throws Exception {
 
-
+        Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
         ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
         while (true){
             Thread.sleep(10000);

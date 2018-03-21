@@ -2,11 +2,11 @@ package org.tron.common.overlay.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Message;
+import org.tron.protos.Protocol;
 
 public class DisconnectMessage extends P2pMessage {
 
-  private Message.DisconnectMessage disconnectMessage;
+  private Protocol.DisconnectMessage disconnectMessage;
 
   public DisconnectMessage(byte[] rawData) {
     super(rawData);
@@ -21,9 +21,9 @@ public class DisconnectMessage extends P2pMessage {
    * The reason of disconnect.
    */
   public DisconnectMessage(ReasonCode reasonCode) {
-    this.disconnectMessage = Message.DisconnectMessage
+    this.disconnectMessage = Protocol.DisconnectMessage
         .newBuilder()
-        .setReason(Message.ReasonCode.forNumber(reasonCode.asByte()))
+        .setReason(Protocol.ReasonCode.forNumber(reasonCode.asByte()))
         .build();
     unpacked = true;
     this.type = MessageTypes.P2P_DISCONNECT.asByte();
@@ -31,7 +31,7 @@ public class DisconnectMessage extends P2pMessage {
 
   private void unPack() {
     try {
-      this.disconnectMessage = Message.DisconnectMessage.parseFrom(this.data);
+      this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
