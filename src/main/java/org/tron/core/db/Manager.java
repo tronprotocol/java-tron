@@ -371,9 +371,6 @@ public class Manager {
     try {
       revokingStore.pop();
       head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
-      getDynamicPropertiesStore().saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-      getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-      getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
     } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
@@ -401,10 +398,6 @@ public class Manager {
           processBlock(item);
           tmpDialog.commit();
           head = item;
-          getDynamicPropertiesStore()
-              .saveLatestBlockHeaderHash(head.getBlockId().getByteString());
-          getDynamicPropertiesStore().saveLatestBlockHeaderNumber(head.getNum());
-          getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(head.getTimeStamp());
         } catch (ValidateSignatureException e) {
           e.printStackTrace();
         } catch (ContractValidateException e) {
@@ -770,7 +763,7 @@ public class Manager {
     }
 
     // todo set reverking db max size.
-    refreshHead(block);
+    this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
 
@@ -796,7 +789,7 @@ public class Manager {
     int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
-    getDynamicPropertiesStore().setLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
   }
 
   /**
