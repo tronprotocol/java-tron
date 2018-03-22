@@ -22,7 +22,6 @@ import org.tron.protos.Contract.AssetIssueContract;
 
 @Slf4j
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
-
   private AssetIssueContract assetIssueContract;
 
   /**
@@ -72,9 +71,5 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   public long getEndTime() {
     return this.assetIssueContract.getEndTime();
-  }
-
-  public ByteString getOwnerAddress() {
-    return this.assetIssueContract.getOwnerAddress();
   }
 }

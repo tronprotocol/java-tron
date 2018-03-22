@@ -81,7 +81,7 @@ public class AccountCapsule implements ProtoCapsule<Account> {
   }
 
   /**
-   * get account from address.
+   * get account from address and account name.
    */
   public AccountCapsule(ByteString address,
       AccountType accountType) {
@@ -90,8 +90,6 @@ public class AccountCapsule implements ProtoCapsule<Account> {
         .setAddress(address)
         .build();
   }
-
-
   public AccountCapsule(Account account) {
     this.account = account;
   }
@@ -210,13 +208,16 @@ public class AccountCapsule implements ProtoCapsule<Account> {
    */
   public boolean addAsset(String key, Long value) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    if (!assetMap.isEmpty()) {
+    if (assetMap.isEmpty()) {
+      assetMap = Maps.newHashMap();
+    } else {
       if (assetMap.containsKey(key)) {
         return false;
       }
     }
+    assetMap.put(key, value);
 
-    this.account = this.account.toBuilder().putAsset(key, value).build();
+    this.account = this.account.toBuilder().clearAsset().putAllAsset(assetMap).build();
 
     return true;
   }
