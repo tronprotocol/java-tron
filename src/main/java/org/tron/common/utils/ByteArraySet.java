@@ -31,7 +31,7 @@ public class ByteArraySet implements Set<byte[]> {
   private Set<ByteArrayWrapper> delegate;
 
   public ByteArraySet() {
-    this(new HashSet<ByteArrayWrapper>());
+    this(new HashSet<>());
   }
 
   ByteArraySet(Set<ByteArrayWrapper> delegate) {
