@@ -21,7 +21,6 @@ public class FullNode {
     Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
     Args cfgArgs = Args.getInstance();
 
-    Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
     if (cfgArgs.isHelp()) {

@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -209,7 +210,7 @@ public class SyncPool {
   public synchronized Set<String> nodesInUse() {
     Set<String> ids = new HashSet<>();
     if (channelManager.getActivePeers() == null){
-
+      return ids;
     }
     for (Channel peer : channelManager.getActivePeers()) {
       ids.add(peer.getPeerId());
@@ -255,8 +256,12 @@ public class SyncPool {
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
-      return  true;
 
+      if (handler.getState().equals(State.Dead)) {
+        return false;
+      }
+
+      return  true;
 
 //
 //      if (handler.getNodeStatistics().isPredefined()) return true;

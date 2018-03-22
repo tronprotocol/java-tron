@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
@@ -23,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -51,6 +55,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
+@Component
 public class Manager {
 
   private static final long BLOCK_INTERVAL_SEC = 1;
@@ -66,6 +71,9 @@ public class Manager {
   private WitnessStore witnessStore;
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+
+  @Autowired
+  private PeersStore peersStore;
   private BlockCapsule genesisBlock;
 
 
@@ -75,7 +83,6 @@ public class Manager {
   private BlockCapsule head;
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
-
 
   @Getter
   @Setter
@@ -166,6 +173,37 @@ public class Manager {
     return 100 * this.dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
         / BlockFilledSlots.SLOT_NUMBER;
   }
+
+  public PeersStore getPeersStore() {
+    return peersStore;
+  }
+
+  public void setPeersStore(PeersStore peersStore) {
+    this.peersStore = peersStore;
+  }
+
+  public Node getHomeNode() {
+    final Args args = Args.getInstance();
+    Set<Node> nodes = this.peersStore.get("home".getBytes());
+    if (nodes.size() > 0) {
+      return nodes.stream().findFirst().get();
+    } else {
+      Node node = Node.instanceOf(args.getNodeExternalIp()
+          + ":" + args.getNodeListenPort());
+      nodes.add(node);
+      this.peersStore.put("home".getBytes(), nodes);
+      return node;
+    }
+  }
+
+  public void saveNeighbours(Set<Node> nodes) {
+    this.peersStore.put("neighbours".getBytes(), nodes);
+  }
+
+  public Set<Node> loadNeighbours() {
+    return this.peersStore.get("neighbours".getBytes());
+  }
+
 
   /**
    * all db should be init here.

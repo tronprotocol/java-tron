@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 
 public class Node implements Serializable {
@@ -57,7 +58,7 @@ public class Node implements Serializable {
 
   public String getEnodeURL() {
     return new StringBuilder("enode://")
-        .append(id).append("@")
+        .append(ByteArray.toHexString(id)).append("@")
         .append(host).append(":")
         .append(port).toString();
   }
@@ -136,7 +137,7 @@ public class Node implements Serializable {
     return "Node{" +
         " host='" + host + '\'' +
         ", port=" + port +
-        ", id=" + id +
+        ", id=" + ByteArray.toHexString(id) +
         '}';
   }
 
