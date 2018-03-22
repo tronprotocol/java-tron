@@ -15,6 +15,9 @@
 
 package org.tron.command;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.application.CliApplication;
@@ -29,12 +32,7 @@ import org.tron.peer.PeerType;
 import org.tron.protos.core.TronTransaction;
 import org.tron.utils.ByteArray;
 
-import javax.inject.Inject;
-
-import static org.fusesource.jansi.Ansi.ansi;
-
-@CliCommand(commands = "send", description = "Send balance to receiver address", needInjection = true)
-public class ConsensusCommand implements ExecutableCommand {
+public class ConsensusCommand extends Command {
 
   private static final Logger logger = LoggerFactory.getLogger("ConsensusCommand");
 
@@ -118,7 +116,8 @@ public class ConsensusCommand implements ExecutableCommand {
     }
   }
 
-  private boolean check(String[] parameters) {
+  @Override
+  public boolean check(String[] parameters) {
     if (parameters.length < 2) {
       logger.error("missing parameter");
       return false;

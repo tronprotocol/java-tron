@@ -15,12 +15,13 @@
 
 package org.tron.command;
 
-import org.tron.application.CliApplication;
-
 import static org.fusesource.jansi.Ansi.ansi;
 
-@CliCommand(commands = {"exit", "quit", "bye"}, description = "Exit java-tron application")
-public class ExitCommand implements ExecutableCommand {
+import org.tron.application.CliApplication;
+
+public class ExitCommand extends Command {
+  public ExitCommand() {
+  }
 
   @Override
   public void execute(CliApplication app, String[] parameters) {
@@ -44,8 +45,8 @@ public class ExitCommand implements ExecutableCommand {
     System.out.println("");
   }
 
-//  @Override
-//  public boolean check(String[] parameters) {
-//    return true;
-//  }
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }

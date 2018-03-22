@@ -15,17 +15,18 @@
 
 package org.tron.command;
 
-import org.tron.application.CliApplication;
-
 import static org.fusesource.jansi.Ansi.Color.MAGENTA;
 import static org.fusesource.jansi.Ansi.ansi;
 
-@CliCommand(commands = "version")
-public class VersionCommand implements ExecutableCommand {
+import org.tron.application.CliApplication;
+
+public class VersionCommand extends Command {
+  public VersionCommand() {
+  }
 
   @Override
   public void execute(CliApplication app, String[] parameters) {
-    //usage();
+    usage();
   }
 
   @Override
@@ -45,4 +46,8 @@ public class VersionCommand implements ExecutableCommand {
     System.out.println("");
   }
 
+  @Override
+  public boolean check(String[] parameters) {
+    return true;
+  }
 }
