@@ -55,6 +55,13 @@ public class Node implements Serializable {
     return node;
   }
 
+  public String getEnodeURL() {
+    return new StringBuilder("enode://")
+        .append(id).append("@")
+        .append(host).append(":")
+        .append(port).toString();
+  }
+
   public Node(String enodeURL) {
     try {
       URI uri = new URI(enodeURL);
