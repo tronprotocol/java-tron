@@ -2,13 +2,15 @@ package org.tron.common.utils;
 
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 
+import java.util.Optional;
+
 public class DialogOptional<T extends Dialog> {
   private static final DialogOptional<?> EMPTY = new DialogOptional<>();
 
-  private java.util.Optional<T> value;
+  private Optional<T> value;
 
   private DialogOptional() {
-    this.value = java.util.Optional.empty();
+    this.value = Optional.empty();
   }
 
   public static <T extends Dialog> DialogOptional<T> empty() {
@@ -18,7 +20,7 @@ public class DialogOptional<T extends Dialog> {
   }
 
   private DialogOptional(T value) {
-    this.value = java.util.Optional.of(value);
+    this.value = Optional.of(value);
   }
 
   public static <T extends Dialog> DialogOptional<T> of(T value) {
@@ -35,6 +37,6 @@ public class DialogOptional<T extends Dialog> {
 
   public void reset() {
     value.ifPresent(Dialog::destroy);
-    value = java.util.Optional.empty();
+    value = Optional.empty();
   }
 }

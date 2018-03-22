@@ -303,7 +303,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
           revokingDatabase.revoke();
         }
       } catch (Exception e) {
-        log.error("revoke database error.", e);
+        logger.error("revoke database error.", e);
       }
       if (disableOnExit) {
         revokingDatabase.disable();
@@ -317,7 +317,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
           revokingDatabase.revoke();
         }
       } catch (Exception e) {
-        log.error("revoke database error.", e);
+        logger.error("revoke database error.", e);
         throw new RevokingStoreIllegalStateException(e);
       }
       if (disableOnExit) {
@@ -337,6 +337,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @AllArgsConstructor
   @EqualsAndHashCode
+  @Getter
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

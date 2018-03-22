@@ -3,17 +3,15 @@ package org.tron.core.actuator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
+@Slf4j
 public class ActuatorFactory {
-
-  private static final Logger logger = LoggerFactory.getLogger("ActuatorFactory");
   public static final ActuatorFactory INSTANCE = new ActuatorFactory();
 
   private ActuatorFactory() {
@@ -52,8 +50,8 @@ public class ActuatorFactory {
         return new CreateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager);
-      case TransferAssertContract:
-        return new TransferAssertActuator(contract.getParameter(), manager);
+      case TransferAssetContract:
+        return new TransferAssetActuator(contract.getParameter(), manager);
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
@@ -66,6 +64,8 @@ public class ActuatorFactory {
         break;
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
+      case ParticipateAssetIssueContract:
+        return new ParticipateAssetIssueActuator(contract.getParameter(), manager);
       default:
 
     }

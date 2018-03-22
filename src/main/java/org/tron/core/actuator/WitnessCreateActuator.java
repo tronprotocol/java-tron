@@ -4,8 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
@@ -14,15 +14,12 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class WitnessCreateActuator extends AbstractActuator {
-
-
-  private static final Logger logger = LoggerFactory.getLogger("WitnessCreateActuator");
 
   WitnessCreateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
-
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
@@ -53,9 +50,21 @@ public class WitnessCreateActuator extends AbstractActuator {
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
 
-      if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) != null) {
-        throw new ContractValidateException("Witness has existed");
-      }
+      Preconditions.checkArgument(
+          this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray()),
+          "account not exists");
+
+      AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+          .get(contract.getOwnerAddress().toByteArray());
+
+      Preconditions.checkArgument(accountCapsule.getShare() >= WitnessCapsule.MIN_BALANCE,
+          "witnessAccount  has balance["
+              + accountCapsule.getShare() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
+
+      Preconditions.checkArgument(
+          !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
+          "Witness has existed");
+
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());

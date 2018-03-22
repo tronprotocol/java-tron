@@ -4,22 +4,7 @@ package protocol;
 
 
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
-option java_outer_classname = "Message"; //Specify the class name of the generated Java file
-
-message Capability {
-  string name = 1;
-  int32 version = 2;
-}
-
-enum P2pMessageCode {
-  HELLO = 0;
-  DISCONNECT = 1;
-  PING = 2;
-  PONG = 3;
-  GET_PEERS = 4;
-  PEERS = 5;
-  USER = 6;
-}
+option java_outer_classname = "Discover"; //Specify the class name of the generated Java file
 
 enum ReasonCode {
   REQUESTED = 0;
@@ -42,7 +27,6 @@ message Peer {
   bytes address = 1;
   int32 port = 2;
   string peerId = 3;
-  repeated Capability capabilities = 4;
 }
 
 message DisconnectMessage {
@@ -52,11 +36,41 @@ message DisconnectMessage {
 message HelloMessage {
   int32 p2pVersion = 1;
   string clientId = 2;
-  repeated Capability capabilities = 3;
   int32 listenPort = 4;
   string peerId = 5;
 }
 
 message PeersMessage {
   repeated Peer peers = 1;
+}
+
+message Endpoint {
+  bytes address = 1;
+  int32 port = 2;
+  bytes nodeId = 3;
+}
+
+message PingMessage {
+  int32 version = 1;
+  Endpoint from = 2;
+  Endpoint to = 3;
+  int64 timestamp = 4;
+}
+
+message PongMessage {
+  Endpoint from = 1;
+  int32 echo = 2;
+  int64 timestamp = 3;
+}
+
+message FindNeighbours {
+  Endpoint from = 1;
+  bytes targetId = 2;
+  int64 timestamp = 3;
+}
+
+message Neighbours {
+  Endpoint from = 1;
+  repeated Endpoint neighbours = 2;
+  int64 timestamp = 3;
 }

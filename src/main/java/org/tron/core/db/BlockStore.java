@@ -15,18 +15,16 @@
 
 package org.tron.core.db;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
-public class BlockStore extends TronDatabase<BlockCapsule> {
+@Slf4j
+public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
-  public static final Logger logger = LoggerFactory.getLogger("BlockStore");
 
   private BlockCapsule head;
 
@@ -79,30 +77,6 @@ public class BlockStore extends TronDatabase<BlockCapsule> {
   // genesis_time
   public DateTime getGenesisTime() {
     return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
-  }
-
-  @Override
-  public void put(byte[] key, BlockCapsule item) {
-    logger.info("address is {},account is {}", key, item);
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    logger.info("address is {} ", ByteArray.toHexString(key));
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override

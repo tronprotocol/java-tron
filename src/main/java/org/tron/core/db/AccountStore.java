@@ -3,13 +3,13 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
-public class AccountStore extends TronDatabase<AccountCapsule> {
+@Slf4j
+public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static final String ACCOUNT_SUN_ADDRESS
       = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
@@ -20,7 +20,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
   private static final String ACCOUNT_ZION_ADDRESS
       = "55ddae14564f82d5b94c7a131b5fcfd31ad6515a";
 
-  private static final Logger logger = LoggerFactory.getLogger("AccountStore");
   private static AccountStore instance;
 
 
@@ -42,31 +41,6 @@ public class AccountStore extends TronDatabase<AccountCapsule> {
       }
     }
     return instance;
-  }
-
-
-  @Override
-  public void put(byte[] key, AccountCapsule item) {
-    logger.info("address is {},account is {}", key, item);
-
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
-
-    logger.info("address is {} ", ByteArray.toHexString(key));
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    // This should be called just before an object is removed.
-    onDelete(key);
-    dbSource.deleteData(key);
   }
 
   @Override

@@ -4,10 +4,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.ChainInventory;
 
+@Slf4j
 public class ChainInventoryMessage extends Message {
 
   public ChainInventoryMessage(byte[] packed) {

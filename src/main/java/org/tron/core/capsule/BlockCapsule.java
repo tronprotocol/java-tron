@@ -53,7 +53,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       this.block = Block.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      log.debug(e.getMessage());
+      logger.debug(e.getMessage());
     }
   }
 
