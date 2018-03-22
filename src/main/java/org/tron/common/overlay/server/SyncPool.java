@@ -73,7 +73,7 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private Args args;
+  private Args args = Args.getInstance();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -82,7 +82,6 @@ public class SyncPool {
 
   @Autowired
   public SyncPool(final Args args) {
-    this.args = args;
   }
 
   public void init(final ChannelManager channelManager) {
@@ -248,11 +247,11 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
+    int lackSize = this.args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = nodesInUse();
-    nodesInUse.add(Hex.toHexString(args.nodeId()));   // exclude home node
+    nodesInUse.add(Hex.toHexString(this.args.nodeId()));   // exclude home node
 
 
     //TODO: here can only use TCP connect seed peer.
@@ -286,7 +285,7 @@ public class SyncPool {
 //    active.sort((c1, c2) -> c2.getTotalDifficulty().compareTo(c1.getTotalDifficulty()));
 //
 //    BigInteger highestDifficulty = active.get(0).getTotalDifficulty();
-    int thresholdIdx = (int) (min(args.getSyncNodeCount(), active.size()) - 1);
+    int thresholdIdx = (int) (min(this.args.getSyncNodeCount(), active.size()) - 1);
 //
 //    for (int i = thresholdIdx; i >= 0; i--) {
 //      if (isIn20PercentRange(active.get(i).getTotalDifficulty(), highestDifficulty)) {

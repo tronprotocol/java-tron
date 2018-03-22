@@ -48,16 +48,12 @@ public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
     @Autowired
     //EthereumListener ethereumListener;
 
-    private Args args;
+    private Args args = Args.getInstance();
     private boolean supportChunkedFrames = false;
 
 
-    public MessageCodec() {
-    }
-
     @Autowired
     private MessageCodec(final Args args) {
-        this.args = args;
         //setMaxFramePayloadSize(config.rlpxMaxFrameSize());
     }
 

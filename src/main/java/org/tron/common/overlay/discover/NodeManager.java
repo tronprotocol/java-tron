@@ -17,33 +17,24 @@
  */
 package org.tron.common.overlay.discover;
 
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
+
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -66,7 +57,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   static final int MAX_NODES = 2000;
   static final int NODES_TRIM_THRESHOLD = 3000;
 
-  PeerConnectionTester peerConnectionManager;
+  //PeerConnectionTester peerConnectionManager;
   //EthereumListener ethereumListener;
 
   Consumer<DiscoveryEvent> messageSender;
@@ -91,15 +82,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private ScheduledExecutorService pongTimer;
 
   @Autowired
-  public NodeManager(ApplicationContext ctx, PeerConnectionTester peerConnectionManager) {
+  public NodeManager(ApplicationContext ctx) {
     //this.ethereumListener = ethereumListener;
     Args args = Args.getInstance();
-    this.peerConnectionManager = peerConnectionManager;
+    //this.peerConnectionManager = peerConnectionManager;
 
     PERSIST = args.isNodeDiscoveryPersist();
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(args.nodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+    homeNode = new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
+
+    logger.info(homeNode.toString());
     table = new NodeTable(homeNode, args.isNodeDiscoveryPublicHomeNode());
 
     logStatsTimer.scheduleAtFixedRate(new TimerTask() {
@@ -110,8 +103,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-    for (Node node : args.getNodeActive()) {
-      getNodeHandler(node).getNodeStatistics().setPredefined(true);
+    if (args.getNodeActive() != null){
+      for (Node node : args.getNodeActive()) {
+        getNodeHandler(node).getNodeStatistics().setPredefined(true);
+      }
     }
   }
 
@@ -189,8 +184,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
-      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics()
-          .getReputation());
+      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
         nodeHandlerMap.remove(getKey(handler.getNode()));
@@ -261,10 +255,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public void stateChanged(NodeHandler nodeHandler, NodeHandler.State oldState,
       NodeHandler.State newState) {
-    if (discoveryEnabled && peerConnectionManager
-        != null) {  // peerConnectionManager can be null if component not inited yet
-      peerConnectionManager.nodeStatusChanged(nodeHandler);
-    }
+
   }
 
   public synchronized List<NodeHandler> getNodes(int minReputation) {
@@ -355,7 +346,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public void close() {
     try {
-      peerConnectionManager.close();
+      //peerConnectionManager.close();
       nodeManagerTasksTimer.cancel();
       pongTimer.shutdownNow();
       logStatsTimer.cancel();

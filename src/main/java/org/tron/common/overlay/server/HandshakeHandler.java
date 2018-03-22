@@ -66,14 +66,13 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private boolean isHandshakeDone;
   private boolean isInitiator = false;
 
-  private final Args args;
+  private final Args args = Args.getInstance();
   private final NodeManager nodeManager;
 
   @Autowired
   public HandshakeHandler(final Args args, final NodeManager nodeManager) {
-    this.args = args;
     this.nodeManager = nodeManager;
-    myKey = args.getMyKey();
+    myKey = this.args.getMyKey();
   }
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {

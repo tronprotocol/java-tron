@@ -39,7 +39,7 @@ public class PeerServer {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
 
-    private Args args;
+    private Args args = Args.getInstance();
 
     private ApplicationContext ctx;
 
@@ -57,7 +57,6 @@ public class PeerServer {
     @Autowired
     public PeerServer(final Args args, final ApplicationContext ctx) {
         this.ctx = ctx;
-        this.args = args;
     }
 
     public void start(int port) {
@@ -76,14 +75,14 @@ public class PeerServer {
 
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, args.getNodeConnectionTimeout());
+            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.args.getNodeConnectionTimeout());
 
             b.handler(new LoggingHandler());
             b.childHandler(tronChannelInitializer);
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);
-            logger.info("NodeId: [{}] ", Hex.toHexString(args.nodeId()));
+            logger.info("NodeId: [{}] ", Hex.toHexString(this.args.nodeId()));
 
             channelFuture = b.bind(port).sync();
 
