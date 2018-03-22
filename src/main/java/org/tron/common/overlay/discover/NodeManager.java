@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private final boolean PERSIST;
 
@@ -83,16 +83,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   @Autowired
   public NodeManager(ApplicationContext ctx) {
-    //this.ethereumListener = ethereumListener;
     Args args = Args.getInstance();
+    //this.ethereumListener = ethereumListener;
     //this.peerConnectionManager = peerConnectionManager;
-
     PERSIST = args.isNodeDiscoveryPersist();
+
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
     homeNode = new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
 
-    logger.info(homeNode.toString());
+    logger.info("homeNode : {}", homeNode.toString());
+
     table = new NodeTable(homeNode, args.isNodeDiscoveryPublicHomeNode());
 
     logStatsTimer.scheduleAtFixedRate(new TimerTask() {
@@ -103,10 +104,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-    if (args.getNodeActive() != null){
-      for (Node node : args.getNodeActive()) {
-        getNodeHandler(node).getNodeStatistics().setPredefined(true);
-      }
+
+    for (Node node : args.getNodeActive()) {
+      getNodeHandler(node).getNodeStatistics().setPredefined(true);
     }
   }
 
@@ -282,13 +282,16 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        if (predicate.test(handler)) {
+        //if (predicate.test(handler)) {
           filtered.add(handler);
-        }
+        //}
       }
     }
     filtered.sort((o1, o2) -> o2.getNodeStatistics().getEthTotalDifficulty().compareTo(
         o1.getNodeStatistics().getEthTotalDifficulty()));
+
+    logger.info("get NodeHandler size {}", filtered.size());
+
     return CollectionUtils.truncate(filtered, limit);
   }
 
