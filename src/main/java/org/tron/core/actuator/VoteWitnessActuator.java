@@ -56,7 +56,7 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
           .getShare();
-      long sum = contract.getVotesList().stream().map(vote -> vote.getVoteCount()).count();
+      long sum = contract.getVotesList().stream().mapToLong(vote -> vote.getVoteCount()).sum();
       if (sum > share) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the share[" + share + "]");
@@ -74,6 +74,8 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(voteContract.getOwnerAddress().toByteArray());
+
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 
     voteContract.getVotesList().forEach(vote -> {
       logger.debug("countVoteAccount,address[{}]",
