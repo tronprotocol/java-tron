@@ -7,7 +7,7 @@
 </h1>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/tronprotocol/java-tron)
+[![Slack](https://img.shields.io/badge/chat-on%20slack-brightgreen.svg)](https://join.slack.com/t/tronfoundation/shared_invite/enQtMzAzNzg4NTI4NDM3LTAyZGQzMzEzMjNkNDU0ZjNkNTA4OTYyNTA5YWZmYjE3MTEyOWZhNzljNzQwODM3NDQ0OWRiMTIyMDhlYzgyOGQ)
 [![Build Status](https://travis-ci.org/tronprotocol/java-tron.svg?branch=develop)](https://travis-ci.org/tronprotocol/java-tron)
 [![GitHub issues](https://img.shields.io/github/issues/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/issues) 
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg)](https://github.com/tronprotocol/java-tron/pulls)
@@ -19,7 +19,17 @@ TRON is a block chain-based decentralized smart protocol and an application deve
 
 TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
-# Resources
+Resources
+===================
+
+1. [TRON Website](https://tron.network/)
+2. Documentation(Comming soon. You are seeing part of it.)
+3. [Blog](https://tronprotocol.github.io/tron-blog/)
+4. [Community Telegram Group](https://t.me/tronnetworkEN)
+5. [Slack Workspace](https://tronfoundation.slack.com/)
+6. White Paper(Comming soon)
+7. Roadmap(Comming soon)
+8. [Wiki](http://wiki.tron.network)
 
 # Set up the environment
 
@@ -29,12 +39,13 @@ TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
 ## Getting the code
 
-## Prepare dependencies
+>## Prepare dependencies
 
 ## Building source code
-git clone https://github.com/tronprotocol/java-tron.git
-./gradlew build
 
+    git clone https://github.com/tronprotocol/java-tron.git
+    ./gradlew build
+    
 # How To Run
 
 ## Running a private testnet
