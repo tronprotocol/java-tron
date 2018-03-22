@@ -19,7 +19,7 @@ package org.tron.common.overlay.message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageCodec;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.TronMessageFactory;
 
 
 /**
@@ -36,7 +38,7 @@ import org.tron.core.config.args.Args;
  */
 @Component
 @Scope("prototype")
-public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
+public class MessageCodec extends ByteToMessageDecoder {
 
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");
     private static final Logger loggerNet = LoggerFactory.getLogger("net");
@@ -59,9 +61,12 @@ public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
 
     private Message decodeMessage(ChannelHandlerContext ctx, ByteBuf buffer) throws IOException {
 
-        Message msg;
+        TronMessageFactory factory = new TronMessageFactory();
+        byte[] encoded = new byte[buffer.readableBytes()];
+        buffer.readBytes(encoded);
+        TronMessage msg;
         try {
-            msg = createMessage(buffer.array());
+            msg = factory.create(encoded);
         } catch (Exception ex) {
             loggerNet.debug("Incorrectly encoded message from: \t{}, dropping peer", channel);
             channel.disconnect(ReasonCode.BAD_PROTOCOL);
@@ -78,19 +83,20 @@ public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
         return msg;
     }
 
-    @Override
-    protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
-        String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
+//    @Override
+//    protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
+//        String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
+//
+//        if (loggerNet.isDebugEnabled())
+//            loggerNet.debug("To:   {}    Send:  {}", channel, msg);
+//
+//        //TODO: get data to send.
+//        byte[] encoded = msg.getData();
+//        out.add(encoded);
+//
+//        channel.getNodeStatistics().rlpxOutMessages.add();
+//    }
 
-        if (loggerNet.isDebugEnabled())
-            loggerNet.debug("To:   {}    Send:  {}", channel, msg);
-
-        //TODO: get data to send.
-        byte[] encoded = msg.getData();
-        out.add(encoded);
-
-        channel.getNodeStatistics().rlpxOutMessages.add();
-    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out)

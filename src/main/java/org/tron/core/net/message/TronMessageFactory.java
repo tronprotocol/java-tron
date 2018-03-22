@@ -30,7 +30,7 @@ public class TronMessageFactory extends MessageFactory {
   }
 
   @Override
-  protected TronMessage create(byte[] data) {
+  public TronMessage create(byte[] data) {
     byte type = data[0];
     byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
     return create(type, rawData);
