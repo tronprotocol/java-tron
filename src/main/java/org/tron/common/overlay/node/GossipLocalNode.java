@@ -66,7 +66,7 @@ public class GossipLocalNode implements LocalNode {
 //
 //    //Peer connect
 //    cluster.otherMembers().forEach(member ->
-//        peerDel.connectPeer(new PeerConnection(this.cluster, member)));
+//        peerDel.onConnectPeer(new PeerConnection(this.cluster, member)));
 //
 //    //liston peer's change
 //    Subscription membershipListener = cluster
@@ -87,10 +87,10 @@ public class GossipLocalNode implements LocalNode {
 //  private void onEvent(MembershipEvent event) {
 //    if (event.type() == Type.REMOVED) {
 //      PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
-//      peerDel.disconnectPeer(peer);
+//      peerDel.onDisconnectPeer(peer);
 //    } else {
 //      PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
-//      peerDel.connectPeer(peer);
+//      peerDel.onConnectPeer(peer);
 //    }
 //  }
 

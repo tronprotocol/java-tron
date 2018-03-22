@@ -89,8 +89,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     PERSIST = args.isNodeDiscoveryPersist();
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
-
-    homeNode = new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
+    args.nodeId();
+    homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
 
     logger.info("homeNode : {}", homeNode.toString());
 
@@ -282,15 +282,16 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        if (predicate.test(handler)) {
+        //if (predicate.test(handler)) {
           filtered.add(handler);
-        }
+        //}
       }
     }
+    logger.info("size {}", filtered.size());
     filtered.sort((o1, o2) -> o2.getNodeStatistics().getEthTotalDifficulty().compareTo(
         o1.getNodeStatistics().getEthTotalDifficulty()));
 
-    logger.info("get NodeHandler size {}", filtered.size());
+    logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
   }
@@ -339,7 +340,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   /**
    * @return home node if config defines it as public, otherwise null
    */
-  Node getPublicHomeNode() {
+  public Node getPublicHomeNode() {
     Args args = Args.getInstance();
     if (args.isNodeDiscoveryPublicHomeNode()) {
       return homeNode;

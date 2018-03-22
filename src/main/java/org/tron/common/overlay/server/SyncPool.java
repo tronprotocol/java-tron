@@ -28,6 +28,8 @@ import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -56,7 +58,7 @@ public class SyncPool {
 
   private static final long WORKER_TIMEOUT = 3; // 3 seconds
 
-  private final List<Channel> activePeers = Collections.synchronizedList(new ArrayList<Channel>());
+  private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
 
   private BigInteger lowerUsefulDifficulty = BigInteger.ZERO;
 
@@ -65,6 +67,9 @@ public class SyncPool {
 
   @Autowired
   private NodeManager nodeManager;
+
+  @Autowired
+  private PeerConnectionDelegate peerDel;
 
   @Autowired
   private ChannelManager channelManager;
@@ -79,21 +84,27 @@ public class SyncPool {
   @Autowired
   public SyncPool(final Args args) {
     this.args = args;
-    init(channelManager);
+    logger.info("_________SyncPool ggg.");
+    init(channelManager, null);
   }
 
-  public void init(final ChannelManager channelManager) {
+  public void init(final ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+    logger.info("_________SyncPool init {} p {}.", channelManager, peerDel);
+
     if (this.channelManager != null) return; // inited already
     this.channelManager = channelManager;
     //updateLowerUsefulDifficulty();x
+    this.peerDel = peerDel;
+
+    //updateLowerUsefulDifficulty();
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
-        heartBeat();
+        //heartBeat();
 //        updateLowerUsefulDifficulty();
         fillUp();
-        prepareActive();
-        cleanupActive();
+        //prepareActive();
+        //cleanupActive();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -170,7 +181,7 @@ public class SyncPool {
     return ret;
   }
 
-  public synchronized List<Channel> getActivePeers() {
+  public synchronized List<PeerConnection> getActivePeers() {
     return new ArrayList<>(activePeers);
   }
 
@@ -191,6 +202,9 @@ public class SyncPool {
 
   public synchronized Set<String> nodesInUse() {
     Set<String> ids = new HashSet<>();
+    if (channelManager.getActivePeers() == null){
+
+    }
     for (Channel peer : channelManager.getActivePeers()) {
       ids.add(peer.getPeerId());
     }
@@ -259,11 +273,12 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
+    logger.info("fillup");
+    //int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     //if(lackSize <= 0) return;
-    lackSize = 10;
+    int lackSize = 10;
     final Set<String> nodesInUse = nodesInUse();
-    nodesInUse.add(Hex.toHexString(args.nodeId()));   // exclude home node
+    nodesInUse.add(Hex.toHexString(nodeManager.getPublicHomeNode().getId()));   // exclude home node
 
 
     //TODO: here can only use TCP connect seed peer.
@@ -275,6 +290,7 @@ public class SyncPool {
     }
 
     logger.info("connection nodes size : {}", newNodes.size());
+
     for(NodeHandler n : newNodes) {
       channelManager.connect(n.getNode());
     }
@@ -285,10 +301,10 @@ public class SyncPool {
 
     // Filtering out with nodeSelector because server-connected nodes were not tested
     NodeSelector nodeSelector = new NodeSelector();
-    List<Channel> active = new ArrayList<>();
+    List<PeerConnection> active = new ArrayList<>();
     for (Channel channel : managerActive) {
       if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {
-        active.add(channel);
+        active.add((PeerConnection)channel);
       }
     }
 
@@ -307,15 +323,14 @@ public class SyncPool {
 //      }
 //    }
 
-    List<Channel> filtered = active.subList(0, thresholdIdx + 1);
+    List<PeerConnection> filtered = active.subList(0, thresholdIdx + 1);
 
     // sorting by latency in asc order
     filtered.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
-    for (Channel channel : filtered) {
+    for (PeerConnection channel : filtered) {
       if (!activePeers.contains(channel)) {
-        //TODO: let listener know
-        //ethereumListener.onPeerAddedToSyncPool(channel);
+        peerDel.onConnectPeer(channel);
       }
     }
 
@@ -324,10 +339,11 @@ public class SyncPool {
   }
 
   private synchronized void cleanupActive() {
-    Iterator<Channel> iterator = activePeers.iterator();
+    Iterator<PeerConnection> iterator = activePeers.iterator();
     while (iterator.hasNext()) {
-      Channel next = iterator.next();
+      PeerConnection next = iterator.next();
       if (next.isDisconnected()) {
+        peerDel.onDisconnectPeer(next);
         logger.info("Removing peer " + next + " from active due to disconnect.");
         iterator.remove();
       }

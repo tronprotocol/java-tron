@@ -97,9 +97,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     isInitiator = true;
 
     //TODO: send hello message here
-    final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
-    byteBufMsg.writeBytes(initiatePacket);
-    ctx.writeAndFlush(byteBufMsg).sync();
+//    final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
+//    byteBufMsg.writeBytes(initiatePacket);
+//    ctx.writeAndFlush(byteBufMsg).sync();
     channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
 
 

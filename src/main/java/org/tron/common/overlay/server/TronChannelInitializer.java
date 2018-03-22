@@ -75,6 +75,8 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 //            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             final Channel channel = ctx.getBean(PeerConnection.class);
+            logger.info("Channel: {}" , channel);
+
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             if(!peerDiscoveryMode) {

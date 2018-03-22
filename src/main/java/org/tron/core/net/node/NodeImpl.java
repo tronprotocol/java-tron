@@ -1,19 +1,6 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
-import io.scalecube.transport.Address;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,25 +14,16 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.TraitorPeerException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.exception.*;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Component
@@ -89,8 +67,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           ids.forEach((key, value) -> peer.sendMessage(new FetchInvDataMessage(value, key))));
     }
   }
-
-  private HashMap<Address, PeerConnection> mapPeer = new HashMap<>();
 
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
@@ -235,7 +211,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectToP2PNetWork() {
-    pool.init(channelManager);
+    pool.init(channelManager, this);
   }
 
 
@@ -243,7 +219,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
-      for (PeerConnection peer : mapPeer.values()) {
+      for (PeerConnection peer : getActivePeer()) {
         if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
@@ -422,7 +398,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
-      while (mapPeer.isEmpty()) {
+      while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
         Thread.sleep(10000L);
       }
@@ -614,7 +590,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void banTraitorPeer(PeerConnection peer) {
-    disconnectPeer(peer);
+    onDisconnectPeer(peer);
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
@@ -818,13 +794,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopFetchBlocks.push(fetchMsg);
   }
 
-  private void startSync() {
-    mapPeer.values().forEach(this::startSyncWithPeer);
-  }
+//  private void startSync() {
+//    mapPeer.values().forEach(this::startSyncWithPeer);
+//  }
 
   private Collection<PeerConnection> getActivePeer() {
-    //TODO: filter active peer, exclude banned, dead, traitor peers
-    return mapPeer.values();
+    return pool.getActivePeers();
   }
 
   private void startSyncWithPeer(PeerConnection peer) {
@@ -837,11 +812,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     syncNextBatchChainIds(peer);
   }
 
-  @Override
-  public PeerConnection getPeer(io.scalecube.transport.Message msg) {
-    return mapPeer.get(msg.sender());
-  }
-
   private void syncNextBatchChainIds(PeerConnection peer) {
     try {
       Deque<BlockId> chainSummary =
@@ -852,14 +822,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
       e.printStackTrace();
-      disconnectPeer(peer);
+      onDisconnectPeer(peer);
     }
 
   }
 
   @Override
-  public void connectPeer(PeerConnection peer) {
+  public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
+    startSyncWithPeer(peer);
 //    if (mapPeer.containsKey(peer.getAddress())) {
 //      return;
 //    }
@@ -872,7 +843,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   @Override
-  public void disconnectPeer(PeerConnection peer) {
+  public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
     //mapPeer.remove(peer.getAddress());
   }
