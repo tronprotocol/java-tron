@@ -43,7 +43,7 @@ import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 @Component
 public class ChannelManager {
 
-    private static final Logger logger = LoggerFactory.getLogger("net");
+    private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
     // If the inbound peer connection was dropped by us with a reason message
     // then we ban that peer IP on any connections for some time to protect from
@@ -95,7 +95,7 @@ public class ChannelManager {
         }, 0, 1, TimeUnit.SECONDS);
 
         //if (this.args.getNodeListenPort() > 0) {
-            new Thread(() -> peerServer.start(this.args.getNodeListenPort()),
+            new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
             "PeerServerThread").start();
         //}
     }
@@ -143,7 +143,7 @@ public class ChannelManager {
 
             //if(peer.isProtocolsInitialized()) {
 
-                logger.debug("Protocols initialized");
+                logger.info("Protocols initialized");
 
                 if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
                     if (!peer.isActive() &&

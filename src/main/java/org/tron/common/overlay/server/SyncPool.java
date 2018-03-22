@@ -54,7 +54,7 @@ import static java.lang.Math.min;
 @Component
 public class SyncPool {
 
-  public static final Logger logger = LoggerFactory.getLogger("sync");
+  public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private static final long WORKER_TIMEOUT = 3; // 3 seconds
 

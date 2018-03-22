@@ -17,26 +17,23 @@
  */
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.DisconnectMessage;
-import org.tron.common.overlay.message.HelloMessage;
-import org.tron.common.overlay.message.P2pMessage;
-import org.tron.common.overlay.message.P2pMessageCodes;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.message.*;
 import org.tron.core.config.args.Args;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 
 /**
@@ -54,7 +51,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   public final static byte VERSION = 5;
 
-  private final static Logger logger = LoggerFactory.getLogger("net");
+  private final static Logger logger = LoggerFactory.getLogger("P2pHandler");
 
   private static ScheduledExecutorService pingTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
@@ -92,7 +89,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   @Override
   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-    logger.debug("P2P protocol activated");
+    logger.info("P2P protocol activated");
     msgQueue.activate(ctx);
     //tronListener.trace("P2P protocol activated");
 
@@ -103,6 +100,9 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, P2pMessage msg)
       throws InterruptedException {
+
+
+    logger.info("rcv p2p msg *************************************************");
 
     if (P2pMessageCodes.inRange(msg.getCommand().asByte())) {
       logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
@@ -200,6 +200,9 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   }
 
   private void startTimers() {
+
+    logger.info(args.getNodeP2pPingInterval() + "");
+    logger.info(args.getNodeP2pPingInterval() + "");
     // sample for pinging in background
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       try {
@@ -207,7 +210,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
-    }, 2, args.getNodeP2pPingInterval(), TimeUnit.SECONDS);
+    }, 2, 10, TimeUnit.SECONDS);
   }
 
   public void killTimers() {
