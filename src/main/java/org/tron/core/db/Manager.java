@@ -124,11 +124,11 @@ public class Manager {
   }
 
   public long getHeadBlockNum() {
-    return this.head.getNum();
+    return this.head.getNumber();
   }
 
   public long getHeadBlockTimeStamp() {
-    return this.head.getTimeStamp();
+    return this.head.getTimestamp();
   }
 
   public void addWitness(final WitnessCapsule witnessCapsule) {
@@ -159,7 +159,7 @@ public class Manager {
   }
 
   private long getHeadSlot() {
-    return (head.getTimeStamp() - genesisBlock.getTimeStamp()) / blockInterval();
+    return (head.getTimestamp() - genesisBlock.getTimestamp()) / blockInterval();
   }
 
   public int calculateParticipationRate() {
@@ -239,7 +239,7 @@ public class Manager {
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
         this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
-            this.genesisBlock.getTimeStamp());
+            this.genesisBlock.getTimestamp());
         this.initAccount();
         this.initWitness();
 
@@ -375,7 +375,7 @@ public class Manager {
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
     try {
       revokingStore.pop();
-      head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
+      head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNumber() - 1).getBytes());
     } catch (RevokingStoreIllegalStateException e) {
       e.printStackTrace();
     }
@@ -389,7 +389,7 @@ public class Manager {
         .getBranch(newHead.getBlockId(), head.getBlockId());
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
-      while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
+      while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getHashedParentHash())) {
         eraseBlock();
       }
     }
@@ -403,7 +403,7 @@ public class Manager {
           processBlock(item);
           blockStore.put(item.getBlockId().getBytes(), item);
           this.numHashCache
-              .putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
+              .putData(ByteArray.fromLong(item.getNumber()), item.getBlockId().getBytes());
           tmpDialog.commit();
           head = item;
         } catch (ValidateSignatureException e) {
@@ -431,14 +431,14 @@ public class Manager {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (head.getBlockId().equals(block.getParentHash())) {
-      long slot = getSlotAtTime(block.getTimeStamp());
+    if (head.getBlockId().equals(block.getHashedParentHash())) {
+      long slot = getSlotAtTime(block.getTimestamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
         logger.warn(
             "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
             ByteArray.toHexString(scheduledWitness.toByteArray()),
-            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimestamp()),
             slot);
         return false;
       }
@@ -466,15 +466,15 @@ public class Manager {
     dialog.reset();
 
     //todo: check block's validity
-    if (!block.generatedByMyself) {
+    if (!block.isGeneratedByMyself()) {
       if (!block.validateSignature()) {
         logger.info("The siganature is not validated.");
         //TODO: throw exception here.
         return;
       }
 
-      if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-        logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
+      if (!block.calculateMerkleRoot().equals(block.getMerkleRoot())) {
+        logger.info("The merkler root doesn't match, Calc result is " + block.calculateMerkleRoot()
             + " , the headers is " + block.getMerkleRoot());
         //TODO: throw exception here.
         return;
@@ -490,15 +490,15 @@ public class Manager {
     BlockCapsule newBlock = this.khaosDb.push(block);
     //DB don't need lower block
     if (head == null) {
-      if (newBlock.getNum() != 0) {
+      if (newBlock.getNumber() != 0) {
         return;
       }
     } else {
-      if (newBlock.getNum() <= head.getNum()) {
+      if (newBlock.getNumber() <= head.getNumber()) {
         return;
       }
       //switch fork
-      if (!newBlock.getParentHash().equals(head.getBlockId())) {
+      if (!newBlock.getHashedParentHash().equals(head.getBlockId())) {
         switchFork(newBlock);
       }
 
@@ -528,7 +528,7 @@ public class Manager {
         });
 
     blockStore.put(block.getBlockId().getBytes(), block);
-    this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+    this.numHashCache.putData(ByteArray.fromLong(block.getNumber()), block.getBlockId().getBytes());
     //refreshHead(newBlock);
     logger.info("save block: " + newBlock);
   }
@@ -537,8 +537,8 @@ public class Manager {
     this.head = block;
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNumber());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimestamp());
     updateWitnessSchedule();
   }
 
@@ -547,8 +547,8 @@ public class Manager {
     this.head = block;
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNumber());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimestamp());
     updateWitnessSchedule();
   }
 
@@ -603,7 +603,7 @@ public class Manager {
     final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
     blockStore.delete(blockHash.getBytes());
-    this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
+    this.numHashCache.deleteData(ByteArray.fromLong(block.getNumber()));
     this.head = this.khaosDb.getHead();
   }
 
@@ -652,12 +652,12 @@ public class Manager {
    */
   public long getBlockNumById(final Sha256Hash hash) {
     if (this.khaosDb.containBlock(hash)) {
-      return this.khaosDb.getBlock(hash).getNum();
+      return this.khaosDb.getBlock(hash).getNumber();
     }
 
     //TODO: optimize here
     final byte[] blockByte = blockStore.get(hash.getBytes()).getData();
-    return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
+    return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNumber() : 0;
   }
 
 
@@ -705,7 +705,7 @@ public class Manager {
         processTransaction(trx);
         tmpDialog.merge();
         // push into block
-        blockCapsule.addTransaction(trx);
+        blockCapsule.addTransaction(trx.getInstance());
         iterator.remove();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
@@ -728,7 +728,7 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
-    blockCapsule.generatedByMyself = true;
+    blockCapsule.setGeneratedByMyself(true);
     this.pushBlock(blockCapsule);
     return blockCapsule;
   }
@@ -775,9 +775,9 @@ public class Manager {
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
 
-    if (needMaintenance(block.getTimeStamp())) {
-      if (block.getNum() == 1) {
-        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+    if (needMaintenance(block.getTimestamp())) {
+      if (block.getNumber() == 1) {
+        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimestamp());
       } else {
         this.processMaintenance(block);
       }
@@ -812,20 +812,19 @@ public class Manager {
    */
   private void processMaintenance(BlockCapsule block) {
     this.updateWitness();
-    this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+    this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimestamp());
   }
 
   /**
    * @param block the block update signed witness.  set witness who signed block the 1. the latest
    * block num 2. pay the trx to witness. 3. (TODO)the latest slot num.
    */
-
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     long latestSlotNum = 0;
-    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
+    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNumber())
         .setLatestSlotNum(latestSlotNum)
         .build();
     AccountCapsule sun = accountStore.getSun();
@@ -870,7 +869,7 @@ public class Manager {
     long interval = blockInterval();
 
     if (getHeadBlockNum() == 0) {
-      return getGenesisBlock().getTimeStamp() + slotNum * interval;
+      return getGenesisBlock().getTimestamp() + slotNum * interval;
     }
 
     if (lastHeadBlockIsMaintenance()) {
@@ -879,7 +878,7 @@ public class Manager {
 
     long headSlotTime = getHeadBlockTimestamp();
     headSlotTime = headSlotTime
-        - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
+        - ((headSlotTime - getGenesisBlock().getTimestamp()) % interval);
 
     return headSlotTime + interval * slotNum;
   }
@@ -890,7 +889,7 @@ public class Manager {
   }
 
   private long getHeadBlockTimestamp() {
-    return head.getTimeStamp();
+    return this.head.getTimestamp();
   }
 
 

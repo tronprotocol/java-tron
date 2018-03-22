@@ -24,7 +24,7 @@ public class ChainInventoryMessage extends Message {
     blockIds.forEach(blockId -> {
       ChainInventory.BlockId.Builder b = ChainInventory.BlockId.newBuilder();
       b.setHash(blockId.getByteString());
-      b.setNumber(blockId.getNum());
+      b.setNumber(blockId.getNumber());
       invBuilder.addIds(b);
     });
 

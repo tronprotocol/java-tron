@@ -44,7 +44,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
     // TODO timestamp shouble be consistent.
-    long gap = System.currentTimeMillis() - block.getTimeStamp();
+    long gap = System.currentTimeMillis() - block.getTimestamp();
     if (gap / 1000 < -6000) {
       throw new BadBlockException("block time error");
     }
@@ -114,7 +114,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
 
     //todo: limit the count of block to send peer by one time.
-    long unForkedBlockIdNum = unForkedBlockId.getNum();
+    long unForkedBlockIdNum = unForkedBlockId.getNumber();
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
@@ -135,16 +135,16 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
       if (dbManager.containBlock(beginBLockId)) {
-        highBlkNum = beginBLockId.getNum();
+        highBlkNum = beginBLockId.getNumber();
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        highNoForkBlkNum = forkList.peekLast().getNum();
+        highNoForkBlkNum = forkList.peekLast().getNumber();
         forkList.pollLast();
         Collections.reverse(forkList);
         highBlkNum = highNoForkBlkNum + forkList.size();
         logger.info("highNum: " + highBlkNum);
-        logger.info("forkLastNum: " + forkList.peekLast().getNum());
+        logger.info("forkLastNum: " + forkList.peekLast().getNumber());
       }
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
@@ -191,8 +191,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public long getBlockTime(BlockId id) {
     return dbManager.containBlock(id)
-        ? dbManager.getBlockById(id).getTimeStamp()
-        : dbManager.getGenesisBlock().getTimeStamp();
+        ? dbManager.getBlockById(id).getTimestamp()
+        : dbManager.getGenesisBlock().getTimestamp();
   }
 
   @Override

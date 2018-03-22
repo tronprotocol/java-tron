@@ -154,7 +154,7 @@ public class ManagerTest {
     try {
       long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
       BlockCapsule blockCapsule1 = new BlockCapsule(num,
-              dbManager.getHead().getParentHash().getByteString(),
+              dbManager.getHead().getHashedParentHash().getByteString(),
               System.currentTimeMillis(),
               witnessCapsule.getAddress());
       blockCapsule1.generatedByMyself = true;
@@ -178,15 +178,15 @@ public class ManagerTest {
       Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()));
 
       Assert.assertEquals(
-          dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
+          dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getHashedParentHash(),
           blockCapsule1.getBlockId());
 
       Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 6);
 
-      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
+      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNumber() - 1),
           blockCapsule1.getBlockId());
-      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
-          blockCapsule1.getParentHash());
+      Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNumber() - 2),
+          blockCapsule1.getHashedParentHash());
 
       Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());

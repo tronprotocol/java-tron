@@ -464,7 +464,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
             .forEach(p -> {
               p.setHeadBlockWeBothHave(block.getBlockId());
-              p.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+              p.setHeadBlockTimeWeBothHave(block.getTimestamp());
             });
 
         getActivePeer().forEach(p -> p.cleanInvGarbage());
@@ -508,7 +508,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             //TODO: erase process here
             peer.getBlockInProc().remove(block.getBlockId());
             //updateBlockWeBothHave(peer, block.getBlockId());
-            peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+            peer.setHeadBlockTimeWeBothHave(block.getTimestamp());
             peer.setHeadBlockWeBothHave(block.getBlockId());
             if (peer.getSyncBlockToFetch().isEmpty()
                 && peer.getUnfetchSyncNum() == 0) { //send sync to let peer know we are sync.
@@ -544,7 +544,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long remainNum = 0;
     try {
       blockIds = del.getLostBlockIds(summaryChainIds);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
+      remainNum = del.getHeadBlockId().getNumber() - blockIds.peekLast().getNumber();
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
@@ -592,7 +592,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (blocks[0] != null) {
       peer.setHeadBlockWeBothHave(blocks[0].getBlockId());
-      peer.setHeadBlockTimeWeBothHave(blocks[0].getTimeStamp());
+      peer.setHeadBlockTimeWeBothHave(blocks[0].getTimestamp());
     }
   }
 
@@ -609,15 +609,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //check if the peer is a traitor
         if (!blockIdWeGet.isEmpty()) {
-          long num = blockIdWeGet.peek().getNum();
+          long num = blockIdWeGet.peek().getNumber();
           for (BlockId id : blockIdWeGet) {
-            if (id.getNum() != num++) {
+            if (id.getNumber() != num++) {
               throw new TraitorPeerException("We get a not continuous block inv from " + peer);
             }
           }
 
           if (peer.getSyncChainRequested().getKey().isEmpty()) {
-            if (blockIdWeGet.peek().getNum() != 1) {
+            if (blockIdWeGet.peek().getNumber() != 1) {
               throw new TraitorPeerException(
                   "We want a block inv starting from beginning from " + peer);
             }
@@ -815,7 +815,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.getSyncBlockToFetch().clear();
     peer.setUnfetchSyncNum(0);
     peer.setHeadBlockWeBothHave(del.getGenesisBlock().getBlockId());
-    peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimeStamp());
+    peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimestamp());
     peer.setBanned(false);
     syncNextBatchChainIds(peer);
   }

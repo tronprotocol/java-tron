@@ -51,7 +51,7 @@ public class BlockUtil {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(args.getPrivateKey()));
-    blockCapsule.generatedByMyself = true;
+    blockCapsule.setGeneratedByMyself(true);
 
     return blockCapsule;
   }
@@ -60,6 +60,6 @@ public class BlockUtil {
    * Whether the hash of the judge block is equal to the hash of the parent block.
    */
   public static boolean isParentOf(BlockCapsule blockCapsule1, BlockCapsule blockCapsule2) {
-    return blockCapsule1.getBlockId().equals(blockCapsule2.getParentHash());
+    return blockCapsule1.getBlockId().equals(blockCapsule2.getHashedParentHash());
   }
 }

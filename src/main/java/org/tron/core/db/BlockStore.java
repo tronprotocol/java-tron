@@ -61,12 +61,12 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
    */
   @Deprecated
   public long getHeadBlockNum() {
-    return head == null ? 0 : head.getNum();
+    return head == null ? 0 : head.getNumber();
   }
 
   @Deprecated
   public DateTime getHeadBlockTime() {
-    return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
+    return head == null ? getGenesisTime() : new DateTime(head.getTimestamp());
   }
 
   @Deprecated
