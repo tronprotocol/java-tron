@@ -21,7 +21,9 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   @Override
   public boolean has(byte[] key) {
-    return false;
+    byte[] account = dbSource.getData(key);
+    logger.info("address is {},witness is {}", key, account);
+    return null != account;
   }
 
   private static WitnessStore instance;

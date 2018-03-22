@@ -60,6 +60,10 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException(
               "Account[" + contract.getOwnerAddress() + "] not exists");
         }
+        if (!dbManager.getWitnessStore().has(bytes)) {
+          throw new ContractValidateException(
+              "Witness[" + contract.getOwnerAddress() + "] not exists");
+        }
       }
 
       if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
