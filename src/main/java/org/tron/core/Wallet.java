@@ -98,13 +98,7 @@ public class Wallet {
    * Get balance by address.
    */
   public long getBalance(byte[] address) {
-    ArrayList<TXOutput> utxos = utxoStore.findUtxo(address);
-    long balance = 0;
-
-    for (TXOutput txOutput : utxos) {
-      balance += txOutput.getValue();
-    }
-
+    long balance = utxoStore.findUtxo(address).stream().mapToLong(TXOutput::getValue).sum();
     logger.info("balance = {}", balance);
     return balance;
   }
