@@ -89,7 +89,6 @@ public class WitnessCreateActuator extends AbstractActuator {
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
-    logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
   }
 
 }
