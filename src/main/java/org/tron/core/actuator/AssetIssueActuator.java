@@ -34,7 +34,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class AssetIssueActuator extends AbstractActuator {
-
   AssetIssueActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -55,7 +54,7 @@ public class AssetIssueActuator extends AbstractActuator {
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
-      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
+      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), fee);
       ret.setStatus(fee, code.SUCESS);
 
       AccountCapsule accountCapsule = dbManager.getAccountStore()
