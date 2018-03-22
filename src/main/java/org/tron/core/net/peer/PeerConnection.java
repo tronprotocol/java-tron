@@ -9,24 +9,22 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.discover.Node;
-import org.tron.common.overlay.discover.NodeStatistics;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.server.MessageQueue;
+import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 
 @Slf4j
-public class PeerConnection extends Node{
+@Component
+@Scope("prototype")
+public class PeerConnection extends Channel{
 
   @Override
   public int hashCode() {
     return super.hashCode();
   }
-
-  private MessageQueue messageQueue;
-
-  private NodeStatistics nodeStatistics;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -186,18 +184,6 @@ public class PeerConnection extends Node{
   }
 
 
-  public PeerConnection(byte[] id, String host, int port) {
-    super(id, host, port);
-  }
-
-  public void setMessageQueue(MessageQueue messageQueue) {
-    this.messageQueue = messageQueue;
-  }
-
-  public void setNodeStatistics(NodeStatistics nodeStatistics) {
-    this.nodeStatistics = nodeStatistics;
-  }
-
   public boolean isBusy() {
     return !advObjWeRequested.isEmpty()
         && !syncBlockRequested.isEmpty()
@@ -205,7 +191,7 @@ public class PeerConnection extends Node{
   }
 
   public void sendMessage(Message message) {
-    messageQueue.sendMessage(message);
+    msgQueue.sendMessage(message);
     nodeStatistics.ethOutbound.add();
   }
 

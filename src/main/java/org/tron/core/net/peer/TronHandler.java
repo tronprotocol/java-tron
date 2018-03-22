@@ -63,7 +63,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
     msgQueue.receivedMessage(msg);
 
     //handle message
-    peerDel.onMessage(channel.getPeer(), msg);
+    peerDel.onMessage((PeerConnection) channel, msg);
   }
 
   @Override

@@ -16,9 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.node.GossipLocalNode;
+import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -39,6 +41,7 @@ import org.tron.core.net.message.ItemNotFound;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -46,6 +49,9 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j
 @Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
+
+  @Autowired
+  private SyncPool pool;
 
   class InvToSend {
 
@@ -137,7 +143,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   ExecutorLoop<Message> loopAdvertiseInv;
 
   @Override
-  public void onMessage(PeerConnection peer, Message msg) {
+  public void onMessage(PeerConnection peer, TronMessage msg) {
     logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:

@@ -37,7 +37,6 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
 
@@ -56,7 +55,7 @@ public class Channel {
     Args args;
 
     @Autowired
-    private MessageQueue msgQueue;
+    protected MessageQueue msgQueue;
 
     @Autowired
     private P2pHandler p2pHandler;
@@ -82,10 +81,10 @@ public class Channel {
 
     private InetSocketAddress inetSocketAddress;
 
-    private PeerConnection node;
+    private Node node;
     private PeerConnectionDelegate peerDel;
 
-    private NodeStatistics nodeStatistics;
+    protected NodeStatistics nodeStatistics;
     private boolean discoveryMode;
     private boolean isActive;
     private boolean isDisconnected;
@@ -157,27 +156,16 @@ public class Channel {
 
     public void activateTron(ChannelHandlerContext ctx) {
         //TODO: use tron handle here.
-
         tronHandler = new TronHandler();
+
         ctx.pipeline().addLast("data", tronHandler);
+
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setChannel(this);
         tronHandler.setPeerDiscoveryMode(discoveryMode);
         tronHandler.setPeerDel(peerDel);
-//        EthHandler handler = ethHandlerFactory.create(version);
-//        MessageFactory messageFactory = createEthMessageFactory(version);
-//        messageCodec.setEthVersion(version);
-//        messageCodec.setEthMessageFactory(messageFactory);
-//
-//        ctx.pipeline().addLast("data", handler);
-//
-//        handler.setMsgQueue(msgQueue);
-//        handler.setChannel(this);
-//        handler.setPeerDiscoveryMode(discoveryMode);
-//
-//        handler.activate();
-//
-//        eth = handler;
+
+        tronHandler.activate();
     }
 
 
@@ -193,9 +181,7 @@ public class Channel {
      * Set node and register it in NodeManager if it is not registered yet.
      */
     public void initWithNode(byte[] nodeId, int remotePort) {
-        node = new PeerConnection(nodeId, inetSocketAddress.getHostString(), remotePort);
-        node.setNodeStatistics(nodeStatistics);
-        node.setMessageQueue(msgQueue);
+        node = new Node(nodeId, inetSocketAddress.getHostString(), remotePort);
         nodeStatistics = nodeManager.getNodeStatistics(node);
     }
 
@@ -204,10 +190,6 @@ public class Channel {
     }
 
     public Node getNode() {
-        return node;
-    }
-
-    public PeerConnection getPeer() {
         return node;
     }
 
@@ -220,14 +202,6 @@ public class Channel {
     }
 
     public void onSyncDone(boolean done) {
-//
-//        if (done) {
-//            eth.enableTransactions();
-//        } else {
-//            eth.disableTransactions();
-//        }
-//
-//        eth.onSyncDone(done);
     }
 
     public boolean isDiscoveryMode() {

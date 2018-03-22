@@ -29,6 +29,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.core.net.peer.PeerConnection;
 
 /**
  * @author Roman Mandeleil
@@ -70,7 +71,10 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
                 return;
             }
 
-            final Channel channel = ctx.getBean(Channel.class);
+//            final Channel channel = ctx.getBean(Channel.class);
+//            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
+
+            final Channel channel = ctx.getBean(PeerConnection.class);
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             if(!peerDiscoveryMode) {
