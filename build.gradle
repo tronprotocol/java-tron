@@ -168,10 +168,6 @@ sourceSets {
 
 }
 
-//protobuf.protoc {
-//    artifact = 'com.google.protobuf:protoc:3.4.0'
-//}
-
 protobuf {
     generatedFilesBaseDir = "$projectDir/src/"
     protoc {
