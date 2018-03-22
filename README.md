@@ -88,7 +88,6 @@ The building will normally finish in less than one minute.
 ```
 
 * In IntelliJ IDEA<br>
-![](https://github.com/guodongxiaren/ImageCache/raw/master/Logo/foryou.gif)
 
 ### Running multi-nodes
 
