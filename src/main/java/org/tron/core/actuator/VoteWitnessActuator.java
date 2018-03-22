@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -48,8 +49,11 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
+      ByteString ownerAddress = contract.getOwnerAddress();
+      Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
-      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+      AccountStore accountStore = dbManager.getAccountStore();
+      byte[] ownerAddressBytes = ownerAddress.toByteArray();
 
       Iterator<Vote> iterator = contract.getVotesList().iterator();
       while (iterator.hasNext()) {
@@ -95,10 +99,12 @@ public class VoteWitnessActuator extends AbstractActuator {
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 
     voteContract.getVotesList().forEach(vote -> {
-      logger.debug("countVoteAccount,address[{}]",
-          vote.getVoteAddress().toStringUtf8());
+      String toStringUtf8 = vote.getVoteAddress().toStringUtf8();
+
+      logger.debug("countVoteAccount,address[{}]", toStringUtf8);
+
       accountCapsule.addVotes(
-          ByteString.copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())),
+          ByteString.copyFrom(ByteArray.fromHexString(toStringUtf8)),
           vote.getVoteCount());
     });
 

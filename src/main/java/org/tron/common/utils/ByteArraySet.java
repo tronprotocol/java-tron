@@ -28,10 +28,10 @@ import org.tron.core.db.ByteArrayWrapper;
 
 public class ByteArraySet implements Set<byte[]> {
 
-  Set<ByteArrayWrapper> delegate;
+  private Set<ByteArrayWrapper> delegate;
 
   public ByteArraySet() {
-    this(new HashSet<ByteArrayWrapper>());
+    this(new HashSet<>());
   }
 
   ByteArraySet(Set<ByteArrayWrapper> delegate) {

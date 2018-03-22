@@ -24,11 +24,7 @@ public class StringUtil {
    * @param bits string bits
    */
   public static boolean isHexString(String str, int bits) {
-    String regex = "^[A-Fa-f0-9]{" + bits + "}$";
-    if (str.matches(regex)) {
-      return true;
-    } else {
-      return false;
-    }
+    String regex = String.format("^[A-Fa-f0-9]{%d}$", bits);
+    return str.matches(regex);
   }
 }
