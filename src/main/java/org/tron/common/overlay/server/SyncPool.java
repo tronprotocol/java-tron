@@ -79,10 +79,10 @@ public class SyncPool {
   @Autowired
   public SyncPool(final Args args) {
     this.args = args;
-    init();
+    init(channelManager);
   }
 
-  public void init() {
+  public void init(final ChannelManager channelManager) {
     if (this.channelManager != null) return; // inited already
     this.channelManager = channelManager;
     //updateLowerUsefulDifficulty();x
@@ -219,15 +219,12 @@ public class SyncPool {
   }
 
   class NodeSelector implements Predicate<NodeHandler> {
-    BigInteger lowerDifficulty;
     Set<String> nodesInUse;
 
-    public NodeSelector(BigInteger lowerDifficulty) {
-      this.lowerDifficulty = lowerDifficulty;
+    public NodeSelector() {
     }
 
-    public NodeSelector(BigInteger lowerDifficulty, Set<String> nodesInUse) {
-      this.lowerDifficulty = lowerDifficulty;
+    public NodeSelector(Set<String> nodesInUse) {
       this.nodesInUse = nodesInUse;
     }
 
@@ -250,6 +247,14 @@ public class SyncPool {
 //      if (handler.getNodeStatistics().getReputation() < 100) return false;
 //
 //      return handler.getNodeStatistics().getEthTotalDifficulty().compareTo(lowerDifficulty) >= 0;
+//
+//      if (handler.getNodeStatistics().isPredefined()) return true;
+//
+//      if (nodesSelector != null && !nodesSelector.test(handler)) return false;
+//
+//      //TODO: use reputation sysytem
+//      //if (handler.getNodeStatistics().getReputation() < 100) return false;
+//      return true;
     }
   }
 
@@ -260,11 +265,10 @@ public class SyncPool {
     final Set<String> nodesInUse = nodesInUse();
     nodesInUse.add(Hex.toHexString(args.nodeId()));   // exclude home node
 
+
+    //TODO: here can only use TCP connect seed peer.
     List<NodeHandler> newNodes;
-    newNodes = nodeManager.getNodes(new NodeSelector(lowerUsefulDifficulty, nodesInUse), lackSize);
-    if (lackSize > 0 && newNodes.isEmpty()) {
-      newNodes = nodeManager.getNodes(new NodeSelector(BigInteger.ZERO, nodesInUse), lackSize);
-    }
+    newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
 
     if (logger.isTraceEnabled()) {
       logDiscoveredNodes(newNodes);
@@ -280,7 +284,7 @@ public class SyncPool {
     List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());
 
     // Filtering out with nodeSelector because server-connected nodes were not tested
-    NodeSelector nodeSelector = new NodeSelector(BigInteger.ZERO);
+    NodeSelector nodeSelector = new NodeSelector();
     List<Channel> active = new ArrayList<>();
     for (Channel channel : managerActive) {
       if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {

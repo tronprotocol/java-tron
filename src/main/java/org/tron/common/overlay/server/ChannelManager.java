@@ -17,25 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
-import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
-
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +27,14 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.node.NodeImpl;
+
+import java.net.InetAddress;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
+import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
 /**
  * @author Roman Mandeleil
@@ -85,13 +74,17 @@ public class ChannelManager {
 
     private PeerClient peerClient;
 
+    private NodeImpl peerDel;
+
     @Autowired
     private ChannelManager(final Args args, final PeerClient peerClient,
-        final PeerServer peerServer) {
+        final PeerServer peerServer, final NodeImpl peerDel) {
+        this.args = args;
         //this.syncManager = syncManager;
         this.peerClient = peerClient;
         this.peerServer = peerServer;
-        maxActivePeers = this.args.getNodeMaxActiveNodes();
+        this.peerDel = peerDel;
+        maxActivePeers = args.getNodeMaxActiveNodes();
         //trustedPeers = config.peerTrusted();
         mainWorker.scheduleWithFixedDelay(() -> {
             try {
@@ -101,10 +94,10 @@ public class ChannelManager {
             }
         }, 0, 1, TimeUnit.SECONDS);
 
-        if (this.args.getNodeListenPort() > 0) {
+        //if (this.args.getNodeListenPort() > 0) {
             new Thread(() -> peerServer.start(this.args.getNodeListenPort()),
             "PeerServerThread").start();
-        }
+        //}
     }
 
     public void connect(Node node) {
@@ -121,7 +114,9 @@ public class ChannelManager {
         }
 
         //todo ethereum.connect(node);
-        peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
+
+        logger.info( "connect peer {} {} {}",node.getHost(), node.getPort(), node.getHexIdShort());
+        //peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
 
     }
 

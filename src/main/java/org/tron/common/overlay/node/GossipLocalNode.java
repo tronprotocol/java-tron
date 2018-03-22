@@ -15,22 +15,14 @@
 
 package org.tron.common.overlay.node;
 
+import io.scalecube.cluster.Cluster;
+import io.scalecube.transport.Address;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import io.scalecube.cluster.Cluster;
-import io.scalecube.cluster.ClusterConfig;
-import io.scalecube.cluster.membership.MembershipEvent;
-import io.scalecube.cluster.membership.MembershipEvent.Type;
-import io.scalecube.transport.Address;
-import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
 @Slf4j
@@ -58,49 +50,49 @@ public class GossipLocalNode implements LocalNode {
 //  }
 
   @Override
-  public void start() {
-    logger.info("listener message");
-
-    ClusterConfig config = ClusterConfig.builder()
-            .seedMembers(getAddresses())
-            .portAutoIncrement(false)
-        .port(Args.getInstance().getOverlay().getPort())
-        .syncGroup(Args.getInstance().getChainId())
-            .build();
-
-    logger.info("sync group = {}", config.getSyncGroup());
-
-    cluster = Cluster.joinAwait(config);
-
-    //Peer connect
-    cluster.otherMembers().forEach(member ->
-        peerDel.connectPeer(new PeerConnection(this.cluster, member)));
-
-    //liston peer's change
-    Subscription membershipListener = cluster
-            .listenMembership()
-        .subscribe(event -> onEvent(event));
-
-    executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
-        new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
-
-    Subscription messageSubscription = cluster
-            .listen()
-            .subscribe(msg -> executors.submit(new StartWorker(msg, peerDel)));
-
-    subscriptions.add(membershipListener);
-    subscriptions.add(messageSubscription);
-  }
-
-  private void onEvent(MembershipEvent event) {
-    if (event.type() == Type.REMOVED) {
-      PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
-      peerDel.disconnectPeer(peer);
-    } else {
-      PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
-      peerDel.connectPeer(peer);
-    }
-  }
+  public void start() {}
+//    logger.info("listener message");
+//
+//    ClusterConfig config = ClusterConfig.builder()
+//            .seedMembers(getAddresses())
+//            .portAutoIncrement(false)
+//        .port(Args.getInstance().getOverlay().getPort())
+//        .syncGroup(Args.getInstance().getChainId())
+//            .build();
+//
+//    logger.info("sync group = {}", config.getSyncGroup());
+//
+//    cluster = Cluster.joinAwait(config);
+//
+//    //Peer connect
+//    cluster.otherMembers().forEach(member ->
+//        peerDel.connectPeer(new PeerConnection(this.cluster, member)));
+//
+//    //liston peer's change
+//    Subscription membershipListener = cluster
+//            .listenMembership()
+//        .subscribe(event -> onEvent(event));
+//
+//    executors = new ThreadPoolExecutor(4, 4, 0L, TimeUnit.MILLISECONDS,
+//        new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
+//
+//    Subscription messageSubscription = cluster
+//            .listen()
+//            .subscribe(msg -> executors.submit(new StartWorker(msg, peerDel)));
+//
+//    subscriptions.add(membershipListener);
+//    subscriptions.add(messageSubscription);
+//  }
+//
+//  private void onEvent(MembershipEvent event) {
+//    if (event.type() == Type.REMOVED) {
+//      PeerConnection peer = new PeerConnection(this.cluster, event.oldMember());
+//      peerDel.disconnectPeer(peer);
+//    } else {
+//      PeerConnection peer = new PeerConnection(this.cluster, event.newMember());
+//      peerDel.connectPeer(peer);
+//    }
+//  }
 
   /**
    * stop gossip node.

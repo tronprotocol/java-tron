@@ -20,9 +20,6 @@ package org.tron.common.overlay.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +34,12 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.core.net.peer.TronHandler;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -53,7 +56,7 @@ public class Channel {
     Args args;
 
     @Autowired
-    private MessageQueue msgQueue;
+    protected MessageQueue msgQueue;
 
     @Autowired
     private P2pHandler p2pHandler;
@@ -73,13 +76,16 @@ public class Channel {
     @Autowired
     private WireTrafficStats stats;
 
+    private TronHandler tronHandler;
+
     private ChannelManager channelManager;
 
     private InetSocketAddress inetSocketAddress;
 
     private Node node;
-    private NodeStatistics nodeStatistics;
+    private PeerConnectionDelegate peerDel;
 
+    protected NodeStatistics nodeStatistics;
     private boolean discoveryMode;
     private boolean isActive;
     private boolean isDisconnected;
@@ -88,7 +94,8 @@ public class Channel {
 
     private PeerStatistics peerStats = new PeerStatistics();
 
-    public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode, ChannelManager channelManager) {
+    public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
+        ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
 
@@ -101,12 +108,14 @@ public class Channel {
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
+        this.peerDel = peerDel;
 
         if (discoveryMode) {
             // temporary key/nodeId to not accidentally smear our reputation with
             // unexpected disconnect
 //            handshakeHandler.generateTempKey();
         }
+
 
         handshakeHandler.setRemoteId(remoteId, this);
 
@@ -118,7 +127,7 @@ public class Channel {
 
     }
 
-    public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
+    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
         logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
 
@@ -148,20 +157,16 @@ public class Channel {
 
     public void activateTron(ChannelHandlerContext ctx) {
         //TODO: use tron handle here.
-//        EthHandler handler = ethHandlerFactory.create(version);
-//        MessageFactory messageFactory = createEthMessageFactory(version);
-//        messageCodec.setEthVersion(version);
-//        messageCodec.setEthMessageFactory(messageFactory);
-//
-//        ctx.pipeline().addLast("data", handler);
-//
-//        handler.setMsgQueue(msgQueue);
-//        handler.setChannel(this);
-//        handler.setPeerDiscoveryMode(discoveryMode);
-//
-//        handler.activate();
-//
-//        eth = handler;
+        tronHandler = new TronHandler();
+
+        ctx.pipeline().addLast("data", tronHandler);
+
+        tronHandler.setMsgQueue(msgQueue);
+        tronHandler.setChannel(this);
+        tronHandler.setPeerDiscoveryMode(discoveryMode);
+        tronHandler.setPeerDel(peerDel);
+
+        tronHandler.activate();
     }
 
 
@@ -189,7 +194,6 @@ public class Channel {
         return node;
     }
 
-
     public void onDisconnect() {
         isDisconnected = true;
     }
@@ -199,14 +203,6 @@ public class Channel {
     }
 
     public void onSyncDone(boolean done) {
-//
-//        if (done) {
-//            eth.enableTransactions();
-//        } else {
-//            eth.disableTransactions();
-//        }
-//
-//        eth.onSyncDone(done);
     }
 
     public boolean isDiscoveryMode() {
@@ -238,7 +234,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-//        msgQueue.disconnect(reason);
+         msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {

@@ -21,9 +21,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.timeout.ReadTimeoutException;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -32,12 +29,12 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
-import org.tron.common.overlay.message.DisconnectMessage;
-import org.tron.common.overlay.message.HelloMessage;
-import org.tron.common.overlay.message.P2pMessage;
-import org.tron.common.overlay.message.P2pMessageFactory;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.message.*;
 import org.tron.core.config.args.Args;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * The Netty handler which manages initial negotiation with peer (when either we initiating
@@ -120,7 +117,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
       if (msg instanceof HelloMessage) {
         isHandshakeDone = true;
-        this.channel.publicRLPxHandshakeFinished(ctx, (HelloMessage) msg);
+        this.channel.publicHandshakeFinished(ctx, (HelloMessage) msg);
       } else {
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
@@ -144,7 +141,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
       channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
       isHandshakeDone = true;
-      this.channel.publicRLPxHandshakeFinished(ctx, inboundHelloMessage);
+      this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
     }
   }

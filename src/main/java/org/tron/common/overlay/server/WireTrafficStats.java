@@ -24,15 +24,15 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.DatagramPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.tron.common.utils.Utils;
 
 /**
  * Created by Anton Nashatyrev on 27.02.2017.
@@ -83,9 +83,7 @@ public class WireTrafficStats  implements Runnable  {
             long outSpeed = out * 1000 / d;
             long inSpeed = in * 1000 / d;
             lastTime = curTime;
-            return "Speed in/out " + Utils.sizeToStr(inSpeed) + " / " + Utils.sizeToStr(outSpeed) +
-                    "(sec), packets in/out " + inPac + "/" + outPac +
-                    ", total in/out: " + Utils.sizeToStr(inSizeTot) + " / " + Utils.sizeToStr(outSizeTot);
+            return "";
         }
 
 
