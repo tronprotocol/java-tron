@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
@@ -12,6 +13,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -48,6 +50,17 @@ public class VoteWitnessActuator extends AbstractActuator {
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
 
       Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+
+      Iterator<Vote> iterator = contract.getVotesList().iterator();
+      while (iterator.hasNext()) {
+        Vote vote = iterator.next();
+        byte[] bytes = ByteString
+            .copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())).toByteArray();
+        if (!dbManager.getAccountStore().has(bytes)) {
+          throw new ContractValidateException(
+              "Account[" + contract.getOwnerAddress() + "] not exists");
+        }
+      }
 
       if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException(
