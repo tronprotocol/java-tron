@@ -270,6 +270,7 @@ public class SyncPool {
       logDiscoveredNodes(newNodes);
     }
 
+    logger.info("connection nodes size : {}", newNodes.size());
     for(NodeHandler n : newNodes) {
       channelManager.connect(n.getNode());
     }

@@ -79,7 +79,7 @@ public class ChannelManager {
      */
     private BlockingQueue<Channel> newActivePeers = new LinkedBlockingQueue<>();
 
-    private Args args;
+    private Args args = Args.getInstance();
 
     private PeerServer peerServer;
 
@@ -88,11 +88,10 @@ public class ChannelManager {
     @Autowired
     private ChannelManager(final Args args, final PeerClient peerClient,
         final PeerServer peerServer) {
-        this.args = args;
         //this.syncManager = syncManager;
         this.peerClient = peerClient;
         this.peerServer = peerServer;
-        maxActivePeers = args.getNodeMaxActiveNodes();
+        maxActivePeers = this.args.getNodeMaxActiveNodes();
         //trustedPeers = config.peerTrusted();
         mainWorker.scheduleWithFixedDelay(() -> {
             try {
@@ -102,8 +101,8 @@ public class ChannelManager {
             }
         }, 0, 1, TimeUnit.SECONDS);
 
-        if (args.getNodeListenPort() > 0) {
-            new Thread(() -> peerServer.start(args.getNodeListenPort()),
+        if (this.args.getNodeListenPort() > 0) {
+            new Thread(() -> peerServer.start(this.args.getNodeListenPort()),
             "PeerServerThread").start();
         }
     }

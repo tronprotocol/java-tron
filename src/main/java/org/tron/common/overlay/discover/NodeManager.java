@@ -282,9 +282,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        //if (predicate.test(handler)) {
+        if (predicate.test(handler)) {
           filtered.add(handler);
-        //}
+        }
       }
     }
     filtered.sort((o1, o2) -> o2.getNodeStatistics().getEthTotalDifficulty().compareTo(
