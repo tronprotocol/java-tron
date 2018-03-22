@@ -15,8 +15,6 @@
 
 package org.tron.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import org.tron.application.CliApplication;
 import org.tron.core.BlockUtils;
 import org.tron.core.Blockchain;
@@ -24,9 +22,10 @@ import org.tron.core.BlockchainIterator;
 import org.tron.peer.Peer;
 import org.tron.protos.core.TronBlock;
 
-public class PrintBlockchainCommand extends Command {
-  public PrintBlockchainCommand() {
-  }
+import static org.fusesource.jansi.Ansi.ansi;
+
+@CliCommand(commands = "printblockchain", description = "Print blockchain")
+public class PrintBlockchainCommand implements ExecutableCommand {
 
     @Override
     public void execute(CliApplication app, String[] parameters) {
@@ -56,8 +55,4 @@ public class PrintBlockchainCommand extends Command {
     System.out.println("");
   }
 
-  @Override
-  public boolean check(String[] parameters) {
-    return true;
-  }
 }

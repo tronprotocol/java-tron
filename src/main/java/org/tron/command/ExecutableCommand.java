@@ -17,10 +17,8 @@ package org.tron.command;
 
 import org.tron.application.CliApplication;
 
-public abstract class Command {
-  public abstract void execute(CliApplication app, String[] parameters);
+public interface ExecutableCommand {
+    void execute(CliApplication app, String[] parameters);
 
-  public abstract void usage();
-
-  public abstract boolean check(String[] parameters);
+    void usage();
 }

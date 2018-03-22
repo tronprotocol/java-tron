@@ -15,16 +15,16 @@
 
 package org.tron.command;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
-import java.util.ArrayList;
 import org.tron.application.CliApplication;
 import org.tron.peer.Peer;
 import org.tron.protos.core.TronTXOutput;
 
-public class GetBalanceCommand extends Command {
-  public GetBalanceCommand() {
-  }
+import java.util.ArrayList;
+
+import static org.fusesource.jansi.Ansi.ansi;
+
+@CliCommand(commands = "getbalance", description = "Get your balance")
+public class GetBalanceCommand implements ExecutableCommand {
 
   @Override
   public void execute(CliApplication app, String[] parameters) {
@@ -59,8 +59,4 @@ public class GetBalanceCommand extends Command {
     System.out.println("");
   }
 
-  @Override
-  public boolean check(String[] parameters) {
-    return true;
-  }
 }
