@@ -1,10 +1,13 @@
 package org.tron.program;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -14,15 +17,19 @@ public class FullNode {
   /**
    * Start the FullNode.
    */
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException {
     Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
     Args cfgArgs = Args.getInstance();
+
+    Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
+    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
     logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
-    Application appT = ApplicationFactory.create();
+    Application appT = ApplicationFactory.create(context);
     appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT);
     appT.addService(rpcApiService);
@@ -32,6 +39,8 @@ public class FullNode {
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
+
+
     rpcApiService.blockUntilShutdown();
   }
 }

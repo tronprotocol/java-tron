@@ -250,6 +250,8 @@ public class SyncPool {
 
     @Override
     public boolean test(NodeHandler handler) {
+      logger.info(handler.getNode().toString());
+      logger.info(handler.getNode().getHexId());
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
