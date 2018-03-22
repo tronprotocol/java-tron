@@ -105,6 +105,10 @@ public class AccountCapsule implements ProtoCapsule<Account> {
     return this.account;
   }
 
+  public void setInstance(Account account) {
+    this.account = account;
+  }
+
   public ByteString getAddress() {
     return this.account.getAddress();
   }
