@@ -1,7 +1,6 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
-import io.scalecube.transport.Address;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
@@ -89,8 +88,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           ids.forEach((key, value) -> peer.sendMessage(new FetchInvDataMessage(value, key))));
     }
   }
-
-  private HashMap<Address, PeerConnection> mapPeer = new HashMap<>();
 
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
@@ -235,7 +232,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectToP2PNetWork() {
-    pool.init(channelManager);
+    pool.init(channelManager, this);
   }
 
 
@@ -243,7 +240,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
-      for (PeerConnection peer : mapPeer.values()) {
+      for (PeerConnection peer : getActivePeer()) {
         if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
@@ -422,7 +419,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
-      while (mapPeer.isEmpty()) {
+      while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
         Thread.sleep(10000L);
       }
@@ -614,7 +611,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void banTraitorPeer(PeerConnection peer) {
-    disconnectPeer(peer);
+    onDisconnectPeer(peer);
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
@@ -818,13 +815,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopFetchBlocks.push(fetchMsg);
   }
 
-  private void startSync() {
-    mapPeer.values().forEach(this::startSyncWithPeer);
-  }
+//  private void startSync() {
+//    mapPeer.values().forEach(this::startSyncWithPeer);
+//  }
 
   private Collection<PeerConnection> getActivePeer() {
-    //TODO: filter active peer, exclude banned, dead, traitor peers
-    return mapPeer.values();
+    return pool.getActivePeers();
   }
 
   private void startSyncWithPeer(PeerConnection peer) {
@@ -837,11 +833,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     syncNextBatchChainIds(peer);
   }
 
-  @Override
-  public PeerConnection getPeer(io.scalecube.transport.Message msg) {
-    return mapPeer.get(msg.sender());
-  }
-
   private void syncNextBatchChainIds(PeerConnection peer) {
     try {
       Deque<BlockId> chainSummary =
@@ -852,14 +843,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
       e.printStackTrace();
-      disconnectPeer(peer);
+      onDisconnectPeer(peer);
     }
 
   }
 
   @Override
-  public void connectPeer(PeerConnection peer) {
+  public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
+    startSyncWithPeer(peer);
 //    if (mapPeer.containsKey(peer.getAddress())) {
 //      return;
 //    }
@@ -872,7 +864,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   @Override
-  public void disconnectPeer(PeerConnection peer) {
+  public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
     //mapPeer.remove(peer.getAddress());
   }

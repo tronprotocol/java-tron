@@ -43,6 +43,8 @@ import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
 
 /**
  * <p>Encapsulates logic which manages peers involved in blockchain sync</p>
@@ -61,7 +63,7 @@ public class SyncPool {
 
   private static final long WORKER_TIMEOUT = 3; // 3 seconds
 
-  private final List<Channel> activePeers = Collections.synchronizedList(new ArrayList<Channel>());
+  private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
 
   private BigInteger lowerUsefulDifficulty = BigInteger.ZERO;
 
@@ -70,6 +72,8 @@ public class SyncPool {
 
   @Autowired
   private NodeManager nodeManager;
+
+  private PeerConnectionDelegate peerDel;
 
   private ChannelManager channelManager;
 
@@ -84,9 +88,11 @@ public class SyncPool {
   public SyncPool(final Args args) {
   }
 
-  public void init(final ChannelManager channelManager) {
+  public void init(final ChannelManager channelManager, PeerConnectionDelegate peerDel) {
     if (this.channelManager != null) return; // inited already
     this.channelManager = channelManager;
+    this.peerDel = peerDel;
+
     //updateLowerUsefulDifficulty();
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
@@ -172,7 +178,7 @@ public class SyncPool {
     return ret;
   }
 
-  public synchronized List<Channel> getActivePeers() {
+  public synchronized List<PeerConnection> getActivePeers() {
     return new ArrayList<>(activePeers);
   }
 
@@ -272,10 +278,10 @@ public class SyncPool {
 
     // Filtering out with nodeSelector because server-connected nodes were not tested
     NodeSelector nodeSelector = new NodeSelector();
-    List<Channel> active = new ArrayList<>();
+    List<PeerConnection> active = new ArrayList<>();
     for (Channel channel : managerActive) {
       if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {
-        active.add(channel);
+        active.add((PeerConnection)channel);
       }
     }
 
@@ -294,15 +300,14 @@ public class SyncPool {
 //      }
 //    }
 
-    List<Channel> filtered = active.subList(0, thresholdIdx + 1);
+    List<PeerConnection> filtered = active.subList(0, thresholdIdx + 1);
 
     // sorting by latency in asc order
     filtered.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
-    for (Channel channel : filtered) {
+    for (PeerConnection channel : filtered) {
       if (!activePeers.contains(channel)) {
-        //TODO: let listener know
-        //ethereumListener.onPeerAddedToSyncPool(channel);
+        peerDel.onConnectPeer(channel);
       }
     }
 
@@ -311,10 +316,11 @@ public class SyncPool {
   }
 
   private synchronized void cleanupActive() {
-    Iterator<Channel> iterator = activePeers.iterator();
+    Iterator<PeerConnection> iterator = activePeers.iterator();
     while (iterator.hasNext()) {
-      Channel next = iterator.next();
+      PeerConnection next = iterator.next();
       if (next.isDisconnected()) {
+        peerDel.onDisconnectPeer(next);
         logger.info("Removing peer " + next + " from active due to disconnect.");
         iterator.remove();
       }
