@@ -25,7 +25,7 @@ Resources
 1. [TRON Website](https://tron.network/)
 2. Documentation(Comming soon. You are seeing part of it.)
 3. [Blog](https://tronprotocol.github.io/tron-blog/)
-4. [Community Telegram Group](https://t.me/tronnetworkEN)
+git4. [Community Telegram Group](https://t.me/tronnetworkEN)
 5. [Slack Workspace](https://tronfoundation.slack.com/)
 6. White Paper(Comming soon)
 7. Roadmap(Comming soon)
