@@ -19,12 +19,13 @@
 package org.tron.common.utils;
 
 
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Maps;
 import org.tron.core.db.ByteArrayWrapper;
 
 
@@ -153,7 +154,7 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
         @Override
         public Entry<byte[], V> next() {
           Entry<ByteArrayWrapper, V> next = it.next();
-          return new AbstractMap.SimpleImmutableEntry(next.getKey().getData(), next.getValue());
+          return Maps.immutableEntry(next.getKey().getData(), next.getValue());
         }
 
         @Override
