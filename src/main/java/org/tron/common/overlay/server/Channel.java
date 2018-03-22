@@ -102,7 +102,7 @@ public class Channel {
         isActive = remoteId != null && !remoteId.isEmpty();
 
         pipeline.addLast("readTimeoutHandler",
-            new ReadTimeoutHandler(args.getNodeChannelReadTimeout(), TimeUnit.SECONDS));
+            new ReadTimeoutHandler(100, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
@@ -148,7 +148,7 @@ public class Channel {
 
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
-        ctx.writeAndFlush(helloMessage).sync();
+        ctx.writeAndFlush(helloMessage.getData()).sync();
 
         if (logger.isDebugEnabled())
             logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
