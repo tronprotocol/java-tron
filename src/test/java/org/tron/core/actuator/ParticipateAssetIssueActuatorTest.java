@@ -205,6 +205,69 @@ public class ParticipateAssetIssueActuatorTest {
     }
   }
 
+  @Test
+  public void ExchangeDevisibleTest(){
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ParticipateAssetIssueActuator actuator =
+            new ParticipateAssetIssueActuator(getContract(999L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try{
+      actuator.validate();
+      actuator.execute(ret);
+    }
+    catch(ContractValidateException e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+
+      AccountCapsule owner = dbManager.getAccountStore()
+              .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+              .get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), 10000L);
+      Assert.assertEquals(toAccount.getBalance(), 10000L);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(),
+              10000000L);
+    }
+    catch(ContractExeException e){
+      Assert.assertFalse(e instanceof  ContractExeException);
+    }
+
+  }
+
+
+  @Test
+  public void NegativeAmountTest(){
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ParticipateAssetIssueActuator actuator =
+            new ParticipateAssetIssueActuator(getContract(-999L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try{
+      actuator.validate();
+      actuator.execute(ret);
+    }
+    catch(ContractValidateException e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+
+      AccountCapsule owner = dbManager.getAccountStore()
+              .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+              .get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), 10000L);
+      Assert.assertEquals(toAccount.getBalance(), 10000L);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(),
+              10000000L);
+    }
+    catch(ContractExeException e){
+      Assert.assertFalse(e instanceof  ContractExeException);
+    }
+
+  }
+
   private boolean isNullOrZero(Long value) {
     if (null == value || value == 0) {
       return true;
