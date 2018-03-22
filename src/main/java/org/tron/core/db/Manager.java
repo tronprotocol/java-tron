@@ -473,18 +473,18 @@ public class Manager {
         return;
       }
 
-      try {
-        validateWitnessSchedule(block); // direct return ,need test
-      } catch (Exception ex) {
-        logger.error("validateWitnessSchedule error", ex);
-      }
-
       if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
         logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
             + " , the headers is " + block.getMerkleRoot());
         //TODO: throw exception here.
         return;
       }
+    }
+
+    try {
+      validateWitnessSchedule(block); // direct return ,need test
+    } catch (Exception ex) {
+      logger.error("validateWitnessSchedule error", ex);
     }
 
     BlockCapsule newBlock = this.khaosDb.push(block);
@@ -990,7 +990,6 @@ public class Manager {
         "updateWitness,before:{} ",
         getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(wits));
   }
-
 
   private byte[] createDbKey(ByteString string) {
     return string.toByteArray();
