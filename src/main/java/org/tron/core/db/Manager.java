@@ -273,13 +273,17 @@ public class Manager {
       byte[] keyAddress = ByteArray.fromHexString(key.getAddress());
       ByteString address = ByteString.copyFrom(keyAddress);
 
-      final AccountCapsule accountCapsule = new AccountCapsule(
-          ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
+      if (!this.accountStore.has(keyAddress)) {
+        final AccountCapsule accountCapsule = new AccountCapsule(
+            ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
+        this.accountStore.put(keyAddress, accountCapsule);
+      }
+
       final WitnessCapsule witnessCapsule = new WitnessCapsule(
           address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
-      this.accountStore.put(keyAddress, accountCapsule);
       this.witnessStore.put(keyAddress, witnessCapsule);
+
       this.wits.add(witnessCapsule);
     });
   }
@@ -398,7 +402,8 @@ public class Manager {
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           processBlock(item);
           blockStore.put(item.getBlockId().getBytes(), item);
-          this.numHashCache.putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
+          this.numHashCache
+              .putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
           head = item;
         } catch (ValidateSignatureException e) {
@@ -898,6 +903,8 @@ public class Manager {
    * update witness.
    */
   public void updateWitness() {
+    List<WitnessCapsule> currentWits = wits;
+
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
     logger.info("there is account List size is {}", accountList.size());
@@ -978,6 +985,10 @@ public class Manager {
       witnessCapsule.setIsJobs(true);
       this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
+
+    logger.info(
+        "updateWitness,before:{} ",
+        getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(wits));
   }
 
 
