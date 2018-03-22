@@ -48,7 +48,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //subtract from owner address
       byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
-      ownerAccount.setBalance(ownerAccount.getBalance() - cost - fee);
+      ownerAccount.setBalance(ownerAccount.getBalance() - cost);
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule =
@@ -100,9 +100,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
-      long fee = calcFee();
       //Whether the balance is enough
-      if (ac.getBalance() < participateAssetIssueContract.getAmount() + fee) {
+      if (ac.getBalance() < participateAssetIssueContract.getAmount()) {
         throw new ContractValidateException();
       }
 

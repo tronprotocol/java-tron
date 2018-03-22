@@ -27,7 +27,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class AssetIssueActuatorTest {
-
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_assetIssue_test";
@@ -59,9 +58,8 @@ public class AssetIssueActuatorTest {
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule = new AccountCapsule(
-        ByteString.copyFromUtf8("owner"),
-        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.AssetIssue,
-        100000L);
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8("owner"), AccountType.AssetIssue);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
@@ -96,9 +94,7 @@ public class AssetIssueActuatorTest {
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
           .get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
-
-      Assert.assertEquals(owner.getBalance(), 0L);
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), 10000L);
+      Assert.assertEquals(owner.getInstance().getAssetMap().get(NAME).longValue(), 10000L);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
