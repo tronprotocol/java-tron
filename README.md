@@ -19,7 +19,39 @@ TRON is a block chain-based decentralized smart protocol and an application deve
 
 TRON is a product of Web 4.0 and the decentralized internet of next generation.
 
- 
+# Resources
+
+# Set up the environment
+
+## Supported Operating System
+
+# How to Build
+
+## Getting the code
+
+## Prepare dependencies
+
+## Building source code
+git clone https://github.com/tronprotocol/java-tron.git
+
+./gradlew build
+
+# How To Run
+
+## Running a private testnet
+
+### Running a full node
+
+### Running a witness node
+
+### Running multi-nodes
+
+## Running a local node and connecting to the public testnet 
+
+### Running a full node
+
+### Running a witness node 
+
 
 # Quick Start
 
