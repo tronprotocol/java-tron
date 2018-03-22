@@ -115,7 +115,7 @@ public class ChannelManager {
 
         //todo ethereum.connect(node);
 
-        logger.info( "connect peer {} {} {}",node.getHost(), node.getPort(), node.getHexIdShort());
+        logger.info( "connect peer {} {} {}",node.getHost(), node.getPort(), node.getHexId());
         peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
 
     }
