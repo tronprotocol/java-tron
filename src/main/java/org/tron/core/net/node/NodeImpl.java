@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.node.GossipLocalNode;
+import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
@@ -52,6 +53,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
   private SyncPool pool;
+
+  @Autowired
+  private ChannelManager channelManager;
 
   class InvToSend {
 
@@ -231,7 +235,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectToP2PNetWork() {
-
+    pool.init(channelManager);
   }
 
 
