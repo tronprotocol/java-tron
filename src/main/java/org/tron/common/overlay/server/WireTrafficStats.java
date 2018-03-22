@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Component
 public class WireTrafficStats  implements Runnable  {
-    private final static Logger logger = LoggerFactory.getLogger("net");
+    private final static Logger logger = LoggerFactory.getLogger("WireTrafficStats");
 
     private ScheduledExecutorService executor;
     public final TrafficStatHandler tcp = new TrafficStatHandler();

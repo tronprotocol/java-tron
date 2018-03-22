@@ -55,7 +55,7 @@ import org.tron.core.net.node.NodeImpl;
 @Component
 public class ChannelManager {
 
-    private static final Logger logger = LoggerFactory.getLogger("net");
+    private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
     // If the inbound peer connection was dropped by us with a reason message
     // then we ban that peer IP on any connections for some time to protect from
@@ -127,7 +127,7 @@ public class ChannelManager {
 
         //todo ethereum.connect(node);
 
-        logger.info( "connect peer {} {} {}",node.getHost(), node.getPort(), node.getHexIdShort());
+        logger.info( "connect peer {} {} {}",node.getHost(), node.getPort(), node.getHexId());
         peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
 
     }
@@ -155,7 +155,7 @@ public class ChannelManager {
 
             //if(peer.isProtocolsInitialized()) {
 
-                logger.debug("Protocols initialized");
+                logger.info("Protocols initialized");
 
                 if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
                     if (!peer.isActive() &&

@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 @Scope("prototype")
 public class Channel {
 
-    private final static Logger logger = LoggerFactory.getLogger("net");
+    private final static Logger logger = LoggerFactory.getLogger("Channel");
 
     @Autowired
     Args args;
@@ -125,6 +126,8 @@ public class Channel {
 
         p2pHandler.setMsgQueue(msgQueue);
 
+        logger.info("Channel init finished");
+
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
@@ -148,7 +151,9 @@ public class Channel {
 
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeId);
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
-        ctx.writeAndFlush(helloMessage.getData()).sync();
+        logger.info("send hello msg: {}", helloMessage);
+
+        ctx.writeAndFlush(Unpooled.wrappedBuffer(helloMessage.getSendData())).sync();
 
         if (logger.isDebugEnabled())
             logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
