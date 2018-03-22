@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
@@ -13,6 +14,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -53,12 +55,29 @@ public class VoteWitnessActuator extends AbstractActuator {
       AccountStore accountStore = dbManager.getAccountStore();
       byte[] ownerAddressBytes = ownerAddress.toByteArray();
 
-      if (!accountStore.has(ownerAddressBytes)) {
-        throw new ContractValidateException("Account[" + ownerAddress + "] not exists");
+      Iterator<Vote> iterator = contract.getVotesList().iterator();
+      while (iterator.hasNext()) {
+        Vote vote = iterator.next();
+        byte[] bytes = ByteString
+            .copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())).toByteArray();
+        if (!dbManager.getAccountStore().has(bytes)) {
+          throw new ContractValidateException(
+              "Account[" + contract.getOwnerAddress() + "] not exists");
+        }
+        if (!dbManager.getWitnessStore().has(bytes)) {
+          throw new ContractValidateException(
+              "Witness[" + contract.getOwnerAddress() + "] not exists");
+        }
       }
 
-      long share = accountStore.get(ownerAddressBytes).getShare();
-      long sum = contract.getVotesList().stream().map(vote -> vote.getVoteCount()).count();
+      if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException(
+            "Account[" + contract.getOwnerAddress() + "] not exists");
+      }
+
+      long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
+          .getShare();
+      long sum = contract.getVotesList().stream().mapToLong(vote -> vote.getVoteCount()).sum();
       if (sum > share) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the share[" + share + "]");
@@ -76,6 +95,8 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(voteContract.getOwnerAddress().toByteArray());
+
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 
     voteContract.getVotesList().forEach(vote -> {
       String toStringUtf8 = vote.getVoteAddress().toStringUtf8();
