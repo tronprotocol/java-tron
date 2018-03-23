@@ -27,11 +27,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.common.utils.ByteArray;
 
 @Slf4j
 @NoArgsConstructor
@@ -145,6 +147,10 @@ public class Args {
   @Setter
   private int nodeP2pVersion;
 
+  @Getter
+  @Setter
+  private byte[] p2pNodeId;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -174,6 +180,7 @@ public class Args {
     INSTANCE.nodeP2pPingInterval = 0L;
     INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
+    INSTANCE.p2pNodeId = new byte[]{};
   }
 
   /**
@@ -377,7 +384,9 @@ public class Args {
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
     try {
-      File file = new File(INSTANCE.storage.getDirectory(), "nodeId.properties");
+      File file = new File(
+          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDirectory(),
+          "nodeId.properties");
       Properties props = new Properties();
       if (file.canRead()) {
         try (Reader r = new FileReader(file)) {
@@ -460,5 +469,13 @@ public class Args {
    */
   public byte[] nodeId() {
     return getMyKey().getNodeId();
+  }
+
+  public byte[] getNetNodeId() {
+    if (ArrayUtils.isEmpty(INSTANCE.p2pNodeId)) {
+      INSTANCE.p2pNodeId = ByteArray.fromHexString(getGeneratedNodePrivateKey());
+    }
+
+    return INSTANCE.p2pNodeId;
   }
 }
