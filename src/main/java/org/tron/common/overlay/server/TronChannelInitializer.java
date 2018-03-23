@@ -39,7 +39,7 @@ import org.tron.core.net.peer.PeerConnection;
 @Scope("prototype")
 public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel> {
 
-    private static final Logger logger = LoggerFactory.getLogger("net");
+    private static final Logger logger = LoggerFactory.getLogger("TronChannelInitializer");
 
     @Autowired
     private ApplicationContext ctx;
@@ -66,7 +66,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
             if (isInbound() && channelManager.isRecentlyDisconnected(ch.remoteAddress().getAddress())) {
                 // avoid too frequent connection attempts
-                logger.debug("Drop connection - the same IP was disconnected recently, channel: {}", ch.toString());
+                logger.info("Drop connection - the same IP was disconnected recently, channel: {}", ch.toString());
                 ch.disconnect();
                 return;
             }
@@ -80,6 +80,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             if(!peerDiscoveryMode) {
+                logger.info("add Channel");
                 channelManager.add(channel);
             }
 
@@ -90,6 +91,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
             // be aware of channel closing
             ch.closeFuture().addListener((ChannelFutureListener) future -> {
+                logger.info("@@@@@@@@@ closeFuture");
                 if (!peerDiscoveryMode) {
                     channelManager.notifyDisconnect(channel);
                 }

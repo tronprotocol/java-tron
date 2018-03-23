@@ -52,8 +52,8 @@ import java.util.List;
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
 
-  private static final Logger loggerWire = LoggerFactory.getLogger("wire");
-  private static final Logger loggerNet = LoggerFactory.getLogger("net");
+  private static final Logger loggerWire = LoggerFactory.getLogger("HandshakeHandler");
+  private static final Logger loggerNet = LoggerFactory.getLogger("HandshakeHandler");
 
   private final ECKey myKey;
   private byte[] nodeId;
@@ -73,6 +73,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+      loggerWire.info("&&&&&&&&&&&&&& channelActive");
     channel.setInetSocketAddress((InetSocketAddress) ctx.channel().remoteAddress());
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId);
@@ -82,8 +84,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
   }
 
+  @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-    loggerWire.debug("Decoding handshake... (" + in.readableBytes() + " bytes available)");
+    loggerWire.info("Decoding handshake... (" + in.readableBytes() + " bytes available)");
     decodeHandshake(ctx, in);
     if (isHandshakeDone) {
       loggerWire.debug("Handshake done, removing HandshakeHandler from pipeline.");
@@ -110,7 +113,11 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void decodeHandshake(final ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
 
     P2pMessageFactory factory = new P2pMessageFactory();
-    P2pMessage msg = factory.create(buffer.array());
+
+    byte[] encoded = new byte[buffer.readableBytes()];
+    buffer.readBytes(encoded);
+
+    P2pMessage msg = factory.create(encoded);
 
     if (isInitiator) {
       loggerWire.debug("initiator");

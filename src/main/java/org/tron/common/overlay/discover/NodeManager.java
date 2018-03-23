@@ -17,24 +17,33 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.message.*;
-import org.tron.common.overlay.discover.table.NodeTable;
-import org.tron.common.utils.CollectionUtils;
-import org.tron.core.config.args.Args;
-
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.utils.CollectionUtils;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -51,6 +60,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private final boolean PERSIST;
+
+//  @Autowired
+//  private Manager dbManager;
 
   private static final long LISTENER_REFRESH_RATE = 1000;
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000;
@@ -78,19 +90,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private boolean inited = false;
   private Timer logStatsTimer = new Timer();
   private Timer nodeManagerTasksTimer = new Timer("NodeManagerTasks");
-  ;
   private ScheduledExecutorService pongTimer;
 
   @Autowired
-  public NodeManager(ApplicationContext ctx) {
+  public NodeManager(Manager dbManager) {
     Args args = Args.getInstance();
-    //this.ethereumListener = ethereumListener;
-    //this.peerConnectionManager = peerConnectionManager;
     PERSIST = args.isNodeDiscoveryPersist();
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
     args.nodeId();
-    homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
+    //homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
+    homeNode = dbManager.getHomeNode();
 
     logger.info("homeNode : {}", homeNode.toString());
 
@@ -282,9 +292,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        //if (predicate.test(handler)) {
+        if (predicate.test(handler)) {
           filtered.add(handler);
-        //}
+        }
       }
     }
     logger.info("size {}", filtered.size());

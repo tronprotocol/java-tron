@@ -193,6 +193,6 @@ public class PeerConnection extends Channel{
 
   @Override
   public String toString() {
-    return "";// nodeStatistics.toString();
+    return super.toString();// nodeStatistics.toString();
   }
 }

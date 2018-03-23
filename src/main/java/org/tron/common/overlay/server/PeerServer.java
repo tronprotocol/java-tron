@@ -37,7 +37,7 @@ import org.tron.core.net.node.NodeImpl;
 @Component
 public class PeerServer {
 
-    private static final Logger logger = LoggerFactory.getLogger("net");
+    private static final Logger logger = LoggerFactory.getLogger("PeerServer");
 
     private Args args = Args.getInstance();
 
@@ -63,9 +63,7 @@ public class PeerServer {
 
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
-        logger.info("**************ethereumChannelInitializer, {}", tronChannelInitializer);
         tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
-        logger.info("_____________ethereumChannelInitializer, {}", tronChannelInitializer);
 
         tronChannelInitializer.setNodeImpl(p2pNode);
 

@@ -23,7 +23,7 @@ public class HelloMessage extends P2pMessage {
    */
   public HelloMessage(byte p2pVersion, String clientId, int listenPort, String peerId) {
 
-    Builder builder = this.helloMessage.toBuilder();
+    Builder builder = Protocol.HelloMessage.newBuilder();
 
     builder.setP2PVersion(p2pVersion);
     builder.setClientId(clientId);
@@ -33,6 +33,7 @@ public class HelloMessage extends P2pMessage {
     this.helloMessage = builder.build();
     this.unpacked = true;
     this.type = MessageTypes.P2P_HELLO.asByte();
+    pack();
   }
 
   private void unPack() {
@@ -123,13 +124,14 @@ public class HelloMessage extends P2pMessage {
    * Get string.
    */
   public String toString() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
-    return "[" + this.getCommand().name() + " p2pVersion="
-        + this.getP2PVersion() + " clientId=" + this.getClientId()
-        + " peerPort=" + this.getListenPort() + " peerId="
-        + this.getPeerId() + "]";
+    return helloMessage.toString();
+//    if (!this.unpacked) {
+//      this.unPack();
+//    }
+//    return "[" + this.getCommand().name() + " p2pVersion="
+//        + this.getP2PVersion() + " clientId=" + this.getClientId()
+//        + " peerPort=" + this.getListenPort() + " peerId="
+//        + this.getPeerId() + "]";
   }
 
   @Override

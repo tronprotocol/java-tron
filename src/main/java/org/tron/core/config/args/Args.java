@@ -1,8 +1,27 @@
 package org.tron.core.config.args;
 
+import static org.tron.common.crypto.Hash.sha3;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.ConfigObject;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,15 +31,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-
-import java.io.*;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.tron.common.crypto.Hash.sha3;
 
 @Slf4j
 @NoArgsConstructor
@@ -386,7 +396,7 @@ public class Args {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
         try {
-          Socket s = new Socket("www.google.com", 80);
+          Socket s = new Socket("www.baidu.com", 80);
           INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
         } catch (IOException e) {
