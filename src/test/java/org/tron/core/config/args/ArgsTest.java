@@ -30,12 +30,9 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{}, Configuration.getByPath("config-junit.conf"));
+    Args.setParam(new String[]{"-w"}, Configuration.getByPath("config-junit.conf"));
 
     Args args = Args.getInstance();
-
-    Assert.assertEquals("61ea9502165977c7b2be2be25d3030c21b7b33a4aeb0b13ac578001104bef721",
-        args.getPrivateKey());
 
     Assert.assertEquals("database-test", args.getStorage().getDirectory());
 

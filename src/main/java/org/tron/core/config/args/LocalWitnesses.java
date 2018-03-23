@@ -15,16 +15,27 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Lists;
+import java.util.List;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
-
 public class LocalWitnesses {
 
   @Getter
-  private List<String> privateKeys;
+  private List<String> privateKeys = Lists.newArrayList();
+
+  public LocalWitnesses() {
+  }
+
+  public LocalWitnesses(String privateKey) {
+    addPrivateKeys(privateKey);
+  }
+
+  public LocalWitnesses(List<String> privateKeys) {
+    setPrivateKeys(privateKeys);
+  }
 
   /**
    * Private key of ECKey.
@@ -33,17 +44,31 @@ public class LocalWitnesses {
     if (CollectionUtils.isEmpty(privateKeys)) {
       return;
     }
-    this.privateKeys = privateKeys;
     for (String privateKey : privateKeys) {
-      if (StringUtils.startsWithIgnoreCase(privateKey, "0X")) {
-        privateKey = privateKey.substring(2);
-      }
+      validate(privateKey);
+    }
+    this.privateKeys = privateKeys;
+  }
 
-      if (StringUtils.isNotBlank(privateKey) && privateKey.length() != 66) {
-        throw new IllegalArgumentException(
-            "Private key(" + privateKey + ") must be 66-bits hex string.");
-      }
+  private void validate(String privateKey) {
+    if (StringUtils.startsWithIgnoreCase(privateKey, "0X")) {
+      privateKey = privateKey.substring(2);
     }
 
+    if (StringUtils.isNotBlank(privateKey) && privateKey.length() != 66) {
+      throw new IllegalArgumentException(
+          "Private key(" + privateKey + ") must be 66-bits hex string.");
+    }
   }
+
+  public void addPrivateKeys(String privateKey) {
+    validate(privateKey);
+    this.privateKeys.add(privateKey);
+  }
+
+  //get the first one recently
+  public String getPrivateKey() {
+    return privateKeys.get(0);
+  }
+
 }
