@@ -105,7 +105,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
     //homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
-    homeNode = new Node(Args.getInstance().getNetNodeId(), args.getNodeExternalIp(),
+    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
         args.getNodeListenPort());
 
     logger.info("homeNode:" + Args.getInstance().getMyKey().getNodeId());

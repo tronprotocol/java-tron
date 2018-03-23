@@ -82,7 +82,7 @@ public class PeerServer {
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);
-            logger.info("NodeId: [{}] ", Hex.toHexString(this.args.getNetNodeId()));
+            logger.info("NodeId: [{}] ", Hex.toHexString(this.args.getMyKey().getNodeId()));
 
             channelFuture = b.bind(port).sync();
 
