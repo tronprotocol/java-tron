@@ -23,12 +23,12 @@ Resources
 ===================
 
 1. [TRON Website](https://tron.network/)
-2. [Documentation](https://github.com/tronprotocol/java-tron)(Comming soon. You are seeing part of it.)
+2. [Documentation](https://github.com/tronprotocol/java-tron)(Coming soon. You are seeing part of it.)
 3. [Blog](https://tronprotocol.github.io/tron-blog/)
 4. [Community Telegram Group](https://t.me/tronnetworkEN)
 5. [Slack Workspace](https://tronfoundation.slack.com/)
-6. White Paper(Comming soon)
-7. Roadmap(Comming soon)
+6. White Paper(Coming soon)
+7. Roadmap(Coming soon)
 8. [TRON Wiki](http://wiki.tron.network/en/latest/)
 9. [TRON Protocol](https://github.com/tronprotocol/protocol)
 10. [Wallet Client](https://github.com/tronprotocol/wallet-cli)
