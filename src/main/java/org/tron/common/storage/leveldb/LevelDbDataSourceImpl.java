@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
@@ -39,15 +40,13 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 
 @Slf4j
+@NoArgsConstructor
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   String dataBaseName;
   DB database;
   boolean alive;
   private String parentName;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
-
-  public LevelDbDataSourceImpl() {
-  }
 
   /**
    * constructor.

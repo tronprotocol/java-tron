@@ -28,7 +28,6 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -154,33 +153,27 @@ public class RpcApiService implements Service {
 
     //refactor、test later
     private void checkVoteWitnessAccount(VoteWitnessContract req) {
-
       //send back to cli
-      Preconditions.checkNotNull(req.getOwnerAddress(), "OwnerAddress is null");
+      ByteString ownerAddress = req.getOwnerAddress();
+      Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
-      AccountCapsule account = app.getDbManager().getAccountStore()
-          .get(req.getOwnerAddress().toByteArray());
+      AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
+      Preconditions.checkNotNull(account, "OwnerAddress[" + ownerAddress + "] not exists");
 
-      Preconditions.checkNotNull(account, "OwnerAddress[" + req.getOwnerAddress() + "] not exists");
+      int votesCount = req.getVotesCount();
+      Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
+      Preconditions.checkArgument(
+              account.getShare() < votesCount,
+              "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
 
-      Preconditions
-          .checkArgument(req.getVotesCount() <= 0, "VotesCount[" + req.getVotesCount() + "] <= 0");
-
-      Preconditions.checkArgument(account.getShare() < req.getVotesCount(),
-          "Share[" + account.getShare() + "] <  VotesCount[" + req.getVotesCount() + "]");
-
-      Iterator<Vote> iterator = req.getVotesList().iterator();
-      while (iterator.hasNext()) {
-        Vote vote = iterator.next();
+      req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore()
-            .get(voteAddress.toByteArray());
+        WitnessCapsule witness = app.getDbManager().getWitnessStore().get(voteAddress.toByteArray());
         Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
-
-        Preconditions.checkArgument(vote.getVoteCount() <= 0,
-            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount()
-                + "] <= 0");
-      }
+        Preconditions.checkArgument(
+                vote.getVoteCount() <= 0,
+                "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+      });
     }
 
     @Override
@@ -286,6 +279,19 @@ public class RpcApiService implements Service {
     public void getAssetIssueList(EmptyMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(wallet.getAssetIssueList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueByAccount(Account request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      ByteString fromBs = request.getAddress();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAssetIssueByAccount(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
       responseObserver.onCompleted();
     }
   }
