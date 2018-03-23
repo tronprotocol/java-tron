@@ -17,9 +17,12 @@
  */
 package org.tron.common.overlay.message;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 
 /**
@@ -33,31 +36,36 @@ import org.tron.core.config.args.Args;
 @Component
 public class StaticMessages {
 
-    @Autowired
-    Args args;
+  @Autowired
+  Args args;
 
-    public final static PingMessage PING_MESSAGE = new PingMessage();
-    public final static PongMessage PONG_MESSAGE = new PongMessage();
-    public final static DisconnectMessage DISCONNECT_MESSAGE = new DisconnectMessage(ReasonCode.REQUESTED);
+  public final static PingMessage PING_MESSAGE = new PingMessage();
+  public final static PongMessage PONG_MESSAGE = new PongMessage();
+  public final static DisconnectMessage DISCONNECT_MESSAGE = new DisconnectMessage(
+      ReasonCode.REQUESTED);
 
-    public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
+  public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
 
-    public HelloMessage createHelloMessage(String peerId) {
-        return createHelloMessage(peerId, args.getNodeListenPort());
-    }
-    public HelloMessage createHelloMessage(String peerId, int listenPort) {
+  public HelloMessage createHelloMessage(ChannelHandlerContext ctx, String peerId) {
+    return createHelloMessage(ctx, peerId, args.getNodeListenPort());
+  }
 
-        String helloAnnouncement = buildHelloAnnouncement();
-        //TODO#p2p : get version from config here
-        byte p2pVersion = 0;
-        //byte p2pVersion = (byte) config.defaultP2PVersion();
-        //List<Capability> capabilities = configCapabilities.getConfigCapabilities();
-        return new HelloMessage(p2pVersion, helloAnnouncement,
-                listenPort, peerId);
-    }
+  public HelloMessage createHelloMessage(ChannelHandlerContext ctx, String peerId,
+      int listenPort) {
 
-    private String buildHelloAnnouncement() {
-        return "java-tron";
+    String helloAnnouncement = buildHelloAnnouncement();
+    //TODO#p2p : get version from config here
+    byte version = 0;
+    Node node = new Node(ByteArray.fromHexString(peerId),
+        ctx.channel().localAddress().toString(), listenPort);
+    //byte p2pVersion = (byte) config.defaultP2PVersion();
+    //List<Capability> capabilities = configCapabilities.getConfigCapabilities();
+    return new HelloMessage(node, version, helloAnnouncement,
+        listenPort, peerId);
+  }
+
+  private String buildHelloAnnouncement() {
+    return "java-tron";
 //        String version = config.projectVersion();
 //        String numberVersion = version;
 //        Pattern pattern = Pattern.compile("^\\d+(\\.\\d+)*");
@@ -74,5 +82,5 @@ public class StaticMessages {
 //
 //        return String.format("Ethereum(J)/v%s/%s/%s/Java/%s", numberVersion, system,
 //                config.projectVersionModifier().equalsIgnoreCase("release") ? "Release" : "Dev", phrase);
-    }
+  }
 }
