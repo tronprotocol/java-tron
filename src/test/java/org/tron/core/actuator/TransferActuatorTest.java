@@ -15,6 +15,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Configuration;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -25,6 +26,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class TransferActuatorTest {
+
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_transfer_test";
@@ -99,8 +101,8 @@ public class TransferActuatorTest {
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), 9899L);
-      Assert.assertEquals(toAccount.getBalance(), 200L);
+      Assert.assertEquals(owner.getBalance(), 10000 - AMOUNT - ChainConstant.TRANSFER_FEE);
+      Assert.assertEquals(toAccount.getBalance(), 100 + AMOUNT);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -121,7 +123,7 @@ public class TransferActuatorTest {
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), 0L);
+      Assert.assertEquals(owner.getBalance(), 10000 - 9999 - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), 10099L);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -137,19 +139,19 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertTrue(false);
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertTrue(e instanceof ContractExeException);
       Assert.assertEquals(ret.getInstance().getRet(), code.FAILED);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(TO_ADDRESS));
-
-      Assert.assertEquals(owner.getBalance(), 9999L);
-      Assert.assertEquals(toAccount.getBalance(), 100L);
     }
+    AccountCapsule owner = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule toAccount = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(TO_ADDRESS));
+    logger.info(owner.getBalance() + ")))))");
+    Assert.assertEquals(owner.getBalance(), 0 - ChainConstant.TRANSFER_FEE);
+    Assert.assertEquals(toAccount.getBalance(), 10000 + 100L);
   }
 }

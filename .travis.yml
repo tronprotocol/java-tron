@@ -6,3 +6,7 @@ jdk: oraclejdk8
 script:
   - ./gradlew lint
   - ./gradlew test
+  
+skip_build:
+    - README.md
+    - LICENSE
