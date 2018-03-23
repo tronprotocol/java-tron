@@ -64,6 +64,10 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
                 logger.debug("Open {} connection, channel: {}", isInbound() ? "inbound" : "outbound", ch.toString());
             }
 
+            if (ch.remoteAddress() == null) {
+                logger.info("%%%%%% remote null %%%%%%");
+            }
+
             if (isInbound() && channelManager.isRecentlyDisconnected(ch.remoteAddress().getAddress())) {
                 // avoid too frequent connection attempts
                 logger.info("Drop connection - the same IP was disconnected recently, channel: {}", ch.toString());

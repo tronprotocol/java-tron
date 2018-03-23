@@ -9,7 +9,7 @@ import org.tron.common.overlay.message.MessageFactory;
 public class TronMessageFactory extends MessageFactory {
 
   @Override
-  protected TronMessage create(byte type, byte[] packed) {
+  public TronMessage create(byte type, byte[] packed) {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     switch (receivedTypes) {
       case TRX:

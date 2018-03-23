@@ -89,9 +89,8 @@ public class ChannelManager {
     private NodeImpl peerDel;
 
     @Autowired
-    private ChannelManager(final Args args, final PeerClient peerClient,
+    private ChannelManager(final PeerClient peerClient,
         final PeerServer peerServer, final NodeImpl peerDel) {
-        this.args = args;
         //this.syncManager = syncManager;
         this.peerClient = peerClient;
         this.peerServer = peerServer;

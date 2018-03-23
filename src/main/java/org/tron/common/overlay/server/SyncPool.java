@@ -253,9 +253,12 @@ public class SyncPool {
     public boolean test(NodeHandler handler) {
       logger.info(handler.getNode().toString());
       logger.info(handler.getNode().getHexId());
+      logger.info(handler.getState().toString());
+
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
+
 
       if (handler.getState().equals(State.Dead)) {
         return false;
@@ -299,6 +302,12 @@ public class SyncPool {
     //TODO: here can only use TCP connect seed peer.
     List<NodeHandler> newNodes;
     newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
+   // newNodes = new ArrayList<>();
+
+    //newNodes.add(nodeManager.getNodeHandler(new Node()))
+
+
+
 
     if (logger.isTraceEnabled()) {
       logDiscoveredNodes(newNodes);
