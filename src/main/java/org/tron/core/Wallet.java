@@ -18,7 +18,9 @@
 
 package org.tron.core;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.AccountList;
@@ -30,6 +32,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
@@ -56,9 +59,12 @@ import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class Wallet {
+
   private BlockStore db;
-  @Getter private final ECKey ecKey;
-  @Getter private UtxoStore utxoStore;
+  @Getter
+  private final ECKey ecKey;
+  @Getter
+  private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
   private Manager dbManager;
@@ -189,14 +195,14 @@ public class Wallet {
   public AccountList getAllAccounts() {
     AccountList.Builder builder = AccountList.newBuilder();
     dbManager.getAccountStore().getAllAccounts()
-            .forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
+        .forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
     return builder.build();
   }
 
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     dbManager.getWitnessStore().getAllWitnesses()
-            .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
+        .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
   }
 
@@ -212,7 +218,19 @@ public class Wallet {
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
-            .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    assetIssueCapsuleList.stream()
+        .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
+        .forEach(witnessCapsule -> {
+          builder.addAssetIssue(witnessCapsule.getInstance());
+        });
     return builder.build();
   }
 }
