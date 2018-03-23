@@ -50,11 +50,6 @@ public class DisconnectMessage extends P2pMessage {
     return this.data;
   }
 
-  @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.fromByte(this.type);
-  }
-
   /**
    * Get reason of disconnect.
    */
@@ -73,7 +68,7 @@ public class DisconnectMessage extends P2pMessage {
     if (!this.unpacked) {
       this.unPack();
     }
-    return "[" + this.getCommand().name() + " reason=" + this.getReason() + "]";
+    return "[" + this.getType().name() + " reason=" + this.getReason() + "]";
   }
 
   @Override

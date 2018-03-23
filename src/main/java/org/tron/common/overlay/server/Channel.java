@@ -111,9 +111,10 @@ public class Channel {
 
         isActive = remoteId != null && !remoteId.isEmpty();
 
+        //TODO: use config here
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
-        //pipeline.addLast(stats.tcp);
+        pipeline.addLast(stats.tcp);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 

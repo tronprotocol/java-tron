@@ -78,7 +78,7 @@ public enum MessageTypes {
   }
 
   public static boolean inP2pRange(byte code) {
-    return code < LAST.asByte() && code >= P2P_HELLO.asByte();
+    return code <= P2P_PONG.asByte() && code >= P2P_HELLO.asByte();
   }
 
   public static boolean inTronRange(byte code) {

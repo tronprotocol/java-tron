@@ -108,11 +108,6 @@ public class HelloMessage extends P2pMessage {
     return this.helloMessage.getPeerId();
   }
 
-  @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.fromByte(this.type);
-  }
-
   /**
    * Set peer ID.
    */

@@ -34,9 +34,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
-import org.tron.common.overlay.message.P2pMessageCodes;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.MessageTypes;
 
 
 /**
@@ -108,29 +108,29 @@ P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     logger.info("rcv p2p msg *************************************************");
 
-    if (P2pMessageCodes.inRange(msg.getCommand().asByte())) {
-      logger.trace("P2PHandler invoke: [{}]", msg.getCommand());
+    if (MessageTypes.inP2pRange(msg.getType().asByte())) {
+      logger.trace("P2PHandler invoke: [{}]", msg.getType());
     }
 
     //tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
-    switch (msg.getCommand()) {
-      case HELLO:
+    switch (msg.getType()) {
+      case P2P_HELLO:
         msgQueue.receivedMessage(msg);
         logger.info("p2p hello");
         setHandshake((HelloMessage) msg, ctx);
         break;
-      case DISCONNECT:
+      case P2P_DISCONNECT:
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
         processDisconnect(ctx, (DisconnectMessage) msg);
         break;
-      case PING:
+      case P2P_PING:
         msgQueue.receivedMessage(msg);
         ctx.writeAndFlush(PONG_MESSAGE);
         break;
-      case PONG:
+      case P2P_PONG:
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
         break;

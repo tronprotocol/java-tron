@@ -9,6 +9,7 @@ public class PingMessage extends P2pMessage {
 
   public PingMessage() {
     this.type = MessageTypes.P2P_PING.asByte();
+    this.data = FIXED_PAYLOAD;
   }
 
   public PingMessage(byte type, byte[] rawData) {
@@ -20,10 +21,6 @@ public class PingMessage extends P2pMessage {
     return FIXED_PAYLOAD;
   }
 
-  @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.fromByte(this.type);
-  }
 
   @Override
   public String toString() {

@@ -30,7 +30,4 @@ public abstract class P2pMessage extends Message {
         super(type, rawData);
     }
 
-    public P2pMessageCodes getCommand() {
-        return P2pMessageCodes.fromByte(type);
-    }
 }

@@ -9,6 +9,7 @@ public class PongMessage extends P2pMessage {
 
   public PongMessage() {
     this.type = MessageTypes.P2P_PONG.asByte();
+    this.data = FIXED_PAYLOAD;
   }
 
   public PongMessage(byte type, byte[] rawData) {
@@ -21,13 +22,8 @@ public class PongMessage extends P2pMessage {
   }
 
   @Override
-  public P2pMessageCodes getCommand() {
-    return P2pMessageCodes.fromByte(this.type);
-  }
-
-  @Override
   public String toString() {
-    return "[" + this.getCommand().name() + "]";
+    return "[" + this.getType().name() + "]";
   }
 
   @Override
