@@ -251,14 +251,10 @@ public class SyncPool {
 
     @Override
     public boolean test(NodeHandler handler) {
-      logger.info(handler.getNode().toString());
-      logger.info(handler.getNode().getHexId());
-      logger.info(handler.getState().toString());
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
-
 
       if (!handler.getState().equals(State.Active)) {
         return false;
@@ -317,7 +313,11 @@ public class SyncPool {
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
       if (!Arrays.equals(nodeManager.getPublicHomeNode().getId(),n.getNode().getId())){
-          channelManager.connect(n.getNode());
+
+        logger.info("new node--------------------");
+        logger.info(n.getNode().toString());
+        logger.info(n.getState().toString());
+        channelManager.connect(n.getNode());
       }
     }
   }

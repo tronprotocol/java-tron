@@ -103,9 +103,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     this.dbManager = dbManager;
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
-    args.nodeId();
+
     //homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
-    homeNode = dbManager.getHomeNode();
+    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
+        args.getNodeListenPort());
 
     logger.info("homeNode : {}", homeNode.toString());
 

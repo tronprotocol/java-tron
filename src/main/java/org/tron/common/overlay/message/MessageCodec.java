@@ -65,7 +65,8 @@ public class MessageCodec extends ByteToMessageDecoder {
     try {
       msg = createMessage(code, payload);
     } catch (Exception ex) {
-      loggerNet.debug("Incorrectly encoded message from: \t{}, dropping peer", channel);
+      loggerNet.info("Incorrectly encoded message from: \t{}, dropping peer", channel);
+      loggerNet.info(ex.getMessage());
       channel.disconnect(ReasonCode.BAD_PROTOCOL);
       return null;
     }

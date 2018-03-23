@@ -27,7 +27,7 @@ public class PingMessage extends P2pMessage {
 
   @Override
   public String toString() {
-    return "[" + getCommand().name() + "]";
+    return "[" + getType().name() + "]";
   }
 
   @Override

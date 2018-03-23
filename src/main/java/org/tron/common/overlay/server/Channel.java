@@ -36,7 +36,6 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.message.StaticMessages;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
@@ -52,8 +51,8 @@ public class Channel {
 
     private final static Logger logger = LoggerFactory.getLogger("Channel");
 
-    @Autowired
-    Args args;
+//    @Autowired
+//    Args args;
 
     @Autowired
     protected MessageQueue msgQueue;
@@ -83,7 +82,18 @@ public class Channel {
     private InetSocketAddress inetSocketAddress;
 
     private Node node;
+
     private PeerConnectionDelegate peerDel;
+
+    public TronState getTronState() {
+        return tronState;
+    }
+
+    public void setTronState(TronState tronState) {
+        this.tronState = tronState;
+    }
+
+    private TronState tronState = TronState.INIT;
 
     protected NodeStatistics nodeStatistics;
     private boolean discoveryMode;
@@ -211,6 +221,10 @@ public class Channel {
     public void onSyncDone(boolean done) {
     }
 
+    public boolean isProtocolsInitialized() {
+        return tronState.ordinal() > TronState.INIT.ordinal();
+    }
+
     public boolean isDiscoveryMode() {
         return discoveryMode;
     }
@@ -253,6 +267,13 @@ public class Channel {
 
     public ChannelManager getChannelManager() {
         return channelManager;
+    }
+
+    public enum TronState {
+        INIT,
+        START_TO_SYNC,
+        SYNC_COMPLETED,
+        SYNC_FAILED
     }
 
     @Override

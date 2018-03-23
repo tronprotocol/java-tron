@@ -39,7 +39,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private final static Logger logger = LoggerFactory.getLogger("net");
 
-  protected Channel channel;
+  protected PeerConnection peer;
 
   private MessageQueue msgQueue = null;
 
@@ -60,11 +60,11 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws InterruptedException {
     logger.info("tron handle recv msg:" + msg);
-    channel.getNodeStatistics().ethInbound.add();
+    peer.getNodeStatistics().ethInbound.add();
     msgQueue.receivedMessage(msg);
 
     //handle message
-    peerDel.onMessage((PeerConnection) channel, msg);
+    peerDel.onMessage(peer, msg);
   }
 
   @Override
@@ -82,19 +82,19 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   public void activate() {
     logger.info("ETH protocol activated");
-    peerDel.onConnectPeer((PeerConnection) channel);
+    peerDel.onConnectPeer(peer);
 //    ethereumListener.trace("ETH protocol activated");
-//    sendStatus();
+
   }
 
   protected void disconnect(ReasonCode reason) {
     msgQueue.disconnect(reason);
-    channel.getNodeStatistics().nodeDisconnectedLocal(reason);
+    peer.getNodeStatistics().nodeDisconnectedLocal(reason);
   }
 
   protected void sendMessage(TronMessage message) {
     msgQueue.sendMessage(message);
-    channel.getNodeStatistics().ethOutbound.add();
+    peer.getNodeStatistics().ethOutbound.add();
   }
 
   public void setMsgQueue(MessageQueue msgQueue) {
@@ -106,7 +106,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
   }
 
   public void setChannel(Channel channel) {
-    this.channel = channel;
+    this.peer = (PeerConnection) channel;
   }
 
 }
