@@ -162,6 +162,7 @@ public class MessageQueue {
 
       //TODO#p2p#peerDel : let node know
       //ethereumListener.onSendMessage(channel, msg);
+      logger.info("msg queue send:" + msg);
 
       ctx.writeAndFlush(Unpooled.wrappedBuffer(msg.getSendData()))
           .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
