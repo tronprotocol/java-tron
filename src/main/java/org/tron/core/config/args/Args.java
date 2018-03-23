@@ -140,6 +140,10 @@ public class Args {
   @Setter
   private long syncNodeCount;
 
+  @Getter
+  @Setter
+  private byte nodeP2pVersion;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -168,6 +172,7 @@ public class Args {
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
     INSTANCE.nodeP2pPingInterval = 0L;
     INSTANCE.syncNodeCount = 0;
+    INSTANCE.nodeP2pVersion = 0;
   }
 
   /**
@@ -263,6 +268,10 @@ public class Args {
 
     if (config.hasPath("syn.node.count")) {
       INSTANCE.syncNodeCount = config.getLong("syn.node.count");
+    }
+
+    if (config.hasPath("node.p2p.version")) {
+      INSTANCE.nodeP2pVersion = (byte) config.getAnyRef("node.p2p.version");
     }
   }
 

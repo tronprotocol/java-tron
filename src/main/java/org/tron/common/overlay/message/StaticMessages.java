@@ -55,7 +55,7 @@ public class StaticMessages {
 
     String helloAnnouncement = buildHelloAnnouncement();
     //TODO#p2p : get version from config here
-    byte version = 0;
+    byte version = Args.getInstance().getNodeP2pVersion();
     Node node = new Node(ByteArray.fromHexString(peerId),
         ctx.channel().localAddress().toString(), listenPort);
     //byte p2pVersion = (byte) config.defaultP2PVersion();
