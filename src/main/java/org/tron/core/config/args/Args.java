@@ -461,21 +461,10 @@ public class Args {
   }
 
   public ECKey getMyKey() {
-    return ECKey.fromPrivate(Hex.decode(INSTANCE.privateKey));
-  }
-
-  /**
-   * Home NodeID calculated from 'peer.privateKey' property
-   */
-  public byte[] nodeId() {
-    return getMyKey().getNodeId();
-  }
-
-  public byte[] getNetNodeId() {
     if (ArrayUtils.isEmpty(INSTANCE.p2pNodeId)) {
       INSTANCE.p2pNodeId = ByteArray.fromHexString(getGeneratedNodePrivateKey());
     }
-
-    return INSTANCE.p2pNodeId;
+    
+    return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
   }
 }
