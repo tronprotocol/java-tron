@@ -12,7 +12,7 @@ import org.tron.core.capsule.AccountCapsule;
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static final String ACCOUNT_SUN_ADDRESS
-      = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
+      = "6c22c1af7bfbb2b0e07148ecba27b56f81a54fcf";
 
   private static final String ACCOUNT_BLACKHOLE_ADDRESS
       = "548794500882809695a8a687866e76d4271a146a";
