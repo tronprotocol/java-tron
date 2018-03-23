@@ -26,6 +26,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -188,8 +189,8 @@ public class Manager {
     if (nodes.size() > 0) {
       return nodes.stream().findFirst().get();
     } else {
-      Node node = Node.instanceOf(args.getNodeExternalIp()
-          + ":" + args.getNodeListenPort());
+      Node node = new Node(new ECKey().getNodeId(), args.getNodeExternalIp(),
+          args.getNodeListenPort());
       nodes.add(node);
       this.peersStore.put("home".getBytes(), nodes);
       return node;
