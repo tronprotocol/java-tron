@@ -268,8 +268,8 @@ public class Args {
     INSTANCE.syncNodeCount =
         config.hasPath("syn.node.count") ? config.getLong("syn.node.count") : 0;
 
-    INSTANCE.nodeP2pVersion =
-        config.hasPath("node.p2p.version") ? (byte) config.getAnyRef("node.p2p.version") : 0;
+    INSTANCE.nodeP2pVersion = 0;
+//        config.hasPath("node.p2p.version") ? (byte) config.getAnyRef("node.p2p.version") : 0;
   }
 
 

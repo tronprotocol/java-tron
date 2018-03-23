@@ -103,7 +103,7 @@ public class Channel {
 
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
-        pipeline.addLast(stats.tcp);
+        //pipeline.addLast(stats.tcp);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
@@ -161,6 +161,8 @@ public class Channel {
 
     public void activateTron(ChannelHandlerContext ctx) {
         //TODO: use tron handle here.
+
+        logger.info("tron active");
         tronHandler = new TronHandler();
 
         ctx.pipeline().addLast("data", tronHandler);

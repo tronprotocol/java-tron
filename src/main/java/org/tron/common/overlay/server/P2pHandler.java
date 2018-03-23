@@ -17,23 +17,26 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.*;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.P2pMessage;
+import org.tron.common.overlay.message.P2pMessageCodes;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 
 /**
@@ -47,7 +50,8 @@ import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
  */
 @Component
 @Scope("prototype")
-public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
+public class
+P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   public final static byte VERSION = 5;
 
@@ -113,6 +117,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     switch (msg.getCommand()) {
       case HELLO:
         msgQueue.receivedMessage(msg);
+        logger.info("p2p hello");
         setHandshake((HelloMessage) msg, ctx);
         break;
       case DISCONNECT:

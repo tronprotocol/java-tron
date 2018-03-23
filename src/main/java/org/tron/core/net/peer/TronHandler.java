@@ -59,6 +59,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws InterruptedException {
+    logger.info("tron handle recv msg:" + msg);
     channel.getNodeStatistics().ethInbound.add();
     msgQueue.receivedMessage(msg);
 
@@ -74,13 +75,14 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-    logger.debug("handlerRemoved: kill timers in EthHandler");
+    logger.info("handlerRemoved: kill timers in EthHandler");
 //    ethereumListener.removeListener(listener);
 //    onShutdown();
   }
 
   public void activate() {
-    logger.debug("ETH protocol activated");
+    logger.info("ETH protocol activated");
+    peerDel.onConnectPeer((PeerConnection) channel);
 //    ethereumListener.trace("ETH protocol activated");
 //    sendStatus();
   }

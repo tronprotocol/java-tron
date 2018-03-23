@@ -830,6 +830,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
+    logger.info("start sync with::" + peer);
     startSyncWithPeer(peer);
 //    if (mapPeer.containsKey(peer.getAddress())) {
 //      return;

@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.Queue;
@@ -162,7 +163,8 @@ public class MessageQueue {
       //TODO#p2p#peerDel : let node know
       //ethereumListener.onSendMessage(channel, msg);
 
-      ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+      ctx.writeAndFlush(Unpooled.wrappedBuffer(msg.getSendData()))
+          .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
       if (msg.getAnswerMessage() != null) {
         messageRoundtrip.incRetryTimes();

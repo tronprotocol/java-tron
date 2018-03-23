@@ -187,6 +187,7 @@ public class PeerConnection extends Channel{
   }
 
   public void sendMessage(Message message) {
+    logger.info("nodeimpl send message" + message);
     msgQueue.sendMessage(message);
     nodeStatistics.ethOutbound.add();
   }
