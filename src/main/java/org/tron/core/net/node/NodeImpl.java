@@ -554,6 +554,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
+    peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     long remainNum = 0;

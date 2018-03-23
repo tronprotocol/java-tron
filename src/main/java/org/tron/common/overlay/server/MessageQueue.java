@@ -57,7 +57,7 @@ import org.tron.common.overlay.message.StaticMessages;
 @Scope("prototype")
 public class MessageQueue {
 
-  private static final Logger logger = LoggerFactory.getLogger("net");
+  private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
     private AtomicInteger cnt = new AtomicInteger(0);
@@ -116,6 +116,7 @@ public class MessageQueue {
   }
 
   private void disconnect(DisconnectMessage msg) {
+    logger.info("disconnect here");
     ctx.writeAndFlush(msg);
     ctx.close();
   }

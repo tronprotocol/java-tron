@@ -270,9 +270,14 @@ public class Channel {
         return channelManager;
     }
 
+    public boolean isSyncing() {
+        return tronState.ordinal() > TronState.START_TO_SYNC.ordinal();
+    }
+
     public enum TronState {
         INIT,
         START_TO_SYNC,
+        SYNCING,
         SYNC_COMPLETED,
         SYNC_FAILED
     }

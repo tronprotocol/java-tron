@@ -37,7 +37,7 @@ import org.tron.protos.Protocol.Block;
  */
 public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
-  private final static Logger logger = LoggerFactory.getLogger("net");
+  private final static Logger logger = LoggerFactory.getLogger("TronHandler");
 
   protected PeerConnection peer;
 
@@ -75,13 +75,13 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-    logger.info("handlerRemoved: kill timers in EthHandler");
+    logger.info("handlerRemoved: kill timers in TronHandler");
 //    ethereumListener.removeListener(listener);
 //    onShutdown();
   }
 
   public void activate() {
-    logger.info("ETH protocol activated");
+    logger.info("Tron protocol activated");
     peerDel.onConnectPeer(peer);
 //    ethereumListener.trace("ETH protocol activated");
 
