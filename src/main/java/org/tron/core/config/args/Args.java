@@ -163,7 +163,7 @@ public class Args {
     INSTANCE.nodeDiscoveryEnable = false;
     INSTANCE.nodeDiscoveryPersist = false;
     INSTANCE.nodeConnectionTimeout = 0;
-    INSTANCE.nodeActive = Collections.EMPTY_LIST;
+    INSTANCE.nodeActive = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 0;
     INSTANCE.nodeListenPort = 0;
@@ -226,53 +226,50 @@ public class Args {
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
-    INSTANCE.blockInterval = config.getLong("block.interval");
-    INSTANCE.needSyncCheck = config.getBoolean("block.needSyncCheck");
 
-    if (config.hasPath("node.discovery.enable")) {
-      INSTANCE.nodeDiscoveryEnable = config.getBoolean("node.discovery.enable");
-    }
+    INSTANCE.blockInterval =
+        config.hasPath("block.interval") ? config.getLong("block.interval") : 0;
 
-    if (config.hasPath("node.discovery.persist")) {
-      INSTANCE.nodeDiscoveryPersist = config.getBoolean("node.discovery.persist");
-    }
+    INSTANCE.needSyncCheck =
+        config.hasPath("block.needSyncCheck") && config.getBoolean("block.needSyncCheck");
 
-    if (config.hasPath("node.connection.timeout")) {
-      INSTANCE.nodeConnectionTimeout = config.getInt("node.connection.timeout") * 1000;
-    }
+    INSTANCE.nodeDiscoveryEnable =
+        config.hasPath("node.discovery.enable") && config.getBoolean("node.discovery.enable");
+
+    INSTANCE.nodeDiscoveryPersist =
+        config.hasPath("node.discovery.persist") && config.getBoolean("node.discovery.persist");
+
+    INSTANCE.nodeConnectionTimeout =
+        config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
+            : 0;
 
     INSTANCE.nodeActive = nodeActive(config);
 
-    if (config.hasPath("node.channel.read.timeout")) {
-      INSTANCE.nodeChannelReadTimeout = config.getInt("node.channel.read.timeout");
-    }
+    INSTANCE.nodeChannelReadTimeout =
+        config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
+            : 0;
 
-    if (config.hasPath("node.maxActiveNodes")) {
-      INSTANCE.nodeMaxActiveNodes = config.getInt("node.maxActiveNodes");
-    }
+    INSTANCE.nodeMaxActiveNodes =
+        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
 
-    if (config.hasPath("node.listen.port")) {
-      INSTANCE.nodeListenPort = config.getInt("node.listen.port");
-    }
+    INSTANCE.nodeListenPort =
+        config.hasPath("node.listen.port") ? config.getInt("node.listen.port") : 0;
 
     bindIp(config);
     externalIp(config);
 
-    if (config.hasPath("node.discovery.public.home.node")) {
-      INSTANCE.nodeDiscoveryPublicHomeNode = config.getBoolean("node.discovery.public.home.node");
-    }
+    INSTANCE.nodeDiscoveryPublicHomeNode =
+        config.hasPath("node.discovery.public.home.node") && config
+            .getBoolean("node.discovery.public.home.node");
 
-    if (config.hasPath("node.p2p.pingInterval")) {
-      INSTANCE.nodeP2pPingInterval = config.getLong("node.p2p.pingInterval");
-    }
+    INSTANCE.nodeP2pPingInterval =
+        config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
 
-    if (config.hasPath("syn.node.count")) {
-      INSTANCE.syncNodeCount = config.getLong("syn.node.count");
-    }
+    INSTANCE.syncNodeCount =
+        config.hasPath("syn.node.count") ? config.getLong("syn.node.count") : 0;
 
-    if (config.hasPath("node.p2p.version")) {
-      INSTANCE.nodeP2pVersion = (byte) config.getAnyRef("node.p2p.version");
-    }
+    INSTANCE.nodeP2pVersion =
+        config.hasPath("node.p2p.version") ? (byte) config.getAnyRef("node.p2p.version") : 0;
   }
 
 
