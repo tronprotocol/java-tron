@@ -41,11 +41,11 @@ public class ManagerTest {
         0,
         ByteString.copyFrom(
             ECKey.fromPrivate(ByteArray
-                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                .fromHexString(Args.getInstance().getLocalWitnesses().getFirstPrivateKey()))
                 .getAddress()));
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
-        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getFirstPrivateKey()));
   }
 
   @AfterClass
