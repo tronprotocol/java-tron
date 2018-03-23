@@ -25,7 +25,7 @@ public class RevokingStoreTest {
   public void init() {
     revokingDatabase = RevokingStore.getInstance();
     revokingDatabase.enable();
-    Args.setParam(new String[]{"--witness", "-d", "output_revokingStore_test"},
+    Args.setParam(new String[]{"-d", "output_revokingStore_test"},
         Configuration.getByPath(Constant.NORMAL_CONF));
   }
 
