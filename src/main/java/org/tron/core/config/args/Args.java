@@ -142,7 +142,7 @@ public class Args {
 
   @Getter
   @Setter
-  private byte nodeP2pVersion;
+  private int nodeP2pVersion;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -266,10 +266,10 @@ public class Args {
         config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
 
     INSTANCE.syncNodeCount =
-        config.hasPath("syn.node.count") ? config.getLong("syn.node.count") : 0;
+        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
 
-    INSTANCE.nodeP2pVersion = 0;
-//        config.hasPath("node.p2p.version") ? (byte) config.getAnyRef("node.p2p.version") : 0;
+    INSTANCE.nodeP2pVersion =
+        config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
   }
 
 

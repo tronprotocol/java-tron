@@ -25,7 +25,7 @@ public class HelloMessage extends P2pMessage {
   /**
    * Create hello message.
    */
-  public HelloMessage(Node from, byte version, String clientId, int listenPort, String peerId) {
+  public HelloMessage(Node from, int version, String clientId, int listenPort, String peerId) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
