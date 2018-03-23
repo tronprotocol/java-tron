@@ -1,18 +1,12 @@
 package org.tron.core.db;
 
-import java.io.File;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.DialogOptional;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ProtoCapsule;
-import org.tron.core.config.Configuration;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
@@ -26,14 +20,6 @@ public class RevokingStoreTest {
     revokingDatabase = RevokingStore.getInstance();
     ((RevokingStore) revokingDatabase).getStack().clear();
     revokingDatabase.enable();
-    Args.setParam(new String[]{"--witness", "-d", "output_revokingStore_test"},
-        Configuration.getByPath(Constant.NORMAL_CONF));
-  }
-
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
 
   @Test
