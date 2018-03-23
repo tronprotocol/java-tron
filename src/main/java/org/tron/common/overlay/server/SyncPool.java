@@ -90,13 +90,10 @@ public class SyncPool {
   @Autowired
   public SyncPool(final Args args) {
     this.args = args;
-    logger.info("_________SyncPool ggg.");
     init(channelManager, null);
   }
 
   public void init(final ChannelManager channelManager, PeerConnectionDelegate peerDel) {
-    logger.info("_________SyncPool init {} p {}.", channelManager, peerDel);
-
     if (this.channelManager != null) return; // inited already
     this.channelManager = channelManager;
     //updateLowerUsefulDifficulty();x
