@@ -12,11 +12,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @NoArgsConstructor
 public class Args {
+
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
@@ -27,6 +29,7 @@ public class Args {
   private boolean help = false;
 
   @Getter
+  @Setter
   @Parameter(names = {"-w", "--witness"})
   private boolean witness = false;
 
@@ -34,7 +37,6 @@ public class Args {
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
-  @Getter
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
 
@@ -62,7 +64,7 @@ public class Args {
 
   @Getter
   @Setter
-  private LocalWitnesses localWitnesses;
+  private LocalWitnesses localWitnesses = new LocalWitnesses();
 
   @Getter
   @Setter
@@ -96,20 +98,25 @@ public class Args {
   public static void setParam(final String[] args, final com.typesafe.config.Config config) {
 
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    if (StringUtils.isBlank(INSTANCE.privateKey) && config.hasPath("private.key")) {
-      INSTANCE.privateKey = config.getString("private.key");
 
-      if (INSTANCE.privateKey != null && INSTANCE.privateKey.toUpperCase().startsWith("0X")) {
-        INSTANCE.privateKey = INSTANCE.privateKey.substring(2);
-      }
+    if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
+      INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
+      logger.debug("Got privateKey from cmd");
+    } else if (config.hasPath("localwitness")) {
 
-      if (INSTANCE.privateKey != null && INSTANCE.privateKey.length() != 0
-          && INSTANCE.privateKey.length() != 64) {
-        throw new IllegalArgumentException(
-            "Private key(" + INSTANCE.privateKey + ") must be 64-bits hex string.");
+      INSTANCE.localWitnesses = new LocalWitnesses();
+      List<String> localwitness = config.getStringList("localwitness");
+      if (localwitness.size() > 1) {
+        logger.warn("localwitness size must be one, get the first one");
+        localwitness = localwitness.subList(0, 1);
       }
+      INSTANCE.localWitnesses.setPrivateKeys(localwitness);
+      logger.debug("Got privateKey from config.conf");
     }
-    logger.info("private.key = {}", INSTANCE.privateKey);
+
+    if (INSTANCE.isWitness() && CollectionUtils.isEmpty(INSTANCE.localWitnesses.getPrivateKeys())) {
+      logger.warn("This is a witness node,but localWitnesses is null");
+    }
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
@@ -125,16 +132,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("localwitness")) {
-      INSTANCE.localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList("localwitness");
-      if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one, get the first one");
-        localwitness = localwitness.subList(0, 1);
-      }
-      INSTANCE.localWitnesses.setPrivateKeys(localwitness);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();

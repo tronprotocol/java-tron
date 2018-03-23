@@ -32,7 +32,7 @@ public class ManagerTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath},
+    Args.setParam(new String[]{"-d", dbPath, "-w"},
         Configuration.getByPath(Constant.TEST_CONF));
 
     dbManager.init();
@@ -40,10 +40,12 @@ public class ManagerTest {
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
         0,
         ByteString.copyFrom(
-            ECKey.fromPrivate(ByteArray.fromHexString(Args.getInstance().getPrivateKey()))
+            ECKey.fromPrivate(ByteArray
+                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
                 .getAddress()));
     blockCapsule2.setMerkleRoot();
-    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
+    blockCapsule2.sign(
+        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
   }
 
   @AfterClass
