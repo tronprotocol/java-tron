@@ -41,7 +41,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
-import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -256,9 +255,13 @@ public class SyncPool {
         return false;
       }
 
-      if (!handler.getState().equals(State.Active)) {
+      if (handler.getNode().getId().length == 0) {
         return false;
       }
+
+//      if (!handler.getState().equals(State.Active)) {
+//        return false;
+//      }
 
       return  true;
 
@@ -309,6 +312,12 @@ public class SyncPool {
       logDiscoveredNodes(newNodes);
     }
 
+    logger.info("new nodes----------");
+    newNodes.forEach(node -> logger.info(node.toString()));
+    logger.info("active nodes------------");
+    activePeers.forEach(peerConnection -> logger.info(peerConnection.getNode().toString()));
+
+
     logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
@@ -324,6 +333,8 @@ public class SyncPool {
 
   private synchronized void prepareActive() {
     List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());
+    logger.info("manage active nodes----------");
+    managerActive.forEach(node -> logger.info(node.toString()));
 
     // Filtering out with nodeSelector because server-connected nodes were not tested
     NodeSelector nodeSelector = new NodeSelector();
@@ -340,7 +351,7 @@ public class SyncPool {
 //    active.sort((c1, c2) -> c2.getTotalDifficulty().compareTo(c1.getTotalDifficulty()));
 //
 //    BigInteger highestDifficulty = active.get(0).getTotalDifficulty();
-    int thresholdIdx = (int) (min(args.getSyncNodeCount(), active.size()) - 1);
+    int thresholdIdx = (int) (min(Args.getInstance().getSyncNodeCount(), active.size()) - 1);
 //
 //    for (int i = thresholdIdx; i >= 0; i--) {
 //      if (isIn20PercentRange(active.get(i).getTotalDifficulty(), highestDifficulty)) {
@@ -349,19 +360,19 @@ public class SyncPool {
 //      }
 //    }
 
-    List<PeerConnection> filtered = active.subList(0, thresholdIdx + 1);
+    //List<PeerConnection> filtered = active.subList(0, thresholdIdx + 1);
 
     // sorting by latency in asc order
-    filtered.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
+    active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
-    for (PeerConnection channel : filtered) {
+    for (PeerConnection channel : active) {
       if (!activePeers.contains(channel)) {
         peerDel.onConnectPeer(channel);
       }
     }
 
     activePeers.clear();
-    activePeers.addAll(filtered);
+    activePeers.addAll(active);
   }
 
   private synchronized void cleanupActive() {

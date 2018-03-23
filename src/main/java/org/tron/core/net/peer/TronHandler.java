@@ -69,7 +69,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.warn("Eth handling failed", cause);
+    logger.warn("Tron handling failed", cause);
     ctx.close();
   }
 

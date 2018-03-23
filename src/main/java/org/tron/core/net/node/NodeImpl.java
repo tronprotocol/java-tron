@@ -428,6 +428,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       e.printStackTrace();
     }
 
+    logger.info("wait end");
+
     //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 

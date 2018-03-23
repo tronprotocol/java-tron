@@ -59,7 +59,7 @@ public class Args {
   private String privateKey = "";
 
   @Parameter(names = {"--storage-directory"}, description = "Storage directory")
-  private String storageDirectory = "";
+  private String storageDirectory = "database";
 
   @Parameter(names = {"--overlay-port"}, description = "Overlay port")
   private int overlayPort = 0;

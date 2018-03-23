@@ -108,6 +108,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
         args.getNodeListenPort());
 
+    logger.info("homeNode:" + Args.getInstance().getMyKey().getNodeId());
+
     logger.info("homeNode : {}", homeNode.toString());
 
     table = new NodeTable(homeNode, args.isNodeDiscoveryPublicHomeNode());
@@ -322,15 +324,13 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
+        logger.info(handler.getNode().toString());
         if (predicate.test(handler)) {
           filtered.add(handler);
         }
       }
     }
     logger.info("size {}", filtered.size());
-    filtered.sort((o1, o2) -> o2.getNodeStatistics().getEthTotalDifficulty().compareTo(
-        o1.getNodeStatistics().getEthTotalDifficulty()));
-
     logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
