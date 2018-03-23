@@ -19,11 +19,11 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j
 public class RevokingStoreTest {
 
-  private RevokingDatabase revokingDatabase;
+  private AbstractRevokingStore revokingDatabase;
 
   @Before
   public void init() {
-    revokingDatabase = RevokingStore.getInstance();
+    revokingDatabase = new TestRevokingTronDatabase();
     revokingDatabase.enable();
     Args.setParam(new String[]{"-d", "output_revokingStore_test"},
         Configuration.getByPath(Constant.NORMAL_CONF));
@@ -36,10 +36,10 @@ public class RevokingStoreTest {
   }
 
   @Test
-  public void testUndo() {
-    ((RevokingStore) revokingDatabase).getStack().clear();
+  public synchronized void testUndo() {
+    revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
-        "testrevokingtronstore-testUndo");
+        "testrevokingtronstore-testUndo", revokingDatabase);
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
     DialogOptional dialog = DialogOptional.of(revokingDatabase.buildDialog());
@@ -47,39 +47,39 @@ public class RevokingStoreTest {
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
-        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 2);
+        Assert.assertEquals(revokingDatabase.getStack().size(), 2);
         tmpDialog.merge();
-        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 1);
+        Assert.assertEquals(revokingDatabase.getStack().size(), 1);
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
     });
 
-    Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 1);
+    Assert.assertEquals(revokingDatabase.getStack().size(), 1);
 
     dialog.reset();
 
-    Assert.assertTrue(((RevokingStore) revokingDatabase).getStack().isEmpty());
+    Assert.assertTrue(revokingDatabase.getStack().isEmpty());
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
-    Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 0);
+    Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
     tronDatabase.close();
   }
 
   @Test
-  public void testPop() {
-    ((RevokingStore) revokingDatabase).getStack().clear();
+  public synchronized void testPop() {
+    revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
-        "testrevokingtronstore-testPop");
+        "testrevokingtronstore-testPop", revokingDatabase);
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
     IntStream.rangeClosed(1, 10).forEach(i -> {
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
-        Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 1);
+        Assert.assertEquals(revokingDatabase.getActiveDialog(), 1);
         tmpDialog.commit();
-        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), i);
-        Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 0);
+        Assert.assertEquals(revokingDatabase.getStack().size(), i);
+        Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
       } catch (RevokingStoreIllegalStateException e) {
         e.printStackTrace();
       }
@@ -92,7 +92,7 @@ public class RevokingStoreTest {
     }
 
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
-    Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 9);
+    Assert.assertEquals(revokingDatabase.getStack().size(), 9);
     tronDatabase.close();
   }
 
@@ -111,8 +111,8 @@ public class RevokingStoreTest {
 
   private static class TestRevokingTronStore extends TronStoreWithRevoking<TestProtoCapsule> {
 
-    protected TestRevokingTronStore(String dbName) {
-      super(dbName);
+    protected TestRevokingTronStore(String dbName, RevokingDatabase revokingDatabase) {
+      super(dbName, revokingDatabase);
     }
 
     @Override
@@ -124,5 +124,9 @@ public class RevokingStoreTest {
     public boolean has(byte[] key) {
       return false;
     }
+  }
+
+  private static class TestRevokingTronDatabase extends AbstractRevokingStore {
+
   }
 }
