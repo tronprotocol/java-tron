@@ -23,9 +23,11 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -60,6 +62,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private final boolean PERSIST;
+
+  private Manager dbManager;
 
 //  @Autowired
 //  private Manager dbManager;
@@ -96,6 +100,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   public NodeManager(Manager dbManager) {
     Args args = Args.getInstance();
     PERSIST = args.isNodeDiscoveryPersist();
+    this.dbManager = dbManager;
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
     args.nodeId();
@@ -144,10 +149,34 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         }
       }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
+      dbRead();
+      nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
+        @Override
+        public void run() {
+          dbWrite();
+        }
+      }, DB_COMMIT_RATE, DB_COMMIT_RATE);
+
+
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
     }
+  }
+
+  private void dbRead() {
+    Set<Node> Nodes = this.dbManager.readNeighbours();
+    logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
+    Nodes.forEach(node -> getNodeHandler(node));
+  }
+
+  private void dbWrite() {
+    Set<Node> batch = new HashSet<>();
+    synchronized (this) {
+      nodeHandlerMap.values().forEach(handle -> batch.add(handle.getNode()));
+    }
+    logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
+    dbManager.clearAndWriteNeighbours(batch);
   }
 
   public void setMessageSender(Consumer<DiscoveryEvent> messageSender) {

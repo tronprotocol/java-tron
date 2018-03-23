@@ -260,7 +260,7 @@ public class SyncPool {
       }
 
 
-      if (handler.getState().equals(State.Dead)) {
+      if (!handler.getState().equals(State.Active)) {
         return false;
       }
 
@@ -316,10 +316,8 @@ public class SyncPool {
     logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
-      logger.info("***^^^^^^^^^^^");
       if (!Arrays.equals(nodeManager.getPublicHomeNode().getId(),n.getNode().getId())){
           channelManager.connect(n.getNode());
-          logger.info("***^^^^^^^^^^^");
       }
     }
   }

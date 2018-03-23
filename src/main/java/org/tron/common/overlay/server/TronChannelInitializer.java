@@ -61,11 +61,12 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     public void initChannel(NioSocketChannel ch) throws Exception {
         try {
             if (!peerDiscoveryMode) {
-                logger.debug("Open {} connection, channel: {}", isInbound() ? "inbound" : "outbound", ch.toString());
+                logger.info("Open {} connection, channel: {}", isInbound() ? "inbound" : "outbound", ch.toString());
             }
 
             if (ch.remoteAddress() == null) {
                 logger.info("%%%%%% remote null %%%%%%");
+                return;
             }
 
             if (isInbound() && channelManager.isRecentlyDisconnected(ch.remoteAddress().getAddress())) {

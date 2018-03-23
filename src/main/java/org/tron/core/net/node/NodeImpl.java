@@ -537,7 +537,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long remainNum = 0;
     try {
       blockIds = del.getLostBlockIds(summaryChainIds);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
@@ -552,7 +551,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
+      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
+
 
     if (!peer.isNeedSyncFromPeer()
         && !summaryChainIds.isEmpty()

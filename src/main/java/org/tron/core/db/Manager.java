@@ -197,11 +197,11 @@ public class Manager {
     }
   }
 
-  public void saveNeighbours(Set<Node> nodes) {
+  public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
   }
 
-  public Set<Node> loadNeighbours() {
+  public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
   }
 
