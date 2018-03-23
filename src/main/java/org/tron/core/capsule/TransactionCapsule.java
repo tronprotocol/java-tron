@@ -15,6 +15,13 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.protos.Contract.AssetIssueContract;
+import static org.tron.protos.Contract.DeployContract;
+import static org.tron.protos.Contract.VoteAssetContract;
+import static org.tron.protos.Contract.VoteWitnessContract;
+import static org.tron.protos.Contract.WitnessCreateContract;
+import static org.tron.protos.Contract.WitnessUpdateContract;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -41,8 +48,6 @@ import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
-
-import static org.tron.protos.Contract.*;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -250,9 +255,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
           break;
         case DeployContract:
-          owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
-          // todo add other contract
+          owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
           break;
+        case ParticipateAssetIssueContract:
+          owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
+          break;
+        // todo add other contract
+
         default:
           return null;
       }
