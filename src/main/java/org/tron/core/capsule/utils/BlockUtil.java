@@ -16,8 +16,8 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -33,21 +33,25 @@ public class BlockUtil {
 
     Args args = Args.getInstance();
     GenesisBlock genesisBlockArg = args.getGenesisBlock();
-    List<Transaction> transactionList = new ArrayList<>();
-    genesisBlockArg.getAssets().forEach(key ->
-        transactionList
-            .add(TransactionUtil
-                .newGenesisTransaction(key.getAddress(), key.getBalance())));
+    List<Transaction> transactionList =
+        genesisBlockArg.getAssets().stream()
+            .map(key -> {
+              String address = key.getAddress();
+              long balance = key.getBalance();
+              return TransactionUtil.newGenesisTransaction(address, balance);
+            })
+            .collect(Collectors.toList());
 
     long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());
-    ByteString parentHash = ByteString
-        .copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash()));
+    ByteString parentHash =
+        ByteString.copyFrom(ByteArray.fromHexString(genesisBlockArg.getParentHash()));
     long number = Long.parseLong(genesisBlockArg.getNumber());
 
     BlockCapsule blockCapsule = new BlockCapsule(timestamp, parentHash, number, transactionList);
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.sign(ByteArray.fromHexString(Args.getInstance().getPrivateKey()));
+    blockCapsule.sign(ByteArray.fromHexString(args.getLocalWitnesses().getPrivateKey()));
+
     blockCapsule.generatedByMyself = true;
 
     return blockCapsule;
@@ -56,8 +60,7 @@ public class BlockUtil {
   /**
    * Whether the hash of the judge block is equal to the hash of the parent block.
    */
-  public static boolean isParentOf(BlockCapsule blockCapsule1, BlockCapsule
-      blockCapsule2) {
+  public static boolean isParentOf(BlockCapsule blockCapsule1, BlockCapsule blockCapsule2) {
     return blockCapsule1.getBlockId().equals(blockCapsule2.getParentHash());
   }
 }

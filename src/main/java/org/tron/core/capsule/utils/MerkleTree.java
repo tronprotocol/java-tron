@@ -4,25 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 
+@Getter
 public class MerkleTree {
     private static volatile MerkleTree instance;
     private List<Sha256Hash> hashList;
     private List<Leaf> leaves;
     private Leaf root;
-
-    public Leaf getRoot() {
-        return root;
-    }
-
-    public List<Sha256Hash> getHashList() {
-        return hashList;
-    }
-
-    public List<Leaf> getLeaves() {
-        return leaves;
-    }
 
     public static MerkleTree getInstance() {
         if (instance == null) {
@@ -88,24 +78,13 @@ public class MerkleTree {
         return leaf;
     }
 
-    private Sha256Hash computeHash(Sha256Hash leftSig, Sha256Hash rightSig) {
-        return Sha256Hash.of(leftSig.getByteString().concat(rightSig.getByteString()).toByteArray());
+    private Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
+        return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
     }
 
+    @Getter
     public class Leaf {
         private Sha256Hash hash;
         private Leaf left, right;
-
-        public Sha256Hash getHash() {
-            return hash;
-        }
-
-        public Leaf getLeft() {
-            return left;
-        }
-
-        public Leaf getRight() {
-            return right;
-        }
     }
 }
