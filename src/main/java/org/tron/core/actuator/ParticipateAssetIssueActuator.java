@@ -89,8 +89,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
           .checkNotNull(participateAssetIssueContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(participateAssetIssueContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(participateAssetIssueContract.getAssetName(), "trx name is null");
-      if (participateAssetIssueContract.getAmount() < 0) {
-        throw new ContractValidateException("Trx Num can not be negative!");
+      if (participateAssetIssueContract.getAmount() <= 0) {
+        throw new ContractValidateException("Trx Num must be positive!");
       }
 
       byte[] addressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
