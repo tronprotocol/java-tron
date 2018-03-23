@@ -24,7 +24,6 @@ public class RevokingStoreTest {
   @Before
   public void init() {
     revokingDatabase = RevokingStore.getInstance();
-    ((RevokingStore) revokingDatabase).getStack().clear();
     revokingDatabase.enable();
     Args.setParam(new String[]{"--witness", "-d", "output_revokingStore_test"},
         Configuration.getByPath(Constant.NORMAL_CONF));
@@ -38,6 +37,7 @@ public class RevokingStoreTest {
 
   @Test
   public void testUndo() {
+    ((RevokingStore) revokingDatabase).getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo");
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
@@ -67,6 +67,7 @@ public class RevokingStoreTest {
 
   @Test
   public void testPop() {
+    ((RevokingStore) revokingDatabase).getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testPop");
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
