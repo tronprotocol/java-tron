@@ -377,7 +377,7 @@ public class Args {
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
     try {
-      File file = new File(INSTANCE.storageDirectory, "nodeId.properties");
+      File file = new File(INSTANCE.storage.getDirectory(), "nodeId.properties");
       Properties props = new Properties();
       if (file.canRead()) {
         try (Reader r = new FileReader(file)) {
