@@ -27,7 +27,7 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
-import org.tron.protos.Protocal.Block;
+import org.tron.protos.Protocol.Block;
 
 /**
  * Process the messages between peers with 'eth' capability on the network<br>
