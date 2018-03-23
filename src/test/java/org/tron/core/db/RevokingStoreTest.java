@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -10,12 +10,11 @@ import org.junit.Test;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
-import org.tron.protos.Protocol.Witness;
 
 @Slf4j
 public class RevokingStoreTest {
@@ -25,48 +24,65 @@ public class RevokingStoreTest {
   @Before
   public void init() {
     revokingDatabase = RevokingStore.getInstance();
+    ((RevokingStore) revokingDatabase).getStack().clear();
     revokingDatabase.enable();
-    Args.setParam(new String[]{"--witness"}, Configuration.getByPath(Constant.NORMAL_CONF));
+    Args.setParam(new String[]{"--witness", "-d", "output_revokingStore_test"},
+        Configuration.getByPath(Constant.NORMAL_CONF));
   }
 
   @After
   public void removeDb() {
     Args.clearParam();
-    FileUtil.deleteDir(new File("output_manager_test"));
+    FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
 
   @Test
   public void testUndo() {
-    TestRevokingTronStore tronDatabase = new TestRevokingTronStore("test");
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFromUtf8(""), 100L, "");
+    TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
+        "testrevokingtronstore-testUndo");
+    TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
     DialogOptional dialog = DialogOptional.of(revokingDatabase.buildDialog());
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
-      tronDatabase.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-      Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
-      tmpDialog.merge();
-    } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
-    }
+    IntStream.range(0, 10).forEach(i -> {
+      try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+        tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+        Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
+        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 2);
+        tmpDialog.merge();
+        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 1);
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
+      }
+    });
+
+    Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 1);
 
     dialog.reset();
 
+    Assert.assertTrue(((RevokingStore) revokingDatabase).getStack().isEmpty());
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
+    Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 0);
     tronDatabase.close();
   }
 
   @Test
   public void testPop() {
-    TestRevokingTronStore tronDatabase = new TestRevokingTronStore("test");
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFromUtf8(""), 100L, "");
+    TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
+        "testrevokingtronstore-testPop");
+    TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
-      tronDatabase.put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-      Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
-      tmpDialog.commit();
-    } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
-    }
+    IntStream.rangeClosed(1, 10).forEach(i -> {
+      try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+        tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+        Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
+        Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 1);
+        tmpDialog.commit();
+        Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), i);
+        Assert.assertEquals(((RevokingStore) revokingDatabase).getActiveDialog(), 0);
+      } catch (RevokingStoreIllegalStateException e) {
+        e.printStackTrace();
+      }
+    });
 
     try {
       revokingDatabase.pop();
@@ -75,37 +91,37 @@ public class RevokingStoreTest {
     }
 
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
+    Assert.assertEquals(((RevokingStore) revokingDatabase).getStack().size(), 9);
     tronDatabase.close();
   }
 
-  private static class TestProtoCapsule extends WitnessCapsule {
+  private static class TestProtoCapsule implements ProtoCapsule<Object> {
 
-
-    public TestProtoCapsule(ByteString pubKey, String url) {
-      super(pubKey, url);
+    @Override
+    public byte[] getData() {
+      return new byte[0];
     }
 
-    public TestProtoCapsule(Witness witness) {
-      super(witness);
-    }
-
-    public TestProtoCapsule(ByteString address) {
-      super(address);
-    }
-
-    public TestProtoCapsule(ByteString address, long voteCount, String url) {
-      super(address, voteCount, url);
-    }
-
-    public TestProtoCapsule(byte[] data) {
-      super(data);
+    @Override
+    public Object getInstance() {
+      return null;
     }
   }
 
-  private static class TestRevokingTronStore extends WitnessStore {
+  private static class TestRevokingTronStore extends TronStoreWithRevoking<TestProtoCapsule> {
 
     protected TestRevokingTronStore(String dbName) {
       super(dbName);
+    }
+
+    @Override
+    public TestProtoCapsule get(byte[] key) {
+      return null;
+    }
+
+    @Override
+    public boolean has(byte[] key) {
+      return false;
     }
   }
 }
