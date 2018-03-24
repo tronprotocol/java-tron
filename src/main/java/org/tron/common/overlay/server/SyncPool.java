@@ -99,7 +99,7 @@ public class SyncPool {
       try {
         //heartBeat();
 //        updateLowerUsefulDifficulty();
-        //fillUp();
+        fillUp();
         //prepareActive();
         //cleanupActive();
       } catch (Throwable t) {
@@ -285,7 +285,7 @@ public class SyncPool {
     //int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     //if(lackSize <= 0) return;
     int lackSize = 10;
-    final Set<String> nodesInUse = nodesInUse();
+    final Set<String> nodesInUse = channelManager.nodesInUse();
     nodesInUse.add(Hex.toHexString(nodeManager.getPublicHomeNode().getId()));   // exclude home node
 
 
@@ -312,14 +312,27 @@ public class SyncPool {
     logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
-      if (!Arrays.equals(nodeManager.getPublicHomeNode().getId(),n.getNode().getId())){
+      if (!isHomeNode(n.getNode())){
 
         logger.info("new node--------------------");
         logger.info(n.getNode().toString());
         logger.info(n.getState().toString());
         channelManager.connect(n.getNode());
+      }else {
+        logger.info("isHomeNode {}", n.getNode());
       }
     }
+  }
+
+  private boolean isHomeNode(Node node){
+    Node me = nodeManager.getPublicHomeNode();
+    if (node.getHexId().equals(me.getHexId())){
+      return  true;
+    }
+    if (node.getHost().equals(me.getHost()) && node.getPort() == me.getPort()){
+      return  true;
+    }
+    return  false;
   }
 
   private synchronized void prepareActive() {
