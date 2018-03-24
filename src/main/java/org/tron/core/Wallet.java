@@ -217,14 +217,10 @@ public class Wallet {
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    assetIssueCapsuleList.stream()
+    dbManager.getAssetIssueStore().getAllAssetIssues().stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(witnessCapsule -> {
-          builder.addAssetIssue(witnessCapsule.getInstance());
-        });
+        .forEach(assetIssueCapsule -> builder.addAssetIssue(assetIssueCapsule.getInstance()));
     return builder.build();
   }
 }
