@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover.table;
 
+import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.Node;
 
 import java.util.*;
@@ -25,6 +26,10 @@ import java.util.*;
  * Created by kest on 5/25/15.
  */
 public class NodeTable {
+
+    static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeTable");
+
+
 
     private final Node node;  // our node
     private transient NodeBucket[] buckets;
@@ -150,6 +155,10 @@ public class NodeTable {
             if (!e.getNode().isDiscoveryNode()) {
                 closestNodes.add(e.getNode());
             }
+        }
+        logger.info("getClosestNodes, size= {}  ", closestNodes.size());
+        if (closestNodes.size() > 0){
+            logger.info("fist load, {}  ", closestNodes.get(0));
         }
         return closestNodes;
     }

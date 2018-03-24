@@ -22,10 +22,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import java.net.BindException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -36,6 +32,11 @@ import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+
+import java.net.BindException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class UDPListener {
@@ -63,7 +64,7 @@ public class UDPListener {
   public UDPListener(final Args args, final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
 
-    this.address = this.args.getNodeDiscoveryBindIp();
+    //this.address = this.args.getNodeDiscoveryBindIp();
     port = this.args.getNodeListenPort();
     if (this.args.isNodeDiscoveryEnable()) {
       bootPeers = this.args.getSeedNode().getIpList().toArray(new String[0]);
@@ -123,7 +124,9 @@ public class UDPListener {
               }
             });
 
-        channel = b.bind(address, port).sync().channel();
+        channel = b.bind(port).sync().channel();
+
+        logger.info("udp bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {

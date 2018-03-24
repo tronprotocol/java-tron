@@ -308,7 +308,7 @@ public class NodeHandler {
 
     void sendNeighbours(List<Node> neighbours) {
 //        logMessage("<===  [NEIGHBOURS] " + this);
-        Message neighbors = new NeighborsMessage(node, neighbours);
+        Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
         logMessage(neighbors, false);
         sendMessage(neighbors);
         getNodeStatistics().discoverOutNeighbours.add();

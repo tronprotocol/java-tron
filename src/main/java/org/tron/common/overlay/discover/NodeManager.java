@@ -17,35 +17,24 @@
  */
 package org.tron.common.overlay.discover;
 
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * The central class for Peer Discovery machinery.
@@ -204,7 +193,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       trimTable();
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
-      logger.debug(" +++ New node: " + ret + " " + n);
+      logger.info(" +++ New node: {} size=", ret, nodeHandlerMap.size());
       if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
@@ -212,6 +201,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       // we found discovery node with same host:port,
       // replace node with correct nodeId
       ret.node = n;
+        logger.info("  New change:old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       if (!n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
