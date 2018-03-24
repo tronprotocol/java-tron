@@ -2,9 +2,12 @@ package org.tron.core.services;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+
+import java.util.Arrays;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.joda.time.DateTime;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -50,14 +53,14 @@ public class WitnessService implements Service {
    */
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
+        if (MapUtils.isEmpty(localWitnessStateMap)) {
           logger.error("LocalWitnesses is null");
           return;
         }
 
         while (isRunning) {
           try {
-            if (this.needSyncCheck) {
+            if (needSyncCheck) {
               Thread.sleep(500L);
             } else {
               DateTime time = DateTime.now();
@@ -65,13 +68,13 @@ public class WitnessService implements Service {
                   - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
                   % Manager.LOOP_INTERVAL;
               if (timeToNextSecond < 50L) {
-                timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
+                timeToNextSecond += Manager.LOOP_INTERVAL;
               }
               DateTime nextTime = time.plus(timeToNextSecond);
               logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
               Thread.sleep(timeToNextSecond);
             }
-            this.blockProductionLoop();
+            blockProductionLoop();
           } catch (InterruptedException ex) {
             logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
@@ -85,7 +88,7 @@ public class WitnessService implements Service {
    * Loop to generate blocks
    */
   private void blockProductionLoop() throws InterruptedException {
-    BlockProductionCondition result = this.tryProduceBlock();
+    BlockProductionCondition result = tryProduceBlock();
 
     if (result == null) {
       logger.warn("Result is null");
@@ -132,7 +135,7 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
     long now = DateTime.now().getMillis() + 50L;
-    if (this.needSyncCheck) {
+    if (needSyncCheck) {
 //      logger.info(new DateTime(db.getSlotTime(1)).toString());
 //      logger.info(now.toString());
 
@@ -146,7 +149,7 @@ public class WitnessService implements Service {
       }
     }
 
-    final int participation = this.db.calculateParticipationRate();
+    final int participation = db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
           "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
@@ -163,7 +166,7 @@ public class WitnessService implements Service {
 
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
-    if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
+    if (!localWitnessStateMap.containsKey(scheduledWitness)) {
       logger.info("ScheduledWitness[{}],slot[{}]",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot);
       return BlockProductionCondition.NOT_MY_TURN;
@@ -202,13 +205,8 @@ public class WitnessService implements Service {
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress));
+    return db.generateBlock(localWitnessStateMap.get(witnessAddress), when, privateKeyMap.get(witnessAddress));
   }
-
-
-
-
 
   /**
    * Initialize the local witnesses
@@ -219,20 +217,19 @@ public class WitnessService implements Service {
       byte[] privateKey = ByteArray.fromHexString(key);
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] address = ecKey.getAddress();
-      WitnessCapsule witnessCapsule = this.db.getWitnessStore()
-          .get(address);
+      WitnessCapsule witnessCapsule = db.getWitnessStore().get(address);
       // need handle init witness
       if (null == witnessCapsule) {
-        logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
+        logger.warn("WitnessCapsule[" + Arrays.toString(address) + "] is not in witnessStore");
         witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
       }
 
-      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
-      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+      privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+      localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
     });
 
-    this.db.updateWits();
-    this.db.setShuffledWitnessStates(db.getWitnesses());
+    db.updateWits();
+    db.setShuffledWitnessStates(db.getWitnesses());
   }
 
 
