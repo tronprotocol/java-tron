@@ -219,6 +219,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
+        logger.info("trimTable delete node, {}", handler.getNode());
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
