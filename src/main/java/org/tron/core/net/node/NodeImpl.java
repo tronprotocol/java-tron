@@ -424,6 +424,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
+    logger.info("Block number is " + blkMsg.getBlockId().getNum());
 
     if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
