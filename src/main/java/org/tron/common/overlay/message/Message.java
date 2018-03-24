@@ -1,10 +1,15 @@
 package org.tron.common.overlay.message;
 
+import com.google.protobuf.CodedOutputStream;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.MessageTypes;
+
 
 public abstract class Message {
 
@@ -29,8 +34,21 @@ public abstract class Message {
   }
 
 
-  public byte[] getSendData() {
-    return ArrayUtils.add(this.getData(), 0 ,type);
+  public ByteBuf getSendData(){
+    try{
+      ByteBuf msg = Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
+      int headerLen = CodedOutputStream.computeRawVarint32Size(data.length);
+      ByteBuf out = Unpooled.buffer(data.length + headerLen);
+      CodedOutputStream headerOut =
+              CodedOutputStream.newInstance(new ByteBufOutputStream(out), headerLen);
+      headerOut.writeRawVarint32(data.length);
+      headerOut.flush();
+      out.writeBytes(msg, msg.readerIndex(), data.length);
+      return  out;
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+    return null;
   }
 
   public Sha256Hash getMessageId() {
