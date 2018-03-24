@@ -314,6 +314,6 @@ public class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s | %s", getPeerId(), inetSocketAddress);
+        return String.format("%s | %s | %s", getPeerId(), inetSocketAddress, isDisconnected);
     }
 }
