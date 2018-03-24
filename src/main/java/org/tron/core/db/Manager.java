@@ -891,7 +891,6 @@ public class Manager {
     return headSlotTime + interval * slotNum;
   }
 
-
   private boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
@@ -994,8 +993,8 @@ public class Manager {
     });
 
     logger.info(
-        "updateWitness,before:{} ",
-        getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(wits));
+        "updateWitness,before:{} ,\n after:{} ",
+        getWitnessStringList(currentWits), getWitnessStringList(wits));
   }
 
   private byte[] createDbKey(ByteString string) {
@@ -1053,7 +1052,7 @@ public class Manager {
       setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
           .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
 
-      logger.debug(
+      logger.info(
           "updateWitnessSchedule,before:{} ", getWitnessStringList(getWitnesses()).toString()
               + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
     }
