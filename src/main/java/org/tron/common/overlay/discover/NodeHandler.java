@@ -42,7 +42,7 @@ public class NodeHandler {
     // they are not so informative when everything is already up and running
     // but could be interesting when discovery just starts
     private void logMessage(Message msg, boolean inbound) {
-        //logger.info("handle msg type: {}, date: {}", msg.getType(), msg);
+        logger.info("handle msg type: {}, date: {}", msg.getType(), msg);
         String s = String.format("%s[%s (%s)] %s", inbound ? " ===>  " : "<===  ", msg.getClass().getSimpleName(),
                 msg.getData().length, this);
         if (msgInCount > 1024) {
@@ -240,7 +240,9 @@ public class NodeHandler {
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
         for (Node n : msg.getNodes()) {
-            nodeManager.getNodeHandler(n);
+            if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
+                nodeManager.getNodeHandler(n);
+            }
         }
     }
 
@@ -253,13 +255,14 @@ public class NodeHandler {
         Node publicHomeNode = nodeManager.getPublicHomeNode();
         if (publicHomeNode != null) {
             if (closest.size() == KademliaOptions.BUCKET_SIZE) closest.remove(closest.size() - 1);
-            closest.add(publicHomeNode);
+            //closest.add(publicHomeNode);
         }
 
         sendNeighbours(closest);
     }
 
     void handleTimedOut() {
+        logger.info("ping timeout {} {} {}", node.getHost(),node.getPort(),node.getHexIdShort());
         waitForPong = false;
         if (--pingTrials > 0) {
             sendPing();

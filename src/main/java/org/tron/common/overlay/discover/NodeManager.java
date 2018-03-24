@@ -193,20 +193,23 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       trimTable();
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
-      logger.info(" +++ New node: {} size=", ret, nodeHandlerMap.size());
+      logger.info(" +++ New node: {} size={}", ret, nodeHandlerMap.size());
       if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
       // we found discovery node with same host:port,
       // replace node with correct nodeId
-      ret.node = n;
         logger.info("  New change:old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      ret.node = n;
       if (!n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
       logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
     }
+
+    nodeHandlerMap.values().forEach(handler-> logger.info("{} {} {} {}",
+            handler.node.getHost(),handler.node.getPort(),handler.node.getHexIdShort(),handler.state.toString()));
 
     return ret;
   }
@@ -219,6 +222,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
+        logger.info("trimTable delete node, {}", handler.getNode());
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
