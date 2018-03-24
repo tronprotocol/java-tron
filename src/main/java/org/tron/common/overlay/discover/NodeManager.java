@@ -318,7 +318,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        logger.info(handler.getNode().toString());
+        logger.info(handler.toString());
         if (predicate.test(handler)) {
           filtered.add(handler);
         }

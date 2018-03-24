@@ -40,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
-import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -106,8 +105,8 @@ public class SyncPool {
         //heartBeat();
 //        updateLowerUsefulDifficulty();
         fillUp();
-        //prepareActive();
-        //cleanupActive();
+        prepareActive();
+        cleanupActive();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -203,11 +202,19 @@ public class SyncPool {
     }
   }
 
+//  public synchronized Set<String> nodesInUse() {
+//    Set<String> ids = new HashSet<>();
+//    if (channelManager.getActivePeers() == null){
+//      return ids;
+//    }
+//    for (Channel peer : channelManager.getActivePeers()) {
+//      ids.add(peer.getPeerId());
+//    }
+//    return ids;
+//  }
+
   public synchronized Set<String> nodesInUse() {
     Set<String> ids = new HashSet<>();
-    if (channelManager.getActivePeers() == null){
-      return ids;
-    }
     for (Channel peer : channelManager.getActivePeers()) {
       ids.add(peer.getPeerId());
     }
@@ -256,9 +263,13 @@ public class SyncPool {
         return false;
       }
 
-      if (!handler.getState().equals(State.Active)) {
+      if (handler.getNode().getPort() == 0) {
         return false;
       }
+
+//      if (!handler.getState().equals(State.Active)) {
+//        return false;
+//      }
 
       return  true;
 
@@ -291,7 +302,7 @@ public class SyncPool {
     //int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     //if(lackSize <= 0) return;
     int lackSize = 10;
-    final Set<String> nodesInUse = channelManager.nodesInUse();
+    final Set<String> nodesInUse = nodesInUse();
     nodesInUse.add(Hex.toHexString(nodeManager.getPublicHomeNode().getId()));   // exclude home node
 
 
@@ -342,6 +353,8 @@ public class SyncPool {
     List<PeerConnection> active = new ArrayList<>();
     for (Channel channel : managerActive) {
       if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {
+        logger.info("add to active nodes-----------");
+        logger.info(channel.getNode().toString());
         active.add((PeerConnection)channel);
       }
     }

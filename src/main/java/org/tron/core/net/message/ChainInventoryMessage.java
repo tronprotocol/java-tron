@@ -60,9 +60,15 @@ public class ChainInventoryMessage extends TronMessage {
   }
 
   public List<BlockId> getBlockIds() {
-    return getChainInventory().getIdsList().stream()
-        .map(blockId -> new BlockId(blockId.getHash(), blockId.getNumber()))
-        .collect(Collectors.toCollection(ArrayList::new));
+
+    try {
+      return getChainInventory().getIdsList().stream()
+          .map(blockId -> new BlockId(blockId.getHash(), blockId.getNumber()))
+          .collect(Collectors.toCollection(ArrayList::new));
+    } catch (Exception e) {
+      logger.info("breakPoint");
+    }
+    return null;
   }
 
   public Long getRemainNum() {
@@ -77,7 +83,7 @@ public class ChainInventoryMessage extends TronMessage {
     try {
       this.chainInventory = ChainInventory.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
+      logger.info(e.getMessage());
     }
     unpacked = true;
   }

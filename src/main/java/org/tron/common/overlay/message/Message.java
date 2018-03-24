@@ -28,8 +28,9 @@ public abstract class Message {
     unpacked = false;
   }
 
+
   public byte[] getSendData() {
-    return ArrayUtils.add(this.data, 0 ,type);
+    return ArrayUtils.add(this.getData(), 0 ,type);
   }
 
   public Sha256Hash getMessageId() {
