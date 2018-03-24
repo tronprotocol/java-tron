@@ -149,7 +149,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       // now we know both remote nodeId and port
       // let's set node, that will cause registering node in NodeManager
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
-      channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
+      channel.sendHelloMessage(ctx, nodeManager.getPublicHomeNode().getHexId());
       isHandshakeDone = true;
       this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
@@ -168,12 +168,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     if (channel.isDiscoveryMode()) {
-      loggerNet.trace("Handshake failed: " + cause);
+      loggerNet.info("Handshake failed: " + cause);
     } else {
       if (cause instanceof IOException || cause instanceof ReadTimeoutException) {
-        loggerNet.debug("Handshake failed: " + ctx.channel().remoteAddress() + ": " + cause);
+        loggerNet.info("Handshake failed: " + ctx.channel().remoteAddress() + ": " + cause);
       } else {
-        loggerNet.warn("Handshake failed: ", cause);
+        loggerNet.info("Handshake failed: ", cause);
       }
     }
     ctx.close();

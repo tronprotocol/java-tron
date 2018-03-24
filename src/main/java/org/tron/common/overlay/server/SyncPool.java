@@ -22,7 +22,6 @@ import static java.lang.Math.min;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -107,8 +106,8 @@ public class SyncPool {
         //heartBeat();
 //        updateLowerUsefulDifficulty();
         fillUp();
-        prepareActive();
-        cleanupActive();
+        //prepareActive();
+        //cleanupActive();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -292,7 +291,7 @@ public class SyncPool {
     //int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     //if(lackSize <= 0) return;
     int lackSize = 10;
-    final Set<String> nodesInUse = nodesInUse();
+    final Set<String> nodesInUse = channelManager.nodesInUse();
     nodesInUse.add(Hex.toHexString(nodeManager.getPublicHomeNode().getId()));   // exclude home node
 
 
@@ -319,15 +318,19 @@ public class SyncPool {
     logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
-      if (!Arrays.equals(nodeManager.getPublicHomeNode().getId(),n.getNode().getId())){
+      if (!nodeManager.isHomeNode(n.getNode())){
 
         logger.info("connect node--------------------");
         logger.info(n.getNode().toString());
         logger.info(n.getState().toString());
         channelManager.connect(n.getNode());
+      }else {
+        logger.info("isHomeNode {}", n.getNode());
       }
     }
   }
+
+
 
   private synchronized void prepareActive() {
     List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());

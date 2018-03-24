@@ -21,9 +21,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +36,10 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -142,7 +143,7 @@ public class Channel {
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
 
-        logger.debug("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
+        logger.info("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
 
 //        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
 //        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);

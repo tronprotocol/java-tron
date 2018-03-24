@@ -382,6 +382,16 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return null;
   }
 
+  public boolean isHomeNode(Node node){
+    if (node.getHexId().equals(homeNode.getHexId())){
+      return  true;
+    }
+    if (node.getHost().equals(homeNode.getHost()) && node.getPort() == homeNode.getPort()){
+      return  true;
+    }
+    return  false;
+  }
+
   public void close() {
     try {
       //peerConnectionManager.close();
