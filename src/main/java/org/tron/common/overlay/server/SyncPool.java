@@ -18,6 +18,22 @@ package org.tron.common.overlay.server;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import static java.lang.Math.min;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -30,16 +46,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-
-import static java.lang.Math.min;
 
 /**
  * <p>Encapsulates logic which manages peers involved in blockchain sync</p>
@@ -99,9 +105,9 @@ public class SyncPool {
       try {
         //heartBeat();
 //        updateLowerUsefulDifficulty();
-        //fillUp();
-        //prepareActive();
-        //cleanupActive();
+        fillUp();
+        prepareActive();
+        cleanupActive();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }

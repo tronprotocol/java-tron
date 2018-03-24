@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.*;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 
 import java.io.IOException;
@@ -143,6 +144,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       }
 
       final HelloMessage inboundHelloMessage = (HelloMessage) msg;
+      this.remoteId = ByteArray.fromHexString(inboundHelloMessage.getPeerId());
+      loggerNet.info("getPeerId:" + inboundHelloMessage.getPeerId());
       // now we know both remote nodeId and port
       // let's set node, that will cause registering node in NodeManager
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
