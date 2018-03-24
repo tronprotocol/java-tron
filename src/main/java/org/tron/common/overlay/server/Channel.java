@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -163,7 +162,7 @@ public class Channel {
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
         logger.info("send hello msg: {}", helloMessage);
 
-        ctx.writeAndFlush(Unpooled.wrappedBuffer(helloMessage.getSendData())).sync();
+        ctx.writeAndFlush(helloMessage.getSendData()).sync();
 
         if (logger.isDebugEnabled())
             logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
