@@ -12,6 +12,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -32,166 +34,73 @@ public class PeerConnection {
   private Cluster cluster;
 
   //broadcast
+  @Getter
+  @Setter
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
+  @Getter
+  @Setter
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
+  @Getter
+  @Setter
   private HashMap<Sha256Hash, Long> advObjSpreadToUs = new HashMap<>();
 
+  @Getter
+  @Setter
   private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
 
+  @Getter
+  @Setter
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
-    return advObjSpreadToUs;
-  }
-
-  public void setAdvObjSpreadToUs(
-      HashMap<Sha256Hash, Long> advObjSpreadToUs) {
-    this.advObjSpreadToUs = advObjSpreadToUs;
-  }
-
-  public HashMap<Sha256Hash, Long> getAdvObjWeSpread() {
-    return advObjWeSpread;
-  }
-
-  public void setAdvObjWeSpread(HashMap<Sha256Hash, Long> advObjWeSpread) {
-    this.advObjWeSpread = advObjWeSpread;
-  }
-
   //sync chain
+  @Getter
+  @Setter
   private BlockId headBlockWeBothHave;
 
+  @Getter
+  @Setter
   private long headBlockTimeWeBothHave;
 
+  @Getter
   private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
 
+  @Getter
+  @Setter
   private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
 
+  @Getter
+  @Setter
   private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
-    return syncChainRequested;
-  }
+  @Getter
+  @Setter
+  private long unfetchSyncNum = 0L;
 
-  public void setSyncChainRequested(
-      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
-    this.syncChainRequested = syncChainRequested;
-  }
+  @Getter
+  @Setter
+  private boolean needSyncFromPeer;
 
-  public HashMap<BlockId, Long> getSyncBlockRequested() {
-    return syncBlockRequested;
-  }
+  @Getter
+  @Setter
+  private boolean needSyncFromUs;
 
-  public void setSyncBlockRequested(
-      HashMap<BlockId, Long> syncBlockRequested) {
-    this.syncBlockRequested = syncBlockRequested;
-  }
+  @Getter
+  @Setter
+  private boolean banned;
+
+  @Getter
+  @Setter
+  private Set<BlockId> blockInProc = new HashSet<>();
 
   public Address getAddress() {
     return member.address();
   }
 
-  public long getUnfetchSyncNum() {
-    return unfetchSyncNum;
-  }
-
-  public void setUnfetchSyncNum(long unfetchSyncNum) {
-    this.unfetchSyncNum = unfetchSyncNum;
-  }
-
-  private long unfetchSyncNum = 0L;
-
-  private boolean needSyncFromPeer;
-
-  private boolean needSyncFromUs;
-
-  public Set<BlockId> getBlockInProc() {
-    return blockInProc;
-  }
-
-  public void setBlockInProc(Set<BlockId> blockInProc) {
-    this.blockInProc = blockInProc;
-  }
-
-  private boolean banned;
-
-  private Set<BlockId> blockInProc = new HashSet<>();
-
-  public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
-    return advObjWeRequested;
-  }
-
-  public void setAdvObjWeRequested(HashMap<Sha256Hash, Long> advObjWeRequested) {
-    this.advObjWeRequested = advObjWeRequested;
-  }
-
-
   public void cleanInvGarbage() {
     //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy 
-
   }
-
-  public boolean isBanned() {
-    return banned;
-  }
-
-  public void setBanned(boolean banned) {
-    this.banned = banned;
-  }
-
-  public BlockId getHeadBlockWeBothHave() {
-    return headBlockWeBothHave;
-  }
-
-  public void setHeadBlockWeBothHave(BlockId headBlockWeBothHave) {
-    this.headBlockWeBothHave = headBlockWeBothHave;
-  }
-
-  public long getHeadBlockTimeWeBothHave() {
-    return headBlockTimeWeBothHave;
-  }
-
-  public void setHeadBlockTimeWeBothHave(long headBlockTimeWeBothHave) {
-    this.headBlockTimeWeBothHave = headBlockTimeWeBothHave;
-  }
-
-  public Deque<BlockId> getSyncBlockToFetch() {
-    return syncBlockToFetch;
-  }
-
-  public boolean isNeedSyncFromPeer() {
-    return needSyncFromPeer;
-  }
-
-  public void setNeedSyncFromPeer(boolean needSyncFromPeer) {
-    this.needSyncFromPeer = needSyncFromPeer;
-  }
-
-  public boolean isNeedSyncFromUs() {
-    return needSyncFromUs;
-  }
-
-  public void setNeedSyncFromUs(boolean needSyncFromUs) {
-    this.needSyncFromUs = needSyncFromUs;
-  }
-
-  public Queue<Sha256Hash> getInvToUs() {
-    return invToUs;
-  }
-
-  public void setInvToUs(Queue<Sha256Hash> invToUs) {
-    this.invToUs = invToUs;
-  }
-
-  public Queue<Sha256Hash> getInvWeAdv() {
-    return invWeAdv;
-  }
-
-  public void setInvWeAdv(Queue<Sha256Hash> invWeAdv) {
-    this.invWeAdv = invWeAdv;
-  }
-
 
   public PeerConnection(Cluster cluster, Member member) {
     this.cluster = cluster;
@@ -233,7 +142,6 @@ public class PeerConnection {
       e.printStackTrace();
     }
   }
-
 
   @Override
   public String toString() {
