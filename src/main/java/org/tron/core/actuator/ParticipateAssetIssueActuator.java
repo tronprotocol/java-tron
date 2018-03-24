@@ -126,7 +126,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       int num = assetIssueCapsule.getNum();
       long exchangeAmount = cost / trxNum * num;
       float preciseExchangeAmount = (float) cost / (float) trxNum * (float) num;
-      if (preciseExchangeAmount - exchangeAmount >= 0.000001f) {
+      if (preciseExchangeAmount - exchangeAmount >= 0.000001f
+          || preciseExchangeAmount - exchangeAmount <= -0.000001f) {
         throw new ContractValidateException("Can not process the exchange!");
       }
     } catch (InvalidProtocolBufferException e) {
