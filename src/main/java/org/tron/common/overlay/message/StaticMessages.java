@@ -17,12 +17,10 @@
  */
 package org.tron.common.overlay.message;
 
-import io.netty.channel.ChannelHandlerContext;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 
 /**
@@ -46,22 +44,8 @@ public class StaticMessages {
 
   public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
 
-  public HelloMessage createHelloMessage(ChannelHandlerContext ctx, String peerId) {
-    return createHelloMessage(ctx, peerId, args.getNodeListenPort());
-  }
-
-  public HelloMessage createHelloMessage(ChannelHandlerContext ctx, String peerId,
-      int listenPort) {
-
-    String helloAnnouncement = buildHelloAnnouncement();
-    //TODO#p2p : get version from config here
-    int version = Args.getInstance().getNodeP2pVersion();
-    Node node = new Node(ByteArray.fromHexString(peerId),
-        ctx.channel().localAddress().toString(), listenPort);
-    //byte p2pVersion = (byte) config.defaultP2PVersion();
-    //List<Capability> capabilities = configCapabilities.getConfigCapabilities();
-    return new HelloMessage(node, version, helloAnnouncement,
-        listenPort, peerId);
+  public HelloMessage createHelloMessage(Node node) {
+    return createHelloMessage(node);
   }
 
   private String buildHelloAnnouncement() {

@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -16,16 +17,23 @@ public class HelloMessage extends P2pMessage {
   public HelloMessage(byte[] rawData) {
     super(rawData);
     this.type = MessageTypes.P2P_HELLO.asByte();
+    unPack();
   }
 
   public HelloMessage(byte type, byte[] rawData) {
     super(type, rawData);
+    try {
+      this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+    }
+    unPack();
   }
 
   /**
    * Create hello message.
    */
-  public HelloMessage(Node from, int version, String clientId, int listenPort, String peerId) {
+  public HelloMessage(Node from) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
@@ -36,35 +44,23 @@ public class HelloMessage extends P2pMessage {
     Builder builder = Protocol.HelloMessage.newBuilder();
 
     builder.setFrom(fromEndpoint);
-    builder.setVersion(version);
-    builder.setClientId(clientId);
-    builder.setListenPort(listenPort);
-    builder.setPeerId(peerId);
+    builder.setVersion(Args.getInstance().getNodeP2pVersion());
 
     this.helloMessage = builder.build();
-    this.unpacked = true;
     this.type = MessageTypes.P2P_HELLO.asByte();
-    pack();
+    this.data = this.helloMessage.toByteArray();
   }
 
-  private void unPack() {
+  public void unPack() {
     try {
       this.helloMessage = Protocol.HelloMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
       e.printStackTrace();
     }
-    this.unpacked = true;
-  }
-
-  private void pack() {
-    this.data = this.helloMessage.toByteArray();
   }
 
   @Override
   public byte[] getData() {
-    if (this.data == null) {
-      this.pack();
-    }
     return this.data;
   }
 
@@ -72,49 +68,21 @@ public class HelloMessage extends P2pMessage {
    * Get the version of p2p protocol.
    */
   public byte getVersion() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
     return (byte) this.helloMessage.getVersion();
-  }
-
-  /**
-   * Get client ID.
-   */
-  public String getClientId() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
-    return this.helloMessage.getClientId();
   }
 
   /**
    * Get listen port.
    */
   public int getListenPort() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
-    return this.helloMessage.getListenPort();
+    return this.helloMessage.getFrom().getPort();
   }
 
   /**
    * Get peer ID.
    */
   public String getPeerId() {
-    if (!this.unpacked) {
-      this.unPack();
-    }
-    return this.helloMessage.getPeerId();
-  }
-
-  /**
-   * Set peer ID.
-   */
-  public void setPeerId(String peerId) {
-    Builder builder = this.helloMessage.toBuilder();
-    builder.setPeerId(peerId);
-    this.helloMessage = builder.build();
+    return ByteArray.toHexString(this.helloMessage.getFrom().getNodeId().toByteArray());
   }
 
   /**
@@ -148,5 +116,11 @@ public class HelloMessage extends P2pMessage {
   @Override
   public MessageTypes getType() {
     return MessageTypes.fromByte(this.type);
+  }
+
+  public Node getFrom() {
+    Endpoint from = this.helloMessage.getFrom();
+    return new Node(from.getNodeId().toByteArray(),
+        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
   }
 }

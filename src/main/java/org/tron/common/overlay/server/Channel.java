@@ -159,7 +159,7 @@ public class Channel {
 
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
 
-        final HelloMessage helloMessage = staticMessages.createHelloMessage(ctx, nodeManager.getPublicHomeNode().getHexId());
+        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
         logger.info("send hello msg: {}", helloMessage);
 
