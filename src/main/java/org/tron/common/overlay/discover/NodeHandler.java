@@ -240,7 +240,7 @@ public class NodeHandler {
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
         for (Node n : msg.getNodes()) {
-            if (nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
+            if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
                 nodeManager.getNodeHandler(n);
             }
         }
@@ -255,7 +255,7 @@ public class NodeHandler {
         Node publicHomeNode = nodeManager.getPublicHomeNode();
         if (publicHomeNode != null) {
             if (closest.size() == KademliaOptions.BUCKET_SIZE) closest.remove(closest.size() - 1);
-            closest.add(publicHomeNode);
+            //closest.add(publicHomeNode);
         }
 
         sendNeighbours(closest);
