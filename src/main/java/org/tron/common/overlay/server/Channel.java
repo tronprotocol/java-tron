@@ -75,6 +75,9 @@ public class Channel {
     @Autowired
     private WireTrafficStats stats;
 
+    @Autowired
+    private ProtobufVarint32LengthFieldPrepender protoPender;
+
     private TronHandler tronHandler;
 
     private ChannelManager channelManager;
@@ -115,6 +118,7 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
+        pipeline.addLast("protoPender", protoPender);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 

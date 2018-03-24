@@ -1,8 +1,6 @@
 package org.tron.common.overlay.message;
 
-import com.google.protobuf.CodedOutputStream;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -35,40 +33,40 @@ public abstract class Message {
 
 
   public ByteBuf getSendData(){
-    try{
+//    try{
 
-      ByteBuf msg = Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
-        //ByteBuf out = Unpooled.wrappedBuffer(ArrayUtils.EMPTY_BYTE_ARRAY);
-
-      int bodyLen = msg.readableBytes();
-      int headerLen = CodedOutputStream.computeRawVarint32Size(bodyLen);
-      ByteBuf out = Unpooled.buffer(0, 2048);
-      out.ensureWritable(headerLen + bodyLen);
-
-      CodedOutputStream headerOut =
-          CodedOutputStream.newInstance(new ByteBufOutputStream(out), headerLen);
-      headerOut.writeRawVarint32(bodyLen);
-      headerOut.flush();
-
-
-
-      out.writeBytes(msg, msg.readerIndex(), bodyLen);
+     return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
+//        //ByteBuf out = Unpooled.wrappedBuffer(ArrayUtils.EMPTY_BYTE_ARRAY);
 //
-//      ByteBuf msg = Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
 //      int bodyLen = msg.readableBytes();
-//      int headerLen = CodedOutputStream.computeRawVarint32Size(data.length);
-//      //ByteBuf out = Unpooled.buffer(data.length + headerLen);
-//      msg.ensureWritable(headerLen + bodyLen);
+//      int headerLen = CodedOutputStream.computeRawVarint32Size(bodyLen);
+//      ByteBuf out = Unpooled.buffer(0, 2048);
+//      out.ensureWritable(headerLen + bodyLen);
+//
 //      CodedOutputStream headerOut =
-//              CodedOutputStream.newInstance(new ByteBufOutputStream(msg), headerLen);
-//      headerOut.writeRawVarint32(data.length);
+//          CodedOutputStream.newInstance(new ByteBufOutputStream(out), headerLen);
+//      headerOut.writeRawVarint32(bodyLen);
 //      headerOut.flush();
-//      out.writeBytes(msg, msg.readerIndex(), data.length);
-      return  out;
-    }catch (Exception e){
-      e.printStackTrace();
-    }
-    return null;
+//
+//
+//
+//      out.writeBytes(msg, msg.readerIndex(), bodyLen);
+////
+////      ByteBuf msg = Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
+////      int bodyLen = msg.readableBytes();
+////      int headerLen = CodedOutputStream.computeRawVarint32Size(data.length);
+////      //ByteBuf out = Unpooled.buffer(data.length + headerLen);
+////      msg.ensureWritable(headerLen + bodyLen);
+////      CodedOutputStream headerOut =
+////              CodedOutputStream.newInstance(new ByteBufOutputStream(msg), headerLen);
+////      headerOut.writeRawVarint32(data.length);
+////      headerOut.flush();
+////      out.writeBytes(msg, msg.readerIndex(), data.length);
+//      return  out;
+//    }catch (Exception e){
+//      e.printStackTrace();
+//    }
+//    return null;
   }
 
   public Sha256Hash getMessageId() {
