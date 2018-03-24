@@ -208,6 +208,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
     }
 
+    nodeHandlerMap.values().forEach(handler-> logger.info("{} {} {} {}",
+            handler.node.getHost(),handler.node.getPort(),handler.node.getHexIdShort(),handler.state.toString()));
+
     return ret;
   }
 

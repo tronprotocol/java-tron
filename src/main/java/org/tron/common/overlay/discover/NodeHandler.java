@@ -260,6 +260,7 @@ public class NodeHandler {
     }
 
     void handleTimedOut() {
+        logger.info("ping timeout {} {} {}", node.getHost(),node.getPort(),node.getHexIdShort());
         waitForPong = false;
         if (--pingTrials > 0) {
             sendPing();
