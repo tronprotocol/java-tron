@@ -1043,9 +1043,9 @@ public class Manager {
    */
   private void updateWitnessSchedule() {
     if (CollectionUtils.isEmpty(getWitnesses())) {
-      logger.warn("Witnesses is empty");
-      return;
+      throw new RuntimeException("Witnesses is empty");
     }
+
     // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
