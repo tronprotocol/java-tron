@@ -431,7 +431,7 @@ public class Manager {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (head.getBlockId().equals(block.getParentHash())) {
+    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
       long slot = getSlotAtTime(block.getTimeStamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
