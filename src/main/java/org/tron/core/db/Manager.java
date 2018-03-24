@@ -90,6 +90,10 @@ public class Manager {
 
   @Getter
   @Setter
+  private boolean isSyncMode;
+
+  @Getter
+  @Setter
   protected List<WitnessCapsule> shuffledWitnessStates;
 
 

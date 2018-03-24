@@ -24,6 +24,7 @@ import org.tron.core.witness.BlockProductionCondition;
 
 @Slf4j
 public class WitnessService implements Service {
+
   private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
@@ -145,7 +146,9 @@ public class WitnessService implements Service {
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
-
+    if (!db.isSyncMode()) {
+      return BlockProductionCondition.NOT_SYNCED;
+    }
     final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
@@ -205,9 +208,6 @@ public class WitnessService implements Service {
     return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
-
-
-
 
 
   /**

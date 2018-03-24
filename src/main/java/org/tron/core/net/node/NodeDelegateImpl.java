@@ -30,6 +30,7 @@ import org.tron.core.net.message.TransactionMessage;
 
 @Slf4j
 public class NodeDelegateImpl implements NodeDelegate {
+
   private Manager dbManager;
 
   public NodeDelegateImpl(Manager dbManager) {
@@ -185,6 +186,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void syncToCli(long unSyncNum) {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    dbManager.setSyncMode(unSyncNum == 0);
     //TODO: notify cli know how many block we need to sync
   }
 
