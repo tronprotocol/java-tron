@@ -193,15 +193,15 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       trimTable();
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
-      logger.info(" +++ New node: {} size=", ret, nodeHandlerMap.size());
+      logger.info(" +++ New node: {} size={}", ret, nodeHandlerMap.size());
       if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
       // we found discovery node with same host:port,
       // replace node with correct nodeId
-      ret.node = n;
         logger.info("  New change:old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      ret.node = n;
       if (!n.getHexId().equals(homeNode.getHexId())) {
         //ethereumListener.onNodeDiscovered(ret.getNode());
       }
