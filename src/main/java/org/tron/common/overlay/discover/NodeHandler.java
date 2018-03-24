@@ -240,7 +240,9 @@ public class NodeHandler {
 //        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
         for (Node n : msg.getNodes()) {
-            nodeManager.getNodeHandler(n);
+            if (nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
+                nodeManager.getNodeHandler(n);
+            }
         }
     }
 
