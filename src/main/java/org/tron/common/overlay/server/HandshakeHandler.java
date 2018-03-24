@@ -17,10 +17,15 @@
  */
 package org.tron.common.overlay.server;
 
+import com.google.protobuf.CodedInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.timeout.ReadTimeoutException;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -29,13 +34,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
-import org.tron.common.overlay.message.*;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.P2pMessage;
+import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.List;
 
 /**
  * The Netty handler which manages initial negotiation with peer (when either we initiating
@@ -57,7 +62,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private static final Logger loggerNet = LoggerFactory.getLogger("HandshakeHandler");
 
   private final ECKey myKey;
-  private byte[] nodeId;
   private byte[] remoteId;
   private byte[] initiatePacket;
   private Channel channel;
@@ -80,31 +84,55 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId);
       initiate(ctx);
-    } else {
-      nodeId = myKey.getNodeId();
     }
   }
 
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
     loggerWire.info("Decoding handshake... (" + in.readableBytes() + " bytes available)");
-    decodeHandshake(ctx, in);
-    if (isHandshakeDone) {
-      loggerWire.debug("Handshake done, removing HandshakeHandler from pipeline.");
-      ctx.pipeline().remove(this);
+
+    in.markReaderIndex();
+    final byte[] buf = new byte[5];
+    for (int i = 0; i < buf.length; i ++) {
+      if (!in.isReadable()) {
+        in.resetReaderIndex();
+        return;
+      }
+
+      buf[i] = in.readByte();
+      if (buf[i] >= 0) {
+        int length = CodedInputStream.newInstance(buf, 0, i + 1).readRawVarint32();
+        if (length < 0) {
+          throw new CorruptedFrameException("negative length: " + length);
+        }
+
+        if (in.readableBytes() < length) {
+          in.resetReaderIndex();
+          return;
+        } else {
+          decodeHandshake(ctx, in.readBytes(length));
+          if (isHandshakeDone) {
+            loggerWire.debug("Handshake done, removing HandshakeHandler from pipeline.");
+            ctx.pipeline().remove(this);
+          }
+          return;
+        }
+      }
     }
+
+    // Couldn't find the byte whose MSB is off.
+    throw new CorruptedFrameException("length wider than 32-bit");
   }
 
   public void initiate(ChannelHandlerContext ctx) throws Exception {
     loggerNet.debug("initiator activated");
-    nodeId = myKey.getNodeId();
     isInitiator = true;
 
     //TODO: send hello message here
 //    final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
 //    byteBufMsg.writeBytes(initiatePacket);
 //    ctx.writeAndFlush(byteBufMsg).sync();
-    channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
+    channel.sendHelloMessage(ctx);
 
 
     channel.getNodeStatistics().rlpxAuthMessagesSent.add();
@@ -149,7 +177,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       // now we know both remote nodeId and port
       // let's set node, that will cause registering node in NodeManager
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
-      channel.sendHelloMessage(ctx, nodeManager.getPublicHomeNode().getHexId());
+      channel.sendHelloMessage(ctx);
       isHandshakeDone = true;
       this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
