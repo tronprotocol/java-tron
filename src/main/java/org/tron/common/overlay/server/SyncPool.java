@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -256,9 +257,9 @@ public class SyncPool {
         return false;
       }
 
-//      if (!handler.getState().equals(State.Active)) {
-//        return false;
-//      }
+      if (!handler.getState().equals(State.Active)) {
+        return false;
+      }
 
       return  true;
 
@@ -320,7 +321,7 @@ public class SyncPool {
     for(NodeHandler n : newNodes) {
       if (!Arrays.equals(nodeManager.getPublicHomeNode().getId(),n.getNode().getId())){
 
-        logger.info("new node--------------------");
+        logger.info("connect node--------------------");
         logger.info(n.getNode().toString());
         logger.info(n.getState().toString());
         channelManager.connect(n.getNode());
