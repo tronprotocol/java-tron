@@ -17,25 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
-import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
-
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +27,13 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+
+import java.net.InetAddress;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
+import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
 /**
  * @author Roman Mandeleil
@@ -139,10 +127,10 @@ public class ChannelManager {
   public Set<String> nodesInUse() {
     Set<String> ids = new HashSet<>();
     for (Channel peer : getActivePeers()) {
-      ids.add(peer.getPeerId());
+      ids.add(peer.getNode().getHexId());
     }
     for (Channel peer : newPeers) {
-      ids.add(peer.getPeerId());
+      ids.add(peer.getNode().getHexId());
     }
     return ids;
   }

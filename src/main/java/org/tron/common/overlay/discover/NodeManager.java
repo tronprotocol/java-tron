@@ -382,11 +382,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return null;
   }
 
-  public boolean isHomeNode(Node node){
-    if (node.getHexId().equals(homeNode.getHexId())){
+  public boolean isTheSameNode(Node src, Node des){
+    if (src.getHexId().equals(des.getHexId())){
       return  true;
     }
-    if (node.getHost().equals(homeNode.getHost()) && node.getPort() == homeNode.getPort()){
+    if (src.getHost().equals(homeNode.getHost()) && des.getPort() == homeNode.getPort()){
       return  true;
     }
     return  false;

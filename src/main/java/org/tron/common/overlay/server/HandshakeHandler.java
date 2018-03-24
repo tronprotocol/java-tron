@@ -104,7 +104,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 //    final ByteBuf byteBufMsg = ctx.alloc().buffer(initiatePacket.length);
 //    byteBufMsg.writeBytes(initiatePacket);
 //    ctx.writeAndFlush(byteBufMsg).sync();
-    channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
+    channel.sendHelloMessage(ctx);
 
 
     channel.getNodeStatistics().rlpxAuthMessagesSent.add();
@@ -149,7 +149,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       // now we know both remote nodeId and port
       // let's set node, that will cause registering node in NodeManager
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
-      channel.sendHelloMessage(ctx, nodeManager.getPublicHomeNode().getHexId());
+      channel.sendHelloMessage(ctx);
       isHandshakeDone = true;
       this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
