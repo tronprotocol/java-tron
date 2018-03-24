@@ -18,6 +18,21 @@ package org.tron.common.overlay.server;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import static java.lang.Math.min;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -25,21 +40,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-
-import static java.lang.Math.min;
 
 /**
  * <p>Encapsulates logic which manages peers involved in blockchain sync</p>
@@ -250,9 +256,9 @@ public class SyncPool {
         return false;
       }
 
-//      if (!handler.getState().equals(State.Active)) {
-//        return false;
-//      }
+      if (!handler.getState().equals(State.Active)) {
+        return false;
+      }
 
       return  true;
 
@@ -312,9 +318,9 @@ public class SyncPool {
     logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
-      if (!isHomeNode(n.getNode())){
+      if (!nodeManager.isHomeNode(n.getNode())){
 
-        logger.info("new node--------------------");
+        logger.info("connect node--------------------");
         logger.info(n.getNode().toString());
         logger.info(n.getState().toString());
         channelManager.connect(n.getNode());
@@ -324,16 +330,7 @@ public class SyncPool {
     }
   }
 
-  private boolean isHomeNode(Node node){
-    Node me = nodeManager.getPublicHomeNode();
-    if (node.getHexId().equals(me.getHexId())){
-      return  true;
-    }
-    if (node.getHost().equals(me.getHost()) && node.getPort() == me.getPort()){
-      return  true;
-    }
-    return  false;
-  }
+
 
   private synchronized void prepareActive() {
     List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());

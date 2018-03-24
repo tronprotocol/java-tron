@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.*;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 
 import java.io.IOException;
@@ -143,10 +144,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       }
 
       final HelloMessage inboundHelloMessage = (HelloMessage) msg;
+      this.remoteId = ByteArray.fromHexString(inboundHelloMessage.getPeerId());
+      loggerNet.info("getPeerId:" + inboundHelloMessage.getPeerId());
       // now we know both remote nodeId and port
       // let's set node, that will cause registering node in NodeManager
       channel.initWithNode(remoteId, inboundHelloMessage.getListenPort());
-      channel.sendHelloMessage(ctx, Hex.toHexString(nodeId));
+      channel.sendHelloMessage(ctx, nodeManager.getPublicHomeNode().getHexId());
       isHandshakeDone = true;
       this.channel.publicHandshakeFinished(ctx, inboundHelloMessage);
       channel.getNodeStatistics().rlpxInHello.add();
@@ -165,12 +168,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     if (channel.isDiscoveryMode()) {
-      loggerNet.trace("Handshake failed: " + cause);
+      loggerNet.info("Handshake failed: " + cause);
     } else {
       if (cause instanceof IOException || cause instanceof ReadTimeoutException) {
-        loggerNet.debug("Handshake failed: " + ctx.channel().remoteAddress() + ": " + cause);
+        loggerNet.info("Handshake failed: " + ctx.channel().remoteAddress() + ": " + cause);
       } else {
-        loggerNet.warn("Handshake failed: ", cause);
+        loggerNet.info("Handshake failed: ", cause);
       }
     }
     ctx.close();
