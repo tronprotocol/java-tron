@@ -127,10 +127,10 @@ public class ChannelManager {
   public Set<String> nodesInUse() {
     Set<String> ids = new HashSet<>();
     for (Channel peer : getActivePeers()) {
-      ids.add(peer.getNode().getHexId());
+      ids.add(peer.getPeerId());
     }
     for (Channel peer : newPeers) {
-      ids.add(peer.getNode().getHexId());
+      ids.add(peer.getPeerId());
     }
     return ids;
   }

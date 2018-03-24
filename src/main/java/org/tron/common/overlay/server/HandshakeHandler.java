@@ -57,7 +57,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private static final Logger loggerNet = LoggerFactory.getLogger("HandshakeHandler");
 
   private final ECKey myKey;
-  private byte[] nodeId;
   private byte[] remoteId;
   private byte[] initiatePacket;
   private Channel channel;
@@ -80,8 +79,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId);
       initiate(ctx);
-    } else {
-      nodeId = myKey.getNodeId();
     }
   }
 
@@ -97,7 +94,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   public void initiate(ChannelHandlerContext ctx) throws Exception {
     loggerNet.debug("initiator activated");
-    nodeId = myKey.getNodeId();
     isInitiator = true;
 
     //TODO: send hello message here
