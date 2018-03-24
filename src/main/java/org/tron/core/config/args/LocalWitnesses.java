@@ -52,6 +52,10 @@ public class LocalWitnesses {
   }
 
   public String getFirstPrivateKey() {
+    if (CollectionUtils.isEmpty(privateKeys)) {
+      logger.warn("privateKeys is empty");
+      return null;
+    }
     return this.privateKeys.get(0);
   }
 
