@@ -19,7 +19,12 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +40,6 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -75,8 +76,9 @@ public class Channel {
     @Autowired
     private WireTrafficStats stats;
 
-    @Autowired
     private ProtobufVarint32LengthFieldPrepender protoPender;
+
+    private ProtobufVarint32FrameDecoder lengthDecoder;
 
     private TronHandler tronHandler;
 
@@ -111,6 +113,8 @@ public class Channel {
         ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
+        protoPender = new ProtobufVarint32LengthFieldPrepender();
+        lengthDecoder = new ProtobufVarint32FrameDecoder();
 
         isActive = remoteId != null && !remoteId.isEmpty();
 
@@ -118,6 +122,7 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
+        pipeline.addLast("lengthDecode", lengthDecoder);
         pipeline.addLast("protoPender", protoPender);
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);

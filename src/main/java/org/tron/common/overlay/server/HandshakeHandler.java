@@ -17,11 +17,9 @@
  */
 package org.tron.common.overlay.server;
 
-import com.google.protobuf.CodedInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -76,10 +74,11 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     this.nodeManager = nodeManager;
     myKey = this.args.getMyKey();
   }
+
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-      loggerWire.info("&&&&&&&&&&&&&& channelActive");
+    loggerWire.info("&&&&&&&&&&&&&& channelActive");
     channel.setInetSocketAddress((InetSocketAddress) ctx.channel().remoteAddress());
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId);
@@ -90,39 +89,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
     loggerWire.info("Decoding handshake... (" + in.readableBytes() + " bytes available)");
-
-    in.markReaderIndex();
-    final byte[] buf = new byte[5];
-    for (int i = 0; i < buf.length; i ++) {
-      if (!in.isReadable()) {
-        in.resetReaderIndex();
-        return;
-      }
-
-      buf[i] = in.readByte();
-      if (buf[i] >= 0) {
-        int length = CodedInputStream.newInstance(buf, 0, i + 1).readRawVarint32();
-        if (length < 0) {
-          throw new CorruptedFrameException("negative length: " + length);
-        }
-
-        if (in.readableBytes() < length) {
-          in.resetReaderIndex();
-          return;
-        } else {
-          decodeHandshake(ctx, in.readBytes(length));
-          if (isHandshakeDone) {
-            loggerWire.debug("Handshake done, removing HandshakeHandler from pipeline.");
-            ctx.pipeline().remove(this);
-          }
-          return;
-        }
-
-      }
+    decodeHandshake(ctx, in);
+    if (isHandshakeDone) {
+      loggerWire.debug("Handshake done, removing HandshakeHandler from pipeline.");
+      ctx.pipeline().remove(this);
     }
 
-    // Couldn't find the byte whose MSB is off.
-    throw new CorruptedFrameException("length wider than 32-bit");
   }
 
   public void initiate(ChannelHandlerContext ctx) throws Exception {
@@ -134,7 +106,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 //    byteBufMsg.writeBytes(initiatePacket);
 //    ctx.writeAndFlush(byteBufMsg).sync();
     channel.sendHelloMessage(ctx);
-
 
     channel.getNodeStatistics().rlpxAuthMessagesSent.add();
   }
