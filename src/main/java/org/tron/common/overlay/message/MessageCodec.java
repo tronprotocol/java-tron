@@ -128,7 +128,6 @@ public class MessageCodec extends ByteToMessageDecoder {
         }
       }
     }
-
     // Couldn't find the byte whose MSB is off.
     throw new CorruptedFrameException("length wider than 32-bit");
   }

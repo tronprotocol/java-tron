@@ -117,6 +117,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
           }
           return;
         }
+
       }
     }
 
