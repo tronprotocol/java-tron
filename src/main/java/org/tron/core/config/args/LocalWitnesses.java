@@ -18,22 +18,21 @@ package org.tron.core.config.args;
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+@NoArgsConstructor
 public class LocalWitnesses {
 
   @Getter
   private List<String> privateKeys = Lists.newArrayList();
 
-  public LocalWitnesses() {
+  public LocalWitnesses(final String privateKey) {
+    addPrivateKey(privateKey);
   }
 
-  public LocalWitnesses(String privateKey) {
-    addPrivateKeys(privateKey);
-  }
-
-  public LocalWitnesses(List<String> privateKeys) {
+  public LocalWitnesses(final List<String> privateKeys) {
     setPrivateKeys(privateKeys);
   }
 
@@ -41,13 +40,19 @@ public class LocalWitnesses {
    * Private key of ECKey.
    */
   public void setPrivateKeys(final List<String> privateKeys) {
-    if (CollectionUtils.isEmpty(privateKeys)) {
-      return;
+    if (CollectionUtils.isNotEmpty(privateKeys)) {
+      privateKeys.forEach(this::validate);
+      this.privateKeys = privateKeys;
     }
-    for (String privateKey : privateKeys) {
-      validate(privateKey);
-    }
-    this.privateKeys = privateKeys;
+  }
+
+  public void addPrivateKey(final String privateKey) {
+    validate(privateKey);
+    this.privateKeys.add(privateKey);
+  }
+
+  public String getFirstPrivateKey() {
+    return this.privateKeys.get(0);
   }
 
   private void validate(String privateKey) {
@@ -60,15 +65,4 @@ public class LocalWitnesses {
           "Private key(" + privateKey + ") must be 66-bits hex string.");
     }
   }
-
-  public void addPrivateKeys(String privateKey) {
-    validate(privateKey);
-    this.privateKeys.add(privateKey);
-  }
-
-  //get the first one recently
-  public String getPrivateKey() {
-    return privateKeys.get(0);
-  }
-
 }
