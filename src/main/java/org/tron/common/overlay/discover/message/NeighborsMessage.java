@@ -41,7 +41,7 @@ public class NeighborsMessage extends Message {
     });
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
-        .setAddress(ByteString.copyFrom(from.getId()))
+        .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .setPort(from.getPort())
         .setNodeId(ByteString.copyFrom(from.getId()))
         .build();
