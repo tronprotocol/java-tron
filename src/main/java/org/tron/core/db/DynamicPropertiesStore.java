@@ -195,7 +195,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .plus((round + 1) * maintenanceTimeInterval);
     setNextMaintenanceTime(nextMaintenanceTime);
 
-    logger.info("currentMaintenanceTime:{}, blockTime:{},updateNextMaintenanceTime:{}",
+    logger.info("do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );

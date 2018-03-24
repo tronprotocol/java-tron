@@ -431,7 +431,7 @@ public class Manager {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (head.getBlockId().equals(block.getParentHash())) {
+    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
       long slot = getSlotAtTime(block.getTimeStamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
@@ -855,10 +855,17 @@ public class Manager {
     if (when < firstSlotTime) {
       return 0;
     }
-    logger.warn("nextFirstSlotTime:[{}],now[{}]", new DateTime(firstSlotTime), new DateTime(when));
+    logger
+        .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
     return (when - firstSlotTime) / blockInterval() + 1;
   }
 
+  /**
+   * get absolute Slot At Time
+   */
+  public long getAbSlotAtTime(long when) {
+    return (when - getGenesisBlock().getTimeStamp()) / blockInterval();
+  }
 
   /**
    * get slot time.
