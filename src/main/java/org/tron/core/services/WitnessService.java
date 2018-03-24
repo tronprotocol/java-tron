@@ -193,8 +193,8 @@ public class WitnessService implements Service {
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info(
-          "Produce block successfully, blockNumber:{}, blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), block.getBlockId(), new DateTime(block.getTimeStamp()),
+          "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), db.getAbSlotAtTime(now),block.getBlockId(), new DateTime(block.getTimeStamp()),
           db.getHead().getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
