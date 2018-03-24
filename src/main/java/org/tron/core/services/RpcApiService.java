@@ -6,8 +6,8 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.logging.Logger;
+
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
@@ -33,9 +33,8 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class RpcApiService implements Service {
-
-  private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
   private int port = 50051;
   private Server apiServer;
   private Application app;
