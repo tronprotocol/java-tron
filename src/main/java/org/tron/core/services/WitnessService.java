@@ -151,9 +151,8 @@ public class WitnessService implements Service {
 
     final int participation = db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
-      logger.warn(
-          "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
-              + "]");
+      logger.warn(String.format("Participation[%d] <  MIN_PARTICIPATION_RATE[%d]",
+              participation, MIN_PARTICIPATION_RATE));
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
@@ -220,7 +219,7 @@ public class WitnessService implements Service {
       WitnessCapsule witnessCapsule = db.getWitnessStore().get(address);
       // need handle init witness
       if (null == witnessCapsule) {
-        logger.warn("WitnessCapsule[" + Arrays.toString(address) + "] is not in witnessStore");
+        logger.warn(String.format("WitnessCapsule[%s] is not in witnessStore", Arrays.toString(address)));
         witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
       }
 
