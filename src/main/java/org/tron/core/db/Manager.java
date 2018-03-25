@@ -79,6 +79,9 @@ public class Manager {
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
+  @Getter
+  @Setter
+  private boolean isSyncMode;
 
   @Getter
   @Setter
