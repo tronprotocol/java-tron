@@ -25,7 +25,7 @@ import org.tron.core.witness.BlockProductionCondition;
 @Slf4j
 public class WitnessService implements Service {
 
-  private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
+  private static final int MIN_PARTICIPATION_RATE = 0; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
@@ -69,7 +69,8 @@ public class WitnessService implements Service {
                 timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
               }
               DateTime nextTime = time.plus(timeToNextSecond);
-              logger.info("Sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
+              logger.debug(
+                  "ProductionLoop sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
               Thread.sleep(timeToNextSecond);
             }
             this.blockProductionLoop();
@@ -95,13 +96,13 @@ public class WitnessService implements Service {
 
     switch (result) {
       case PRODUCED:
-        logger.info("Produced");
+        logger.debug("Produced");
         break;
       case NOT_SYNCED:
 //        logger.info("Not sync");
         break;
       case NOT_MY_TURN:
-        logger.info("It's not my turn");
+        logger.debug("It's not my turn");
         break;
       case NOT_TIME_YET:
         logger.info("Not time yet");
@@ -143,6 +144,9 @@ public class WitnessService implements Service {
         Thread.sleep(nexSlotTime - now); //Processing Time Drift later
         now = DateTime.now().getMillis();
       } else {
+        logger.debug("Not sync ,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
+            new DateTime(now), new DateTime(db.getHead().getTimeStamp()), db.getHead().getNum(),
+            db.getHead().getBlockId());
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
@@ -161,14 +165,20 @@ public class WitnessService implements Service {
 //    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
+      logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
+          new DateTime(now), new DateTime(db.getHead().getTimeStamp()), db.getHead().getNum(),
+          db.getHead().getBlockId());
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger.info("ScheduledWitness[{}],slot[{}]",
-          ByteArray.toHexString(scheduledWitness.toByteArray()), slot);
+      logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
+          ByteArray.toHexString(scheduledWitness.toByteArray()), slot, db.getAbSlotAtTime(now));
+      logger.debug("headBlockNumber:{},headBlockId:{},headBlockTime:{}",
+          db.getHead().getNum(), db.getHead().getBlockId(),
+          new DateTime(db.getHead().getTimeStamp()));
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -184,8 +194,10 @@ public class WitnessService implements Service {
 
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
-      logger.info("Block is generated successfully, Its Id is {},number{} ", block.getBlockId(),
-          block.getNum());
+      logger.info(
+          "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), db.getAbSlotAtTime(now),block.getBlockId(), new DateTime(block.getTimeStamp()),
+          db.getHead().getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {

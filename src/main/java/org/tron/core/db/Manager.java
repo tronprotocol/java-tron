@@ -456,7 +456,7 @@ public class Manager {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (head.getBlockId().equals(block.getParentHash())) {
+    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
       long slot = getSlotAtTime(block.getTimeStamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
@@ -880,10 +880,17 @@ public class Manager {
     if (when < firstSlotTime) {
       return 0;
     }
-    logger.warn("nextFirstSlotTime:[{}],now[{}]", new DateTime(firstSlotTime), new DateTime(when));
+    logger
+        .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
     return (when - firstSlotTime) / blockInterval() + 1;
   }
 
+  /**
+   * get absolute Slot At Time
+   */
+  public long getAbSlotAtTime(long when) {
+    return (when - getGenesisBlock().getTimeStamp()) / blockInterval();
+  }
 
   /**
    * get slot time.
@@ -908,7 +915,6 @@ public class Manager {
 
     return headSlotTime + interval * slotNum;
   }
-
 
   private boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
@@ -1071,9 +1077,9 @@ public class Manager {
    */
   private void updateWitnessSchedule() {
     if (CollectionUtils.isEmpty(getWitnesses())) {
-      logger.warn("Witnesses is empty");
-      return;
+      throw new RuntimeException("Witnesses is empty");
     }
+
     // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
@@ -1081,7 +1087,7 @@ public class Manager {
       setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
           .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
 
-      logger.debug(
+      logger.info(
           "updateWitnessSchedule,before:{} ", getWitnessStringList(getWitnesses()).toString()
               + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
     }
@@ -1092,6 +1098,4 @@ public class Manager {
         .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
-
-
 }

@@ -18,9 +18,11 @@ package org.tron.core.config.args;
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+@Slf4j
 public class LocalWitnesses {
 
   @Getter
@@ -68,6 +70,10 @@ public class LocalWitnesses {
 
   //get the first one recently
   public String getPrivateKey() {
+    if(CollectionUtils.isEmpty(privateKeys)){
+      logger.warn("privateKey is null");
+      return null;
+    }
     return privateKeys.get(0);
   }
 
