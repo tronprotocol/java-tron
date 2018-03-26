@@ -645,10 +645,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               }
             }
             if (!isFound) {
-              //TODO: fix this
-              logger.error("unlinked error");
-              startSyncWithPeer(peer);
-              //throw new TraitorPeerException("We get a unlinked block chain from " + peer);
+              throw new TraitorPeerException("We get a unlinked block chain from " + peer);
             }
           }
         }
