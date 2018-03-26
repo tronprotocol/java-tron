@@ -62,9 +62,6 @@ public class Args {
   @Parameter(names = {"--storage-directory"}, description = "Storage directory")
   private String storageDirectory = "";
 
-  @Parameter(names = {"--overlay-port"}, description = "Overlay port")
-  private int overlayPort = 0;
-
   @Getter
   private Storage storage;
 
@@ -84,10 +81,6 @@ public class Args {
   @Getter
   @Setter
   private LocalWitnesses localWitnesses = new LocalWitnesses();
-
-  @Getter
-  @Setter
-  private long blockInterval;
 
   @Getter
   @Setter
@@ -156,14 +149,12 @@ public class Args {
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
     INSTANCE.storageDirectory = "";
-    INSTANCE.overlayPort = 0;
     INSTANCE.storage = null;
     INSTANCE.overlay = null;
     INSTANCE.seedNode = null;
     INSTANCE.genesisBlock = null;
     INSTANCE.chainId = null;
     INSTANCE.localWitnesses = null;
-    INSTANCE.blockInterval = 0L;
     INSTANCE.needSyncCheck = false;
     INSTANCE.nodeDiscoveryEnable = false;
     INSTANCE.nodeDiscoveryPersist = false;
@@ -212,11 +203,6 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(config.getString("storage.directory")));
 
-    INSTANCE.overlay = new Overlay();
-    INSTANCE.overlay.setPort(Optional.ofNullable(INSTANCE.overlayPort)
-        .filter(i -> 0 != i)
-        .orElse(config.getInt("overlay.port")));
-
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
@@ -237,9 +223,6 @@ public class Args {
     } else {
       INSTANCE.genesisBlock = GenesisBlock.getDefault();
     }
-
-    INSTANCE.blockInterval =
-        config.hasPath("block.interval") ? config.getLong("block.interval") : 0;
 
     INSTANCE.needSyncCheck =
         config.hasPath("block.needSyncCheck") && config.getBoolean("block.needSyncCheck");
