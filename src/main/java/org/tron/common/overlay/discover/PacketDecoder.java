@@ -36,6 +36,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
         byte[] encoded = new byte[buf.readableBytes()];
         buf.readBytes(encoded);
         try {
+            logger.info("rcv udp packet, type {}, len {}", buf.array()[0], buf.readableBytes());
             DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
             out.add(event);
         } catch (Exception e) {
