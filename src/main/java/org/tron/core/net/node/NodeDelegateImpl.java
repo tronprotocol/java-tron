@@ -102,9 +102,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
       unForkedBlockId = dbManager.getGenesisBlockId();
-    }
-
-    if (!blockChainSummary.isEmpty()) {
+    } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
