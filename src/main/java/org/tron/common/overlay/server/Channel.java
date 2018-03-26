@@ -234,6 +234,21 @@ public class Channel {
         return tronState.ordinal() > TronState.INIT.ordinal();
     }
 
+    public String logSyncStats() {
+        //TODO: return tron sync status here.
+//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
+//    long lifeTime = System.currentTimeMillis() - connectedTime;
+        return "";
+//        return String.format(
+//            "Peer %s: [ %18s, ping %6s ms, last know block num %s ]: needSyncFromPeer:%b needSyncFromUs:%b",
+//            this.getNode().getHost() + ":" + this.getNode().getPort(),
+//            this.getPeerIdShort(),
+//            (int)this.getPeerStats().getAvgLatency(),
+//            headBlockWeBothHave.getNum(),
+//            isNeedSyncFromPeer(),
+//            isNeedSyncFromUs());
+    }
+
     public boolean isDiscoveryMode() {
         return discoveryMode;
     }

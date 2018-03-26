@@ -184,13 +184,24 @@ public class PeerConnection extends Channel{
 //    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
 //    long lifeTime = System.currentTimeMillis() - connectedTime;
     return String.format(
-        "Peer %s: [ %18s, ping %6s ms, last know block num %s ]: needSyncFromPeer:%b needSyncFromUs:%b",
+        "Peer %s: [ %18s, ping %6s ms]-----------\n"
+            + "last know block num: %s\n "
+            + "needSyncFromPeer:%b\n "
+            + "needSyncFromUs:%b\n"
+            + "syncToFetchSize:%d\n"
+            + "syncBlockRequestedSize:%d\n"
+            + "unFetchSynNum:%d\n"
+            + "blockInPorc%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
         (int)this.getPeerStats().getAvgLatency(),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
-        isNeedSyncFromUs());
+        isNeedSyncFromUs(),
+        syncBlockToFetch.size(),
+        syncBlockRequested.size(),
+        unfetchSyncNum,
+        blockInProc.size());
   }
 
   public boolean isBusy() {

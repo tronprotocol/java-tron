@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
+import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
@@ -129,11 +130,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Thread handleSyncBlockLoop;
 
-  private Set<BlockMessage> blockWaitToProc = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProc = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockWaitToProcBak = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProcBak = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockInProc = new HashSet<>();
+  private Set<BlockMessage> blockInProc = new ConcurrentSet<>();
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
