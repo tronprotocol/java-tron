@@ -26,10 +26,8 @@ import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -97,8 +95,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
         args.getNodeListenPort());
 
+    logger.info("homeNode : {}", homeNode);
+
     String[] bootPeers = args.getSeedNode().getIpList().toArray(new String[0]);
     for (String boot : bootPeers) {
+      logger.info("length : {}", bootPeers.length);
       bootNodes.add(Node.instanceOf(boot));
     }
 
@@ -123,10 +124,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public ScheduledExecutorService getPongTimer() {
     return pongTimer;
-  }
-
-  void setBootNodes(List<Node> bootNodes) {
-    this.bootNodes = bootNodes;
   }
 
   void channelActivated() {
@@ -375,15 +372,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return sb.toString();
   }
 
-  /**
-   * @return home node if config defines it as public, otherwise null
-   */
   public Node getPublicHomeNode() {
-    Args args = Args.getInstance();
-    if (args.isNodeDiscoveryPublicHomeNode()) {
-      return homeNode;
-    }
-    return null;
+    return homeNode;
   }
 
   public boolean isTheSameNode(Node src, Node des){
@@ -408,11 +398,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   }
 
   private class ListenerHandler {
-
     Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
     DiscoverListener listener;
     Predicate<NodeStatistics> filter;
-
     ListenerHandler(DiscoverListener listener, Predicate<NodeStatistics> filter) {
       this.listener = listener;
       this.filter = filter;
@@ -433,19 +421,4 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
   }
 
-  public static void main(String[] args) {
-    try {
-      logger.info(InetAddress.getLocalHost().toString());
-      ServerSocket ss = new ServerSocket(7080);
-      DatagramSocket socket = new DatagramSocket(7080);
-      logger.info(ss.getInetAddress().toString());
-      logger.info(ss.getLocalSocketAddress().toString());
-      logger.info(ss.getLocalPort() + "");
-
-
-    } catch (Exception e) {
-      logger.info("aaa", e);
-    }
-    System.out.println(111);
-  }
 }
