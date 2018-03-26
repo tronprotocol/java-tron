@@ -4,17 +4,15 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.ChainInventory;
 
-@Slf4j
-public class ChainInventoryMessage extends Message {
+public class ChainInventoryMessage extends TronMessage {
 
   public ChainInventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   protected ChainInventory chainInventory;
@@ -31,6 +29,7 @@ public class ChainInventoryMessage extends Message {
     invBuilder.setRemainNum(remainNum);
     chainInventory = invBuilder.build();
     unpacked = true;
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
   }
 
   @Override
@@ -46,6 +45,11 @@ public class ChainInventoryMessage extends Message {
     return data;
   }
 
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
   private void pack() {
     this.data = this.chainInventory.toByteArray();
   }
@@ -56,9 +60,15 @@ public class ChainInventoryMessage extends Message {
   }
 
   public List<BlockId> getBlockIds() {
-    return getChainInventory().getIdsList().stream()
-        .map(blockId -> new BlockId(blockId.getHash(), blockId.getNumber()))
-        .collect(Collectors.toCollection(ArrayList::new));
+
+    try {
+      return getChainInventory().getIdsList().stream()
+          .map(blockId -> new BlockId(blockId.getHash(), blockId.getNumber()))
+          .collect(Collectors.toCollection(ArrayList::new));
+    } catch (Exception e) {
+      logger.info("breakPoint");
+    }
+    return null;
   }
 
   public Long getRemainNum() {
@@ -73,7 +83,7 @@ public class ChainInventoryMessage extends Message {
     try {
       this.chainInventory = ChainInventory.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
+      logger.info(e.getMessage());
     }
     unpacked = true;
   }
@@ -81,6 +91,6 @@ public class ChainInventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_CHAIN_INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 }

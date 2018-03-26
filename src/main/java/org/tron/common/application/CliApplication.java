@@ -27,7 +27,7 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public void init(String path, Args args) {
+  public void init( Args args) {
 
   }
 

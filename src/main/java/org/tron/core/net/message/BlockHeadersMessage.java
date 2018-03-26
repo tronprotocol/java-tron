@@ -3,22 +3,22 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Items;
 
-@Slf4j
-public class BlockHeadersMessage extends Message {
+
+public class BlockHeadersMessage extends TronMessage {
 
   private List<BlockHeader> blockHeaders = new ArrayList<>();
 
   public BlockHeadersMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCKHEADERS.asByte();
   }
 
   public BlockHeadersMessage(List<BlockHeader> blockHeaders) {
     this.blockHeaders = blockHeaders;
+    this.type = MessageTypes.BLOCKHEADERS.asByte();
     unpacked = true;
   }
 
@@ -28,8 +28,13 @@ public class BlockHeadersMessage extends Message {
   }
 
   @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCKHEADERS;
+    return MessageTypes.fromByte(this.type);
   }
 
   @Override

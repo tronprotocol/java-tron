@@ -1,6 +1,6 @@
 package org.tron.core.net.message;
 
-public class GetDataMessage extends Message {
+public class GetDataMessage extends TronMessage {
 
   public GetDataMessage() {
     super();
@@ -18,6 +18,11 @@ public class GetDataMessage extends Message {
 
   @Override
   public String toString() {
+    return null;
+  }
+
+  @Override
+  public Class<?> getAnswerMessage() {
     return null;
   }
 

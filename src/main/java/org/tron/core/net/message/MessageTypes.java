@@ -33,6 +33,22 @@ public enum MessageTypes {
 
   TRX_INVENTORY(0x13),
 
+  P2P_HELLO(0x20),
+
+  P2P_DISCONNECT(0x21),
+
+  P2P_PING(0x22),
+
+  P2P_PONG(0x23),
+
+  DISCOVER_PING(0x30),
+
+  DISCOVER_PONG(0x31),
+
+  DISCOVER_FIND_PEER(0x32),
+
+  DISCOVER_PEERS(0x33),
+
   LAST(0xFF);
 
   private final int type;
@@ -61,6 +77,14 @@ public enum MessageTypes {
     return (byte) (type);
   }
 
+  public static boolean inP2pRange(byte code) {
+    return code <= P2P_PONG.asByte() && code >= P2P_HELLO.asByte();
+  }
+
+  public static boolean inTronRange(byte code) {
+    return code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte();
+  }
+
   @Override
   public String toString() {
     switch (type) {
@@ -76,6 +100,8 @@ public enum MessageTypes {
         return "SYNC_BLOCK_CHAIN";
       case 11:
         return "BLOCK_INVENTORY";
+      default:
+        break;
     }
     return super.toString();
   }

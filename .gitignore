@@ -52,3 +52,5 @@ src/main/resources/META-INF/
 
 /output_manager/
 /output_witness/
+
+nodeId.properties
