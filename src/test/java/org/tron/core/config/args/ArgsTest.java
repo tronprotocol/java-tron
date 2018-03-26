@@ -36,8 +36,6 @@ public class ArgsTest {
 
     Assert.assertEquals("database-test", args.getStorage().getDirectory());
 
-    Assert.assertEquals(7080, args.getOverlay().getPort());
-
     Assert.assertEquals(7, args.getSeedNode().getIpList().size());
 
     GenesisBlock genesisBlock = args.getGenesisBlock();
@@ -55,19 +53,14 @@ public class ArgsTest {
         Lists.newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
         args.getLocalWitnesses().getPrivateKeys());
 
-    Assert.assertEquals(5000, args.getBlockInterval());
-
     Assert.assertTrue(args.isNodeDiscoveryEnable());
     Assert.assertTrue(args.isNodeDiscoveryPersist());
     Assert.assertEquals("127.0.0.1", args.getNodeDiscoveryBindIp());
     Assert.assertEquals("46.168.1.1", args.getNodeExternalIp());
-    Assert.assertTrue(args.isNodeDiscoveryPublicHomeNode());
     Assert.assertEquals(10002, args.getNodeListenPort());
     Assert.assertEquals(2000, args.getNodeConnectionTimeout());
     Assert.assertEquals(0, args.getNodeActive().size());
-    Assert.assertEquals(90, args.getNodeChannelReadTimeout());
     Assert.assertEquals(30, args.getNodeMaxActiveNodes());
-    Assert.assertEquals(5, args.getNodeP2pPingInterval());
     Assert.assertEquals(0, args.getNodeP2pVersion());
     Assert.assertEquals(30, args.getSyncNodeCount());
 
