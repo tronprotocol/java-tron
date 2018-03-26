@@ -29,8 +29,15 @@ import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class AccountCapsule implements ProtoCapsule<Account> {
+public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
+
   private Account account;
+
+
+  @Override
+  public int compareTo(AccountCapsule otherObject) {
+    return Long.compare(otherObject.getBalance(), this.getBalance());
+  }
 
   /**
    * get account from bytes data.

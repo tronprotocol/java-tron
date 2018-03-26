@@ -202,6 +202,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     gossipNode = GossipLocalNode.getInstance();
     gossipNode.setPeerDel(this);
     gossipNode.start();
+
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;

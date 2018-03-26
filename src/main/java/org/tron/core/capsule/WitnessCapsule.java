@@ -8,11 +8,17 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
 
 @Slf4j
-public class WitnessCapsule implements ProtoCapsule<Witness> {
+public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<WitnessCapsule> {
+
   public static final long MIN_BALANCE = 100;
 
   private Witness witness;
 
+  
+  @Override
+  public int compareTo(WitnessCapsule otherObject) {
+    return Long.compare(otherObject.getVoteCount(), this.getVoteCount());
+  }
 
   /**
    * WitnessCapsule constructor with pubKey and url.
