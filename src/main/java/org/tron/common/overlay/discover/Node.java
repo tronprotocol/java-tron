@@ -83,15 +83,6 @@ public class Node implements Serializable {
     this.port = port;
   }
 
-  public Node(byte[] id, String address) {
-    this.id = id;
-
-    int colon = address.indexOf(":");//TODO: throw exception here.
-    this.host = address.substring(0, colon - 1);
-    //TODO: throw exception here
-    this.port = Integer.parseInt(address.substring(colon, address.length() - 1));
-  }
-
   public String getHexId() {
     return Hex.toHexString(id);
   }
@@ -116,20 +107,12 @@ public class Node implements Serializable {
     return host;
   }
 
-  public void setHost(String host) {
-    this.host = host;
-  }
-
   public int getPort() {
     return port;
   }
 
   public void setPort(int port) {
     this.port = port;
-  }
-
-  public void setDiscovery(boolean isDiscoveryNode) {
-    isFakeNodeId = isDiscoveryNode;
   }
 
   @Override
