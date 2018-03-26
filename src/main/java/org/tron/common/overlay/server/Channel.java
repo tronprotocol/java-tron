@@ -308,11 +308,6 @@ public class Channel {
         return  true;
     }
 
-    public String logSyncStats() {
-        //TODO: return tron sync status here.
-        return "tron sync stats";
-    }
-
     @Override
     public int hashCode() {
         int result = inetSocketAddress != null ? inetSocketAddress.hashCode() : 0;

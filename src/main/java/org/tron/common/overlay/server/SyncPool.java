@@ -18,6 +18,21 @@ package org.tron.common.overlay.server;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import static java.lang.Math.min;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -30,16 +45,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-
-import static java.lang.Math.min;
 
 /**
  * <p>Encapsulates logic which manages peers involved in blockchain sync</p>
@@ -116,7 +121,7 @@ public class SyncPool {
         t.printStackTrace();
         logger.error("Exception in log worker", t);
       }
-    }, 30, 30, TimeUnit.SECONDS);
+    }, 10, 10, TimeUnit.SECONDS);
   }
 
   public void setNodesSelector(Predicate<NodeHandler> nodesSelector) {
@@ -222,7 +227,7 @@ public class SyncPool {
       sb.append("Active peers\n");
       sb.append("============\n");
       Set<Node> activeSet = new HashSet<>();
-      for (Channel peer : new ArrayList<>(activePeers)) {
+      for (PeerConnection peer : new ArrayList<>(activePeers)) {
         sb.append(peer.logSyncStats()).append('\n');
         activeSet.add(peer.getNode());
       }
@@ -230,7 +235,7 @@ public class SyncPool {
       sb.append("============\n");
       for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
         if (!activeSet.contains(peer.getNode())) {
-          sb.append(peer.logSyncStats()).append('\n');
+          sb.append(((PeerConnection)peer).logSyncStats()).append('\n');
         }
       }
       logger.info(sb.toString());

@@ -179,6 +179,19 @@ public class PeerConnection extends Channel{
     this.invWeAdv = invWeAdv;
   }
 
+  public String logSyncStats() {
+    //TODO: return tron sync status here.
+//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
+//    long lifeTime = System.currentTimeMillis() - connectedTime;
+    return String.format(
+        "Peer %s: [ %18s, ping %6s ms, last know block num %s ]: needSyncFromPeer:%b needSyncFromUs:%b",
+        this.getNode().getHost() + ":" + this.getNode().getPort(),
+        this.getPeerIdShort(),
+        (int)this.getPeerStats().getAvgLatency(),
+        headBlockWeBothHave.getNum(),
+        isNeedSyncFromPeer(),
+        isNeedSyncFromUs());
+  }
 
   public boolean isBusy() {
     return !advObjWeRequested.isEmpty()
