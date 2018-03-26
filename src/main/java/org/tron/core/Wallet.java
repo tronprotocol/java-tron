@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -188,14 +188,18 @@ public class Wallet {
 
   public AccountList getAllAccounts() {
     AccountList.Builder builder = AccountList.newBuilder();
-    dbManager.getAccountStore().getAllAccounts()
-        .forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
+    List<AccountCapsule> accountCapsuleList =
+        dbManager.getAccountStore().getAllAccounts();
+    accountCapsuleList.sort(null);
+    accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
     return builder.build();
   }
 
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
-    dbManager.getWitnessStore().getAllWitnesses()
+    List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
+    witnessCapsuleList.sort(null);
+    witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
   }
