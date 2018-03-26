@@ -97,11 +97,11 @@ public class SyncPool {
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
-//        heartBeat();
+        heartBeat();
 ////        updateLowerUsefulDifficulty();
-//        fillUp();
-//        prepareActive();
-//        cleanupActive();
+        fillUp();
+        prepareActive();
+        cleanupActive();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
