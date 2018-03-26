@@ -42,7 +42,7 @@ public class NodeHandler {
     // they are not so informative when everything is already up and running
     // but could be interesting when discovery just starts
     private void logMessage(Message msg, boolean inbound) {
-        logger.info("handle msg type: {}, len {}, date: {}", msg.getType(), msg.getSendData().length,  msg);
+        //logger.info("handle msg type: {}, len {}, date: {}", msg.getType(), msg.getSendData().length,  msg);
         String s = String.format("%s[%s (%s)] %s", inbound ? " ===>  " : "<===  ", msg.getClass().getSimpleName(),
                 msg.getData().length, this);
         if (msgInCount > 1024) {

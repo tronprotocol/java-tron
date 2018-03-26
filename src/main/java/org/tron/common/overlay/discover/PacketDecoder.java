@@ -22,7 +22,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.Message;
 
 import java.util.List;
@@ -36,11 +35,10 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
         byte[] encoded = new byte[buf.readableBytes()];
         buf.readBytes(encoded);
         try {
-            logger.info("rcv udp packet {} {} ", encoded[0], encoded.length);
             DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
             out.add(event);
         } catch (Exception e) {
-            throw new RuntimeException("Exception processing inbound message from " + ctx.channel().remoteAddress() + ": " + Hex.toHexString(encoded), e);
+            logger.info("parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length, ctx.channel().remoteAddress());
         }
     }
 }

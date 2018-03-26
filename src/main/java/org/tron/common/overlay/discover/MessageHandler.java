@@ -48,12 +48,20 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent event) throws Exception {
-        nodeManager.handleInbound(event);
+    public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent discoveryEvent) throws Exception {
+        logger.info("rcv msg type {}, len {} from {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
+        nodeManager.handleInbound(discoveryEvent);
     }
 
     @Override
     public void accept(DiscoveryEvent discoveryEvent) {
+        logger.info("send msg to type {}, len {} from {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
         InetSocketAddress address = discoveryEvent.getAddress();
         sendPacket(discoveryEvent.getMessage().getSendData(), address);
     }
