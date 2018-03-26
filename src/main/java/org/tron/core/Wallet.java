@@ -221,14 +221,31 @@ public class Wallet {
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.size() == 0) {
+      return null;
+    }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
         .getAllAssetIssues();
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(witnessCapsule -> {
-          builder.addAssetIssue(witnessCapsule.getInstance());
+        .forEach(issueCapsule -> {
+          builder.addAssetIssue(issueCapsule.getInstance());
         });
     return builder.build();
+  }
+
+  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
+    if (assetName == null || assetName.size() == 0) {
+      return null;
+    }
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
+      if (assetName.equals(assetIssueCapsule.getName())) {
+        return assetIssueCapsule.getInstance();
+      }
+    }
+    return null;
   }
 }

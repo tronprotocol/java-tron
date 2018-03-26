@@ -6,11 +6,11 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.logging.Logger;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -289,6 +289,19 @@ public class RpcApiService implements Service {
 
       if (fromBs != null) {
         responseObserver.onNext(wallet.getAssetIssueByAccount(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueByName(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      ByteString asertName = request.getValue();
+
+      if (asertName != null) {
+        responseObserver.onNext(wallet.getAssetIssueByName(asertName));
       } else {
         responseObserver.onNext(null);
       }
