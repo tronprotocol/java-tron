@@ -297,7 +297,11 @@ public class Manager {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
 
-        this.pushBlock(this.genesisBlock);
+        //this.pushBlock(this.genesisBlock);
+        blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
+        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()), this.genesisBlock.getBlockId().getBytes());
+        //refreshHead(newBlock);
+        logger.info("save block: " + this.genesisBlock);
 
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
@@ -350,6 +354,9 @@ public class Manager {
 
       this.wits.add(witnessCapsule);
     });
+
+    this.updateWits();
+    this.setShuffledWitnessStates(getWitnesses());
   }
 
   public AccountStore getAccountStore() {

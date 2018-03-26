@@ -38,7 +38,8 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void init(String path, Args args) {
+  @Autowired
+  public void init(Args args) {
     //p2pNode = new NodeImpl();
     //p2pNode = ctx.getBean(NodeImpl.class);
     dbManager = new Manager();

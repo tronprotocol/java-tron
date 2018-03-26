@@ -29,7 +29,7 @@ public class FullNode {
     }
     logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
     Application appT = ApplicationFactory.create(context);
-    appT.init(cfgArgs.getOutputDirectory(), cfgArgs);
+    //appT.init(cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT);
     appT.addService(rpcApiService);
     if (cfgArgs.isWitness()) {

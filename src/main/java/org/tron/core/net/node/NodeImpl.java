@@ -227,6 +227,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void connectToP2PNetWork() {
+
     pool.init(channelManager, this);
   }
 

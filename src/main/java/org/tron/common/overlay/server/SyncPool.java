@@ -235,7 +235,7 @@ public class SyncPool {
       sb.append("============\n");
       for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
         if (!activeSet.contains(peer.getNode())) {
-          sb.append(((PeerConnection)peer).logSyncStats()).append('\n');
+          sb.append(peer.logSyncStats()).append('\n');
         }
       }
       logger.info(sb.toString());

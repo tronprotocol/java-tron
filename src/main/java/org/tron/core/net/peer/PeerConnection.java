@@ -191,7 +191,7 @@ public class PeerConnection extends Channel{
             + "syncToFetchSize:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
-            + "blockInPorc%d\n",
+            + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
         (int)this.getPeerStats().getAvgLatency(),
