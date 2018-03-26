@@ -298,7 +298,6 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    logger.info("fillup");
     //int lackSize = args.getNodeMaxActiveNodes() - channelManager.getActivePeers().size();
     //if(lackSize <= 0) return;
     int lackSize = 10;
@@ -313,48 +312,32 @@ public class SyncPool {
 
     //newNodes.add(nodeManager.getNodeHandler(new Node()))
 
-
-
-
     if (logger.isTraceEnabled()) {
       logDiscoveredNodes(newNodes);
     }
 
-    logger.info("new nodes----------");
-    newNodes.forEach(node -> logger.info(node.toString()));
-    logger.info("active nodes------------");
-    activePeers.forEach(peerConnection -> logger.info(peerConnection.getNode().toString()));
-
-
-    logger.info("connection nodes size : {}", newNodes.size());
     //todo exclude home node from k bucket
     for(NodeHandler n : newNodes) {
       if (!nodeManager.isTheSameNode(n.getNode(), nodeManager.getPublicHomeNode())){
 
         logger.info("connect node--------------------");
-        logger.info(n.getNode().toString());
-        logger.info(n.getState().toString());
+        logger.info(n.getNode().toString() + " | " + n.getState().toString());
         channelManager.connect(n.getNode());
       }else {
-        logger.info("isHomeNode {}", n.getNode());
+        logger.info("isTheHomeNode {}", n.getNode());
       }
     }
   }
 
 
-
   private synchronized void prepareActive() {
     List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());
-    logger.info("manage active nodes----------");
-    managerActive.forEach(node -> logger.info(node.toString()));
 
     // Filtering out with nodeSelector because server-connected nodes were not tested
     NodeSelector nodeSelector = new NodeSelector();
     List<PeerConnection> active = new ArrayList<>();
     for (Channel channel : managerActive) {
       if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {
-        logger.info("add to active nodes-----------");
-        logger.info(channel.getNode().toString());
         active.add((PeerConnection)channel);
       }
     }

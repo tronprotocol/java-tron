@@ -17,8 +17,15 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,15 +36,6 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.message.MessageTypes;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 
 /**
@@ -107,11 +105,11 @@ P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
       throws InterruptedException {
 
 
-    logger.info("rcv p2p msg *************************************************");
+    //logger.info("rcv p2p msg *************************************************");
 
-    if (MessageTypes.inP2pRange(msg.getType().asByte())) {
-      logger.trace("P2PHandler invoke: [{}]", msg.getType());
-    }
+//    if (MessageTypes.inP2pRange(msg.getType().asByte())) {
+//      logger.trace("P2PHandler invoke: [{}]", msg.getType());
+//    }
 
     //tronListener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 

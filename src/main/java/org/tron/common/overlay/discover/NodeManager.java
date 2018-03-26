@@ -320,8 +320,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         }
       }
     }
-    logger.info("size {}", filtered.size());
-    logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
+//    logger.info("size {}", filtered.size());
+//    logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
   }

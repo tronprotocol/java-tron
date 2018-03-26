@@ -169,12 +169,12 @@ public class Channel {
 
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
-        logger.info("send hello msg: {}", helloMessage);
+        //logger.info("send hello msg: {}", helloMessage);
 
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
 
-        if (logger.isDebugEnabled())
-            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
+//        if (logger.isDebugEnabled())
+//            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
         getNodeStatistics().rlpxOutHello.add();
     }
 
