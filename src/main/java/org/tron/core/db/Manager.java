@@ -15,6 +15,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
@@ -76,6 +79,9 @@ public class Manager {
   private RevokingDatabase revokingStore;
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
 
+  @Getter
+  @Setter
+  private boolean isSyncMode;
 
   @Getter
   @Setter
@@ -106,16 +112,39 @@ public class Manager {
   // transaction cache
   private List<TransactionCapsule> pendingTrxs;
 
-  private List<WitnessCapsule> wits = new ArrayList<>();
+  volatile private List<WitnessCapsule> wits = new ArrayList<>();
+  private ReadWriteLock witsLock = new ReentrantReadWriteLock();
+  private Lock witsRead = witsLock.readLock();
+  private Lock witsWrite = witsLock.writeLock();
 
   // witness
 
   public List<WitnessCapsule> getWitnesses() {
-    return this.wits;
+    witsRead.lock();
+    try {
+      return this.wits;
+    } finally {
+      witsRead.unlock();
+    }
+
   }
 
   public void setWitnesses(List<WitnessCapsule> wits) {
-    this.wits = wits;
+    witsWrite.lock();
+    try {
+      this.wits = wits;
+    } finally {
+      witsWrite.unlock();
+    }
+  }
+
+  public void addWitness(final WitnessCapsule witnessCapsule) {
+    witsWrite.lock();
+    try {
+      this.wits.add(witnessCapsule);
+    } finally {
+      witsWrite.unlock();
+    }
   }
 
   public BlockId getHeadBlockId() {
@@ -129,10 +158,6 @@ public class Manager {
 
   public long getHeadBlockTimeStamp() {
     return this.head.getTimeStamp();
-  }
-
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    this.wits.add(witnessCapsule);
   }
 
 
@@ -789,7 +814,7 @@ public class Manager {
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers = wits.stream()
+    List<Long> numbers = getWitnesses().stream()
         .map(wit -> wit.getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
@@ -909,7 +934,7 @@ public class Manager {
    * update witness.
    */
   public void updateWitness() {
-    List<WitnessCapsule> currentWits = wits;
+    List<WitnessCapsule> currentWits = getWitnesses();
 
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
@@ -982,19 +1007,20 @@ public class Manager {
     });
     sortWitness(witnessCapsuleList);
     if (witnessCapsuleList.size() > MAX_ACTIVE_WITNESS_NUM) {
-      this.wits = witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM);
+      setWitnesses(witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM));
     } else {
-      this.wits = witnessCapsuleList;
+      setWitnesses(witnessCapsuleList);
     }
 
-    this.wits.forEach(witnessCapsule -> {
+    getWitnesses().forEach(witnessCapsule -> {
       witnessCapsule.setIsJobs(true);
       this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
 
     logger.info(
-        "updateWitness,before:{} ,\n after:{} ",
-        getWitnessStringList(currentWits), getWitnessStringList(wits));
+        "updateWitness,before:{} ",
+        getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(
+            getWitnesses()));
   }
 
   private byte[] createDbKey(ByteString string) {
@@ -1009,15 +1035,24 @@ public class Manager {
    * update wits sync to store.
    */
   public void updateWits() {
-    wits.clear();
+    getWitnesses().clear();
     witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
       if (witnessCapsule.getIsJobs()) {
-        wits.add(witnessCapsule);
+        addWitness(witnessCapsule);
       }
     });
-    sortWitness(wits);
+    sortWitness();
   }
 
+  private void sortWitness() {
+    witsWrite.lock();
+    try {
+      sortWitness(wits);
+    } finally {
+      witsWrite.unlock();
+    }
+
+  }
 
   private void sortWitness(List<WitnessCapsule> list) {
     list.sort((a, b) -> {
