@@ -34,40 +34,24 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * The central class for Peer Discovery machinery.
- *
- * The NodeManager manages info on all the Nodes discovered by the peer discovery protocol, routes
- * protocol messages to the corresponding NodeHandlers and supplies the info about discovered Nodes
- * and their usage statistics
- *
- * Created by Anton Nashatyrev on 16.07.2015.
- */
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
 
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
-  private final boolean PERSIST;
+  private Args args = Args.getInstance();
 
   private Manager dbManager;
-
-//  @Autowired
-//  private Manager dbManager;
 
   private static final long LISTENER_REFRESH_RATE = 1000;
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000;
   static final int MAX_NODES = 2000;
   static final int NODES_TRIM_THRESHOLD = 3000;
 
-  //PeerConnectionTester peerConnectionManager;
-  //EthereumListener ethereumListener;
-
   Consumer<DiscoveryEvent> messageSender;
 
   NodeTable table;
   private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-  //final ECKey key;
   final Node homeNode;
   private List<Node> bootNodes = new ArrayList<>();
 
@@ -85,18 +69,15 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   @Autowired
   public NodeManager(Manager dbManager) {
-    Args args = Args.getInstance();
-    PERSIST = args.isNodeDiscoveryPersist();
+
     this.dbManager = dbManager;
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    //homeNode = Node.instanceOf("127.0.0.1:"+ args.getNodeListenPort());//new Node(args.nodeId(), "127.0.0.1", args.getNodeListenPort());
-    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
-        args.getNodeListenPort());
+    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
-      bootNodes.add(Node.instanceOf(boot));
+        bootNodes.add(Node.instanceOf(boot));
     }
 
     logger.info("homeNode : {}", homeNode);
@@ -114,7 +95,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
 
     for (Node node : args.getNodeActive()) {
-      getNodeHandler(node).getNodeStatistics().setPredefined(true);
+        getNodeHandler(node).getNodeStatistics().setPredefined(true);
     }
   }
 
@@ -138,14 +119,15 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         }
       }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
-      dbRead();
-      nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          dbWrite();
-        }
-      }, DB_COMMIT_RATE, DB_COMMIT_RATE);
-
+      if(args.isNodeDiscoveryPersist()){
+        dbRead();
+        nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
+          @Override
+          public void run() {
+            dbWrite();
+          }
+        }, DB_COMMIT_RATE, DB_COMMIT_RATE);
+      }
 
       for (Node node : bootNodes) {
         getNodeHandler(node);
@@ -162,7 +144,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private void dbWrite() {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
-      nodeHandlerMap.values().forEach(handle -> batch.add(handle.getNode()));
+      for (NodeHandler nodeHandler: nodeHandlerMap.values()){
+        if (nodeHandler.state != NodeHandler.State.Dead){
+          batch.add(nodeHandler.getNode());
+        }
+      }
     }
     logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
     dbManager.clearAndWriteNeighbours(batch);
@@ -178,7 +164,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   private String getKey(InetSocketAddress address) {
     InetAddress addr = address.getAddress();
-    // addr == null if the hostname can't be resolved
     return (addr == null ? address.getHostString() : addr.getHostAddress()) + ":" + address
         .getPort();
   }
@@ -190,24 +175,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       trimTable();
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
-      logger.info(" +++ New node: {} size={}", ret, nodeHandlerMap.size());
-      if (!n.isDiscoveryNode() && !n.getHexId().equals(homeNode.getHexId())) {
-        //ethereumListener.onNodeDiscovered(ret.getNode());
-      }
+      logger.info("Add new node: {}, size={}", ret, nodeHandlerMap.size());
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      // we found discovery node with same host:port,
-      // replace node with correct nodeId
-        logger.info("  New change:old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      logger.info("change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
-      if (!n.getHexId().equals(homeNode.getHexId())) {
-        //ethereumListener.onNodeDiscovered(ret.getNode());
-      }
-      logger.debug(" +++ Found real nodeId for discovery endpoint {}", n);
     }
-
-    nodeHandlerMap.values().forEach(handler-> logger.info("{} {} {} {}",
-            handler.node.getHost(),handler.node.getPort(),handler.node.getHexIdShort(),handler.state.toString()));
-
     return ret;
   }
 
@@ -286,11 +258,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
   }
 
-  public void stateChanged(NodeHandler nodeHandler, NodeHandler.State oldState,
-      NodeHandler.State newState) {
-
-  }
-
   public synchronized List<NodeHandler> getNodes(int minReputation) {
     List<NodeHandler> ret = new ArrayList<>();
     for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
@@ -301,14 +268,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return ret;
   }
 
-  /**
-   * Returns limited list of nodes matching {@code predicate} criteria<br> The nodes are sorted then
-   * by their totalDifficulties
-   *
-   * @param predicate only those nodes which are satisfied to its condition are included in results
-   * @param limit max size of returning list
-   * @return list of nodes matching criteria
-   */
   public List<NodeHandler> getNodes(
       Predicate<NodeHandler> predicate,
       int limit) {
@@ -321,7 +280,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         }
       }
     }
-    logger.info("size {}", filtered.size());
+
     logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
@@ -337,17 +296,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
   }
 
-  /**
-   * Add a listener which is notified when the node statistics starts or stops meeting the criteria
-   * specified by [filter] param.
-   */
   public synchronized void addDiscoverListener(DiscoverListener listener,
       Predicate<NodeStatistics> filter) {
     listeners.put(listener, new ListenerHandler(listener, filter));
-  }
-
-  public synchronized void removeDiscoverListener(DiscoverListener listener) {
-    listeners.remove(listener);
   }
 
   public synchronized String dumpAllStatistics() {
@@ -384,7 +335,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public void close() {
     try {
-      //peerConnectionManager.close();
       nodeManagerTasksTimer.cancel();
       pongTimer.shutdownNow();
       logStatsTimer.cancel();

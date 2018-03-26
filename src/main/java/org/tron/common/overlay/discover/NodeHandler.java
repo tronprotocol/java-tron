@@ -20,7 +20,6 @@ package org.tron.common.overlay.discover;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.*;
-import org.tron.common.overlay.discover.table.KademliaOptions;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -160,7 +159,6 @@ public class NodeHandler {
     private void changeState(State newState) {
         State oldState = state;
         if (newState == State.Discovered) {
-            // will wait for Pong to assume this alive
             sendPing();
         }
         if (!node.isDiscoveryNode()) {
@@ -206,12 +204,6 @@ public class NodeHandler {
             sendPing();
         }
         state = newState;
-        stateChanged(oldState, newState);
-    }
-
-    protected void stateChanged(State oldState, State newState) {
-        logger.trace("State change " + oldState + " -> " + newState + ": " + this);
-        nodeManager.stateChanged(this, oldState, newState);
     }
 
     void handlePing(PingMessage msg) {
@@ -237,7 +229,6 @@ public class NodeHandler {
 
     void handleNeighbours(NeighborsMessage msg) {
         logMessage(msg, true);
-//        logMessage(" ===> [NEIGHBOURS] " + this + ", Count: " + msg.getNodes().size());
         getNodeStatistics().discoverInNeighbours.add();
         for (Node n : msg.getNodes()) {
             if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
@@ -248,16 +239,8 @@ public class NodeHandler {
 
     void handleFindNode(FindNodeMessage msg) {
         logMessage(msg, true);
-//        logMessage(" ===> [FIND_NODE] " + this);
         getNodeStatistics().discoverInFind.add();
         List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
-
-        Node publicHomeNode = nodeManager.getPublicHomeNode();
-        if (publicHomeNode != null) {
-            if (closest.size() == KademliaOptions.BUCKET_SIZE) closest.remove(closest.size() - 1);
-            //closest.add(publicHomeNode);
-        }
-
         sendNeighbours(closest);
     }
 
@@ -278,9 +261,6 @@ public class NodeHandler {
     }
 
     void sendPing() {
-        if (waitForPong) {
-            logger.trace("<=/=  [PING] (Waiting for pong) " + this);
-        }
         Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
         logMessage(ping, false);
         waitForPong = true;
@@ -309,7 +289,6 @@ public class NodeHandler {
     }
 
     void sendNeighbours(List<Node> neighbours) {
-//        logMessage("<===  [NEIGHBOURS] " + this);
         Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
         logMessage(neighbors, false);
         sendMessage(neighbors);
@@ -317,7 +296,6 @@ public class NodeHandler {
     }
 
     void sendFindNode(byte[] target) {
-//        logMessage("<===  [FIND_NODE] " + this);
         Message findNode = new FindNodeMessage(node, target);
         logMessage(findNode, false);
         sendMessage(findNode);
