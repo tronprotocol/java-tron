@@ -24,7 +24,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.Message;
+import org.tron.common.overlay.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
@@ -102,9 +102,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
       unForkedBlockId = dbManager.getGenesisBlockId();
-    }
-
-    if (!blockChainSummary.isEmpty()) {
+    } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()

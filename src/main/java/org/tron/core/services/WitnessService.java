@@ -243,8 +243,6 @@ public class WitnessService implements Service {
       this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
     });
 
-    this.db.updateWits();
-    this.db.setShuffledWitnessStates(db.getWitnesses());
   }
 
 

@@ -87,6 +87,7 @@
   <logger name="AccountCapsule" level="INFO"/>
   <logger name="AssetIssueCapsule" level="INFO"/>
   <logger name="Manager" level="INFO"/>
+  <logger name="Net" level="INFO"/>
 
 </configuration>
 

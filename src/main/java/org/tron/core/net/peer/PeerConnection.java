@@ -1,35 +1,26 @@
 package org.tron.core.net.peer;
 
-import io.scalecube.cluster.Cluster;
-import io.scalecube.cluster.Member;
-import io.scalecube.transport.Address;
-import java.io.UnsupportedEncodingException;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.message.Message;
-import org.tron.core.net.message.MessageTypes;
+
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
-public class PeerConnection {
+@Component
+@Scope("prototype")
+public class PeerConnection extends Channel{
 
   @Override
   public int hashCode() {
-    return member.hashCode();
+    return super.hashCode();
   }
-
-  //private
-  private Member member;
-
-  private Cluster cluster;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -86,10 +77,6 @@ public class PeerConnection {
   public void setSyncBlockRequested(
       HashMap<BlockId, Long> syncBlockRequested) {
     this.syncBlockRequested = syncBlockRequested;
-  }
-
-  public Address getAddress() {
-    return member.address();
   }
 
   public long getUnfetchSyncNum() {
@@ -192,11 +179,29 @@ public class PeerConnection {
     this.invWeAdv = invWeAdv;
   }
 
-
-  public PeerConnection(Cluster cluster, Member member) {
-    this.cluster = cluster;
-    this.member = member;
-    //this.needSyncFromPeer = true;
+  public String logSyncStats() {
+    //TODO: return tron sync status here.
+//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
+//    long lifeTime = System.currentTimeMillis() - connectedTime;
+    return String.format(
+        "Peer %s: [ %18s, ping %6s ms]-----------\n"
+            + "last know block num: %s\n "
+            + "needSyncFromPeer:%b\n "
+            + "needSyncFromUs:%b\n"
+            + "syncToFetchSize:%d\n"
+            + "syncBlockRequestedSize:%d\n"
+            + "unFetchSynNum:%d\n"
+            + "blockInPorc:%d\n",
+        this.getNode().getHost() + ":" + this.getNode().getPort(),
+        this.getPeerIdShort(),
+        (int)this.getPeerStats().getAvgLatency(),
+        headBlockWeBothHave.getNum(),
+        isNeedSyncFromPeer(),
+        isNeedSyncFromUs(),
+        syncBlockToFetch.size(),
+        syncBlockRequested.size(),
+        unfetchSyncNum,
+        blockInProc.size());
   }
 
   public boolean isBusy() {
@@ -206,39 +211,13 @@ public class PeerConnection {
   }
 
   public void sendMessage(Message message) {
-    logger.info("Send message " + message + ", Peer:" + this);
-
-    if (message == null) {
-      logger.error("send message = null");
-      return;
-    }
-
-    MessageTypes type = message.getType();
-    byte[] value = message.getData();
-
-    if (cluster == null) {
-      logger.error("cluster is null");
-      return;
-    }
-
-    try {
-      io.scalecube.transport.Message msg = io.scalecube.transport.Message.builder()
-          .data(new String(value, "ISO-8859-1"))
-          .header("type", type.toString())
-          .build();
-
-      //logger.info("send message to member");
-      cluster.send(member, msg);
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-    }
+    logger.info("nodeimpl send message" + message);
+    msgQueue.sendMessage(message);
+    nodeStatistics.ethOutbound.add();
   }
-
 
   @Override
   public String toString() {
-    return "PeerConnection{" +
-        "member=" + member +
-        '}';
+    return super.toString();// nodeStatistics.toString();
   }
 }

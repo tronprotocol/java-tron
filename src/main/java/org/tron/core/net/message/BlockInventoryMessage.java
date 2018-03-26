@@ -4,19 +4,17 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.BlockInventory;
 
-@Slf4j
-public class BlockInventoryMessage extends Message {
+public class BlockInventoryMessage extends TronMessage {
 
   protected BlockInventory blockInventory;
 
   public BlockInventoryMessage(byte[] packed) {
     super(packed);
+    this.type = MessageTypes.BLOCK_INVENTORY.asByte();
   }
 
   @Override
@@ -35,6 +33,11 @@ public class BlockInventoryMessage extends Message {
   @Override
   public String toString() {
     return super.toString();
+  }
+
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
   }
 
   private BlockInventory getBlockInventory() {
@@ -70,6 +73,7 @@ public class BlockInventoryMessage extends Message {
 
     invBuilder.setType(type);
     blockInventory = invBuilder.build();
+    this.type = MessageTypes.BLOCK_INVENTORY.asByte();
     unpacked = true;
   }
 
@@ -81,7 +85,7 @@ public class BlockInventoryMessage extends Message {
 
   @Override
   public MessageTypes getType() {
-    return MessageTypes.BLOCK_INVENTORY;
+    return MessageTypes.fromByte(this.type);
   }
 
   //public List<BlockId> getBlockIds()

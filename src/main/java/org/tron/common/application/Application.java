@@ -24,7 +24,7 @@ public interface Application {
 
   void setOptions(Args args);
 
-  void init(String path, Args args);
+  void init(Args args);
 
   void initServices(Args args);
 
