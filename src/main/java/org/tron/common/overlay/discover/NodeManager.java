@@ -98,7 +98,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     logger.info("homeNode : {}", homeNode);
 
     for (String boot : args.getSeedNode().getIpList()) {
-      logger.info("length : {}", args.getSeedNode().getIpList().size());
+      logger.info("length : {}", args.getSeedNode().getIpList().get(0));
       bootNodes.add(Node.instanceOf(boot));
     }
 
