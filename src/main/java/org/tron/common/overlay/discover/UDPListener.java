@@ -34,48 +34,38 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 import java.net.BindException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class UDPListener {
 
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("UDPListener");
 
   private int port;
-  private String address;
-  private String[] bootPeers;
 
   @Autowired
   private NodeManager nodeManager;
 
   @Autowired
-  Args args = Args.getInstance();
-
-  @Autowired
   WireTrafficStats stats;
+
+  Args args = Args.getInstance();
 
   private Channel channel;
   private volatile boolean shutdown = false;
   private DiscoveryExecutor discoveryExecutor;
 
   @Autowired
-  public UDPListener(final Args args, final NodeManager nodeManager) {
+  public UDPListener(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-
-    //this.address = this.args.getNodeDiscoveryBindIp();
-    port = this.args.getNodeListenPort();
-    if (this.args.isNodeDiscoveryEnable()) {
-      bootPeers = this.args.getSeedNode().getIpList().toArray(new String[0]);
-    }
-    if (this.args.isNodeDiscoveryEnable()) {
+    port = args.getNodeListenPort();
+    if (args.isNodeDiscoveryEnable()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
       } else {
         new Thread(() -> {
           try {
-            UDPListener.this.start(bootPeers);
+            UDPListener.this.start();
           } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -85,29 +75,11 @@ public class UDPListener {
     }
   }
 
-  public UDPListener(String address, int port) {
-    this.address = address;
-    this.port = port;
-  }
-
-  public void start(String[] ipList) throws Exception {
-
-    logger.info("Discovery UDPListener started");
+  public void start() throws Exception {
     NioEventLoopGroup group = new NioEventLoopGroup(1);
-
-    final List<Node> bootNodes = new ArrayList<>();
-
-    for (String boot : ipList) {
-      // since discover IP list has no NodeIds we will generate random but persistent
-      bootNodes.add(Node.instanceOf(boot));
-    }
-
-    nodeManager.setBootNodes(bootNodes);
-
     try {
       discoveryExecutor = new DiscoveryExecutor(nodeManager);
       discoveryExecutor.start();
-
       while (!shutdown) {
         Bootstrap b = new Bootstrap();
         b.group(group)
@@ -126,7 +98,7 @@ public class UDPListener {
 
         channel = b.bind(port).sync().channel();
 
-        logger.info("udp bind port {}", port);
+        logger.info("Discovery UDPListener started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {

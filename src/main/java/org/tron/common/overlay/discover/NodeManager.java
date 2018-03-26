@@ -71,7 +71,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
   //final ECKey key;
   final Node homeNode;
-  private List<Node> bootNodes;
+  private List<Node> bootNodes = new ArrayList<>();
 
   // option to handle inbounds only from known peers (i.e. which were discovered by ourselves)
   boolean inboundOnlyFromKnownNodes = false;
@@ -97,11 +97,15 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
         args.getNodeListenPort());
 
-    logger.info("homeNode:" + Args.getInstance().getMyKey().getNodeId());
+    String[] bootPeers = args.getSeedNode().getIpList().toArray(new String[0]);
+    for (String boot : bootPeers) {
+      bootNodes.add(Node.instanceOf(boot));
+    }
 
-    logger.info("homeNode : {}", homeNode.toString());
+    logger.info("homeNode : {}", homeNode);
+    logger.info("bootNodes : size= {}", bootNodes.size());
 
-    table = new NodeTable(homeNode, args.isNodeDiscoveryPublicHomeNode());
+    table = new NodeTable(homeNode);
 
     logStatsTimer.scheduleAtFixedRate(new TimerTask() {
       @Override
