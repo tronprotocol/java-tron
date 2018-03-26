@@ -19,6 +19,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class VoteWitnessActuator extends AbstractActuator {
+
   VoteWitnessActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -58,8 +59,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       Iterator<Vote> iterator = contract.getVotesList().iterator();
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
-        byte[] bytes = ByteString
-            .copyFrom(ByteArray.fromHexString(vote.getVoteAddress().toStringUtf8())).toByteArray();
+        byte[] bytes = vote.getVoteAddress().toByteArray();
         if (!dbManager.getAccountStore().has(bytes)) {
           throw new ContractValidateException(
               "Account[" + contract.getOwnerAddress() + "] not exists");
@@ -99,12 +99,12 @@ public class VoteWitnessActuator extends AbstractActuator {
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 
     voteContract.getVotesList().forEach(vote -> {
-      String toStringUtf8 = vote.getVoteAddress().toStringUtf8();
+      //  String toStringUtf8 = vote.getVoteAddress().toStringUtf8();
 
-      logger.debug("countVoteAccount,address[{}]", toStringUtf8);
+      logger.debug("countVoteAccount,address[{}]",
+          ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
 
-      accountCapsule.addVotes(
-          ByteString.copyFrom(ByteArray.fromHexString(toStringUtf8)),
+      accountCapsule.addVotes(vote.getVoteAddress(),
           vote.getVoteCount());
     });
 
