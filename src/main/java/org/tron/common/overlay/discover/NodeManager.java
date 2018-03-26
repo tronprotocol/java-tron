@@ -80,7 +80,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         bootNodes.add(Node.instanceOf(boot));
     }
 
-    logger.info("homeNode : {}", homeNode);
     logger.info("bootNodes : size= {}", bootNodes.size());
 
     table = new NodeTable(homeNode);

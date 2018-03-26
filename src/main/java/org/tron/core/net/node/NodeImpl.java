@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
+import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
@@ -18,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -104,8 +104,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private NodeDelegate del;
 
-  private GossipLocalNode gossipNode;
-
   private volatile boolean isAdvertiseActive;
 
   private volatile boolean isFetchActive;
@@ -132,11 +130,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Thread handleSyncBlockLoop;
 
-  private Set<BlockMessage> blockWaitToProc = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProc = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockWaitToProcBak = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProcBak = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockInProc = new HashSet<>();
+  private Set<BlockMessage> blockInProc = new ConcurrentSet<>();
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -209,9 +207,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
-    gossipNode = GossipLocalNode.getInstance();
-    gossipNode.setPeerDel(this);
-    gossipNode.start();
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
@@ -220,7 +215,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void close() throws InterruptedException {
-    gossipNode.stop();
     loopFetchBlocks.join();
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();

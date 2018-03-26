@@ -59,7 +59,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws InterruptedException {
-    logger.info("tron handle recv msg:" + msg);
+    //logger.info("tron handle recv msg:" + msg);
     peer.getNodeStatistics().ethInbound.add();
     msgQueue.receivedMessage(msg);
 

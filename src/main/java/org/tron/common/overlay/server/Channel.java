@@ -169,12 +169,12 @@ public class Channel {
 
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         //ByteBuf byteBufMsg = ctx.alloc().buffer();
-        logger.info("send hello msg: {}", helloMessage);
+        //logger.info("send hello msg: {}", helloMessage);
 
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
 
-        if (logger.isDebugEnabled())
-            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
+//        if (logger.isDebugEnabled())
+//            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
         getNodeStatistics().rlpxOutHello.add();
     }
 
@@ -232,6 +232,21 @@ public class Channel {
 
     public boolean isProtocolsInitialized() {
         return tronState.ordinal() > TronState.INIT.ordinal();
+    }
+
+    public String logSyncStats() {
+        //TODO: return tron sync status here.
+//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
+//    long lifeTime = System.currentTimeMillis() - connectedTime;
+        return "";
+//        return String.format(
+//            "Peer %s: [ %18s, ping %6s ms, last know block num %s ]: needSyncFromPeer:%b needSyncFromUs:%b",
+//            this.getNode().getHost() + ":" + this.getNode().getPort(),
+//            this.getPeerIdShort(),
+//            (int)this.getPeerStats().getAvgLatency(),
+//            headBlockWeBothHave.getNum(),
+//            isNeedSyncFromPeer(),
+//            isNeedSyncFromUs());
     }
 
     public boolean isDiscoveryMode() {
@@ -306,11 +321,6 @@ public class Channel {
     public boolean isIdle() {
       // TODO: use peer's status.
         return  true;
-    }
-
-    public String logSyncStats() {
-        //TODO: return tron sync status here.
-        return "tron sync stats";
     }
 
     @Override

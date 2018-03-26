@@ -82,7 +82,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 //            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
             final Channel channel = ctx.getBean(PeerConnection.class);
-            logger.info("Channel: {}" , channel);
+            //logger.info("Channel: {}" , channel);
 
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
@@ -98,7 +98,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
             // be aware of channel closing
             ch.closeFuture().addListener((ChannelFutureListener) future -> {
-                logger.info("@@@@@@@@@ closeFuture");
+                logger.info("Close channel:" + channel.getNode());
                 if (!peerDiscoveryMode) {
                     channelManager.notifyDisconnect(channel);
                 }
