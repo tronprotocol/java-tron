@@ -196,7 +196,7 @@ protobuf {
 run {
     if (project.hasProperty('witness')) {
         standardInput = System.in
-        args = ['--witness', true]
+        args = ['--witness']
     }
 }
 
