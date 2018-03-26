@@ -23,14 +23,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
-import org.slf4j.LoggerFactory;
 
 
 public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
         implements Consumer<DiscoveryEvent> {
-    static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+    static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
     public Channel channel;
 
@@ -47,12 +48,20 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent event) throws Exception {
-        nodeManager.handleInbound(event);
+    public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent discoveryEvent) throws Exception {
+        logger.info("rcv msg type {}, len {} from {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
+        nodeManager.handleInbound(discoveryEvent);
     }
 
     @Override
     public void accept(DiscoveryEvent discoveryEvent) {
+        logger.info("send msg to type {}, len {} from {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
         InetSocketAddress address = discoveryEvent.getAddress();
         sendPacket(discoveryEvent.getMessage().getSendData(), address);
     }

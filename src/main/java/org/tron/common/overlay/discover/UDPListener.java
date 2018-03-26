@@ -22,15 +22,12 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.WireTrafficStats;
-import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 import java.net.BindException;
@@ -89,6 +86,8 @@ public class UDPListener {
               public void initChannel(NioDatagramChannel ch)
                   throws Exception {
                 ch.pipeline().addLast(stats.udp);
+                ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
+                ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
                 ch.pipeline().addLast(new PacketDecoder());
                 MessageHandler messageHandler = new MessageHandler(ch, nodeManager);
                 nodeManager.setMessageSender(messageHandler);
@@ -140,13 +139,4 @@ public class UDPListener {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-
-    Args.setParam(args, Configuration.getByPath(Constant.NORMAL_CONF));
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-    while (true) {
-      Thread.sleep(10000);
-    }
-
-  }
 }

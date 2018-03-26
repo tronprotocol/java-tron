@@ -98,7 +98,7 @@ public class SyncPool {
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         heartBeat();
-//        updateLowerUsefulDifficulty();
+////        updateLowerUsefulDifficulty();
         fillUp();
         prepareActive();
         cleanupActive();
