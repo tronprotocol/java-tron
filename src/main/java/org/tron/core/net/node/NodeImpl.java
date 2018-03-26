@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.node.GossipLocalNode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -103,8 +102,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ConcurrentHashMap<Sha256Hash, PeerConnection> fetchMap = new ConcurrentHashMap<>();
 
   private NodeDelegate del;
-
-  private GossipLocalNode gossipNode;
 
   private volatile boolean isAdvertiseActive;
 
@@ -209,9 +206,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
-    gossipNode = GossipLocalNode.getInstance();
-    gossipNode.setPeerDel(this);
-    gossipNode.start();
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
@@ -220,7 +214,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void close() throws InterruptedException {
-    gossipNode.stop();
     loopFetchBlocks.join();
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();
