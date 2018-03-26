@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * It also manages itself regarding inclusion/eviction from Kademlia table
  */
 public class NodeHandler {
-    static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+    static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeHandler");
 
     static long PingTimeout = 15000; //KademliaOptions.REQ_TIMEOUT;
     static final int WARN_PACKET_SIZE = 1400;
@@ -42,7 +42,7 @@ public class NodeHandler {
     // they are not so informative when everything is already up and running
     // but could be interesting when discovery just starts
     private void logMessage(Message msg, boolean inbound) {
-        logger.info("handle msg type: {}, date: {}", msg.getType(), msg);
+        logger.info("handle msg type: {}, len {}, date: {}", msg.getType(), msg.getSendData().length,  msg);
         String s = String.format("%s[%s (%s)] %s", inbound ? " ===>  " : "<===  ", msg.getClass().getSimpleName(),
                 msg.getData().length, this);
         if (msgInCount > 1024) {
@@ -302,7 +302,6 @@ public class NodeHandler {
     }
 
     void sendPong() {
-//        logMessage("<===  [PONG] " + this);
         Message pong = new PongMessage(node);
         logMessage(pong, false);
         sendMessage(pong);

@@ -23,14 +23,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
-import org.slf4j.LoggerFactory;
 
 
 public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
         implements Consumer<DiscoveryEvent> {
-    static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+    static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
     public Channel channel;
 
