@@ -419,4 +419,8 @@ public class SyncPool {
 //            }
 //        }
   }
+
+  public List<NodeHandler> getActiveNodes() {
+    return this.nodeManager.getActiveNodes();
+  }
 }

@@ -6,17 +6,21 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -243,8 +247,18 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      // TODO: this.app.getP2pNode().getActiveNodes();
-      super.listNodes(request, responseObserver);
+      List<NodeHandler> handlerList = this.app.getP2pNode().getActiveNodes();
+
+      NodeList.Builder nodeListBuilder = NodeList.newBuilder();
+      for (NodeHandler handler : handlerList) {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+            Address.newBuilder()
+                .setHost(ByteString.copyFrom(ByteArray.fromString(handler.getNode().getHost())))
+                .setPort(handler.getNode().getPort())));
+      }
+
+      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onCompleted();
     }
 
     @Override

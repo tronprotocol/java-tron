@@ -18,6 +18,7 @@ import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.ChannelManager;
@@ -223,6 +224,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advertiseLoopThread.join();
     advObjFetchLoopThread.join();
     handleSyncBlockLoop.join();
+  }
+
+  @Override
+  public List<NodeHandler> getActiveNodes() {
+    return this.pool.getActiveNodes();
   }
 
   @Override
