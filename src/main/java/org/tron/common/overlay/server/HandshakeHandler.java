@@ -124,6 +124,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       loggerWire.debug("initiator");
 
       if (msg instanceof HelloMessage) {
+
+        if (((HelloMessage) msg).getVersion() != Args.getInstance().getNodeP2pVersion()) {
+          channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+          return;
+        }
+
         isHandshakeDone = true;
         this.channel.publicHandshakeFinished(ctx, (HelloMessage) msg);
       } else {
@@ -144,6 +150,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       }
 
       final HelloMessage inboundHelloMessage = (HelloMessage) msg;
+
+      if (((HelloMessage) msg).getVersion() != Args.getInstance().getNodeP2pVersion()) {
+        channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+        return;
+      }
+
       this.remoteId = ByteArray.fromHexString(inboundHelloMessage.getPeerId());
       loggerNet.info("getPeerId:" + inboundHelloMessage.getPeerId());
       // now we know both remote nodeId and port
