@@ -81,6 +81,7 @@ dependencies {
     compile "org.apache.commons:commons-lang3:3.4"
 
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
+    compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
 
     compile "org.apache.commons:commons-collections4:4.0"
 
@@ -195,7 +196,7 @@ protobuf {
 run {
     if (project.hasProperty('witness')) {
         standardInput = System.in
-        args = ['--witness', true]
+        args = ['--witness']
     }
 }
 

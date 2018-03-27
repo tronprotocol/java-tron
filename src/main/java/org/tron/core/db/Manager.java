@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -26,6 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -54,13 +59,13 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
+@Component
 public class Manager {
 
   private static final long BLOCK_INTERVAL_SEC = 1;
   private static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
-  public static final long LOOP_INTERVAL = Args.getInstance()
-      .getBlockInterval(); // must be divisible by 60. millisecond
+  public static final long LOOP_INTERVAL = 5000L; // ms,produce block period, must be divisible by 60. millisecond
 
   private AccountStore accountStore;
   private TransactionStore transactionStore;
@@ -69,6 +74,9 @@ public class Manager {
   private WitnessStore witnessStore;
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+
+  @Autowired
+  private PeersStore peersStore;
   private BlockCapsule genesisBlock;
 
 
@@ -192,6 +200,37 @@ public class Manager {
         / BlockFilledSlots.SLOT_NUMBER;
   }
 
+  public PeersStore getPeersStore() {
+    return peersStore;
+  }
+
+  public void setPeersStore(PeersStore peersStore) {
+    this.peersStore = peersStore;
+  }
+
+  public Node getHomeNode() {
+    final Args args = Args.getInstance();
+    Set<Node> nodes = this.peersStore.get("home".getBytes());
+    if (nodes.size() > 0) {
+      return nodes.stream().findFirst().get();
+    } else {
+      Node node = new Node(new ECKey().getNodeId(), args.getNodeExternalIp(),
+          args.getNodeListenPort());
+      nodes.add(node);
+      this.peersStore.put("home".getBytes(), nodes);
+      return node;
+    }
+  }
+
+  public void clearAndWriteNeighbours(Set<Node> nodes) {
+    this.peersStore.put("neighbours".getBytes(), nodes);
+  }
+
+  public Set<Node> readNeighbours() {
+    return this.peersStore.get("neighbours".getBytes());
+  }
+
+
   /**
    * all db should be init here.
    */
@@ -228,6 +267,8 @@ public class Manager {
       logger.error(e.getMessage());
       System.exit(-1);
     }
+    this.updateWits();
+    this.setShuffledWitnessStates(getWitnesses());
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     this.khaosDb.start(head);
   }
@@ -258,7 +299,11 @@ public class Manager {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
 
-        this.pushBlock(this.genesisBlock);
+        //this.pushBlock(this.genesisBlock);
+        blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
+        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()), this.genesisBlock.getBlockId().getBytes());
+        //refreshHead(newBlock);
+        logger.info("save block: " + this.genesisBlock);
 
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
@@ -456,7 +501,7 @@ public class Manager {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (head.getBlockId().equals(block.getParentHash())) {
+    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
       long slot = getSlotAtTime(block.getTimeStamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
@@ -880,10 +925,17 @@ public class Manager {
     if (when < firstSlotTime) {
       return 0;
     }
-    logger.warn("nextFirstSlotTime:[{}],now[{}]", new DateTime(firstSlotTime), new DateTime(when));
+    logger
+        .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
     return (when - firstSlotTime) / blockInterval() + 1;
   }
 
+  /**
+   * get absolute Slot At Time
+   */
+  public long getAbSlotAtTime(long when) {
+    return (when - getGenesisBlock().getTimeStamp()) / blockInterval();
+  }
 
   /**
    * get slot time.
@@ -908,7 +960,6 @@ public class Manager {
 
     return headSlotTime + interval * slotNum;
   }
-
 
   private boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
@@ -1071,9 +1122,9 @@ public class Manager {
    */
   private void updateWitnessSchedule() {
     if (CollectionUtils.isEmpty(getWitnesses())) {
-      logger.warn("Witnesses is empty");
-      return;
+      throw new RuntimeException("Witnesses is empty");
     }
+
     // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
@@ -1081,7 +1132,7 @@ public class Manager {
       setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
           .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
 
-      logger.debug(
+      logger.info(
           "updateWitnessSchedule,before:{} ", getWitnessStringList(getWitnesses()).toString()
               + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
     }
@@ -1092,6 +1143,4 @@ public class Manager {
         .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
         .collect(Collectors.toList());
   }
-
-
 }

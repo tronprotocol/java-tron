@@ -50,7 +50,6 @@ public class BlockUtil {
     BlockCapsule blockCapsule = new BlockCapsule(timestamp, parentHash, number, transactionList);
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.sign(ByteArray.fromHexString(args.getLocalWitnesses().getPrivateKey()));
 
     blockCapsule.generatedByMyself = true;
 

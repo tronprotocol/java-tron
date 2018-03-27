@@ -1,7 +1,7 @@
 package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
-import io.scalecube.transport.Address;
+import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
@@ -16,7 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.node.GossipLocalNode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.Channel.TronState;
+import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -34,16 +40,23 @@ import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
+@Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
+
+  @Autowired
+  private SyncPool pool;
+
+  @Autowired
+  private ChannelManager channelManager;
 
   class InvToSend {
 
@@ -78,8 +91,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private HashMap<Address, PeerConnection> mapPeer = new HashMap<>();
-
   private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
 
   private final List<BlockId> blockToAdvertise = new ArrayList<>();
@@ -93,8 +104,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ConcurrentHashMap<Sha256Hash, PeerConnection> fetchMap = new ConcurrentHashMap<>();
 
   private NodeDelegate del;
-
-  private GossipLocalNode gossipNode;
 
   private volatile boolean isAdvertiseActive;
 
@@ -122,11 +131,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Thread handleSyncBlockLoop;
 
-  private Set<BlockMessage> blockWaitToProc = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProc = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockWaitToProcBak = new HashSet<>();
+  private Set<BlockMessage> blockWaitToProcBak = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockInProc = new HashSet<>();
+  private Set<BlockMessage> blockInProc = new ConcurrentSet<>();
 
   ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -135,7 +144,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   ExecutorLoop<Message> loopAdvertiseInv;
 
   @Override
-  public void onMessage(PeerConnection peer, Message msg) {
+  public void onMessage(PeerConnection peer, TronMessage msg) {
     logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:
@@ -199,17 +208,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
-    gossipNode = GossipLocalNode.getInstance();
-    gossipNode.setPeerDel(this);
-    gossipNode.start();
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
+    activeTronPump();
   }
 
   @Override
   public void close() throws InterruptedException {
-    gossipNode.stop();
     loopFetchBlocks.join();
     loopSyncBlockChain.join();
     loopAdvertiseInv.join();
@@ -221,12 +227,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   @Override
+  public List<NodeHandler> getActiveNodes() {
+    return this.pool.getActiveNodes();
+  }
+
+  @Override
   public void connectToP2PNetWork() {
 
+    pool.init(channelManager, this);
+  }
+
+
+  private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
       logger.info("loop advertise inv");
-      for (PeerConnection peer : mapPeer.values()) {
+      for (PeerConnection peer : getActivePeer()) {
         if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
           peer.sendMessage(b);
@@ -405,13 +421,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
 
     try {
-      while (mapPeer.isEmpty()) {
+      while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
         Thread.sleep(10000L);
       }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
+
+    logger.info("wait end");
 
     //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
@@ -540,12 +558,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     logger.info("on handle sync block chain message");
+    peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     long remainNum = 0;
     try {
       blockIds = del.getLostBlockIds(summaryChainIds);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
       e.printStackTrace();
@@ -560,7 +578,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
+      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
+
 
     if (!peer.isNeedSyncFromPeer()
         && !summaryChainIds.isEmpty()
@@ -598,7 +618,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void banTraitorPeer(PeerConnection peer) {
-    disconnectPeer(peer);
+    onDisconnectPeer(peer);
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
@@ -735,6 +755,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private long getUnSyncNum() {
+    if (getActivePeer().isEmpty()) return 0;
     return getActivePeer().stream()
         .mapToLong(peer -> peer.getUnfetchSyncNum() + peer.getSyncBlockToFetch().size())
         .max()
@@ -802,13 +823,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopFetchBlocks.push(fetchMsg);
   }
 
-  private void startSync() {
-    mapPeer.values().forEach(this::startSyncWithPeer);
-  }
+//  private void startSync() {
+//    mapPeer.values().forEach(this::startSyncWithPeer);
+//  }
 
   private Collection<PeerConnection> getActivePeer() {
-    //TODO: filter active peer, exclude banned, dead, traitor peers
-    return mapPeer.values();
+    return pool.getActivePeers();
   }
 
   private void startSyncWithPeer(PeerConnection peer) {
@@ -821,11 +841,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     syncNextBatchChainIds(peer);
   }
 
-  @Override
-  public PeerConnection getPeer(io.scalecube.transport.Message msg) {
-    return mapPeer.get(msg.sender());
-  }
-
   private void syncNextBatchChainIds(PeerConnection peer) {
     try {
       Deque<BlockId> chainSummary =
@@ -836,27 +851,30 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
       e.printStackTrace();
-      disconnectPeer(peer);
+      onDisconnectPeer(peer);
     }
 
   }
 
   @Override
-  public void connectPeer(PeerConnection peer) {
+  public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
-    if (mapPeer.containsKey(peer.getAddress())) {
-      return;
-    }
-
-    logger.info("Discover new peer:" + peer);
-    mapPeer.put(peer.getAddress(), peer);
-    if (!peer.isNeedSyncFromPeer()) {
-      startSyncWithPeer(peer);
-    }
+    logger.info("start sync with::" + peer);
+    peer.setTronState(TronState.START_TO_SYNC);
+    startSyncWithPeer(peer);
+//    if (mapPeer.containsKey(peer.getAddress())) {
+//      return;
+//    }
+//
+//    logger.info("Discover new peer:" + peer);
+//    mapPeer.put(peer.getAddress(), peer);
+//    if (!peer.isNeedSyncFromPeer()) {
+//      startSyncWithPeer(peer);
+//    }
   }
 
   @Override
-  public void disconnectPeer(PeerConnection peer) {
+  public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
     //mapPeer.remove(peer.getAddress());
   }
