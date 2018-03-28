@@ -127,7 +127,6 @@ public class WitnessService implements Service {
     }
   }
 
-
   /**
    * Generate and broadcast blocks
    */
