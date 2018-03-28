@@ -39,6 +39,7 @@
 
 <p align="center">
   <a href="#how-to-build">How to Build</a> •
+  <a href="#running">How to Run</a> •
   <a href="#links">Links</a> •
   <a href="http://wiki.tron.network">Wiki</a> •
   <a href="CONTRIBUTING.md">Contributing</a> •
@@ -67,7 +68,7 @@ git clone https://github.com/tronprotocol/java-tron.git
 
 ## Prepare dependencies
 
-* JDK 1.8 (do not use JDK 1.9 please)
+* JDK 1.8 (JDK 1.9+ are not supported yet)
 
 ## Building from source code
 
@@ -88,14 +89,15 @@ cd java-tron
 
   1. Start IntelliJ. Select `File` -> `Open`, then locate to the java-tron folder which you have git cloned to your local drive. Then click `Open` button on the right bottom.
   2. Check on `Use auto-import` on the `Import Project from Gradle` dialog. Select JDK 1.8 in the `Gradle JVM` option. Then click `OK`.
-  3. IntelliJ will open the project and start gradle syncing, which will take several minutes, depending on your network connection and your IntelliJ configuration.
-  4. After the syncing finished, select `Gradle` -> `Tasks` -> `build`, and then double click `build` option.  The project will start building, which will normally take less than one minute to finish.
+  3. IntelliJ will open the project and start gradle syncing, which will take several minutes, depending on your network connection and your IntelliJ configuration
+  4. After the syncing finished, select `Gradle` -> `Tasks` -> `build`, and then double click `build` option.
     
-# Running 
+# Running
 
-## Running a private testnet
+## Running a Private Testnet
 
 ### Running a full node
+
 * In the Terminal
 
 ```bash
@@ -113,7 +115,8 @@ java -jar java-tron.jar
   1. After the building finishes, locate `FullNode` in the project structure view panel, which is on the path `java-tron/src/main/java/org.tron/program/FullNode`.
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
-### Running a witness node
+### Running a Witness Node
+
 * In the Terminal
 
 ```bash
@@ -246,16 +249,16 @@ Then, run `FullNode::main()` again.
 
 ### Running multi-nodes
 
-To run TRON on more than one node, you need to specify several seed nodes' IPs in `config.conf` in `seed.node`/`ip.list`:
-For private testnet, the IPs are allocated by yourself or other entities who are not to publicize their work.
+To run TRON on more than one node, you need to specify several seed nodes' IPs in `config.conf` in `seed.node.ip.list`:
+For private testnet, the IPs are allocated by yourself.
 
 ## Running a local node and connecting to the public testnet 
 
-### Running a full node
+### Running a Full Node
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
-### Running a witness node 
+### Running a Witness Node 
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
   
