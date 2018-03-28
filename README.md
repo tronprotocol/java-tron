@@ -119,7 +119,7 @@ java -jar java-tron.jar
 ```bash
 ./gradlew run -Pwitness=true
 ```
-
+  
 <details>
 <summary>Show Output</summary>
 
@@ -219,21 +219,29 @@ java -jar java-tron.jar --witness true
 ```
 
 * In IntelliJ IDEA
-
+  
 <details>
-<summary>Open the configuration panel:</summary>
+<summary>
+
+Open the configuration panel:
+
+</summary>
 
 ![](docs/images/program_configure.png)
 
 </details>  
 
 <details>
-<summary>In the `Program arguments` option, fill in `--witness`:</summary>
+<summary>
+
+In the `Program arguments` option, fill in `--witness`:
+
+</summary>
 
 ![](docs/images/set_witness_param.jpeg)
 
 </details> 
-
+  
 Then, run `FullNode::main()` again.
 
 ### Running multi-nodes
