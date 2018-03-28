@@ -87,6 +87,7 @@ public class ChannelManager {
   }
 
   private void processNewPeers() {
+    logger.info("size {}", newPeers.size());
     if (newPeers.isEmpty()) {
       return;
     }
@@ -95,14 +96,13 @@ public class ChannelManager {
 
     int addCnt = 0;
     for (Channel peer : newPeers) {
-
-      if (peer.isProtocolsInitialized()) {
-
+      if (peer.getTronState().equals(Channel.TronState.HANDSHAKE_FINISHED)) {
         if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
           if (!peer.isActive() && activePeers.size() >= maxActivePeers //&& !trustedPeers.accept(peer.getNode())
               ) {
             disconnect(peer, TOO_MANY_PEERS);
           } else {
+            logger.info("add new user {}", peer);
             activePeers.put(peer.getNodeIdWrapper(), peer);
             addCnt++;
           }
@@ -129,7 +129,6 @@ public class ChannelManager {
 
   public void notifyDisconnect(Channel channel) {
     logger.debug("Peer {}: notifies about disconnect", channel);
-    channel.onDisconnect();
     syncPool.onDisconnect(channel);
     activePeers.values().remove(channel);
     newPeers.remove(channel);

@@ -93,7 +93,6 @@ public class Channel {
     protected NodeStatistics nodeStatistics;
     private boolean discoveryMode;
     private boolean isActive;
-    private boolean isDisconnected;
 
     private String remoteId;
 
@@ -141,6 +140,8 @@ public class Channel {
         activateTron(ctx);
 
         getNodeStatistics().rlpxHandshake.add();
+
+        tronState = TronState.HANDSHAKE_FINISHED;
     }
 
     public void activateTron(ChannelHandlerContext ctx) {
@@ -155,7 +156,6 @@ public class Channel {
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
-        getNodeStatistics().rlpxOutHello.add();
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -176,14 +176,6 @@ public class Channel {
 
     public Node getNode() {
         return node;
-    }
-
-    public void onDisconnect() {
-        isDisconnected = true;
-    }
-
-    public boolean isDisconnected() {
-        return isDisconnected;
     }
 
     public boolean isProtocolsInitialized() {
@@ -255,6 +247,7 @@ public class Channel {
 
     public enum TronState {
         INIT,
+        HANDSHAKE_FINISHED,
         START_TO_SYNC,
         SYNCING,
         SYNC_COMPLETED,
@@ -288,6 +281,6 @@ public class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s | %s | %s", getPeerId(), inetSocketAddress, isDisconnected);
+        return String.format("%s | %s", getPeerId(), inetSocketAddress);
     }
 }
