@@ -24,9 +24,6 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import java.io.IOException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +32,10 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.TronChannelInitializer;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.node.NodeImpl;
+
+import java.io.IOException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -98,6 +99,8 @@ public class PeerClient {
     }
 
     public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
+
+        logger.info("connect peer {} {} {}", host, port, remoteId);
 
         TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, remoteId);
         tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);

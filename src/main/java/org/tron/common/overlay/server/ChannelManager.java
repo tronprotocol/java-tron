@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
@@ -35,57 +33,34 @@ import java.util.concurrent.*;
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
-/**
- * @author Roman Mandeleil
- * @since 11.11.2014
- */
 @Component
 public class ChannelManager {
 
   private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
-  // If the inbound peer connection was dropped by us with a reason message
-  // then we ban that peer IP on any connections for some time to protect from
-  // too active peers
   private static final int inboundConnectionBanTimeout = 10 * 1000;
 
   private List<Channel> newPeers = new CopyOnWriteArrayList<>();
+
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
+  private Map<InetAddress, Date> recentlyDisconnected = Collections.synchronizedMap(new LRUMap<InetAddress, Date>(500));
+
   private ScheduledExecutorService mainWorker = Executors.newSingleThreadScheduledExecutor();
-  private int maxActivePeers;
-  private Map<InetAddress, Date> recentlyDisconnected = Collections
-      .synchronizedMap(new LRUMap<InetAddress, Date>(500));
-  //private NodeFilter trustedPeers;
-
-  /**
-   * Queue with new blocks from other peers
-   */
-  //private BlockingQueue<BlockWrapper> newForeignBlocks = new LinkedBlockingQueue<>();
-
-  /**
-   * Queue with new peers used for after channel init tasks
-   */
-  private BlockingQueue<Channel> newActivePeers = new LinkedBlockingQueue<>();
 
   private Args args = Args.getInstance();
 
-  private PeerServer peerServer;
+  private int maxActivePeers = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 3000;;
 
-  private PeerClient peerClient;
+  private PeerServer peerServer;
 
   @Autowired
   private SyncPool syncPool;
 
-
   @Autowired
-  private ChannelManager(final PeerClient peerClient,
-      final PeerServer peerServer) {
-    //this.syncManager = syncManager;
-    this.peerClient = peerClient;
+  private ChannelManager(final PeerServer peerServer) {
     this.peerServer = peerServer;
-    maxActivePeers = args.getNodeMaxActiveNodes();
-    //trustedPeers = config.peerTrusted();
+
     mainWorker.scheduleWithFixedDelay(() -> {
       try {
         processNewPeers();
@@ -94,34 +69,10 @@ public class ChannelManager {
       }
     }, 0, 1, TimeUnit.SECONDS);
 
-    //if (this.args.getNodeListenPort() > 0) {
-    new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
+    if (this.args.getNodeListenPort() > 0) {
+      new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
         "PeerServerThread").start();
-    //}
-  }
-
-  public void connect(Node node) {
-    if (logger.isTraceEnabled()) {
-      logger.trace(
-          "Peer {}: initiate connection",
-          node.getHexIdShort()
-      );
     }
-    if (nodesInUse().contains(node.getHexId())) {
-      if (logger.isTraceEnabled()) {
-        logger.trace(
-            "Peer {}: connection already initiated",
-            node.getHexIdShort()
-        );
-      }
-      return;
-    }
-
-    //todo ethereum.connect(node);
-
-    logger.info("connect peer {} {} {}", node.getHost(), node.getPort(), node.getHexId());
-    peerClient.connectAsync(node.getHost(), node.getPort(), node.getHexId(), false);
-
   }
 
   public Set<String> nodesInUse() {
@@ -139,35 +90,22 @@ public class ChannelManager {
     if (newPeers.isEmpty()) {
       return;
     }
-
     List<Channel> processed = new ArrayList<>();
-
     int addCnt = 0;
     for (Channel peer : newPeers) {
-
-      logger.debug("Processing new peer: " + peer);
-
       if (peer.isProtocolsInitialized()) {
-
-        logger.info("Protocols initialized");
-
         if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
-          if (!peer.isActive() &&
-              activePeers.size() >= maxActivePeers //&&
-            //!trustedPeers.accept(peer.getNode())
+          if (!peer.isActive() && activePeers.size() >= maxActivePeers //&& !trustedPeers.accept(peer.getNode())
               ) {
-
-            // restricting inbound connections unless this is a trusted peer
-
             disconnect(peer, TOO_MANY_PEERS);
           } else {
-            process(peer);
+            logger.info("Add active peer {}", peer);
+            activePeers.put(peer.getNodeIdWrapper(), peer);
             addCnt++;
           }
         } else {
           disconnect(peer, DUPLICATE_PEER);
         }
-
         processed.add(peer);
       }
     }
@@ -180,10 +118,16 @@ public class ChannelManager {
     newPeers.removeAll(processed);
   }
 
-  private void disconnect(Channel peer, ReasonCode reason) {
-    logger.debug("Disconnecting peer with reason " + reason + ": " + peer);
+  public void disconnect(Channel peer, ReasonCode reason) {
+    logger.info("Disconnecting peer with reason " + reason + ": " + peer);
     peer.disconnect(reason);
     recentlyDisconnected.put(peer.getInetSocketAddress().getAddress(), new Date());
+  }
+
+  public void notifyDisconnect(Channel channel) {
+    syncPool.onDisconnect(channel);
+    activePeers.values().remove(channel);
+    newPeers.remove(channel);
   }
 
   public boolean isRecentlyDisconnected(InetAddress peerAddr) {
@@ -197,38 +141,13 @@ public class ChannelManager {
     }
   }
 
-  private void process(Channel peer) {
-    if (peer.isSyncing()) {
-      activePeers.put(peer.getNodeIdWrapper(), peer);
-    }
-  }
-
-
   public void add(Channel peer) {
-    logger.info("New peer in ChannelManager {}", peer);
+    logger.info("Add new peer: {}", peer);
     newPeers.add(peer);
-  }
-
-  public void notifyDisconnect(Channel channel) {
-    logger.debug("Peer {}: notifies about disconnect", channel);
-    channel.onDisconnect();
-    syncPool.onDisconnect(channel);
-    activePeers.values().remove(channel);
-    newPeers.remove(channel);
-  }
-
-  public void onSyncDone(boolean done) {
-    for (Channel channel : activePeers.values()) {
-      channel.onSyncDone(done);
-    }
   }
 
   public Collection<Channel> getActivePeers() {
     return new ArrayList<>(activePeers.values());
-  }
-
-  public Channel getActivePeer(byte[] nodeId) {
-    return activePeers.get(new ByteArrayWrapper(nodeId));
   }
 
   public void close() {
