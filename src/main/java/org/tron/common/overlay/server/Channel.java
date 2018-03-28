@@ -108,7 +108,7 @@ public class Channel {
 
         //TODO: use config here
         pipeline.addLast("readTimeoutHandler",
-            new ReadTimeoutHandler(100, TimeUnit.SECONDS));
+            new ReadTimeoutHandler(60, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
@@ -132,13 +132,10 @@ public class Channel {
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
-        logger.info("Handshake finished with {}", ctx.channel().remoteAddress());
-
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
-
-        tronState = TronState.HANDSHAKE_FINISHED;
+        setTronState(TronState.HANDSHAKE_FINISHED);
     }
 
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {

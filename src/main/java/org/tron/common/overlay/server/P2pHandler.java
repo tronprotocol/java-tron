@@ -55,7 +55,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     msgQueue.activate(ctx);
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       try {
-        logger.info("time to send ping");
         msgQueue.sendMessage(PING_MESSAGE);
       } catch (Throwable t) {
         logger.error("startTimers exception", t);
@@ -73,17 +72,15 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         closeChannel(ctx);
         break;
       case P2P_PING:
-        logger.info("i rcv ping from {}", ctx.channel().remoteAddress());
         msgQueue.receivedMessage(msg);
         msgQueue.sendMessage(PONG_MESSAGE);
         break;
       case P2P_PONG:
-        logger.info("i rcv pong from {}", ctx.channel().remoteAddress());
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
         break;
       default:
-        logger.info("rvc wrong msg, {}", ctx.channel().remoteAddress());
+        logger.info("Receive error msg, {}", ctx.channel().remoteAddress());
         closeChannel(ctx);
         break;
     }

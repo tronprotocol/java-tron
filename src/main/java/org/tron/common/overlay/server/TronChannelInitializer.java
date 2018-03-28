@@ -60,11 +60,6 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     @Override
     public void initChannel(NioSocketChannel ch) throws Exception {
         try {
-            if (!peerDiscoveryMode) {
-                logger.info("Open {} connection, channel: {}", isInbound() ? "inbound" : "outbound", ch.toString());
-            }
-
-
             if (isInbound() && channelManager.isRecentlyDisconnected(ch.remoteAddress().getAddress())) {
                 // avoid too frequent connection attempts
                 logger.info("Drop connection - the same IP was disconnected recently, channel: {}", ch.toString());
