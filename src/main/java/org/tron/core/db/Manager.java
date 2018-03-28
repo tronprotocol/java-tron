@@ -1112,7 +1112,7 @@ public class Manager {
       if (b.getVoteCount() != a.getVoteCount()) {
         return (int) (b.getVoteCount() - a.getVoteCount());
       } else {
-        return b.getAddress().hashCode() - a.getAddress().hashCode();
+        return Long.compare(b.getAddress().hashCode(),a.getAddress().hashCode());
       }
     });
   }
@@ -1133,6 +1133,7 @@ public class Manager {
       throw new RuntimeException("Witnesses is empty");
     }
 
+    List<String> currentWitsAddress = getWitnessStringList(getWitnesses());
     // TODO  what if the number of witness is not same in different slot.
     if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
@@ -1141,7 +1142,7 @@ public class Manager {
           .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
 
       logger.info(
-          "updateWitnessSchedule,before:{} ", getWitnessStringList(getWitnesses()).toString()
+          "updateWitnessSchedule,before:{} ", currentWitsAddress
               + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
     }
   }
