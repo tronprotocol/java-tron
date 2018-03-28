@@ -5,8 +5,6 @@ import org.tron.common.utils.Sha256Hash;
 
 public abstract class Message {
 
-  public static int verison = 1;
-
   public static byte PING = 1;
   public static byte PONG = 2;
   public static byte FINE_PEERS = 3;
@@ -64,5 +62,4 @@ public abstract class Message {
         throw new IllegalArgumentException("No such message");
     }
   }
-
 }

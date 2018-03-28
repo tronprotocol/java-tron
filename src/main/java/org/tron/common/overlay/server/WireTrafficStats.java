@@ -51,10 +51,7 @@ public class WireTrafficStats  implements Runnable  {
     }
 
     @Override
-    public void run() {
-        logger.info("TCP: " + tcp.stats());
-        logger.info("UDP: " + udp.stats());
-    }
+    public void run() {}
 
     @PreDestroy
     public void close() {

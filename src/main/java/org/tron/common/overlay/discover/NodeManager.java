@@ -17,34 +17,23 @@
  */
 package org.tron.common.overlay.discover;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeHandler.State;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
@@ -188,7 +177,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       nodeHandlerMap.put(key, ret);
       logger.info("Add new node: {}, size={}", ret, nodeHandlerMap.size());
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      logger.info("change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
     return ret;
@@ -196,13 +185,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   private void trimTable() {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
-
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
       sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
-        logger.info("trimTable delete node, {}", handler.getNode());
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
@@ -241,8 +228,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
     NodeHandler nodeHandler = getNodeHandler(n);
 
-    logger.trace("===> ({}) {} [{}] {}", sender, m.getClass().getSimpleName(), nodeHandler, m);
-
     byte type = m.getType();
     switch (type) {
       case 1:
@@ -279,13 +264,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return ret;
   }
 
-  public List<NodeHandler> getNodes(
-      Predicate<NodeHandler> predicate,
-      int limit) {
+  public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate,  int limit) {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        logger.info(handler.toString());
         if (predicate.test(handler)) {
           filtered.add(handler);
         }
@@ -344,16 +326,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public Node getPublicHomeNode() {
     return homeNode;
-  }
-
-  public boolean isTheSameNode(Node src, Node des){
-    if (src.getHexId().equals(des.getHexId())){
-      return  true;
-    }
-    if (src.getHost().equals(homeNode.getHost()) && des.getPort() == homeNode.getPort()){
-      return  true;
-    }
-    return  false;
   }
 
   public void close() {
