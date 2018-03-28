@@ -191,7 +191,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
     long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
     DateTime currentMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - Time.getCurrentMillis()) / maintenanceTimeInterval;
+    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
     DateTime nextMaintenanceTime = currentMaintenanceTime
         .plus((round + 1) * maintenanceTimeInterval);
     setNextMaintenanceTime(nextMaintenanceTime);
