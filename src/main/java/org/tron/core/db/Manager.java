@@ -284,9 +284,7 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis()
-      throws ContractValidateException, ContractExeException,
-      ValidateSignatureException, UnLinkedBlockException {
+  public void initGenesis() {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
