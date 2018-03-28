@@ -1,5 +1,3 @@
-package org.tron.core.net.peer;
-
 /*
  * Copyright (c) [2016] [ <ether.camp> ]
  * This file is part of the ethereumJ library.
@@ -17,13 +15,14 @@ package org.tron.core.net.peer;
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-
+package org.tron.core.net.peer;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.message.ReasonCode;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
@@ -35,6 +34,8 @@ import org.tron.protos.Protocol.Block;
  * delegating version specific stuff to its descendants
  *
  */
+@Component
+@Scope("prototype")
 public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private final static Logger logger = LoggerFactory.getLogger("TronHandler");
@@ -43,15 +44,9 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private MessageQueue msgQueue = null;
 
-  protected boolean peerDiscoveryMode = false;
-
   protected Block bestBlock;
 
   public PeerConnectionDelegate peerDel;
-
-  public TronHandler() {
-
-  }
 
   public void setPeerDel(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;
@@ -59,50 +54,32 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws InterruptedException {
-    //logger.info("tron handle recv msg:" + msg);
-    peer.getNodeStatistics().ethInbound.add();
     msgQueue.receivedMessage(msg);
-
     //handle message
     peerDel.onMessage(peer, msg);
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.warn("Tron handling failed", cause);
+    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause);
     ctx.close();
   }
 
   @Override
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-    logger.info("handlerRemoved: kill timers in TronHandler");
-//    ethereumListener.removeListener(listener);
-//    onShutdown();
+    logger.info("handler Removed.");
   }
 
-  public void activate() {
-    logger.info("Tron protocol activated");
-    peerDel.onConnectPeer(peer);
-//    ethereumListener.trace("ETH protocol activated");
-
-  }
-
-  protected void disconnect(ReasonCode reason) {
-    msgQueue.disconnect(reason);
-    peer.getNodeStatistics().nodeDisconnectedLocal(reason);
-  }
+//  public void activate() {
+//    peerDel.onConnectPeer(peer);
+//  }
 
   protected void sendMessage(TronMessage message) {
     msgQueue.sendMessage(message);
-    peer.getNodeStatistics().ethOutbound.add();
   }
 
   public void setMsgQueue(MessageQueue msgQueue) {
     this.msgQueue = msgQueue;
-  }
-
-  public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
-    this.peerDiscoveryMode = peerDiscoveryMode;
   }
 
   public void setChannel(Channel channel) {

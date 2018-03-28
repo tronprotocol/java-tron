@@ -33,40 +33,7 @@ public abstract class Message {
 
 
   public ByteBuf getSendData(){
-//    try{
-
      return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
-//        //ByteBuf out = Unpooled.wrappedBuffer(ArrayUtils.EMPTY_BYTE_ARRAY);
-//
-//      int bodyLen = msg.readableBytes();
-//      int headerLen = CodedOutputStream.computeRawVarint32Size(bodyLen);
-//      ByteBuf out = Unpooled.buffer(0, 2048);
-//      out.ensureWritable(headerLen + bodyLen);
-//
-//      CodedOutputStream headerOut =
-//          CodedOutputStream.newInstance(new ByteBufOutputStream(out), headerLen);
-//      headerOut.writeRawVarint32(bodyLen);
-//      headerOut.flush();
-//
-//
-//
-//      out.writeBytes(msg, msg.readerIndex(), bodyLen);
-////
-////      ByteBuf msg = Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
-////      int bodyLen = msg.readableBytes();
-////      int headerLen = CodedOutputStream.computeRawVarint32Size(data.length);
-////      //ByteBuf out = Unpooled.buffer(data.length + headerLen);
-////      msg.ensureWritable(headerLen + bodyLen);
-////      CodedOutputStream headerOut =
-////              CodedOutputStream.newInstance(new ByteBufOutputStream(msg), headerLen);
-////      headerOut.writeRawVarint32(data.length);
-////      headerOut.flush();
-////      out.writeBytes(msg, msg.readerIndex(), data.length);
-//      return  out;
-//    }catch (Exception e){
-//      e.printStackTrace();
-//    }
-//    return null;
   }
 
   public Sha256Hash getMessageId() {
