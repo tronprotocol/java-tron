@@ -29,7 +29,7 @@ public class PingMessage extends P2pMessage {
 
   @Override
   public Class<?> getAnswerMessage() {
-    return null;
+    return PongMessage.class;
   }
 
   @Override

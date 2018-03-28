@@ -107,7 +107,6 @@ public class MessageQueue {
   }
 
   private void disconnect(DisconnectMessage msg) {
-    logger.info("disconnect here");
     ctx.writeAndFlush(msg);
     ctx.close();
   }
@@ -123,11 +122,6 @@ public class MessageQueue {
       if (waitingMessage.getAnswerMessage() != null
           && msg.getClass() == waitingMessage.getAnswerMessage()) {
         messageRoundtrip.answer();
-        //TODO: tron message.
-//        if (waitingMessage instanceof TronMessage)
-//          channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
-        logger.trace("Message round trip covered: [{}] ",
-            messageRoundtrip.getMsg().getClass());
       }
     }
   }
@@ -153,8 +147,6 @@ public class MessageQueue {
       Message msg = messageRoundtrip.getMsg();
 
       //TODO#p2p#peerDel : let node know
-      //ethereumListener.onSendMessage(channel, msg);
-      logger.info("msg queue send:" + msg);
 
       ctx.writeAndFlush(msg.getSendData())
           .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -167,7 +159,7 @@ public class MessageQueue {
   }
 
   public void close() {
-    if (timerTask != null) {
+    if (!timerTask.isCancelled()) {
       timerTask.cancel(false);
     }
   }
