@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 
@@ -190,12 +191,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
     long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
     DateTime currentMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
+    long round = (blockTime - Time.getCurrentMillis()) / maintenanceTimeInterval;
     DateTime nextMaintenanceTime = currentMaintenanceTime
         .plus((round + 1) * maintenanceTimeInterval);
     setNextMaintenanceTime(nextMaintenanceTime);
 
-    logger.info("do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
+    logger.info(
+        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
