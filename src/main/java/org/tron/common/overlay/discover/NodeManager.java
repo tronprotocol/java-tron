@@ -145,7 +145,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
-        if (nodeHandler.state != NodeHandler.State.Dead){
+        if (!nodeHandler.state.equals(NodeHandler.State.Dead)) {
           batch.add(nodeHandler.getNode());
         }
       }
