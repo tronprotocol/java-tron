@@ -87,7 +87,6 @@ public class MessageQueue {
   }
 
   public void sendMessage(Message msg) {
-    logger.info("send ping msg to {}", channel);
     if (msg instanceof PingMessage) {
       if (hasPing) return;
       hasPing = true;
@@ -123,11 +122,6 @@ public class MessageQueue {
       if (waitingMessage.getAnswerMessage() != null
           && msg.getClass() == waitingMessage.getAnswerMessage()) {
         messageRoundtrip.answer();
-        //TODO: tron message.
-//        if (waitingMessage instanceof TronMessage)
-//          channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
-        logger.trace("Message round trip covered: [{}] ",
-            messageRoundtrip.getMsg().getClass());
       }
     }
   }
