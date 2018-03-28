@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 
@@ -29,7 +30,7 @@ public class PongMessage extends Message {
         .build();
     this.pongMessage = Discover.PongMessage.newBuilder()
         .setFrom(toEndpoint)
-        .setEcho(1)
+        .setEcho(Args.getInstance().getNodeP2pVersion())
         .setTimestamp(System.currentTimeMillis())
         .build();
     this.data = this.pongMessage.toByteArray();

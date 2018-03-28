@@ -22,9 +22,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,19 +38,15 @@ import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
-/**
- * @author Roman Mandeleil
- * @since 01.11.2014
- */
 @Component
 @Scope("prototype")
 public class Channel {
 
     private final static Logger logger = LoggerFactory.getLogger("Channel");
-
-//    @Autowired
-//    Args args;
 
     @Autowired
     protected MessageQueue msgQueue;
@@ -76,10 +69,6 @@ public class Channel {
     @Autowired
     private WireTrafficStats stats;
 
-    private ProtobufVarint32LengthFieldPrepender protoPender;
-
-    private ProtobufVarint32FrameDecoder lengthDecoder;
-
     private TronHandler tronHandler;
 
     private ChannelManager channelManager;
@@ -95,6 +84,7 @@ public class Channel {
     }
 
     public void setTronState(TronState tronState) {
+        logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
         this.tronState = tronState;
     }
 
@@ -113,8 +103,6 @@ public class Channel {
         ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
-        protoPender = new ProtobufVarint32LengthFieldPrepender();
-        lengthDecoder = new ProtobufVarint32FrameDecoder();
 
         isActive = remoteId != null && !remoteId.isEmpty();
 
@@ -122,20 +110,13 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
-        pipeline.addLast("lengthDecode", lengthDecoder);
-        pipeline.addLast("protoPender", protoPender);
+        pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
+        pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
         this.peerDel = peerDel;
-
-        if (discoveryMode) {
-            // temporary key/nodeId to not accidentally smear our reputation with
-            // unexpected disconnect
-//            handshakeHandler.generateTempKey();
-        }
-
 
         handshakeHandler.setRemoteId(remoteId, this);
 
@@ -150,50 +131,32 @@ public class Channel {
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
+        logger.info("Handshake finished with {}", ctx.channel().remoteAddress());
 
-        logger.info("publicRLPxHandshakeFinished with " + ctx.channel().remoteAddress());
-
-//        FrameCodecHandler frameCodecHandler = new FrameCodecHandler(frameCodec, this);
-//        ctx.pipeline().addLast("medianFrameCodec", frameCodecHandler);
-        //TODO: use messageCodec handle bytes to message directly
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
 
         p2pHandler.setChannel(this);
-        p2pHandler.setHandshake(helloRemote, ctx);
+
+        activateTron(ctx);
 
         getNodeStatistics().rlpxHandshake.add();
     }
 
-    public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
-
-        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
-        //ByteBuf byteBufMsg = ctx.alloc().buffer();
-        //logger.info("send hello msg: {}", helloMessage);
-
-        ctx.writeAndFlush(helloMessage.getSendData()).sync();
-
-//        if (logger.isDebugEnabled())
-//            logger.debug("To:   {}    Send:  {}", ctx.channel().remoteAddress(), helloMessage);
-        getNodeStatistics().rlpxOutHello.add();
-    }
-
     public void activateTron(ChannelHandlerContext ctx) {
-        //TODO: use tron handle here.
-
-        logger.info("tron active");
         tronHandler = new TronHandler();
-
         ctx.pipeline().addLast("data", tronHandler);
-
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setChannel(this);
-        tronHandler.setPeerDiscoveryMode(discoveryMode);
         tronHandler.setPeerDel(peerDel);
-
-        tronHandler.activate();
+        //tronHandler.activate();
     }
 
+    public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
+        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
+        ctx.writeAndFlush(helloMessage.getSendData()).sync();
+        getNodeStatistics().rlpxOutHello.add();
+    }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
         this.inetSocketAddress = inetSocketAddress;
@@ -211,10 +174,6 @@ public class Channel {
         nodeStatistics = nodeManager.getNodeStatistics(node);
     }
 
-    public void initWithNode(byte[] nodeId) {
-        initWithNode(nodeId, inetSocketAddress.getPort());
-    }
-
     public Node getNode() {
         return node;
     }
@@ -225,9 +184,6 @@ public class Channel {
 
     public boolean isDisconnected() {
         return isDisconnected;
-    }
-
-    public void onSyncDone(boolean done) {
     }
 
     public boolean isProtocolsInitialized() {
@@ -305,6 +261,11 @@ public class Channel {
         SYNC_FAILED
     }
 
+    public boolean isIdle() {
+        // TODO: use peer's status.
+        return  true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -316,11 +277,6 @@ public class Channel {
         if (inetSocketAddress != null ? !inetSocketAddress.equals(channel.inetSocketAddress) : channel.inetSocketAddress != null) return false;
         if (node != null ? !node.equals(channel.node) : channel.node != null) return false;
         return this == channel;
-    }
-
-    public boolean isIdle() {
-      // TODO: use peer's status.
-        return  true;
     }
 
     @Override

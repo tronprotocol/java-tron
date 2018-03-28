@@ -87,6 +87,7 @@ public class MessageQueue {
   }
 
   public void sendMessage(Message msg) {
+    logger.info("send ping msg to {}", channel);
     if (msg instanceof PingMessage) {
       if (hasPing) return;
       hasPing = true;
@@ -107,7 +108,6 @@ public class MessageQueue {
   }
 
   private void disconnect(DisconnectMessage msg) {
-    logger.info("disconnect here");
     ctx.writeAndFlush(msg);
     ctx.close();
   }
@@ -153,8 +153,6 @@ public class MessageQueue {
       Message msg = messageRoundtrip.getMsg();
 
       //TODO#p2p#peerDel : let node know
-      //ethereumListener.onSendMessage(channel, msg);
-      logger.info("msg queue send:" + msg);
 
       ctx.writeAndFlush(msg.getSendData())
           .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -167,7 +165,7 @@ public class MessageQueue {
   }
 
   public void close() {
-    if (timerTask != null) {
+    if (!timerTask.isCancelled()) {
       timerTask.cancel(false);
     }
   }

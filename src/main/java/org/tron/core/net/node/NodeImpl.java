@@ -2,18 +2,6 @@ package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,25 +16,16 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.TraitorPeerException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.exception.*;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Component
@@ -145,7 +124,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg);
+    //logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -231,17 +210,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     return this.pool.getActiveNodes();
   }
 
-  @Override
-  public void connectToP2PNetWork() {
-
-    pool.init(channelManager, this);
-  }
-
-
   private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
-      logger.info("loop advertise inv");
+      //logger.info("loop advertise inv");
       for (PeerConnection peer : getActivePeer()) {
         if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
@@ -260,7 +232,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     // sync block chain
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
-      logger.info("loop sync block chain");
+      //logger.info("loop sync block chain");
       if (syncMap.containsKey(d.getMessageId())) {
         syncMap.get(d.getMessageId()).sendMessage(d);
       }
@@ -388,7 +360,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    logger.info("on handle advertise inventory message");
+    //logger.info("on handle advertise inventory message");
     peer.cleanInvGarbage();
 
     msg.getHashList().forEach(id -> {
@@ -436,13 +408,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    logger.info("on handle block message");
+    //logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
     HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
-    logger.info("Block number is " + blkMsg.getBlockId().getNum());
+    //logger.info("Block number is " + blkMsg.getBlockId().getNum());
 
     if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
@@ -541,7 +513,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    logger.info("on handle transaction message");
+    //logger.info("on handle transaction message");
     try {
       if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
         throw new TraitorPeerException("We don't send fetch request to" + peer);
@@ -557,7 +529,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    logger.info("on handle sync block chain message");
+    //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -622,7 +594,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    logger.info("on handle block chain inventory message");
+    //logger.info("on handle block chain inventory message");
     try {
       if (peer.getSyncChainRequested() != null) {
         //List<BlockId> blockIds = msg.getBlockIds();
