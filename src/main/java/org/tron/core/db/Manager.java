@@ -36,6 +36,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -301,7 +302,8 @@ public class Manager {
 
         //this.pushBlock(this.genesisBlock);
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
-        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()), this.genesisBlock.getBlockId().getBytes());
+        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()),
+            this.genesisBlock.getBlockId().getBytes());
         //refreshHead(newBlock);
         logger.info("save block: " + this.genesisBlock);
 
@@ -428,7 +430,7 @@ public class Manager {
 
   void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
-    long now = System.currentTimeMillis();
+    long now = Time.getCurrentMillis();
     // todo: avoid ddos, design more smoothly formula later.
     if (balance < 1000000 * 1000) {
       if (now - latestOperationTime < 5 * 60 * 1000) {
@@ -865,6 +867,12 @@ public class Manager {
         .collect(Collectors.toList());
 
     int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    if (solidifiedPosition < 0) {
+      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+          solidifiedPosition, wits.size());
+      return;
+    }
+
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
@@ -942,7 +950,7 @@ public class Manager {
    */
   public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
-      return System.currentTimeMillis();
+      return Time.getCurrentMillis();
     }
     long interval = blockInterval();
 

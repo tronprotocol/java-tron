@@ -25,6 +25,7 @@ import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -291,7 +292,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                         !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
                             && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
                     .forEach(idToSpread -> {
-                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), System.currentTimeMillis());
+                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                       sendPackage.add(idToSpread, peer);
                     });
                 peer.cleanInvGarbage();
@@ -325,7 +326,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       sendPackage.add(idToFetch, peer);
                       advObjToFetch.remove(idToFetch.getKey());
                       peer.getAdvObjWeRequested()
-                          .put(idToFetch.getKey(), System.currentTimeMillis());
+                          .put(idToFetch.getKey(), Time.getCurrentMillis());
                     });
               });
           sendPackage.sendFetch();
@@ -581,7 +582,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
 
-
     if (!peer.isNeedSyncFromPeer()
         && !summaryChainIds.isEmpty()
         && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
@@ -755,7 +755,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private long getUnSyncNum() {
-    if (getActivePeer().isEmpty()) return 0;
+    if (getActivePeer().isEmpty()) {
+      return 0;
+    }
     return getActivePeer().stream()
         .mapToLong(peer -> peer.getUnfetchSyncNum() + peer.getSyncBlockToFetch().size())
         .max()
