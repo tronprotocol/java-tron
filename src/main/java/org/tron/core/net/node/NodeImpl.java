@@ -125,7 +125,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    //logger.info("Handle Message: " + msg);
+    logger.info("Handle Message: " + msg);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -492,20 +492,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     getActivePeer()
         .forEach(peer -> {
-          if (peer.getSyncBlockToFetch().isEmpty() //TODO: need process here
+          if (peer.getSyncBlockToFetch().isEmpty()
+              && peer.getBlockInProc().isEmpty()
               && !peer.isNeedSyncFromPeer()
               && !peer.isNeedSyncFromUs()) {
             needSync.offer(peer);
           } else {
             //TODO: erase process here
-            peer.getBlockInProc().remove(block.getBlockId());
-            //updateBlockWeBothHave(peer, block.getBlockId());
-            peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
-            peer.setHeadBlockWeBothHave(block.getBlockId());
-            if (peer.getSyncBlockToFetch().isEmpty()
-                && peer.getUnfetchSyncNum() == 0) { //send sync to let peer know we are sync.
-              needFetchAgain.offer(peer);
+            if (peer.getBlockInProc().remove(block.getBlockId())) {
+              updateBlockWeBothHave(peer, block);
+              if (peer.getSyncBlockToFetch().isEmpty()
+                  && peer.getUnfetchSyncNum() == 0
+                  && peer.getBlockInProc().isEmpty()) { //send sync to let peer know we are sync.
+                needFetchAgain.offer(peer);
+              }
             }
+
           }
         });
 
@@ -678,7 +680,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+            updateBlockWeBothHave(peer, ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK)).getBlockCapsule());
           }
           //poll the block we both have.
           blockIdWeGet.pop();
@@ -775,9 +777,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     send.clear();
   }
 
-  private void updateBlockWeBothHave(PeerConnection peer, BlockId id) {
-    peer.setHeadBlockWeBothHave(id);
-    peer.setHeadBlockTimeWeBothHave(del.getBlockTime(id));
+  private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
+    peer.setHeadBlockWeBothHave(block.getBlockId());
+    peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {

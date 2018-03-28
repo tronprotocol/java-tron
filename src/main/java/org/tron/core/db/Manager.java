@@ -975,10 +975,10 @@ public class Manager {
 
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
-    logger.info("there is account List size is {}", accountList.size());
+    //logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
-      logger.info("there is account ,account address is {}",
-          account.createReadableString());
+//      logger.info("there is account ,account address is {}",
+//          account.createReadableString());
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
