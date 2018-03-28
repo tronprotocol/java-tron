@@ -301,7 +301,8 @@ public class Manager {
 
         //this.pushBlock(this.genesisBlock);
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
-        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()), this.genesisBlock.getBlockId().getBytes());
+        this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()),
+            this.genesisBlock.getBlockId().getBytes());
         //refreshHead(newBlock);
         logger.info("save block: " + this.genesisBlock);
 
@@ -865,6 +866,12 @@ public class Manager {
         .collect(Collectors.toList());
 
     int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    if (solidifiedPosition < 0) {
+      logger.error("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+          solidifiedPosition, wits.size());
+      return;
+    }
+
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
