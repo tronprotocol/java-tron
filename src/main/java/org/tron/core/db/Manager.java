@@ -867,7 +867,7 @@ public class Manager {
 
     int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
-      logger.error("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, wits.size());
       return;
     }
