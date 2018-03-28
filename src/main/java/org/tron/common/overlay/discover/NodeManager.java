@@ -177,7 +177,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       nodeHandlerMap.put(key, ret);
       logger.info("Add new node: {}, size={}", ret, nodeHandlerMap.size());
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      logger.info("change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
     return ret;
@@ -185,13 +185,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   private void trimTable() {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
-
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
       sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
-        logger.info("trimTable delete node, {}", handler.getNode());
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
@@ -229,8 +227,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       return;
     }
     NodeHandler nodeHandler = getNodeHandler(n);
-
-    logger.trace("===> ({}) {} [{}] {}", sender, m.getClass().getSimpleName(), nodeHandler, m);
 
     byte type = m.getType();
     switch (type) {
@@ -330,16 +326,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public Node getPublicHomeNode() {
     return homeNode;
-  }
-
-  public boolean isTheSameNode(Node src, Node des){
-    if (src.getHexId().equals(des.getHexId())){
-      return  true;
-    }
-    if (src.getHost().equals(des.getHost()) && des.getPort() == des.getPort()){
-      return  true;
-    }
-    return  false;
   }
 
   public void close() {

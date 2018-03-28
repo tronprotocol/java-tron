@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.core.config.args.Args;
@@ -78,14 +77,18 @@ public class SyncPool {
         logger.error("Exception in sync worker", t);
       }
     }, WORKER_TIMEOUT, WORKER_TIMEOUT, TimeUnit.SECONDS);
+  }
 
-    logExecutor.scheduleWithFixedDelay(() -> {
-      try {
-        logActivePeers();
-      } catch (Throwable t) {
-        logger.error("Exception in log worker", t);
-      }
-    }, 10, 10, TimeUnit.SECONDS);
+  private void fillUp() {
+    int lackSize = maxActiveNodes - channelManager.getActivePeers().size();
+    if(lackSize <= 0) return;
+
+    final Set<String> nodesInUse = channelManager.nodesInUse();
+    nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
+
+    List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
+    newNodes.forEach(n -> peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
+            n.getNode().getHexId(), false));
   }
 
   private synchronized void prepareActive() {
@@ -110,39 +113,6 @@ public class SyncPool {
 
     activePeers.clear();
     activePeers.addAll(active);
-  }
-
-  private void fillUp() {
-    int lackSize = maxActiveNodes - channelManager.getActivePeers().size();
-    if(lackSize <= 0) return;
-
-    final Set<String> nodesInUse = channelManager.nodesInUse();
-    nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
-
-    List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
-            n.getNode().getHexId(), false));
-  }
-
-  synchronized void logActivePeers() {
-    if (logger.isInfoEnabled()) {
-      StringBuilder sb = new StringBuilder("Peer stats:\n");
-      sb.append("Active peers\n");
-      sb.append("============\n");
-      Set<Node> activeSet = new HashSet<>();
-      for (PeerConnection peer : new ArrayList<>(activePeers)) {
-        sb.append(peer.logSyncStats()).append('\n');
-        activeSet.add(peer.getNode());
-      }
-      sb.append("Other connected peers\n");
-      sb.append("============\n");
-      for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
-        if (!activeSet.contains(peer.getNode())) {
-          sb.append(peer.logSyncStats()).append('\n');
-        }
-      }
-      logger.info(sb.toString());
-    }
   }
 
   public List<NodeHandler> getActiveNodes() {
