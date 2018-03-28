@@ -17,34 +17,23 @@
  */
 package org.tron.common.overlay.discover;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeHandler.State;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
@@ -279,13 +268,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return ret;
   }
 
-  public List<NodeHandler> getNodes(
-      Predicate<NodeHandler> predicate,
-      int limit) {
+  public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate,  int limit) {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        logger.info(handler.toString());
         if (predicate.test(handler)) {
           filtered.add(handler);
         }
@@ -350,7 +336,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     if (src.getHexId().equals(des.getHexId())){
       return  true;
     }
-    if (src.getHost().equals(homeNode.getHost()) && des.getPort() == homeNode.getPort()){
+    if (src.getHost().equals(des.getHost()) && des.getPort() == des.getPort()){
       return  true;
     }
     return  false;

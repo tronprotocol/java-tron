@@ -13,8 +13,6 @@ public interface Node {
 
   void listen();
 
-  void connectToP2PNetWork();
-
   void syncFrom(Sha256Hash myHeadBlockHash);
 
   void close() throws InterruptedException;

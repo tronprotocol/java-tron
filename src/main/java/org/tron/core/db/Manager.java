@@ -36,6 +36,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.RandomGenerator;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -413,7 +414,7 @@ public class Manager {
 
   void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
-    long now = System.currentTimeMillis();
+    long now = Time.getCurrentMillis();
     // todo: avoid ddos, design more smoothly formula later.
     if (balance < 1000000 * 1000) {
       if (now - latestOperationTime < 5 * 60 * 1000) {
@@ -933,7 +934,7 @@ public class Manager {
    */
   public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
-      return System.currentTimeMillis();
+      return Time.getCurrentMillis();
     }
     long interval = blockInterval();
 

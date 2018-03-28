@@ -217,7 +217,7 @@ public class PeerConnection extends Channel{
 
   public void sendMessage(Message message) {
     if (message.getType().equals(MessageTypes.SYNC_BLOCK_CHAIN)) {
-      logger.info("nodeimpl send message" + message);
+      logger.info("1231321");
     }
     msgQueue.sendMessage(message);
     nodeStatistics.ethOutbound.add();
