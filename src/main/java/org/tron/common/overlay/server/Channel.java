@@ -52,13 +52,7 @@ public class Channel {
     protected MessageQueue msgQueue;
 
     @Autowired
-    private P2pHandler p2pHandler;
-
-    @Autowired
     private MessageCodec messageCodec;
-
-    @Autowired
-    private HandshakeHandler handshakeHandler;
 
     @Autowired
     private NodeManager nodeManager;
@@ -69,6 +63,13 @@ public class Channel {
     @Autowired
     private WireTrafficStats stats;
 
+    @Autowired
+    private HandshakeHandler handshakeHandler;
+
+    @Autowired
+    private P2pHandler p2pHandler;
+
+    @Autowired
     private TronHandler tronHandler;
 
     private ChannelManager channelManager;
@@ -109,24 +110,25 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler",
             new ReadTimeoutHandler(100, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
-        pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
+        pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
         this.discoveryMode = discoveryMode;
         this.peerDel = peerDel;
 
-        handshakeHandler.setRemoteId(remoteId, this);
-
         messageCodec.setChannel(this);
-
         msgQueue.setChannel(this);
+        handshakeHandler.setChannel(this, remoteId);
+        p2pHandler.setChannel(this);
+        tronHandler.setChannel(this);
 
         p2pHandler.setMsgQueue(msgQueue);
+        tronHandler.setMsgQueue(msgQueue);
+        tronHandler.setPeerDel(peerDel);
 
         logger.info("Channel init finished");
-
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
@@ -134,23 +136,9 @@ public class Channel {
 
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
-
-        p2pHandler.setChannel(this);
-
-        activateTron(ctx);
-
-        getNodeStatistics().rlpxHandshake.add();
+        ctx.pipeline().addLast("data", tronHandler);
 
         tronState = TronState.HANDSHAKE_FINISHED;
-    }
-
-    public void activateTron(ChannelHandlerContext ctx) {
-        tronHandler = new TronHandler();
-        ctx.pipeline().addLast("data", tronHandler);
-        tronHandler.setMsgQueue(msgQueue);
-        tronHandler.setChannel(this);
-        tronHandler.setPeerDel(peerDel);
-        //tronHandler.activate();
     }
 
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
@@ -197,10 +185,6 @@ public class Channel {
 //            isNeedSyncFromUs());
     }
 
-    public boolean isDiscoveryMode() {
-        return discoveryMode;
-    }
-
     public String getPeerId() {
         return node == null ? "<null>" : node.getHexId();
     }
@@ -235,14 +219,6 @@ public class Channel {
 
     public PeerStatistics getPeerStats() {
         return peerStats;
-    }
-
-    public ChannelManager getChannelManager() {
-        return channelManager;
-    }
-
-    public boolean isSyncing() {
-        return tronState.ordinal() > TronState.START_TO_SYNC.ordinal();
     }
 
     public enum TronState {

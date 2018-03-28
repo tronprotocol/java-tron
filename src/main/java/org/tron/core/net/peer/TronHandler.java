@@ -21,6 +21,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
@@ -32,6 +34,8 @@ import org.tron.protos.Protocol.Block;
  * delegating version specific stuff to its descendants
  *
  */
+@Component
+@Scope("prototype")
 public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private final static Logger logger = LoggerFactory.getLogger("TronHandler");
@@ -44,9 +48,6 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   public PeerConnectionDelegate peerDel;
 
-  public TronHandler() {
-
-  }
   public void setPeerDel(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;
   }

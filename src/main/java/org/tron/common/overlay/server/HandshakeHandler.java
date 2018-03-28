@@ -108,9 +108,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
 
-  public void setRemoteId(String remoteId, Channel channel) {
-    this.remoteId = Hex.decode(remoteId);
+  public void setChannel(Channel channel, String remoteId) {
     this.channel = channel;
+    this.remoteId = Hex.decode(remoteId);
   }
 
 }

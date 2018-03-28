@@ -104,7 +104,6 @@ public class SyncPool {
 
     for (PeerConnection channel : active) {
       if (!activePeers.contains(channel)) {
-        logger.info("&&&&&&&&&&&&&&&&&&&&&&&&&& {}", channel);
         peerDel.onConnectPeer(channel);
       }
     }
