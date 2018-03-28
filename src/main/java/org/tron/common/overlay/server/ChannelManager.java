@@ -211,9 +211,9 @@ public class ChannelManager {
 
   private void process(Channel peer) {
     //TODO:Sync status refresh time
-    if (peer.isSyncing()) {
+    //if (peer.isSyncing()) {
       activePeers.put(peer.getNodeIdWrapper(), peer);
-    }
+    //}
   }
 
 

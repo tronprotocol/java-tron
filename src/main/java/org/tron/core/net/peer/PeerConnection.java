@@ -11,6 +11,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.tron.core.net.message.MessageTypes;
 
 @Slf4j
 @Component
@@ -205,13 +206,19 @@ public class PeerConnection extends Channel{
   }
 
   public boolean isBusy() {
-    return !advObjWeRequested.isEmpty()
-        && !syncBlockRequested.isEmpty()
-        && syncChainRequested != null;
+    return !idle();
+  }
+
+  public boolean idle() {
+    return advObjWeRequested.isEmpty()
+        && syncBlockRequested.isEmpty()
+        && syncChainRequested == null;
   }
 
   public void sendMessage(Message message) {
-    logger.info("nodeimpl send message" + message);
+    if (message.getType().equals(MessageTypes.SYNC_BLOCK_CHAIN)) {
+      logger.info("nodeimpl send message" + message);
+    }
     msgQueue.sendMessage(message);
     nodeStatistics.ethOutbound.add();
   }

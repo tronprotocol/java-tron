@@ -362,11 +362,11 @@ public class SyncPool {
     // sorting by latency in asc order
     active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
-    for (PeerConnection channel : active) {
-      if (!activePeers.contains(channel)) {
-        peerDel.onConnectPeer(channel);
-      }
-    }
+//    for (PeerConnection channel : active) {
+//      if (!activePeers.contains(channel)) {
+//        peerDel.onConnectPeer(channel);
+//      }
+//    }
 
     activePeers.clear();
     activePeers.addAll(active);
