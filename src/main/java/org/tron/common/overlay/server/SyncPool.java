@@ -172,6 +172,7 @@ public class SyncPool {
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
+
       }
 
       return  true;

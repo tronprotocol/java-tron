@@ -85,7 +85,7 @@ public class Channel {
     }
 
     public void setTronState(TronState tronState) {
-        logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
+        //logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
         this.tronState = tronState;
     }
 
