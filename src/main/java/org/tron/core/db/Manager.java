@@ -867,6 +867,12 @@ public class Manager {
         .collect(Collectors.toList());
 
     int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    if (solidifiedPosition < 0) {
+      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+          solidifiedPosition, wits.size());
+      return;
+    }
+
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
