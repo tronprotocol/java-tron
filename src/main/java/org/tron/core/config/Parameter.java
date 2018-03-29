@@ -8,7 +8,7 @@ public interface Parameter {
     long ASSET_ISSUE_FEE = 1000000000; // 1000 trx 10^9
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
-    long WITNESS_PAY_PER_BLOCK = 3000000;  // 3trx
+    long WITNESS_PAY_PER_BLOCK = 32000000;  // 3trx
     int BLOCK_PRODUCED_INTERVAL = 3; // 3sec
 
     double SOLIDIFIED_THRESHOLD = 0.3;
