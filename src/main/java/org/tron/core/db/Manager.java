@@ -395,7 +395,7 @@ public class Manager {
 
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     return true;
   }
@@ -437,7 +437,7 @@ public class Manager {
       revokingStore.pop();
       head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
     } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     khaosDb.pop();
     for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
@@ -471,13 +471,13 @@ public class Manager {
           tmpDialog.commit();
           head = item;
         } catch (ValidateSignatureException e) {
-          e.printStackTrace();
+          logger.debug(e.getMessage(), e);
         } catch (ContractValidateException e) {
-          e.printStackTrace();
+          logger.debug(e.getMessage(), e);
         } catch (ContractExeException e) {
-          e.printStackTrace();
+          logger.debug(e.getMessage(), e);
         } catch (RevokingStoreIllegalStateException e) {
-          e.printStackTrace();
+          logger.debug(e.getMessage(), e);
         }
       });
       return;
@@ -570,7 +570,7 @@ public class Manager {
         this.processBlock(newBlock);
         tmpDialog.commit();
       } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     }
 
@@ -581,13 +581,13 @@ public class Manager {
           try {
             pushTransactions(trx);
           } catch (ValidateSignatureException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (ContractValidateException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (ContractExeException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (HighFreqException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         });
     popedTransactions.stream()
@@ -790,12 +790,12 @@ public class Manager {
         iterator.remove();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     }
 
@@ -926,7 +926,7 @@ public class Manager {
     try {
       adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
   }

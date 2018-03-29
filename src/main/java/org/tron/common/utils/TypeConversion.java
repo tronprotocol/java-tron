@@ -19,9 +19,11 @@
 package org.tron.common.utils;
 
 import com.google.common.primitives.Longs;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
+@Slf4j
 public class TypeConversion {
 
   public static byte[] longToBytes(long x) {
@@ -40,7 +42,7 @@ public class TypeConversion {
     try {
       return Hex.decodeHex(hexString);
     } catch (DecoderException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       return null;
     }
   }

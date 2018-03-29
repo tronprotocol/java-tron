@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class FileUtil {
 
   public static List<String> recursiveList(String path) throws IOException {
@@ -71,8 +73,8 @@ public class FileUtil {
       if (file.isDirectory()) {
         // call deletion of file individually
         Arrays.stream(Objects.requireNonNull(file.list()))
-                .map(s -> fileName + System.getProperty("file.separator") + s)
-                .forEachOrdered(FileUtil::recursiveDelete);
+            .map(s -> fileName + System.getProperty("file.separator") + s)
+            .forEachOrdered(FileUtil::recursiveDelete);
       }
 
       file.setWritable(true);
@@ -90,7 +92,7 @@ public class FileUtil {
         bw.flush();
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
   }
 
