@@ -281,7 +281,7 @@ public class NodeHandler {
     }
 
     void sendPong() {
-        Message pong = new PongMessage(node);
+        Message pong = new PongMessage(nodeManager.getPublicHomeNode());
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
