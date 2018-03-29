@@ -47,9 +47,14 @@
 </p>
 
 ## What's TRON?
-TRON is a block chain-based decentralized smart protocol and an application development platform. It allows each user to freely publish, store and own contents and data, and in the decentralized autonomous form, decides an incentive mechanism and enables application developers and content creators through digital asset distribution, circulation and transaction, thus forming a decentralized content entertainment ecosystem.
 
-TRON is a product of Web 4.0 and the decentralized internet of next generation.
+TRON is an ambitious project dedicated to building the infrastructure for a truly decentralized Internet.
+
+The Tron Protocol, one of the largest blockchain based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem. 
+
+TRON enables large-scale development and engagement. With over 2000 TPS, high concurrency, low latency and massive data transmission, TRON is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+
+TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their communities, with smart contracts making decentralized crowdfunding and token issuance easier than ever.
 
 # How to Build
 
