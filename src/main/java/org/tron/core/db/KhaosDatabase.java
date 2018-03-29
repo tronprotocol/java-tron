@@ -204,7 +204,6 @@ public class KhaosDatabase extends TronDatabase {
    */
   public boolean pop() {
     KhaosBlock prev = head.parent;
-    miniStore.remove(head.id);
     if (prev != null) {
       head = prev;
       return true;

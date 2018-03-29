@@ -1,5 +1,12 @@
 package org.tron.core.net.peer;
 
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -8,9 +15,6 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Component
@@ -205,13 +209,16 @@ public class PeerConnection extends Channel{
   }
 
   public boolean isBusy() {
-    return !advObjWeRequested.isEmpty()
-        && !syncBlockRequested.isEmpty()
-        && syncChainRequested != null;
+    return !idle();
+  }
+
+  public boolean idle() {
+    return advObjWeRequested.isEmpty()
+        && syncBlockRequested.isEmpty()
+        && syncChainRequested == null;
   }
 
   public void sendMessage(Message message) {
-    //logger.info("nodeimpl send message" + message);
     msgQueue.sendMessage(message);
     nodeStatistics.ethOutbound.add();
   }

@@ -42,6 +42,7 @@ import org.tron.core.config.args.Args;
 @Slf4j
 @NoArgsConstructor
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
+
   String dataBaseName;
   DB database;
   boolean alive;
@@ -219,6 +220,21 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
         result.add(iterator.peekNext().getValue());
       }
       return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public long getTotal() throws RuntimeException {
+    try (DBIterator iterator = database.iterator()) {
+      long total = 0;
+      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        total++;
+      }
+      return total;
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
