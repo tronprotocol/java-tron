@@ -68,7 +68,7 @@ public class HelloMessage extends P2pMessage {
    * Get the version of p2p protocol.
    */
   public int getVersion() {
-    return (byte) this.helloMessage.getVersion();
+    return this.helloMessage.getVersion();
   }
 
   /**
