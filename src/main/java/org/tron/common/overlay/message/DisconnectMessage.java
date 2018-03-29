@@ -25,8 +25,8 @@ public class DisconnectMessage extends P2pMessage {
         .newBuilder()
         .setReason(Protocol.ReasonCode.forNumber(reasonCode.asByte()))
         .build();
-    unpacked = true;
     this.type = MessageTypes.P2P_DISCONNECT.asByte();
+    this.data = this.disconnectMessage.toByteArray();
   }
 
   private void unPack() {
