@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
+import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
@@ -113,21 +114,24 @@ public class Manager {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-  public List<TransactionCapsule> getPendingTrxs() {
-    return this.pendingTrxs;
+  public List<TransactionCapsule> getPendingTransactions() {
+    return this.pendingTransactions;
   }
 
 
-  // transaction cache
-  private List<TransactionCapsule> pendingTrxs;
+  // transactions cache
+  private List<TransactionCapsule> pendingTransactions;
 
-  volatile private List<WitnessCapsule> wits = new ArrayList<>();
+  // transactions popped
+  private List<TransactionCapsule> popedTransactions = new ArrayList<>();
+
+  private volatile List<WitnessCapsule> wits = new ArrayList<>();
+
   private ReadWriteLock witsLock = new ReentrantReadWriteLock();
   private Lock witsRead = witsLock.readLock();
   private Lock witsWrite = witsLock.writeLock();
 
   // witness
-
   public List<WitnessCapsule> getWitnesses() {
     witsRead.lock();
     try {
@@ -252,7 +256,7 @@ public class Manager {
     this.numHashCache.initDB();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
-    this.pendingTrxs = new ArrayList<>();
+    this.pendingTransactions = new ArrayList<>();
     try {
       this.initGenesis();
     } catch (ContractValidateException e) {
@@ -403,7 +407,7 @@ public class Manager {
     try (
         RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
       processTransaction(trx);
-      pendingTrxs.add(trx);
+      pendingTransactions.add(trx);
 
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
@@ -452,6 +456,10 @@ public class Manager {
       e.printStackTrace();
     }
     khaosDb.pop();
+    for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
+      popedTransactions.add(trx);
+    }
+
     // todo process the trans in the poped block.
 
   }
@@ -532,9 +540,9 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException {
 
-    List<TransactionCapsule> pendingTrxsTmp = new ArrayList<>(pendingTrxs);
+    List<TransactionCapsule> pendingTrxsTmp = new ArrayList<>(pendingTransactions);
     //TODO: optimize performance here.
-    pendingTrxs.clear();
+    pendingTransactions.clear();
     dialog.reset();
 
     //todo: check block's validity
@@ -598,6 +606,23 @@ public class Manager {
             e.printStackTrace();
           }
         });
+    popedTransactions.stream()
+        .filter(trx -> transactionStore.get(trx.getTransactionId().getBytes()) == null)
+        .forEach(trx -> {
+          try {
+            pushTransactions(trx);
+          } catch (ValidateSignatureException e) {
+            e.printStackTrace();
+          } catch (ContractValidateException e) {
+            e.printStackTrace();
+          } catch (ContractExeException e) {
+            e.printStackTrace();
+          } catch (HighFreqException e) {
+            e.printStackTrace();
+          }
+        });
+
+    popedTransactions.clear();
 
     blockStore.put(block.getBlockId().getBytes(), block);
     this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
@@ -763,7 +788,7 @@ public class Manager {
     dialog.reset();
     dialog = DialogOptional.of(revokingStore.buildDialog());
 
-    Iterator iterator = pendingTrxs.iterator();
+    Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
@@ -796,7 +821,8 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    logger.info("postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTrxs.size() + "]");
+    logger.info(
+        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size() + "]");
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
@@ -909,12 +935,12 @@ public class Manager {
     AccountCapsule sun = accountStore.getSun();
 
     try {
-      adjustBalance(sun.getAddress().toByteArray(), -3);
+      adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
 
     }
     try {
-      adjustBalance(witnessCapsule.getAddress().toByteArray(), 3);
+      adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       e.printStackTrace();
     }
@@ -1112,7 +1138,7 @@ public class Manager {
       if (b.getVoteCount() != a.getVoteCount()) {
         return (int) (b.getVoteCount() - a.getVoteCount());
       } else {
-        return Long.compare(b.getAddress().hashCode(),a.getAddress().hashCode());
+        return Long.compare(b.getAddress().hashCode(), a.getAddress().hashCode());
       }
     });
   }
