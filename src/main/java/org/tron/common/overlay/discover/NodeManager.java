@@ -232,6 +232,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     switch (type) {
       case 1:
         nodeHandler.handlePing((PingMessage) m);
+        if(nodeHandler.getState().equals(State.NonActive) || nodeHandler.getState().equals(State.Dead)){
+            nodeHandler.changeState(State.Discovered);
+        }
         break;
       case 2:
         nodeHandler.handlePong((PongMessage) m);
