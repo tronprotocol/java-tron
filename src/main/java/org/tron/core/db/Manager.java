@@ -253,21 +253,7 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
 
     this.pendingTrxs = new ArrayList<>();
-    try {
-      this.initGenesis();
-    } catch (ContractValidateException e) {
-      logger.error(e.getMessage());
-      System.exit(-1);
-    } catch (ContractExeException e) {
-      logger.error(e.getMessage());
-      System.exit(-1);
-    } catch (ValidateSignatureException e) {
-      logger.error(e.getMessage());
-      System.exit(-1);
-    } catch (UnLinkedBlockException e) {
-      logger.error(e.getMessage());
-      System.exit(-1);
-    }
+    this.initGenesis();
     this.updateWits();
     this.setShuffledWitnessStates(getWitnesses());
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
@@ -285,9 +271,7 @@ public class Manager {
   /**
    * init genesis block.
    */
-  public void initGenesis()
-      throws ContractValidateException, ContractExeException,
-      ValidateSignatureException, UnLinkedBlockException {
+  public void initGenesis() {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
@@ -991,10 +975,10 @@ public class Manager {
 
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
-    logger.info("there is account List size is {}", accountList.size());
+    //logger.info("there is account List size is {}", accountList.size());
     accountList.forEach(account -> {
-      logger.info("there is account ,account address is {}",
-          account.createReadableString());
+//      logger.info("there is account ,account address is {}",
+//          account.createReadableString());
 
       Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
