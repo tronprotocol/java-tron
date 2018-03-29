@@ -55,7 +55,7 @@ public class PeerConnection extends Channel{
   }
 
   //sync chain
-  private BlockId headBlockWeBothHave;
+  private BlockId headBlockWeBothHave = new BlockId();
 
   private long headBlockTimeWeBothHave;
 
@@ -119,8 +119,7 @@ public class PeerConnection extends Channel{
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy 
-
+    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy
   }
 
   public boolean isBanned() {
