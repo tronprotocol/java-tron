@@ -24,6 +24,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.NumberMessage.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
@@ -247,5 +249,11 @@ public class Wallet {
       }
     }
     return null;
+  }
+
+  public NumberMessage totalTransaction() {
+    Builder builder = NumberMessage.newBuilder()
+        .setNum(dbManager.getTransactionStore().getTotalTransactions());
+    return builder.build();
   }
 }

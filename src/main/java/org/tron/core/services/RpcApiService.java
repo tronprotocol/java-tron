@@ -168,16 +168,17 @@ public class RpcApiService implements Service {
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
       Preconditions.checkArgument(
-              account.getShare() < votesCount,
-              "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
+          account.getShare() < votesCount,
+          "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore().get(voteAddress.toByteArray());
+        WitnessCapsule witness = app.getDbManager().getWitnessStore()
+            .get(voteAddress.toByteArray());
         Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
         Preconditions.checkArgument(
-                vote.getVoteCount() <= 0,
-                "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+            vote.getVoteCount() <= 0,
+            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
       });
     }
 
@@ -320,6 +321,13 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.totalTransaction());
       responseObserver.onCompleted();
     }
   }

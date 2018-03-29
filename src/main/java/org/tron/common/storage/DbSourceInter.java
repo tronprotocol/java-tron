@@ -39,4 +39,7 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V> {
   Set<byte[]> allKeys() throws RuntimeException;
 
   Set<byte[]> allValues() throws RuntimeException;
+
+  long getTotal() throws RuntimeException;
+
 }

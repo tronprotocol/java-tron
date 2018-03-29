@@ -25,6 +25,13 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return null != transaction;
   }
 
+  /**
+   * get total transaction.
+   */
+  public long getTotalTransactions() {
+    return dbSource.getTotal();
+  }
+
   private static TransactionStore instance;
 
 
