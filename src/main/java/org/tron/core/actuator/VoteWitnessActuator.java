@@ -33,7 +33,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       countVoteAccount(voteContract);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }

@@ -33,7 +33,7 @@ public class DisconnectMessage extends P2pMessage {
     try {
       this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     unpacked = true;
   }

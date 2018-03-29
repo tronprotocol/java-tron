@@ -19,7 +19,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TronTest {
 
   /**
@@ -41,7 +43,7 @@ public class TronTest {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
 

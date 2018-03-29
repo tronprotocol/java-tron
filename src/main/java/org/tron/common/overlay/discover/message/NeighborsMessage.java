@@ -2,6 +2,9 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Discover;
@@ -9,9 +12,7 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-import java.util.ArrayList;
-import java.util.List;
-
+@Slf4j
 public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
@@ -21,7 +22,7 @@ public class NeighborsMessage extends Message {
     try {
       this.neighbours = Discover.Neighbours.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
   }
 

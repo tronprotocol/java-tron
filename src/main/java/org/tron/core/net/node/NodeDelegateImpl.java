@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -24,7 +25,6 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.common.overlay.message.Message;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
@@ -76,11 +76,11 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
       logger.info("Contract validate failed");
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new BadTransactionException();
     } catch (ContractExeException e) {
       logger.info("Contract execute failed");
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();

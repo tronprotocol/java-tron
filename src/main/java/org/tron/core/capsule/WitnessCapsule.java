@@ -56,7 +56,7 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     try {
       this.witness = Witness.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
   }
 

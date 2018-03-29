@@ -146,13 +146,13 @@ public class Wallet {
         return true;
       }
     } catch (ValidateSignatureException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (ContractExeException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     return false;
   }

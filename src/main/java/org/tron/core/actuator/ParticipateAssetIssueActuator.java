@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -29,6 +30,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
+
+@Slf4j
 public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   ParticipateAssetIssueActuator(Any contract, Manager dbManager) {
@@ -70,7 +73,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
   }

@@ -19,9 +19,9 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -102,7 +102,7 @@ public class UtxoStore extends TronDatabase {
           }
         }
       } catch (InvalidProtocolBufferException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     }
 
@@ -121,7 +121,7 @@ public class UtxoStore extends TronDatabase {
               try {
                 return TXOutputs.parseFrom(getDbSource().getData(key));
               } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
+                logger.debug(e.getMessage(), e);
                 return null;
               }
             })
