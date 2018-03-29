@@ -129,7 +129,7 @@ public class SyncPool {
     for (NodeHandler nodeHandler: nodeManager.getActiveNodes()){
       logger.info(nodeHandler.toString());
     }
-    logger.info("-------- active channel.");
+    logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
     }
@@ -198,15 +198,18 @@ public class SyncPool {
       if (handler.getState().equals(NodeHandler.State.Discovered) ||
               handler.getState().equals(NodeHandler.State.Dead) ||
               handler.getState().equals(NodeHandler.State.NonActive)){
+        logger.info("@@@@@@@ 1111");
         return false;
       }
 
       if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) ||
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
+        logger.info("@@@@@@@ 2222");
         return false;
       }
 
       if (channelManager.isRecentlyDisconnected(handler.getInetSocketAddress().getAddress())){
+        logger.info("@@@@@@@ 3333");
           return false;
       }
 
