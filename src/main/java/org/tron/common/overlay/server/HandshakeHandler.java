@@ -81,7 +81,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     final HelloMessage helloMessage = (HelloMessage) msg;
-
+    logger.info("helloMessage.getVersion()  {}", helloMessage.getVersion());
+    logger.info("Args.getInstance().getNodeP2pVersion() {}", Args.getInstance().getNodeP2pVersion());
     if (helloMessage.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       ctx.close();
       return;
