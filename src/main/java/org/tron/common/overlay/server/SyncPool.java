@@ -202,7 +202,7 @@ public class SyncPool {
         return false;
       }
 
-      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) ||
+      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
         logger.info("@@@@@@@ 2222");
         return false;
