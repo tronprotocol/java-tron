@@ -97,7 +97,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Trx Num must be positive!");
       }
 
-      if ( participateAssetIssueContract.getOwnerAddress().equals(participateAssetIssueContract.getToAddress())){
+      if (participateAssetIssueContract.getOwnerAddress()
+          .equals(participateAssetIssueContract.getToAddress())) {
         throw new ContractValidateException("Cannot participate asset Issue yourself !");
       }
 
@@ -142,7 +143,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (exchangeAmount == 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
-      AccountCapsule toAccount = this.dbManager.getAccountStore().get(participateAssetIssueContract.getToAddress().toByteArray());
+      AccountCapsule toAccount = this.dbManager.getAccountStore()
+          .get(participateAssetIssueContract.getToAddress().toByteArray());
       if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }

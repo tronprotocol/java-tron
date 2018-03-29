@@ -59,30 +59,28 @@ public class TransferActuator extends AbstractActuator {
             "contract type error,expected type [TransferContract],real type[" + contract
                 .getClass() + "]");
       }
-
       TransferContract transferContract = this.contract.unpack(TransferContract.class);
-      AccountCapsule ownerAccount = dbManager.getAccountStore()
-          .get(transferContract.getOwnerAddress().toByteArray());
       Preconditions.checkNotNull(transferContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
+      if (transferContract.getOwnerAddress().equals(transferContract.getToAddress())) {
+        throw new ContractValidateException("Cannot transfer trx to yourself.");
+      }
+      if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+      }
+
+      AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(transferContract.getOwnerAddress().toByteArray());
 
-      long balance = accountCapsule.getBalance();
-      long laststOperationTime = accountCapsule.getLatestOperationTime();
+      long balance = ownerAccount.getBalance();
+      long laststOperationTime = ownerAccount.getLatestOperationTime();
       long now = System.currentTimeMillis();
-
+      //TODO:
       //if (now - laststOperationTime < balance) {
       //throw new ContractValidateException();
       //}
-
-      {
-        if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
-          throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
-        }
-      }
 
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferContract.getToAddress();
