@@ -86,8 +86,7 @@ public class TransferAssetActuator extends AbstractActuator {
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferAssetContract.getToAddress();
       if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
-        AccountCapsule account = new AccountCapsule(toAddress, null,
-            AccountType.Normal);
+        AccountCapsule account = new AccountCapsule(toAddress, AccountType.Normal);
         dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 
