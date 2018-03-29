@@ -229,6 +229,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
   @Override
   public long getTotal() throws RuntimeException {
+    resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       long total = 0;
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
