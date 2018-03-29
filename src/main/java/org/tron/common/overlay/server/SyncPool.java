@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.core.config.args.Args;
@@ -134,25 +135,24 @@ public class SyncPool {
       logger.info(channel.toString());
     }
 
-
-//    if (logger.isInfoEnabled()) {
-//      StringBuilder sb = new StringBuilder("Peer stats:\n");
-//      sb.append("Active peers\n");
-//      sb.append("============\n");
-//      Set<Node> activeSet = new HashSet<>();
-//      for (PeerConnection peer : new ArrayList<>(activePeers)) {
-//        sb.append(peer.logSyncStats()).append('\n');
-//        activeSet.add(peer.getNode());
-//      }
-//      sb.append("Other connected peers\n");
-//      sb.append("============\n");
-//      for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
-//        if (!activeSet.contains(peer.getNode())) {
-//          sb.append(peer.logSyncStats()).append('\n');
-//        }
-//      }
-//      logger.info(sb.toString());
-//    }
+    if (logger.isInfoEnabled()) {
+      StringBuilder sb = new StringBuilder("Peer stats:\n");
+      sb.append("Active peers\n");
+      sb.append("============\n");
+      Set<Node> activeSet = new HashSet<>();
+      for (PeerConnection peer : new ArrayList<>(activePeers)) {
+        sb.append(peer.logSyncStats()).append('\n');
+        activeSet.add(peer.getNode());
+      }
+      sb.append("Other connected peers\n");
+      sb.append("============\n");
+      for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
+        if (!activeSet.contains(peer.getNode())) {
+          sb.append(peer.logSyncStats()).append('\n');
+        }
+      }
+      logger.info(sb.toString());
+    }
   }
 
   public List<NodeHandler> getActiveNodes() {
@@ -198,18 +198,15 @@ public class SyncPool {
       if (handler.getState().equals(NodeHandler.State.Discovered) ||
               handler.getState().equals(NodeHandler.State.Dead) ||
               handler.getState().equals(NodeHandler.State.NonActive)){
-        logger.info("@@@@@@@ 1111");
         return false;
       }
 
-      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
+      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) ||
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
-        logger.info("@@@@@@@ 2222");
         return false;
       }
 
       if (channelManager.isRecentlyDisconnected(handler.getInetSocketAddress().getAddress())){
-        logger.info("@@@@@@@ 3333");
           return false;
       }
 

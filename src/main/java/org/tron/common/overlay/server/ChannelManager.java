@@ -17,23 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
-import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
-
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +25,13 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+
+import java.net.InetAddress;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
+import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
 
 @Component
@@ -153,7 +143,6 @@ public class ChannelManager {
   }
 
   public void add(Channel peer) {
-    logger.info("Add new peer: {}", peer);
     newPeers.add(peer);
   }
 
