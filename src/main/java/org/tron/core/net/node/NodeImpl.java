@@ -387,14 +387,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     //terminate inactive loop
     disconnectInactiveExecutor.scheduleWithFixedDelay(() -> {
-      disconnectInactive();
+      try {
+        disconnectInactive();
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
   }
 
   private void disconnectInactive() {
     getActivePeer().forEach(peer -> {
-
       final boolean[] isDisconnected = {false};
 
       peer.getAdvObjWeRequested().values().stream()
@@ -409,15 +412,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       //TODO:optimize here
       if (!isDisconnected[0]) {
-        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum() > NetConstants.HEAD_NUM_MAX_DELTA
+        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
+            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / BlockConstant.BLOCK_INTERVAL
             && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME) {
           isDisconnected[0] = true;
         }
       }
 
-
       if (isDisconnected[0]) {
-        disconnectPeer(peer, ReasonCode.RESET);
+        //TODO use new reason
+        disconnectPeer(peer, ReasonCode.USER_REASON);
       }
     });
   }
@@ -921,6 +925,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
+    logger.info("disconnect with " + peer.getNode().getHost());
     peer.disconnect(reason);
   }
 }
