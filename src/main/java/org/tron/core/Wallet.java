@@ -24,6 +24,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.NumberMessage.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
@@ -144,13 +146,13 @@ public class Wallet {
         return true;
       }
     } catch (ValidateSignatureException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (ContractExeException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     return false;
   }
@@ -221,10 +223,37 @@ public class Wallet {
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.size() == 0) {
+      return null;
+    }
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    dbManager.getAssetIssueStore().getAllAssetIssues().stream()
+    assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(assetIssueCapsule -> builder.addAssetIssue(assetIssueCapsule.getInstance()));
+        .forEach(issueCapsule -> {
+          builder.addAssetIssue(issueCapsule.getInstance());
+        });
+    return builder.build();
+  }
+
+  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
+    if (assetName == null || assetName.size() == 0) {
+      return null;
+    }
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
+      if (assetName.equals(assetIssueCapsule.getName())) {
+        return assetIssueCapsule.getInstance();
+      }
+    }
+    return null;
+  }
+
+  public NumberMessage totalTransaction() {
+    Builder builder = NumberMessage.newBuilder()
+        .setNum(dbManager.getTransactionStore().getTotalTransactions());
     return builder.build();
   }
 }

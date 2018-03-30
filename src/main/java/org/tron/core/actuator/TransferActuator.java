@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -15,6 +16,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class TransferActuator extends AbstractActuator {
 
 
@@ -39,11 +41,11 @@ public class TransferActuator extends AbstractActuator {
 
 
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
@@ -59,30 +61,28 @@ public class TransferActuator extends AbstractActuator {
             "contract type error,expected type [TransferContract],real type[" + contract
                 .getClass() + "]");
       }
-
       TransferContract transferContract = this.contract.unpack(TransferContract.class);
-      AccountCapsule ownerAccount = dbManager.getAccountStore()
-          .get(transferContract.getOwnerAddress().toByteArray());
       Preconditions.checkNotNull(transferContract.getOwnerAddress(), "OwnerAddress is null");
       Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
+      if (transferContract.getOwnerAddress().equals(transferContract.getToAddress())) {
+        throw new ContractValidateException("Cannot transfer trx to yourself.");
+      }
+      if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+      }
+
+      AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(transferContract.getOwnerAddress().toByteArray());
 
-      long balance = accountCapsule.getBalance();
-      long laststOperationTime = accountCapsule.getLatestOperationTime();
+      long balance = ownerAccount.getBalance();
+      long laststOperationTime = ownerAccount.getLatestOperationTime();
       long now = System.currentTimeMillis();
-
+      //TODO:
       //if (now - laststOperationTime < balance) {
       //throw new ContractValidateException();
       //}
-
-      {
-        if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
-          throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
-        }
-      }
 
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferContract.getToAddress();

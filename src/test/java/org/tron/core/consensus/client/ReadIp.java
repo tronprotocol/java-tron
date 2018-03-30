@@ -19,7 +19,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ReadIp {
 
   /**
@@ -34,7 +36,7 @@ public class ReadIp {
         laststr += tempString;
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     return laststr;
   }

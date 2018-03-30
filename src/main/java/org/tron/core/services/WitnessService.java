@@ -2,11 +2,9 @@ package org.tron.core.services;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.joda.time.DateTime;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
@@ -53,14 +51,14 @@ public class WitnessService implements Service {
    */
   private Runnable scheduleProductionLoop =
       () -> {
-        if (MapUtils.isEmpty(localWitnessStateMap)) {
+        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
           logger.error("LocalWitnesses is null");
           return;
         }
 
         while (isRunning) {
           try {
-            if (needSyncCheck) {
+            if (this.needSyncCheck) {
               Thread.sleep(500L);
             } else {
               DateTime time = DateTime.now();
@@ -68,14 +66,14 @@ public class WitnessService implements Service {
                   - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
                   % Manager.LOOP_INTERVAL;
               if (timeToNextSecond < 50L) {
-                timeToNextSecond += Manager.LOOP_INTERVAL;
+                timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
               }
               DateTime nextTime = time.plus(timeToNextSecond);
               logger.debug(
                   "ProductionLoop sleep : " + timeToNextSecond + " ms,next time:" + nextTime);
               Thread.sleep(timeToNextSecond);
             }
-            blockProductionLoop();
+            this.blockProductionLoop();
           } catch (InterruptedException ex) {
             logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
@@ -89,7 +87,7 @@ public class WitnessService implements Service {
    * Loop to generate blocks
    */
   private void blockProductionLoop() throws InterruptedException {
-    BlockProductionCondition result = tryProduceBlock();
+    BlockProductionCondition result = this.tryProduceBlock();
 
     if (result == null) {
       logger.warn("Result is null");
@@ -135,10 +133,7 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
     long now = DateTime.now().getMillis() + 50L;
-    if (needSyncCheck) {
-//      logger.info(new DateTime(db.getSlotTime(1)).toString());
-//      logger.info(now.toString());
-
+    if (this.needSyncCheck) {
       long nexSlotTime = db.getSlotTime(1);
       if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
@@ -151,10 +146,10 @@ public class WitnessService implements Service {
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
-//    if (!db.isSyncMode()) {
+//    if (db.isSyncMode()) {
 //      return BlockProductionCondition.NOT_SYNCED;
 //    }
-    final int participation = db.calculateParticipationRate();
+    final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
           "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
@@ -163,7 +158,7 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(now);
-//    logger.debug("Slot:" + slot);
+    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
@@ -174,7 +169,7 @@ public class WitnessService implements Service {
 
     final ByteString scheduledWitness = db.getScheduledWitness(slot);
 
-    if (!localWitnessStateMap.containsKey(scheduledWitness)) {
+    if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot, db.getAbSlotAtTime(now));
       logger.debug("headBlockNumber:{},headBlockId:{},headBlockTime:{}",
@@ -197,12 +192,13 @@ public class WitnessService implements Service {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info(
           "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), db.getAbSlotAtTime(now),block.getBlockId(), new DateTime(block.getTimeStamp()),
+          block.getNum(), db.getAbSlotAtTime(now), block.getBlockId(),
+          new DateTime(block.getTimeStamp()),
           db.getHead().getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
@@ -218,8 +214,10 @@ public class WitnessService implements Service {
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    return db.generateBlock(localWitnessStateMap.get(witnessAddress), when, privateKeyMap.get(witnessAddress));
+    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
+        this.privateKeyMap.get(witnessAddress));
   }
+
 
   /**
    * Initialize the local witnesses
@@ -230,20 +228,20 @@ public class WitnessService implements Service {
       byte[] privateKey = ByteArray.fromHexString(key);
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] address = ecKey.getAddress();
-      WitnessCapsule witnessCapsule = db.getWitnessStore().get(address);
+      WitnessCapsule witnessCapsule = this.db.getWitnessStore()
+          .get(address);
       // need handle init witness
       if (null == witnessCapsule) {
-        logger.warn("WitnessCapsule[" + Arrays.toString(address) + "] is not in witnessStore");
+        logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
         witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
       }
 
-      privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
-      localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
     });
 
-    db.updateWits();
-    db.setShuffledWitnessStates(db.getWitnesses());
   }
+
 
   @Override
   public void init(Args args) {

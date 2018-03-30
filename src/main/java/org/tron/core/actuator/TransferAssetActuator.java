@@ -15,6 +15,7 @@
 
 package org.tron.core.actuator;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -57,7 +58,9 @@ public class TransferAssetActuator extends AbstractActuator {
       long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerKey);
-      ownerAccountCapsule.reduceAssetAmount(assertName, amount);
+      if (!ownerAccountCapsule.reduceAssetAmount(assertName, amount)) {
+        throw new ContractExeException("reduceAssetAmount failed !");
+      }
       accountStore.put(ownerKey, ownerAccountCapsule);
 
       AccountCapsule toAccountCapsule = accountStore.get(toKey);
@@ -78,6 +81,13 @@ public class TransferAssetActuator extends AbstractActuator {
       TransferAssetContract transferAssetContract = this.contract
           .unpack(TransferAssetContract.class);
 
+      Preconditions.checkNotNull(transferAssetContract.getOwnerAddress(), "OwnerAddress is null");
+      Preconditions.checkNotNull(transferAssetContract.getToAddress(), "ToAddress is null");
+      Preconditions.checkNotNull(transferAssetContract.getAssetName(), "AssetName is null");
+      Preconditions.checkNotNull(transferAssetContract.getAmount(), "Amount is null");
+      if (transferAssetContract.getOwnerAddress().equals(transferAssetContract.getToAddress())) {
+        throw new ContractValidateException("Cannot transfer asset to yourself.");
+      }
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
       if (!this.dbManager.getAccountStore().has(ownerKey)) {
         throw new ContractValidateException();
@@ -86,8 +96,7 @@ public class TransferAssetActuator extends AbstractActuator {
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferAssetContract.getToAddress();
       if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
-        AccountCapsule account = new AccountCapsule(toAddress, null,
-            AccountType.Normal);
+        AccountCapsule account = new AccountCapsule(toAddress, AccountType.Normal);
         dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 

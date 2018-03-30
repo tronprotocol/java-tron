@@ -149,7 +149,7 @@ public class ManagerTest {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
       } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     });
 
@@ -196,7 +196,7 @@ public class ManagerTest {
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
 
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     dbManager.getWitnesses().clear();
   }

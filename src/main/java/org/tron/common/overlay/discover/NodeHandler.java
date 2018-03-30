@@ -156,7 +156,7 @@ public class NodeHandler {
     }
 
     // Manages state transfers
-    private void changeState(State newState) {
+    public void changeState(State newState) {
         State oldState = state;
         if (newState == State.Discovered) {
             sendPing();
@@ -208,7 +208,6 @@ public class NodeHandler {
 
     void handlePing(PingMessage msg) {
         logMessage(msg, true);
-//        logMessage(" ===> [PING] " + this);
         getNodeStatistics().discoverInPing.add();
         if (!nodeManager.table.getNode().equals(node)) {
             sendPong();
@@ -217,13 +216,13 @@ public class NodeHandler {
 
     void handlePong(PongMessage msg) {
         logMessage(msg, true);
-//        logMessage(" ===> [PONG] " + this);
         if (waitForPong) {
             waitForPong = false;
             getNodeStatistics().discoverInPong.add();
             getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
             getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
             changeState(State.Alive);
+            node.setId(msg.getNodeId());
         }
     }
 
@@ -282,7 +281,7 @@ public class NodeHandler {
     }
 
     void sendPong() {
-        Message pong = new PongMessage(node);
+        Message pong = new PongMessage(nodeManager.getPublicHomeNode());
         logMessage(pong, false);
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();

@@ -18,12 +18,14 @@ import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -226,16 +228,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   @Override
-  public void connectToP2PNetWork() {
-
-    pool.init(channelManager, this);
+  public List<NodeHandler> getActiveNodes() {
+    return this.pool.getActiveNodes();
   }
-
 
   private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {
-      logger.info("loop advertise inv");
+      //logger.info("loop advertise inv");
       for (PeerConnection peer : getActivePeer()) {
         if (!peer.isNeedSyncFromUs()) {
           logger.info("Advertise adverInv to " + peer);
@@ -254,7 +254,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     // sync block chain
     loopSyncBlockChain = new ExecutorLoop<>(2, 10, d -> {
-      logger.info("loop sync block chain");
+      //logger.info("loop sync block chain");
       if (syncMap.containsKey(d.getMessageId())) {
         syncMap.get(d.getMessageId()).sendMessage(d);
       }
@@ -267,7 +267,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -285,7 +285,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                         !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
                             && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
                     .forEach(idToSpread -> {
-                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), System.currentTimeMillis());
+                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                       sendPackage.add(idToSpread, peer);
                     });
                 peer.cleanInvGarbage();
@@ -303,7 +303,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -319,7 +319,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       sendPackage.add(idToFetch, peer);
                       advObjToFetch.remove(idToFetch.getKey());
                       peer.getAdvObjWeRequested()
-                          .put(idToFetch.getKey(), System.currentTimeMillis());
+                          .put(idToFetch.getKey(), Time.getCurrentMillis());
                     });
               });
           sendPackage.sendFetch();
@@ -334,7 +334,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -382,7 +382,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    logger.info("on handle advertise inventory message");
+    //logger.info("on handle advertise inventory message");
     peer.cleanInvGarbage();
 
     msg.getHashList().forEach(id -> {
@@ -420,7 +420,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         Thread.sleep(10000L);
       }
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     logger.info("wait end");
@@ -430,13 +430,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    logger.info("on handle block message");
+    //logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
     HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
-    logger.info("Block number is " + blkMsg.getBlockId().getNum());
+    //logger.info("Block number is " + blkMsg.getBlockId().getNum());
 
     if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
@@ -503,7 +503,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
     } catch (TronException e) {
       //should not go here.
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       //logger.error(e.getMessage());
       return;
     }
@@ -513,20 +513,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     getActivePeer()
         .forEach(peer -> {
-          if (peer.getSyncBlockToFetch().isEmpty() //TODO: need process here
+          if (peer.getSyncBlockToFetch().isEmpty()
+              && peer.getBlockInProc().isEmpty()
               && !peer.isNeedSyncFromPeer()
               && !peer.isNeedSyncFromUs()) {
             needSync.offer(peer);
           } else {
             //TODO: erase process here
-            peer.getBlockInProc().remove(block.getBlockId());
-            //updateBlockWeBothHave(peer, block.getBlockId());
-            peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
-            peer.setHeadBlockWeBothHave(block.getBlockId());
-            if (peer.getSyncBlockToFetch().isEmpty()
-                && peer.getUnfetchSyncNum() == 0) { //send sync to let peer know we are sync.
-              needFetchAgain.offer(peer);
+            if (peer.getBlockInProc().remove(block.getBlockId())) {
+              updateBlockWeBothHave(peer, block);
+              if (peer.getSyncBlockToFetch().isEmpty()
+                  && peer.getUnfetchSyncNum() == 0
+                  && peer.getBlockInProc().isEmpty()) { //send sync to let peer know we are sync.
+                needFetchAgain.offer(peer);
+              }
             }
+
           }
         });
 
@@ -535,7 +537,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    logger.info("on handle transaction message");
+    //logger.info("on handle transaction message");
     try {
       if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
         throw new TraitorPeerException("We don't send fetch request to" + peer);
@@ -551,7 +553,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    logger.info("on handle sync block chain message");
+    //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -560,7 +562,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       blockIds = del.getLostBlockIds(summaryChainIds);
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       return;
     }
 
@@ -574,7 +576,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setNeedSyncFromUs(true);
       remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
-
 
     if (!peer.isNeedSyncFromPeer()
         && !summaryChainIds.isEmpty()
@@ -616,7 +617,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    logger.info("on handle block chain inventory message");
+    //logger.info("on handle block chain inventory message");
     try {
       if (peer.getSyncChainRequested() != null) {
         //List<BlockId> blockIds = msg.getBlockIds();
@@ -700,7 +701,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+            updateBlockWeBothHave(peer, ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK)).getBlockCapsule());
           }
           //poll the block we both have.
           blockIdWeGet.pop();
@@ -749,7 +750,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private long getUnSyncNum() {
-    if (getActivePeer().isEmpty()) return 0;
+    if (getActivePeer().isEmpty()) {
+      return 0;
+    }
     return getActivePeer().stream()
         .mapToLong(peer -> peer.getUnfetchSyncNum() + peer.getSyncBlockToFetch().size())
         .max()
@@ -795,9 +798,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     send.clear();
   }
 
-  private void updateBlockWeBothHave(PeerConnection peer, BlockId id) {
-    peer.setHeadBlockWeBothHave(id);
-    peer.setHeadBlockTimeWeBothHave(del.getBlockTime(id));
+  private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
+    peer.setHeadBlockWeBothHave(block.getBlockId());
+    peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
@@ -844,7 +847,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new Pair<>((LinkedList<BlockId>) chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       onDisconnectPeer(peer);
     }
 

@@ -106,7 +106,7 @@ public class ParticipateAssetIssueActuatorTest {
 
   private void initAssetIssue(long startTimestmp, long endTimestmp) {
     AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
         .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
         .setTotalSupply(TOTAL_SUPPLY)
         .setTrxNum(TRX_NUM)

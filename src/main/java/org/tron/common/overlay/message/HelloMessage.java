@@ -25,7 +25,7 @@ public class HelloMessage extends P2pMessage {
     try {
       this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
     unPack();
   }
@@ -55,7 +55,7 @@ public class HelloMessage extends P2pMessage {
     try {
       this.helloMessage = Protocol.HelloMessage.parseFrom(this.data);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
   }
 
@@ -67,8 +67,8 @@ public class HelloMessage extends P2pMessage {
   /**
    * Get the version of p2p protocol.
    */
-  public byte getVersion() {
-    return (byte) this.helloMessage.getVersion();
+  public int getVersion() {
+    return this.helloMessage.getVersion();
   }
 
   /**

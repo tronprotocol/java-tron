@@ -6,17 +6,22 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -35,6 +40,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class RpcApiService implements Service {
+
   private int port = 50051;
   private Server apiServer;
   private Application app;
@@ -61,7 +67,7 @@ public class RpcApiService implements Service {
           .build()
           .start();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     logger.info("Server started, listening on " + port);
@@ -162,16 +168,17 @@ public class RpcApiService implements Service {
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
       Preconditions.checkArgument(
-              account.getShare() < votesCount,
-              "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
+          account.getShare() < votesCount,
+          "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore().get(voteAddress.toByteArray());
+        WitnessCapsule witness = app.getDbManager().getWitnessStore()
+            .get(voteAddress.toByteArray());
         Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
         Preconditions.checkArgument(
-                vote.getVoteCount() <= 0,
-                "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+            vote.getVoteCount() <= 0,
+            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
       });
     }
 
@@ -242,8 +249,18 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      // TODO: this.app.getP2pNode().getActiveNodes();
-      super.listNodes(request, responseObserver);
+      List<NodeHandler> handlerList = this.app.getP2pNode().getActiveNodes();
+
+      NodeList.Builder nodeListBuilder = NodeList.newBuilder();
+      for (NodeHandler handler : handlerList) {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+            Address.newBuilder()
+                .setHost(ByteString.copyFrom(ByteArray.fromString(handler.getNode().getHost())))
+                .setPort(handler.getNode().getPort())));
+      }
+
+      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -293,6 +310,26 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getAssetIssueByName(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      ByteString asertName = request.getValue();
+
+      if (asertName != null) {
+        responseObserver.onNext(wallet.getAssetIssueByName(asertName));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.totalTransaction());
+      responseObserver.onCompleted();
+    }
   }
 
   @Override
@@ -308,7 +345,7 @@ public class RpcApiService implements Service {
       try {
         apiServer.awaitTermination();
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     }
   }

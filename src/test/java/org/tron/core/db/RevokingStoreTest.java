@@ -51,7 +51,7 @@ public class RevokingStoreTest {
         tmpDialog.merge();
         Assert.assertEquals(revokingDatabase.getStack().size(), 1);
       } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     });
 
@@ -81,14 +81,14 @@ public class RevokingStoreTest {
         Assert.assertEquals(revokingDatabase.getStack().size(), i);
         Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
       } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     });
 
     try {
       revokingDatabase.pop();
     } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());

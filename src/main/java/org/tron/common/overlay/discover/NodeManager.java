@@ -20,6 +20,7 @@ package org.tron.common.overlay.discover;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.message.*;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
@@ -93,9 +94,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
 
-    for (Node node : args.getNodeActive()) {
-        getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
+
   }
 
   public ScheduledExecutorService getPongTimer() {
@@ -131,7 +130,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
+
+      for (Node node : args.getNodeActive()) {
+        getNodeHandler(node).getNodeStatistics().setPredefined(true);
+      }
     }
+  }
+
+  public boolean isNodeAlive(NodeHandler nodeHandler){
+    return  nodeHandler.state.equals(State.Alive) ||
+            nodeHandler.state.equals(State.Active) ||
+            nodeHandler.state.equals(State.EvictCandidate);
   }
 
   private void dbRead() {
@@ -144,7 +153,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
-        if (nodeHandler.state != NodeHandler.State.Dead){
+        if (isNodeAlive(nodeHandler)) {
           batch.add(nodeHandler.getNode());
         }
       }
@@ -176,7 +185,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       nodeHandlerMap.put(key, ret);
       logger.info("Add new node: {}, size={}", ret, nodeHandlerMap.size());
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      logger.info("change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
+      logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
     return ret;
@@ -184,13 +193,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   private void trimTable() {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
-
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
       sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
 
       for (NodeHandler handler : sorted) {
-        logger.info("trimTable delete node, {}", handler.getNode());
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
@@ -229,12 +236,13 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
     NodeHandler nodeHandler = getNodeHandler(n);
 
-    logger.trace("===> ({}) {} [{}] {}", sender, m.getClass().getSimpleName(), nodeHandler, m);
-
     byte type = m.getType();
     switch (type) {
       case 1:
         nodeHandler.handlePing((PingMessage) m);
+        if(nodeHandler.getState().equals(State.NonActive) || nodeHandler.getState().equals(State.Dead)){
+            nodeHandler.changeState(State.Discovered);
+        }
         break;
       case 2:
         nodeHandler.handlePong((PongMessage) m);
@@ -267,13 +275,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return ret;
   }
 
-  public List<NodeHandler> getNodes(
-      Predicate<NodeHandler> predicate,
-      int limit) {
+  public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate,  int limit) {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
-        logger.info(handler.toString());
         if (predicate.test(handler)) {
           filtered.add(handler);
         }
@@ -283,6 +288,18 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
+  }
+
+  public List<NodeHandler> getActiveNodes() {
+    List<NodeHandler> handlers = new ArrayList<>();
+    for (NodeHandler handler :
+        this.nodeHandlerMap.values()) {
+      if (handler.state == State.Alive || handler.state == State.Active || handler.state == State.EvictCandidate) {
+        handlers.add(handler);
+      }
+    }
+
+    return handlers;
   }
 
   private synchronized void processListeners() {
@@ -320,16 +337,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public Node getPublicHomeNode() {
     return homeNode;
-  }
-
-  public boolean isTheSameNode(Node src, Node des){
-    if (src.getHexId().equals(des.getHexId())){
-      return  true;
-    }
-    if (src.getHost().equals(homeNode.getHost()) && des.getPort() == homeNode.getPort()){
-      return  true;
-    }
-    return  false;
   }
 
   public void close() {
