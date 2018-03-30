@@ -27,6 +27,16 @@ public class PeerConnection extends Channel{
     return super.hashCode();
   }
 
+  public long getConnectTime() {
+    return connectTime;
+  }
+
+  public void setConnectTime(long connectTime) {
+    this.connectTime = connectTime;
+  }
+
+  private long connectTime;
+
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
@@ -189,6 +199,7 @@ public class PeerConnection extends Channel{
 //    long lifeTime = System.currentTimeMillis() - connectedTime;
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
+            + "connect time: %s\n"
             + "last know block num: %s\n "
             + "needSyncFromPeer:%b\n "
             + "needSyncFromUs:%b\n"
@@ -200,6 +211,7 @@ public class PeerConnection extends Channel{
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
         (int)this.getPeerStats().getAvgLatency(),
+        Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
