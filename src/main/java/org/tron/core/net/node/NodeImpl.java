@@ -407,6 +407,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             .findFirst().ifPresent(time -> isDisconnected[0] = true);
       }
 
+      //TODO:optimize here
+      if (!isDisconnected[0]) {
+        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum() > NetConstants.HEAD_NUM_MAX_DELTA
+            && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME) {
+          isDisconnected[0] = true;
+        }
+      }
+
+
       if (isDisconnected[0]) {
         disconnectPeer(peer, ReasonCode.RESET);
       }
@@ -912,7 +921,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
-    logger.info("!!!!!!! disconnect!!!!!!");
     peer.disconnect(reason);
   }
 }
