@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 
 @Slf4j
@@ -194,6 +195,7 @@ public class PeerConnection extends Channel{
             + "syncToFetchSize:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
+            + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
@@ -204,6 +206,7 @@ public class PeerConnection extends Channel{
         syncBlockToFetch.size(),
         syncBlockRequested.size(),
         unfetchSyncNum,
+        syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
         blockInProc.size());
   }
 

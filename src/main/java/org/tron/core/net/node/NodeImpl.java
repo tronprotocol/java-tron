@@ -25,7 +25,6 @@ import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
-import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
@@ -61,9 +60,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
   private SyncPool pool;
-
-  @Autowired
-  private ChannelManager channelManager;
 
   class InvToSend {
 
@@ -233,6 +229,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advertiseLoopThread.join();
     advObjFetchLoopThread.join();
     handleSyncBlockLoop.join();
+    disconnectInactiveExecutor.shutdown();
   }
 
   @Override
@@ -405,14 +402,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .findFirst().ifPresent(time -> isDisconnected[0] = true);
 
       if (!isDisconnected[0]) {
-        //getSyncBlockIdWeRequested
         peer.getSyncBlockRequested().values().stream()
             .filter(time -> time < Time.getCurrentMillis() - NetConstants.SYNC_TIME_OUT)
             .findFirst().ifPresent(time -> isDisconnected[0] = true);
       }
 
       if (isDisconnected[0]) {
-        onDisconnectPeer(peer);
+        disconnectPeer(peer, ReasonCode.RESET);
       }
     });
   }
@@ -651,7 +647,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void banTraitorPeer(PeerConnection peer) {
-    onDisconnectPeer(peer);
+    disconnectPeer(peer, ReasonCode.BAD_PROTOCOL); //TODO: ban it
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
@@ -870,8 +866,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
     peer.setUnfetchSyncNum(0);
-    peer.setSync
-    peer.setHeadBlockWeBothHave(new BlockId());
+    peer.setHeadBlockWeBothHave(del.getGenesisBlock().getBlockId());
     peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimeStamp());
     peer.setBanned(false);
     syncNextBatchChainIds(peer);
@@ -887,7 +882,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
       logger.debug(e.getMessage(), e);
-      onDisconnectPeer(peer);
+      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
     }
 
   }
@@ -912,9 +907,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
-    peer.disconnect(ReasonCode.RESET);
+    //peer.disconnect(reason);
+  }
 
-
+  private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
+    logger.info("!!!!!!! disconnect!!!!!!");
+    peer.disconnect(reason);
   }
 }
 
