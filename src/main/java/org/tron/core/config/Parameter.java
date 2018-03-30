@@ -21,5 +21,15 @@ public interface Parameter {
 
   }
 
+  interface BlockConstant {
+    long BLOCK_INTERVAL = 5000L;
+  }
+
+  interface NetConstants {
+    long ADV_TIME_OUT = 1000L;
+    long SYNC_TIME_OUT = 5000L;
+  }
+
+
 
 }

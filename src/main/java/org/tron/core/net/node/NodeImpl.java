@@ -13,7 +13,10 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
@@ -111,6 +115,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private volatile boolean isFetchActive;
 
   private volatile boolean isHandleSyncBlockActive;
+
+  private ScheduledExecutorService disconnectInactiveExecutor = Executors.newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -379,6 +385,27 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advertiseLoopThread.start();
     advObjFetchLoopThread.start();
     handleSyncBlockLoop.start();
+
+    //terminate inactive loop
+    disconnectInactiveExecutor.scheduleWithFixedDelay(() -> {
+      disconnectInactive();
+    }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
+
+  }
+
+  private void disconnectInactive() {
+    getActivePeer().forEach(peer -> {
+
+//      peer.getAdvObjWeRequested().values().stream()
+//          .filter(time -> time < Time.getCurrentMillis() - )
+
+
+
+    });
+
+
+
+
   }
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
