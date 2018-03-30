@@ -14,6 +14,7 @@ import org.tron.core.services.WitnessService;
 
 @Slf4j
 public class FullNode {
+
   /**
    * Start the FullNode.
    */
@@ -27,10 +28,10 @@ public class FullNode {
       logger.info("Here is the help message.");
       return;
     }
-    logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
+
     Application appT = ApplicationFactory.create(context);
-    //appT.init(cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT);
+
     appT.addService(rpcApiService);
     if (cfgArgs.isWitness()) {
       appT.addService(new WitnessService(appT));
@@ -38,7 +39,6 @@ public class FullNode {
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
-
 
     rpcApiService.blockUntilShutdown();
   }
