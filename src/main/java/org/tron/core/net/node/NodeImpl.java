@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -32,6 +33,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
@@ -396,17 +398,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void disconnectInactive() {
     getActivePeer().forEach(peer -> {
 
-//      peer.getAdvObjWeRequested().values().stream()
-//          .filter(time -> time < Time.getCurrentMillis() - )
+      final boolean[] isDisconnected = {false};
 
+      peer.getAdvObjWeRequested().values().stream()
+          .filter(time -> time < Time.getCurrentMillis() - NetConstants.ADV_TIME_OUT)
+          .findFirst().ifPresent(time -> isDisconnected[0] = true);
 
+      if (!isDisconnected[0]) {
+        //getSyncBlockIdWeRequested
+        peer.getSyncBlockRequested().values().stream()
+            .filter(time -> time < Time.getCurrentMillis() - NetConstants.SYNC_TIME_OUT)
+            .findFirst().ifPresent(time -> isDisconnected[0] = true);
+      }
 
+      if (isDisconnected[0]) {
+        onDisconnectPeer(peer);
+      }
     });
-
-
-
-
   }
+
+
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     //logger.info("on handle advertise inventory message");
@@ -859,7 +870,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
     peer.setUnfetchSyncNum(0);
-    peer.setHeadBlockWeBothHave(del.getGenesisBlock().getBlockId());
+    peer.setSync
+    peer.setHeadBlockWeBothHave(new BlockId());
     peer.setHeadBlockTimeWeBothHave(del.getGenesisBlock().getTimeStamp());
     peer.setBanned(false);
     syncNextBatchChainIds(peer);
@@ -900,7 +912,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
-    //mapPeer.remove(peer.getAddress());
+    peer.disconnect(ReasonCode.RESET);
+
+
   }
 }
 
