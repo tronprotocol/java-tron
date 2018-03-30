@@ -39,10 +39,9 @@ public class AccountStoreTest {
     AccountStoreTest.put(data, accountCapsule);
   }
 
-
   @Test
   public void get() {
-    //test get Method
+    //test get and has Method
     Assert
         .assertEquals(ByteArray.toHexString(address), ByteArray
             .toHexString(AccountStoreTest.get(data).getInstance().getAddress().toByteArray()))
