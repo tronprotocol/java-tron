@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -12,6 +13,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+@Slf4j
 public class CreateAccountActuator extends AbstractActuator {
 
 
@@ -33,7 +35,7 @@ public class CreateAccountActuator extends AbstractActuator {
       return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
   }

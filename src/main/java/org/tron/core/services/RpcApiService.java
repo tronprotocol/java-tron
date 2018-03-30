@@ -7,7 +7,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
@@ -38,9 +38,9 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
+@Slf4j
 public class RpcApiService implements Service {
 
-  private static final Logger logger = Logger.getLogger(RpcApiService.class.getName());
   private int port = 50051;
   private Server apiServer;
   private Application app;
@@ -67,7 +67,7 @@ public class RpcApiService implements Service {
           .build()
           .start();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     logger.info("Server started, listening on " + port);
@@ -168,16 +168,17 @@ public class RpcApiService implements Service {
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
       Preconditions.checkArgument(
-              account.getShare() < votesCount,
-              "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
+          account.getShare() < votesCount,
+          "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore().get(voteAddress.toByteArray());
+        WitnessCapsule witness = app.getDbManager().getWitnessStore()
+            .get(voteAddress.toByteArray());
         Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
         Preconditions.checkArgument(
-                vote.getVoteCount() <= 0,
-                "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+            vote.getVoteCount() <= 0,
+            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
       });
     }
 
@@ -322,6 +323,13 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.totalTransaction());
+      responseObserver.onCompleted();
+    }
   }
 
   @Override
@@ -337,7 +345,7 @@ public class RpcApiService implements Service {
       try {
         apiServer.awaitTermination();
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        logger.debug(e.getMessage(), e);
       }
     }
   }

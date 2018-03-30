@@ -2,6 +2,18 @@ package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +29,25 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.*;
-import org.tron.core.net.message.*;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.TraitorPeerException;
+import org.tron.core.exception.TronException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.net.message.BlockInventoryMessage;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.ChainInventoryMessage;
+import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
+import org.tron.core.net.message.ItemNotFound;
+import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Component
@@ -246,7 +267,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -282,7 +303,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -313,7 +334,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             Thread.sleep(1000);
             continue;
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           }
         }
 
@@ -399,7 +420,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         Thread.sleep(10000L);
       }
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     logger.info("wait end");
@@ -482,7 +503,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
     } catch (TronException e) {
       //should not go here.
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       //logger.error(e.getMessage());
       return;
     }
@@ -541,7 +562,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       blockIds = del.getLostBlockIds(summaryChainIds);
     } catch (UnReachBlockException e) {
       //TODO: disconnect this peer casue this peer can not switch
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       return;
     }
 
@@ -826,7 +847,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new Pair<>((LinkedList<BlockId>) chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       onDisconnectPeer(peer);
     }
 

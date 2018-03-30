@@ -24,14 +24,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import java.net.BindException;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.args.Args;
-
-import java.net.BindException;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class UDPListener {
@@ -64,7 +63,7 @@ public class UDPListener {
           try {
             UDPListener.this.start();
           } catch (Exception e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);
           }
         }, "UDPListener").start();

@@ -58,7 +58,7 @@ public class SyncPool {
 
   private Args args = Args.getInstance();
 
-  private int maxActiveNodes = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 3000;
+  private int maxActiveNodes = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -129,6 +129,16 @@ public class SyncPool {
   }
 
   synchronized void logActivePeers() {
+    logger.info("-------- active node.");
+
+    for (NodeHandler nodeHandler: nodeManager.getActiveNodes()){
+      logger.info(nodeHandler.toString());
+    }
+    logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
+    for (Channel channel: channelManager.getActivePeers()){
+      logger.info(channel.toString());
+    }
+
     if (logger.isInfoEnabled()) {
       StringBuilder sb = new StringBuilder("Peer stats:\n");
       sb.append("Active peers\n");
@@ -195,7 +205,7 @@ public class SyncPool {
         return false;
       }
 
-      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) ||
+      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
         return false;
       }

@@ -19,7 +19,9 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -29,6 +31,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
+
+@Slf4j
 public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   ParticipateAssetIssueActuator(Any contract, Manager dbManager) {
@@ -54,13 +58,16 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       AssetIssueCapsule assetIssueCapsule =
           this.dbManager.getAssetIssueStore()
               .get(participateAssetIssueContract.getAssetName().toByteArray());
-      long exchangeAmount = cost / assetIssueCapsule.getTrxNum() * assetIssueCapsule.getNum();
+      long exchangeAmount = cost * assetIssueCapsule.getNum() / assetIssueCapsule.getTrxNum();
       ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
       //add to to_address
       byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
       toAccount.setBalance(toAccount.getBalance() + cost);
-      toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
+      if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
+        throw new ContractExeException("reduceAssetAmount failed !");
+      }
+
       //write to db
       dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
       dbManager.getAccountStore().put(toAddressBytes, toAccount);
@@ -70,7 +77,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
   }
@@ -93,6 +100,11 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Trx Num must be positive!");
       }
 
+      if (participateAssetIssueContract.getOwnerAddress()
+          .equals(participateAssetIssueContract.getToAddress())) {
+        throw new ContractValidateException("Cannot participate asset Issue yourself !");
+      }
+
       byte[] addressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       //Whether the account exist
       if (!this.dbManager.getAccountStore().has(addressBytes)) {
@@ -103,20 +115,26 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       long fee = calcFee();
       //Whether the balance is enough
       if (ac.getBalance() < participateAssetIssueContract.getAmount() + fee) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("No enough balance !");
       }
 
       //Whether have the mapping
       if (!this.dbManager.getAssetIssueStore()
           .has(participateAssetIssueContract.getAssetName().toByteArray())) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("No asset named " + ByteArray
+            .toStr(participateAssetIssueContract.getAssetName().toByteArray()));
       }
-
-      //Whether the exchange can be processed: to see if the exchange can be the exact int
-      long cost = participateAssetIssueContract.getAmount();
       AssetIssueCapsule assetIssueCapsule =
           this.dbManager.getAssetIssueStore()
               .get(participateAssetIssueContract.getAssetName().toByteArray());
+      if (!participateAssetIssueContract.getToAddress()
+          .equals(assetIssueCapsule.getOwnerAddress())) {
+        throw new ContractValidateException("The asset is not issued by " + ByteArray
+            .toHexString(participateAssetIssueContract.getToAddress().toByteArray()));
+      }
+      //Whether the exchange can be processed: to see if the exchange can be the exact int
+      long cost = participateAssetIssueContract.getAmount();
+
       DateTime now = DateTime.now();
       if (now.getMillis() >= assetIssueCapsule.getEndTime() || now.getMillis() < assetIssueCapsule
           .getStartTime()) {
@@ -124,12 +142,16 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
-      long exchangeAmount = cost / trxNum * num;
-      float preciseExchangeAmount = (float) cost / (float) trxNum * (float) num;
-      if (preciseExchangeAmount - exchangeAmount >= 0.000001f
-          || preciseExchangeAmount - exchangeAmount <= -0.000001f) {
+      long exchangeAmount = cost * num / trxNum;
+      if (exchangeAmount == 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
+      AccountCapsule toAccount = this.dbManager.getAccountStore()
+          .get(participateAssetIssueContract.getToAddress().toByteArray());
+      if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
+        throw new ContractValidateException("Asset balance is not enough !");
+      }
+
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException();
     }

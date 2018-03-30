@@ -176,6 +176,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
+   * asset balance enough
+   */
+  public boolean assetBalanceEnough(ByteString name, long amount) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(name.toByteArray());
+    Long currentAmount = assetMap.get(nameKey);
+
+    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+      return true;
+    }
+    return false;
+  }
+
+
+  /**
    * reduce asset amount.
    */
   public boolean reduceAssetAmount(ByteString name, long amount) {

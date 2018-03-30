@@ -200,7 +200,7 @@ public class WitnessService implements Service {
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
