@@ -59,6 +59,10 @@ public class MessageRoundtrip {
         lastTimestamp = System.currentTimeMillis();
     }
 
+    public long getTime() {
+        return lastTimestamp;
+    }
+
     public boolean hasToRetry() {
         return 20000 < System.currentTimeMillis() - lastTimestamp;
     }
