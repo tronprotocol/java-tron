@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,13 +52,5 @@ public class AccountStoreTest {
             .toHexString(AccountStoreTest.get(data).getInstance().getAccountName().toByteArray()))
     ;
     Assert.assertTrue(AccountStoreTest.has(data));
-  }
-  
-
-  public static byte[] randomBytes(int length) {
-    //generate the random number
-    byte[] result = new byte[length];
-    new Random().nextBytes(result);
-    return result;
   }
 }
