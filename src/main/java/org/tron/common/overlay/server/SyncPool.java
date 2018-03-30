@@ -199,9 +199,7 @@ public class SyncPool {
 
       //TODO: use reputation sysytem
 
-      if (handler.getState().equals(NodeHandler.State.Discovered) ||
-              handler.getState().equals(NodeHandler.State.Dead) ||
-              handler.getState().equals(NodeHandler.State.NonActive)){
+      if (!nodeManager.isNodeAlive(handler)){
         return false;
       }
 
