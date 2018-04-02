@@ -102,9 +102,10 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (blockChainSummary.isEmpty() ||
         (blockChainSummary.size() == 1
-        && blockChainSummary.get(0).equals(dbManager.getHeadBlockId()))) {
+        && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
-    } else if (blockChainSummary.size() == 1) {
+    } else if (blockChainSummary.size() == 1
+        && blockChainSummary.get(0).getNum() == 0) {
      return new LinkedList<BlockId>(){{
         add(dbManager.getGenesisBlockId());
       }};
