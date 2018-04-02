@@ -26,7 +26,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -34,23 +33,19 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.utils.TxInputUtil;
-import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocol.TXInput;
-import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
+
   private Transaction transaction;
 
   /**
@@ -72,6 +67,20 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public TransactionCapsule(String key, long value) {
+
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(value)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .build();
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
+            Any.pack(transferContract)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+  /* public TransactionCapsule(String key, long value) {
     TXInput.raw rawData = TXInput.raw.newBuilder()
         .setTxID(ByteString.copyFrom(new byte[]{}))
         .setVout(-1).build();
@@ -89,13 +98,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .addVin(txi)
         .addVout(txo);
     this.transaction = Transaction.newBuilder().setRawData(rawCoinbaseTransaction.build()).build();
-
-  }
+  } */
 
   /**
    * constructor TransactionCapsule.
    */
-  public TransactionCapsule(
+  /*public TransactionCapsule(
       byte[] address,
       String to,
       long amount,
@@ -129,8 +137,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       logger.error("Transaction create failed！");
       transaction = null;
     }
-  }
-
+  }*/
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
     AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {

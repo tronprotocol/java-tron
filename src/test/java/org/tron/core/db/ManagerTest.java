@@ -15,7 +15,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
@@ -26,6 +25,7 @@ import org.tron.core.exception.ValidateSignatureException;
 
 @Slf4j
 public class ManagerTest {
+
   private static Manager dbManager = new Manager();
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
@@ -85,7 +85,7 @@ public class ManagerTest {
         .fromHexString(blockCapsule2.getBlockId().toString()))));
   }
 
-  @Test
+  /*@Test
   public void testPushTransactions() {
     TransactionCapsule transactionCapsule = new TransactionCapsule(
         "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519", 123);
@@ -96,7 +96,7 @@ public class ManagerTest {
     }
     Assert.assertEquals("pushTransaction is error", 123,
         transactionCapsule.getInstance().getRawData().getVout(0).getValue());
-  }
+  }*/
 
   //  @Test
   public void updateWits() {
@@ -156,14 +156,14 @@ public class ManagerTest {
     try {
       long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
       BlockCapsule blockCapsule1 = new BlockCapsule(num,
-              dbManager.getHead().getParentHash().getByteString(),
-              System.currentTimeMillis(),
-              witnessCapsule.getAddress());
+          dbManager.getHead().getParentHash().getByteString(),
+          System.currentTimeMillis(),
+          witnessCapsule.getAddress());
       blockCapsule1.generatedByMyself = true;
       BlockCapsule blockCapsule2 = new BlockCapsule(num + 1,
-              blockCapsule1.getBlockId().getByteString(),
-              System.currentTimeMillis(),
-              witnessCapsule.getAddress());
+          blockCapsule1.getBlockId().getByteString(),
+          System.currentTimeMillis(),
+          witnessCapsule.getAddress());
       blockCapsule2.generatedByMyself = true;
 
       logger.error("******1*******" + "block1 id:" + blockCapsule1.getBlockId());

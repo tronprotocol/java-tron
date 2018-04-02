@@ -16,13 +16,13 @@
 package org.tron.core.capsule.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.crypto.ECKey;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class TransactionUtil {
+
   public static Transaction newGenesisTransaction(String key, long value) {
     return new TransactionCapsule(key, value).getInstance();
   }
@@ -33,13 +33,12 @@ public class TransactionUtil {
    * @param transaction {@link Transaction} transaction.
    * @return boolean true for coinbase, false for not coinbase.
    */
-  public static boolean isCoinbaseTransaction(Transaction transaction) {
+  /*public static boolean isCoinbaseTransaction(Transaction transaction) {
     Transaction.raw rawData = transaction.getRawData();
     return rawData.getVinList().size() == 1
         && rawData.getVin(0).getRawData().getTxID().size() == 0
         && rawData.getVin(0).getRawData().getVout() == -1;
-  }
-
+  }*/
   private static boolean checkTxOutUnSpent(TXOutput prevOut) {
     return true;//todo :check prevOut is unspent
   }
@@ -54,9 +53,9 @@ public class TransactionUtil {
   /**
    * Get sender.
    */
-  public static byte[] getSender(Transaction tx) {
+ /* public static byte[] getSender(Transaction tx) {
     byte[] pubKey = tx.getRawData().getVin(0).getRawData().getPubKey().toByteArray();
     return ECKey.computeAddress(pubKey);
-  }
+  } */
 
 }
