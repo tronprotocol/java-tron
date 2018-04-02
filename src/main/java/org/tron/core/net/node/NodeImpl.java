@@ -31,7 +31,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -748,8 +747,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
-              + "\n Peer give us is " + blockIdWeGet.peek()));
+              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
+              + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
         }

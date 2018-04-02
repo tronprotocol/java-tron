@@ -49,9 +49,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
     }
 
+    public String getString() {
+      return "Num: " + num + ",ID:" + super.toString();
+    }
+
     @Override
     public String toString() {
-      return "Num: " + num + ",ID:" + super.toString();
+      return super.toString();
     }
 
     @Override
