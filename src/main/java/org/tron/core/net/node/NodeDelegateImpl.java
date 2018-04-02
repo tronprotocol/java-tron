@@ -100,8 +100,14 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     BlockId unForkedBlockId = null;
 
-    if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
+    if (blockChainSummary.isEmpty() ||
+        (blockChainSummary.size() == 1
+        && blockChainSummary.get(0).equals(dbManager.getHeadBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
+    } else if (blockChainSummary.size() == 1) {
+     return new LinkedList<BlockId>(){{
+        add(dbManager.getGenesisBlockId());
+      }};
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
@@ -117,7 +123,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
-        .filter(num -> num > 0)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))
         .collect(Collectors.toCollection(LinkedList::new));
   }

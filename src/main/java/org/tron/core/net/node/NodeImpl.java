@@ -663,7 +663,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setNeedSyncFromUs(false);
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
-        && summaryChainIds.contains(blockIds.peekFirst())) {
+        && (summaryChainIds.contains(blockIds.peekFirst())
+           || blockIds.peek().getNum() == 0)) {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
