@@ -13,8 +13,8 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
@@ -102,7 +102,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //public
   //TODO:need auto erase oldest block
-  private Queue<BlockId> freshBlockId = new LinkedBlockingQueue<>();
+
+  private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
+    @Override
+    public boolean offer(BlockId blockId) {
+      if (size() > 200) {
+        super.poll();
+      }
+      return super.offer(blockId);
+    }
+  };
 
   private ConcurrentHashMap<Sha256Hash, PeerConnection> syncMap = new ConcurrentHashMap<>();
 
@@ -629,6 +638,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         del.handleTransaction(trxMsg.getTransactionCapsule());
       }
     } catch (TraitorPeerException e) {
+      logger.error(e.getMessage());
       banTraitorPeer(peer);
     } catch (BadTransactionException e) {
       badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
@@ -722,7 +732,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           } else {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
-              throw new TraitorPeerException("We get a unlinked block chain from " + peer);
+              throw new TraitorPeerException(String.format(
+                  "We get a unlinked block chain from " + peer
+              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+              + "\n Peer give us is " + blockIdWeGet.peek()));
             }
           }
         }
@@ -819,6 +832,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
     } catch (TraitorPeerException e) {
+      logger.error(e.getMessage());
       banTraitorPeer(peer);
     }
   }
