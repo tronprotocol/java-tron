@@ -3,9 +3,13 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +20,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NetConstants;
 
 @Slf4j
 @Component
@@ -42,13 +47,13 @@ public class PeerConnection extends Channel{
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
-  private HashMap<Sha256Hash, Long> advObjSpreadToUs = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjSpreadToUs = new ConcurrentHashMap<>();
 
-  private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
+  public Map<Sha256Hash, Long> getAdvObjSpreadToUs() {
     return advObjSpreadToUs;
   }
 
@@ -57,7 +62,7 @@ public class PeerConnection extends Channel{
     this.advObjSpreadToUs = advObjSpreadToUs;
   }
 
-  public HashMap<Sha256Hash, Long> getAdvObjWeSpread() {
+  public Map<Sha256Hash, Long> getAdvObjWeSpread() {
     return advObjWeSpread;
   }
 
@@ -130,7 +135,26 @@ public class PeerConnection extends Channel{
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy
+    long oldestTimestamp = Time.getCurrentMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
+
+    Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+
+    iterator = this.advObjWeSpread.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+  }
+
+  private void removeIterator(Iterator<Entry<Sha256Hash, Long>> iterator, long oldestTimestamp) {
+    while (iterator.hasNext()) {
+      Map.Entry entry = iterator.next();
+      Long ts = (Long) entry.getValue();
+
+      if (ts < oldestTimestamp) {
+        iterator.remove();
+      }
+    }
   }
 
   public boolean isBanned() {
