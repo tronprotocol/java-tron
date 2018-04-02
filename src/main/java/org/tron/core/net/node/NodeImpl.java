@@ -31,6 +31,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -127,6 +128,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ScheduledExecutorService disconnectInactiveExecutor = Executors
       .newSingleThreadScheduledExecutor();
+
+  private ScheduledExecutorService cleanInventoryExecutor = Executors.newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -242,6 +245,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advObjFetchLoopThread.join();
     handleSyncBlockLoop.join();
     disconnectInactiveExecutor.shutdown();
+    cleanInventoryExecutor.shutdown();
   }
 
   @Override
@@ -305,7 +309,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                       sendPackage.add(idToSpread, peer);
                     });
-                peer.cleanInvGarbage();
+//                peer.cleanInvGarbage();
               });
 
           sendPackage.sendInv();
@@ -406,6 +410,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
+
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logNodeStatus();
@@ -413,6 +418,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Exception in log worker", t);
       }
     }, 10, 10, TimeUnit.SECONDS);
+
+    cleanInventoryExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        getActivePeer().forEach(p -> p.cleanInvGarbage());
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
+    }, 2, NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES / 2, TimeUnit.MINUTES);
   }
 
   private synchronized void logNodeStatus() {
@@ -475,7 +488,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     //logger.info("on handle advertise inventory message");
-    peer.cleanInvGarbage();
+//    peer.cleanInvGarbage();
 
     msg.getHashList().forEach(id -> {
       final boolean[] spreaded = {false};
@@ -572,7 +585,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               p.setHeadBlockTimeWeBothHave(block.getTimeStamp());
             });
 
-        getActivePeer().forEach(p -> p.cleanInvGarbage());
+//        getActivePeer().forEach(p -> p.cleanInvGarbage());
         //rebroadcast
         broadcast(new BlockMessage(block));
 
@@ -898,7 +911,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
     logger.info("on handle advertise blocks inventory message");
-    peer.cleanInvGarbage();
+//    peer.cleanInvGarbage();
 
     //todo: check this peer's advertise history and the history of our request to this peer.
     //simple implement here first
