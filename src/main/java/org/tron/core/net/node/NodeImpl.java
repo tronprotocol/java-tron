@@ -396,7 +396,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   }
 
-  private void disconnectInactive() {
+  private synchronized void disconnectInactive() {
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
 
@@ -414,7 +414,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (!isDisconnected[0]) {
         if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
             > 2 * NetConstants.HEAD_NUM_CHECK_TIME / BlockConstant.BLOCK_INTERVAL
-            && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME) {
+            && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME
+            && peer.getSyncBlockRequested().isEmpty()) {
           isDisconnected[0] = true;
         }
       }
