@@ -21,6 +21,7 @@ package org.tron.core.config;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.typesafe.config.ConfigFactory;
+import java.io.File;
 
 public class Configuration {
 
@@ -38,7 +39,7 @@ public class Configuration {
     }
 
     if (config == null) {
-      config = ConfigFactory.load(configurationPath);
+      config = ConfigFactory.parseFile(new File(configurationPath));
     }
 
     return config;

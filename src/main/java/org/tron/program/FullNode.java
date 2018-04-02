@@ -18,6 +18,7 @@ public class FullNode {
    * Start the FullNode.
    */
   public static void main(String[] args) throws InterruptedException {
+
     Args.setParam(args, Constant.NORMAL_CONF);
     Args cfgArgs = Args.getInstance();
 
@@ -27,7 +28,6 @@ public class FullNode {
       logger.info("Here is the help message.");
       return;
     }
-    logger.info("Here is the help message." + cfgArgs.getOutputDirectory());
     Application appT = ApplicationFactory.create(context);
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT);
