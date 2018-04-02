@@ -1,5 +1,6 @@
 package org.tron.core.net2.peer;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.net2.message.TMessage;
@@ -8,9 +9,8 @@ import org.tron.core.net2.message.TMessageType;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Slf4j(topic = "core.net2")
 public class PeerDiscover {
-
-    private static final Logger logger = LoggerFactory.getLogger("PeerDiscover");
 
     public void start(){
         new Timer().schedule(

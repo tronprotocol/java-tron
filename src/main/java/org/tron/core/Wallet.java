@@ -59,7 +59,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "core")
 public class Wallet {
 
   private BlockStore db;

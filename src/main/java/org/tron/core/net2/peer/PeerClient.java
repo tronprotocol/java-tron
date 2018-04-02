@@ -1,5 +1,6 @@
 package org.tron.core.net2.peer;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.net2.message.TMessage;
@@ -10,9 +11,8 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Slf4j(topic = "core.net2")
 public class PeerClient {
-
-    private static final Logger logger = LoggerFactory.getLogger("PeerClient");
 
     private static PeerClient peerClient;
 

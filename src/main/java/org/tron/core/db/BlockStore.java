@@ -22,7 +22,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
 

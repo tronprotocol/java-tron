@@ -13,7 +13,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "core.actuator")
 public class CreateAccountActuator extends AbstractActuator {
 
 

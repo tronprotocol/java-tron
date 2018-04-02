@@ -12,7 +12,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
-@Slf4j
+@Slf4j(topic = "program")
 public class FullNode {
   /**
    * Start the FullNode.

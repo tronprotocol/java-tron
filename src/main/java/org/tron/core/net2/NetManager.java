@@ -1,5 +1,6 @@
 package org.tron.core.net2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +18,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j(topic = "core.net2")
 public class NetManager {
-
-    private static final Logger logger = LoggerFactory.getLogger("NetManager");
 
     private static TMessageHandle msgHandle = TMessageHandle.getInstance();
 

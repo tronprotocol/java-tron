@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 
-@Slf4j
+@Slf4j(topic = "core.config")
 @NoArgsConstructor
 @Component
 public class Args {

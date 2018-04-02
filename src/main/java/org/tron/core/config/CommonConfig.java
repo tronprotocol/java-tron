@@ -27,8 +27,5 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @ComponentScan(basePackages = "org.tron")
 public class CommonConfig {
-
-    private static final Logger logger = LoggerFactory.getLogger("general");
-
     private static CommonConfig defaultInstance;
 }

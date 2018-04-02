@@ -18,7 +18,6 @@
 
 package org.tron.common.utils;
 
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,7 +26,6 @@ import java.util.Set;
 
 import com.google.common.collect.Maps;
 import org.tron.core.db.ByteArrayWrapper;
-
 
 public class ByteArrayMap<V> implements Map<byte[], V> {
 

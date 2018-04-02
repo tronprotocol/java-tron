@@ -38,7 +38,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "core.services")
 public class RpcApiService implements Service {
 
   private int port = 50051;

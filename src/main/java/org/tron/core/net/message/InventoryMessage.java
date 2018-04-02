@@ -3,11 +3,12 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-
+@Slf4j(topic = "core.net")
 public class InventoryMessage extends TronMessage {
 
   protected Inventory inv;

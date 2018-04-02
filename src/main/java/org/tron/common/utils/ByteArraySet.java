@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.Set;
 import org.tron.core.db.ByteArrayWrapper;
 
-
 public class ByteArraySet implements Set<byte[]> {
 
   private Set<ByteArrayWrapper> delegate;

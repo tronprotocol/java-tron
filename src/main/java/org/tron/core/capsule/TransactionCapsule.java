@@ -49,7 +49,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
-@Slf4j
+@Slf4j(topic = "core.capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
 

@@ -31,7 +31,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be
  * used as keys in a map. It also checks that the length is correct and provides a bit more type

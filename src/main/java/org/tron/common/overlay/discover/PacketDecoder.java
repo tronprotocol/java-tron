@@ -21,13 +21,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.message.Message;
 
 import java.util.List;
 
+@Slf4j(topic = "common.overlay")
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
 
     @Override
     public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {

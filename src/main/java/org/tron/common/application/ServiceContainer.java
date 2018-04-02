@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "common.application")
 public class ServiceContainer {
   private ArrayList<Service> services;
 

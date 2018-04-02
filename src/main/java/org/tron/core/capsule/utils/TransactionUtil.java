@@ -21,7 +21,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "core.capsule")
 public class TransactionUtil {
   public static Transaction newGenesisTransaction(String key, long value) {
     return new TransactionCapsule(key, value).getInstance();

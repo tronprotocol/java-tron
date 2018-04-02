@@ -1,9 +1,11 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol;
 
+@Slf4j(topic = "common.overlay")
 public class DisconnectMessage extends P2pMessage {
 
   private Protocol.DisconnectMessage disconnectMessage;

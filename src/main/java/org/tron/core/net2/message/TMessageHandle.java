@@ -1,6 +1,7 @@
 package org.tron.core.net2.message;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,10 +12,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j(topic = "core.net2")
 public class TMessageHandle {
-
-    private static final Logger logger = LoggerFactory.getLogger("TMessageHandle");
-
 
     private ArrayList<Method> methods = Lists.newArrayList();
 

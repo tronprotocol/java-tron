@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
-@Slf4j
+@Slf4j(topic = "common.utils")
 public class TypeConversion {
 
   public static byte[] longToBytes(long x) {

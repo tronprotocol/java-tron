@@ -2,6 +2,7 @@ package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
@@ -10,6 +11,7 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
 
+@Slf4j(topic = "common.overlay")
 public class HelloMessage extends P2pMessage {
 
   Protocol.HelloMessage helloMessage;

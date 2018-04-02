@@ -25,6 +25,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -34,10 +35,9 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.node.NodeImpl;
 
+@Slf4j(topic = "common.overlay")
 @Component
 public class PeerServer {
-
-    private static final Logger logger = LoggerFactory.getLogger("PeerServer");
 
     private Args args = Args.getInstance();
 

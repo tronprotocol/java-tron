@@ -9,7 +9,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ValidateSignatureException;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class PendingManager implements AutoCloseable {
 
   List<TransactionCapsule> tmpTransactions = new ArrayList<>();

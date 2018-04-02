@@ -19,6 +19,7 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -44,11 +45,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Roman Mandeleil
  */
+@Slf4j(topic = "common.overlay")
 @Component
 @Scope("prototype")
 public class MessageQueue {
-
-  private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
     private AtomicInteger cnt = new AtomicInteger(0);

@@ -28,7 +28,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
-@Slf4j
+@Slf4j(topic = "core.net")
 public class NodeDelegateImpl implements NodeDelegate {
 
   private Manager dbManager;

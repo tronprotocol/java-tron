@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 
-@Slf4j
+@Slf4j(topic = "common.utils")
 public class ByteArray {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 

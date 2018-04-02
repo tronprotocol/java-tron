@@ -60,7 +60,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 @Component
 public class Manager {
 

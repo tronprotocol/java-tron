@@ -9,7 +9,7 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 
-@Slf4j
+@Slf4j(topic = "common.overlay")
 public class PingMessage extends Message {
 
   private Discover.PingMessage pingMessage;

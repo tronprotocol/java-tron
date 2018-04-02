@@ -19,6 +19,7 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -35,11 +36,10 @@ import java.util.concurrent.TimeUnit;
 import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
 import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
+@Slf4j(topic = "common.overlay")
 @Component
 @Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
-
-  private final static Logger logger = LoggerFactory.getLogger("P2pHandler");
 
   private static ScheduledExecutorService pingTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));

@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.DatagramPacket;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -37,9 +38,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by Anton Nashatyrev on 27.02.2017.
  */
+@Slf4j(topic = "common.overlay")
 @Component
 public class WireTrafficStats  implements Runnable  {
-    private final static Logger logger = LoggerFactory.getLogger("WireTrafficStats");
 
     private ScheduledExecutorService executor;
     public final TrafficStatHandler tcp = new TrafficStatHandler();

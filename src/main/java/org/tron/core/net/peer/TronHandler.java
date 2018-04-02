@@ -19,6 +19,7 @@ package org.tron.core.net.peer;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -34,11 +35,10 @@ import org.tron.protos.Protocol.Block;
  * delegating version specific stuff to its descendants
  *
  */
+@Slf4j(topic = "core.net")
 @Component
 @Scope("prototype")
 public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
-
-  private final static Logger logger = LoggerFactory.getLogger("TronHandler");
 
   protected PeerConnection peer;
 

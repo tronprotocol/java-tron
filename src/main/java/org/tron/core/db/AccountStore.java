@@ -8,7 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static final String ACCOUNT_SUN_ADDRESS

@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.TransactionCapsule;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   private TransactionStore(String dbName) {

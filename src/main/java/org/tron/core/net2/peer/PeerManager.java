@@ -1,5 +1,6 @@
 package org.tron.core.net2.peer;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,9 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j(topic = "core.net2")
 public class PeerManager {
-
-    private static final Logger logger = LoggerFactory.getLogger("PeerManager");
 
     private static short activeNum;
 
