@@ -134,9 +134,6 @@ public class WitnessService implements Service {
 
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
-//      logger.info(new DateTime(db.getSlotTime(1)).toString());
-//      logger.info(now.toString());
-
       long nexSlotTime = db.getSlotTime(1);
       if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
@@ -149,9 +146,9 @@ public class WitnessService implements Service {
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
-//    if (!db.isSyncMode()) {
-//      return BlockProductionCondition.NOT_SYNCED;
-//    }
+    if (db.isSyncMode()) {
+      return BlockProductionCondition.NOT_SYNCED;
+    }
     final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
@@ -161,7 +158,7 @@ public class WitnessService implements Service {
     }
 
     long slot = db.getSlotAtTime(now);
-//    logger.debug("Slot:" + slot);
+    logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
@@ -195,7 +192,8 @@ public class WitnessService implements Service {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info(
           "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), db.getAbSlotAtTime(now),block.getBlockId(), new DateTime(block.getTimeStamp()),
+          block.getNum(), db.getAbSlotAtTime(now), block.getBlockId(),
+          new DateTime(block.getTimeStamp()),
           db.getHead().getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;

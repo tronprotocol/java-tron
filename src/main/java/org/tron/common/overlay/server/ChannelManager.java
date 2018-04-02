@@ -51,7 +51,7 @@ public class ChannelManager {
 
   private Args args = Args.getInstance();
 
-  private int maxActivePeers = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 3000;;
+  private int maxActivePeers = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
 
   private PeerServer peerServer;
 
