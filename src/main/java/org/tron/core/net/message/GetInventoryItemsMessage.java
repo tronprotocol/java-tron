@@ -1,8 +1,9 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j(topic = "core.net")
 public class GetInventoryItemsMessage extends TronMessage {
 
   private org.tron.protos.TronInventoryItems.InventoryItems items;

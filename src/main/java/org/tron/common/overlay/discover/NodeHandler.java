@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.*;
@@ -29,8 +30,8 @@ import java.util.concurrent.TimeUnit;
  * The instance of this class responsible for discovery messages exchange with the specified Node
  * It also manages itself regarding inclusion/eviction from Kademlia table
  */
+@Slf4j(topic = "common.overlay")
 public class NodeHandler {
-    static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeHandler");
 
     static long PingTimeout = 15000; //KademliaOptions.REQ_TIMEOUT;
     static final int WARN_PACKET_SIZE = 1400;

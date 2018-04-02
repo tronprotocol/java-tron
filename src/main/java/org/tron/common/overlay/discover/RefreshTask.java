@@ -18,11 +18,12 @@
 package org.tron.common.overlay.discover;
 import java.util.ArrayList;
 import java.util.Random;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Slf4j(topic = "common.overlay")
 public class RefreshTask extends DiscoverTask {
-    private static final Logger logger = LoggerFactory.getLogger("discover");
 
     public RefreshTask(NodeManager nodeManager) {
         super(nodeManager);

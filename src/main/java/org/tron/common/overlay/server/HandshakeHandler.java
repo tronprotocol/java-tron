@@ -20,6 +20,7 @@ package org.tron.common.overlay.server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -34,11 +35,10 @@ import org.tron.core.config.args.Args;
 import java.net.InetSocketAddress;
 import java.util.List;
 
+@Slf4j(topic = "common.overlay")
 @Component
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
-
-  private static final Logger logger = LoggerFactory.getLogger("HandshakeHandler");
 
   private byte[] remoteId;
 

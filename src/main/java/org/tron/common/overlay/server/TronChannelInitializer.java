@@ -22,6 +22,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,10 @@ import org.tron.core.net.peer.PeerConnection;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
+@Slf4j(topic = "common.overlay")
 @Component
 @Scope("prototype")
 public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel> {
-
-    private static final Logger logger = LoggerFactory.getLogger("TronChannelInitializer");
 
     @Autowired
     private ApplicationContext ctx;

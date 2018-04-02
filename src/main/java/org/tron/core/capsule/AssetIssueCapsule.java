@@ -20,7 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Contract.AssetIssueContract;
 
-@Slf4j
+@Slf4j(topic = "core.capsule")
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   private AssetIssueContract assetIssueContract;

@@ -12,7 +12,7 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-@Slf4j
+@Slf4j(topic = "common.overlay")
 public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;

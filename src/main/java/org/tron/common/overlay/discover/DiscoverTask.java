@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.table.KademliaOptions;
@@ -25,8 +26,8 @@ import org.tron.common.overlay.discover.table.NodeEntry;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j(topic = "common.overlay")
 public class DiscoverTask implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger("DiscoverTask");
 
     NodeManager nodeManager;
 

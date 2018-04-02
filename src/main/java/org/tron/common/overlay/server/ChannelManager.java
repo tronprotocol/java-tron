@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.server;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +34,9 @@ import java.util.concurrent.*;
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
-
+@Slf4j(topic = "common.overlay")
 @Component
 public class ChannelManager {
-
-  private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
   private static final int inboundConnectionBanTimeout = 10 * 1000;
 

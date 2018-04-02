@@ -17,7 +17,7 @@ import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 @Getter // only for unit test
 public abstract class AbstractRevokingStore implements RevokingDatabase {
 

@@ -22,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import java.io.IOException;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +39,10 @@ import org.tron.core.net.message.TronMessageFactory;
 /**
  * The Netty codec which encodes/decodes RPLx frames to subprotocol Messages
  */
+@Slf4j(topic = "common.overlay")
 @Component
 @Scope("prototype")
 public class MessageCodec extends ByteToMessageDecoder {
-
-  private static final Logger loggerNet = LoggerFactory.getLogger("net");
 
   private Channel channel;
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
@@ -64,14 +64,14 @@ public class MessageCodec extends ByteToMessageDecoder {
     try {
       msg = createMessage(code, payload);
     } catch (Exception ex) {
-      loggerNet.info("Incorrectly encoded message from: \t{}, dropping peer", channel);
-      loggerNet.info(ex.getMessage());
+      logger.info("Incorrectly encoded message from: \t{}, dropping peer", channel);
+      logger.info(ex.getMessage());
       channel.disconnect(ReasonCode.BAD_PROTOCOL);
       return null;
     }
 
-    if (loggerNet.isDebugEnabled()) {
-      loggerNet.debug("From: {}    Recv:  {}", channel, msg.toString());
+    if (logger.isDebugEnabled()) {
+      logger.debug("From: {}    Recv:  {}", channel, msg.toString());
     }
 
     //TODO: let peer know.

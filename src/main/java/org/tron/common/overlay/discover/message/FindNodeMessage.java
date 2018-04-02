@@ -9,7 +9,7 @@ import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.FindNeighbours;
 
-@Slf4j
+@Slf4j(topic = "common.overlay")
 public class FindNodeMessage extends Message {
 
   private Discover.FindNeighbours findNeighbours;

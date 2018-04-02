@@ -1,5 +1,6 @@
 package org.tron.core.net2.nio;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.net2.message.TMessage;
@@ -15,9 +16,8 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 
+@Slf4j(topic = "core.net2")
 public class EventHandle {
-
-    private static final Logger logger = LoggerFactory.getLogger("EventHandle");
 
     private static EventHandle eventHandle;
 

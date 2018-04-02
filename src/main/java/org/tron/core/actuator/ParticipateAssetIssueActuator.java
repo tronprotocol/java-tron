@@ -31,8 +31,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
-
-@Slf4j
+@Slf4j(topic = "core.actuator")
 public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   ParticipateAssetIssueActuator(Any contract, Manager dbManager) {

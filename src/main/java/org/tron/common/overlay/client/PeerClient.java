@@ -24,6 +24,7 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +44,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @see <a href="http://netty.io">http://netty.io</a>
  */
+@Slf4j(topic = "common.overlay")
 @Component
 public class PeerClient {
-
-    private static final Logger logger = LoggerFactory.getLogger("net");
 
     @Autowired
     private ApplicationContext ctx;

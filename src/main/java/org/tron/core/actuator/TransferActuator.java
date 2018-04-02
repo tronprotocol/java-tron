@@ -16,7 +16,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "core.actuator")
 public class TransferActuator extends AbstractActuator {
 
 

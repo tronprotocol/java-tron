@@ -3,10 +3,11 @@ package org.tron.core.net.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Items;
 
-
+@Slf4j(topic = "core.net")
 public class BlockHeadersMessage extends TronMessage {
 
   private List<BlockHeader> blockHeaders = new ArrayList<>();

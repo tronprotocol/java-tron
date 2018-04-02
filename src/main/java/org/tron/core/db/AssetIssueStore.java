@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.AssetIssueCapsule;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   private static AssetIssueStore instance;

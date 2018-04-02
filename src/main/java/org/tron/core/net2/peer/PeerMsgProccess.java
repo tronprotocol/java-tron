@@ -1,6 +1,7 @@
 package org.tron.core.net2.peer;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.core.net2.message.TMessage;
@@ -10,9 +11,8 @@ import org.tron.core.net2.nio.Address;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 
+@Slf4j(topic = "core.net2")
 public class PeerMsgProccess {
-
-    private static final Logger logger = LoggerFactory.getLogger("PeerMsgProccess");
 
     public static void processMsg(TMessage msg){
         switch (msg.getMsgType()) {

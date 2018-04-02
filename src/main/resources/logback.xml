@@ -50,44 +50,27 @@
     <appender-ref ref="ASYNC"/>
   </root>
 
-  <logger name="Config" level="INFO"/>
-  <logger name="Transaction" level="INFO"/>
-  <logger name="Wallet" level="INFO"/>
-  <logger name="DB" level="INFO"/>
-  <logger name="Command" level="INFO"/>
-  <logger name="UTXOSet" level="INFO"/>
-  <logger name="UTXOStore" level="INFO"/>
-  <logger name="TransactionMessageHandler" level="INFO"/>
-  <logger name="BlockMessageHandler" level="INFO"/>
-  <logger name="BlockStores" level="INFO"/>
-  <logger name="Blockchain" level="INFO"/>
-  <logger name="BlockLoader" level="INFO"/>
-  <logger name="ConsensusCommand" level="INFO"/>
-  <logger name="Application" level="INFO"/>
-  <logger name="Services" level="INFO"/>
-  <logger name="GossipManager" level="INFO"/>
-  <logger name="GossipCore" level="INFO"/>
-  <logger name="UdpTransportManager" level="INFO"/>
-  <logger name="AbstractActiveGossiper" level="INFO"/>
-  <logger name="UserDataPersister" level="INFO"/>
-  <logger name="GossipLocalNode" level="INFO"/>
-  <logger name="ApplicationImpl" level="INFO"/>
-  <logger name="DynamicPropertiesStore" level="INFO"/>
-  <logger name="FullNode" level="INFO"/>
-  <logger name="PeerConnection" level="INFO"/>
-  <logger name="TransactionUtil" level="INFO"/>
-  <logger name="TransactionVoteActuator" level="INFO"/>
-  <logger name="WitnessStore" level="INFO"/>
-  <logger name="AssetIssueStore" level="INFO"/>
-  <logger name="ActuatorFactory" level="INFO"/>
-  <logger name="ByteArray" level="INFO"/>
-  <logger name="Args" level="INFO"/>
-  <logger name="WitnessCteateActuator" level="INFO"/>
-  <logger name="AssetIssueActuator" level="INFO"/>
-  <logger name="AccountCapsule" level="INFO"/>
-  <logger name="AssetIssueCapsule" level="INFO"/>
-  <logger name="Manager" level="INFO"/>
-  <logger name="Net" level="INFO"/>
+  <logger name="program" level="INFO"/>
+
+  <logger name="core" level="INFO"/>
+  <logger name="core.actuator" level="INFO"/>
+  <logger name="core.capsule" level="INFO"/>
+  <logger name="core.config" level="INFO"/>
+  <logger name="core.db" level="INFO"/>
+  <logger name="core.events" level="INFO"/>
+  <logger name="core.exception" level="INFO"/>
+  <logger name="core.facade" level="INFO"/>
+  <logger name="core.net" level="INFO"/>
+  <logger name="core.net2" level="INFO"/>
+  <logger name="core.services" level="INFO"/>
+  <logger name="core.witness" level="INFO"/>
+
+  <logger name="common" level="INFO"/>
+  <logger name="common.application" level="INFO"/>
+  <logger name="common.crypto" level="INFO"/>
+  <logger name="common.overlay" level="INFO"/>
+  <logger name="common.storage" level="INFO"/>
+  <logger name="common.utils" level="INFO"/>
 
 </configuration>
 

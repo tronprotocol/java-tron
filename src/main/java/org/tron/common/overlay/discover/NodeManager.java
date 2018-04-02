@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,10 +36,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+@Slf4j(topic = "common.overlay")
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
-
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private Args args = Args.getInstance();
 

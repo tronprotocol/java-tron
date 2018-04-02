@@ -54,7 +54,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "core.net")
 @Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 

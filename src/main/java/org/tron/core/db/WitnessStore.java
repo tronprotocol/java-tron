@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.WitnessCapsule;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   protected WitnessStore(String dbName) {

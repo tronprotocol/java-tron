@@ -6,7 +6,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
 
   private RevokingDatabase revokingDatabase;

@@ -31,7 +31,7 @@ import org.tron.core.SpendableOutputs;
 import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.TXOutputs;
 
-@Slf4j
+@Slf4j(topic = "core.db")
 public class UtxoStore extends TronDatabase {
   private UtxoStore(String dbName) {
     super(dbName);

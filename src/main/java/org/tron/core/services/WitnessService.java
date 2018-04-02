@@ -22,7 +22,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 
-@Slf4j
+@Slf4j(topic = "core.services")
 public class WitnessService implements Service {
 
   private static final int MIN_PARTICIPATION_RATE = 0; // MIN_PARTICIPATION_RATE * 1%

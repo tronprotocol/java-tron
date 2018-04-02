@@ -27,7 +27,7 @@ import java.security.Security;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.jce.TronCastleProvider;
 
-@Slf4j
+@Slf4j(topic = "common.crypto")
 public class Hash {
   private static final Provider CRYPTO_PROVIDER;
 

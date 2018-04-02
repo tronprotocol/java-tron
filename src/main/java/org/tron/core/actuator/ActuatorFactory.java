@@ -10,7 +10,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.TransactionType;
 
-@Slf4j
+@Slf4j(topic = "core.actuator")
 public class ActuatorFactory {
   public static final ActuatorFactory INSTANCE = new ActuatorFactory();
 

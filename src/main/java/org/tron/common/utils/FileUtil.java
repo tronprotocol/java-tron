@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Slf4j(topic = "common.utils")
 public class FileUtil {
 
   public static List<String> recursiveList(String path) throws IOException {

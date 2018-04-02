@@ -17,7 +17,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 
-@Slf4j
+@Slf4j(topic = "core.net")
 @Component
 @Scope("prototype")
 public class PeerConnection extends Channel{

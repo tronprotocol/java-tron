@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover.table;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.Node;
 
@@ -25,11 +26,8 @@ import java.util.*;
 /**
  * Created by kest on 5/25/15.
  */
+@Slf4j(topic = "common.overlay")
 public class NodeTable {
-
-    static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeTable");
-
-
 
     private final Node node;  // our node
     private transient NodeBucket[] buckets;

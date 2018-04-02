@@ -1,5 +1,6 @@
 package org.tron.core.net2.nio;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,9 +9,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j(topic = "core.net2")
 public class NioManager {
-
-    private static final Logger logger = LoggerFactory.getLogger("NioManager");
 
     private static CopyOnWriteArrayList<InetSocketAddress> blacklist = new CopyOnWriteArrayList<>();
 

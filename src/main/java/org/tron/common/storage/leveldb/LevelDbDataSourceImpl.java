@@ -39,7 +39,7 @@ import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "common.storage")
 @NoArgsConstructor
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
