@@ -721,14 +721,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                   "We want a block inv starting from beginning from " + peer);
             }
           } else {
-            boolean isFound = false;
-            for (BlockId id :
-                blockIdWeGet) {
-              if (id.equals(blockIdWeGet.peek())) {
-                isFound = true;
-              }
-            }
-            if (!isFound) {
+            if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException("We get a unlinked block chain from " + peer);
             }
           }
@@ -927,12 +920,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       Deque<BlockId> chainSummary =
           del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
-              ((LinkedList<BlockId>) peer.getSyncBlockToFetch()));
+              peer.getSyncBlockToFetch());
       peer.setSyncChainRequested(
-          new Pair<>((LinkedList<BlockId>) chainSummary, System.currentTimeMillis()));
+          new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (Exception e) { //TODO: use tron excpetion here
-      logger.debug(e.getMessage(), e);
+      logger.info(e.getMessage(), e);
       disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
     }
 

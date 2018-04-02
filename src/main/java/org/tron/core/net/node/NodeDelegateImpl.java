@@ -123,7 +123,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     long highBlkNum;
@@ -160,7 +160,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
-        retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
+        retSummary.offer(blockIds.poll());
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);

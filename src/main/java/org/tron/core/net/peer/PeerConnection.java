@@ -3,9 +3,9 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -70,18 +70,18 @@ public class PeerConnection extends Channel{
 
   private long headBlockTimeWeBothHave;
 
-  private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
+  private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
   private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
 
-  private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
+  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
+  public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
+      Pair<Deque<BlockId>, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
   }
 
