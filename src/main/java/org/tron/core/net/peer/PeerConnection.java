@@ -3,7 +3,10 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,6 +19,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NetConstants;
 
 @Slf4j
 @Component
@@ -130,7 +134,26 @@ public class PeerConnection extends Channel{
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy
+    long oldestTimestamp = System.currentTimeMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
+
+    Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+
+    iterator = this.advObjWeSpread.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+  }
+
+  private void removeIterator(Iterator<Entry<Sha256Hash, Long>> iterator, long oldestTimestamp) {
+    while (iterator.hasNext()) {
+      Map.Entry entry = iterator.next();
+      Long ts = (Long) entry.getValue();
+
+      if (ts < oldestTimestamp) {
+        iterator.remove();
+      }
+    }
   }
 
   public boolean isBanned() {
