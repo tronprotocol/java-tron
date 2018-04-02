@@ -98,6 +98,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private final List<BlockId> blockToAdvertise = new ArrayList<>();
 
+  private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
+
   //public
   //TODO:need auto erase oldest block
   private Queue<BlockId> freshBlockId = new LinkedBlockingQueue<>();
@@ -114,7 +116,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isHandleSyncBlockActive;
 
-  private ScheduledExecutorService disconnectInactiveExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService disconnectInactiveExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -394,6 +397,39 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
+    logExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        logNodeStatus();
+      } catch (Throwable t) {
+        logger.error("Exception in log worker", t);
+      }
+    }, 10, 10, TimeUnit.SECONDS);
+  }
+
+  private synchronized void logNodeStatus() {
+    StringBuilder sb = new StringBuilder("LocalNode stats:\n");
+    sb.append("============\n");
+
+    sb.append(String.format(
+              "MyHeadBlockNum: %d\n"
+            + "advToSpreadNum: %d\n"
+            + "advObjectToFetchNum: %d\n"
+            + "advObjWeRequestedNum: %d\n"
+            + "unSyncNum: %d\n"
+            + "blockWaitToProcess: %d\n"
+            + "syncBlockIdWeRequested: %d\n"
+            + "badAdvObjSize: %d\n",
+        del.getHeadBlockId().getNum(),
+        advObjToSpread.size(),
+        advObjToFetch.size(),
+        advObjWeRequested.size(),
+        getUnSyncNum(),
+        blockWaitToProc.size(),
+        syncBlockIdWeRequested.size(),
+        badAdvObj.size()
+    ));
+
+    logger.info(sb.toString());
   }
 
   private synchronized void disconnectInactive() {
@@ -426,7 +462,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     });
   }
-
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
@@ -749,7 +784,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer, ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK)).getBlockCapsule());
+            updateBlockWeBothHave(peer,
+                ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK))
+                    .getBlockCapsule());
           }
           //poll the block we both have.
           blockIdWeGet.pop();

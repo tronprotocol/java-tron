@@ -204,6 +204,7 @@ public class PeerConnection extends Channel{
             + "needSyncFromPeer:%b\n "
             + "needSyncFromUs:%b\n"
             + "syncToFetchSize:%d\n"
+            + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
             + "syncChainRequested:%s\n"
@@ -216,6 +217,7 @@ public class PeerConnection extends Channel{
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
+        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         unfetchSyncNum,
         syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
