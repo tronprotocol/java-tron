@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 
 @Slf4j
@@ -25,6 +26,16 @@ public class PeerConnection extends Channel{
   public int hashCode() {
     return super.hashCode();
   }
+
+  public long getConnectTime() {
+    return connectTime;
+  }
+
+  public void setConnectTime(long connectTime) {
+    this.connectTime = connectTime;
+  }
+
+  private long connectTime;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -188,22 +199,26 @@ public class PeerConnection extends Channel{
 //    long lifeTime = System.currentTimeMillis() - connectedTime;
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
+            + "connect time: %s\n"
             + "last know block num: %s\n "
             + "needSyncFromPeer:%b\n "
             + "needSyncFromUs:%b\n"
             + "syncToFetchSize:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
+            + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
         (int)this.getPeerStats().getAvgLatency(),
+        Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
         syncBlockRequested.size(),
         unfetchSyncNum,
+        syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
         blockInProc.size());
   }
 
