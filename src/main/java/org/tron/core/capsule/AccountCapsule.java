@@ -24,6 +24,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
@@ -64,7 +65,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
-   * get account from contract.
+   * construct account from AccountCreateContract.
    */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
@@ -73,6 +74,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setAddress(contract.getOwnerAddress())
         .setTypeValue(contract.getTypeValue())
         .build();
+  }
+
+  /**
+   * construct account from AccountUpdateContract
+   */
+  public AccountCapsule(final AccountUpdateContract contract) {
+
   }
 
   /**
@@ -139,6 +147,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getLatestOperationTime() {
     return this.account.getLatestOprationTime();
+  }
+
+  public void setLatestOperationTime(long latest_time) {
+    this.account = this.account.toBuilder().setLatestOprationTime(latest_time).build();
   }
 
   public void setBalance(long balance) {
@@ -225,6 +237,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().putAsset(nameKey, currentAmount + amount).build();
 
     return true;
+  }
+
+  /**
+   * set account name
+   */
+  public void setAccountName(byte[] name) {
+    this.account = this.account.toBuilder().setAccountName(ByteString.copyFrom(name)).build();
+
   }
 
   /**

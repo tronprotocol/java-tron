@@ -415,8 +415,12 @@ public class Manager {
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         long balacne = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
-        int latstTransNumberInBlock = this.head.getTransactions().size();
-        doValidateFreq(balacne, latstTransNumberInBlock, latestOperationTime);
+        if (latestOperationTime != 0) {
+          int latstTransNumberInBlock = this.head.getTransactions().size();
+          doValidateFreq(balacne, latstTransNumberInBlock, latestOperationTime);
+        } else {
+          accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+        }
       }
     }
   }
