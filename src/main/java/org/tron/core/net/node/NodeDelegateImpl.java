@@ -23,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
@@ -51,6 +52,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushBlock(block);
+    } catch (ValidateScheduleException e) {
+      throw new BadBlockException("validate schedule exception");
     } catch (ValidateSignatureException e) {
       throw new BadBlockException("validate signature exception");
     } catch (ContractValidateException e) {
