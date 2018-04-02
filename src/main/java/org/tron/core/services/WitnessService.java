@@ -99,7 +99,7 @@ public class WitnessService implements Service {
         logger.debug("Produced");
         break;
       case NOT_SYNCED:
-//        logger.info("Not sync");
+        logger.info("Not sync");
         break;
       case NOT_MY_TURN:
         logger.debug("It's not my turn");
@@ -146,9 +146,9 @@ public class WitnessService implements Service {
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
-    if (db.isSyncMode()) {
-      return BlockProductionCondition.NOT_SYNCED;
-    }
+//    if (db.isSyncMode()) {
+//      return BlockProductionCondition.NOT_SYNCED;
+//    }
     final int participation = this.db.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
