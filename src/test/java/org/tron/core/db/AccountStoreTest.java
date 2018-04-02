@@ -10,7 +10,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
 
@@ -31,7 +30,7 @@ public class AccountStoreTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Constant.TEST_CONF);
     AccountStoreTest = AccountStore.create(dbPath);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
         ByteString.copyFrom(accountName),

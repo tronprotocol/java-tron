@@ -11,11 +11,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class BlockCapsuleTest {
+
   private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
       .copyFrom(ByteArray
           .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
@@ -25,7 +25,7 @@ public class BlockCapsuleTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Constant.TEST_CONF);
   }
 
   @AfterClass
