@@ -130,7 +130,6 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node.");
-
     for (NodeHandler nodeHandler: nodeManager.getActiveNodes()){
       logger.info(nodeHandler.toString());
     }

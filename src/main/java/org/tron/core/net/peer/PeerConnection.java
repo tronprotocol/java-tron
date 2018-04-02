@@ -3,12 +3,12 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
@@ -25,7 +25,7 @@ import org.tron.core.config.Parameter.NetConstants;
 @Slf4j
 @Component
 @Scope("prototype")
-public class PeerConnection extends Channel{
+public class PeerConnection extends Channel {
 
   @Override
   public int hashCode() {
@@ -75,18 +75,18 @@ public class PeerConnection extends Channel{
 
   private long headBlockTimeWeBothHave;
 
-  private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
+  private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
   private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
 
-  private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
+  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
+  public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
+      Pair<Deque<BlockId>, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
   }
 
@@ -135,7 +135,8 @@ public class PeerConnection extends Channel{
 
 
   public void cleanInvGarbage() {
-    long oldestTimestamp = Time.getCurrentMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
+    long oldestTimestamp =
+        Time.getCurrentMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 
     Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
 
@@ -228,18 +229,20 @@ public class PeerConnection extends Channel{
             + "needSyncFromPeer:%b\n "
             + "needSyncFromUs:%b\n"
             + "syncToFetchSize:%d\n"
+            + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
             + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
-        (int)this.getPeerStats().getAvgLatency(),
+        (int) this.getPeerStats().getAvgLatency(),
         Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
+        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         unfetchSyncNum,
         syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
