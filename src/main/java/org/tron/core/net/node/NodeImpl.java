@@ -227,6 +227,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
+    pool.init();
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
