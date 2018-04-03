@@ -3,9 +3,7 @@ package org.tron.core.db;
 import java.io.File;
 import java.util.Random;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -37,7 +35,7 @@ public class TransactionStoreTest {
     transactionStore.put(data, transactionCapsule);
   }
 
-  @Test
+  /*@Test
   public void testGet() {
     //test get and has method
     Assert.assertTrue(transactionStore.has(data));
@@ -46,9 +44,9 @@ public class TransactionStoreTest {
             .toByteArray()));
     Assert.assertEquals(value,
         transactionStore.get(data).getInstance().getRawData().getVoutList().get(0).getValue());
-  }
+  } */
 
-  @Test
+  /*@Test
   public void findTransactionByHash() {
     //test findTransactionByHash method
     TransactionCapsule transactionCapsuleByHash = new TransactionCapsule(
@@ -60,7 +58,7 @@ public class TransactionStoreTest {
     Assert.assertEquals(value,
         transactionCapsuleByHash.getInstance().getRawData().getVoutList().get(0).getValue());
 
-  }
+  } */
 
   public static byte[] randomBytes(int length) {
     //generate the random number

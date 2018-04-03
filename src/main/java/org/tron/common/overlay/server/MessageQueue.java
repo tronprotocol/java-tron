@@ -124,6 +124,7 @@ public class MessageQueue {
       if (waitingMessage.getAnswerMessage() != null
           && msg.getClass() == waitingMessage.getAnswerMessage()) {
         messageRoundtrip.answer();
+        channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
       }
     }
   }

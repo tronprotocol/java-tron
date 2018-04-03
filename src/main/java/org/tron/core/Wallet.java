@@ -174,10 +174,10 @@ public class Wallet {
   /**
    * Create a transaction.
    */
-  public Transaction createTransaction(byte[] address, String to, long amount) {
+  /*public Transaction createTransaction(byte[] address, String to, long amount) {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
-  }
+  } */
 
   /**
    * Create a transaction by contract.

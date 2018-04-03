@@ -22,7 +22,7 @@ public interface NodeDelegate {
 
   LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
 
-  Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds);
+  Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds);
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 

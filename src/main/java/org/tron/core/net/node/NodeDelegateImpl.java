@@ -100,8 +100,15 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     BlockId unForkedBlockId = null;
 
-    if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
+    if (blockChainSummary.isEmpty() ||
+        (blockChainSummary.size() == 1
+        && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
+    } else if (blockChainSummary.size() == 1
+        && blockChainSummary.get(0).getNum() == 0) {
+     return new LinkedList<BlockId>(){{
+        add(dbManager.getGenesisBlockId());
+      }};
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
@@ -117,13 +124,12 @@ public class NodeDelegateImpl implements NodeDelegate {
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
-        .filter(num -> num > 0)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))
         .collect(Collectors.toCollection(LinkedList::new));
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     long highBlkNum;
@@ -160,7 +166,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
-        retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
+        retSummary.offer(blockIds.poll());
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);
