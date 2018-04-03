@@ -569,18 +569,16 @@ public class Manager {
           switchFork(newBlock);
           logger.info("save block: " + newBlock);
           return;
-        } else {
-          try (Dialog tmpDialog = revokingStore.buildDialog()) {
-            this.processBlock(newBlock);
-            tmpDialog.commit();
-          } catch (RevokingStoreIllegalStateException e) {
-            logger.debug(e.getMessage(), e);
-          }
+        }
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          this.processBlock(newBlock);
+          tmpDialog.commit();
+        } catch (RevokingStoreIllegalStateException e) {
+          logger.debug(e.getMessage(), e);
         }
       }
       blockStore.put(block.getBlockId().getBytes(), block);
-      this.numHashCache
-          .putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+      this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
       //refreshHead(newBlock);
       logger.info("save block: " + newBlock);
     }
