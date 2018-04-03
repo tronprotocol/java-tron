@@ -25,7 +25,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -33,9 +32,10 @@ import org.tron.protos.Protocol.BlockHeader.raw;
 
 @Slf4j
 public class BlockUtilTest {
+
   @Before
   public void initConfiguration() {
-    Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
   }
 
   @After

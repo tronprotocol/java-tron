@@ -80,6 +80,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
           .getShare();
       long sum = contract.getVotesList().stream().mapToLong(vote -> vote.getVoteCount()).sum();
+      sum *= 1000000;     //trx -> drop. The vote count is based on TRX
       if (sum > share) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the share[" + share + "]");

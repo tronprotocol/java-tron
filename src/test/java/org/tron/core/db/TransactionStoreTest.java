@@ -8,7 +8,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 
@@ -29,7 +28,7 @@ public class TransactionStoreTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Constant.TEST_CONF);
     transactionStore = TransactionStore.create(dbPath);
     TransactionCapsule transactionCapsule = new TransactionCapsule(key, value);
     transactionStore.put(data, transactionCapsule);
