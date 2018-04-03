@@ -1,7 +1,4 @@
 #!/bin/bash
-
-cat tron > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
 ./gradlew clean shadowJar
 ssh deploy@47.93.9.236 -p 22008 touch bbb.txt
 ssh deploy@47.93.9.236 -p 22008 mkdir tron
