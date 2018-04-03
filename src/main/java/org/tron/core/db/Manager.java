@@ -439,7 +439,7 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  public void eraseBlock() {
+  private void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
     try {
@@ -449,10 +449,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
     khaosDb.pop();
-    for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
-      popedTransactions.add(trx);
-    }
-
+    popedTransactions.addAll(oldHeadBlock.getTransactions());
     // todo process the trans in the poped block.
 
   }
@@ -463,6 +460,7 @@ public class Manager {
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
+        logger.info("erase block. num = {}", head.getNum());
         eraseBlock();
       }
     }
@@ -566,17 +564,23 @@ public class Manager {
         }
         //switch fork
         if (!newBlock.getParentHash().equals(head.getBlockId())) {
+          logger.warn("switch fork! new head num = {}, blockid = {}", newBlock.getNum(),
+              newBlock.getBlockId());
           switchFork(newBlock);
-        }
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          this.processBlock(newBlock);
-          tmpDialog.commit();
-        } catch (RevokingStoreIllegalStateException e) {
-          logger.debug(e.getMessage(), e);
+          logger.info("save block: " + newBlock);
+          return;
+        } else {
+          try (Dialog tmpDialog = revokingStore.buildDialog()) {
+            this.processBlock(newBlock);
+            tmpDialog.commit();
+          } catch (RevokingStoreIllegalStateException e) {
+            logger.debug(e.getMessage(), e);
+          }
         }
       }
       blockStore.put(block.getBlockId().getBytes(), block);
-      this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+      this.numHashCache
+          .putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
       //refreshHead(newBlock);
       logger.info("save block: " + newBlock);
     }
