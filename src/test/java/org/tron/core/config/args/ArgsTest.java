@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.config.Configuration;
 
 public class ArgsTest {
 
@@ -30,11 +29,11 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{"-w"}, Configuration.getByPath("config-junit.conf"));
+    Args.setParam(new String[]{"-w"}, "configFile/config-junit.conf");
 
     Args args = Args.getInstance();
 
-    Assert.assertEquals("database-test", args.getStorage().getDirectory());
+    Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
 
     Assert.assertEquals(7, args.getSeedNode().getIpList().size());
 

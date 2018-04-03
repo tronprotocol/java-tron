@@ -13,7 +13,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -24,6 +23,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class CreateAccountActuatorTest {
+
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
@@ -39,7 +39,7 @@ public class CreateAccountActuatorTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath},
-        Configuration.getByPath("config-junit.conf"));
+        "config-junit.conf");
     dbManager = new Manager();
     dbManager.init();
   }

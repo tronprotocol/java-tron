@@ -29,7 +29,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -65,7 +64,7 @@ public class TransferAssetActuatorTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath},
-        Configuration.getByPath("config-junit.conf"));
+        "config-junit.conf");
     dbManager = new Manager();
     dbManager.init();
   }
