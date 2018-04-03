@@ -34,8 +34,6 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.utils.TxInputUtil;
-import org.tron.core.capsule.utils.TxOutputUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
