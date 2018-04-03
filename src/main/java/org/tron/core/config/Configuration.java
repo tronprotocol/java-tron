@@ -39,9 +39,13 @@ public class Configuration {
     }
 
     if (config == null) {
-      config = ConfigFactory.parseFile(new File(configurationPath));
+      File confFile = new File(configurationPath);
+      if (confFile.exists()) {
+        config = ConfigFactory.parseFile(new File(configurationPath));
+      } else {
+        config = ConfigFactory.load(configurationPath);
+      }
     }
-
     return config;
   }
 }
