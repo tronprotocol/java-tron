@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Configuration;
@@ -24,14 +25,17 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class CreateAccountActuatorTest {
+
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
 
   private static final String ACCOUNT_NAME_FRIST = "ownerF";
-  private static final String OWNER_ADDRESS_FRIST = "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS_FRIST =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
-  private static final String OWNER_ADDRESS_SECOND = "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS_SECOND =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
   /**
    * Init data.

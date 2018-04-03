@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -36,8 +37,10 @@ public class ParticipateAssetIssueActuatorTest {
   private static final String dbPath = "output_participateAsset_test";
 
 
-  private static final String OWNER_ADDRESS = "548794500882809695a8a687866e76d4271a1abc";
-  private static final String TO_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String TO_ADDRESS =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String ASSET_NAME = "myCoin";
 
   private static final long TOTAL_SUPPLY = 10L;
@@ -206,64 +209,60 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void ExchangeDevisibleTest(){
+  public void ExchangeDevisibleTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     ParticipateAssetIssueActuator actuator =
-            new ParticipateAssetIssueActuator(getContract(999L), dbManager);
+        new ParticipateAssetIssueActuator(getContract(999L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try{
+    try {
       actuator.validate();
       actuator.execute(ret);
-    }
-    catch(ContractValidateException e){
+    } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
 
       AccountCapsule owner = dbManager.getAccountStore()
-              .get(ByteArray.fromHexString(OWNER_ADDRESS));
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
-              .get(ByteArray.fromHexString(TO_ADDRESS));
+          .get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), 10000L);
       Assert.assertEquals(toAccount.getBalance(), 10000L);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(),
-              10000000L);
-    }
-    catch(ContractExeException e){
-      Assert.assertFalse(e instanceof  ContractExeException);
+          10000000L);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
   }
 
 
   @Test
-  public void NegativeAmountTest(){
+  public void NegativeAmountTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     ParticipateAssetIssueActuator actuator =
-            new ParticipateAssetIssueActuator(getContract(-999L), dbManager);
+        new ParticipateAssetIssueActuator(getContract(-999L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try{
+    try {
       actuator.validate();
       actuator.execute(ret);
-    }
-    catch(ContractValidateException e){
+    } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
 
       AccountCapsule owner = dbManager.getAccountStore()
-              .get(ByteArray.fromHexString(OWNER_ADDRESS));
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
-              .get(ByteArray.fromHexString(TO_ADDRESS));
+          .get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), 10000L);
       Assert.assertEquals(toAccount.getBalance(), 10000L);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(),
-              10000000L);
-    }
-    catch(ContractExeException e){
-      Assert.assertFalse(e instanceof  ContractExeException);
+          10000000L);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
   }

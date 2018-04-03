@@ -21,6 +21,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -85,7 +86,9 @@ public class AssetIssueActuator extends AbstractActuator {
     try {
       final AssetIssueContract assetIssueContract = this.contract.unpack(AssetIssueContract.class);
 
-      Preconditions.checkNotNull(assetIssueContract.getOwnerAddress(), "OwnerAddress is null");
+      if (!Wallet.addressValid(assetIssueContract.getOwnerAddress())) {
+        throw new ContractValidateException("Invalidate ownerAddress");
+      }
       Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
 
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())

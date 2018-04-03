@@ -32,6 +32,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.db.AccountStore;
 
 @Slf4j
 @NoArgsConstructor
@@ -208,6 +211,14 @@ public class Args {
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
 
+    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    }
+
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
@@ -216,6 +227,7 @@ public class Args {
 
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
+        AccountStore.setAccount(config);
       }
       if (config.hasPath("genesis.block.witnesses")) {
         INSTANCE.genesisBlock.setWitnesses(getWitnessesFromConfig(config));

@@ -70,6 +70,8 @@ public class Wallet {
   private Application app;
   private Node p2pnode;
   private Manager dbManager;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -100,6 +102,58 @@ public class Wallet {
 
   public byte[] getAddress() {
     return ecKey.getAddress();
+  }
+
+  public static String getAddressPreFixString() {
+    return addressPreFixString;
+  }
+
+  public static void setAddressPreFixString(String addressPreFixString) {
+    Wallet.addressPreFixString = addressPreFixString;
+  }
+
+  public static byte getAddressPreFixByte() {
+    return addressPreFixByte;
+  }
+
+  public static void setAddressPreFixByte(byte addressPreFixByte) {
+    Wallet.addressPreFixByte = addressPreFixByte;
+  }
+
+  public static boolean addressValid(ByteString bsAddress) {
+
+    if (bsAddress == null || bsAddress.size() == 0) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    byte[] address = bsAddress.toByteArray();
+    return addressValid(address);
+  }
+
+  public static boolean addressValid(byte[] address) {
+    if (address.length != Constant.ADDRESS_SIZE / 2) {
+      logger.warn(
+          "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
+              + " !!");
+      return false;
+    }
+    if (address[0] != addressPreFixByte) {
+      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
+          + address[0] + " !!");
+      return false;
+    }
+    //Other rule;
+    return true;
+  }
+
+  public static boolean addressValid(String addressStr) {
+    try {
+      byte[] address = ByteArray.fromHexString(addressStr);
+      return addressValid(address);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return false;
+    }
   }
 
   /**
