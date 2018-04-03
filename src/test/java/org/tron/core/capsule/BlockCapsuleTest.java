@@ -11,7 +11,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -26,7 +25,7 @@ public class BlockCapsuleTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Constant.TEST_CONF);
   }
 
   @AfterClass

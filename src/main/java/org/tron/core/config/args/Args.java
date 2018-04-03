@@ -4,6 +4,7 @@ import static org.tron.common.crypto.Hash.sha3;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +33,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.core.config.Configuration;
 
 @Slf4j
 @NoArgsConstructor
@@ -39,6 +41,9 @@ import org.tron.common.overlay.discover.Node;
 public class Args {
 
   private static final Args INSTANCE = new Args();
+
+  @Parameter(names = {"-c", "--config"}, description = "Config File")
+  private String confFile = "";
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
@@ -175,10 +180,14 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final com.typesafe.config.Config config) {
-
+  public static void setParam(final String[] args, final String configFile) {
+    Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-
+    if ("" == INSTANCE.confFile) {
+      config = Configuration.getByPath(configFile);
+    } else {
+      config = Configuration.getByPath(INSTANCE.confFile);
+    }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       logger.debug("Got privateKey from cmd");
