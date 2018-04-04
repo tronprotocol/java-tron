@@ -183,11 +183,11 @@ public class Args {
   public static void setParam(final String[] args, final String configFile) {
     Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    File confFile = new File(configFile);
+    File confFile = new File(INSTANCE.confFile);
     if (confFile.exists()) {
       config = Configuration.getByFile(confFile);
     } else {
-      config = Configuration.getByPath(INSTANCE.confFile);
+      config = Configuration.getByPath(configFile);
     }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
