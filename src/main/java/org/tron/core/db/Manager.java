@@ -590,15 +590,15 @@ public class Manager {
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
-    if ( block.getNum() != 1 ){
+    if (block.getNum() != 1){
       slot = getSlotAtTime(block.getTimeStamp());
     }
     for (int i = 1; i < slot; ++i){
-      if (block.getWitnessAddress() != getScheduledWitness(i)){
-        WitnessCapsule w = this.witnessStore.get(block.getWitnessAddress().toByteArray());
+      if (getScheduledWitness(i) != block.getWitnessAddress()){
+        WitnessCapsule w = this.witnessStore.get(getScheduledWitness(i).toByteArray());
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
-        logger.debug("{} miss a block",w.getInstance().getUrl());
+        logger.info("{} miss a block",w.getAddress());
       }
     }
     this.head = block;
@@ -917,8 +917,8 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("updateSignedWitness. witness url:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.getInstance().getUrl(), block.getNum(), witnessCapsule.getTotalProduced());
+    logger.info("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+        witnessCapsule.getAddress(), block.getNum(), witnessCapsule.getTotalProduced());
 
   }
 
