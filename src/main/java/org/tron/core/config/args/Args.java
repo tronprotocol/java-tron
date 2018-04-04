@@ -180,14 +180,14 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final String configFile) {
+  public static void setParam(final String[] args, final String configFilePath) {
     Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     File confFile = new File(INSTANCE.confFile);
     if (confFile.exists()) {
       config = Configuration.getByFile(confFile);
     } else {
-      config = Configuration.getByPath(configFile);
+      config = Configuration.getByPath(configFilePath);
     }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
