@@ -17,10 +17,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateSignatureException;
 
 @Slf4j
 public class ManagerTest {
@@ -147,7 +144,8 @@ public class ManagerTest {
     IntStream.range(0, 5).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-      } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+//      } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+      } catch (Exception e) {
         logger.debug(e.getMessage(), e);
       }
     });
@@ -194,7 +192,8 @@ public class ManagerTest {
       Assert.assertEquals(dbManager.getHead().getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
 
-    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+//    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
     dbManager.getWitnesses().clear();
