@@ -56,7 +56,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     parentName += Args.getInstance().getStorage().getDirectory();
     this.parentName = parentName;
     this.dataBaseName = name;
-    logger.debug("New LevelDbDataSourceImpl: " + name);
   }
 
   @Override

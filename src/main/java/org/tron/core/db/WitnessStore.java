@@ -28,6 +28,10 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   private static WitnessStore instance;
 
+  public static void destory() {
+    instance = null;
+  }
+
   /**
    * create fun.
    *
