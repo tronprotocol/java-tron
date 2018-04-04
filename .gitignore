@@ -29,9 +29,6 @@ pernodedata.*
 ringstate.*
 shareddata.*
 
-# svn
-.svn
-
 # protobuf generated classes
 src/main/gen
 
