@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import com.google.common.primitives.Longs;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -129,9 +130,10 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch) {
 
     Deque<BlockId> retSummary = new LinkedList<>();
+    List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
     long lowBlkNum = 0;
@@ -166,7 +168,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
-        retSummary.offer(blockIds.poll());
+        retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);
