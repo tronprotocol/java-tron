@@ -48,6 +48,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -443,7 +444,7 @@ public class Manager {
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException,
-      ContractExeException, UnLinkedBlockException {
+      ContractExeException, UnLinkedBlockException, ValidateScheduleException {
 
     try (PendingManager pm = new PendingManager(this)) {
       //todo: check block's validity
@@ -461,11 +462,11 @@ public class Manager {
           return;
         }
       }
-      try {
-        witnessController.validateWitnessSchedule(block); // direct return ,need test
-      } catch (Exception ex) {
-        logger.error("validateWitnessSchedule error", ex);
+
+      if (!witnessController.validateWitnessSchedule(block)) {
+        throw new ValidateScheduleException("validateWitnessSchedule error");
       }
+
       BlockCapsule newBlock = this.khaosDb.push(block);
       //DB don't need lower block
       if (head == null) {
@@ -645,7 +646,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(final WitnessCapsule witnessCapsule,
       final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException,
-      ContractExeException, UnLinkedBlockException {
+      ContractExeException, UnLinkedBlockException, ValidateScheduleException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

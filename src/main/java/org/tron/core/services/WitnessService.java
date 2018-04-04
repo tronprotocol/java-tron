@@ -18,6 +18,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
@@ -174,7 +175,8 @@ public class WitnessService implements Service {
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
-          ByteArray.toHexString(scheduledWitness.toByteArray()), slot, controller.getAbSlotAtTime(now));
+          ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
+          controller.getAbSlotAtTime(now));
       logger.debug("headBlockNumber:{},headBlockId:{},headBlockTime:{}",
           head.getNum(), head.getBlockId(),
           new DateTime(head.getTimeStamp()));
@@ -216,7 +218,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
