@@ -604,7 +604,8 @@ public class Manager {
         WitnessCapsule w = this.witnessStore.get(getScheduledWitness(i).toByteArray());
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
-        logger.info("{} miss a block",w.createReadableString());
+        logger.info("{} miss a block. totalMissed = {}",
+            w.createReadableString(), w.getTotalMissed());
       }
     }
     this.head = block;
