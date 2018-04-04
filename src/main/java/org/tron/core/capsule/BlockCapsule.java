@@ -237,8 +237,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public void setMerkleRoot() {
     BlockHeader.raw blockHeaderRaw =
-            this.block.getBlockHeader().getRawData().toBuilder()
-                    .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
+        this.block.getBlockHeader().getRawData().toBuilder()
+            .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
@@ -247,6 +247,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public Sha256Hash getMerkleRoot() {
     unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
+  }
+
+  public ByteString getWitnessAddress(){
+    unPack();
+    return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
 
 
