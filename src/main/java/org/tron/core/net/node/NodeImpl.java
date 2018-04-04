@@ -963,7 +963,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
     logger.info("start sync with::" + peer);
-    peer.setTronState(TronState.START_TO_SYNC);
+    peer.setTronState(TronState.SYNCING);
     peer.setConnectTime(Time.getCurrentMillis());
     startSyncWithPeer(peer);
 //    if (mapPeer.containsKey(peer.getAddress())) {

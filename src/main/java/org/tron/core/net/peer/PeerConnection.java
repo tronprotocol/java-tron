@@ -262,7 +262,7 @@ public class PeerConnection extends Channel {
 
   public void sendMessage(Message message) {
     msgQueue.sendMessage(message);
-    nodeStatistics.ethOutbound.add();
+    nodeStatistics.rlpxOutMessages.add();
   }
 
   @Override
