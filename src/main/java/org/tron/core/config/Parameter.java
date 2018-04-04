@@ -12,6 +12,7 @@ public interface Parameter {
     int BLOCK_PRODUCED_INTERVAL = 3; // 3sec
 
     double SOLIDIFIED_THRESHOLD = 0.3;
+    int PRIVATE_KEY_LENGTH = 64;
   }
 
   interface NodeConstant {

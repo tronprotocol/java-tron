@@ -892,6 +892,7 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+    System.out.println("xxd " + ByteArray.toHexString(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray()));
     long latestSlotNum = 0;
     witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
         .setLatestSlotNum(latestSlotNum)
