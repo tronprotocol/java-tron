@@ -585,6 +585,14 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
+    long slot = getSlotAtTime(block.getTimeStamp());
+    for (int i = 1; i < slot; i ++){
+      if (block.getWitnessAddress() != getScheduledWitness(i)){
+        WitnessCapsule w = this.witnessStore.get(block.getWitnessAddress().toByteArray());
+        w.setTotalMissed(w.getTotalMissed()+1);
+        this.witnessStore.put(w.createDbKey(), w);
+      }
+    }
     this.head = block;
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
@@ -882,16 +890,17 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    long latestSlotNum = 0;
-    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
-        .setLatestSlotNum(latestSlotNum)
-        .build();
-    AccountCapsule sun = accountStore.getSun();
+    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
+    witnessCapsule.setLatestBlockNum(block.getNum());
+    witnessCapsule.setLatestSlotNum(getAbSlotAtTime(block.getTimeStamp()));
 
+    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+
+    AccountCapsule sun = accountStore.getSun();
     try {
       adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-
+      logger.debug(e.getMessage(), e);
     }
     try {
       adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
