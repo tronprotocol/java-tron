@@ -35,6 +35,7 @@ public class ManagerTest {
         Constant.TEST_CONF);
 
     dbManager.init();
+
     blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
         0,
@@ -51,6 +52,7 @@ public class ManagerTest {
   public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    dbManager.destory();
   }
 
   @Test
