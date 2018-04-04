@@ -289,7 +289,6 @@ public class Manager {
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
     } else {
-      String test = Args.getInstance().getOutputDirectory();
       if (this.hasBlocks()) {
         logger.error("genesis block modify, please delete database directory({}) and restart",
             Args.getInstance().getOutputDirectory());
