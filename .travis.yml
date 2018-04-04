@@ -2,15 +2,17 @@ sudo: required
 language: java
 jdk: oraclejdk8
 script:
-- rm -r ./output-directory/
-- rm -r ./output_manager_test/
 - ./gradlew lint
-- ./gradlew test --debug
+- ./gradlew test
 - cat tron > ~/.ssh/id_rsa
 - chmod 600 ~/.ssh/id_rsa
 addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
+  - 47.93.33.201:22008
+  - 123.56.10.6:22008
+  - 39.107.80.135:22008
+  - 47.93.184.2:22008
 skip_build:
 - README.md
 - LICENSE
