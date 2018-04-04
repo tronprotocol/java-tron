@@ -28,6 +28,7 @@ public class WitnessStoreTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    WitnessStore.destory();
   }
 
   @Test

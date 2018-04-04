@@ -181,6 +181,14 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  public void destory() {
+    getAccountStore().destroy();
+    getTransactionStore().destroy();
+    getBlockStore().destroy();
+    getWitnessStore().destory();
+    getAssetIssueStore().destroy();
+    getDynamicPropertiesStore().destroy();
+  }
 
   /**
    * all db should be init here.
@@ -197,12 +205,10 @@ public class Manager {
 
     revokingStore = RevokingStore.getInstance();
     revokingStore.enable();
-
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
-
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();

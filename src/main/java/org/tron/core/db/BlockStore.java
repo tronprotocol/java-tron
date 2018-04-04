@@ -34,13 +34,18 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   private static BlockStore instance;
 
+  public static void destroy() {
+    instance = null;
+  }
+
   /**
    * create fun.
    */
   public static BlockStore create(String dbName) {
     if (instance == null) {
-      synchronized (AccountStore.class) {
+      synchronized (BlockStore.class) {
         if (instance == null) {
+          logger.info("adafasdfasdfasdfasdf");
           instance = new BlockStore(dbName);
         }
       }

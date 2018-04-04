@@ -25,6 +25,7 @@ public class AccountStoreTest {
   public static void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    AccountStoreTest.destroy();
   }
 
   @BeforeClass

@@ -5,7 +5,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Time;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 
@@ -82,11 +81,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static DynamicPropertiesStore instance;
 
+  public void destroy() {
+    instance = null;
+  }
+
   /**
    * create fun.
    *
    * @param dbName the name of database
    */
+
   public static DynamicPropertiesStore create(String dbName) {
     if (instance == null) {
       synchronized (DynamicPropertiesStore.class) {
