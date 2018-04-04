@@ -131,6 +131,10 @@ public class Wallet {
   }
 
   public static boolean addressValid(byte[] address) {
+    if (address == null || address.length == 0) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
     if (address.length != Constant.ADDRESS_SIZE / 2) {
       logger.warn(
           "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
@@ -147,6 +151,10 @@ public class Wallet {
   }
 
   public static boolean addressValid(String addressStr) {
+    if (addressStr == null || "".equals(addressStr)) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
     try {
       byte[] address = ByteArray.fromHexString(addressStr);
       return addressValid(address);
