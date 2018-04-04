@@ -89,7 +89,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (remoteId.length != 64) {
+    if (remoteId.length != 64) { //not initiator
       remoteId = ByteArray.fromHexString(helloMessage.getPeerId());
       channel.initWithNode(remoteId, helloMessage.getListenPort());
       channel.sendHelloMessage(ctx);

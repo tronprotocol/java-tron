@@ -246,7 +246,8 @@ public class PeerConnection extends Channel {
         syncBlockRequested.size(),
         unfetchSyncNum,
         syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
-        blockInProc.size());
+        blockInProc.size())
+        + nodeStatistics.toString() + "\n";
   }
 
   public boolean isBusy() {

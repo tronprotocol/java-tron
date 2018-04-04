@@ -17,12 +17,11 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.tron.common.overlay.message.ReasonCode;
+import static java.lang.Math.min;
 
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static java.lang.Math.min;
+import org.tron.common.overlay.message.ReasonCode;
 
 /**
  * Handles all possible statistics related to a Node
@@ -124,7 +123,6 @@ public class NodeStatistics {
                 }
             }
         }
-
         return discoverReput + 100 * rlpxReput;
     }
 

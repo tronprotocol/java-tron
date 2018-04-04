@@ -83,12 +83,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
 
-    public void sendInv() {
+    void sendInv() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> peer.sendMessage(new InventoryMessage(value, key))));
     }
 
-    public void sendFetch() {
+    void sendFetch() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> peer.sendMessage(new FetchInvDataMessage(value, key))));
     }
@@ -156,11 +156,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Set<BlockMessage> blockInProc = new ConcurrentSet<>();
 
-  ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
+  private ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
-  ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
+  private ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
 
-  ExecutorLoop<Message> loopAdvertiseInv;
+  private ExecutorLoop<Message> loopAdvertiseInv;
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {

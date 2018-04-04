@@ -132,13 +132,14 @@ public class Channel {
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
+        //nodeStatistics.setClientId(helloRemote.getClientID); TODO:use clientID
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
         setTronState(TronState.HANDSHAKE_FINISHED);
     }
 
-    public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
+    public void sendHelloMessage(ChannelHandlerContext ctx) throws InterruptedException {
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
     }
