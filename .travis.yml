@@ -2,8 +2,8 @@ sudo: required
 language: java
 jdk: oraclejdk8
 script:
-- rm -r output-directory
-- rm -r output_manager_test
+- rm -r ./output-directory/
+- rm -r ./output_manager_test/
 - ./gradlew lint
 - ./gradlew test --debug
 - cat tron > ~/.ssh/id_rsa
