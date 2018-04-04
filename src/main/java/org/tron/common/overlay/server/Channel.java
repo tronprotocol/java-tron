@@ -137,7 +137,7 @@ public class Channel {
     ctx.pipeline().addLast("messageCodec", messageCodec);
     ctx.pipeline().addLast("p2p", p2pHandler);
     ctx.pipeline().addLast("data", tronHandler);
-    getNodeStatistics().rlpxHandshake.add();
+    getNodeStatistics().p2pHandShake.add();
     setTronState(TronState.HANDSHAKE_FINISHED);
   }
 
@@ -145,7 +145,7 @@ public class Channel {
     final HelloMessage helloMessage = staticMessages
         .createHelloMessage(nodeManager.getPublicHomeNode());
     ctx.writeAndFlush(helloMessage.getSendData()).sync();
-    getNodeStatistics().rlpxOutHello.add();
+    getNodeStatistics().p2pOutHello.add();
   }
 
   public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
