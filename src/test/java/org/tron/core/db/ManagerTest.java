@@ -31,6 +31,11 @@ public class ManagerTest {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
         Constant.TEST_CONF);
 
+    File file = new File(Args.getInstance().getOutputDirectory());
+    if (file.exists()) {
+      FileUtil.deleteDir(file);
+    }
+
     dbManager.init();
     blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
@@ -42,6 +47,7 @@ public class ManagerTest {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+    
   }
 
   @AfterClass

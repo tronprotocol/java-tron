@@ -6,8 +6,8 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
-import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,6 +28,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
@@ -219,6 +220,10 @@ public class Manager {
   public BlockCapsule getGenesisBlock() {
     return genesisBlock;
   }
+
+
+
+
 
   /**
    * init genesis block.
@@ -508,11 +513,11 @@ public class Manager {
     witnessController.updateWitnessSchedule();
 
     long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
-    if(missedBlocks >= 0){
+    if (missedBlocks >= 0) {
       while (missedBlocks-- > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
       }
-    }else{
+    } else {
       logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
     }
   }
