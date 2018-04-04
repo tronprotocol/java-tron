@@ -123,7 +123,7 @@ public class ManagerTest {
     dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
     dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
     dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
-    dbManager.updateWits();
+    dbManager.getWitnessController().initWits();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
       logger.info("witness address is {}",
           ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));

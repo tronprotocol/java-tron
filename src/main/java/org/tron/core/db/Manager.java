@@ -7,20 +7,13 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
@@ -28,7 +21,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -36,7 +28,6 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
-import org.tron.common.utils.RandomGenerator;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
@@ -58,6 +49,7 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -66,7 +58,7 @@ import org.tron.protos.Protocol.Transaction;
 public class Manager {
 
   private static final long BLOCK_INTERVAL_SEC = 1;
-  private static final int MAX_ACTIVE_WITNESS_NUM = 21;
+  public static final int MAX_ACTIVE_WITNESS_NUM = 21;
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
   public static final long LOOP_INTERVAL = 5000L; // ms,produce block period, must be divisible by 60. millisecond
 
@@ -101,7 +93,7 @@ public class Manager {
 
   @Getter
   @Setter
-  protected List<WitnessCapsule> shuffledWitnessStates;
+  private WitnessController witnessController;
 
 
   public WitnessStore getWitnessStore() {
@@ -135,39 +127,15 @@ public class Manager {
   // transactions popped
   private List<TransactionCapsule> popedTransactions = new ArrayList<>();
 
-  private volatile List<WitnessCapsule> wits = new ArrayList<>();
 
-  private ReadWriteLock witsLock = new ReentrantReadWriteLock();
-  private Lock witsRead = witsLock.readLock();
-  private Lock witsWrite = witsLock.writeLock();
-
-  // witness
+  //for test only
   public List<WitnessCapsule> getWitnesses() {
-    witsRead.lock();
-    try {
-      return this.wits;
-    } finally {
-      witsRead.unlock();
-    }
-
+    return witnessController.getWitnesses();
   }
 
-  public void setWitnesses(List<WitnessCapsule> wits) {
-    witsWrite.lock();
-    try {
-      this.wits = wits;
-    } finally {
-      witsWrite.unlock();
-    }
-  }
-
+  //for test only
   public void addWitness(final WitnessCapsule witnessCapsule) {
-    witsWrite.lock();
-    try {
-      this.wits.add(witnessCapsule);
-    } finally {
-      witsWrite.unlock();
-    }
+    witnessController.addWitness(witnessCapsule);
   }
 
   public BlockId getHeadBlockId() {
@@ -181,38 +149,6 @@ public class Manager {
 
   public long getHeadBlockTimeStamp() {
     return this.head.getTimeStamp();
-  }
-
-
-  /**
-   * get ScheduledWitness by slot.
-   */
-  public ByteString getScheduledWitness(final long slot) {
-
-    final long currentSlot = getHeadSlot() + slot;
-
-    if (currentSlot < 0) {
-      throw new RuntimeException("currentSlot should be positive.");
-    }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnessStates();
-    if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
-      throw new RuntimeException("ShuffledWitnesses is null.");
-    }
-    final int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
-
-    final ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex).getAddress();
-    //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
-
-    return scheduledWitness;
-  }
-
-  private long getHeadSlot() {
-    return (head.getTimeStamp() - genesisBlock.getTimeStamp()) / blockInterval();
-  }
-
-  public int calculateParticipationRate() {
-    return 100 * this.dynamicPropertiesStore.getBlockFilledSlots().calculateFilledSlotsCount()
-        / BlockFilledSlots.SLOT_NUMBER;
   }
 
   public PeersStore getPeersStore() {
@@ -257,6 +193,7 @@ public class Manager {
     this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
+    this.setWitnessController(WitnessController.createInstance(this));
 
     revokingStore = RevokingStore.getInstance();
     revokingStore.enable();
@@ -268,8 +205,8 @@ public class Manager {
 
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
-    this.updateWits();
-    this.setShuffledWitnessStates(getWitnesses());
+    this.witnessController.initWits();
+    this.witnessController.initShuffledWitnessStates();
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     this.khaosDb.start(head);
   }
@@ -353,9 +290,8 @@ public class Manager {
           address, key.getVoteCount(), key.getUrl());
       witnessCapsule.setIsJobs(true);
       this.witnessStore.put(keyAddress, witnessCapsule);
-
-      this.wits.add(witnessCapsule);
     });
+
   }
 
   public AccountStore getAccountStore() {
@@ -498,33 +434,6 @@ public class Manager {
 
   //TODO: if error need to rollback.
 
-
-  /**
-   * validate witness schedule.
-   */
-  private boolean validateWitnessSchedule(BlockCapsule block) {
-
-    ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-        .getWitnessAddress();
-    //to deal with other condition later
-    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
-      long slot = getSlotAtTime(block.getTimeStamp());
-      final ByteString scheduledWitness = getScheduledWitness(slot);
-      if (!scheduledWitness.equals(witnessAddress)) {
-        logger.warn(
-            "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
-            ByteArray.toHexString(scheduledWitness.toByteArray()),
-            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
-            slot);
-        return false;
-      }
-    }
-
-    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
-        ByteArray.toHexString(witnessAddress.toByteArray()));
-    return true;
-  }
-
   private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {
 
   }
@@ -553,7 +462,7 @@ public class Manager {
         }
       }
       try {
-        validateWitnessSchedule(block); // direct return ,need test
+        witnessController.validateWitnessSchedule(block); // direct return ,need test
       } catch (Exception ex) {
         logger.error("validateWitnessSchedule error", ex);
       }
@@ -595,9 +504,9 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    updateWitnessSchedule();
+    witnessController.updateWitnessSchedule();
 
-    long missedBlocks = getSlotAtTime(block.getTimeStamp()) - 1;
+    long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
     Preconditions
         .checkArgument(missedBlocks >= 0, "missedBlocks [" + missedBlocks + "] is illegal");
 
@@ -614,7 +523,7 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    updateWitnessSchedule();
+    witnessController.updateWitnessSchedule();
   }
 
 
@@ -855,15 +764,16 @@ public class Manager {
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers = getWitnesses().stream()
+    List<Long> numbers = witnessController.getWitnesses().stream()
         .map(wit -> wit.getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
 
-    int solidifiedPosition = (int) (wits.size() * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    long size = witnessController.getWitnesses().size();
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
       logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
-          solidifiedPosition, wits.size());
+          solidifiedPosition, size);
       return;
     }
 
@@ -883,7 +793,7 @@ public class Manager {
    * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
-    this.updateWitness();
+    witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
 
@@ -915,200 +825,13 @@ public class Manager {
 
   }
 
-  private long blockInterval() {
-    return LOOP_INTERVAL; // millisecond todo getFromDb
-  }
-
-  /**
-   * get slot at time.
-   */
-  public long getSlotAtTime(long when) {
-    long firstSlotTime = getSlotTime(1);
-    if (when < firstSlotTime) {
-      return 0;
-    }
-    logger
-        .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
-    return (when - firstSlotTime) / blockInterval() + 1;
-  }
-
-  /**
-   * get absolute Slot At Time
-   */
-  public long getAbSlotAtTime(long when) {
-    return (when - getGenesisBlock().getTimeStamp()) / blockInterval();
-  }
-
-  /**
-   * get slot time.
-   */
-  public long getSlotTime(long slotNum) {
-    if (slotNum == 0) {
-      return Time.getCurrentMillis();
-    }
-    long interval = blockInterval();
-
-    if (getHeadBlockNum() == 0) {
-      return getGenesisBlock().getTimeStamp() + slotNum * interval;
-    }
-
-    if (lastHeadBlockIsMaintenance()) {
-      slotNum += getSkipSlotInMaintenance();
-    }
-
-    long headSlotTime = getHeadBlockTimestamp();
-    headSlotTime = headSlotTime
-        - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
-
-    return headSlotTime + interval * slotNum;
-  }
-
-  private boolean lastHeadBlockIsMaintenance() {
+  public boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
-  private long getHeadBlockTimestamp() {
-    return head.getTimeStamp();
-  }
-
-
   // To be added
-  private long getSkipSlotInMaintenance() {
+  public long getSkipSlotInMaintenance() {
     return 0;
-  }
-
-  /**
-   * update witness.
-   */
-  public void updateWitness() {
-    List<WitnessCapsule> currentWits = getWitnesses();
-
-    final Map<ByteString, Long> countWitness = Maps.newHashMap();
-    final List<AccountCapsule> accountList = this.accountStore.getAllAccounts();
-    //logger.info("there is account List size is {}", accountList.size());
-    accountList.forEach(account -> {
-//      logger.info("there is account ,account address is {}",
-//          account.createReadableString());
-
-      Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
-          .reduce((a, b) -> a + b);
-      if (sum.isPresent()) {
-        if (sum.get() <= account.getShare()) {
-          account.getVotesList().forEach(vote -> {
-            //TODO validate witness //active_witness
-            ByteString voteAddress = vote.getVoteAddress();
-            long voteCount = vote.getVoteCount();
-            if (countWitness.containsKey(voteAddress)) {
-              countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
-            } else {
-              countWitness.put(voteAddress, voteCount);
-            }
-          });
-        } else {
-          logger.info(
-              "account" + account.createReadableString() + ",share[" + account.getShare()
-                  + "] > voteSum["
-                  + sum.get() + "]");
-        }
-      }
-    });
-
-    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-      witnessCapsule.setVoteCount(0);
-      witnessCapsule.setIsJobs(false);
-      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-    });
-    final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
-    logger.info("countWitnessMap size is {}", countWitness.keySet().size());
-
-    //Only possible during the initialization phase
-    if (countWitness.size() == 0) {
-      witnessCapsuleList.addAll(this.witnessStore.getAllWitnesses());
-    }
-
-    countWitness.forEach((address, voteCount) -> {
-      final WitnessCapsule witnessCapsule = this.witnessStore.get(createDbKey(address));
-      if (null == witnessCapsule) {
-        logger.warn("witnessCapsule is null.address is {}", createReadableString(address));
-        return;
-      }
-
-      ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
-      AccountCapsule witnessAccountCapsule = accountStore.get(createDbKey(witnessAddress));
-      if (witnessAccountCapsule == null) {
-        logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] not exists");
-      } else {
-        if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-          logger.warn("witnessAccount[" + createReadableString(witnessAddress) + "] has balance["
-              + witnessAccountCapsule
-              .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
-        } else {
-          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-          witnessCapsule.setIsJobs(false);
-          witnessCapsuleList.add(witnessCapsule);
-          this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
-              witnessCapsule.getVoteCount());
-        }
-      }
-    });
-    sortWitness(witnessCapsuleList);
-    if (witnessCapsuleList.size() > MAX_ACTIVE_WITNESS_NUM) {
-      setWitnesses(witnessCapsuleList.subList(0, MAX_ACTIVE_WITNESS_NUM));
-    } else {
-      setWitnesses(witnessCapsuleList);
-    }
-
-    getWitnesses().forEach(witnessCapsule -> {
-      witnessCapsule.setIsJobs(true);
-      this.witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-    });
-
-    logger.info(
-        "updateWitness,before:{} ",
-        getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(
-            getWitnesses()));
-  }
-
-  private byte[] createDbKey(ByteString string) {
-    return string.toByteArray();
-  }
-
-  public String createReadableString(ByteString string) {
-    return ByteArray.toHexString(string.toByteArray());
-  }
-
-  /**
-   * update wits sync to store.
-   */
-  public void updateWits() {
-    getWitnesses().clear();
-    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-      if (witnessCapsule.getIsJobs()) {
-        addWitness(witnessCapsule);
-      }
-    });
-    sortWitness();
-  }
-
-  private void sortWitness() {
-    witsWrite.lock();
-    try {
-      sortWitness(wits);
-    } finally {
-      witsWrite.unlock();
-    }
-
-  }
-
-  private void sortWitness(List<WitnessCapsule> list) {
-    list.sort((a, b) -> {
-      if (b.getVoteCount() != a.getVoteCount()) {
-        return (int) (b.getVoteCount() - a.getVoteCount());
-      } else {
-        return Long.compare(b.getAddress().hashCode(), a.getAddress().hashCode());
-      }
-    });
   }
 
   public AssetIssueStore getAssetIssueStore() {
@@ -1119,31 +842,4 @@ public class Manager {
     this.assetIssueStore = assetIssueStore;
   }
 
-  /**
-   * shuffle witnesses
-   */
-  private void updateWitnessSchedule() {
-    if (CollectionUtils.isEmpty(getWitnesses())) {
-      throw new RuntimeException("Witnesses is empty");
-    }
-
-    List<String> currentWitsAddress = getWitnessStringList(getWitnesses());
-    // TODO  what if the number of witness is not same in different slot.
-    if (getHeadBlockNum() != 0 && getHeadBlockNum() % getWitnesses().size() == 0) {
-      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", getHeadBlockNum(),
-          getHeadBlockTimeStamp());
-      setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
-          .shuffle(getWitnesses(), getHeadBlockTimeStamp()));
-
-      logger.info(
-          "updateWitnessSchedule,before:{} ", currentWitsAddress
-              + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
-    }
-  }
-
-  private List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
-    return witnessStates.stream()
-        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
-        .collect(Collectors.toList());
-  }
 }
