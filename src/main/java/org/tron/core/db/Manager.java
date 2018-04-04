@@ -6,6 +6,7 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -595,6 +596,15 @@ public class Manager {
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
     updateWitnessSchedule();
+
+    long missedBlocks = getSlotAtTime(block.getTimeStamp()) - 1;
+    Preconditions
+        .checkArgument(missedBlocks >= 0, "missedBlocks [" + missedBlocks + "] is illegal");
+
+    while (missedBlocks-- > 0) {
+      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
+    }
+
   }
 
   @Deprecated
