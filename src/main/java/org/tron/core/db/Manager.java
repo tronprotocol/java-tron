@@ -575,7 +575,6 @@ public class Manager {
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          logger.info("start process block, num = {}",newBlock.getNum());
           this.processBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
@@ -590,7 +589,10 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
-    long slot = getSlotAtTime(block.getTimeStamp());
+    long slot = 1;
+    if ( block.getNum() != 1 ){
+      slot = getSlotAtTime(block.getTimeStamp());
+    }
     for (int i = 1; i < slot; ++i){
       if (block.getWitnessAddress() != getScheduledWitness(i)){
         WitnessCapsule w = this.witnessStore.get(block.getWitnessAddress().toByteArray());
@@ -600,6 +602,7 @@ public class Manager {
       }
     }
     this.head = block;
+    logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
@@ -889,7 +892,7 @@ public class Manager {
 
   /**
    * @param block the block update signed witness.  set witness who signed block the 1. the latest
-   * block num 2. pay the trx to witness. 3. (TODO)the latest slot num.
+   * block num 2. pay the trx to witness. 3. the latest slot num.
    */
 
   public void updateSignedWitness(BlockCapsule block) {
@@ -914,8 +917,8 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("updateSignedWitness successfully. block num:{}, witness url:{}",
-        block.getNum(), witnessCapsule.getInstance().getUrl());
+    logger.info("updateSignedWitness. witness url:{}, blockNum:{}, totalProduced:{}",
+        witnessCapsule.getInstance().getUrl(), block.getNum(), witnessCapsule.getTotalProduced());
 
   }
 
