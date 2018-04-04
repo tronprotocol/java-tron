@@ -3,7 +3,7 @@ language: java
 jdk: oraclejdk8
 script:
 - ./gradlew lint
-- ./gradlew test
+- ./gradlew test --info
 - cat tron > ~/.ssh/id_rsa
 - chmod 600 ~/.ssh/id_rsa
 addons:
