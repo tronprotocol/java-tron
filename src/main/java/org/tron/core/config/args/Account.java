@@ -15,13 +15,13 @@
 
 package org.tron.core.config.args;
 
+import com.google.protobuf.ByteString;
 import java.io.Serializable;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.StringUtil;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.AccountType;
-import com.google.protobuf.ByteString;
 
 public class Account implements Serializable {
 
@@ -44,20 +44,14 @@ public class Account implements Serializable {
   }
 
   /**
-   * Account address is a 40-bits hex string.
+   * Account address is a 42-bits hex string.
    */
   public void setAddress(final String address) {
-    if (null == address) {
+    if (!Wallet.addressValid(address)){
       throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+          "The address(" + address + ") must be a 42-bit hexadecimal string.");
     }
-
-    if (StringUtil.isHexString(address, 40)) {
-      this.address = address;
-    } else {
-      throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 40-bit hexadecimal string.");
-    }
+    this.address = address;
   }
 
   public long getBalance() {

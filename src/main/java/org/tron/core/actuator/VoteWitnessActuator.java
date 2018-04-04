@@ -1,12 +1,12 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
@@ -50,8 +50,10 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
+      if (!Wallet.addressValid(contract.getOwnerAddress())) {
+        throw new ContractValidateException("Invalidate address");
+      }
       ByteString ownerAddress = contract.getOwnerAddress();
-      Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
       AccountStore accountStore = dbManager.getAccountStore();
       byte[] ownerAddressBytes = ownerAddress.toByteArray();

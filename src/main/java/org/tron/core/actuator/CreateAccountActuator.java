@@ -5,6 +5,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -52,7 +53,9 @@ public class CreateAccountActuator extends AbstractActuator {
       AccountCreateContract contract = this.contract.unpack(AccountCreateContract.class);
 
       Preconditions.checkNotNull(contract.getAccountName(), "AccountName is null");
-      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+      if (!Wallet.addressValid(contract.getOwnerAddress())) {
+        throw new ContractValidateException("Invalidate ownerAddress");
+      }
       Preconditions.checkNotNull(contract.getType(), "Type is null");
 
       if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
