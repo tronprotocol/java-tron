@@ -23,6 +23,7 @@ public class TransactionStoreTest {
   public static void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    TransactionStore.destory();
   }
 
   @BeforeClass

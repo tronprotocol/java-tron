@@ -16,10 +16,12 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+@Slf4j
 public class ArgsTest {
 
   @After
@@ -32,7 +34,6 @@ public class ArgsTest {
     Args.setParam(new String[]{"-w"}, "configFile/config-junit.conf");
 
     Args args = Args.getInstance();
-
     Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
 
     Assert.assertEquals(7, args.getSeedNode().getIpList().size());

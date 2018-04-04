@@ -21,6 +21,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     super(dbName);
   }
 
+  public void destroy() {
+    instance = null;
+  }
+
   /**
    * create fun.
    *
