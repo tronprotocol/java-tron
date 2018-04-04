@@ -508,13 +508,13 @@ public class Manager {
     witnessController.updateWitnessSchedule();
 
     long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
-    Preconditions
-        .checkArgument(missedBlocks >= 0, "missedBlocks [" + missedBlocks + "] is illegal");
-
-    while (missedBlocks-- > 0) {
-      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
+    if(missedBlocks >= 0){
+      while (missedBlocks-- > 0) {
+        this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
+      }
+    }else{
+      logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
     }
-
   }
 
   @Deprecated
