@@ -33,6 +33,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -208,8 +209,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    * cheack balance of the address.
    */
   public boolean checkBalance(byte[] address, String to, long amount, long balance) {
+    if (!Wallet.addressValid(address)) {
+      logger.error("address invalid");
+      return false;
+    }
 
-    if (to.length() != 40) {
+    if (!Wallet.addressValid(to)) {
       logger.error("address invalid");
       return false;
     }

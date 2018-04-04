@@ -21,6 +21,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
@@ -81,8 +82,12 @@ public class TransferAssetActuator extends AbstractActuator {
       TransferAssetContract transferAssetContract = this.contract
           .unpack(TransferAssetContract.class);
 
-      Preconditions.checkNotNull(transferAssetContract.getOwnerAddress(), "OwnerAddress is null");
-      Preconditions.checkNotNull(transferAssetContract.getToAddress(), "ToAddress is null");
+      if (!Wallet.addressValid(transferAssetContract.getOwnerAddress())) {
+        throw new ContractValidateException("Invalidate ownerAddress");
+      }
+      if (!Wallet.addressValid(transferAssetContract.getToAddress())) {
+        throw new ContractValidateException("Invalidate toAddress");
+      }
       Preconditions.checkNotNull(transferAssetContract.getAssetName(), "AssetName is null");
       Preconditions.checkNotNull(transferAssetContract.getAmount(), "Amount is null");
       if (transferAssetContract.getOwnerAddress().equals(transferAssetContract.getToAddress())) {

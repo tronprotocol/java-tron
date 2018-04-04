@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -35,8 +36,10 @@ public class ParticipateAssetIssueActuatorTest {
   private static final String dbPath = "output_participateAsset_test";
 
 
-  private static final String OWNER_ADDRESS = "548794500882809695a8a687866e76d4271a1abc";
-  private static final String TO_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String TO_ADDRESS =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String ASSET_NAME = "myCoin";
 
   private static final long TOTAL_SUPPLY = 10L;

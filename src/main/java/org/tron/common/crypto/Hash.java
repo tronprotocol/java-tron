@@ -26,9 +26,11 @@ import java.security.Provider;
 import java.security.Security;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.core.Wallet;
 
 @Slf4j
 public class Hash {
+
   private static final Provider CRYPTO_PROVIDER;
 
   private static final String HASH_256_ALGORITHM_NAME;
@@ -124,10 +126,12 @@ public class Hash {
    * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
    *
    * @param input - data
-   * @return - 20 right bytes of the hash keccak of the data
+   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
    */
   public static byte[] sha3omit12(byte[] input) {
     byte[] hash = sha3(input);
-    return copyOfRange(hash, 12, hash.length);
+    byte[] address = copyOfRange(hash, 11, hash.length);
+    address[0] = Wallet.getAddressPreFixByte();
+    return address;
   }
 }

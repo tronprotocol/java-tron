@@ -96,6 +96,10 @@ public class Manager {
 
   @Getter
   @Setter
+  private String netType;
+
+  @Getter
+  @Setter
   protected List<WitnessCapsule> shuffledWitnessStates;
 
 
