@@ -183,7 +183,8 @@ public class Args {
   public static void setParam(final String[] args, final String configFile) {
     Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    if ("" == INSTANCE.confFile) {
+    File confFile = new File(configFile);
+    if (confFile.exists()) {
       config = Configuration.getByPath(configFile);
     } else {
       config = Configuration.getByPath(INSTANCE.confFile);
