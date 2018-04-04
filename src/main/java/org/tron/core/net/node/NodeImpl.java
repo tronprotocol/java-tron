@@ -227,6 +227,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void listen() {
+    pool.init();
     isAdvertiseActive = true;
     isFetchActive = true;
     isHandleSyncBlockActive = true;
@@ -557,7 +558,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       //processSyncBlock(blkMsg.getBlockCapsule());
       if (!peer.isBusy()) {
         if (peer.getUnfetchSyncNum() > 0
-            && peer.getSyncBlockToFetch().size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
+            && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
           syncNextBatchChainIds(peer);
         } else {
           //TODO: here should be a loop do this thing

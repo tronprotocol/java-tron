@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
@@ -52,6 +53,8 @@ public class SyncPool {
   private NodeManager nodeManager;
 
   @Autowired
+  private ApplicationContext ctx;
+
   private ChannelManager channelManager;
 
   private PeerConnectionDelegate peerDel;
@@ -70,10 +73,11 @@ public class SyncPool {
   public SyncPool(PeerConnectionDelegate peerDel, PeerClient peerClient) {
     this.peerDel = peerDel;
     this.peerClient = peerClient;
-    init();
   }
 
   public void init() {
+    channelManager = ctx.getBean(ChannelManager.class);
+
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
