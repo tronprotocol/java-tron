@@ -97,9 +97,9 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 10) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 10) * 2;
-//        discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
+        min(discoverInPong.get(), 50) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
+    discoverReput += min(discoverInNeighbours.get(), 50) * 2;
+    //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int rlpxReput = 0;
     rlpxReput += p2pHandShake.get() > 0 ? 20 : 0;

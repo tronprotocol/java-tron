@@ -217,7 +217,11 @@ public class SyncPool {
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
+      }
 
+      if (handler.getNodeStatistics().getReputation() < 100) {
+        logger.info("filter it !!! Repu:" + handler.getNodeStatistics() );
+        return false;
       }
 
       return  true;
