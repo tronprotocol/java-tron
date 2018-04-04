@@ -7,7 +7,6 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,7 +27,6 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
@@ -220,9 +218,6 @@ public class Manager {
   public BlockCapsule getGenesisBlock() {
     return genesisBlock;
   }
-
-
-
 
 
   /**
