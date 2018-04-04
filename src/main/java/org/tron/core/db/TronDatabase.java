@@ -1,8 +1,10 @@
 package org.tron.core.db;
 
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 
+@Slf4j
 public abstract class TronDatabase<T> {
 
   protected LevelDbDataSourceImpl dbSource;
@@ -41,5 +43,6 @@ public abstract class TronDatabase<T> {
   public abstract T get(byte[] key);
 
   public abstract boolean has(byte[] key);
+
 
 }
