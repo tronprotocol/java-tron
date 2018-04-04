@@ -63,10 +63,10 @@ public class TransferActuator extends AbstractActuator {
                 .getClass() + "]");
       }
       TransferContract transferContract = this.contract.unpack(TransferContract.class);
-      if (!Wallet.addressValid(transferContract.getOwnerAddress())) {
+      if (!Wallet.addressValid(transferContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
-      if (!Wallet.addressValid(transferContract.getToAddress())) {
+      if (!Wallet.addressValid(transferContract.getToAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate toAddress");
       }
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");

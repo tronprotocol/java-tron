@@ -120,16 +120,6 @@ public class Wallet {
     Wallet.addressPreFixByte = addressPreFixByte;
   }
 
-  public static boolean addressValid(ByteString bsAddress) {
-
-    if (bsAddress == null || bsAddress.size() == 0) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    byte[] address = bsAddress.toByteArray();
-    return addressValid(address);
-  }
-
   public static boolean addressValid(byte[] address) {
     if (address == null || address.length == 0) {
       logger.warn("Warning: Address is empty !!");
