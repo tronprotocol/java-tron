@@ -15,6 +15,10 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     super(dbName);
   }
 
+  public void destroy() {
+    instance = null;
+  }
+
   /**
    * create fun.
    *

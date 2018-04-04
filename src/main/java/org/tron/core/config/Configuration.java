@@ -22,7 +22,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class Configuration {
 
   private static com.typesafe.config.Config config;
@@ -38,14 +40,24 @@ public class Configuration {
       throw new IllegalArgumentException("Configuration path is required!");
     }
 
-    if (config == null) {
-      File confFile = new File(configurationPath);
-      if (confFile.exists()) {
-        config = ConfigFactory.parseFile(new File(configurationPath));
-      } else {
-        config = ConfigFactory.load(configurationPath);
-      }
+    //if (config == null) {
+
+    File confFile = new File(configurationPath);
+    if (confFile.exists()) {
+      logger.info("eee");
+      logger.info(configurationPath);
+
+      config = ConfigFactory.parseFile(new File(configurationPath));
+      return config;
+    } else {
+      logger.info("aaa");
+      logger.info(configurationPath);
+      config = ConfigFactory.load(configurationPath);
+      return config;
     }
-    return config;
   }
+  //logger.info("fff");
+  //logger.info(configurationPath);
+  //return config;
 }
+
