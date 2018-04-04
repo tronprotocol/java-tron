@@ -575,6 +575,7 @@ public class Manager {
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          logger.info("start process block, num = {}",newBlock.getNum());
           this.processBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
@@ -590,11 +591,12 @@ public class Manager {
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = getSlotAtTime(block.getTimeStamp());
-    for (int i = 1; i < slot; i ++){
+    for (int i = 1; i < slot; ++i){
       if (block.getWitnessAddress() != getScheduledWitness(i)){
         WitnessCapsule w = this.witnessStore.get(block.getWitnessAddress().toByteArray());
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
+        logger.debug("{} miss a block",w.getInstance().getUrl());
       }
     }
     this.head = block;
@@ -911,6 +913,9 @@ public class Manager {
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
     }
+
+    logger.info("updateSignedWitness successfully. block num:{}, witness url:{}",
+        block.getNum(), witnessCapsule.getInstance().getUrl());
 
   }
 
