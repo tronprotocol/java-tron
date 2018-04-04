@@ -1,2 +1,2 @@
 #!/bin/bash
-ssh tron@$HOST_IP -p 22008 sh /home/tron/workspace/deploy_all.sh
+ssh tron@47.93.9.236 -p 22008 sh /home/tron/workspace/deploy_all.sh
