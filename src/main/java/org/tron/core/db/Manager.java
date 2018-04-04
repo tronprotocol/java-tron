@@ -600,8 +600,8 @@ public class Manager {
       slot = getSlotAtTime(block.getTimeStamp());
     }
     for (int i = 1; i < slot; ++i){
-      if (getScheduledWitness(i) != block.getWitnessAddress()){
-        WitnessCapsule w = this.witnessStore.get(getScheduledWitness(i).toByteArray());
+      if (!getScheduledWitness(i).equals(block.getWitnessAddress())){
+        WitnessCapsule w = this.witnessStore.get(createDbKey(getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info("{} miss a block. totalMissed = {}",

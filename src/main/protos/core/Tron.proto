@@ -118,7 +118,7 @@ message BlockHeader {
     //bytes nonce = 5;
     //bytes difficulty = 6;
     int64 number = 7;
-    //int64 witness_id = 8;
+    int64 witness_id = 8;
     bytes witness_address = 9;
   }
   raw raw_data = 1;
