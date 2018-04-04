@@ -6,7 +6,6 @@ script:
 - ./gradlew test
 - cat tron > ~/.ssh/id_rsa
 - chmod 600 ~/.ssh/id_rsa
-- cat tron
 addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
