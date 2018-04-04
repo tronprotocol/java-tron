@@ -604,7 +604,7 @@ public class Manager {
         WitnessCapsule w = this.witnessStore.get(getScheduledWitness(i).toByteArray());
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
-        logger.info("{} miss a block",w.getAddress());
+        logger.info("{} miss a block",w.createReadableString());
       }
     }
     this.head = block;
@@ -924,7 +924,7 @@ public class Manager {
     }
 
     logger.info("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.getAddress(), block.getNum(), witnessCapsule.getTotalProduced());
+        witnessCapsule.createReadableString(), block.getNum(), witnessCapsule.getTotalProduced());
 
   }
 
