@@ -185,7 +185,7 @@ public class Args {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     File confFile = new File(configFile);
     if (confFile.exists()) {
-      config = Configuration.getByPath(configFile);
+      config = Configuration.getByFile(confFile);
     } else {
       config = Configuration.getByPath(INSTANCE.confFile);
     }

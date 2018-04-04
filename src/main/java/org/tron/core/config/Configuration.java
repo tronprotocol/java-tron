@@ -39,12 +39,17 @@ public class Configuration {
     }
 
     if (config == null) {
-      File confFile = new File(configurationPath);
-      if (confFile.exists()) {
-        config = ConfigFactory.parseFile(new File(configurationPath));
-      } else {
-        config = ConfigFactory.load(configurationPath);
-      }
+      config = ConfigFactory.load(configurationPath);
+    }
+    return config;
+  }
+
+  public static com.typesafe.config.Config getByFile(final File confFile) {
+    if (!confFile.exists()) {
+      throw new IllegalArgumentException("Configuration path is required!");
+    }
+    if (config == null) {
+      config = ConfigFactory.parseFile(confFile);
     }
     return config;
   }
