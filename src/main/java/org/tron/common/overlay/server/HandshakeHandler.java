@@ -80,7 +80,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     final HelloMessage helloMessage = (HelloMessage) msg;
-    channel.getNodeStatistics().p2pInHello.add();
 
     if (helloMessage.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       logger.info("version not support, you[{}] version[{}], my version[{}]",
@@ -94,6 +93,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       channel.initWithNode(remoteId, helloMessage.getListenPort());
       channel.sendHelloMessage(ctx);
     }
+
+    channel.getNodeStatistics().p2pInHello.add();
 
     channel.publicHandshakeFinished(ctx, helloMessage);
 
