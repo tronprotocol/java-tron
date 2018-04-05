@@ -36,6 +36,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 
 @Slf4j
@@ -377,7 +378,7 @@ public class Args {
   private static void privateKey(final com.typesafe.config.Config config) {
     if (config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
-      if (INSTANCE.privateKey.length() != 64) {
+      if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
         throw new RuntimeException(
             "The peer.privateKey needs to be Hex encoded and 32 byte length");
       }

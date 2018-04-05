@@ -36,13 +36,13 @@ public class ArgsTest {
     Args args = Args.getInstance();
     Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
 
-    Assert.assertEquals(7, args.getSeedNode().getIpList().size());
+    Assert.assertEquals(11, args.getSeedNode().getIpList().size());
 
     GenesisBlock genesisBlock = args.getGenesisBlock();
 
-    Assert.assertEquals(3, genesisBlock.getAssets().size());
+    Assert.assertEquals(4, genesisBlock.getAssets().size());
 
-    Assert.assertEquals(4, genesisBlock.getWitnesses().size());
+    Assert.assertEquals(11, genesisBlock.getWitnesses().size());
 
     Assert.assertEquals("0", genesisBlock.getTimestamp());
 
@@ -50,7 +50,7 @@ public class ArgsTest {
         genesisBlock.getParentHash());
 
     Assert.assertEquals(
-        Lists.newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+        Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
         args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertTrue(args.isNodeDiscoveryEnable());
