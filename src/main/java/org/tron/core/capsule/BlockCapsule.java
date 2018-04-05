@@ -184,7 +184,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
@@ -201,7 +201,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
-              block.getBlockHeader().getWitnessSignature().toStringUtf8()),
+              TransactionCapsule
+                  .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       throw new ValidateSignatureException(e.getMessage());
@@ -228,9 +229,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
 
     Vector<Sha256Hash> ids = transactionsList.stream()
-            .map(TransactionCapsule::new)
-            .map(TransactionCapsule::getHash)
-            .collect(Collectors.toCollection(Vector::new));
+        .map(TransactionCapsule::new)
+        .map(TransactionCapsule::getHash)
+        .collect(Collectors.toCollection(Vector::new));
 
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }
