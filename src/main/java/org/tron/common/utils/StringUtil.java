@@ -15,6 +15,8 @@
 
 package org.tron.common.utils;
 
+import com.google.protobuf.ByteString;
+
 public class StringUtil {
 
   /**
@@ -26,5 +28,14 @@ public class StringUtil {
   public static boolean isHexString(String str, int bits) {
     String regex = String.format("^[A-Fa-f0-9]{%d}$", bits);
     return str.matches(regex);
+  }
+
+
+  public static byte[] createDbKey(ByteString string) {
+    return string.toByteArray();
+  }
+
+  public static String createReadableString(ByteString string) {
+    return ByteArray.toHexString(string.toByteArray());
   }
 }
