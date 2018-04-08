@@ -128,7 +128,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ScheduledExecutorService disconnectInactiveExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private ScheduledExecutorService cleanInventoryExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService cleanInventoryExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -410,7 +411,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
-
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logNodeStatus();
@@ -433,7 +433,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     sb.append("============\n");
 
     sb.append(String.format(
-              "MyHeadBlockNum: %d\n"
+        "MyHeadBlockNum: %d\n"
             + "advToSpreadNum: %d\n"
             + "advObjectToFetchNum: %d\n"
             + "advObjWeRequestedNum: %d\n"
@@ -677,7 +677,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
-           || blockIds.peek().getNum() == 0)) {
+        || blockIds.peek().getNum() == 0)) {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
@@ -748,8 +748,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
-              + "\n Peer give us is " + blockIdWeGet.peek().getString()));
+                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                      .getString()
+                      + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
         }
@@ -804,11 +805,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
 
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer,blockIdWeGet.peek());
-          } else {
-            //poll the block we both have.
-            peer.getSyncBlockToFetch().pollLast();
+            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+
           }
+          //poll the block we both have.
+          blockIdWeGet.poll();
         }
 
         //sew it
@@ -910,7 +911,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
     peer.setHeadBlockWeBothHave(blockId);
-    long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule().getTimeStamp();
+    long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
+        .getTimeStamp();
     peer.setHeadBlockTimeWeBothHave(time);
   }
 
