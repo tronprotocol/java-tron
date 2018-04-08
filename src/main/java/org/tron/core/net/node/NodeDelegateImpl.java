@@ -117,7 +117,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-          .filter(blockId -> dbManager.containBlock(blockId))
+          .filter(blockId -> containBlockInMainChain(blockId))
           .findFirst()
           .orElseThrow(UnReachBlockException::new);
       //todo: can not find any same block form peer's summary and my db.
@@ -144,7 +144,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     LinkedList<BlockId> forkList = new LinkedList<>();
 
     if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
-      if (dbManager.containBlock(beginBLockId)) {
+      if (containBlockInMainChain(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {

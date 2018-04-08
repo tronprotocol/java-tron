@@ -790,26 +790,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!isFound) {
             while (!blockIdWeGet.isEmpty()
                 && del.containBlock(blockIdWeGet.peek())) {
-              peer.setHeadBlockWeBothHave(blockIdWeGet.peek());
-              peer.setHeadBlockTimeWeBothHave(del.getBlockTime(blockIdWeGet.peek()));
+              updateBlockWeBothHave(peer, blockIdWeGet.peek());
               blockIdWeGet.poll();
             }
           }
         } else if (!blockIdWeGet.isEmpty()) {
           while (!peer.getSyncBlockToFetch().isEmpty()) {
             if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
-              blockIdWeGet.pop();
+              peer.getSyncBlockToFetch().pollLast();
             } else {
               break;
             }
           }
+
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer,
-                ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK))
-                    .getBlockCapsule());
+            updateBlockWeBothHave(peer,blockIdWeGet.peek());
+          } else {
+            //poll the block we both have.
+            peer.getSyncBlockToFetch().pollLast();
           }
-          //poll the block we both have.
-          blockIdWeGet.pop();
         }
 
         //sew it
@@ -907,6 +906,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+  }
+
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+    peer.setHeadBlockWeBothHave(blockId);
+    long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule().getTimeStamp();
+    peer.setHeadBlockTimeWeBothHave(time);
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
