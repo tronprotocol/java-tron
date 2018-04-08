@@ -38,7 +38,7 @@ public class WitnessService implements Service {
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
-  WitnessController controller;
+  private WitnessController controller;
 
   /**
    * Construction method.

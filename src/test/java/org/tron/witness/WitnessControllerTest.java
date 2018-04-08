@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.Arrays;
 import org.junit.Test;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -43,16 +43,14 @@ public class WitnessControllerTest {
     assertEquals(1, controller.getSlotAtTime(1522847891000L));
     assertEquals(3, controller.getHeadSlot());
 
-    List<WitnessCapsule> list = Lists.newArrayList();
     ByteString a = ByteString.copyFrom("1", Charset.defaultCharset());
     ByteString b = ByteString.copyFrom("2", Charset.defaultCharset());
-//    ByteString b = ByteString.copyFrom(new byte[1]);
-
     WitnessCapsule witnessCapsule1 = new WitnessCapsule(a);
     WitnessCapsule witnessCapsule2 = new WitnessCapsule(b);
-    list.add(witnessCapsule1);
-    list.add(witnessCapsule2);
-    controller.setShuffledWitnessStates(list);
+
+    controller.setShuffledWitnessStates(Lists.newArrayList(Arrays.asList(
+        witnessCapsule1, witnessCapsule2
+    )));
 
     assertEquals(a, controller.getScheduledWitness(1));
 

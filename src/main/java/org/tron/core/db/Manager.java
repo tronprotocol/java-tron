@@ -28,6 +28,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -507,11 +508,12 @@ public class Manager {
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
     if (block.getNum() != 1){
-      slot = getSlotAtTime(block.getTimeStamp());
+      slot = witnessController.getSlotAtTime(block.getTimeStamp());
     }
     for (int i = 1; i < slot; ++i){
-      if (!getScheduledWitness(i).equals(block.getWitnessAddress())){
-        WitnessCapsule w = this.witnessStore.get(createDbKey(getScheduledWitness(i)));
+      if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
+        WitnessCapsule w = this.witnessStore
+            .get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed()+1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info("{} miss a block. totalMissed = {}",
@@ -828,7 +830,7 @@ public class Manager {
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
     witnessCapsule.setLatestBlockNum(block.getNum());
-    witnessCapsule.setLatestSlotNum(getAbSlotAtTime(block.getTimeStamp()));
+    witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
 
