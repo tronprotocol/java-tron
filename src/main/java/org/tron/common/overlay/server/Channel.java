@@ -107,8 +107,7 @@ public class Channel {
         isActive = remoteId != null && !remoteId.isEmpty();
 
         //TODO: use config here
-        pipeline.addLast("readTimeoutHandler",
-            new ReadTimeoutHandler(60, TimeUnit.SECONDS));
+        pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
@@ -128,7 +127,6 @@ public class Channel {
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setPeerDel(peerDel);
 
-        logger.info("Channel init finished");
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
@@ -207,6 +205,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
+        logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
          msgQueue.disconnect(reason);
     }
 

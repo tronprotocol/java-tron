@@ -38,7 +38,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
             DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
             out.add(event);
         } catch (Exception e) {
-            logger.info("parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length, ctx.channel().remoteAddress());
+            logger.error("parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length, ctx.channel().remoteAddress());
         }
     }
 }
