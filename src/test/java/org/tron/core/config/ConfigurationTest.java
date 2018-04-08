@@ -75,7 +75,6 @@ public class ConfigurationTest {
   public void getShouldReturnConfiguration() {
     Config config = Configuration.getByPath("config-test.conf");
     assertTrue(config.hasPath("storage"));
-    assertTrue(config.hasPath("overlay"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
   }

@@ -35,6 +35,7 @@ public class ManagerTest {
         Constant.TEST_CONF);
 
     dbManager.init();
+
     blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
         0,
@@ -51,6 +52,7 @@ public class ManagerTest {
   public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    dbManager.destory();
   }
 
   @Test
@@ -134,9 +136,9 @@ public class ManagerTest {
 
   @Test
   public void fork() {
-    Args.setParam(new String[]{"--witness"}, Constant.NORMAL_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
-    String key = "00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();

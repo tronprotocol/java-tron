@@ -77,7 +77,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     //TODO: let peer know.
     //ethereumListener.onRecvMessage(channel, msg);
 
-    channel.getNodeStatistics().rlpxInMessages.add();
+    channel.getNodeStatistics().tronInMessage.add();
     return msg;
   }
 
