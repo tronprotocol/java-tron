@@ -212,7 +212,6 @@ public class Manager {
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
-    this.witnessController.initShuffledWitnessStates();
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     this.khaosDb.start(head);
   }
