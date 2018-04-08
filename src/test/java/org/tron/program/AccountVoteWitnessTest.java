@@ -72,7 +72,7 @@ public class AccountVoteWitnessTest {
     witnessCapsuleList.forEach(witnessCapsule ->
         dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule)
     );
-    dbManager.updateWitness();
+    dbManager.getWitnessController().updateWitness();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000002".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000003".getBytes()));

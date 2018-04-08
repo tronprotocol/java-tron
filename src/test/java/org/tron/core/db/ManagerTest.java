@@ -17,10 +17,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateSignatureException;
 
 @Slf4j
 public class ManagerTest {
@@ -46,6 +43,7 @@ public class ManagerTest {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+
   }
 
   @AfterClass
@@ -125,7 +123,7 @@ public class ManagerTest {
     dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
     dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
     dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
-    dbManager.updateWits();
+    dbManager.getWitnessController().initWits();
     dbManager.getWitnesses().forEach(witnessCapsule -> {
       logger.info("witness address is {}",
           ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
@@ -149,7 +147,7 @@ public class ManagerTest {
     IntStream.range(0, 5).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-      } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+      } catch (Exception e) {
         logger.debug(e.getMessage(), e);
       }
     });
@@ -196,7 +194,7 @@ public class ManagerTest {
       Assert.assertEquals(dbManager.getHead().getBlockId().getByteString(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
 
-    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | UnLinkedBlockException e) {
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
     dbManager.getWitnesses().clear();

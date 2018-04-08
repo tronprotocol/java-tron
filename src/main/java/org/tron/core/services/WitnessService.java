@@ -18,32 +18,35 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
+import org.tron.core.witness.WitnessController;
 
 @Slf4j
 public class WitnessService implements Service {
 
-  private static final int MIN_PARTICIPATION_RATE = 0; // MIN_PARTICIPATION_RATE * 1%
+  private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
-  private Manager db;
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
+
+  private WitnessController controller;
 
   /**
    * Construction method.
    */
   public WitnessService(Application tronApp) {
     this.tronApp = tronApp;
-    db = tronApp.getDbManager();
     generateThread = new Thread(scheduleProductionLoop);
+    controller = tronApp.getDbManager().getWitnessController();
   }
 
   /**
@@ -133,23 +136,24 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
 
     long now = DateTime.now().getMillis() + 50L;
+    BlockCapsule head = this.tronApp.getDbManager().getHead();
     if (this.needSyncCheck) {
-      long nexSlotTime = db.getSlotTime(1);
+      long nexSlotTime = controller.getSlotTime(1);
       if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
         Thread.sleep(nexSlotTime - now); //Processing Time Drift later
         now = DateTime.now().getMillis();
       } else {
         logger.debug("Not sync ,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-            new DateTime(now), new DateTime(db.getHead().getTimeStamp()), db.getHead().getNum(),
-            db.getHead().getBlockId());
+            new DateTime(now), new DateTime(head.getTimeStamp()),
+            head.getNum(), head.getBlockId());
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
 //    if (db.isSyncMode()) {
 //      return BlockProductionCondition.NOT_SYNCED;
 //    }
-    final int participation = this.db.calculateParticipationRate();
+    final int participation = this.controller.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
           "Participation[" + participation + "] <  MIN_PARTICIPATION_RATE[" + MIN_PARTICIPATION_RATE
@@ -157,28 +161,29 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = db.getSlotAtTime(now);
+    long slot = controller.getSlotAtTime(now);
     logger.debug("Slot:" + slot);
 
     if (slot == 0) {
       logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-          new DateTime(now), new DateTime(db.getHead().getTimeStamp()), db.getHead().getNum(),
-          db.getHead().getBlockId());
+          new DateTime(now), new DateTime(head.getTimeStamp()), head.getNum(),
+          head.getBlockId());
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
-    final ByteString scheduledWitness = db.getScheduledWitness(slot);
+    final ByteString scheduledWitness = controller.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
-          ByteArray.toHexString(scheduledWitness.toByteArray()), slot, db.getAbSlotAtTime(now));
+          ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
+          controller.getAbSlotAtTime(now));
       logger.debug("headBlockNumber:{},headBlockId:{},headBlockTime:{}",
-          db.getHead().getNum(), db.getHead().getBlockId(),
-          new DateTime(db.getHead().getTimeStamp()));
+          head.getNum(), head.getBlockId(),
+          new DateTime(head.getTimeStamp()));
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
-    long scheduledTime = db.getSlotTime(slot);
+    long scheduledTime = controller.getSlotTime(slot);
 
     if (scheduledTime - now > PRODUCE_TIME_OUT) {
       return BlockProductionCondition.LAG;
@@ -192,9 +197,9 @@ public class WitnessService implements Service {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       logger.info(
           "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), db.getAbSlotAtTime(now), block.getBlockId(),
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
           new DateTime(block.getTimeStamp()),
-          db.getHead().getBlockId());
+          head.getBlockId());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
@@ -213,8 +218,8 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException {
-    return db.generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+    return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
 
@@ -228,7 +233,7 @@ public class WitnessService implements Service {
       byte[] privateKey = ByteArray.fromHexString(key);
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] address = ecKey.getAddress();
-      WitnessCapsule witnessCapsule = this.db.getWitnessStore()
+      WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
           .get(address);
       // need handle init witness
       if (null == witnessCapsule) {
