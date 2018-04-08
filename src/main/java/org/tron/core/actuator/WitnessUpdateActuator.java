@@ -53,7 +53,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
       }
 
       final WitnessUpdateContract contract = this.contract.unpack(WitnessUpdateContract.class);
-      if(!Wallet.addressValid(contract.getOwnerAddress())){
+      if(!Wallet.addressValid(contract.getOwnerAddress().toByteArray())){
         throw new ContractValidateException("Invalidate address");
       }
       if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {

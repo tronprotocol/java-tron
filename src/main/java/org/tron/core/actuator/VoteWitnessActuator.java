@@ -50,7 +50,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
-      if (!Wallet.addressValid(contract.getOwnerAddress())) {
+      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
       ByteString ownerAddress = contract.getOwnerAddress();
