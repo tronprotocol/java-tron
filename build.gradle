@@ -120,6 +120,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
+    compile 'com.googlecode.cqengine:cqengine:2.12.4'
 }
 
 check.dependsOn 'lint'
