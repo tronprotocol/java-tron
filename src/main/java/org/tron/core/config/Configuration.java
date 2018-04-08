@@ -40,24 +40,21 @@ public class Configuration {
       throw new IllegalArgumentException("Configuration path is required!");
     }
 
-    //if (config == null) {
-
     File confFile = new File(configurationPath);
     if (confFile.exists()) {
-      logger.info("eee");
-      logger.info(configurationPath);
-
       config = ConfigFactory.parseFile(new File(configurationPath));
-      return config;
     } else {
-      logger.info("aaa");
-      logger.info(configurationPath);
       config = ConfigFactory.load(configurationPath);
-      return config;
     }
+    return config;
   }
-  //logger.info("fff");
-  //logger.info(configurationPath);
-  //return config;
+
+  public static com.typesafe.config.Config getByFile(final File confFile) {
+    if (!confFile.exists()) {
+      throw new IllegalArgumentException("Configuration path is required!");
+    }
+    config = ConfigFactory.parseFile(confFile);
+    return config;
+  }
 }
 
