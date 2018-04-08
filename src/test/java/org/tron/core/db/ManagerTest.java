@@ -144,7 +144,7 @@ public class ManagerTest {
     dbManager.addWitness(witnessCapsule);
     dbManager.addWitness(witnessCapsule);
     dbManager.addWitness(witnessCapsule);
-    IntStream.range(0, 5).forEach(i -> {
+    IntStream.range(0, 1).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
       } catch (Exception e) {
@@ -182,7 +182,7 @@ public class ManagerTest {
           dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
           blockCapsule1.getBlockId());
 
-      Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 6);
+      Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 2);
 
       Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
           blockCapsule1.getBlockId());

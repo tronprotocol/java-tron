@@ -128,7 +128,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ScheduledExecutorService disconnectInactiveExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private ScheduledExecutorService cleanInventoryExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService cleanInventoryExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -410,7 +411,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
-
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logNodeStatus();
@@ -433,7 +433,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     sb.append("============\n");
 
     sb.append(String.format(
-              "MyHeadBlockNum: %d\n"
+        "MyHeadBlockNum: %d\n"
             + "advToSpreadNum: %d\n"
             + "advObjectToFetchNum: %d\n"
             + "advObjWeRequestedNum: %d\n"
@@ -677,7 +677,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
-           || blockIds.peek().getNum() == 0)) {
+        || blockIds.peek().getNum() == 0)) {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
@@ -748,8 +748,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
-              + "\n Peer give us is " + blockIdWeGet.peek().getString()));
+                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                      .getString()
+                      + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
         }
@@ -790,26 +791,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!isFound) {
             while (!blockIdWeGet.isEmpty()
                 && del.containBlock(blockIdWeGet.peek())) {
-              peer.setHeadBlockWeBothHave(blockIdWeGet.peek());
-              peer.setHeadBlockTimeWeBothHave(del.getBlockTime(blockIdWeGet.peek()));
+              updateBlockWeBothHave(peer, blockIdWeGet.peek());
               blockIdWeGet.poll();
             }
           }
         } else if (!blockIdWeGet.isEmpty()) {
           while (!peer.getSyncBlockToFetch().isEmpty()) {
             if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
-              blockIdWeGet.pop();
+              peer.getSyncBlockToFetch().pollLast();
             } else {
               break;
             }
           }
+
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer,
-                ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK))
-                    .getBlockCapsule());
+            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+
           }
           //poll the block we both have.
-          blockIdWeGet.pop();
+          blockIdWeGet.poll();
         }
 
         //sew it
@@ -907,6 +907,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+  }
+
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+    peer.setHeadBlockWeBothHave(blockId);
+    long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
+        .getTimeStamp();
+    peer.setHeadBlockTimeWeBothHave(time);
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {

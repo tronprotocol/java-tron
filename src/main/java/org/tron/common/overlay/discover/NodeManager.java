@@ -93,8 +93,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-
-
   }
 
   public ScheduledExecutorService getPongTimer() {
@@ -146,16 +144,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private void dbRead() {
     Set<Node> Nodes = this.dbManager.readNeighbours();
     logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node));
+    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics().setPersistedReputation(node.getReputation()));
   }
 
   private void dbWrite() {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
-        if (isNodeAlive(nodeHandler)) {
+        //if (isNodeAlive(nodeHandler)) {
+          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
           batch.add(nodeHandler.getNode());
-        }
+        //}
       }
     }
     logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
