@@ -64,4 +64,16 @@ public class WalletTest {
             .getAddress()));
     assertEquals("Wallet ECKey should match provided ECKey", wallet.getEcKey(), ecKey);
   }
+
+  @Test
+  public void ss() {
+    for (int i = 0; i < 4; i++) {
+      ECKey ecKey = new ECKey(Utils.getRandom());
+      System.out.println(i+1);
+      System.out.println("privateKey:" + ByteArray.toHexString(ecKey.getPrivKeyBytes()));
+      System.out.println("publicKey:" + ByteArray.toHexString(ecKey.getPubKey()));
+      System.out.println("address:" + ByteArray.toHexString(ecKey.getAddress()));
+      System.out.println();
+    }
+  }
 }

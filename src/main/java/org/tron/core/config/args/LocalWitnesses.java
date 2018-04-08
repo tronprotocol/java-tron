@@ -21,6 +21,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.ChainConstant;
 
 @Slf4j
 public class LocalWitnesses {
@@ -57,9 +59,9 @@ public class LocalWitnesses {
       privateKey = privateKey.substring(2);
     }
 
-    if (StringUtils.isNotBlank(privateKey) && privateKey.length() != 66) {
+    if (StringUtils.isNotBlank(privateKey) && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
       throw new IllegalArgumentException(
-          "Private key(" + privateKey + ") must be 66-bits hex string.");
+          "Private key(" + privateKey + ") must be " + ChainConstant.PRIVATE_KEY_LENGTH + "-bits hex string.");
     }
   }
 

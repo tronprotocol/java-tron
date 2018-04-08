@@ -93,8 +93,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-
-
   }
 
   public ScheduledExecutorService getPongTimer() {

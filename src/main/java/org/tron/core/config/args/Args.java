@@ -36,6 +36,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 
 @Slf4j
@@ -183,15 +184,14 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final String configFile) {
+  public static void setParam(final String[] args, final String configFilePath) {
     Config config;
-    logger.info(configFile);
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    if ("" == INSTANCE.confFile) {
-      config = Configuration.getByPath(configFile);
-      logger.info(configFile);
+    File confFile = new File(INSTANCE.confFile);
+    if (confFile.exists()) {
+      config = Configuration.getByFile(confFile);
     } else {
-      config = Configuration.getByPath(INSTANCE.confFile);
+      config = Configuration.getByPath(configFilePath);
     }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
@@ -378,7 +378,7 @@ public class Args {
   private static void privateKey(final com.typesafe.config.Config config) {
     if (config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
-      if (INSTANCE.privateKey.length() != 64) {
+      if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
         throw new RuntimeException(
             "The peer.privateKey needs to be Hex encoded and 32 byte length");
       }

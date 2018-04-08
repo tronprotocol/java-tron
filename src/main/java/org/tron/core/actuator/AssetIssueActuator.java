@@ -86,7 +86,7 @@ public class AssetIssueActuator extends AbstractActuator {
     try {
       final AssetIssueContract assetIssueContract = this.contract.unpack(AssetIssueContract.class);
 
-      if (!Wallet.addressValid(assetIssueContract.getOwnerAddress())) {
+      if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
       Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
