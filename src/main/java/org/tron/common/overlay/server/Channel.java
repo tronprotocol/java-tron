@@ -100,7 +100,7 @@ public class Channel {
     private PeerStatistics peerStats = new PeerStatistics();
 
     public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-        ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+                     ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
 
@@ -206,7 +206,7 @@ public class Channel {
 
     public void disconnect(ReasonCode reason) {
         logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
-         msgQueue.disconnect(reason);
+        msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {
@@ -256,3 +256,4 @@ public class Channel {
         return String.format("%s | %s", getPeerId(), inetSocketAddress);
     }
 }
+

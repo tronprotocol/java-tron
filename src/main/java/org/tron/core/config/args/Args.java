@@ -35,8 +35,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.db.AccountStore;
 import org.tron.core.config.Configuration;
+import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.AccountStore;
 
 @Slf4j
 @NoArgsConstructor
@@ -183,13 +184,14 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final String configFile) {
+  public static void setParam(final String[] args, final String configFilePath) {
     Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    if ("" == INSTANCE.confFile) {
-      config = Configuration.getByPath(configFile);
+    File confFile = new File(INSTANCE.confFile);
+    if (confFile.exists()) {
+      config = Configuration.getByFile(confFile);
     } else {
-      config = Configuration.getByPath(INSTANCE.confFile);
+      config = Configuration.getByPath(configFilePath);
     }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
@@ -211,10 +213,12 @@ public class Args {
     }
 
     INSTANCE.storage = new Storage();
+    logger.info("abc");
+    logger.info(INSTANCE.storageDirectory);
     INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(config.getString("storage.directory")));
-
+    logger.info(INSTANCE.storage.getDirectory());
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
@@ -374,7 +378,7 @@ public class Args {
   private static void privateKey(final com.typesafe.config.Config config) {
     if (config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
-      if (INSTANCE.privateKey.length() != 64) {
+      if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
         throw new RuntimeException(
             "The peer.privateKey needs to be Hex encoded and 32 byte length");
       }

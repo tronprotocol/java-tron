@@ -24,6 +24,8 @@ public class BlockStoreTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    BlockStore.destroy();
+
   }
 
   @Test
@@ -34,5 +36,6 @@ public class BlockStoreTest {
     Assert.assertEquals(0, blockStore.getHeadBlockNum());
     Assert.assertEquals(blockStore.getGenesisTime(), blockStore.getHeadBlockTime());
     Assert.assertEquals(0, blockStore.currentASlot());
+
   }
 }

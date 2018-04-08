@@ -2,21 +2,6 @@ package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,25 +19,15 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.TraitorPeerException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.exception.*;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 @Slf4j
 @Component
@@ -83,12 +58,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
 
-    public void sendInv() {
+    void sendInv() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> peer.sendMessage(new InventoryMessage(value, key))));
     }
 
-    public void sendFetch() {
+    void sendFetch() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> peer.sendMessage(new FetchInvDataMessage(value, key))));
     }
@@ -156,11 +131,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Set<BlockMessage> blockInProc = new ConcurrentSet<>();
 
-  ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
+  private ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
-  ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
+  private ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
 
-  ExecutorLoop<Message> loopAdvertiseInv;
+  private ExecutorLoop<Message> loopAdvertiseInv;
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
@@ -963,7 +938,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public void onConnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
     logger.info("start sync with::" + peer);
-    peer.setTronState(TronState.START_TO_SYNC);
+    peer.setTronState(TronState.SYNCING);
     peer.setConnectTime(Time.getCurrentMillis());
     startSyncWithPeer(peer);
 //    if (mapPeer.containsKey(peer.getAddress())) {

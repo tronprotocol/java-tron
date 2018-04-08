@@ -244,6 +244,14 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  public void destory() {
+    getAccountStore().destroy();
+    getTransactionStore().destroy();
+    getBlockStore().destroy();
+    getWitnessStore().destory();
+    getAssetIssueStore().destroy();
+    getDynamicPropertiesStore().destroy();
+  }
 
   /**
    * all db should be init here.
@@ -259,12 +267,10 @@ public class Manager {
 
     revokingStore = RevokingStore.getInstance();
     revokingStore.enable();
-
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
-
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.updateWits();
@@ -589,7 +595,21 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
+    long slot = 1;
+    if (block.getNum() != 1){
+      slot = getSlotAtTime(block.getTimeStamp());
+    }
+    for (int i = 1; i < slot; ++i){
+      if (!getScheduledWitness(i).equals(block.getWitnessAddress())){
+        WitnessCapsule w = this.witnessStore.get(createDbKey(getScheduledWitness(i)));
+        w.setTotalMissed(w.getTotalMissed()+1);
+        this.witnessStore.put(w.createDbKey(), w);
+        logger.info("{} miss a block. totalMissed = {}",
+            w.createReadableString(), w.getTotalMissed());
+      }
+    }
     this.head = block;
+    logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
@@ -879,29 +899,33 @@ public class Manager {
 
   /**
    * @param block the block update signed witness.  set witness who signed block the 1. the latest
-   * block num 2. pay the trx to witness. 3. (TODO)the latest slot num.
+   * block num 2. pay the trx to witness. 3. the latest slot num.
    */
 
   public void updateSignedWitness(BlockCapsule block) {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    long latestSlotNum = 0;
-    witnessCapsule.getInstance().toBuilder().setLatestBlockNum(block.getNum())
-        .setLatestSlotNum(latestSlotNum)
-        .build();
-    AccountCapsule sun = accountStore.getSun();
+    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
+    witnessCapsule.setLatestBlockNum(block.getNum());
+    witnessCapsule.setLatestSlotNum(getAbSlotAtTime(block.getTimeStamp()));
 
+    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+
+    AccountCapsule sun = accountStore.getSun();
     try {
       adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-
+      logger.debug(e.getMessage(), e);
     }
     try {
       adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
     }
+
+    logger.info("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+        witnessCapsule.createReadableString(), block.getNum(), witnessCapsule.getTotalProduced());
 
   }
 
