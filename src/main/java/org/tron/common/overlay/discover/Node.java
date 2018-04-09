@@ -66,6 +66,10 @@ public class Node implements Serializable {
     return node;
   }
 
+  public static Node instanceOf(String ip, int port) {
+    return instanceOf(ip + ":" + port);
+  }
+
   public String getEnodeURL() {
     return new StringBuilder("enode://")
         .append(ByteArray.toHexString(id)).append("@")
