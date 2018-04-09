@@ -211,7 +211,6 @@ public class SyncPool {
       }
 
       if (handler.getNodeStatistics().getReputation() < 100) {
-        logger.info("filter it !!! Repu:" + handler.getNodeStatistics() );
         return false;
       }
 
