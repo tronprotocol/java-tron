@@ -291,8 +291,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public Map<String, NodeHandler> getActiveNodes() {
     Map<String, NodeHandler> handlers = new HashMap<>();
-    for (NodeHandler handler :
-        this.nodeHandlerMap.values()) {
+
+    for (NodeHandler handler : this.nodeHandlerMap.values()) {
       if (isNodeAlive(handler)) {
         String key = handler.node.getHexId() + handler.node.getHost();
         handlers.put(key, handler);
