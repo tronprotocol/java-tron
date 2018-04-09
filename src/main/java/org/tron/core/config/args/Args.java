@@ -340,36 +340,9 @@ public class Args {
       return Collections.EMPTY_LIST;
     }
     List<Node> ret = new ArrayList<>();
-    List<? extends ConfigObject> list = config.getObjectList("node.active");
-    for (ConfigObject configObject : list) {
-      Node n;
-      if (configObject.get("url") != null) {
-        String url = configObject.toConfig().getString("url");
-        n = new Node(url.startsWith("enode://") ? url : "enode://" + url);
-      } else if (configObject.get("ip") != null) {
-        String ip = configObject.toConfig().getString("ip");
-        int port = configObject.toConfig().getInt("port");
-        byte[] nodeId;
-        if (configObject.toConfig().hasPath("nodeId")) {
-          nodeId = Hex.decode(configObject.toConfig().getString("nodeId").trim());
-          if (nodeId.length != 64) {
-            throw new RuntimeException("Invalid config nodeId '" + nodeId + "' at " + configObject);
-          }
-        } else {
-          if (configObject.toConfig().hasPath("nodeName")) {
-            String nodeName = configObject.toConfig().getString("nodeName").trim();
-            // FIXME should be keccak-512 here ?
-            nodeId = ECKey.fromPrivate(sha3(nodeName.getBytes())).getNodeId();
-          } else {
-            throw new RuntimeException(
-                "Either nodeId or nodeName should be specified: " + configObject);
-          }
-        }
-        n = new Node(nodeId, ip, port);
-      } else {
-        throw new RuntimeException(
-            "Unexpected element within 'peer.active' config list: " + configObject);
-      }
+    List<String> list = config.getStringList("node.active");
+    for (String configString : list) {
+      Node n = Node.instanceOf(configString);
       ret.add(n);
     }
     return ret;
