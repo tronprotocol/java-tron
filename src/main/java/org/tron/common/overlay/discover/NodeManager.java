@@ -289,11 +289,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return CollectionUtils.truncate(filtered, limit);
   }
 
-  public List<NodeHandler> getActiveNodes() {
+  public List<NodeHandler> dumpActiveNodes() {
     List<NodeHandler> handlers = new ArrayList<>();
     for (NodeHandler handler :
         this.nodeHandlerMap.values()) {
-      if (handler.state == State.Alive || handler.state == State.Active || handler.state == State.EvictCandidate) {
+      if (isNodeAlive(handler)) {
         handlers.add(handler);
       }
     }
