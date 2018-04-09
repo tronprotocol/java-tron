@@ -1,17 +1,24 @@
-package org.tron.core.db.api;
+package org.tron.core.db.api.index;
 
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.hash.HashIndex;
+import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 
+@Component
+@Slf4j
 public class TransactionIndex extends AbstractIndex<Transaction> {
 
   public static final SimpleAttribute<Transaction, String> Transaction_ID =
@@ -32,7 +39,18 @@ public class TransactionIndex extends AbstractIndex<Transaction> {
               .map(ByteArray::toHexString)
               .collect(Collectors.toList()));
 
+  public TransactionIndex() {
+    super();
+  }
+
   public TransactionIndex(Persistence<Transaction, ? extends Comparable> persistence) {
     super(persistence);
+  }
+
+  @PostConstruct
+  public void init() {
+    addIndex(SuffixTreeIndex.onAttribute(Transaction_ID));
+    addIndex(HashIndex.onAttribute(OWNERS));
+    addIndex(HashIndex.onAttribute(TOS));
   }
 }

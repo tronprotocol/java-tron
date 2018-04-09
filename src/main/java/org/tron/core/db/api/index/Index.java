@@ -1,4 +1,4 @@
-package org.tron.core.db.api;
+package org.tron.core.db.api.index;
 
 public class Index {
 
