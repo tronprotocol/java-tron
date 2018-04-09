@@ -106,7 +106,7 @@ dependencies {
 
     checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
+    //compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
     compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
     // end google grpc
@@ -120,6 +120,8 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
+
+    compile 'io.netty:netty-all:4.0.30.Final'
 }
 
 check.dependsOn 'lint'
