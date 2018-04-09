@@ -168,7 +168,7 @@ public class SyncPool {
 
   public synchronized void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
-      logger.info("Peer {}: disconnected", peer.getPeerIdShort());
+      logger.debug("Peer {}: disconnected", peer.getPeerIdShort());
       peerDel.onDisconnectPeer((PeerConnection)peer);
       activePeers.remove(peer);
     }
@@ -216,7 +216,6 @@ public class SyncPool {
       }
 
       if (handler.getNodeStatistics().getReputation() < 100) {
-        logger.info("filter it !!! Repu:" + handler.getNodeStatistics() );
         return false;
       }
 
