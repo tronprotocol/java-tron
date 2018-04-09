@@ -213,12 +213,9 @@ public class Args {
     }
 
     INSTANCE.storage = new Storage();
-    logger.info("abc");
-    logger.info(INSTANCE.storageDirectory);
     INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(config.getString("storage.directory")));
-    logger.info(INSTANCE.storage.getDirectory());
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
