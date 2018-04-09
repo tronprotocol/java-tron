@@ -533,6 +533,7 @@ public class Manager {
       while (missedBlocks-- > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
       }
+      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
     } else {
       logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
     }
