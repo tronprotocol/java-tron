@@ -22,5 +22,5 @@ public class StoreAPI {
   @Resource
   private IndexedCollection<Account> accountIndex;
 
-  
+
 }
