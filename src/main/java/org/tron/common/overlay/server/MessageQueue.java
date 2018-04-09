@@ -113,7 +113,7 @@ public class MessageQueue {
 
   public void receivedMessage(Message msg) throws InterruptedException {
 
-    logger.info("rcv from peer[{}], size:{} data:{}", ctx.channel().remoteAddress(), msg.getSendData().readableBytes(), msg.toString());
+    logger.debug("rcv from peer[{}], size:{} data:{}", ctx.channel().remoteAddress(), msg.getSendData().readableBytes(), msg.toString());
 
     if (requestQueue.peek() != null) {
       MessageRoundtrip messageRoundtrip = requestQueue.peek();
@@ -153,7 +153,7 @@ public class MessageQueue {
     }
 
     if (messageRoundtrip.getRetryTimes() > 0){
-      logger.info("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
+      logger.warn("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
       ctx.close();
       return;
     }
@@ -163,13 +163,13 @@ public class MessageQueue {
     ctx.writeAndFlush(msg.getSendData())
             .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
+    logger.debug("send to peer[{}] retry[{}], length:{} data:{}", ctx.channel().remoteAddress(),
+            messageRoundtrip.getRetryTimes(), msg.getSendData().readableBytes(), msg.toString());
+
     if (msg.getAnswerMessage() != null) {
       messageRoundtrip.incRetryTimes();
       messageRoundtrip.saveTime();
     }
-
-    logger.info("send to peer[{}] retry[{}], length:{} data:{}", ctx.channel().remoteAddress(),
-            messageRoundtrip.getRetryTimes(), msg.getSendData().readableBytes(), msg.toString());
   }
 
   public void close() {
