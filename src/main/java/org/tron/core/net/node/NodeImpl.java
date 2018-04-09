@@ -2,11 +2,25 @@ package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -24,10 +38,6 @@ import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
 
 @Slf4j
 @Component
@@ -222,11 +232,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     handleSyncBlockLoop.join();
     disconnectInactiveExecutor.shutdown();
     cleanInventoryExecutor.shutdown();
-  }
-
-  @Override
-  public List<NodeHandler> getActiveNodes() {
-    return this.pool.getActiveNodes();
   }
 
   private void activeTronPump() {

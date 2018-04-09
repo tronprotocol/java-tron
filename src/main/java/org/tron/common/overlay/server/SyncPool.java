@@ -130,8 +130,8 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node.");
-    for (NodeHandler nodeHandler: nodeManager.getActiveNodes()){
-      logger.info(nodeHandler.toString());
+    for (NodeHandler handler : nodeManager.dumpActiveNodes()) {
+      logger.info(handler.getNode().toString());
     }
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
     for (Channel channel: channelManager.getActivePeers()){
@@ -156,10 +156,6 @@ public class SyncPool {
       }
       logger.info(sb.toString());
     }
-  }
-
-  public List<NodeHandler> getActiveNodes() {
-    return nodeManager.getActiveNodes();
   }
 
   public synchronized List<PeerConnection> getActivePeers() {
