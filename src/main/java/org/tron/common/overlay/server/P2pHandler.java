@@ -94,7 +94,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause);
+    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
     closeChannel(ctx);
   }
 

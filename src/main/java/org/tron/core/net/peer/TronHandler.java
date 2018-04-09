@@ -61,7 +61,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause);
+    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
     ctx.close();
   }
 

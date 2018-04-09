@@ -79,7 +79,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.debug("Discover channel error" + cause);
+        logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
         ctx.close();
     }
 }
