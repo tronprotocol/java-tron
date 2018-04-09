@@ -6,8 +6,11 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
@@ -21,6 +24,7 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
+import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -44,6 +48,9 @@ public class RpcApiService implements Service {
   private int port = 50051;
   private Server apiServer;
   private Application app;
+
+  @Autowired
+  private NodeManager nodeManager;
 
   public RpcApiService(Application app) {
     this.app = app;
@@ -249,15 +256,24 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = this.app.getP2pNode().getActiveNodes();
+      List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
+
+      Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
+      for (NodeHandler handler : handlerList) {
+        String key = handler.getNode().getHexId() + handler.getNode().getHost();
+        nodeHandlerMap.put(key, handler);
+      }
 
       NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-      for (NodeHandler handler : handlerList) {
-        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-            Address.newBuilder()
-                .setHost(ByteString.copyFrom(ByteArray.fromString(handler.getNode().getHost())))
-                .setPort(handler.getNode().getPort())));
-      }
+
+      nodeHandlerMap.entrySet().stream()
+          .forEach(v -> {
+            org.tron.common.overlay.discover.Node node = v.getValue().getNode();
+            nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+                Address.newBuilder()
+                    .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                    .setPort(node.getPort())));
+          });
 
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
