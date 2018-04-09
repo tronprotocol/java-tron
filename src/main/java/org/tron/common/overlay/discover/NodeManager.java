@@ -293,7 +293,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     Map<String, NodeHandler> handlers = new HashMap<>();
     for (NodeHandler handler :
         this.nodeHandlerMap.values()) {
-      if (handler.state == State.Alive || handler.state == State.Active || handler.state == State.EvictCandidate) {
+      if (isNodeAlive(handler)) {
         String key = handler.node.getHexId() + handler.node.getHost();
         handlers.put(key, handler);
       }
