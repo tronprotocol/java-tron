@@ -349,23 +349,7 @@ public class Args {
       } else if (configObject.get("ip") != null) {
         String ip = configObject.toConfig().getString("ip");
         int port = configObject.toConfig().getInt("port");
-        byte[] nodeId;
-        if (configObject.toConfig().hasPath("nodeId")) {
-          nodeId = Hex.decode(configObject.toConfig().getString("nodeId").trim());
-          if (nodeId.length != 64) {
-            throw new RuntimeException("Invalid config nodeId '" + nodeId + "' at " + configObject);
-          }
-        } else {
-          if (configObject.toConfig().hasPath("nodeName")) {
-            String nodeName = configObject.toConfig().getString("nodeName").trim();
-            // FIXME should be keccak-512 here ?
-            nodeId = ECKey.fromPrivate(sha3(nodeName.getBytes())).getNodeId();
-          } else {
-            throw new RuntimeException(
-                "Either nodeId or nodeName should be specified: " + configObject);
-          }
-        }
-        n = new Node(nodeId, ip, port);
+        n = Node.instanceOf(ip, port);
       } else {
         throw new RuntimeException(
             "Unexpected element within 'peer.active' config list: " + configObject);
