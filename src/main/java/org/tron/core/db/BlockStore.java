@@ -15,18 +15,21 @@
 
 package org.tron.core.db;
 
+import com.googlecode.cqengine.IndexedCollection;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.protos.Protocol.Block;
 
 @Slf4j
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
 
   private BlockCapsule head;
+  private IndexedCollection<Block> blockIndex;
 
   private BlockStore(String dbName) {
     super(dbName);
