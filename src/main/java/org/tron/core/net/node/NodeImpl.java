@@ -249,11 +249,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     cleanInventoryExecutor.shutdown();
   }
 
-  @Override
-  public List<NodeHandler> getActiveNodes() {
-    return this.pool.getActiveNodes();
-  }
-
   private void activeTronPump() {
     // broadcast inv
     loopAdvertiseInv = new ExecutorLoop<>(2, 10, b -> {

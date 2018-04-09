@@ -16,6 +16,4 @@ public interface Node {
   void syncFrom(Sha256Hash myHeadBlockHash);
 
   void close() throws InterruptedException;
-
-  List<NodeHandler> getActiveNodes();
 }

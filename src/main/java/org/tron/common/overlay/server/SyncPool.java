@@ -162,10 +162,6 @@ public class SyncPool {
     }
   }
 
-  public List<NodeHandler> getActiveNodes() {
-    return nodeManager.getActiveNodes();
-  }
-
   public synchronized List<PeerConnection> getActivePeers() {
     return new ArrayList<>(activePeers);
   }
