@@ -7,6 +7,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
@@ -249,15 +250,18 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = this.app.getP2pNode().getActiveNodes();
+      Map<String, NodeHandler> handles = this.app.getP2pNode().getActiveNodes();
 
       NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-      for (NodeHandler handler : handlerList) {
+
+      handles.entrySet().stream().forEach(v -> {
+        org.tron.common.overlay.discover.Node node = v.getValue().getNode();
+
         nodeListBuilder.addNodes(Node.newBuilder().setAddress(
             Address.newBuilder()
-                .setHost(ByteString.copyFrom(ByteArray.fromString(handler.getNode().getHost())))
-                .setPort(handler.getNode().getPort())));
-      }
+                .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                .setPort(node.getPort())));
+      });
 
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();

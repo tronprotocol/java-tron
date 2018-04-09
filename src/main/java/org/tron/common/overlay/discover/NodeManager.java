@@ -289,12 +289,13 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return CollectionUtils.truncate(filtered, limit);
   }
 
-  public List<NodeHandler> getActiveNodes() {
-    List<NodeHandler> handlers = new ArrayList<>();
+  public Map<String, NodeHandler> getActiveNodes() {
+    Map<String, NodeHandler> handlers = new HashMap<>();
     for (NodeHandler handler :
         this.nodeHandlerMap.values()) {
       if (handler.state == State.Alive || handler.state == State.Active || handler.state == State.EvictCandidate) {
-        handlers.add(handler);
+        String key = handler.node.getHexId() + handler.node.getHost();
+        handlers.put(key, handler);
       }
     }
 
