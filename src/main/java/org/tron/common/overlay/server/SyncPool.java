@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -135,7 +134,7 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node.");
-    for (NodeHandler handler : nodeManager.getActiveNodes()) {
+    for (NodeHandler handler : nodeManager.dumpActiveNodes()) {
       logger.info(handler.getNode().toString());
     }
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());

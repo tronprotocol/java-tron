@@ -256,7 +256,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = nodeManager.getActiveNodes();
+      List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
       Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
       for (NodeHandler handler : handlerList) {
