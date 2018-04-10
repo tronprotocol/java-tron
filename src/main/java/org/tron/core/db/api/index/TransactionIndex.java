@@ -5,6 +5,7 @@ import static com.googlecode.cqengine.query.QueryFactory.attribute;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.hash.HashIndex;
+import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
 import java.util.Objects;
@@ -38,6 +39,8 @@ public class TransactionIndex extends AbstractIndex<Transaction> {
               .filter(Objects::nonNull)
               .map(ByteArray::toHexString)
               .collect(Collectors.toList()));
+  public static final Attribute<Transaction, Long> TIMESTAMP =
+      attribute("timestamp", t -> t.getRawData().getTimestamp());
 
   public TransactionIndex() {
     super();
@@ -52,5 +55,6 @@ public class TransactionIndex extends AbstractIndex<Transaction> {
     addIndex(SuffixTreeIndex.onAttribute(Transaction_ID));
     addIndex(HashIndex.onAttribute(OWNERS));
     addIndex(HashIndex.onAttribute(TOS));
+    addIndex(NavigableIndex.onAttribute(TIMESTAMP));
   }
 }
