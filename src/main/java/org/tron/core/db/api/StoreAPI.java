@@ -5,6 +5,8 @@ import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
 import static com.googlecode.cqengine.query.QueryFactory.between;
 import static com.googlecode.cqengine.query.QueryFactory.descending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
+import static com.googlecode.cqengine.query.QueryFactory.existsIn;
+import static com.googlecode.cqengine.query.QueryFactory.or;
 import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
 import static com.googlecode.cqengine.query.QueryFactory.threshold;
@@ -98,7 +100,6 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
-  // TODO
   public Transaction getTransactionById(String id) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
@@ -114,7 +115,6 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  // TODO
   public List<Transaction> getTransactionsFromThis(String address) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
@@ -123,7 +123,6 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  // TODO
   public List<Transaction> getTransactionsToThis(String address) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
@@ -132,7 +131,6 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  // TODO
   public List<Transaction> getTransactionsByTimestamp(
       long beginInMilliseconds, long endInMilliseconds) {
     if (endInMilliseconds < beginInMilliseconds) {
@@ -146,7 +144,6 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  // TODO
   public Block getBlockByNumber(long number) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
@@ -162,7 +159,6 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  // TODO
   public Block getBlockByTransactionId(String transactionId) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     //TODO TRANSACTIONS is all transactions not ids
@@ -180,38 +176,44 @@ public class StoreAPI {
   }
 
   public List<Block> getBlocksRelatedToAccount(String accountAddress) {
-    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    IndexedCollection<Block> blockIndex = indexHelper.getBlockIndex();
+    IndexedCollection<Transaction> transactionIndex = indexHelper.getTransactionIndex();
     //TODO from or to address of transaction in blocks
     ResultSet<Block> resultSet =
-        index.retrieve(all(Block.class), queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
-            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+        blockIndex.retrieve(existsIn(transactionIndex,
+            BlockIndex.TRANSACTIONS,
+            TransactionIndex.Transaction_ID,
+            or(equal(TransactionIndex.OWNERS, accountAddress),
+                equal(TransactionIndex.TOS, accountAddress))
+        ));
 
-    return Streams.stream(resultSet)
-        .collect(Collectors.toList());
+    return Lists.newArrayList(resultSet);
   }
 
   public List<Block> getBlocksByWitnessAddress(String WitnessAddress) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
-        index.retrieve(all(Block.class),
-            queryOptions(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+        index.retrieve(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress));
 
-    return Streams.stream(resultSet)
-        .collect(Collectors.toList());
+    if (resultSet.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return Lists.newArrayList(resultSet);
   }
 
   public List<Block> getBlocksByWitnessId(Long witnessId) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
-        index.retrieve(all(Block.class), queryOptions(equal(BlockIndex.WITNESS_ID, witnessId),
-            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+        index.retrieve(equal(BlockIndex.WITNESS_ID, witnessId));
 
-    return Streams.stream(resultSet)
-        .collect(Collectors.toList());
+    if (resultSet.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return Lists.newArrayList(resultSet);
   }
 
-  // TODO
   public Witness getWitnessByAddress(String address) {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
@@ -227,7 +229,6 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  // TODO
   public Witness getWitnessByUrl(String url) {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
@@ -243,7 +244,6 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  // TODO
   public Witness getWitnessByPublicKey(String publicKey) {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
