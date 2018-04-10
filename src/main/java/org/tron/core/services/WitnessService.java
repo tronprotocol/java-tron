@@ -121,6 +121,8 @@ public class WitnessService implements Service {
       case CONSECUTIVE:
         logger.info("Consecutive");
         break;
+      case TIME_OUT:
+        logger.debug("Time out");
       case EXCEPTION_PRODUCING_BLOCK:
         logger.info("Exception");
         break;
@@ -195,6 +197,12 @@ public class WitnessService implements Service {
 
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
+      if (DateTime.now().getMillis() - now > Manager.LOOP_INTERVAL) {
+        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", Manager.LOOP_INTERVAL,
+            new DateTime(now), DateTime.now());
+        return BlockProductionCondition.TIME_OUT;
+      }
+
       logger.info(
           "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
           block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
