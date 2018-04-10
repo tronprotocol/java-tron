@@ -847,7 +847,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+    logger.debug("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
         witnessCapsule.createReadableString(), block.getNum(), witnessCapsule.getTotalProduced());
 
   }
