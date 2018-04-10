@@ -80,8 +80,8 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
-  public List<Block> getLatestBlocks(int number) {
-    if (number <= 0) {
+  public List<Block> getLatestBlocks(int topN) {
+    if (topN <= 0) {
       return Collections.emptyList();
     }
 
@@ -91,7 +91,7 @@ public class StoreAPI {
             applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Streams.stream(resultSet)
-        .limit(number)
+        .limit(topN)
         .collect(Collectors.toList());
   }
 
@@ -107,8 +107,8 @@ public class StoreAPI {
     return null;
   }
 
-  public List<Transaction> getTransactionsByTimestamp(long beginInMilliseconds,
-      long endInMilliseconds) {
+  public List<Transaction> getTransactionsByTimestamp(
+      long beginInMilliseconds, long endInMilliseconds) {
     return null;
   }
 
@@ -120,7 +120,15 @@ public class StoreAPI {
     return null;
   }
 
-  public Block getBlocksWithAccount(String address) {
+  public Block getBlocksRelatedToAccount(String accountAddress) {
+    return null;
+  }
+
+  public Block getBlocksByWitnessAddress(String WitnessAddress) {
+    return null;
+  }
+
+  public Block getBlocksByWitnessId(String witnessId) {
     return null;
   }
 
@@ -135,6 +143,5 @@ public class StoreAPI {
   public Witness getWitnessByPublicKey(String publicKey) {
     return null;
   }
-  
 
 }
