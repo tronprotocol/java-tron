@@ -77,9 +77,9 @@ public class StoreAPI {
     }
   }
 
-  public int getAccountCount() {
+  public long getAccountCount() {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
-    return index.size();
+    return (long) index.size();
   }
 
   /****************************************
@@ -88,9 +88,9 @@ public class StoreAPI {
    *                                      *
    ****************************************/
 
-  public int getBlockCount() {
+  public long getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
-    return index.size();
+    return (long) index.size();
   }
 
   public Block getBlockByNumber(long number) throws NonUniqueObjectException {
@@ -182,9 +182,9 @@ public class StoreAPI {
    *                                      *
    ****************************************/
 
-  public int getTransactionCount() {
+  public long getTransactionCount() {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    return index.size();
+    return (long) index.size();
   }
 
   public Transaction getTransactionById(String id) throws NonUniqueObjectException {
@@ -315,9 +315,9 @@ public class StoreAPI {
     }
   }
 
-  public int getWitnessCount() {
+  public long getWitnessCount() {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
-    return index.size();
+    return (long) index.size();
   }
 
 
