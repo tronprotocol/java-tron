@@ -9,5 +9,6 @@ public enum  BlockProductionCondition {
   LOW_PARTICIPATION,
   LAG,
   CONSECUTIVE,
+  TIME_OUT,
   EXCEPTION_PRODUCING_BLOCK
 }
