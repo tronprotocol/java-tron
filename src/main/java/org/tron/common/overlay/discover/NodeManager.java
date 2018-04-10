@@ -286,6 +286,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
     logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
 
+    //TODO: here can use head num sort.
+    filtered.sort((o1, o2) -> o2.getNodeStatistics().getReputation() - o1.getNodeStatistics().getReputation());
+
     return CollectionUtils.truncate(filtered, limit);
   }
 
