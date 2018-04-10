@@ -180,19 +180,36 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  // TODO
-  public Block getBlocksRelatedToAccount(String accountAddress) {
-    return null;
+  public List<Block> getBlocksRelatedToAccount(String accountAddress) {
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    //TODO from or to address of transaction in blocks
+    ResultSet<Block> resultSet =
+        index.retrieve(all(Block.class), queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
+            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
   }
 
-  // TODO
-  public Block getBlocksByWitnessAddress(String WitnessAddress) {
-    return null;
+  public List<Block> getBlocksByWitnessAddress(String WitnessAddress) {
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet =
+        index.retrieve(all(Block.class),
+            queryOptions(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
   }
 
-  // TODO
-  public Block getBlocksByWitnessId(String witnessId) {
-    return null;
+  public List<Block> getBlocksByWitnessId(Long witnessId) {
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet =
+        index.retrieve(all(Block.class), queryOptions(equal(BlockIndex.WITNESS_ID, witnessId),
+            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
   }
 
   // TODO
