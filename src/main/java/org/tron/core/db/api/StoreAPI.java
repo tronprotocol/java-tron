@@ -134,7 +134,9 @@ public class StoreAPI {
             TransactionIndex.Transaction_ID,
             or(equal(TransactionIndex.OWNERS, accountAddress),
                 equal(TransactionIndex.TOS, accountAddress))
-        ));
+            ),
+            queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -142,7 +144,9 @@ public class StoreAPI {
   public List<Block> getBlocksByWitnessAddress(String WitnessAddress) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
-        index.retrieve(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress));
+        index.retrieve(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
+            queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -150,7 +154,9 @@ public class StoreAPI {
   public List<Block> getBlocksByWitnessId(Long witnessId) {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
-        index.retrieve(equal(BlockIndex.WITNESS_ID, witnessId));
+        index.retrieve(equal(BlockIndex.WITNESS_ID, witnessId),
+            queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -200,7 +206,9 @@ public class StoreAPI {
   public List<Transaction> getTransactionsFromThis(String address) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
-        index.retrieve(equal(TransactionIndex.OWNERS, address));
+        index.retrieve(equal(TransactionIndex.OWNERS, address),
+            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -208,7 +216,9 @@ public class StoreAPI {
   public List<Transaction> getTransactionsToThis(String address) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
-        index.retrieve(equal(TransactionIndex.TOS, address));
+        index.retrieve(equal(TransactionIndex.TOS, address),
+            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -217,7 +227,9 @@ public class StoreAPI {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(or(equal(TransactionIndex.OWNERS, address),
-            equal(TransactionIndex.TOS, address)));
+            equal(TransactionIndex.TOS, address)),
+            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
@@ -230,7 +242,9 @@ public class StoreAPI {
 
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
-        index.retrieve(between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds));
+        index.retrieve(between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
+            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
