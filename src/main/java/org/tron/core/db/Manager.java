@@ -787,9 +787,9 @@ public class Manager {
   }
 
   /**
-   * update the latest solidified block.
+   * get the latest solidified block num from witness.
    */
-  public void updateLatestSolidifiedBlock() {
+  public long getLatestSolidifiedBlockNumFromWitness() {
     List<Long> numbers = witnessController.getWitnesses().stream()
         .map(wit -> wit.getLatestBlockNum())
         .sorted()
@@ -798,14 +798,23 @@ public class Manager {
     long size = witnessController.getWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
-      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("getLatestSolidifiedBlockNumFromWitness error,solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
-      return;
+      return 0;
     }
 
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+    return latestSolidifiedBlockNum;
+  }
 
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+  /**
+   * update the latest solidified block.
+   */
+  public void updateLatestSolidifiedBlock() {
+    long latestSolidifiedBlockNum = getLatestSolidifiedBlockNumFromWitness();
+    if (latestSolidifiedBlockNum > 0) {
+      getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    }
   }
 
   /**

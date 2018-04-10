@@ -40,4 +40,5 @@ public interface NodeDelegate {
 
   BlockCapsule getGenesisBlock();
 
+  long getLatestSolidifiedBlockNumFromWitness();
 }
