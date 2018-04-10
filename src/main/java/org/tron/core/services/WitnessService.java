@@ -152,9 +152,6 @@ public class WitnessService implements Service {
       }
     }
 
-//    if (db.isSyncMode()) {
-//      return BlockProductionCondition.NOT_SYNCED;
-//    }
     final int participation = this.controller.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(

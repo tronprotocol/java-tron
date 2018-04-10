@@ -143,6 +143,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
   }
 
+
   public TransactionCapsule(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
@@ -151,6 +152,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
+
 
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {

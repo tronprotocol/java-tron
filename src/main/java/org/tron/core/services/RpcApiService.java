@@ -150,8 +150,9 @@ public class RpcApiService implements Service {
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
+        TransactionCapsule trx = new TransactionCapsule(req, ContractType.TransferContract);
+        app.getDbManager().setBlockReference(trx);
+        responseObserver.onNext(trx.getInstance());
       } else {
         responseObserver.onNext(null);
       }
@@ -174,26 +175,21 @@ public class RpcApiService implements Service {
           || request.getOwnerAddress() == null) {
         responseObserver.onNext(null);
       } else {
-        Transaction trx = wallet.createAccount(request);
-        responseObserver.onNext(trx);
+        TransactionCapsule trx = new TransactionCapsule(request,
+            ContractType.AccountCreateContract);
+        app.getDbManager().setBlockReference(trx);
+        responseObserver.onNext(trx.getInstance());
       }
       responseObserver.onCompleted();
     }
 
-
-    private void setReference(TransactionCapsule trans) {
-      byte[] headHash = app.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash()
-          .toByteArray();
-      long headNum = app.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-      trans.setReference(headNum, headHash);
-    }
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       ByteString owner = request.getOwnerAddress();
       TransactionCapsule trx = new TransactionCapsule(request, ContractType.AssetIssueContract);
-      setReference(trx);
+      app.getDbManager().setBlockReference(trx);
       if (owner != null) {
         responseObserver.onNext(trx.getInstance());
       } else {
@@ -234,7 +230,7 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> response) {
 
       try {
-//        checkVoteWitnessAccount(req);//to be complemented later
+        //TODO   to be complemented later     checkVoteWitnessAccount(req);
         Transaction trx = wallet.createTransaction(req);
         response.onNext(trx);
       } catch (Exception ex) {
