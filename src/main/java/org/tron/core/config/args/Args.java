@@ -151,6 +151,11 @@ public class Args {
   @Setter
   private String p2pNodeId;
 
+  @Getter
+  @Setter
+  //If you are running a delay node for java tron, this flag is set to true
+  private boolean delayNode;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -179,6 +184,7 @@ public class Args {
     INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.p2pNodeId = "";
+    INSTANCE.delayNode = false;
   }
 
   /**
