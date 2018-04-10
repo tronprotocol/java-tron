@@ -39,9 +39,11 @@ public class StoreAPI {
   @Autowired
   private IndexHelper indexHelper;
 
-  /**
-   * account api
-   */
+  /****************************************
+   *                                      *
+   *            account api               *
+   *                                      *
+   ****************************************/
 
   public Account getAccountByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
@@ -80,9 +82,11 @@ public class StoreAPI {
     return index.size();
   }
 
-  /**
-   * block api
-   */
+  /****************************************
+   *                                      *
+   *              block api               *
+   *                                      *
+   ****************************************/
 
   public int getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
@@ -166,9 +170,11 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
-  /**
-   * transaction api
-   */
+  /****************************************
+   *                                      *
+   *            transaction api           *
+   *                                      *
+   ****************************************/
 
   public int getTransactionCount() {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
@@ -245,10 +251,12 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
-  /**
-   * witness api
-   */
-  
+  /****************************************
+   *                                      *
+   *            witness api               *
+   *                                      *
+   ****************************************/
+
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
