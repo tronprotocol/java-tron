@@ -520,13 +520,6 @@ public class Manager {
             w.createReadableString(), w.getTotalMissed());
       }
     }
-    this.head = block;
-    logger.info("update head, num = {}", block.getNum());
-    this.dynamicPropertiesStore
-        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    witnessController.updateWitnessSchedule();
 
     long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
     if (missedBlocks >= 0) {
@@ -537,6 +530,16 @@ public class Manager {
     } else {
       logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
     }
+
+    this.head = block;
+    logger.info("update head, num = {}", block.getNum());
+    this.dynamicPropertiesStore
+        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    witnessController.updateWitnessSchedule();
+
+
   }
 
   @Deprecated
