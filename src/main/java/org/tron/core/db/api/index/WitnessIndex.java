@@ -3,7 +3,6 @@ package org.tron.core.db.api.index;
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 import com.googlecode.cqengine.attribute.Attribute;
-import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
 import javax.annotation.PostConstruct;
@@ -19,8 +18,6 @@ public class WitnessIndex extends AbstractIndex<Witness> {
       attribute("witness address", witness -> witness.getAddress().toStringUtf8());
   public static final Attribute<Witness, String> PUBLIC_KEY =
       attribute("public key", witness -> witness.getPubKey().toStringUtf8());
-  public static final Attribute<Witness, Boolean> IS_JOBS =
-      attribute("is jobs", Witness::getIsJobs);
   public static final Attribute<Witness, String> Witness_URL =
       attribute("witness url", Witness::getUrl);
 
@@ -36,7 +33,6 @@ public class WitnessIndex extends AbstractIndex<Witness> {
   public void init() {
     addIndex(SuffixTreeIndex.onAttribute(Witness_ADDRESS));
     addIndex(SuffixTreeIndex.onAttribute(PUBLIC_KEY));
-    addIndex(NavigableIndex.onAttribute(IS_JOBS));
     addIndex(SuffixTreeIndex.onAttribute(Witness_URL));
   }
 

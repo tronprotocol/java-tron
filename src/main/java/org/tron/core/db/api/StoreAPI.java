@@ -24,6 +24,7 @@ import org.tron.core.db.api.index.TransactionIndex;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Witness;
 
 @Component
 @Slf4j
@@ -43,8 +44,28 @@ public class StoreAPI {
     return resultSet.uniqueResult();
   }
 
-  public List<Transaction> getLatestTransactions(int number) {
-    if (number <= 0) {
+  public Account getAccountByName(String name) {
+    IndexedCollection<Account> index = indexHelper.getAccountIndex();
+    ResultSet<Account> resultSet =
+        index.retrieve(equal(AccountIndex.Account_NAME, name));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
+  }
+
+  public int getAccountCount() {
+    IndexedCollection<Account> index = indexHelper.getAccountIndex();
+    return index.size();
+  }
+
+  public List<Transaction> getLatestTransactions(int topN) {
+    if (topN <= 0) {
       return Collections.emptyList();
     }
 
@@ -55,7 +76,7 @@ public class StoreAPI {
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Streams.stream(resultSet)
-        .limit(number)
+        .limit(topN)
         .collect(Collectors.toList());
   }
 
@@ -73,4 +94,47 @@ public class StoreAPI {
         .limit(number)
         .collect(Collectors.toList());
   }
+
+  public Transaction getTransactionById(String id) {
+    return null;
+  }
+
+  public Transaction getTransactionsFromThis(String address) {
+    return null;
+  }
+
+  public Transaction getTransactionsToThis(String address) {
+    return null;
+  }
+
+  public List<Transaction> getTransactionsByTimestamp(long beginInMilliseconds,
+      long endInMilliseconds) {
+    return null;
+  }
+
+  public Block getBlockByNumber(long number) {
+    return null;
+  }
+
+  public Block getBlockByTransactionId(String transactionId) {
+    return null;
+  }
+
+  public Block getBlocksWithAccount(String address) {
+    return null;
+  }
+
+  public Witness getWitnessByAddress(String address) {
+    return null;
+  }
+
+  public Witness getWitnessByUrl(String url) {
+    return null;
+  }
+
+  public Witness getWitnessByPublicKey(String publicKey) {
+    return null;
+  }
+  
+
 }
