@@ -474,6 +474,7 @@ public class Manager {
       }
 
       BlockCapsule newBlock = this.khaosDb.push(block);
+      boolean isSolidifiedBlock = false;
       //DB don't need lower block
       if (head == null) {
         if (newBlock.getNum() != 0) {
@@ -492,14 +493,16 @@ public class Manager {
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          this.processBlock(newBlock);
+          isSolidifiedBlock = this.processBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
         }
       }
-      blockStore.put(block.getBlockId().getBytes(), block);
-      this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+      if(!Args.getInstance().isDelayNode() || (Args.getInstance().isDelayNode() && isSolidifiedBlock)) {
+        blockStore.put(block.getBlockId().getBytes(), block);
+        this.numHashCache.putData(ByteArray.fromLong(block.getNum()), block.getBlockId().getBytes());
+      }
       //refreshHead(newBlock);
       logger.info("save block: " + newBlock);
     }
@@ -765,16 +768,20 @@ public class Manager {
   /**
    * process block.
    */
-  public void processBlock(BlockCapsule block)
+  public boolean processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      processTransaction(transactionCapsule);
-    }
-
     // todo set reverking db max size.
-    this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+
+    boolean isSolidifiedBlock = block.getBlockId().getNum() > getLatestSolidifiedBlockNum();
+    logger.debug("Process block isSolidifiedBlock = {}", isSolidifiedBlock);
+    if(!Args.getInstance().isDelayNode() || (Args.getInstance().isDelayNode() && isSolidifiedBlock)) {
+      this.updateDynamicProperties(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        processTransaction(transactionCapsule);
+      }
+    }
 
     if (needMaintenance(block.getTimeStamp())) {
       if (block.getNum() == 1) {
@@ -783,13 +790,13 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
-
+    return isSolidifiedBlock;
   }
 
   /**
-   * update the latest solidified block.
+   * get the latest solidified block num from witness.
    */
-  public void updateLatestSolidifiedBlock() {
+  public long getLatestSolidifiedBlockNum() {
     List<Long> numbers = witnessController.getWitnesses().stream()
         .map(wit -> wit.getLatestBlockNum())
         .sorted()
@@ -798,14 +805,23 @@ public class Manager {
     long size = witnessController.getWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
-      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("getLatestSolidifiedBlockNum error,solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
-      return;
+      return 0;
     }
 
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+    return latestSolidifiedBlockNum;
+  }
 
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+  /**
+   * update the latest solidified block.
+   */
+  public void updateLatestSolidifiedBlock() {
+    long latestSolidifiedBlockNum = getLatestSolidifiedBlockNum();
+    if (latestSolidifiedBlockNum > 0) {
+      getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    }
   }
 
   /**
