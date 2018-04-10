@@ -387,7 +387,7 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  private void eraseBlock() {
+  public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
     try {
