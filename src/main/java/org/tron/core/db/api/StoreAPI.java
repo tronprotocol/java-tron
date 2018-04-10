@@ -26,6 +26,7 @@ import org.tron.core.db.api.index.AccountIndex;
 import org.tron.core.db.api.index.BlockIndex;
 import org.tron.core.db.api.index.TransactionIndex;
 import org.tron.core.db.api.index.WitnessIndex;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -38,7 +39,7 @@ public class StoreAPI {
   @Autowired
   private IndexHelper indexHelper;
 
-  public Account getAccountByAddress(String address) {
+  public Account getAccountByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
         index.retrieve(equal(AccountIndex.Account_ADDRESS, address));
@@ -47,10 +48,14 @@ public class StoreAPI {
       return null;
     }
 
-    return resultSet.uniqueResult();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
+    }
   }
 
-  public Account getAccountByName(String name) {
+  public Account getAccountByName(String name) throws NonUniqueObjectException {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
         index.retrieve(equal(AccountIndex.Account_NAME, name));
@@ -59,11 +64,11 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
   public int getAccountCount() {
@@ -102,7 +107,7 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
-  public Transaction getTransactionById(String id) {
+  public Transaction getTransactionById(String id) throws NonUniqueObjectException {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(equal(TransactionIndex.Transaction_ID, id));
@@ -111,11 +116,11 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
   public List<Transaction> getTransactionsFromThis(String address) {
@@ -147,7 +152,7 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  public Block getBlockByNumber(long number) {
+  public Block getBlockByNumber(long number) throws NonUniqueObjectException {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.Block_NUMBER, number));
@@ -156,16 +161,15 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
-  public Block getBlockByTransactionId(String transactionId) {
+  public Block getBlockByTransactionId(String transactionId) throws NonUniqueObjectException {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
-    //TODO TRANSACTIONS is all transactions not ids
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.TRANSACTIONS, transactionId));
 
@@ -173,11 +177,11 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
   public List<Block> getBlocksRelatedToAccount(String accountAddress) {
@@ -210,7 +214,7 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  public Witness getWitnessByAddress(String address) {
+  public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.Witness_ADDRESS, address));
@@ -219,14 +223,14 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
-  public Witness getWitnessByUrl(String url) {
+  public Witness getWitnessByUrl(String url) throws NonUniqueObjectException {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.Witness_URL, url));
@@ -235,14 +239,14 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
-  public Witness getWitnessByPublicKey(String publicKey) {
+  public Witness getWitnessByPublicKey(String publicKey) throws NonUniqueObjectException {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.PUBLIC_KEY, publicKey));
@@ -251,11 +255,11 @@ public class StoreAPI {
       return null;
     }
 
-    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
-      return resultSet.iterator().next();
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
     }
-
-    return resultSet.uniqueResult();
   }
 
 }
