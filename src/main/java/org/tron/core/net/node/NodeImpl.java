@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
@@ -44,6 +45,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
+  @Lazy
   private SyncPool pool;
 
   class InvToSend {
