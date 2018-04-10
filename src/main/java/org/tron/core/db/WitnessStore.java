@@ -42,7 +42,9 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   @Override
   public void put(byte[] key, WitnessCapsule item) {
-    indexHelper.add(item.getInstance());
+    if (indexHelper != null) {
+      indexHelper.add(item.getInstance());
+    }
     super.put(key, item);
   }
 

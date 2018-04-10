@@ -43,7 +43,7 @@ public class ApplicationImpl implements Application {
   public void init(Args args) {
     //p2pNode = new NodeImpl();
     //p2pNode = ctx.getBean(NodeImpl.class);
-    dbManager.init();
+//    dbManager.init();
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
     nodeDelegate = new NodeDelegateImpl(dbManager);

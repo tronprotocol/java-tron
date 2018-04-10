@@ -67,7 +67,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    indexHelper.add(item.getInstance());
+    if (indexHelper != null) {
+      indexHelper.add(item.getInstance());
+    }
     super.put(key, item);
   }
 
