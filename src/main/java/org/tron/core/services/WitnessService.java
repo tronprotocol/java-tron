@@ -80,8 +80,7 @@ public class WitnessService implements Service {
           } catch (InterruptedException ex) {
             logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
-            logger.error("Unknown exception happened", ex);
-            throw ex;
+            logger.error("unknown exception happened in witness loop", ex);
           }
         }
       };
