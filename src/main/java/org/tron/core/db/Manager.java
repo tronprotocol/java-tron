@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -260,12 +261,9 @@ public class Manager {
   /**
    * all db should be init here.
    */
-  public void init() {
-//    this.setAccountStore(AccountStore.create("account"));
-//    this.setTransactionStore(TransactionStore.create("trans"));
-//    this.setBlockStore(BlockStore.create("block"));
+  @PostConstruct
+  public void initOther() {
     this.setUtxoStore(UtxoStore.create("utxo"));
-//    this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 
@@ -281,6 +279,18 @@ public class Manager {
     this.setShuffledWitnessStates(getWitnesses());
     this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
     this.khaosDb.start(head);
+  }
+
+  /**
+   * all db should be init here.
+   */
+  public void init() {
+    this.setAccountStore(AccountStore.create("account"));
+    this.setTransactionStore(TransactionStore.create("trans"));
+    this.setBlockStore(BlockStore.create("block"));
+    this.setWitnessStore(WitnessStore.create("witness"));
+
+    initOther();
   }
 
   public BlockId getGenesisBlockId() {
