@@ -424,7 +424,6 @@ public class Manager {
           this.numHashCache
               .putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
-          head = item;
         } catch (ValidateSignatureException e) {
           logger.debug(e.getMessage(), e);
         } catch (ContractValidateException e) {
