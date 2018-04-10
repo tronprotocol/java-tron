@@ -95,51 +95,63 @@ public class StoreAPI {
         .collect(Collectors.toList());
   }
 
+  // TODO
   public Transaction getTransactionById(String id) {
     return null;
   }
 
+  // TODO
   public Transaction getTransactionsFromThis(String address) {
     return null;
   }
 
+  // TODO
   public Transaction getTransactionsToThis(String address) {
     return null;
   }
 
+  // TODO
   public List<Transaction> getTransactionsByTimestamp(
       long beginInMilliseconds, long endInMilliseconds) {
     return null;
   }
 
+  // TODO
   public Block getBlockByNumber(long number) {
     return null;
   }
 
+  // TODO
   public Block getBlockByTransactionId(String transactionId) {
     return null;
   }
 
+  // TODO
   public Block getBlocksRelatedToAccount(String accountAddress) {
     return null;
   }
 
+  // TODO
   public Block getBlocksByWitnessAddress(String WitnessAddress) {
     return null;
   }
 
+  // TODO
   public Block getBlocksByWitnessId(String witnessId) {
     return null;
   }
 
+  // TODO
   public Witness getWitnessByAddress(String address) {
     return null;
   }
 
+  // TODO
   public Witness getWitnessByUrl(String url) {
     return null;
   }
 
+  // TODO
   public Witness getWitnessByPublicKey(String publicKey) {
     return null;
   }
