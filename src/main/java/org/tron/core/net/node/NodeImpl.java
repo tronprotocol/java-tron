@@ -34,6 +34,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.*;
 import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
@@ -524,6 +525,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
     //logger.info("Block number is " + blkMsg.getBlockId().getNum());
+
+    //delay node store solidified block only, if the block to be synced has the number greater than solidified
+    //block number, just ignore it
+    if(Args.getInstance().isDelayNode()) {
+      if (blockId.getNum() > del.getLatestSolidifiedBlockNumFromWitness()) {
+        return;
+      }
+    }
 
     if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
