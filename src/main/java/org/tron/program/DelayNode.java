@@ -12,15 +12,16 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
 @Slf4j
-public class FullNode {
+public class DelayNode {
 
   /**
-   * Start the FullNode.
+   * Start the DelayNode.
    */
   public static void main(String[] args) throws InterruptedException {
-    logger.info("FullNode running.");
+    logger.info("DelayNode running.");
     Args.setParam(args, Constant.NORMAL_CONF);
     Args cfgArgs = Args.getInstance();
+    cfgArgs.setDelayNode(true);
 
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
@@ -32,9 +33,7 @@ public class FullNode {
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT, context);
     appT.addService(rpcApiService);
-    if (cfgArgs.isWitness()) {
-      appT.addService(new WitnessService(appT));
-    }
+
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
