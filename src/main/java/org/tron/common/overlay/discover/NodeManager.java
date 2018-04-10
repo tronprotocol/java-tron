@@ -81,6 +81,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         bootNodes.add(Node.instanceOf(boot));
     }
 
+    logger.info("homeNode : {}", homeNode);
     logger.info("bootNodes : size= {}", bootNodes.size());
 
     table = new NodeTable(homeNode);
@@ -93,8 +94,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-
-
   }
 
   public ScheduledExecutorService getPongTimer() {
@@ -146,16 +145,17 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   private void dbRead() {
     Set<Node> Nodes = this.dbManager.readNeighbours();
     logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node));
+    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics().setPersistedReputation(node.getReputation()));
   }
 
   private void dbWrite() {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
-        if (isNodeAlive(nodeHandler)) {
+        //if (isNodeAlive(nodeHandler)) {
+          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
           batch.add(nodeHandler.getNode());
-        }
+        //}
       }
     }
     logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
@@ -240,9 +240,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     switch (type) {
       case 1:
         nodeHandler.handlePing((PingMessage) m);
-        if(nodeHandler.getState().equals(State.NonActive) || nodeHandler.getState().equals(State.Dead)){
-            nodeHandler.changeState(State.Discovered);
-        }
         break;
       case 2:
         nodeHandler.handlePong((PongMessage) m);
@@ -258,9 +255,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public void sendOutbound(DiscoveryEvent discoveryEvent) {
     if (discoveryEnabled && messageSender != null) {
-      logger.trace(" <===({}) {} [{}] {}", discoveryEvent.getAddress(),
-          discoveryEvent.getMessage().getClass().getSimpleName(), this,
-          discoveryEvent.getMessage());
       messageSender.accept(discoveryEvent);
     }
   }
@@ -285,16 +279,16 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       }
     }
 
-    logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
+    logger.debug("nodeHandlerMap size {} filter peer  size {}", nodeHandlerMap.size(), filtered.size());
 
     return CollectionUtils.truncate(filtered, limit);
   }
 
-  public List<NodeHandler> getActiveNodes() {
+  public List<NodeHandler> dumpActiveNodes() {
     List<NodeHandler> handlers = new ArrayList<>();
     for (NodeHandler handler :
         this.nodeHandlerMap.values()) {
-      if (handler.state == State.Alive || handler.state == State.Active || handler.state == State.EvictCandidate) {
+      if (isNodeAlive(handler)) {
         handlers.add(handler);
       }
     }

@@ -61,7 +61,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
-    logger.info("address is {},account is {}", key, account);
     return null != account;
   }
 

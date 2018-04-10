@@ -49,7 +49,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
       final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
 
-      if (!Wallet.addressValid(contract.getOwnerAddress())) {
+      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
       Preconditions.checkArgument(

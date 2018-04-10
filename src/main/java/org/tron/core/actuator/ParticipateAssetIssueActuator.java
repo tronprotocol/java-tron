@@ -93,10 +93,10 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
-      if (!Wallet.addressValid(participateAssetIssueContract.getOwnerAddress())) {
+      if (!Wallet.addressValid(participateAssetIssueContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
-      if (!Wallet.addressValid(participateAssetIssueContract.getToAddress())) {
+      if (!Wallet.addressValid(participateAssetIssueContract.getToAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate toAddress");
       }
       Preconditions.checkNotNull(participateAssetIssueContract.getAssetName(), "trx name is null");

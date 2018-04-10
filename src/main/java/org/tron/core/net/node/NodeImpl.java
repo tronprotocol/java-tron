@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -34,22 +34,8 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.TraitorPeerException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.exception.*;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -59,6 +45,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
+  @Lazy
   private SyncPool pool;
 
   class InvToSend {
@@ -128,7 +115,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ScheduledExecutorService disconnectInactiveExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private ScheduledExecutorService cleanInventoryExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService cleanInventoryExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -246,11 +234,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     handleSyncBlockLoop.join();
     disconnectInactiveExecutor.shutdown();
     cleanInventoryExecutor.shutdown();
-  }
-
-  @Override
-  public List<NodeHandler> getActiveNodes() {
-    return this.pool.getActiveNodes();
   }
 
   private void activeTronPump() {
@@ -410,7 +393,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
-
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logNodeStatus();
@@ -433,7 +415,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     sb.append("============\n");
 
     sb.append(String.format(
-              "MyHeadBlockNum: %d\n"
+        "MyHeadBlockNum: %d\n"
             + "advToSpreadNum: %d\n"
             + "advObjectToFetchNum: %d\n"
             + "advObjWeRequestedNum: %d\n"
@@ -677,7 +659,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
-           || blockIds.peek().getNum() == 0)) {
+        || blockIds.peek().getNum() == 0)) {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
@@ -748,8 +730,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-              + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
-              + "\n Peer give us is " + blockIdWeGet.peek().getString()));
+                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                      .getString()
+                      + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
         }
@@ -790,26 +773,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!isFound) {
             while (!blockIdWeGet.isEmpty()
                 && del.containBlock(blockIdWeGet.peek())) {
-              peer.setHeadBlockWeBothHave(blockIdWeGet.peek());
-              peer.setHeadBlockTimeWeBothHave(del.getBlockTime(blockIdWeGet.peek()));
+              updateBlockWeBothHave(peer, blockIdWeGet.peek());
               blockIdWeGet.poll();
             }
           }
         } else if (!blockIdWeGet.isEmpty()) {
           while (!peer.getSyncBlockToFetch().isEmpty()) {
             if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
-              blockIdWeGet.pop();
+              peer.getSyncBlockToFetch().pollLast();
             } else {
               break;
             }
           }
+
           if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer,
-                ((BlockMessage) del.getData(blockIdWeGet.peek(), MessageTypes.BLOCK))
-                    .getBlockCapsule());
+            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+
           }
           //poll the block we both have.
-          blockIdWeGet.pop();
+          blockIdWeGet.poll();
         }
 
         //sew it
@@ -907,6 +889,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+  }
+
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+    peer.setHeadBlockWeBothHave(blockId);
+    long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
+        .getTimeStamp();
+    peer.setHeadBlockTimeWeBothHave(time);
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
