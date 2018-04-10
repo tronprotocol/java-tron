@@ -12,27 +12,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
 import java.util.HashMap;
 
 public class SpendableOutputs {
-    private long amount;
-    private HashMap<String, long[]> unspentOutputs = null;
+  private long amount;
+  private HashMap<String, long[]> unspentOutputs = null;
 
-    public HashMap<String, long[]> getUnspentOutputs() {
-        return unspentOutputs;
-    }
+  public HashMap<String, long[]> getUnspentOutputs() {
+    return unspentOutputs;
+  }
 
-    public void setUnspentOutputs(HashMap<String, long[]> unspentOutputs) {
-        this.unspentOutputs = unspentOutputs;
-    }
+  public void setUnspentOutputs(HashMap<String, long[]> unspentOutputs) {
+    this.unspentOutputs = unspentOutputs;
+  }
 
-    public long getAmount() {
-        return amount;
-    }
+  public long getAmount() {
+    return amount;
+  }
 
-    public void setAmount(long amount) {
-        this.amount = amount;
-    }
+  public void setAmount(long amount) {
+    this.amount = amount;
+  }
 }

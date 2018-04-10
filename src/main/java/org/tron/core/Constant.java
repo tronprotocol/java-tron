@@ -12,30 +12,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core;
 
-import org.tron.utils.ByteArray;
+import org.tron.common.utils.ByteArray;
 
 public class Constant {
 
-    // whole
-    public final static byte[] LAST_HASH = ByteArray.fromString("lastHash");
-    public final static String DIFFICULTY = "2001";
+  // whole
+  public static final byte[] LAST_HASH = ByteArray.fromString("lastHash");
+  public static final String DIFFICULTY = "2001";
 
-    // DB
-    public final static String BLOCK_DB_NAME = "block_data";
-    public final static String TRANSACTION_DB_NAME = "transaction_data";
+  // DB
+  public static final String BLOCK_DB_NAME = "block_data";
+  public static final String TRANSACTION_DB_NAME = "transaction_data";
 
-    // kafka
-    public final static String TOPIC_BLOCK = "block";
-    public final static String TOPIC_TRANSACTION = "transaction";
-    public final static Integer PARTITION = 0;
+  //config
+  public static final String NORMAL = "normal";
+  public static final String TEST = "test";
+  public static final String NORMAL_CONF = "config.conf";
+  public static final String TEST_CONF = "config-test.conf";
+  public static final String DATABASE_DIR = "storage.directory";
 
-    //config
-    public final  static String NORMAL_CONF="tron.conf";
-    public final  static String TEST_CONF="tron-test.conf";
-    public final  static String DATABASE_DIR="database.directory";
-
-
-
+  public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0xa1;   //a1 + address  ,a1 is version
+  public static final String ADD_PRE_FIX_STRING_MAINNET = "a1";
+  public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address  ,a0 is version
+  public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
+  public static final int ADDRESS_SIZE = 42;
 }
