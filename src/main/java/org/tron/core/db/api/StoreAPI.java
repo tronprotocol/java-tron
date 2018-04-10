@@ -39,6 +39,10 @@ public class StoreAPI {
   @Autowired
   private IndexHelper indexHelper;
 
+  /**
+   * account api
+   */
+
   public Account getAccountByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
@@ -76,80 +80,13 @@ public class StoreAPI {
     return index.size();
   }
 
-  public List<Transaction> getLatestTransactions(int topN) {
-    if (topN <= 0) {
-      return Collections.emptyList();
-    }
+  /**
+   * block api
+   */
 
-    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet =
-        index.retrieve(all(Transaction.class),
-            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
-
-    return Streams.stream(resultSet)
-        .limit(topN)
-        .collect(Collectors.toList());
-  }
-
-  public List<Block> getLatestBlocks(int topN) {
-    if (topN <= 0) {
-      return Collections.emptyList();
-    }
-
+  public int getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
-    ResultSet<Block> resultSet =
-        index.retrieve(all(Block.class), queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
-            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
-
-    return Streams.stream(resultSet)
-        .limit(topN)
-        .collect(Collectors.toList());
-  }
-
-  public Transaction getTransactionById(String id) throws NonUniqueObjectException {
-    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet =
-        index.retrieve(equal(TransactionIndex.Transaction_ID, id));
-
-    if (resultSet.isEmpty()) {
-      return null;
-    }
-
-    try {
-      return resultSet.uniqueResult();
-    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
-      throw new NonUniqueObjectException(e);
-    }
-  }
-
-  public List<Transaction> getTransactionsFromThis(String address) {
-    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet =
-        index.retrieve(equal(TransactionIndex.OWNERS, address));
-
-    return Lists.newArrayList(resultSet);
-  }
-
-  public List<Transaction> getTransactionsToThis(String address) {
-    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet =
-        index.retrieve(equal(TransactionIndex.TOS, address));
-
-    return Lists.newArrayList(resultSet);
-  }
-
-  public List<Transaction> getTransactionsByTimestamp(
-      long beginInMilliseconds, long endInMilliseconds) {
-    if (endInMilliseconds < beginInMilliseconds) {
-      return Collections.emptyList();
-    }
-
-    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet =
-        index.retrieve(between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds));
-
-    return Lists.newArrayList(resultSet);
+    return index.size();
   }
 
   public Block getBlockByNumber(long number) throws NonUniqueObjectException {
@@ -214,6 +151,104 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
+  public List<Block> getLatestBlocks(int topN) {
+    if (topN <= 0) {
+      return Collections.emptyList();
+    }
+
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet =
+        index.retrieve(all(Block.class), queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
+            applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+
+    return Streams.stream(resultSet)
+        .limit(topN)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * transaction api
+   */
+
+  public int getTransactionCount() {
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    return index.size();
+  }
+
+  public Transaction getTransactionById(String id) throws NonUniqueObjectException {
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.Transaction_ID, id));
+
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
+    }
+  }
+
+  public List<Transaction> getTransactionsFromThis(String address) {
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.OWNERS, address));
+
+    return Lists.newArrayList(resultSet);
+  }
+
+  public List<Transaction> getTransactionsToThis(String address) {
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.TOS, address));
+
+    return Lists.newArrayList(resultSet);
+  }
+
+  public List<Transaction> getAllTransactions(String address) {
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(or(equal(TransactionIndex.OWNERS, address),
+            equal(TransactionIndex.TOS, address)));
+
+    return Lists.newArrayList(resultSet);
+  }
+
+  public List<Transaction> getTransactionsByTimestamp(
+      long beginInMilliseconds, long endInMilliseconds) {
+    if (endInMilliseconds < beginInMilliseconds) {
+      return Collections.emptyList();
+    }
+
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds));
+
+    return Lists.newArrayList(resultSet);
+  }
+
+  public List<Transaction> getLatestTransactions(int topN) {
+    if (topN <= 0) {
+      return Collections.emptyList();
+    }
+
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(all(Transaction.class),
+            queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+
+    return Streams.stream(resultSet)
+        .limit(topN)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * witness api
+   */
+  
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
@@ -230,7 +265,7 @@ public class StoreAPI {
     }
   }
 
-  public Witness getWitnessByUrl(String url) throws NonUniqueObjectException {
+  public List<Witness> getWitnessListByUrl(String url) {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.Witness_URL, url));
@@ -239,11 +274,7 @@ public class StoreAPI {
       return null;
     }
 
-    try {
-      return resultSet.uniqueResult();
-    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
-      throw new NonUniqueObjectException(e);
-    }
+    return Lists.newArrayList(resultSet);
   }
 
   public Witness getWitnessByPublicKey(String publicKey) throws NonUniqueObjectException {
@@ -261,5 +292,11 @@ public class StoreAPI {
       throw new NonUniqueObjectException(e);
     }
   }
+
+  public int getWitnessCount() {
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    return index.size();
+  }
+
 
 }
