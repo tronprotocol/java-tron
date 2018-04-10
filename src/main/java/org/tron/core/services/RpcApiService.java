@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
@@ -49,10 +49,10 @@ public class RpcApiService implements Service {
   private Server apiServer;
   private Application app;
 
-  @Autowired
   private NodeManager nodeManager;
 
-  public RpcApiService(Application app) {
+  public RpcApiService(Application app, ApplicationContext ctx) {
+    nodeManager = ctx.getBean(NodeManager.class);
     this.app = app;
   }
 
