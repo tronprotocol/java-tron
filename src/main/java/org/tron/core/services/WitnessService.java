@@ -133,7 +133,7 @@ public class WitnessService implements Service {
    * Generate and broadcast blocks
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
-
+    logger.info("Try Produce Block");
     long now = DateTime.now().getMillis() + 50L;
     BlockCapsule head = this.tronApp.getDbManager().getHead();
     if (this.needSyncCheck) {
@@ -149,6 +149,7 @@ public class WitnessService implements Service {
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
+
 //    if (db.isSyncMode()) {
 //      return BlockProductionCondition.NOT_SYNCED;
 //    }

@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -34,22 +34,8 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.TraitorPeerException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.exception.*;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -59,6 +45,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
+  @Lazy
   private SyncPool pool;
 
   class InvToSend {
@@ -247,11 +234,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     handleSyncBlockLoop.join();
     disconnectInactiveExecutor.shutdown();
     cleanInventoryExecutor.shutdown();
-  }
-
-  @Override
-  public List<NodeHandler> getActiveNodes() {
-    return this.pool.getActiveNodes();
   }
 
   private void activeTronPump() {

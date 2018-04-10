@@ -61,13 +61,13 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause);
+    logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
     ctx.close();
   }
 
   @Override
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-    logger.info("handler Removed.");
+    logger.info("handler Removed. {}", ctx.channel().remoteAddress());
   }
 
 //  public void activate() {
