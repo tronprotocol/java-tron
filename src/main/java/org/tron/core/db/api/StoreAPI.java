@@ -2,6 +2,8 @@ package org.tron.core.db.api;
 
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
+import static com.googlecode.cqengine.query.QueryFactory.between;
+import static com.googlecode.cqengine.query.QueryFactory.contains;
 import static com.googlecode.cqengine.query.QueryFactory.descending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
 import static com.googlecode.cqengine.query.QueryFactory.orderBy;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.db.api.index.AccountIndex;
 import org.tron.core.db.api.index.BlockIndex;
 import org.tron.core.db.api.index.TransactionIndex;
+import org.tron.core.db.api.index.WitnessIndex;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -96,52 +99,152 @@ public class StoreAPI {
   }
 
   public Transaction getTransactionById(String id) {
-    return null;
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.Transaction_ID, id));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public Transaction getTransactionsFromThis(String address) {
-    return null;
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.OWNERS, address));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public Transaction getTransactionsToThis(String address) {
-    return null;
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(equal(TransactionIndex.TOS, address));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public List<Transaction> getTransactionsByTimestamp(
       long beginInMilliseconds, long endInMilliseconds) {
-    return null;
+    if (endInMilliseconds < beginInMilliseconds) {
+      return Collections.emptyList();
+    }
+
+    IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet =
+        index.retrieve(all(Transaction.class),
+            queryOptions(
+                between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds)));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
   }
 
   public Block getBlockByNumber(long number) {
-    return null;
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet =
+        index.retrieve(equal(BlockIndex.Block_NUMBER, number));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public Block getBlockByTransactionId(String transactionId) {
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
+    //TODO TRANSACTIONS is all transactions not ids
+    ResultSet<Block> resultSet =
+        index.retrieve(contains(BlockIndex.TRANSACTIONS, transactionId));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
+  }
+
+  public List<Block> getBlocksRelatedToAccount(String accountAddress) {
     return null;
   }
 
-  public Block getBlocksRelatedToAccount(String accountAddress) {
+  public List<Block> getBlocksByWitnessAddress(String WitnessAddress) {
     return null;
   }
 
-  public Block getBlocksByWitnessAddress(String WitnessAddress) {
-    return null;
-  }
-
-  public Block getBlocksByWitnessId(String witnessId) {
+  public List<Block> getBlocksByWitnessId(String witnessId) {
     return null;
   }
 
   public Witness getWitnessByAddress(String address) {
-    return null;
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet =
+        index.retrieve(contains(WitnessIndex.Witness_ADDRESS, address));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public Witness getWitnessByUrl(String url) {
-    return null;
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet =
+        index.retrieve(contains(WitnessIndex.Witness_URL, url));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
   public Witness getWitnessByPublicKey(String publicKey) {
-    return null;
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet =
+        index.retrieve(contains(WitnessIndex.PUBLIC_KEY, publicKey));
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    if (resultSet.size() != 1 && resultSet.iterator().hasNext()) {
+      return resultSet.iterator().next();
+    }
+
+    return resultSet.uniqueResult();
   }
 
 }
