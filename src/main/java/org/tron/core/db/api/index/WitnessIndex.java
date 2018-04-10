@@ -15,13 +15,13 @@ import org.tron.protos.Protocol.Witness;
 @Slf4j
 public class WitnessIndex extends AbstractIndex<Witness> {
 
-  private static final Attribute<Witness, String> Witness_ADDRESS =
+  public static final Attribute<Witness, String> Witness_ADDRESS =
       attribute("witness address", witness -> witness.getAddress().toStringUtf8());
-  private static final Attribute<Witness, String> PUBLIC_KEY =
+  public static final Attribute<Witness, String> PUBLIC_KEY =
       attribute("public key", witness -> witness.getPubKey().toStringUtf8());
-  private static final Attribute<Witness, Boolean> IS_JOBS =
+  public static final Attribute<Witness, Boolean> IS_JOBS =
       attribute("is jobs", Witness::getIsJobs);
-  private static final Attribute<Witness, String> Witness_URL =
+  public static final Attribute<Witness, String> Witness_URL =
       attribute("witness url", Witness::getUrl);
 
   public WitnessIndex() {

@@ -24,14 +24,14 @@ public class TransactionIndex extends AbstractIndex<Transaction> {
   public static final SimpleAttribute<Transaction, String> Transaction_ID =
       attribute("transaction id",
           t -> Sha256Hash.of(t.getRawData().toByteArray()).toString());
-  private static final Attribute<Transaction, String> OWNERS =
+  public static final Attribute<Transaction, String> OWNERS =
       attribute(String.class, "owner address",
           t -> t.getRawData().getContractList().stream()
               .map(TransactionCapsule::getOwner)
               .filter(Objects::nonNull)
               .map(ByteArray::toHexString)
               .collect(Collectors.toList()));
-  private static final Attribute<Transaction, String> TOS =
+  public static final Attribute<Transaction, String> TOS =
       attribute(String.class, "to address",
           t -> t.getRawData().getContractList().stream()
               .map(TransactionCapsule::getToAddress)

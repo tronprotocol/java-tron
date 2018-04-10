@@ -5,7 +5,7 @@ import lombok.Data;
 @Data(staticConstructor = "of")
 public class Transaction {
 
-  private final String id;
-  private final String from;
-  private final String to;
+  private String id;
+  private String from;
+  private String to;
 }

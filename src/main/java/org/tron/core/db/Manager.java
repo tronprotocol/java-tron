@@ -69,10 +69,14 @@ public class Manager {
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
   public static final long LOOP_INTERVAL = 5000L; // ms,produce block period, must be divisible by 60. millisecond
 
+  @Autowired
   private AccountStore accountStore;
+  @Autowired
   private TransactionStore transactionStore;
+  @Autowired
   private BlockStore blockStore;
   private UtxoStore utxoStore;
+  @Autowired
   private WitnessStore witnessStore;
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
@@ -257,11 +261,11 @@ public class Manager {
    * all db should be init here.
    */
   public void init() {
-    this.setAccountStore(AccountStore.create("account"));
-    this.setTransactionStore(TransactionStore.create("trans"));
-    this.setBlockStore(BlockStore.create("block"));
+//    this.setAccountStore(AccountStore.create("account"));
+//    this.setTransactionStore(TransactionStore.create("trans"));
+//    this.setBlockStore(BlockStore.create("block"));
     this.setUtxoStore(UtxoStore.create("utxo"));
-    this.setWitnessStore(WitnessStore.create("witness"));
+//    this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
 

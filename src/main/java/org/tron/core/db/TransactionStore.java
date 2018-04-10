@@ -1,13 +1,20 @@
 package org.tron.core.db;
 
+import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.common.iterator.TransactionIterator;
 
 @Slf4j
+@Component
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
-  private TransactionStore(String dbName) {
+  @Autowired
+  private TransactionStore(@Qualifier("trans") String dbName) {
     super(dbName);
   }
 
@@ -23,6 +30,12 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     byte[] transaction = dbSource.getData(key);
     logger.info("address is {}, transaction is {}", key, transaction);
     return null != transaction;
+  }
+
+  @Override
+  public void put(byte[] key, TransactionCapsule item) {
+    indexHelper.add(item.getInstance());
+    super.put(key, item);
   }
 
   /**
@@ -61,6 +74,11 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
    */
   public byte[] findTransactionByHash(byte[] trxHash) {
     return dbSource.getData(trxHash);
+  }
+
+  @Override
+  public Iterator<TransactionCapsule> iterator() {
+    return new TransactionIterator(dbSource.iterator());
   }
 
 }

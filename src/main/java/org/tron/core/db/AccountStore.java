@@ -2,22 +2,28 @@ package org.tron.core.db;
 
 import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.common.iterator.AccountIterator;
 
 @Slf4j
+@Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static Map<String, String> assertsAddress = new HashMap<String, String>();
   private static AccountStore instance;
 
-
-  private AccountStore(String dbName) {
+  @Autowired
+  private AccountStore(@Qualifier("account") String dbName) {
     super(dbName);
   }
 
@@ -57,6 +63,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     byte[] account = dbSource.getData(key);
     logger.info("address is {},account is {}", key, account);
     return null != account;
+  }
+
+  @Override
+  public void put(byte[] key, AccountCapsule item) {
+    indexHelper.add(item.getInstance());
+    super.put(key, item);
   }
 
   /**
@@ -104,4 +116,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       assertsAddress.put(accountName, address);
     }
   }
+
+  @Override
+  public Iterator<AccountCapsule> iterator() {
+    return new AccountIterator(dbSource.iterator());
+  }
+
 }

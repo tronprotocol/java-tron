@@ -5,7 +5,7 @@ import lombok.Data;
 @Data(staticConstructor = "of")
 public class Account {
 
-  private final String address;
-  private final String name;
-  private final long balance;
+  private String address;
+  private String name;
+  private long balance;
 }

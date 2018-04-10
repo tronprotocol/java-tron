@@ -18,21 +18,21 @@ import org.tron.protos.Protocol.Block;
 @Slf4j
 public class BlockIndex extends AbstractIndex<Block> {
 
-  private static final Attribute<Block, String> Block_ID =
+  public static final Attribute<Block, String> Block_ID =
       attribute("block id",
           block -> Sha256Hash.of(block.getBlockHeader().toByteArray()).toString());
-  private static final Attribute<Block, Long> Block_NUMBER =
+  public static final Attribute<Block, Long> Block_NUMBER =
       attribute("block number",
           block -> block.getBlockHeader().getRawData().getNumber());
-  private static final Attribute<Block, String> TRANSACTIONS =
+  public static final Attribute<Block, String> TRANSACTIONS =
       attribute(String.class, "transactions",
           block -> block.getTransactionsList().stream()
               .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
               .collect(Collectors.toList()));
-  private static final Attribute<Block, Long> WITNESS_ID =
+  public static final Attribute<Block, Long> WITNESS_ID =
       attribute("witness id",
           block -> block.getBlockHeader().getRawData().getWitnessId());
-  private static final Attribute<Block, String> WITNESS_ADDRESS =
+  public static final Attribute<Block, String> WITNESS_ADDRESS =
       attribute("witness address",
           block -> block.getBlockHeader().getRawData().getWitnessAddress().toStringUtf8());
 

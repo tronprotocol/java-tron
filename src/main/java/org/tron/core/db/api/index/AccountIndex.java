@@ -15,11 +15,11 @@ import org.tron.protos.Protocol.Account;
 @Slf4j
 public class AccountIndex extends AbstractIndex<Account> {
 
-  private static final Attribute<Account, String> Account_ADDRESS =
+  public static final Attribute<Account, String> Account_ADDRESS =
       attribute("account address", account -> account.getAddress().toStringUtf8());
-  private static final Attribute<Account, String> Account_NAME =
+  public static final Attribute<Account, String> Account_NAME =
       attribute("account name", account -> account.getAccountName().toStringUtf8());
-  private static final Attribute<Account, Long> Account_BALANCE =
+  public static final Attribute<Account, Long> Account_BALANCE =
       attribute("account balance", Account::getBalance);
 
   public AccountIndex() {
