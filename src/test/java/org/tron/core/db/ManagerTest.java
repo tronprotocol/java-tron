@@ -136,11 +136,13 @@ public class ManagerTest {
   public void fork() {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = "040df7d5a0641eb901f4a3b08bb49f968f8dc14306e4cbfb2a455e37a91d6"
+        + "0a7c8a5ff4f0814afa044a403f01cb462628bea1b62afc8fe3a6f3d42d3852591b059";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    WitnessCapsule witnessCapsule = new WitnessCapsule(
+        ByteString.copyFrom(address));
     dbManager.addWitness(witnessCapsule);
     dbManager.addWitness(witnessCapsule);
     dbManager.addWitness(witnessCapsule);
