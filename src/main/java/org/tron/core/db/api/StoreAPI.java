@@ -42,6 +42,7 @@ public class StoreAPI {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
         index.retrieve(equal(AccountIndex.Account_ADDRESS, address));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -53,6 +54,7 @@ public class StoreAPI {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
         index.retrieve(equal(AccountIndex.Account_NAME, name));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -104,6 +106,7 @@ public class StoreAPI {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(equal(TransactionIndex.Transaction_ID, id));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -148,6 +151,7 @@ public class StoreAPI {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.Block_NUMBER, number));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -164,6 +168,7 @@ public class StoreAPI {
     //TODO TRANSACTIONS is all transactions not ids
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.TRANSACTIONS, transactionId));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -178,7 +183,6 @@ public class StoreAPI {
   public List<Block> getBlocksRelatedToAccount(String accountAddress) {
     IndexedCollection<Block> blockIndex = indexHelper.getBlockIndex();
     IndexedCollection<Transaction> transactionIndex = indexHelper.getTransactionIndex();
-    //TODO from or to address of transaction in blocks
     ResultSet<Block> resultSet =
         blockIndex.retrieve(existsIn(transactionIndex,
             BlockIndex.TRANSACTIONS,
@@ -195,10 +199,6 @@ public class StoreAPI {
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress));
 
-    if (resultSet.isEmpty()) {
-      return Collections.emptyList();
-    }
-
     return Lists.newArrayList(resultSet);
   }
 
@@ -207,10 +207,6 @@ public class StoreAPI {
     ResultSet<Block> resultSet =
         index.retrieve(equal(BlockIndex.WITNESS_ID, witnessId));
 
-    if (resultSet.isEmpty()) {
-      return Collections.emptyList();
-    }
-
     return Lists.newArrayList(resultSet);
   }
 
@@ -218,6 +214,7 @@ public class StoreAPI {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.Witness_ADDRESS, address));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -233,6 +230,7 @@ public class StoreAPI {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.Witness_URL, url));
+
     if (resultSet.isEmpty()) {
       return null;
     }
@@ -248,6 +246,7 @@ public class StoreAPI {
     IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
     ResultSet<Witness> resultSet =
         index.retrieve(equal(WitnessIndex.PUBLIC_KEY, publicKey));
+
     if (resultSet.isEmpty()) {
       return null;
     }
