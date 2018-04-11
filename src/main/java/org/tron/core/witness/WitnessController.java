@@ -24,7 +24,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.BlockFilledSlots;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
 
@@ -336,9 +335,7 @@ public class WitnessController {
   }
 
   public int calculateParticipationRate() {
-    return
-        100 * manager.getDynamicPropertiesStore().getBlockFilledSlots().calculateFilledSlotsCount()
-            / BlockFilledSlots.SLOT_NUMBER;
+    return manager.getDynamicPropertiesStore().calculateFilledSlotsCount();
   }
 
   private static List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {

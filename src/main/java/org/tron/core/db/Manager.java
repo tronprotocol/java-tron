@@ -518,9 +518,9 @@ public class Manager {
         logger.info("{} miss a block. totalMissed = {}",
             w.createReadableString(), w.getTotalMissed());
       }
-      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
+      this.dynamicPropertiesStore.applyBlock(false);
     }
-    this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
+    this.dynamicPropertiesStore.applyBlock(true);
 
     if (slot <= 0) {
       logger.warn("missedBlocks [" + slot + "] is illegal");
