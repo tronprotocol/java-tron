@@ -8,6 +8,7 @@ import com.googlecode.cqengine.persistence.Persistence;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
 
 @Component
@@ -15,9 +16,11 @@ import org.tron.protos.Protocol.Witness;
 public class WitnessIndex extends AbstractIndex<Witness> {
 
   public static final Attribute<Witness, String> Witness_ADDRESS =
-      attribute("witness address", witness -> witness.getAddress().toStringUtf8());
+      attribute("witness address",
+          witness -> ByteArray.toHexString(witness.getAddress().toByteArray()));
   public static final Attribute<Witness, String> PUBLIC_KEY =
-      attribute("public key", witness -> witness.getPubKey().toStringUtf8());
+      attribute("public key",
+          witness -> ByteArray.toHexString(witness.getPubKey().toByteArray()));
   public static final Attribute<Witness, String> Witness_URL =
       attribute("witness url", Witness::getUrl);
 

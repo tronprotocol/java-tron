@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Block;
 
@@ -34,7 +35,8 @@ public class BlockIndex extends AbstractIndex<Block> {
           block -> block.getBlockHeader().getRawData().getWitnessId());
   public static final Attribute<Block, String> WITNESS_ADDRESS =
       attribute("witness address",
-          block -> block.getBlockHeader().getRawData().getWitnessAddress().toStringUtf8());
+          block -> ByteArray.toHexString(
+              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray()));
 
   public BlockIndex() {
     super();

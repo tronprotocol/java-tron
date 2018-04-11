@@ -9,6 +9,7 @@ import com.googlecode.cqengine.persistence.Persistence;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Account;
 
 @Component
@@ -16,7 +17,8 @@ import org.tron.protos.Protocol.Account;
 public class AccountIndex extends AbstractIndex<Account> {
 
   public static final Attribute<Account, String> Account_ADDRESS =
-      attribute("account address", account -> account.getAddress().toStringUtf8());
+      attribute("account address",
+          account -> ByteArray.toHexString(account.getAddress().toByteArray()));
   public static final Attribute<Account, String> Account_NAME =
       attribute("account name", account -> account.getAccountName().toStringUtf8());
   public static final Attribute<Account, Long> Account_BALANCE =
