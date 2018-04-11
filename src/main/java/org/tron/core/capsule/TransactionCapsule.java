@@ -81,64 +81,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
-  /* public TransactionCapsule(String key, long value) {
-    TXInput.raw rawData = TXInput.raw.newBuilder()
-        .setTxID(ByteString.copyFrom(new byte[]{}))
-        .setVout(-1).build();
 
-    TXInput txi = TXInput.newBuilder()
-        .setSignature(ByteString.copyFrom(new byte[]{}))
-        .setRawData(rawData).build();
 
-    TXOutput txo = TXOutput.newBuilder()
-        .setValue(value)
-        .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(key)))
-        .build();
-
-    Transaction.raw.Builder rawCoinbaseTransaction = Transaction.raw.newBuilder()
-        .addVin(txi)
-        .addVout(txo);
-    this.transaction = Transaction.newBuilder().setRawData(rawCoinbaseTransaction.build()).build();
-  } */
-
-  /**
-   * constructor TransactionCapsule.
-   */
-  /*public TransactionCapsule(
-      byte[] address,
-      String to,
-      long amount,
-      long balance,
-      UtxoStore utxoStore
-  ) {
-
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
-        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).build());
-    List<TXInput> txInputs = new ArrayList<>();
-    List<TXOutput> txOutputs = new ArrayList<>();
-    long spendableOutputs = balance;
-
-    utxoStore.findSpendableOutputs(address, amount).getUnspentOutputs()
-        .forEach((txId, outs) ->
-            Arrays.stream(outs)
-                .mapToObj(out -> TxInputUtil
-                    .newTxInput(ByteArray.fromHexString(txId), out, null, address))
-                .forEachOrdered(txInputs::add));
-
-    txOutputs.add(TxOutputUtil.newTxOutput(amount, to));
-    txOutputs
-        .add(TxOutputUtil.newTxOutput(spendableOutputs - amount, ByteArray.toHexString(address)));
-
-    if (checkBalance(address, to, amount, balance)) {
-      txInputs.forEach(transactionBuilder::addVin);
-      txOutputs.forEach(transactionBuilder::addVout);
-      logger.info("Transaction create succeeded！");
-      transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
-    } else {
-      logger.error("Transaction create failed！");
-      transaction = null;
-    }
-  }*/
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
     AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (account != null && account.getType() == contract.getType()) {
@@ -183,11 +127,35 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     //this.getInstance().toBuilder(). (transactionResultCapsule.getInstance());
   }
 
+  public void setReference(long blockNum, byte[] blockHash) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder().setRefBlockNum(blockNum)
+        .setRefBlockHash(ByteString.copyFrom(blockHash)).build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public void setExpiration(long expiration) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder().setExpiration(expiration)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
   public TransactionCapsule(AssetIssueContract assetIssueContract) {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
   }
 
-  private void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
+
+  public TransactionCapsule(com.google.protobuf.Message message, ContractType contractType) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
+        TransactionType.ContractType).addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            Any.pack(message)).build());
+    logger.info("Transaction create succeeded！");
+    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
+  }
+
+
+  @Deprecated
+  public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
