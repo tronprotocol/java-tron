@@ -424,7 +424,6 @@ public class Manager {
           this.numHashCache
               .putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
-          head = item;
         } catch (ValidateSignatureException e) {
           logger.debug(e.getMessage(), e);
         } catch (ContractValidateException e) {
@@ -521,14 +520,13 @@ public class Manager {
       }
     }
 
-    long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
-    if (missedBlocks >= 0) {
-      while (missedBlocks-- > 0) {
+    if (slot >= 0) {
+      while (slot-- > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
       }
       this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
     } else {
-      logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
+      logger.warn("missedBlocks [" + slot + "] is illegal");
     }
 
     this.head = block;
@@ -537,9 +535,6 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    witnessController.updateWitnessSchedule();
-
-
   }
 
   @Deprecated
@@ -771,19 +766,21 @@ public class Manager {
       processTransaction(transactionCapsule);
     }
 
-    // todo set reverking db max size.
+    // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
 
-    if (needMaintenance(block.getTimeStamp())) {
+    boolean needMaint = needMaintenance(block.getTimeStamp());
+    if (needMaint) {
       if (block.getNum() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
       } else {
         this.processMaintenance(block);
       }
     }
-
+    updateMaintenanceState(needMaint);
+    witnessController.updateWitnessSchedule();
   }
 
   /**
@@ -855,13 +852,21 @@ public class Manager {
 
   }
 
+  public void updateMaintenanceState(boolean needMaint){
+    if(needMaint) {
+      getDynamicPropertiesStore().saveStateFlag(1);
+    }else{
+      getDynamicPropertiesStore().saveStateFlag(0);
+    }
+  }
+
   public boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
   // To be added
   public long getSkipSlotInMaintenance() {
-    return 0;
+    return getDynamicPropertiesStore().getMaintenanceSkipSlots();
   }
 
   public AssetIssueStore getAssetIssueStore() {
