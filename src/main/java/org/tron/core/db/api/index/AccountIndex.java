@@ -19,8 +19,6 @@ public class AccountIndex extends AbstractIndex<Account> {
   public static final Attribute<Account, String> Account_ADDRESS =
       attribute("account address",
           account -> ByteArray.toHexString(account.getAddress().toByteArray()));
-  public static final Attribute<Account, String> Account_NAME =
-      attribute("account name", account -> account.getAccountName().toStringUtf8());
   public static final Attribute<Account, Long> Account_BALANCE =
       attribute("account balance", Account::getBalance);
 
@@ -35,7 +33,6 @@ public class AccountIndex extends AbstractIndex<Account> {
   @PostConstruct
   public void init() {
     addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
-    addIndex(SuffixTreeIndex.onAttribute(Account_NAME));
     addIndex(NavigableIndex.onAttribute(Account_BALANCE));
   }
 

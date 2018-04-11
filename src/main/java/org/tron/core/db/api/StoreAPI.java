@@ -3,10 +3,8 @@ package org.tron.core.db.api;
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
 import static com.googlecode.cqengine.query.QueryFactory.between;
-import static com.googlecode.cqengine.query.QueryFactory.deduplicate;
 import static com.googlecode.cqengine.query.QueryFactory.descending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
-import static com.googlecode.cqengine.query.QueryFactory.existsIn;
 import static com.googlecode.cqengine.query.QueryFactory.or;
 import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
@@ -16,7 +14,6 @@ import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERI
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.IndexedCollection;
-import com.googlecode.cqengine.query.option.DeduplicationStrategy;
 import com.googlecode.cqengine.resultset.ResultSet;
 import java.util.Collections;
 import java.util.List;
@@ -51,22 +48,6 @@ public class StoreAPI {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     ResultSet<Account> resultSet =
         index.retrieve(equal(AccountIndex.Account_ADDRESS, address));
-
-    if (resultSet.isEmpty()) {
-      return null;
-    }
-
-    try {
-      return resultSet.uniqueResult();
-    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
-      throw new NonUniqueObjectException(e);
-    }
-  }
-
-  public Account getAccountByName(String name) throws NonUniqueObjectException {
-    IndexedCollection<Account> index = indexHelper.getAccountIndex();
-    ResultSet<Account> resultSet =
-        index.retrieve(equal(AccountIndex.Account_NAME, name));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -128,18 +109,12 @@ public class StoreAPI {
   }
 
   public List<Block> getBlocksRelatedToAccount(String accountAddress) {
-    IndexedCollection<Block> blockIndex = indexHelper.getBlockIndex();
-    IndexedCollection<Transaction> transactionIndex = indexHelper.getTransactionIndex();
+    IndexedCollection<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
-        blockIndex.retrieve(existsIn(transactionIndex,
-            BlockIndex.TRANSACTIONS,
-            TransactionIndex.Transaction_ID,
-            or(equal(TransactionIndex.OWNERS, accountAddress),
-                equal(TransactionIndex.TOS, accountAddress))
-            ),
+        index.retrieve(or(equal(BlockIndex.OWNERS, accountAddress),
+            equal(BlockIndex.TOS, accountAddress)),
             queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0)),
-                deduplicate(DeduplicationStrategy.MATERIALIZE)));
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return Lists.newArrayList(resultSet);
   }
