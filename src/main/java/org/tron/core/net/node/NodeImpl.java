@@ -37,8 +37,22 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.BlockConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.*;
-import org.tron.core.net.message.*;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.TraitorPeerException;
+import org.tron.core.exception.TronException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.net.message.BlockInventoryMessage;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.ChainInventoryMessage;
+import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
+import org.tron.core.net.message.ItemNotFound;
+import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -632,46 +646,58 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void processSyncBlock(BlockCapsule block) {
     //TODO: add processing backlog cache here, use multi thread
 
+    boolean isAccept = false;
+
+    //TODO: reason need to organize.
+    ReasonCode reason = null;
+
     try {
       del.handleBlock(block, true);
       freshBlockId.offer(block.getBlockId());
+      isAccept = true;
     } catch (BadBlockException e) {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+      reason = ReasonCode.REQUESTED;
     } catch (TronException e) {
       //should not go here.
       logger.info(e.getMessage(), e);
+      reason = ReasonCode.REQUESTED;
       //logger.error(e.getMessage());
-      return;
     }
 
-    logger.info("save block num:" + block.getNum());
-
-    Deque<PeerConnection> needSync = new LinkedList<>();
-    Deque<PeerConnection> needFetchAgain = new LinkedList<>();
-
-    getActivePeer()
-        .forEach(peer -> {
-          if (peer.getSyncBlockToFetch().isEmpty()
-              && peer.getBlockInProc().isEmpty()
-              && !peer.isNeedSyncFromPeer()
-              && !peer.isNeedSyncFromUs()) {
-            needSync.offer(peer);
-          } else {
-            //TODO: erase process here
-            if (peer.getBlockInProc().remove(block.getBlockId())) {
-              updateBlockWeBothHave(peer, block);
-              if (peer.getSyncBlockToFetch().isEmpty()
-                  && peer.getUnfetchSyncNum() == 0
-                  && peer.getBlockInProc().isEmpty()) { //send sync to let peer know we are sync.
-                needFetchAgain.offer(peer);
+    if (isAccept) {
+      Deque<PeerConnection> needSync = new LinkedList<>();
+      Deque<PeerConnection> needFetchAgain = new LinkedList<>();
+      logger.info("save block num:" + block.getNum());
+      getActivePeer()
+          .forEach(peer -> {
+            if (peer.getSyncBlockToFetch().isEmpty()
+                && peer.getBlockInProc().isEmpty()
+                && !peer.isNeedSyncFromPeer()
+                && !peer.isNeedSyncFromUs()) {
+              needSync.offer(peer);
+            } else {
+              //TODO: erase process here
+              if (peer.getBlockInProc().remove(block.getBlockId())) {
+                updateBlockWeBothHave(peer, block);
+                if (peer.getSyncBlockToFetch().isEmpty()
+                    && peer.getUnfetchSyncNum() == 0
+                    && peer.getBlockInProc().isEmpty()) { //send sync to let peer know we are sync.
+                  needFetchAgain.offer(peer);
+                }
               }
             }
+          });
 
-          }
-        });
+      needSync.forEach(peer -> startSyncWithPeer(peer));
+      needFetchAgain.forEach(peer -> syncNextBatchChainIds(peer));
+    } else {
+      ReasonCode finalReason = reason;
+      getActivePeer().stream()
+          .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
+          .forEach(peer -> disconnectPeer(peer, finalReason));
+    }
 
-    needSync.forEach(peer -> startSyncWithPeer(peer));
-    needFetchAgain.forEach(peer -> syncNextBatchChainIds(peer));
     isHandleSyncBlockActive = true;
   }
 
@@ -1018,7 +1044,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
-    logger.info("disconnect with " + peer.getNode().getHost());
+    logger.info("disconnect with " + peer.getNode().getHost() + "|| reason:" + reason);
     peer.disconnect(reason);
   }
 }

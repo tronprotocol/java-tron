@@ -148,7 +148,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
-        forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
+        forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);j
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
         Collections.reverse(forkList);
