@@ -3,6 +3,7 @@ package org.tron.core.db.api;
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
 import static com.googlecode.cqengine.query.QueryFactory.between;
+import static com.googlecode.cqengine.query.QueryFactory.deduplicate;
 import static com.googlecode.cqengine.query.QueryFactory.descending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
 import static com.googlecode.cqengine.query.QueryFactory.existsIn;
@@ -15,6 +16,7 @@ import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERI
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.IndexedCollection;
+import com.googlecode.cqengine.query.option.DeduplicationStrategy;
 import com.googlecode.cqengine.resultset.ResultSet;
 import java.util.Collections;
 import java.util.List;
@@ -136,7 +138,8 @@ public class StoreAPI {
                 equal(TransactionIndex.TOS, accountAddress))
             ),
             queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0)),
+                deduplicate(DeduplicationStrategy.MATERIALIZE)));
 
     return Lists.newArrayList(resultSet);
   }
