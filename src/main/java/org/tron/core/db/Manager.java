@@ -520,8 +520,8 @@ public class Manager {
       }
     }
 
-    if (slot >= 0) {
-      while (slot-- > 0) {
+    if (slot > 0) {
+      while (--slot > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
       }
       this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
