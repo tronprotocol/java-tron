@@ -61,14 +61,27 @@ public class ManagerTest {
   }
 
   @Test
-  public void setBlockReference() {
+  public void setBlockReference()
+      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, ContractValidateException, ValidateSignatureException {
+
+    BlockCapsule blockCapsule = new BlockCapsule(1, dbManager.getGenesisBlockId().getByteString(),
+        0,
+        ByteString.copyFrom(
+            ECKey.fromPrivate(ByteArray
+                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                .getAddress()));
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(
+        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+
     TransferContract tc = TransferContract.newBuilder().setAmount(10)
         .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
         .setToAddress(ByteString.copyFromUtf8("bbb")).build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
 
     if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
-      this.pushBlock();
+      dbManager.pushBlock(blockCapsule);
+      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
       dbManager.setBlockReference(trx);
       Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
     }
@@ -76,7 +89,8 @@ public class ManagerTest {
       dbManager.eraseBlock();
     }
     try {
-      dbManager.pushBlock(blockCapsule2);
+      dbManager.pushBlock(blockCapsule);
+      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     } catch (ValidateSignatureException e) {
       e.printStackTrace();
     } catch (ContractValidateException e) {
@@ -88,9 +102,10 @@ public class ManagerTest {
     } catch (ValidateScheduleException e) {
       e.printStackTrace();
     }
-
+    Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
     Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
+
   }
 
   @Test
