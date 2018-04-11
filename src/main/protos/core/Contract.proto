@@ -101,3 +101,23 @@ message DeployContract {
   bytes script = 2;
 }
 
+message ChainParameters {
+  int64 trxs_size = 1;
+  int64 loop_interval = 2;
+}
+
+message CreateProposalContract {
+  ChainParameters parameters = 1;
+  int64 expiration_time = 2;
+}
+
+message ApprovalProposalContract {
+  int32 proposalId = 1;
+  repeated bytes approvals_to_add = 2;
+  repeated bytes approvals_to_remove = 3;
+}
+
+message RejectProposalContract {
+  int32 proposalId = 1;
+}
+

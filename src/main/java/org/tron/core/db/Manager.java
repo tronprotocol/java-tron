@@ -506,7 +506,8 @@ public class Manager {
   }
 
   private void handleMissedBlock(BlockCapsule block) {
-    if (block.getNum() <= 1) {
+    if (block.getNum() == 1) {
+      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
       return;
     }
 
@@ -523,7 +524,7 @@ public class Manager {
       }
     }
 
-    long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
+    long missedBlocks = slot - 1;
     if (missedBlocks >= 0) {
       while (missedBlocks-- > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
