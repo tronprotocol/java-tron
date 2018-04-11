@@ -82,6 +82,9 @@ message Transaction {
       DeployContract = 7;
       WitnessUpdateContract = 8;
       ParticipateAssetIssueContract = 9;
+      CreateProposalContract = 10;
+      ApprovalProposalContract = 11;
+      RejectProposalContract = 12;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
