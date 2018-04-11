@@ -505,16 +505,18 @@ public class Manager {
     }
   }
 
-  public void updateDynamicProperties(BlockCapsule block) {
-    long slot = 1;
-    if (block.getNum() != 1){
-      slot = witnessController.getSlotAtTime(block.getTimeStamp());
+  private void handleMissedBlock(BlockCapsule block) {
+    if (block.getNum() <= 1) {
+      return;
     }
-    for (int i = 1; i < slot; ++i){
+
+    long slot = witnessController.getSlotAtTime(block.getTimeStamp());
+
+    for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w = this.witnessStore
             .get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
-        w.setTotalMissed(w.getTotalMissed()+1);
+        w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info("{} miss a block. totalMissed = {}",
             w.createReadableString(), w.getTotalMissed());
@@ -530,6 +532,11 @@ public class Manager {
     } else {
       logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
     }
+  }
+
+  public void updateDynamicProperties(BlockCapsule block) {
+
+    handleMissedBlock(block);
 
     this.head = block;
     logger.info("update head, num = {}", block.getNum());
@@ -538,7 +545,6 @@ public class Manager {
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
     witnessController.updateWitnessSchedule();
-
 
   }
 
@@ -832,11 +838,11 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
+    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
     witnessCapsule.setLatestBlockNum(block.getNum());
     witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
-    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     AccountCapsule sun = accountStore.getSun();
     try {
