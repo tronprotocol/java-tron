@@ -240,6 +240,5 @@ public class ManagerTest {
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
-    dbManager.getWitnesses().clear();
   }
 }
