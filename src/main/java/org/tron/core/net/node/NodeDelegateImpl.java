@@ -126,7 +126,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
-        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
+        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_RETURN_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))
         .collect(Collectors.toCollection(LinkedList::new));

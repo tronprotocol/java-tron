@@ -116,6 +116,7 @@ public class SyncPool {
 
     if (active.isEmpty()) return;
 
+    //sort by latency
     active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
     for (PeerConnection channel : active) {

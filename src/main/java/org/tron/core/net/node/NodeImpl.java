@@ -1,5 +1,8 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
+import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
+
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
@@ -150,6 +153,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ExecutorLoop<Message> loopAdvertiseInv;
 
+  private ScheduledExecutorService fetchSyncBlocksExecutor = Executors
+      .newSingleThreadScheduledExecutor();
+
+  private boolean isSuspendFetch = false;
+
+  private boolean isFetchSyncActive = false;
+
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
     logger.info("Handle Message: " + msg);
@@ -234,6 +244,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     handleSyncBlockLoop.join();
     disconnectInactiveExecutor.shutdown();
     cleanInventoryExecutor.shutdown();
+    fetchSyncBlocksExecutor.shutdown();
   }
 
   private void activeTronPump() {
@@ -351,6 +362,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             blockWaitToProcBak.clear();
           }
 
+          if (blockWaitToProc.size() > MAX_BLOCKS_IN_PROCESS) {
+            isSuspendFetch = true;
+            logger.info("suspend fetch number in proc:" + blockWaitToProc.size());
+          }
+
           isBlockProc[0] = false;
           Set<BlockMessage> pool = new HashSet<>();
           pool.addAll(blockWaitToProc);
@@ -369,11 +385,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (isFound[0]) {
               if (!freshBlockId.contains(msg.getBlockId())) {
                 blockWaitToProc.remove(msg);
-                processSyncBlock(msg.getBlockCapsule());
+                BlockCapsule block = msg.getBlockCapsule();
+                processSyncBlock(block);
                 isBlockProc[0] = true;
               }
             }
           });
+
+          if (blockWaitToProc.size() <= MAX_BLOCKS_IN_PROCESS) {
+            isSuspendFetch = false;
+            logger.info("go on fetching number in proc:" + blockWaitToProc.size());
+          }
+
         } while (isBlockProc[0]);
       }
 
@@ -408,6 +431,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Unhandled exception", t);
       }
     }, 2, NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES / 2, TimeUnit.MINUTES);
+
+    fetchSyncBlocksExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        if (isFetchSyncActive) {
+          if (!isSuspendFetch) {
+            startFetchSyncBlock();
+          } else {
+            logger.info("suspend");
+          }
+        }
+        isFetchActive = false;
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
+    }, 10, 1, TimeUnit.SECONDS);
   }
 
   private synchronized void logNodeStatus() {
@@ -523,7 +561,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
-    //logger.info("Block number is " + blkMsg.getBlockId().getNum());
+    logger.info("handle Block number is " + blkMsg.getBlockId().getNum());
 
     if (advObjWeRequested.containsKey(blockId)) {
       //broadcast mode
@@ -543,8 +581,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
           syncNextBatchChainIds(peer);
         } else {
-          //TODO: here should be a loop do this thing
           //startFetchSyncBlock();
+          isFetchSyncActive = true;
         }
       }
 
@@ -590,10 +628,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
     } catch (TronException e) {
       //should not go here.
-      logger.debug(e.getMessage(), e);
+      logger.info(e.getMessage(), e);
       //logger.error(e.getMessage());
       return;
     }
+
+    logger.info("save block num:" + block.getNum());
 
     Deque<PeerConnection> needSync = new LinkedList<>();
     Deque<PeerConnection> needFetchAgain = new LinkedList<>();
@@ -806,7 +846,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         if (msg.getRemainNum() == 0) {
           if (!peer.getSyncBlockToFetch().isEmpty()) {
-            startFetchSyncBlock();
+            //startFetchSyncBlock();
+            isFetchSyncActive = true;
           } else {
             //let peer know we are sync.
             syncNextBatchChainIds(peer);
@@ -814,7 +855,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         } else {
           if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
             //one batch by one batch.
-            startFetchSyncBlock();
+            //startFetchSyncBlock();
+            isFetchSyncActive = true;
           } else {
             syncNextBatchChainIds(peer);
           }
@@ -849,7 +891,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private synchronized void startFetchSyncBlock() {
     //TODO: check how many block is processing and decide if fetch more
-    HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
+      HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     HashSet<BlockId> request = new HashSet<>();
 
     getActivePeer().stream()
@@ -865,9 +907,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
-              //if (send.get(peer).size() > 200) { //Max Blocks peer get one time
-              //  break;
-              //}
+              if (send.get(peer).size() > MAX_BLOCKS_SYNC_FROM_ONE_PEER) { //Max Blocks peer get one time
+                break;
+              }
             }
           }
         });
