@@ -387,7 +387,7 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  private void eraseBlock() {
+  public void eraseBlock() {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
     try {
@@ -424,7 +424,6 @@ public class Manager {
           this.numHashCache
               .putData(ByteArray.fromLong(item.getNum()), item.getBlockId().getBytes());
           tmpDialog.commit();
-          head = item;
         } catch (ValidateSignatureException e) {
           logger.debug(e.getMessage(), e);
         } catch (ContractValidateException e) {
@@ -507,28 +506,27 @@ public class Manager {
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
-    if (block.getNum() != 1){
+    if (block.getNum() != 1) {
       slot = witnessController.getSlotAtTime(block.getTimeStamp());
     }
-    for (int i = 1; i < slot; ++i){
+    for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w = this.witnessStore
             .get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
-        w.setTotalMissed(w.getTotalMissed()+1);
+        w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info("{} miss a block. totalMissed = {}",
             w.createReadableString(), w.getTotalMissed());
       }
     }
 
-    long missedBlocks = witnessController.getSlotAtTime(block.getTimeStamp()) - 1;
-    if (missedBlocks >= 0) {
-      while (missedBlocks-- > 0) {
+    if (slot >= 0) {
+      while (slot-- > 0) {
         this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
       }
       this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
     } else {
-      logger.warn("missedBlocks [" + missedBlocks + "] is illegal");
+      logger.warn("missedBlocks [" + slot + "] is illegal");
     }
 
     this.head = block;
@@ -537,9 +535,6 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    witnessController.updateWitnessSchedule();
-
-
   }
 
   @Deprecated
@@ -584,6 +579,14 @@ public class Manager {
   public byte[] findBlockByHash(final Sha256Hash hash) {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash).getData()
         : blockStore.get(hash.getBytes()).getData();
+  }
+
+
+  public void setBlockReference(TransactionCapsule trans) {
+    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        .toByteArray();
+    long headNum = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    trans.setReference(headNum, headHash);
   }
 
   /**
@@ -771,19 +774,21 @@ public class Manager {
       processTransaction(transactionCapsule);
     }
 
-    // todo set reverking db max size.
+    // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
 
-    if (needMaintenance(block.getTimeStamp())) {
+    boolean needMaint = needMaintenance(block.getTimeStamp());
+    if (needMaint) {
       if (block.getNum() == 1) {
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
       } else {
         this.processMaintenance(block);
       }
     }
-
+    updateMaintenanceState(needMaint);
+    witnessController.updateWitnessSchedule();
   }
 
   /**
@@ -832,11 +837,11 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
+    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
     witnessCapsule.setLatestBlockNum(block.getNum());
     witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
-    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     AccountCapsule sun = accountStore.getSun();
     try {
@@ -855,13 +860,21 @@ public class Manager {
 
   }
 
+  public void updateMaintenanceState(boolean needMaint){
+    if(needMaint) {
+      getDynamicPropertiesStore().saveStateFlag(1);
+    }else{
+      getDynamicPropertiesStore().saveStateFlag(0);
+    }
+  }
+
   public boolean lastHeadBlockIsMaintenance() {
     return getDynamicPropertiesStore().getStateFlag() == 1;
   }
 
   // To be added
   public long getSkipSlotInMaintenance() {
-    return 0;
+    return getDynamicPropertiesStore().getMaintenanceSkipSlots();
   }
 
   public AssetIssueStore getAssetIssueStore() {

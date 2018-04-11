@@ -12,6 +12,7 @@ import org.tron.core.config.args.Args;
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
+  private static final long MAINTENANCE_SKIP_SLOTS = 2;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -172,7 +173,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
   }
 
-  private void saveStateFlag(int n) {
+  public void saveStateFlag(int n) {
     logger.info("update state flag = {}", n);
     this.put(STATE_FLAG, new BytesCapsule(ByteArray.fromInt(n)));
   }
@@ -186,6 +187,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return nextMaintenanceTime;
   }
 
+  public long getMaintenanceSkipSlots() {
+    return MAINTENANCE_SKIP_SLOTS;
+  }
 
   private void setNextMaintenanceTime(DateTime nextMaintenanceTime) {
     this.nextMaintenanceTime = nextMaintenanceTime;
