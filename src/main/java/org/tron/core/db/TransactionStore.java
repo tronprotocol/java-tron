@@ -6,9 +6,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.common.iterator.TransactionIterator;
 
@@ -85,15 +82,5 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   public Iterator<TransactionCapsule> iterator() {
     return new TransactionIterator(dbSource.iterator());
   }
-
-  public static void main(String[] args) {
-    for (int i = 0; i < 4; i++) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      System.out.println("privateKey:" + ByteArray.toHexString(ecKey.getPrivKey().toByteArray()));
-      System.out.println("publicKey:" + ByteArray.toHexString(ecKey.getPubKey()));
-      System.out.println("address:" + ByteArray.toHexString(ecKey.getAddress()));
-    }
-
-  }
-
+  
 }
