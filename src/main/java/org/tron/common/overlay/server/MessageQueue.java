@@ -58,12 +58,15 @@ public class MessageQueue {
     }
   });
 
+  private static Thread sendMsgThread;
+
   private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
-  private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
+  //private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
+
+  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
+
   private ChannelHandlerContext ctx = null;
 
-//  @Autowired
-//  EthereumListener ethereumListener;
   boolean hasPing = false;
   private ScheduledFuture<?> timerTask;
   private Channel channel;
@@ -73,6 +76,7 @@ public class MessageQueue {
 
   public void activate(ChannelHandlerContext ctx) {
     this.ctx = ctx;
+
     timerTask = timer.scheduleAtFixedRate(() -> {
       try {
         nudgeQueue();
@@ -80,6 +84,21 @@ public class MessageQueue {
         logger.error("Unhandled exception", t);
       }
     }, 10, 10, TimeUnit.MILLISECONDS);
+
+    sendMsgThread = new Thread(()->{
+     while (true) {
+       try {
+         Message msg = msgQueue.take();
+         ctx.writeAndFlush(msg.getSendData())
+                 .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+       }catch (InterruptedException e){
+         break;
+       }catch (Exception e) {
+         logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+       }
+     }
+    });
+    sendMsgThread.start();
   }
 
   public void setChannel(Channel channel) {
@@ -95,7 +114,7 @@ public class MessageQueue {
     if (msg.getAnswerMessage() != null)
       requestQueue.add(new MessageRoundtrip(msg));
     else
-      respondQueue.add(new MessageRoundtrip(msg));
+      msgQueue.offer(msg);
   }
 
   public void disconnect() {
@@ -138,7 +157,7 @@ public class MessageQueue {
     // remove last answered message on the queue
     removeAnsweredMessage(requestQueue.peek());
     // Now send the next message
-    sendToWire(respondQueue.poll());
+    //sendToWire(respondQueue.poll());
     sendToWire(requestQueue.peek());
   }
 
@@ -173,8 +192,7 @@ public class MessageQueue {
   }
 
   public void close() {
-    if (!timerTask.isCancelled()) {
-      timerTask.cancel(false);
-    }
+    sendMsgThread.interrupt();
+    timerTask.cancel(false);
   }
 }
