@@ -15,7 +15,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -39,10 +38,6 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   public NodeDelegateImpl(Manager dbManager) {
     this.dbManager = dbManager;
-  }
-
-  protected BlockStore getBlockStore() {
-    return dbManager.getBlockStore();
   }
 
   @Override
@@ -106,7 +101,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       return new LinkedList<>();
     }
 
-    BlockId unForkedBlockId = null;
+    BlockId unForkedBlockId;
 
     if (blockChainSummary.isEmpty() ||
         (blockChainSummary.size() == 1
@@ -130,20 +125,20 @@ public class NodeDelegateImpl implements NodeDelegate {
     //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
-        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
+        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_RETURN_BATCH_NUM);
     return LongStream.rangeClosed(unForkedBlockIdNum, len)
         .mapToObj(num -> dbManager.getBlockIdByNum(num))
         .collect(Collectors.toCollection(LinkedList::new));
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch) {
+  public Deque<BlockId> getBlockChainSummary (BlockId beginBLockId, Deque<BlockId> blockIdsToFetch) throws UnLinkedBlockException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0;
+    long lowBlkNum = dbManager.getSyncBeginNumber();
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
@@ -153,6 +148,9 @@ public class NodeDelegateImpl implements NodeDelegate {
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
+        if (forkList.size() < 2) {
+          throw new UnLinkedBlockException("unlink from :" + beginBLockId);
+        }
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
         Collections.reverse(forkList);
@@ -202,6 +200,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void syncToCli(long unSyncNum) {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    if (unSyncNum == 0) {
+      logger.info("Sync Block Completed !!!");
+    }
     dbManager.setSyncMode(unSyncNum == 0);
     //TODO: notify cli know how many block we need to sync
   }

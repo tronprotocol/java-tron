@@ -116,6 +116,7 @@ public class SyncPool {
 
     if (active.isEmpty()) return;
 
+    //sort by latency
     active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
     for (PeerConnection channel : active) {
@@ -129,10 +130,6 @@ public class SyncPool {
   }
 
   synchronized void logActivePeers() {
-    logger.info("-------- active node.");
-    for (NodeHandler handler : nodeManager.dumpActiveNodes()) {
-      logger.info(handler.getNode().toString());
-    }
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
