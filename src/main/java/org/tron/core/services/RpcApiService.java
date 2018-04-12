@@ -38,9 +38,14 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.DynamicProperties;
+
 
 @Slf4j
 public class RpcApiService implements Service {
@@ -86,7 +91,42 @@ public class RpcApiService implements Service {
     }));
   }
 
-  private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
+
+  private class DatabaseApi extends DatabaseImplBase {
+
+    private Application app;
+
+    private DatabaseApi(Application app) {
+      this.app = app;
+    }
+
+    @Override
+    public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
+        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
+      long headBlockNum = app.getDbManager().getDynamicPropertiesStore()
+          .getLatestBlockHeaderNumber();
+      byte[] blockHeaderHash = app.getDbManager().getDynamicPropertiesStore()
+          .getLatestBlockHeaderHash().toByteArray();
+      BlockReference ref = BlockReference.newBuilder()
+          .setBlockHash(ByteString.copyFrom(blockHeaderHash))
+          .setBlockNum(headBlockNum)
+          .build();
+      responseObserver.onNext(ref);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDynamicProperties(EmptyMessage request,
+                                     StreamObserver<DynamicProperties> responseObserver) {
+      DynamicProperties.Builder builder = DynamicProperties.newBuilder();
+      builder.setLastSolidityBlockNum(app.getDbManager().getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      DynamicProperties dynamicProperties =  builder.build();
+      responseObserver.onNext(dynamicProperties);
+      responseObserver.onCompleted();
+    }
+  }
+
+  private class WalletApi extends WalletImplBase {
 
     private Application app;
     private Wallet wallet;
@@ -346,6 +386,7 @@ public class RpcApiService implements Service {
       responseObserver.onNext(wallet.totalTransaction());
       responseObserver.onCompleted();
     }
+
   }
 
   @Override

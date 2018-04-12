@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+@Deprecated
 public class BlockFilledSlots {
 
   public static int SLOT_NUMBER = 128;

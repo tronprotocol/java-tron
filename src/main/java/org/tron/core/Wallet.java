@@ -262,7 +262,6 @@ public class Wallet {
     AccountList.Builder builder = AccountList.newBuilder();
     List<AccountCapsule> accountCapsuleList =
         dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.sort(null);
     accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
     return builder.build();
   }
@@ -270,7 +269,6 @@ public class Wallet {
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
-    witnessCapsuleList.sort(null);
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();

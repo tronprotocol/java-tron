@@ -538,14 +538,11 @@ public class Manager {
         logger.info("{} miss a block. totalMissed = {}",
             w.createReadableString(), w.getTotalMissed());
       }
+      this.dynamicPropertiesStore.applyBlock(false);
     }
+    this.dynamicPropertiesStore.applyBlock(true);
 
-    if (slot >= 0) {
-      while (slot-- > 0) {
-        this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(false);
-      }
-      this.dynamicPropertiesStore.getBlockFilledSlots().applyBlock(true);
-    } else {
+    if (slot <= 0) {
       logger.warn("missedBlocks [" + slot + "] is illegal");
     }
 
@@ -779,14 +776,14 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      processTransaction(transactionCapsule);
-    }
-
     // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      processTransaction(transactionCapsule);
+    }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
