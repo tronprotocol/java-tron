@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
@@ -17,8 +18,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -166,6 +169,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ExecutorLoop<Message> loopAdvertiseInv;
 
+  private ExecutorLoop<Message> handleBacklogBlocks;
+
+  private ExecutorService handleBackLogBlocksPool = Executors.newCachedThreadPool();
+
+
   private ScheduledExecutorService fetchSyncBlocksExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
@@ -173,6 +181,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .newSingleThreadScheduledExecutor();
 
   private volatile boolean isHandleSyncBlockActive = false;
+
+  //private volatile boolean isHandleSyncBlockRunning = false;
 
   private boolean isSuspendFetch = false;
 
@@ -358,13 +368,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     });
-//
-//    handleSyncBlockLoop = new Thread(() -> {
-//      while (isHandleSyncBlockActive) {
-//
-//      }
-//
-//    });
 
     //TODO: wait to refactor these threads.
     advertiseLoopThread.start();
@@ -375,6 +378,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       try {
         if (isHandleSyncBlockActive) {
           isHandleSyncBlockActive = false;
+//          Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
           handleSyncBlock();
         }
       } catch (Throwable t) {
@@ -425,17 +429,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private synchronized void handleSyncBlock() {
 
+    if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
+      logger.info("we're already processing too many blocks");
+      return;
+    } else if (isSuspendFetch) {
+      isSuspendFetch = false;
+    }
+
     final boolean[] isBlockProc = {false};
+
     do {
       synchronized (blockWaitToProcBak) {
         blockWaitToProc.addAll(blockWaitToProcBak);
         //need lock here
         blockWaitToProcBak.clear();
-      }
-
-      if (blockWaitToProc.size() > MAX_BLOCKS_IN_PROCESS) {
-        isSuspendFetch = true;
-        logger.info("suspend fetch number in proc:" + blockWaitToProc.size());
       }
 
       isBlockProc[0] = false;
@@ -458,19 +465,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             blockWaitToProc.remove(msg);
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
-            processSyncBlock(block);
+            handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
+            //processSyncBlock(block);
             isBlockProc[0] = true;
           }
         }
       });
 
-      if (blockWaitToProc.size() <= MAX_BLOCKS_IN_PROCESS) {
-        isSuspendFetch = false;
-        logger.info("go on to fetch number in proc:" + blockWaitToProc.size());
+      if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
+        logger.info("we're already processing too many blocks");
+        if (blockWaitToProc.size() >= MAX_BLOCKS_ALREADY_FETCHED) {
+          isSuspendFetch = true;
+        }
+        break;
       }
 
     } while (isBlockProc[0]);
-
   }
 
   private synchronized void logNodeStatus() {
