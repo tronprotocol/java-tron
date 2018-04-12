@@ -21,6 +21,8 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
@@ -85,9 +87,12 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   }
 
   @Override
-  public BlockCapsule get(byte[] key) {
+  public BlockCapsule get(byte[] key) throws ItemNotFoundException, BadItemException {
     byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new BlockCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      throw new ItemNotFoundException();
+    }
+    return new BlockCapsule(value);
   }
 
   @Override

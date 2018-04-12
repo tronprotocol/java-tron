@@ -18,10 +18,12 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -53,6 +55,16 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushBlock(block);
+      if (!syncMode) {
+        List<TransactionCapsule> trx = null;
+        trx = block.getTransactions();
+        return trx.stream()
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(LinkedList::new));
+      } else {
+        return null;
+      }
+
     } catch (ValidateScheduleException e) {
       throw new BadBlockException("validate schedule exception");
     } catch (ValidateSignatureException e) {
@@ -61,14 +73,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception");
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
-    }
-    if (!syncMode) {
-      List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-      return trx.stream()
-          .map(TransactionCapsule::getHash)
-          .collect(Collectors.toCollection(LinkedList::new));
-    } else {
-      return null;
     }
   }
 
@@ -106,11 +110,11 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (blockChainSummary.isEmpty() ||
         (blockChainSummary.size() == 1
-        && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
+            && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-     return new LinkedList<BlockId>(){{
+      return new LinkedList<BlockId>() {{
         add(dbManager.getGenesisBlockId());
       }};
     } else {
@@ -159,9 +163,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-//      if (highBlkNum == 0) {
-//        return retSummary;
-//      }
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
@@ -182,7 +183,13 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(dbManager.findBlockByHash(hash));
+        try {
+          return new BlockMessage(dbManager.getBlockById(hash));
+        } catch (BadItemException e) {
+          logger.debug(e.getMessage());
+        } catch (ItemNotFoundException e) {
+          logger.debug(e.getMessage());
+        }
       case TRX:
         return new TransactionMessage(
             dbManager.getTransactionStore().get(hash.getBytes()).getData());
@@ -201,9 +208,13 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public long getBlockTime(BlockId id) {
-    return dbManager.containBlock(id)
-        ? dbManager.getBlockById(id).getTimeStamp()
-        : dbManager.getGenesisBlock().getTimeStamp();
+    try {
+      return dbManager.getBlockById(id).getTimeStamp();
+    } catch (BadItemException e) {
+      return dbManager.getGenesisBlock().getTimeStamp();
+    } catch (ItemNotFoundException e) {
+      return dbManager.getGenesisBlock().getTimeStamp();
+    }
   }
 
   @Override
