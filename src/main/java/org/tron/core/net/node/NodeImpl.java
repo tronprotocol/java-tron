@@ -417,7 +417,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!isSuspendFetch) {
             startFetchSyncBlock();
           } else {
-            logger.info("suspend");
+            logger.debug("suspend");
           }
         }
         isFetchActive = false;
@@ -669,10 +669,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (BadBlockException e) {
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       reason = ReasonCode.REQUESTED;
-    } catch (TronException e) {
+    } catch (UnLinkedBlockException e) {
       //should not go here.
       logger.debug(e.getMessage(), e);
-      logger.info("unlink here");
+      logger.error("We get a unlinked block, we can't find this block's parent in our db\n"
+          + "this block is " + block);
       reason = ReasonCode.REQUESTED;
       //logger.error(e.getMessage());
     }
