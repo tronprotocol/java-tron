@@ -15,9 +15,16 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class ManagerTest {
@@ -54,6 +61,54 @@ public class ManagerTest {
   }
 
   @Test
+  public void setBlockReference()
+      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, ContractValidateException, ValidateSignatureException {
+
+    BlockCapsule blockCapsule = new BlockCapsule(1, dbManager.getGenesisBlockId().getByteString(),
+        0,
+        ByteString.copyFrom(
+            ECKey.fromPrivate(ByteArray
+                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                .getAddress()));
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(
+        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+
+    TransferContract tc = TransferContract.newBuilder().setAmount(10)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb")).build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+
+    if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
+      dbManager.pushBlock(blockCapsule);
+      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+      dbManager.setBlockReference(trx);
+      Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
+    }
+    while (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
+      dbManager.eraseBlock();
+    }
+    try {
+      dbManager.pushBlock(blockCapsule);
+      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    } catch (ValidateSignatureException e) {
+      e.printStackTrace();
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+    } catch (ContractExeException e) {
+      e.printStackTrace();
+    } catch (UnLinkedBlockException e) {
+      e.printStackTrace();
+    } catch (ValidateScheduleException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    dbManager.setBlockReference(trx);
+    Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
+
+  }
+
+  @Test
   public void pushBlock() {
     boolean isUnlinked = false;
     try {
@@ -84,18 +139,6 @@ public class ManagerTest {
         .fromHexString(blockCapsule2.getBlockId().toString()))));
   }
 
-  /*@Test
-  public void testPushTransactions() {
-    TransactionCapsule transactionCapsule = new TransactionCapsule(
-        "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519", 123);
-    try {
-      dbManager.pushTransactions(transactionCapsule);
-    } catch (Exception e) {
-      Assert.assertTrue("pushTransaction is error", false);
-    }
-    Assert.assertEquals("pushTransaction is error", 123,
-        transactionCapsule.getInstance().getRawData().getVout(0).getValue());
-  }*/
 
   //  @Test
   public void updateWits() {
@@ -197,6 +240,5 @@ public class ManagerTest {
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
-    dbManager.getWitnesses().clear();
   }
 }

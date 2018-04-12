@@ -6,6 +6,7 @@ import "core/Contract.proto";
 
 option java_package = "org.tron.api"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "GrpcAPI"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/go-client-api/api";
 
 service Wallet {
 
@@ -83,10 +84,28 @@ service Wallet {
 
   }
 };
+
 // the api of tron's db
 service Database {
+  // for tapos
+  rpc getBlockReference (EmptyMessage) returns (BlockReference) {
 
+  }
+  rpc GetDynamicProperties (EmptyMessage) returns (DynamicProperties) {
+
+  }
+  rpc GetNowBlock (EmptyMessage) returns (Block) {
+
+  }
+  rpc GetBlockByNum (NumberMessage) returns (Block) {
+
+  }
 };
+
+message BlockReference {
+  int64 block_num = 1;
+  bytes block_hash = 2;
+}
 
 // the api of tron's network such as node list.
 service Network {

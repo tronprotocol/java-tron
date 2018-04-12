@@ -2,6 +2,8 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
@@ -12,6 +14,7 @@ import org.tron.core.config.args.Args;
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
+  private static final long MAINTENANCE_SKIP_SLOTS = 2;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -22,8 +25,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] LATEST_SOLIDIFIED_BLOCK_NUM = "LATEST_SOLIDIFIED_BLOCK_NUM"
       .getBytes();
 
+  private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
-  private BlockFilledSlots blockFilledSlots = new BlockFilledSlots();
+  private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
+
+  private int blockFilledSlotsIndex = 0;
 
   private DateTime nextMaintenanceTime = new DateTime(
       Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
@@ -58,6 +64,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestSolidifiedBlockNum();
     } catch (IllegalArgumentException e) {
       this.saveLatestSolidifiedBlockNum(0);
+    }
+
+    try {
+      this.getBlockFilledSlots();
+    } catch (IllegalArgumentException e) {
+      int[] blockFilledSlots = new int[BLOCK_FILLED_SLOTS_NUMBER];
+      Arrays.fill(blockFilledSlots, 1);
+      this.saveBlockFilledSlots(blockFilledSlots);
     }
 
 
@@ -102,9 +116,51 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return instance;
   }
 
+  public String intArrayToString(int[] a) {
+    StringBuilder sb = new StringBuilder();
+    for(int i : a) {
+      sb.append(i);
+    }
+    return sb.toString();
+  }
+
+  public int[] stringToIntArray(String s) {
+    int length = s.length();
+    int[] result = new int[length];
+    for(int i = 0; i < length; ++i) {
+      result[i] = Integer.parseInt(s.substring(i,i+1));
+    }
+    return result;
+  }
+
+  public void saveBlockFilledSlots(int[] blockFilledSlots) {
+    logger.debug("blockFilledSlots:"+intArrayToString(blockFilledSlots));
+    this.put(BLOCK_FILLED_SLOTS, new BytesCapsule(ByteArray.fromString(intArrayToString(blockFilledSlots))));
+  }
+
+  public int[] getBlockFilledSlots() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS))
+        .map(ByteArray::toStr)
+        .map(this::stringToIntArray)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
+    //return ByteArray.toLong(this.dbSource.getData(this.SOLIDIFIED_THRESHOLD));
+  }
+
+  public void applyBlock(boolean fillBlock) {
+    int [] blockFilledSlots = getBlockFilledSlots();
+    blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
+    blockFilledSlotsIndex = (blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER;
+    saveBlockFilledSlots(blockFilledSlots);
+  }
+
+  public int calculateFilledSlotsCount() {
+    int[] blockFilledSlots = getBlockFilledSlots();
+    return 100 * IntStream.of(blockFilledSlots).sum() / BLOCK_FILLED_SLOTS_NUMBER;
+  }
 
   public void saveLatestSolidifiedBlockNum(long number) {
-    this.put(this.LATEST_SOLIDIFIED_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(number)));
+    this.put(LATEST_SOLIDIFIED_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(number)));
   }
 
   public long getLatestSolidifiedBlockNum() {
@@ -172,13 +228,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
   }
 
-  private void saveStateFlag(int n) {
+  public void saveStateFlag(int n) {
     logger.info("update state flag = {}", n);
     this.put(STATE_FLAG, new BytesCapsule(ByteArray.fromInt(n)));
-  }
-
-  public BlockFilledSlots getBlockFilledSlots() {
-    return blockFilledSlots;
   }
 
 
@@ -186,6 +238,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return nextMaintenanceTime;
   }
 
+  public long getMaintenanceSkipSlots() {
+    return MAINTENANCE_SKIP_SLOTS;
+  }
 
   private void setNextMaintenanceTime(DateTime nextMaintenanceTime) {
     this.nextMaintenanceTime = nextMaintenanceTime;
