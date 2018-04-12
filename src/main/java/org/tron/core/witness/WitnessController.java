@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,6 +68,23 @@ public class WitnessController {
     witsRead.lock();
     try {
       return this.wits;
+    } finally {
+      witsRead.unlock();
+    }
+
+  }
+  // witness
+  public WitnessCapsule getWitnesseByAddress(ByteString address) {
+    witsRead.lock();
+    try {
+      final WitnessCapsule[] witnessCapsule = {null};
+      this.wits.forEach(wit -> {
+        if (Arrays.equals(address.toByteArray(), wit.getAddress().toByteArray())) {
+          witnessCapsule[0] = wit;
+          return;
+        }
+      });
+      return witnessCapsule[0];
     } finally {
       witsRead.unlock();
     }

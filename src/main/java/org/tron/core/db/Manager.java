@@ -855,6 +855,14 @@ public class Manager {
     witnessCapsule.setLatestBlockNum(block.getNum());
     witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
+    //Update memory witness status
+    WitnessCapsule wit = witnessController.getWitnesseByAddress(block.getWitnessAddress());
+    if (wit != null) {
+      wit.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
+      wit.setLatestBlockNum(block.getNum());
+      wit.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
+    }
+
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     AccountCapsule sun = accountStore.getSun();
