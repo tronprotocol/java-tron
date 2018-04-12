@@ -458,8 +458,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             blockWaitToProc.remove(msg);
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
-            handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
-            //processSyncBlock(block);
+            //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
+            processSyncBlock(block);
             isBlockProc[0] = true;
           }
         }
