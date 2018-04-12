@@ -42,10 +42,12 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -78,8 +80,6 @@ public class Manager {
 
   private LevelDbDataSourceImpl numHashCache;
   private KhaosDatabase khaosDb;
-  @Getter
-  private BlockCapsule head;
   private RevokingDatabase revokingStore;
   @Getter
   private DialogOptional<Dialog> dialog = DialogOptional.empty();
@@ -139,17 +139,34 @@ public class Manager {
     witnessController.addWitness(witnessCapsule);
   }
 
+  public BlockCapsule getHead() {
+    try {
+      return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+      return null;
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
+  @Deprecated
   public BlockId getHeadBlockId() {
-    return head.getBlockId();
+    return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+        getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+
     //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
+  @Deprecated
   public long getHeadBlockNum() {
-    return this.head.getNum();
+    return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }
 
+  @Deprecated
   public long getHeadBlockTimeStamp() {
-    return this.head.getTimeStamp();
+    return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
   public PeersStore getPeersStore() {
@@ -213,8 +230,7 @@ public class Manager {
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
-    this.initHeadBlock(Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash()));
-    this.khaosDb.start(head);
+    this.khaosDb.start(genesisBlock);
   }
 
   public BlockId getGenesisBlockId() {
@@ -241,14 +257,13 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-
         //this.pushBlock(this.genesisBlock);
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
         this.numHashCache.putData(ByteArray.fromLong(this.genesisBlock.getNum()),
             this.genesisBlock.getBlockId().getBytes());
-        //refreshHead(newBlock);
-        logger.info("save block: " + this.genesisBlock);
 
+        logger.info("save block: " + this.genesisBlock);
+        // init DynamicPropertiesStore
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
@@ -256,7 +271,6 @@ public class Manager {
             this.genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
-
       }
     }
   }
@@ -364,8 +378,7 @@ public class Manager {
         long balacne = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
-          int latstTransNumberInBlock = this.head.getTransactions().size();
-          doValidateFreq(balacne, latstTransNumberInBlock, latestOperationTime);
+          doValidateFreq(balacne, 0, latestOperationTime);
         } else {
           accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
         }
@@ -387,29 +400,33 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  public void eraseBlock() {
+  public void eraseBlock() throws BadItemException, ItemNotFoundException {
     dialog.reset();
-    BlockCapsule oldHeadBlock = getBlockStore().get(head.getBlockId().getBytes());
+    BlockCapsule oldHeadBlock = getBlockStore()
+        .get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     try {
       revokingStore.pop();
-      head = getBlockStore().get(getBlockIdByNum(oldHeadBlock.getNum() - 1).getBytes());
     } catch (RevokingStoreIllegalStateException e) {
       logger.debug(e.getMessage(), e);
     }
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
-    // todo process the trans in the poped block.
-
   }
 
   private void switchFork(BlockCapsule newHead) {
     Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
-        .getBranch(newHead.getBlockId(), head.getBlockId());
+        .getBranch(newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
-      while (!head.getBlockId().equals(binaryTree.getValue().peekLast().getParentHash())) {
-        logger.info("erase block. num = {}", head.getNum());
-        eraseBlock();
+      while (!getDynamicPropertiesStore().getLatestBlockHeaderHash().equals(
+          binaryTree.getValue().peekLast().getParentHash().getBytes())) {
+        try {
+          eraseBlock();
+        } catch (BadItemException e) {
+          logger.info(e.getMessage());
+        } catch (ItemNotFoundException e) {
+          logger.info(e.getMessage());
+        }
       }
     }
 
@@ -444,6 +461,7 @@ public class Manager {
 
   }
 
+
   /**
    * save a block.
    */
@@ -452,7 +470,7 @@ public class Manager {
       ContractExeException, UnLinkedBlockException, ValidateScheduleException {
 
     try (PendingManager pm = new PendingManager(this)) {
-      //todo: check block's validity
+
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.info("The siganature is not validated.");
@@ -468,22 +486,24 @@ public class Manager {
         }
       }
 
+      // checkWitness
       if (!witnessController.validateWitnessSchedule(block)) {
         throw new ValidateScheduleException("validateWitnessSchedule error");
       }
 
       BlockCapsule newBlock = this.khaosDb.push(block);
       //DB don't need lower block
-      if (head == null) {
+      if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
           return;
         }
       } else {
-        if (newBlock.getNum() <= head.getNum()) {
+        if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
         //switch fork
-        if (!newBlock.getParentHash().equals(head.getBlockId())) {
+        if (!newBlock.getParentHash()
+            .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn("switch fork! new head num = {}, blockid = {}", newBlock.getNum(),
               newBlock.getBlockId());
           switchFork(newBlock);
@@ -529,7 +549,7 @@ public class Manager {
       logger.warn("missedBlocks [" + slot + "] is illegal");
     }
 
-    this.head = block;
+    //this.head = block;
     logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
@@ -537,23 +557,14 @@ public class Manager {
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
   }
 
-  @Deprecated
-  private void refreshHead(BlockCapsule block) {
-    this.head = block;
-    this.dynamicPropertiesStore
-        .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    witnessController.updateWitnessSchedule();
-  }
-
-
   /**
    * Get the fork branch.
    */
   public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
     final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
-        this.khaosDb.getBranch(this.head.getBlockId(), forkBlockHash);
+        this.khaosDb.getBranch(
+            getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+            forkBlockHash);
     return branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(LinkedList::new));
@@ -565,26 +576,29 @@ public class Manager {
    * @param blockHash blockHash
    */
   public boolean containBlock(final Sha256Hash blockHash) {
-    return this.khaosDb.containBlock(blockHash)
-        || blockStore.get(blockHash.getBytes()) != null;
+    try {
+      return this.khaosDb.containBlock(blockHash)
+          || blockStore.get(blockHash.getBytes()) != null;
+    } catch (ItemNotFoundException e) {
+      return false;
+    } catch (BadItemException e) {
+      return false;
+    }
+
   }
 
   public boolean containBlockInMainChain(BlockId blockId) {
-    return blockStore.get(blockId.getBytes()) != null;
+    try {
+      return blockStore.get(blockId.getBytes()) != null;
+    } catch (ItemNotFoundException e) {
+      return false;
+    } catch (BadItemException e) {
+      return false;
+    }
   }
-
-  /**
-   * find a block packed data by id.
-   */
-  public byte[] findBlockByHash(final Sha256Hash hash) {
-    return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash).getData()
-        : blockStore.get(hash.getBytes()).getData();
-  }
-
 
   public void setBlockReference(TransactionCapsule trans) {
-    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash()
-        .toByteArray();
+    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes();
     long headNum = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     trans.setReference(headNum, headHash);
   }
@@ -593,7 +607,8 @@ public class Manager {
    * Get a BlockCapsule by id.
    */
 
-  public BlockCapsule getBlockById(final Sha256Hash hash) {
+  public BlockCapsule getBlockById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
     return this.khaosDb.containBlock(hash) ? this.khaosDb.getBlock(hash)
         : blockStore.get(hash.getBytes());
   }
@@ -601,13 +616,13 @@ public class Manager {
   /**
    * Delete a block.
    */
-
-  public void deleteBlock(final Sha256Hash blockHash) {
+  @Deprecated
+  public void deleteBlock(final Sha256Hash blockHash)
+      throws BadItemException, ItemNotFoundException {
     final BlockCapsule block = this.getBlockById(blockHash);
     this.khaosDb.removeBlk(blockHash);
     blockStore.delete(blockHash.getBytes());
     this.numHashCache.deleteData(ByteArray.fromLong(block.getNum()));
-    this.head = this.khaosDb.getHead();
   }
 
   /**
@@ -653,19 +668,13 @@ public class Manager {
   /**
    * Get number of block by the block id.
    */
-  public long getBlockNumById(final Sha256Hash hash) {
+  public long getBlockNumById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
+
     if (this.khaosDb.containBlock(hash)) {
       return this.khaosDb.getBlock(hash).getNum();
     }
-
-    //TODO: optimize here
-    final byte[] blockByte = blockStore.get(hash.getBytes()).getData();
-    return ArrayUtils.isNotEmpty(blockByte) ? new BlockCapsule(blockByte).getNum() : 0;
-  }
-
-
-  public void initHeadBlock(final Sha256Hash id) {
-    this.head = this.getBlockById(id);
+    return blockStore.get(hash.getBytes()).getNum();
   }
 
   /**
@@ -678,7 +687,7 @@ public class Manager {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    final ByteString preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
+    final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
 
     // judge create block time
     if (when < timestamp) {
@@ -860,10 +869,10 @@ public class Manager {
 
   }
 
-  public void updateMaintenanceState(boolean needMaint){
-    if(needMaint) {
+  public void updateMaintenanceState(boolean needMaint) {
+    if (needMaint) {
       getDynamicPropertiesStore().saveStateFlag(1);
-    }else{
+    } else {
       getDynamicPropertiesStore().saveStateFlag(0);
     }
   }
