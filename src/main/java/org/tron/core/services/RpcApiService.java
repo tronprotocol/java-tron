@@ -29,10 +29,13 @@ import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -113,6 +116,32 @@ public class RpcApiService implements Service {
           .setBlockNum(headBlockNum)
           .build();
       responseObserver.onNext(ref);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
+      Sha256Hash headBlockId = app.getDbManager().getHeadBlockId();
+      Block block = null;
+      try {
+        block = app.getDbManager().getBlockById(headBlockId).getInstance();
+      } catch (BadItemException e) {
+      } catch (ItemNotFoundException e) {
+      }
+      responseObserver.onNext(block);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
+      Sha256Hash headBlockId = app.getDbManager().getBlockIdByNum(request.getNum());
+      Block block = null;
+      try {
+        block = app.getDbManager().getBlockById(headBlockId).getInstance();
+      } catch (BadItemException e) {
+      } catch (ItemNotFoundException e) {
+      }
+      responseObserver.onNext(block);
       responseObserver.onCompleted();
     }
 
