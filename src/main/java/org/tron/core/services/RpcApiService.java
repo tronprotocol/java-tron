@@ -43,10 +43,12 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
 public class RpcApiService implements Service {
@@ -113,6 +115,16 @@ public class RpcApiService implements Service {
           .setBlockNum(headBlockNum)
           .build();
       responseObserver.onNext(ref);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDynamicProperties(EmptyMessage request,
+                                     StreamObserver<DynamicProperties> responseObserver) {
+      DynamicProperties.Builder builder = DynamicProperties.newBuilder();
+      builder.setLastSolidityBlockNum(app.getDbManager().getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      DynamicProperties dynamicProperties =  builder.build();
+      responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
     }
   }
@@ -383,6 +395,7 @@ public class RpcApiService implements Service {
       responseObserver.onNext(wallet.totalTransaction());
       responseObserver.onCompleted();
     }
+
   }
 
   @Override
