@@ -456,6 +456,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (isFound[0]) {
           if (!freshBlockId.contains(msg.getBlockId())) {
             blockWaitToProc.remove(msg);
+            //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
             processSyncBlock(block);
             isBlockProc[0] = true;
@@ -660,7 +661,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       reason = ReasonCode.REQUESTED;
     } catch (TronException e) {
       //should not go here.
-      logger.info(e.getMessage(), e);
+      logger.debug(e.getMessage(), e);
+      logger.info("unlink here");
       reason = ReasonCode.REQUESTED;
       //logger.error(e.getMessage());
     }
@@ -1022,8 +1024,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setSyncChainRequested(
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (Exception e) { //TODO: use tron excpetion here
-      logger.info(e.getMessage(), e);
+    } catch (TronException e) { //TODO: use tron excpetion here
+      logger.info(e.getMessage());
+      logger.debug(e.getMessage(), e);
       disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
     }
   }
