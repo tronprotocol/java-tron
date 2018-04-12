@@ -151,6 +151,16 @@ public class Args {
   @Setter
   private String p2pNodeId;
 
+  @Getter
+  @Setter
+  //If you are running a solidity node for java tron, this flag is set to true
+  private boolean solidityNode;
+
+  @Getter
+  @Setter
+  //If you are running a solidity node for java tron, solidity node must assign a trust node for sync solidity block
+  private String trustNodeAddr;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -179,6 +189,8 @@ public class Args {
     INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.p2pNodeId = "";
+    INSTANCE.solidityNode = false;
+    INSTANCE.trustNodeAddr = "";
   }
 
   /**
@@ -286,6 +298,9 @@ public class Args {
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
+
+    INSTANCE.trustNodeAddr =
+        config.hasPath("node.trust") ? config.getString("node.trust") : null;
   }
 
 
