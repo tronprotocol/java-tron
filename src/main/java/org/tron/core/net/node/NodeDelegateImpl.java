@@ -138,7 +138,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0;
+    long lowBlkNum = dbManager.getSyncBeginNumber();
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
