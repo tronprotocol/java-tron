@@ -27,6 +27,8 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockFilledSlots;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public class WitnessController {
@@ -112,7 +114,14 @@ public class WitnessController {
   }
 
   public BlockCapsule getHead() {
-    return manager.getHead();
+    try {
+      return manager.getBlockStore()
+          .get(manager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+    } catch (ItemNotFoundException e) {
+      return null;
+    } catch (BadItemException e) {
+      return null;
+    }
   }
 
   public boolean lastHeadBlockIsMaintenance() {
@@ -214,8 +223,9 @@ public class WitnessController {
 
     List<String> currentWitsAddress = getWitnessStringList(getWitnesses());
     // TODO  what if the number of witness is not same in different slot.
-    long num = getHead().getNum();
-    long time = getHead().getTimeStamp();
+    long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+
     if (num != 0 && num % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
       setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()

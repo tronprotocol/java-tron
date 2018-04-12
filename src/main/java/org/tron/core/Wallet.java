@@ -41,8 +41,10 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -232,12 +234,28 @@ public class Wallet {
 
   public Block getNowBlock() {
     Sha256Hash headBlockId = dbManager.getHeadBlockId();
-    return dbManager.getBlockById(headBlockId).getInstance();
+    try {
+      return dbManager.getBlockById(headBlockId).getInstance();
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+      return null;
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
   }
 
   public Block getBlockByNum(long blockNum) {
     Sha256Hash headBlockId = dbManager.getBlockIdByNum(blockNum);
-    return dbManager.getBlockById(headBlockId).getInstance();
+    try {
+      return dbManager.getBlockById(headBlockId).getInstance();
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+      return null;
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
   }
 
   public AccountList getAllAccounts() {
