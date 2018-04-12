@@ -1,7 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.api.WalletGrpc.WalletImplBase;
-
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
@@ -25,6 +23,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
@@ -32,7 +31,6 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract;
@@ -43,12 +41,11 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Transaction;
+
 
 @Slf4j
 public class RpcApiService implements Service {
@@ -95,6 +92,7 @@ public class RpcApiService implements Service {
     }));
   }
 
+
   private class DatabaseApi extends DatabaseImplBase {
 
     private Application app;
@@ -109,7 +107,7 @@ public class RpcApiService implements Service {
       long headBlockNum = app.getDbManager().getDynamicPropertiesStore()
           .getLatestBlockHeaderNumber();
       byte[] blockHeaderHash = app.getDbManager().getDynamicPropertiesStore()
-          .getLatestBlockHeaderHash().toByteArray();
+          .getLatestBlockHeaderHash().getBytes();
       BlockReference ref = BlockReference.newBuilder()
           .setBlockHash(ByteString.copyFrom(blockHeaderHash))
           .setBlockNum(headBlockNum)
@@ -120,10 +118,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void getDynamicProperties(EmptyMessage request,
-                                     StreamObserver<DynamicProperties> responseObserver) {
+        StreamObserver<DynamicProperties> responseObserver) {
       DynamicProperties.Builder builder = DynamicProperties.newBuilder();
-      builder.setLastSolidityBlockNum(app.getDbManager().getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-      DynamicProperties dynamicProperties =  builder.build();
+      builder.setLastSolidityBlockNum(
+          app.getDbManager().getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      DynamicProperties dynamicProperties = builder.build();
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
     }
@@ -162,9 +161,8 @@ public class RpcApiService implements Service {
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
-        TransactionCapsule trx = new TransactionCapsule(req, ContractType.TransferContract);
-        app.getDbManager().setBlockReference(trx);
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
       }
@@ -187,10 +185,8 @@ public class RpcApiService implements Service {
           || request.getOwnerAddress() == null) {
         responseObserver.onNext(null);
       } else {
-        TransactionCapsule trx = new TransactionCapsule(request,
-            ContractType.AccountCreateContract);
-        app.getDbManager().setBlockReference(trx);
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createAccount(request);
+        responseObserver.onNext(trx);
       }
       responseObserver.onCompleted();
     }
@@ -200,10 +196,9 @@ public class RpcApiService implements Service {
     public void createAssetIssue(AssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       ByteString owner = request.getOwnerAddress();
-      TransactionCapsule trx = new TransactionCapsule(request, ContractType.AssetIssueContract);
-      app.getDbManager().setBlockReference(trx);
       if (owner != null) {
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
       }
@@ -216,8 +211,7 @@ public class RpcApiService implements Service {
       ByteString ownerAddress = req.getOwnerAddress();
       Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
-      AccountCapsule account = app.getDbManager().getAccountStore()
-          .get(ownerAddress.toByteArray());
+      AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
       Preconditions.checkNotNull(account, "OwnerAddress[" + ownerAddress + "] not exists");
 
       int votesCount = req.getVotesCount();
@@ -242,7 +236,7 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> response) {
 
       try {
-        //TODO   to be complemented later     checkVoteWitnessAccount(req);
+//        checkVoteWitnessAccount(req);//to be complemented later
         Transaction trx = wallet.createTransaction(req);
         response.onNext(trx);
       } catch (Exception ex) {
@@ -297,8 +291,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void listWitnesses(EmptyMessage request,
-        StreamObserver<WitnessList> responseObserver) {
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
     }

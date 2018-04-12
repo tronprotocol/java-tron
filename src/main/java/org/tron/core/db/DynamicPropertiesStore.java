@@ -1,12 +1,13 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.util.Optional;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 
@@ -73,8 +74,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       Arrays.fill(blockFilledSlots, 1);
       this.saveBlockFilledSlots(blockFilledSlots);
     }
-
-
   }
 
 
@@ -118,7 +117,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public String intArrayToString(int[] a) {
     StringBuilder sb = new StringBuilder();
-    for(int i : a) {
+    for (int i : a) {
       sb.append(i);
     }
     return sb.toString();
@@ -127,15 +126,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public int[] stringToIntArray(String s) {
     int length = s.length();
     int[] result = new int[length];
-    for(int i = 0; i < length; ++i) {
-      result[i] = Integer.parseInt(s.substring(i,i+1));
+    for (int i = 0; i < length; ++i) {
+      result[i] = Integer.parseInt(s.substring(i, i + 1));
     }
     return result;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
-    logger.debug("blockFilledSlots:"+intArrayToString(blockFilledSlots));
-    this.put(BLOCK_FILLED_SLOTS, new BytesCapsule(ByteArray.fromString(intArrayToString(blockFilledSlots))));
+    logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
+    this.put(BLOCK_FILLED_SLOTS,
+        new BytesCapsule(ByteArray.fromString(intArrayToString(blockFilledSlots))));
   }
 
   public int[] getBlockFilledSlots() {
@@ -148,7 +148,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void applyBlock(boolean fillBlock) {
-    int [] blockFilledSlots = getBlockFilledSlots();
+    int[] blockFilledSlots = getBlockFilledSlots();
     blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
     blockFilledSlotsIndex = (blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER;
     saveBlockFilledSlots(blockFilledSlots);
@@ -198,10 +198,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   /**
    * get id of global latest block.
    */
-  public ByteString getLatestBlockHeaderHash() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
-        .map(ByteString::copyFrom)
-        .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
+
+  public Sha256Hash getLatestBlockHeaderHash() {
+
+    byte[] blockHash = Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
+        .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
+    return Sha256Hash.wrap(blockHash);
   }
 
   /**
