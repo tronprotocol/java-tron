@@ -413,7 +413,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             logger.debug("suspend");
           }
         }
-        isFetchActive = false;
+        isFetchSyncActive = false;
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
