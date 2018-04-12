@@ -767,14 +767,14 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      processTransaction(transactionCapsule);
-    }
-
     // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      processTransaction(transactionCapsule);
+    }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
