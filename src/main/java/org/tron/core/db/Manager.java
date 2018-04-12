@@ -73,6 +73,7 @@ public class Manager {
   private UtxoStore utxoStore;
   @Autowired
   private WitnessStore witnessStore;
+  @Autowired
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
 
@@ -199,7 +200,6 @@ public class Manager {
   @PostConstruct
   public void initOther() {
     this.setUtxoStore(UtxoStore.create("utxo"));
-    this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
     this.setWitnessController(WitnessController.createInstance(this));
 
@@ -518,14 +518,14 @@ public class Manager {
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
-    if (block.getNum() != 1){
+    if (block.getNum() != 1) {
       slot = witnessController.getSlotAtTime(block.getTimeStamp());
     }
-    for (int i = 1; i < slot; ++i){
+    for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w = this.witnessStore
             .get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
-        w.setTotalMissed(w.getTotalMissed()+1);
+        w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info("{} miss a block. totalMissed = {}",
             w.createReadableString(), w.getTotalMissed());
@@ -843,11 +843,11 @@ public class Manager {
     //TODO: add verification
     WitnessCapsule witnessCapsule = witnessStore
         .get(block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced()+1);
+    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
     witnessCapsule.setLatestBlockNum(block.getNum());
     witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
-    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(),witnessCapsule);
+    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     AccountCapsule sun = accountStore.getSun();
     try {
