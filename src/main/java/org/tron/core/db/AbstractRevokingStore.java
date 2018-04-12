@@ -243,6 +243,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     }
   }
 
+  @Override
+  public int size() {
+    return stack.size();
+  }
+
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }
