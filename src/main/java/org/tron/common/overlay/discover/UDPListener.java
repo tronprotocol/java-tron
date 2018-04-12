@@ -61,7 +61,7 @@ public class UDPListener {
       } else {
         new Thread(() -> {
           try {
-            UDPListener.this.start();
+            start();
           } catch (Exception e) {
             logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);

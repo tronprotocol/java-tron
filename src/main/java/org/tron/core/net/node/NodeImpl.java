@@ -2,16 +2,9 @@ package org.tron.core.net.node;
 
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -520,8 +513,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
-    HashMap<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
-    HashMap<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
+    Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
+    Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
     //logger.info("Block number is " + blkMsg.getBlockId().getNum());
 
