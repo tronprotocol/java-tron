@@ -817,6 +817,14 @@ public class Manager {
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
+  }
+
+  public long getSyncBeginNumber() {
+    return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
   /**
