@@ -1,7 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.api.WalletGrpc.WalletImplBase;
-
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
@@ -13,12 +11,10 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
-import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.Node;
@@ -32,7 +28,6 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract;
@@ -46,7 +41,6 @@ import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class RpcApiService implements Service {
@@ -77,7 +71,6 @@ public class RpcApiService implements Service {
     try {
       apiServer = ServerBuilder.forPort(port)
           .addService(new WalletApi(app))
-          .addService(new DatabaseApi(app))
           .build()
           .start();
     } catch (IOException e) {
@@ -93,31 +86,7 @@ public class RpcApiService implements Service {
     }));
   }
 
-  private class DatabaseApi extends DatabaseImplBase {
-
-    private Application app;
-
-    private DatabaseApi(Application app) {
-      this.app = app;
-    }
-
-    @Override
-    public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
-        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
-      long headBlockNum = app.getDbManager().getDynamicPropertiesStore()
-          .getLatestBlockHeaderNumber();
-      byte[] blockHeaderHash = app.getDbManager().getDynamicPropertiesStore()
-          .getLatestBlockHeaderHash().toByteArray();
-      BlockReference ref = BlockReference.newBuilder()
-          .setBlockHash(ByteString.copyFrom(blockHeaderHash))
-          .setBlockNum(headBlockNum)
-          .build();
-      responseObserver.onNext(ref);
-      responseObserver.onCompleted();
-    }
-  }
-
-  private class WalletApi extends WalletImplBase {
+  private class WalletApi extends org.tron.api.WalletGrpc.WalletImplBase {
 
     private Application app;
     private Wallet wallet;
@@ -150,9 +119,8 @@ public class RpcApiService implements Service {
       ByteString toBs = req.getToAddress();
       long amount = req.getAmount();
       if (fromBs != null && toBs != null && amount > 0) {
-        TransactionCapsule trx = new TransactionCapsule(req, ContractType.TransferContract);
-        app.getDbManager().setBlockReference(trx);
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createTransaction(req);
+        responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
       }
@@ -175,10 +143,8 @@ public class RpcApiService implements Service {
           || request.getOwnerAddress() == null) {
         responseObserver.onNext(null);
       } else {
-        TransactionCapsule trx = new TransactionCapsule(request,
-            ContractType.AccountCreateContract);
-        app.getDbManager().setBlockReference(trx);
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createAccount(request);
+        responseObserver.onNext(trx);
       }
       responseObserver.onCompleted();
     }
@@ -188,10 +154,9 @@ public class RpcApiService implements Service {
     public void createAssetIssue(AssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       ByteString owner = request.getOwnerAddress();
-      TransactionCapsule trx = new TransactionCapsule(request, ContractType.AssetIssueContract);
-      app.getDbManager().setBlockReference(trx);
       if (owner != null) {
-        responseObserver.onNext(trx.getInstance());
+        Transaction trx = wallet.createTransaction(request);
+        responseObserver.onNext(trx);
       } else {
         responseObserver.onNext(null);
       }
@@ -204,8 +169,7 @@ public class RpcApiService implements Service {
       ByteString ownerAddress = req.getOwnerAddress();
       Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
-      AccountCapsule account = app.getDbManager().getAccountStore()
-          .get(ownerAddress.toByteArray());
+      AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
       Preconditions.checkNotNull(account, "OwnerAddress[" + ownerAddress + "] not exists");
 
       int votesCount = req.getVotesCount();
@@ -230,7 +194,7 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> response) {
 
       try {
-        //TODO   to be complemented later     checkVoteWitnessAccount(req);
+//        checkVoteWitnessAccount(req);//to be complemented later
         Transaction trx = wallet.createTransaction(req);
         response.onNext(trx);
       } catch (Exception ex) {
@@ -285,8 +249,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void listWitnesses(EmptyMessage request,
-        StreamObserver<WitnessList> responseObserver) {
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
     }
