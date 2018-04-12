@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 
@@ -60,7 +61,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveLatestSolidifiedBlockNum(0);
     }
-
 
   }
 
@@ -143,10 +143,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   /**
    * get id of global latest block.
    */
-  public ByteString getLatestBlockHeaderHash() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
-        .map(ByteString::copyFrom)
-        .orElseThrow(() -> new IllegalArgumentException("not found latest block header id"));
+
+  public Sha256Hash getLatestBlockHeaderHash() {
+
+    byte[] blockHash = Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
+        .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
+    return Sha256Hash.wrap(blockHash);
   }
 
   /**
@@ -181,7 +183,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public BlockFilledSlots getBlockFilledSlots() {
     return blockFilledSlots;
   }
-
 
   public DateTime getNextMaintenanceTime() {
     return nextMaintenanceTime;
