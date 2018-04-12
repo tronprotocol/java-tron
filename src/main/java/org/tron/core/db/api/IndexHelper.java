@@ -8,9 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.WitnessStore;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -32,11 +34,15 @@ public class IndexHelper {
   @Getter
   @Resource
   private IndexedCollection<Account> accountIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<AssetIssueContract> assetIssueIndex;
 
   private BlockStore blockStore;
   private WitnessStore witnessStore;
   private AccountStore accountStore;
   private TransactionStore transactionStore;
+  private AssetIssueStore assetIssueStore;
 
   /**
    * init index
@@ -47,6 +53,7 @@ public class IndexHelper {
     witnessStore.forEach(w -> witnessIndex.add(w.getInstance()));
     transactionStore.forEach(t -> transactionIndex.add(t.getInstance()));
     accountStore.forEach(a -> accountIndex.add(a.getInstance()));
+    assetIssueStore.forEach(a -> assetIssueIndex.add(a.getInstance()));
   }
 
   private <T> void add(IndexedCollection<T> index, T t) {
@@ -69,6 +76,10 @@ public class IndexHelper {
     add(accountIndex, a);
   }
 
+  public void add(AssetIssueContract a) {
+    add(assetIssueIndex, a);
+  }
+
   private <T> void remove(IndexedCollection<T> index, T t) {
     index.remove(t);
   }
@@ -89,6 +100,10 @@ public class IndexHelper {
     remove(accountIndex, a);
   }
 
+  public void remove(AssetIssueContract a) {
+    remove(assetIssueIndex, a);
+  }
+
   @Autowired
   public void setBlockStore(BlockStore blockStore) {
     this.blockStore = blockStore;
@@ -107,5 +122,10 @@ public class IndexHelper {
   @Autowired
   public void setTransactionStore(TransactionStore transactionStore) {
     this.transactionStore = transactionStore;
+  }
+
+  @Autowired
+  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
+    this.assetIssueStore = assetIssueStore;
   }
 }

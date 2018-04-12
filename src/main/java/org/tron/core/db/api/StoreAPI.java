@@ -1,10 +1,13 @@
 package org.tron.core.db.api;
 
 import static com.googlecode.cqengine.query.QueryFactory.all;
+import static com.googlecode.cqengine.query.QueryFactory.and;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
 import static com.googlecode.cqengine.query.QueryFactory.between;
 import static com.googlecode.cqengine.query.QueryFactory.descending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
+import static com.googlecode.cqengine.query.QueryFactory.greaterThan;
+import static com.googlecode.cqengine.query.QueryFactory.lessThanOrEqualTo;
 import static com.googlecode.cqengine.query.QueryFactory.or;
 import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
@@ -22,10 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.api.index.AccountIndex;
+import org.tron.core.db.api.index.AssetIssueIndex;
 import org.tron.core.db.api.index.BlockIndex;
 import org.tron.core.db.api.index.TransactionIndex;
 import org.tron.core.db.api.index.WitnessIndex;
 import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -298,5 +303,48 @@ public class StoreAPI {
     return (long) index.size();
   }
 
+  /****************************************
+   *                                      *
+   *              AssetIssue api          *
+   *                                      *
+   ****************************************/
+
+  public List<AssetIssueContract> getAssetIssueByTime(long currentInMilliseconds)
+      throws NonUniqueObjectException {
+    IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
+    ResultSet<AssetIssueContract> resultSet =
+        index.retrieve(
+            and(lessThanOrEqualTo(AssetIssueIndex.AssetIssue_START, currentInMilliseconds),
+                greaterThan(AssetIssueIndex.AssetIssue_END, currentInMilliseconds)));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
+  }
+
+  public AssetIssueContract getAssetIssueByName(String name) throws NonUniqueObjectException {
+    IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
+    ResultSet<AssetIssueContract> resultSet =
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_NAME, name));
+
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    try {
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
+    }
+  }
+
+  public List<AssetIssueContract> getAssetIssueByOwnerAddress(String ownerAddress)
+      throws NonUniqueObjectException {
+    IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
+    ResultSet<AssetIssueContract> resultSet =
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_OWNER_RADDRESS, ownerAddress));
+
+    return Streams.stream(resultSet)
+        .collect(Collectors.toList());
+  }
 
 }
