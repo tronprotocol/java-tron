@@ -74,7 +74,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       Arrays.fill(blockFilledSlots, 1);
       this.saveBlockFilledSlots(blockFilledSlots);
     }
-
   }
 
 
