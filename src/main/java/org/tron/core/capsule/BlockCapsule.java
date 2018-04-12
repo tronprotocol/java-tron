@@ -28,6 +28,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.utils.MerkleTree;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -108,26 +109,25 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
 
-  private byte[] data;
-
   private Block block;
-
-  private boolean unpacked;
-
   public boolean generatedByMyself = false;
 
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
+  public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
+    // blockheader raw
+    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setNumber(number)
+        .setParentHash(hash.getByteString())
+        .setTimestamp(when)
+        .setWitnessAddress(witnessAddress).build();
 
-    try {
-      this.block = Block.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
+    // block header
+    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
+    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
 
-    unpacked = true;
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    this.block = blockBuild.setBlockHeader(blockHeader).build();
   }
 
   public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
@@ -146,7 +146,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     // block
     Block.Builder blockBuild = Block.newBuilder();
     this.block = blockBuild.setBlockHeader(blockHeader).build();
-    unpacked = true;
   }
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
@@ -167,7 +166,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     Block.Builder blockBuild = Block.newBuilder();
     transactionList.forEach(trx -> blockBuild.addTransactions(trx));
     this.block = blockBuild.setBlockHeader(blockHeader).build();
-    unpacked = true;
+
   }
 
   public void addTransaction(TransactionCapsule pendingTrx) {
@@ -193,7 +192,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   private Sha256Hash getRawHash() {
-    unPack();
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
@@ -210,15 +208,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public BlockId getBlockId() {
-    unPack();
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
     }
-
     return blockId;
-//    return blockId.equals(Sha256Hash.ZERO_HASH)
-//        ? blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum())
-//        : blockId;
   }
 
   public Sha256Hash calcMerkleRoot() {
@@ -246,41 +239,29 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash getMerkleRoot() {
-    unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
   }
 
-  public ByteString getWitnessAddress(){
-    unPack();
+  public ByteString getWitnessAddress() {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
 
 
-  private void pack() {
-    if (data == null) {
-      this.data = this.block.toByteArray();
-    }
-  }
-
-  public boolean validate() {
-    unPack();
-    return true;
-  }
-
   public BlockCapsule(Block block) {
     this.block = block;
-    unpacked = true;
   }
 
-  public BlockCapsule(byte[] data) {
-    this.data = data;
-    unPack();
+  public BlockCapsule(byte[] data) throws BadItemException {
+    try {
+      this.block = Block.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException();
+    }
   }
 
   @Override
   public byte[] getData() {
-    pack();
-    return data;
+    return this.block.toByteArray();
   }
 
   @Override
@@ -289,28 +270,23 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash getParentHash() {
-    unPack();
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }
 
   public ByteString getParentHashStr() {
-    unPack();
     return this.block.getBlockHeader().getRawData().getParentHash();
   }
 
   public long getNum() {
-    unPack();
     return this.block.getBlockHeader().getRawData().getNumber();
   }
 
   public long getTimeStamp() {
-    unPack();
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
   @Override
   public String toString() {
-    unPack();
     return "BlockCapsule{" +
         "blockId=" + blockId +
         ", num=" + getNum() +
