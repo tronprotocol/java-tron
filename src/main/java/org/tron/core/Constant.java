@@ -27,11 +27,12 @@ public class Constant {
   public static final String BLOCK_DB_NAME = "block_data";
   public static final String TRANSACTION_DB_NAME = "transaction_data";
 
-  //config
-  public static final String NORMAL = "normal";
-  public static final String TEST = "test";
-  public static final String NORMAL_CONF = "config.conf";
+  //config for testnet, mainnet, beta
+  public static final String TESTNET_CONF = "config.conf";
+
+  //config for junit test
   public static final String TEST_CONF = "config-test.conf";
+  
   public static final String DATABASE_DIR = "storage.directory";
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0xa1;   //a1 + address  ,a1 is version
