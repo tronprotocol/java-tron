@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -18,14 +19,14 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
     try {
       this.getActiveWitnesses();
     } catch (IllegalArgumentException e) {
-      List<String> al = new ArrayList<>();
+      List<ByteString> al = new ArrayList<>();
       this.saveActiveWitnesses(al);
     }
 
     try {
       this.getCurrentShuffledWitnesses();
     } catch (IllegalArgumentException e) {
-      List<String> al = new ArrayList<>();
+      List<ByteString> al = new ArrayList<>();
       this.saveCurrentShuffledWitnesses(al);
     }
   }
@@ -70,7 +71,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
   }
 
 
-  public void saveActiveWitnesses(List<String> witnessesAddressList) {
+  public void saveActiveWitnesses(List<ByteString> witnessesAddressList) {
     logger.debug("ActiveWitnesses:" + witnessesAddressList);
     StringBuffer sb = new StringBuffer();
     witnessesAddressList.forEach(address -> sb.append(address).append("&"));
@@ -78,22 +79,22 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
         new BytesCapsule(ByteArray.fromString(sb.toString())));
   }
 
-  public List<String> getActiveWitnesses() {
-    List<String> witnessesAddressList = new ArrayList<>();
+  public List<ByteString> getActiveWitnesses() {
+    List<ByteString> witnessesAddressList = new ArrayList<>();
     return Optional.ofNullable(this.dbSource.getData(ACTIVE_WITNESSES))
         .map(ByteArray::toStr)
         .map((value) -> {
           StringTokenizer st = new StringTokenizer(value, "&");
           while (st.hasMoreElements()) {
             String strN = st.nextToken();
-            witnessesAddressList.add(strN);
+            witnessesAddressList.add(ByteString.copyFrom(strN.getBytes()));
           }
           return witnessesAddressList;
         }).orElseThrow(
             () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
   }
 
-  public void saveCurrentShuffledWitnesses(List<String> witnessesAddressList) {
+  public void saveCurrentShuffledWitnesses(List<ByteString> witnessesAddressList) {
     logger.debug("CurrentShuffledWitnesses:" + witnessesAddressList);
     StringBuffer sb = new StringBuffer();
     witnessesAddressList.forEach(address -> sb.append(address).append("&"));
@@ -101,15 +102,15 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
         new BytesCapsule(ByteArray.fromString(sb.toString())));
   }
 
-  public List<String> getCurrentShuffledWitnesses() {
-    List<String> witnessesAddressList = new ArrayList<>();
+  public List<ByteString> getCurrentShuffledWitnesses() {
+    List<ByteString> witnessesAddressList = new ArrayList<>();
     return Optional.ofNullable(this.dbSource.getData(CURRENT_SHUFFLED_WITNESSES))
         .map(ByteArray::toStr)
         .map((value) -> {
           StringTokenizer st = new StringTokenizer(value, "&");
           while (st.hasMoreElements()) {
             String strN = st.nextToken();
-            witnessesAddressList.add(strN);
+            witnessesAddressList.add(ByteString.copyFrom(strN.getBytes()));
           }
           return witnessesAddressList;
         }).orElseThrow(
