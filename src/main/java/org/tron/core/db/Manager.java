@@ -153,20 +153,19 @@ public class Manager {
     }
   }
 
-  @Deprecated
+
   public BlockId getHeadBlockId() {
     return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash(),
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
 
-    //return Sha256Hash.wrap(this.dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
-  @Deprecated
+
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }
 
-  @Deprecated
+
   public long getHeadBlockTimeStamp() {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
@@ -231,7 +230,7 @@ public class Manager {
     this.witnessController.initWits();
     this.khaosDb.start(genesisBlock);
   }
-  
+
   public BlockId getGenesisBlockId() {
     return this.genesisBlock.getBlockId();
   }
