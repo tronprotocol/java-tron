@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -186,7 +185,6 @@ public class ManagerTest {
   }
 
   @Test
-  @Ignore
   public void fork() {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
