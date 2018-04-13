@@ -54,8 +54,8 @@ public class WitnessController {
         witnessAddresses.add(witnessCapsule.getAddress());
       }
     });
-    setActiveWitnesses(witnessAddresses);
     sortWitness(witnessAddresses);
+    setActiveWitnesses(witnessAddresses);
     witnessAddresses.forEach(address -> {
       logger.info("initWits shuffled addresses:" + ByteArray.toHexString(address.toByteArray()));
     });
