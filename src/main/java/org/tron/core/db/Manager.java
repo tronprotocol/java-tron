@@ -72,6 +72,7 @@ public class Manager {
   private WitnessStore witnessStore;
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
+  private WitnessScheduleStore witnessScheduleStore;
 
   @Autowired
   private PeersStore peersStore;
@@ -111,6 +112,14 @@ public class Manager {
 
   public void setDynamicPropertiesStore(final DynamicPropertiesStore dynamicPropertiesStore) {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
+  }
+
+  public WitnessScheduleStore getWitnessScheduleStore() {
+    return this.witnessScheduleStore;
+  }
+
+  public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
+    this.witnessScheduleStore = witnessScheduleStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -219,6 +228,7 @@ public class Manager {
     this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
+    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
 
     revokingStore = RevokingStore.getInstance();
