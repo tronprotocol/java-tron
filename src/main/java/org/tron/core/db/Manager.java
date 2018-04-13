@@ -417,7 +417,7 @@ public class Manager {
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore().getLatestBlockHeaderHash().equals(
-          binaryTree.getValue().peekLast().getParentHash().getBytes())) {
+          binaryTree.getValue().peekLast().getParentHash())) {
         try {
           eraseBlock();
         } catch (BadItemException e) {
