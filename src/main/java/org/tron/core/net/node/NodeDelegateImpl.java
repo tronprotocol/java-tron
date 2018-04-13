@@ -7,7 +7,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
@@ -131,9 +130,19 @@ public class NodeDelegateImpl implements NodeDelegate {
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
-    return LongStream.rangeClosed(unForkedBlockIdNum, len)
-        .mapToObj(num -> dbManager.getBlockIdByNum(num))
-        .collect(Collectors.toCollection(LinkedList::new));
+
+    LinkedList<BlockId> blockIds = new LinkedList<>();
+    for (long i = unForkedBlockIdNum; i <= len; i++) {
+      try {
+        BlockId id = dbManager.getBlockIdByNum(i);
+        blockIds.add(id);
+      } catch (BadItemException e) {
+        return new LinkedList<>();
+      } catch (ItemNotFoundException e) {
+        return new LinkedList<>();
+      }
+    }
+    return blockIds;
   }
 
   @Override
@@ -168,7 +177,13 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
+        try {
+          retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
+        } catch (BadItemException e) {
+          logger.info(e.getMessage());
+        } catch (ItemNotFoundException e) {
+          logger.info(e.getMessage());
+        }
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {

@@ -135,8 +135,14 @@ public class ManagerTest {
       Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(),
           0);
     } else {
-      Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
-          dbManager.getBlockIdByNum(1).toString());
+      try {
+        Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
+            dbManager.getBlockIdByNum(1).toString());
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
     }
 
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
