@@ -97,6 +97,9 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
   }
 
   public List<ByteString> getActiveWitnesses() {
+    getData(ACTIVE_WITNESSES).forEach(address -> {
+      logger.info("getActiveWitnesses:" + ByteArray.toHexString(address.toByteArray()));
+    });
     return getData(ACTIVE_WITNESSES);
   }
 
@@ -110,6 +113,9 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
   }
 
   public List<ByteString> getCurrentShuffledWitnesses() {
+    getData(CURRENT_SHUFFLED_WITNESSES).forEach(address -> {
+      logger.info("getCurrentShuffledWitnesses:" + ByteArray.toHexString(address.toByteArray()));
+    });
     return getData(CURRENT_SHUFFLED_WITNESSES);
   }
 }
