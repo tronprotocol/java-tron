@@ -21,7 +21,7 @@ public interface NodeDelegate {
 
   void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
-  LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws UnReachBlockException;
+  LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary);
 
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
       throws UnLinkedBlockException;

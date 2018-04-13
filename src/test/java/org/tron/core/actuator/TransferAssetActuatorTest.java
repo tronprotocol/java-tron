@@ -209,5 +209,6 @@ public class TransferAssetActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+    dbManager.destory();
   }
 }

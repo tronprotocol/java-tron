@@ -85,7 +85,7 @@ public class Manager {
   private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
   @Getter
-  private DialogOptional<Dialog> dialog = DialogOptional.empty();
+  private DialogOptional dialog = DialogOptional.instance();
 
   @Getter
   @Setter
@@ -362,7 +362,7 @@ public class Manager {
     validateFreq(trx);
 
     if (!dialog.valid()) {
-      dialog = DialogOptional.of(revokingStore.buildDialog());
+      dialog.setValue(revokingStore.buildDialog());
     }
 
     try (
@@ -709,7 +709,7 @@ public class Manager {
         witnessCapsule.getAddress());
 
     dialog.reset();
-    dialog = DialogOptional.of(revokingStore.buildDialog());
+    dialog.setValue(revokingStore.buildDialog());
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {

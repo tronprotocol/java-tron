@@ -730,13 +730,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     LinkedList<BlockId> blockIds;
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     long remainNum = 0;
-    try {
-      blockIds = del.getLostBlockIds(summaryChainIds);
-    } catch (UnReachBlockException e) {
-      //TODO: disconnect this peer casue this peer can not switch
-      logger.debug(e.getMessage(), e);
-      return;
-    }
+
+    blockIds = del.getLostBlockIds(summaryChainIds);
 
     if (blockIds.isEmpty()) {
       peer.setNeedSyncFromUs(false);
