@@ -40,7 +40,7 @@ public class RevokingStoreTest {
         "testrevokingtronstore-testUndo", revokingDatabase);
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
-    DialogOptional dialog = DialogOptional.of(revokingDatabase.buildDialog());
+    DialogOptional dialog = DialogOptional.instance().setValue(revokingDatabase.buildDialog());
     for (int i = 0; i < 10; i++) {
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
