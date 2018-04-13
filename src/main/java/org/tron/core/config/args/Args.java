@@ -6,6 +6,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -154,11 +156,11 @@ public class Args {
   @Getter
   @Setter
   //If you are running a solidity node for java tron, this flag is set to true
-  private boolean solidityNode;
+  private boolean solidityNode = false;
 
   @Getter
   @Setter
-  //If you are running a solidity node for java tron, solidity node must assign a trust node for sync solidity block
+  @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
 
   public static void clearParam() {
@@ -299,8 +301,9 @@ public class Args {
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
 
-    INSTANCE.trustNodeAddr =
-        config.hasPath("node.trust") ? config.getString("node.trust") : null;
+    if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
+      INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
+    }
   }
 
 
