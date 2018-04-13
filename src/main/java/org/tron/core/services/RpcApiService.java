@@ -134,7 +134,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
-      Sha256Hash headBlockId = app.getDbManager().getBlockIdByNum(request.getNum());
+      Sha256Hash headBlockId = null;
+      try {
+        headBlockId = app.getDbManager().getBlockIdByNum(request.getNum());
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
       Block block = null;
       try {
         block = app.getDbManager().getBlockById(headBlockId).getInstance();
