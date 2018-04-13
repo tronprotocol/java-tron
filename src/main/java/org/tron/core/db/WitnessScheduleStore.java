@@ -19,15 +19,13 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
     try {
       this.getActiveWitnesses();
     } catch (IllegalArgumentException e) {
-      List<ByteString> al = new ArrayList<>();
-      this.saveActiveWitnesses(al);
+      this.saveActiveWitnesses(new ArrayList<>());
     }
 
     try {
       this.getCurrentShuffledWitnesses();
     } catch (IllegalArgumentException e) {
-      List<ByteString> al = new ArrayList<>();
-      this.saveCurrentShuffledWitnesses(al);
+      this.saveCurrentShuffledWitnesses(new ArrayList<>());
     }
   }
 

@@ -139,13 +139,15 @@ public class Manager {
 
 
   //for test only
-  public List<WitnessCapsule> getWitnesses() {
-    return witnessController.getWitnesses();
+  public List<ByteString> getWitnesses() {
+    return witnessController.getActiveWitnesses();
   }
 
   //for test only
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    witnessController.addWitness(witnessCapsule);
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses = witnessController.getActiveWitnesses();
+    witnessAddresses.add(address);
+    witnessController.setActiveWitnesses(witnessAddresses);
   }
 
   public BlockCapsule getHead() {
@@ -811,12 +813,12 @@ public class Manager {
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers = witnessController.getWitnesses().stream()
-        .map(wit -> wit.getLatestBlockNum())
+    List<Long> numbers = witnessController.getActiveWitnesses().stream()
+        .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
 
-    long size = witnessController.getWitnesses().size();
+    long size = witnessController.getActiveWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
       logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",

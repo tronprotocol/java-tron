@@ -147,9 +147,9 @@ public class ManagerTest {
   //  @Test
   public void updateWits() {
     int sizePrv = dbManager.getWitnesses().size();
-    dbManager.getWitnesses().forEach(witnessCapsule -> {
+    dbManager.getWitnesses().forEach(witnessAddress -> {
       logger.info("witness address is {}",
-          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+          ByteArray.toHexString(witnessAddress.toByteArray()));
     });
     logger.info("------------");
     WitnessCapsule witnessCapsulef = new WitnessCapsule(
@@ -162,18 +162,18 @@ public class ManagerTest {
         ByteString.copyFrom(ByteArray.fromHexString("0x0013")), "www.tron.net/three");
     witnessCapsulet.setIsJobs(false);
 
-    dbManager.getWitnesses().forEach(witnessCapsule -> {
+    dbManager.getWitnesses().forEach(witnessAddress -> {
       logger.info("witness address is {}",
-          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+          ByteArray.toHexString(witnessAddress.toByteArray()));
     });
     logger.info("---------");
     dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
     dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
     dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
     dbManager.getWitnessController().initWits();
-    dbManager.getWitnesses().forEach(witnessCapsule -> {
+    dbManager.getWitnesses().forEach(witnessAddress -> {
       logger.info("witness address is {}",
-          ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()));
+          ByteArray.toHexString(witnessAddress.toByteArray()));
     });
     int sizeTis = dbManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
@@ -189,9 +189,7 @@ public class ManagerTest {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(witnessCapsule);
-    dbManager.addWitness(witnessCapsule);
-    dbManager.addWitness(witnessCapsule);
+    dbManager.addWitness(ByteString.copyFrom(address));
     IntStream.range(0, 1).forEach(i -> {
       try {
         dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
