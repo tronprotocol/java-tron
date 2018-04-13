@@ -17,7 +17,11 @@ public interface Parameter {
 
   interface NodeConstant {
 
-    long SYNC_FETCH_BATCH_NUM = 1000;
+    long SYNC_RETURN_BATCH_NUM = 1000;
+    long SYNC_FETCH_BATCH_NUM = 500;
+    long MAX_BLOCKS_IN_PROCESS = 400;
+    long MAX_BLOCKS_ALREADY_FETCHED = 800;
+    long MAX_BLOCKS_SYNC_FROM_ONE_PEER = 200;
     long SYNC_CHAIN_LIMIT_NUM = 500;
 
   }

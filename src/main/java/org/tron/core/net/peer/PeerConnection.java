@@ -51,7 +51,7 @@ public class PeerConnection extends Channel {
 
   private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
-  private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
   public Map<Sha256Hash, Long> getAdvObjSpreadToUs() {
     return advObjSpreadToUs;
@@ -77,7 +77,7 @@ public class PeerConnection extends Channel {
 
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
-  private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
+  private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
 
   private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
@@ -90,12 +90,11 @@ public class PeerConnection extends Channel {
     this.syncChainRequested = syncChainRequested;
   }
 
-  public HashMap<BlockId, Long> getSyncBlockRequested() {
+  public Map<BlockId, Long> getSyncBlockRequested() {
     return syncBlockRequested;
   }
 
-  public void setSyncBlockRequested(
-      HashMap<BlockId, Long> syncBlockRequested) {
+  public void setSyncBlockRequested(ConcurrentHashMap<BlockId, Long> syncBlockRequested) {
     this.syncBlockRequested = syncBlockRequested;
   }
 
@@ -125,11 +124,11 @@ public class PeerConnection extends Channel {
 
   private Set<BlockId> blockInProc = new HashSet<>();
 
-  public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
+  public Map<Sha256Hash, Long> getAdvObjWeRequested() {
     return advObjWeRequested;
   }
 
-  public void setAdvObjWeRequested(HashMap<Sha256Hash, Long> advObjWeRequested) {
+  public void setAdvObjWeRequested(ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested) {
     this.advObjWeRequested = advObjWeRequested;
   }
 

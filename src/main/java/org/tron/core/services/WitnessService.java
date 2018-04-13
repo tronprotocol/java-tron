@@ -137,7 +137,6 @@ public class WitnessService implements Service {
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
     long now = DateTime.now().getMillis() + 50L;
-    BlockCapsule head = this.tronApp.getDbManager().getHead();
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
       if (nexSlotTime > now) { // check sync during first loop
@@ -146,8 +145,11 @@ public class WitnessService implements Service {
         now = DateTime.now().getMillis();
       } else {
         logger.debug("Not sync ,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-            new DateTime(now), new DateTime(head.getTimeStamp()),
-            head.getNum(), head.getBlockId());
+            new DateTime(now),
+            new DateTime(this.tronApp.getDbManager().getDynamicPropertiesStore()
+                .getLatestBlockHeaderTimestamp()),
+            this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+            this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
         return BlockProductionCondition.NOT_SYNCED;
       }
     }
@@ -165,8 +167,12 @@ public class WitnessService implements Service {
 
     if (slot == 0) {
       logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-          new DateTime(now), new DateTime(head.getTimeStamp()), head.getNum(),
-          head.getBlockId());
+          new DateTime(now),
+          new DateTime(
+              this.tronApp.getDbManager().getDynamicPropertiesStore()
+                  .getLatestBlockHeaderTimestamp()),
+          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
@@ -176,9 +182,6 @@ public class WitnessService implements Service {
       logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
           controller.getAbSlotAtTime(now));
-      logger.debug("headBlockNumber:{},headBlockId:{},headBlockTime:{}",
-          head.getNum(), head.getBlockId(),
-          new DateTime(head.getTimeStamp()));
       return BlockProductionCondition.NOT_MY_TURN;
     }
 
@@ -204,7 +207,7 @@ public class WitnessService implements Service {
           "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
           block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
           new DateTime(block.getTimeStamp()),
-          head.getBlockId());
+          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
@@ -228,7 +231,6 @@ public class WitnessService implements Service {
         this.privateKeyMap.get(witnessAddress));
   }
 
-
   /**
    * Initialize the local witnesses
    */
@@ -251,7 +253,6 @@ public class WitnessService implements Service {
     });
 
   }
-
 
   @Override
   public void init(Args args) {

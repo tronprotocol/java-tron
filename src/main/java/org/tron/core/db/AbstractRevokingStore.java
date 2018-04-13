@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
   private int activeDialog = 0;
+  private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
 
   @Override
   public Dialog buildDialog() {
@@ -43,7 +45,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       disabled = false;
     }
 
-    while (stack.size() > DEFAULT_STACK_MAX_SIZE) {
+    while (stack.size() > maxSize.get()) {
       stack.poll();
     }
 
@@ -239,6 +241,19 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     if (stack.isEmpty()) {
       stack.add(new RevokingState());
     }
+  }
+
+  @Override
+  public int size() {
+    return stack.size();
+  }
+
+  public void setMaxSize(int maxSize) {
+    this.maxSize.set(maxSize);
+  }
+
+  public int getMaxSize() {
+    return maxSize.get();
   }
 
   @Slf4j

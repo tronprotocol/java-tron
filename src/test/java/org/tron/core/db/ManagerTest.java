@@ -22,8 +22,10 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -92,7 +94,13 @@ public class ManagerTest {
       Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
     }
     while (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
-      dbManager.eraseBlock();
+      try {
+        dbManager.eraseBlock();
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
     }
     try {
       dbManager.pushBlock(blockCapsule);
@@ -132,17 +140,18 @@ public class ManagerTest {
       Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(),
           0);
     } else {
-      Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
-          dbManager.getBlockIdByNum(1).toString());
+      try {
+        Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
+            dbManager.getBlockIdByNum(1).toString());
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
     }
 
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
 
-    dbManager.deleteBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString(blockCapsule2.getBlockId().toString())));
-
-    Assert.assertFalse("deleteBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString(blockCapsule2.getBlockId().toString()))));
   }
 
 
@@ -182,8 +191,13 @@ public class ManagerTest {
   }
 
   @Test
-  public void fork() throws ValidateSignatureException, ContractValidateException,
-      ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+  public void fork() throws ValidateSignatureException,
+      ContractValidateException,
+      ContractExeException,
+      UnLinkedBlockException,
+      ValidateScheduleException,
+      BadItemException,
+      ItemNotFoundException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
 
@@ -191,10 +205,12 @@ public class ManagerTest {
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 = createTestBlockCapsule(num + 1,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(), addressToProvateKeys);
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+        addressToProvateKeys);
 
     BlockCapsule blockCapsule1 = createTestBlockCapsule(num + 1,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(), addressToProvateKeys);
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+        addressToProvateKeys);
 
     BlockCapsule blockCapsule2 = createTestBlockCapsule(num + 2,
         blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);

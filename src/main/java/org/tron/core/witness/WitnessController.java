@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public class WitnessController {
@@ -65,6 +68,23 @@ public class WitnessController {
     witsRead.lock();
     try {
       return this.wits;
+    } finally {
+      witsRead.unlock();
+    }
+
+  }
+  // witness
+  public WitnessCapsule getWitnesseByAddress(ByteString address) {
+    witsRead.lock();
+    try {
+      final WitnessCapsule[] witnessCapsule = {null};
+      this.wits.forEach(wit -> {
+        if (Arrays.equals(address.toByteArray(), wit.getAddress().toByteArray())) {
+          witnessCapsule[0] = wit;
+          return;
+        }
+      });
+      return witnessCapsule[0];
     } finally {
       witsRead.unlock();
     }
@@ -111,7 +131,14 @@ public class WitnessController {
   }
 
   public BlockCapsule getHead() {
-    return manager.getHead();
+    try {
+      return manager.getBlockStore()
+          .get(manager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+    } catch (ItemNotFoundException e) {
+      return null;
+    } catch (BadItemException e) {
+      return null;
+    }
   }
 
   public boolean lastHeadBlockIsMaintenance() {
@@ -213,8 +240,9 @@ public class WitnessController {
 
     List<String> currentWitsAddress = getWitnessStringList(getWitnesses());
     // TODO  what if the number of witness is not same in different slot.
-    long num = getHead().getNum();
-    long time = getHead().getTimeStamp();
+    long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+
     if (num != 0 && num % getWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
       setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
