@@ -16,17 +16,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
 
   private WitnessScheduleStore(String dbName) {
     super(dbName);
-    try {
-      this.getActiveWitnesses();
-    } catch (IllegalArgumentException e) {
-      this.saveActiveWitnesses(new ArrayList<>());
-    }
-
-    try {
-      this.getCurrentShuffledWitnesses();
-    } catch (IllegalArgumentException e) {
-      this.saveCurrentShuffledWitnesses(new ArrayList<>());
-    }
   }
 
 
