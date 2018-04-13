@@ -14,7 +14,9 @@ public final class DialogOptional {
   }
 
   public synchronized DialogOptional setValue(Dialog value) {
-    this.value = Optional.ofNullable(value);
+    if (!this.value.isPresent()) {
+      this.value = Optional.of(value);
+    }
     return this;
   }
 
