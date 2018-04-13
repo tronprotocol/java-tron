@@ -149,5 +149,6 @@ public class AssetIssueActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+    dbManager.destory();
   }
 }
