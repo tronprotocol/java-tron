@@ -54,17 +54,17 @@ public class ConfigurationTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void whenNullPathGetShouldThrowIllegalArgumentException() {
-    Configuration.getByPath(null);
+    Configuration.getByFileName(null, null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenEmptyPathGetShouldThrowIllegalArgumentException() {
-    Configuration.getByPath(StringUtils.EMPTY);
+    Configuration.getByFileName(StringUtils.EMPTY, StringUtils.EMPTY);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void getShouldNotFindConfiguration() {
-    Config config = Configuration.getByPath("notExistingPath");
+    Config config = Configuration.getByFileName("notExistingPath", "notExistingPath");
     assertFalse(config.hasPath("storage"));
     assertFalse(config.hasPath("overlay"));
     assertFalse(config.hasPath("seed.node"));
@@ -73,7 +73,7 @@ public class ConfigurationTest {
 
   @Test
   public void getShouldReturnConfiguration() {
-    Config config = Configuration.getByPath("config-test.conf");
+    Config config = Configuration.getByFileName("config-test.conf", "config-test.conf");
     assertTrue(config.hasPath("storage"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
