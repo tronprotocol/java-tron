@@ -190,6 +190,9 @@ public class WitnessController {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
     final int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
+    logger.debug("currentSlot:" + currentSlot
+        + ", witnessIndex" + witnessIndex
+        + ", currentShuffledWitnesses size:" + currentShuffledWitnesses.size());
 
     final ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex);
     //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
