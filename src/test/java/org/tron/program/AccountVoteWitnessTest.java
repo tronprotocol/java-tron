@@ -44,7 +44,7 @@ public class AccountVoteWitnessTest {
     } else {
       logger.info("Release resources failure.");
     }
-
+    dbManager.destory();
   }
 
   private static Boolean deleteFolder(File index) {
