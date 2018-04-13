@@ -19,10 +19,15 @@
 package org.tron.core.config;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 
 import com.typesafe.config.ConfigFactory;
+
 import java.io.File;
+import java.io.FileNotFoundException;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ResourceUtils;
 
 @Slf4j
 public class Configuration {
@@ -32,29 +37,36 @@ public class Configuration {
   /**
    * Get configuration by a given path.
    *
-   * @param configurationPath path to configuration file
+   * @param confFileName path to configuration file
    * @return loaded configuration
    */
-  public static com.typesafe.config.Config getByPath(final String configurationPath) {
-    if (isBlank(configurationPath)) {
-      throw new IllegalArgumentException("Configuration path is required!");
+  public static com.typesafe.config.Config getByFileName(final String shellConfFileName, final String confFileName) {
+    if (isNoneBlank(shellConfFileName)) {
+      File shellConfFile = new File(shellConfFileName);
+      resolveConfigFile(shellConfFileName, shellConfFile);
+      return config;
     }
 
-    File confFile = new File(configurationPath);
-    if (confFile.exists()) {
-      config = ConfigFactory.parseFile(new File(configurationPath));
+    if (isBlank(confFileName)) {
+      throw new IllegalArgumentException("Configuration path is required!");
     } else {
-      config = ConfigFactory.load(configurationPath);
+      File confFile = new File(confFileName);
+      resolveConfigFile(confFileName, confFile);
+      return config;
     }
-    return config;
   }
 
-  public static com.typesafe.config.Config getByFile(final File confFile) {
-    if (!confFile.exists()) {
-      throw new IllegalArgumentException("Configuration path is required!");
+  private static void resolveConfigFile(String fileName, File confFile) {
+    if (confFile.exists()) {
+      config = ConfigFactory.parseFile(confFile);
+    } else {
+      try {
+        ResourceUtils.getFile("classpath:" + fileName);
+      } catch (FileNotFoundException e) {
+        throw new IllegalArgumentException("Configuration path is required! No Such file " + fileName);
+      }
+      config = ConfigFactory.load(fileName);
     }
-    config = ConfigFactory.parseFile(confFile);
-    return config;
   }
 }
 
