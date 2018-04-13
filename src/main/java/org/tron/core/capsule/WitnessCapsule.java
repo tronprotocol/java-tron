@@ -82,10 +82,6 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     return this.witness;
   }
 
-  public long getLatestBlockNum() {
-    return this.witness.getLatestBlockNum();
-  }
-
   public void setPubKey(final ByteString pubKey) {
     this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
   }
@@ -96,6 +92,38 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
 
   public void setVoteCount(final long voteCount) {
     this.witness = this.witness.toBuilder().setVoteCount(voteCount).build();
+  }
+
+  public void setTotalProduced(final long totalProduced) {
+    this.witness = this.witness.toBuilder().setTotalProduced(totalProduced).build();
+  }
+
+  public long getTotalProduced() {
+    return this.witness.getTotalProduced();
+  }
+
+  public void setTotalMissed(final long totalMissed) {
+    this.witness = this.witness.toBuilder().setTotalMissed(totalMissed).build();
+  }
+
+  public long getTotalMissed() {
+    return this.witness.getTotalMissed();
+  }
+
+  public void setLatestBlockNum(final long latestBlockNum) {
+    this.witness = this.witness.toBuilder().setLatestBlockNum(latestBlockNum).build();
+  }
+
+  public long getLatestBlockNum() {
+    return this.witness.getLatestBlockNum();
+  }
+
+  public void setLatestSlotNum(final long latestSlotNum) {
+    this.witness = this.witness.toBuilder().setLatestSlotNum(latestSlotNum).build();
+  }
+
+  public long getLatestSlotNum() {
+    return this.witness.getLatestSlotNum();
   }
 
   public void setIsJobs(final boolean isJobs) {

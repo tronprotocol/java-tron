@@ -15,11 +15,11 @@
 
 package org.tron.core.config.args;
 
+import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.StringUtil;
-import java.io.Serializable;
+import org.tron.core.Wallet;
 
 public class Witness implements Serializable {
 
@@ -39,17 +39,11 @@ public class Witness implements Serializable {
    * set address.
    */
   public void setAddress(final String address) {
-    if (null == address) {
+    if ( !Wallet.addressValid(address)){
       throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 40-bit hexadecimal string.");
+          "The address(" + address + ") must be a 42-bit hexadecimal string.");
     }
-
-    if (StringUtil.isHexString(address, 40)) {
-      this.address = address;
-    } else {
-      throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 40-bit hexadecimal string.");
-    }
+    this.address = address;
   }
 
   /**

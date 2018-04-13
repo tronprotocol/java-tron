@@ -61,7 +61,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());
       channel.sendHelloMessage(ctx);
-      channel.getNodeStatistics().rlpxAuthMessagesSent.add();
     }
   }
 
@@ -83,16 +82,19 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     final HelloMessage helloMessage = (HelloMessage) msg;
 
     if (helloMessage.getVersion() != Args.getInstance().getNodeP2pVersion()) {
+      logger.info("version not support, you[{}] version[{}], my version[{}]",
+              ctx.channel().remoteAddress(), helloMessage.getVersion(), Args.getInstance().getNodeP2pVersion());
       ctx.close();
       return;
     }
 
-    if (remoteId.length != 64) {
+    if (remoteId.length != 64) { //not initiator
       remoteId = ByteArray.fromHexString(helloMessage.getPeerId());
       channel.initWithNode(remoteId, helloMessage.getListenPort());
       channel.sendHelloMessage(ctx);
-      channel.getNodeStatistics().rlpxInHello.add();
     }
+
+    channel.getNodeStatistics().p2pInHello.add();
 
     channel.publicHandshakeFinished(ctx, helloMessage);
 
@@ -103,7 +105,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {} {} ", ctx.channel().remoteAddress(), cause);
+    logger.info("exception caught, {} {} ", ctx.channel().remoteAddress(), cause.getMessage());
     ctx.close();
   }
 

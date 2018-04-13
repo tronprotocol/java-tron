@@ -1,12 +1,12 @@
 package org.tron.core.net.node;
 
 import com.google.common.primitives.Longs;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
@@ -14,15 +14,17 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnReachBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
@@ -37,10 +39,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     this.dbManager = dbManager;
   }
 
-  protected BlockStore getBlockStore() {
-    return dbManager.getBlockStore();
-  }
-
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
@@ -51,20 +49,24 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushBlock(block);
+      if (!syncMode) {
+        List<TransactionCapsule> trx = null;
+        trx = block.getTransactions();
+        return trx.stream()
+            .map(TransactionCapsule::getHash)
+            .collect(Collectors.toCollection(LinkedList::new));
+      } else {
+        return null;
+      }
+
+    } catch (ValidateScheduleException e) {
+      throw new BadBlockException("validate schedule exception");
     } catch (ValidateSignatureException e) {
       throw new BadBlockException("validate signature exception");
     } catch (ContractValidateException e) {
       throw new BadBlockException("ContractValidate exception");
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
-    }
-    if (!syncMode) {
-      List<TransactionCapsule> trx = dbManager.getBlockById(block.getBlockId()).getTransactions();
-      return trx.stream()
-          .map(TransactionCapsule::getHash)
-          .collect(Collectors.toCollection(LinkedList::new));
-    } else {
-      return null;
     }
   }
 
@@ -98,15 +100,22 @@ public class NodeDelegateImpl implements NodeDelegate {
       return new LinkedList<>();
     }
 
-    BlockId unForkedBlockId = null;
+    BlockId unForkedBlockId;
 
-    if (blockChainSummary.isEmpty() || blockChainSummary.size() == 1) {
+    if (blockChainSummary.isEmpty() ||
+        (blockChainSummary.size() == 1
+            && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
+    } else if (blockChainSummary.size() == 1
+        && blockChainSummary.get(0).getNum() == 0) {
+      return new LinkedList<BlockId>() {{
+        add(dbManager.getGenesisBlockId());
+      }};
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-          .filter(blockId -> dbManager.containBlock(blockId))
+          .filter(blockId -> containBlockInMainChain(blockId))
           .findFirst()
           .orElseThrow(UnReachBlockException::new);
       //todo: can not find any same block form peer's summary and my db.
@@ -116,28 +125,42 @@ public class NodeDelegateImpl implements NodeDelegate {
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
-    return LongStream.rangeClosed(unForkedBlockIdNum, len)
-        .filter(num -> num > 0)
-        .mapToObj(num -> dbManager.getBlockIdByNum(num))
-        .collect(Collectors.toCollection(LinkedList::new));
+
+    LinkedList<BlockId> blockIds = new LinkedList<>();
+    for (long i = unForkedBlockIdNum; i <= len; i++) {
+      try {
+        BlockId id = dbManager.getBlockIdByNum(i);
+        blockIds.add(id);
+      } catch (BadItemException e) {
+        return new LinkedList<>();
+      } catch (ItemNotFoundException e) {
+        return new LinkedList<>();
+      }
+    }
+    return blockIds;
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, List<BlockId> blockIds) {
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch)
+      throws UnLinkedBlockException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
+    List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = 0;
+    long lowBlkNum = dbManager.getSyncBeginNumber();
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
     if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
-      if (dbManager.containBlock(beginBLockId)) {
+      if (containBlockInMainChain(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
+        if (forkList.size() < 2) {
+          throw new UnLinkedBlockException("unlink from :" + beginBLockId);
+        }
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
         Collections.reverse(forkList);
@@ -148,15 +171,18 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-//      if (highBlkNum == 0) {
-//        return retSummary;
-//      }
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
+        try {
+          retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
+        } catch (BadItemException e) {
+          logger.info(e.getMessage());
+        } catch (ItemNotFoundException e) {
+          logger.info(e.getMessage());
+        }
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
@@ -171,7 +197,13 @@ public class NodeDelegateImpl implements NodeDelegate {
   public Message getData(Sha256Hash hash, MessageTypes type) {
     switch (type) {
       case BLOCK:
-        return new BlockMessage(dbManager.findBlockByHash(hash));
+        try {
+          return new BlockMessage(dbManager.getBlockById(hash));
+        } catch (BadItemException e) {
+          logger.debug(e.getMessage());
+        } catch (ItemNotFoundException e) {
+          logger.debug(e.getMessage());
+        }
       case TRX:
         return new TransactionMessage(
             dbManager.getTransactionStore().get(hash.getBytes()).getData());
@@ -184,15 +216,22 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void syncToCli(long unSyncNum) {
     logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    if (unSyncNum == 0) {
+      logger.info("Sync Block Completed !!!");
+    }
     dbManager.setSyncMode(unSyncNum == 0);
     //TODO: notify cli know how many block we need to sync
   }
 
   @Override
   public long getBlockTime(BlockId id) {
-    return dbManager.containBlock(id)
-        ? dbManager.getBlockById(id).getTimeStamp()
-        : dbManager.getGenesisBlock().getTimeStamp();
+    try {
+      return dbManager.getBlockById(id).getTimeStamp();
+    } catch (BadItemException e) {
+      return dbManager.getGenesisBlock().getTimeStamp();
+    } catch (ItemNotFoundException e) {
+      return dbManager.getGenesisBlock().getTimeStamp();
+    }
   }
 
   @Override

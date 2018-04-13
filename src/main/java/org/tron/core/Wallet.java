@@ -41,8 +41,10 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.UtxoStore;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -70,6 +72,8 @@ public class Wallet {
   private Application app;
   private Node p2pnode;
   private Manager dbManager;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -102,6 +106,56 @@ public class Wallet {
     return ecKey.getAddress();
   }
 
+  public static String getAddressPreFixString() {
+    return addressPreFixString;
+  }
+
+  public static void setAddressPreFixString(String addressPreFixString) {
+    Wallet.addressPreFixString = addressPreFixString;
+  }
+
+  public static byte getAddressPreFixByte() {
+    return addressPreFixByte;
+  }
+
+  public static void setAddressPreFixByte(byte addressPreFixByte) {
+    Wallet.addressPreFixByte = addressPreFixByte;
+  }
+
+  public static boolean addressValid(byte[] address) {
+    if (address == null || address.length == 0) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    if (address.length != Constant.ADDRESS_SIZE / 2) {
+      logger.warn(
+          "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
+              + " !!");
+      return false;
+    }
+    if (address[0] != addressPreFixByte) {
+      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
+          + address[0] + " !!");
+      return false;
+    }
+    //Other rule;
+    return true;
+  }
+
+  public static boolean addressValid(String addressStr) {
+    if (addressStr == null || "".equals(addressStr)) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    try {
+      byte[] address = ByteArray.fromHexString(addressStr);
+      return addressValid(address);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return false;
+    }
+  }
+
   /**
    * Get balance by address.
    */
@@ -120,10 +174,10 @@ public class Wallet {
   /**
    * Create a transaction.
    */
-  public Transaction createTransaction(byte[] address, String to, long amount) {
+  /*public Transaction createTransaction(byte[] address, String to, long amount) {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
-  }
+  } */
 
   /**
    * Create a transaction by contract.
@@ -180,19 +234,41 @@ public class Wallet {
 
   public Block getNowBlock() {
     Sha256Hash headBlockId = dbManager.getHeadBlockId();
-    return dbManager.getBlockById(headBlockId).getInstance();
+    try {
+      return dbManager.getBlockById(headBlockId).getInstance();
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+      return null;
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
   }
 
   public Block getBlockByNum(long blockNum) {
-    Sha256Hash headBlockId = dbManager.getBlockIdByNum(blockNum);
-    return dbManager.getBlockById(headBlockId).getInstance();
+    Sha256Hash headBlockId = null;
+    try {
+      headBlockId = dbManager.getBlockIdByNum(blockNum);
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+    }
+    try {
+      return dbManager.getBlockById(headBlockId).getInstance();
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+      return null;
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
   }
 
   public AccountList getAllAccounts() {
     AccountList.Builder builder = AccountList.newBuilder();
     List<AccountCapsule> accountCapsuleList =
         dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.sort(null);
     accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
     return builder.build();
   }
@@ -200,7 +276,6 @@ public class Wallet {
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
-    witnessCapsuleList.sort(null);
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();

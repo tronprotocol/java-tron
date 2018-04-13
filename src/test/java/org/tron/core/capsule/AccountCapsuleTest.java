@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
@@ -25,7 +24,7 @@ public class AccountCapsuleTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
-        Configuration.getByPath(Constant.TEST_CONF));
+        Constant.TEST_CONF);
     ByteString accountName = ByteString.copyFrom(AccountCapsuleTest.randomBytes(16));
     ByteString address = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
     AccountType accountType = AccountType.forNumber(1);

@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -12,7 +11,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
@@ -21,12 +19,13 @@ import org.tron.protos.Protocol.BlockHeader.raw;
 
 @Slf4j
 public class KhaosDatabaseTest {
+
   private static final String dbPath = "output-khaosDatabase-test";
   private static KhaosDatabase khaosDatabase;
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     khaosDatabase = new KhaosDatabase("test_khaos");
   }
 

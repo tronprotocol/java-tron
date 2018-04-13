@@ -100,15 +100,14 @@ public class Channel {
     private PeerStatistics peerStats = new PeerStatistics();
 
     public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-        ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+                     ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
 
         isActive = remoteId != null && !remoteId.isEmpty();
 
         //TODO: use config here
-        pipeline.addLast("readTimeoutHandler",
-            new ReadTimeoutHandler(60, TimeUnit.SECONDS));
+        pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
@@ -128,7 +127,6 @@ public class Channel {
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setPeerDel(peerDel);
 
-        logger.info("Channel init finished");
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
@@ -207,7 +205,8 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-         msgQueue.disconnect(reason);
+        logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
+        msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {
@@ -257,3 +256,4 @@ public class Channel {
         return String.format("%s | %s", getPeerId(), inetSocketAddress);
     }
 }
+

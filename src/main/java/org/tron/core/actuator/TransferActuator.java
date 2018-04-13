@@ -5,6 +5,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -62,8 +63,12 @@ public class TransferActuator extends AbstractActuator {
                 .getClass() + "]");
       }
       TransferContract transferContract = this.contract.unpack(TransferContract.class);
-      Preconditions.checkNotNull(transferContract.getOwnerAddress(), "OwnerAddress is null");
-      Preconditions.checkNotNull(transferContract.getToAddress(), "ToAddress is null");
+      if (!Wallet.addressValid(transferContract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Invalidate ownerAddress");
+      }
+      if (!Wallet.addressValid(transferContract.getToAddress().toByteArray())) {
+        throw new ContractValidateException("Invalidate toAddress");
+      }
       Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
 
       if (transferContract.getOwnerAddress().equals(transferContract.getToAddress())) {

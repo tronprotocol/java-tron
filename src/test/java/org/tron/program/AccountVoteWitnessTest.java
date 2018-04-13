@@ -10,13 +10,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 public class AccountVoteWitnessTest {
+
   private static Manager dbManager = new Manager();
   private static String dbPath = "output_witness_test";
 
@@ -25,9 +25,9 @@ public class AccountVoteWitnessTest {
    */
   @BeforeClass
   public static void init() {
-    //Args.setParam(new String[]{}, Configuration.getByPath(Constant.TEST_CONF));
+    //Args.setParam(new String[]{}, Constant.TEST_CONF);
     Args.setParam(new String[]{"-d", dbPath},
-        Configuration.getByPath("config-junit.conf"));
+        "config-junit.conf");
     dbManager.init();
   }
 
@@ -72,7 +72,7 @@ public class AccountVoteWitnessTest {
     witnessCapsuleList.forEach(witnessCapsule ->
         dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule)
     );
-    dbManager.updateWitness();
+    dbManager.getWitnessController().updateWitness();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000002".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000003".getBytes()));

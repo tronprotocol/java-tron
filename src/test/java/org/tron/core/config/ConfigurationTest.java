@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 
 @Slf4j
 public class ConfigurationTest {
@@ -47,7 +48,7 @@ public class ConfigurationTest {
 
 //    log.debug("address = {}", ByteArray.toHexString(key.getOwnerAddress()));
 
-    assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0",
+    assertEquals(Wallet.getAddressPreFixString() + "125b6c87b3d67114b3873977888c34582f27bbb0",
         ByteArray.toHexString(key.getAddress()));
   }
 
@@ -74,7 +75,6 @@ public class ConfigurationTest {
   public void getShouldReturnConfiguration() {
     Config config = Configuration.getByPath("config-test.conf");
     assertTrue(config.hasPath("storage"));
-    assertTrue(config.hasPath("overlay"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
   }

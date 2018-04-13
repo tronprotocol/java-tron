@@ -1,11 +1,15 @@
-FROM tronprotocol/centos7-jdk8
-MAINTAINER tronprotocol
+FROM tronprotocol/tron-gradle
 
-# Install dependencies && Download java-tron
-RUN yum update -y && \
-	yum install -y git && \
-	git clone https://github.com/tronprotocol/java-tron.git /home/java-tron
+RUN set -o errexit -o nounset \
+#  Download and build java-tron
+    && echo "git clone" \
+    && git clone https://github.com/tronprotocol/java-tron.git \
+    && cd java-tron \
+    && gradle build
 
 # Change work directory
-WORKDIR /home/java-tron
+WORKDIR /java-tron
+
+# open port 18888
+EXPOSE 18888
 

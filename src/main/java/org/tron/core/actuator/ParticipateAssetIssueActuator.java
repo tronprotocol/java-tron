@@ -22,6 +22,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -92,9 +93,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
-      Preconditions
-          .checkNotNull(participateAssetIssueContract.getOwnerAddress(), "OwnerAddress is null");
-      Preconditions.checkNotNull(participateAssetIssueContract.getToAddress(), "ToAddress is null");
+      if (!Wallet.addressValid(participateAssetIssueContract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Invalidate ownerAddress");
+      }
+      if (!Wallet.addressValid(participateAssetIssueContract.getToAddress().toByteArray())) {
+        throw new ContractValidateException("Invalidate toAddress");
+      }
       Preconditions.checkNotNull(participateAssetIssueContract.getAssetName(), "trx name is null");
       if (participateAssetIssueContract.getAmount() <= 0) {
         throw new ContractValidateException("Trx Num must be positive!");

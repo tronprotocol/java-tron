@@ -49,19 +49,19 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent discoveryEvent) throws Exception {
-//        logger.info("rcv msg type {}, len {} from {} ",
-//                discoveryEvent.getMessage().getType(),
-//                discoveryEvent.getMessage().getSendData().length,
-//                discoveryEvent.getAddress());
+        logger.debug("rcv udp msg type {}, len {} from {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
         nodeManager.handleInbound(discoveryEvent);
     }
 
     @Override
     public void accept(DiscoveryEvent discoveryEvent) {
-//        logger.info("send msg to type {}, len {} from {} ",
-//                discoveryEvent.getMessage().getType(),
-//                discoveryEvent.getMessage().getSendData().length,
-//                discoveryEvent.getAddress());
+        logger.debug("send udp msg type {}, len {} to {} ",
+                discoveryEvent.getMessage().getType(),
+                discoveryEvent.getMessage().getSendData().length,
+                discoveryEvent.getAddress());
         InetSocketAddress address = discoveryEvent.getAddress();
         sendPacket(discoveryEvent.getMessage().getSendData(), address);
     }
@@ -79,8 +79,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.debug("Discover channel error" + cause);
+        logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
         ctx.close();
-        // We don't close the channel because we can keep serving requests.
     }
 }

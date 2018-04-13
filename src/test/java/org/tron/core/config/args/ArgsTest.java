@@ -16,11 +16,12 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.config.Configuration;
 
+@Slf4j
 public class ArgsTest {
 
   @After
@@ -30,19 +31,18 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{"-w"}, Configuration.getByPath("config-junit.conf"));
+    Args.setParam(new String[]{"-w"}, "configFile/config-junit.conf");
 
     Args args = Args.getInstance();
+    Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
 
-    Assert.assertEquals("database-test", args.getStorage().getDirectory());
-
-    Assert.assertEquals(7, args.getSeedNode().getIpList().size());
+    Assert.assertEquals(11, args.getSeedNode().getIpList().size());
 
     GenesisBlock genesisBlock = args.getGenesisBlock();
 
-    Assert.assertEquals(3, genesisBlock.getAssets().size());
+    Assert.assertEquals(4, genesisBlock.getAssets().size());
 
-    Assert.assertEquals(4, genesisBlock.getWitnesses().size());
+    Assert.assertEquals(11, genesisBlock.getWitnesses().size());
 
     Assert.assertEquals("0", genesisBlock.getTimestamp());
 
@@ -50,7 +50,7 @@ public class ArgsTest {
         genesisBlock.getParentHash());
 
     Assert.assertEquals(
-        Lists.newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+        Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
         args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertTrue(args.isNodeDiscoveryEnable());

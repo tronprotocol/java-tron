@@ -80,6 +80,8 @@ public enum ReasonCode {
 
     USER_REASON(0x10),
 
+    RESET(0x11),
+
     /**
      * [0xFF] Reason not specified
      */

@@ -17,19 +17,10 @@
  */
 package org.tron.common.overlay.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
@@ -38,6 +29,12 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 @Component
 public class SyncPool {
@@ -52,6 +49,8 @@ public class SyncPool {
   private NodeManager nodeManager;
 
   @Autowired
+  private ApplicationContext ctx;
+
   private ChannelManager channelManager;
 
   private PeerConnectionDelegate peerDel;
@@ -70,10 +69,11 @@ public class SyncPool {
   public SyncPool(PeerConnectionDelegate peerDel, PeerClient peerClient) {
     this.peerDel = peerDel;
     this.peerClient = peerClient;
-    init();
   }
 
   public void init() {
+    channelManager = ctx.getBean(ChannelManager.class);
+
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
@@ -116,6 +116,7 @@ public class SyncPool {
 
     if (active.isEmpty()) return;
 
+    //sort by latency
     active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
 
     for (PeerConnection channel : active) {
@@ -129,11 +130,6 @@ public class SyncPool {
   }
 
   synchronized void logActivePeers() {
-    logger.info("-------- active node.");
-
-    for (NodeHandler nodeHandler: nodeManager.getActiveNodes()){
-      logger.info(nodeHandler.toString());
-    }
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
@@ -159,17 +155,12 @@ public class SyncPool {
     }
   }
 
-  public List<NodeHandler> getActiveNodes() {
-    return nodeManager.getActiveNodes();
-  }
-
   public synchronized List<PeerConnection> getActivePeers() {
     return new ArrayList<>(activePeers);
   }
 
   public synchronized void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
-      logger.info("Peer {}: disconnected", peer.getPeerIdShort());
       peerDel.onDisconnectPeer((PeerConnection)peer);
       activePeers.remove(peer);
     }
@@ -199,9 +190,7 @@ public class SyncPool {
 
       //TODO: use reputation sysytem
 
-      if (handler.getState().equals(NodeHandler.State.Discovered) ||
-              handler.getState().equals(NodeHandler.State.Dead) ||
-              handler.getState().equals(NodeHandler.State.NonActive)){
+      if (!nodeManager.isNodeAlive(handler)){
         return false;
       }
 
@@ -216,7 +205,10 @@ public class SyncPool {
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
+      }
 
+      if (handler.getNodeStatistics().getReputation() < 100) {
+        return false;
       }
 
       return  true;

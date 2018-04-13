@@ -11,7 +11,6 @@ import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProtoCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -26,7 +25,7 @@ public class RevokingStoreTest {
     revokingDatabase = new TestRevokingTronDatabase();
     revokingDatabase.enable();
     Args.setParam(new String[]{"-d", "output_revokingStore_test"},
-        Configuration.getByPath(Constant.NORMAL_CONF));
+        Constant.NORMAL_CONF);
   }
 
   @After

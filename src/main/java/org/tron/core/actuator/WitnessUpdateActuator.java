@@ -1,10 +1,10 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
@@ -53,7 +53,9 @@ public class WitnessUpdateActuator extends AbstractActuator {
       }
 
       final WitnessUpdateContract contract = this.contract.unpack(WitnessUpdateContract.class);
-      Preconditions.checkNotNull(contract.getOwnerAddress(), "OwnerAddress is null");
+      if(!Wallet.addressValid(contract.getOwnerAddress().toByteArray())){
+        throw new ContractValidateException("Invalidate address");
+      }
       if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
         throw new ContractValidateException("Witness not existed");
       }

@@ -39,6 +39,16 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
+  public int getReputation() {
+    return reputation;
+  }
+
+  public void setReputation(int reputation) {
+    this.reputation = reputation;
+  }
+
+  private int reputation = 0;
+
   public static Node instanceOf(String addressOrEnode) {
     try {
       URI uri = new URI(addressOrEnode);

@@ -1,7 +1,9 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
+import com.typesafe.config.ConfigObject;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -11,20 +13,16 @@ import org.tron.core.capsule.AccountCapsule;
 @Slf4j
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
-  private static final String ACCOUNT_SUN_ADDRESS
-      = "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
-
-  private static final String ACCOUNT_BLACKHOLE_ADDRESS
-      = "548794500882809695a8a687866e76d4271a146a";
-
-  private static final String ACCOUNT_ZION_ADDRESS
-      = "55ddae14564f82d5b94c7a131b5fcfd31ad6515a";
-
+  private static Map<String, String> assertsAddress = new HashMap<String, String>();
   private static AccountStore instance;
 
 
   private AccountStore(String dbName) {
     super(dbName);
+  }
+
+  public void destroy() {
+    instance = null;
   }
 
   /**
@@ -57,7 +55,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
-    logger.info("address is {},account is {}", key, account);
     return null != account;
   }
 
@@ -74,10 +71,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Max TRX account.
    */
   public AccountCapsule getSun() {
-    byte[] data = dbSource.getData(
-        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_SUN_ADDRESS))
-            .toByteArray());
-
+    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Sun"))));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
@@ -86,10 +80,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Min TRX account.
    */
   public AccountCapsule getBlackhole() {
-    byte[] data = dbSource.getData(
-        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_BLACKHOLE_ADDRESS))
-            .toByteArray());
-
+    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Blackhole"))));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
@@ -98,11 +89,18 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Get foundation account info.
    */
   public AccountCapsule getZion() {
-    byte[] data = dbSource.getData(
-        ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_ZION_ADDRESS))
-            .toByteArray());
-
+    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Zion"))));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
+  }
+
+  public static void setAccount(com.typesafe.config.Config config) {
+    List list = config.getObjectList("genesis.block.assets");
+    for (int i = 0; i < list.size(); i++) {
+      ConfigObject obj = (ConfigObject) list.get(i);
+      String accountName = obj.get("accountName").unwrapped().toString();
+      String address = obj.get("address").unwrapped().toString();
+      assertsAddress.put(accountName, address);
+    }
   }
 }

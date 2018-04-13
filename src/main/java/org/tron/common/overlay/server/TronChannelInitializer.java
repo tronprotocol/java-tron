@@ -82,7 +82,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
             // be aware of channel closing
             ch.closeFuture().addListener((ChannelFutureListener) future -> {
-                logger.info("Close channel:" + channel.getNode());
+                logger.info("Close channel:" + channel.getInetSocketAddress());
                 if (!peerDiscoveryMode) {
                     channelManager.notifyDisconnect(channel);
                 }

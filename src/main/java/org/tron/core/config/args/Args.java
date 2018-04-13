@@ -4,7 +4,9 @@ import static org.tron.common.crypto.Hash.sha3;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,6 +35,11 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.config.Configuration;
+import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.AccountStore;
 
 @Slf4j
 @NoArgsConstructor
@@ -39,6 +47,9 @@ import org.tron.common.overlay.discover.Node;
 public class Args {
 
   private static final Args INSTANCE = new Args();
+
+  @Parameter(names = {"-c", "--config"}, description = "Config File")
+  private String confFile = "";
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
@@ -142,6 +153,16 @@ public class Args {
   @Setter
   private String p2pNodeId;
 
+  @Getter
+  @Setter
+  //If you are running a solidity node for java tron, this flag is set to true
+  private boolean solidityNode = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--trust-node"}, description = "Trust node addr")
+  private String trustNodeAddr;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -170,15 +191,22 @@ public class Args {
     INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.p2pNodeId = "";
+    INSTANCE.solidityNode = false;
+    INSTANCE.trustNodeAddr = "";
   }
 
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final com.typesafe.config.Config config) {
-
+  public static void setParam(final String[] args, final String configFilePath) {
+    Config config;
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-
+    File confFile = new File(INSTANCE.confFile);
+    if (confFile.exists()) {
+      config = Configuration.getByFile(confFile);
+    } else {
+      config = Configuration.getByPath(configFilePath);
+    }
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       logger.debug("Got privateKey from cmd");
@@ -202,11 +230,18 @@ public class Args {
     INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(config.getString("storage.directory")));
-
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
+
+    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -216,6 +251,7 @@ public class Args {
 
       if (config.hasPath("genesis.block.assets")) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
+        AccountStore.setAccount(config);
       }
       if (config.hasPath("genesis.block.witnesses")) {
         INSTANCE.genesisBlock.setWitnesses(getWitnessesFromConfig(config));
@@ -264,6 +300,10 @@ public class Args {
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
+
+    if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
+      INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
+    }
   }
 
 
@@ -315,36 +355,9 @@ public class Args {
       return Collections.EMPTY_LIST;
     }
     List<Node> ret = new ArrayList<>();
-    List<? extends ConfigObject> list = config.getObjectList("node.active");
-    for (ConfigObject configObject : list) {
-      Node n;
-      if (configObject.get("url") != null) {
-        String url = configObject.toConfig().getString("url");
-        n = new Node(url.startsWith("enode://") ? url : "enode://" + url);
-      } else if (configObject.get("ip") != null) {
-        String ip = configObject.toConfig().getString("ip");
-        int port = configObject.toConfig().getInt("port");
-        byte[] nodeId;
-        if (configObject.toConfig().hasPath("nodeId")) {
-          nodeId = Hex.decode(configObject.toConfig().getString("nodeId").trim());
-          if (nodeId.length != 64) {
-            throw new RuntimeException("Invalid config nodeId '" + nodeId + "' at " + configObject);
-          }
-        } else {
-          if (configObject.toConfig().hasPath("nodeName")) {
-            String nodeName = configObject.toConfig().getString("nodeName").trim();
-            // FIXME should be keccak-512 here ?
-            nodeId = ECKey.fromPrivate(sha3(nodeName.getBytes())).getNodeId();
-          } else {
-            throw new RuntimeException(
-                "Either nodeId or nodeName should be specified: " + configObject);
-          }
-        }
-        n = new Node(nodeId, ip, port);
-      } else {
-        throw new RuntimeException(
-            "Unexpected element within 'peer.active' config list: " + configObject);
-      }
+    List<String> list = config.getStringList("node.active");
+    for (String configString : list) {
+      Node n = Node.instanceOf(configString);
       ret.add(n);
     }
     return ret;
@@ -353,7 +366,7 @@ public class Args {
   private static void privateKey(final com.typesafe.config.Config config) {
     if (config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
-      if (INSTANCE.privateKey.length() != 64) {
+      if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
         throw new RuntimeException(
             "The peer.privateKey needs to be Hex encoded and 32 byte length");
       }

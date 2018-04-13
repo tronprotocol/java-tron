@@ -19,23 +19,15 @@ package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.DisconnectMessage;
-import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.message.PingMessage;
-import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.overlay.message.StaticMessages;
+import org.tron.common.overlay.message.*;
+
+import java.util.Queue;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class contains the logic for sending messages in a queue
@@ -66,12 +58,15 @@ public class MessageQueue {
     }
   });
 
+  private static Thread sendMsgThread;
+
   private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
-  private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
+  //private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
+
+  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
+
   private ChannelHandlerContext ctx = null;
 
-//  @Autowired
-//  EthereumListener ethereumListener;
   boolean hasPing = false;
   private ScheduledFuture<?> timerTask;
   private Channel channel;
@@ -81,6 +76,7 @@ public class MessageQueue {
 
   public void activate(ChannelHandlerContext ctx) {
     this.ctx = ctx;
+
     timerTask = timer.scheduleAtFixedRate(() -> {
       try {
         nudgeQueue();
@@ -88,6 +84,21 @@ public class MessageQueue {
         logger.error("Unhandled exception", t);
       }
     }, 10, 10, TimeUnit.MILLISECONDS);
+
+    sendMsgThread = new Thread(()->{
+     while (true) {
+       try {
+         Message msg = msgQueue.take();
+         ctx.writeAndFlush(msg.getSendData())
+                 .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+       }catch (InterruptedException e){
+         break;
+       }catch (Exception e) {
+         logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+       }
+     }
+    });
+    sendMsgThread.start();
   }
 
   public void setChannel(Channel channel) {
@@ -103,7 +114,7 @@ public class MessageQueue {
     if (msg.getAnswerMessage() != null)
       requestQueue.add(new MessageRoundtrip(msg));
     else
-      respondQueue.add(new MessageRoundtrip(msg));
+      msgQueue.offer(msg);
   }
 
   public void disconnect() {
@@ -121,6 +132,8 @@ public class MessageQueue {
 
   public void receivedMessage(Message msg) throws InterruptedException {
 
+    logger.debug("rcv from peer[{}], size:{} data:{}", ctx.channel().remoteAddress(), msg.getSendData().readableBytes(), msg.toString());
+
     if (requestQueue.peek() != null) {
       MessageRoundtrip messageRoundtrip = requestQueue.peek();
       Message waitingMessage = messageRoundtrip.getMsg();
@@ -130,12 +143,13 @@ public class MessageQueue {
       if (waitingMessage.getAnswerMessage() != null
           && msg.getClass() == waitingMessage.getAnswerMessage()) {
         messageRoundtrip.answer();
+        channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
       }
     }
   }
 
   private void removeAnsweredMessage(MessageRoundtrip messageRoundtrip) {
-    if (messageRoundtrip != null && messageRoundtrip.isAnswered())
+    if (messageRoundtrip != null && messageRoundtrip.isAnswered()) 
       requestQueue.remove();
   }
 
@@ -143,33 +157,42 @@ public class MessageQueue {
     // remove last answered message on the queue
     removeAnsweredMessage(requestQueue.peek());
     // Now send the next message
-    sendToWire(respondQueue.poll());
+    //sendToWire(respondQueue.poll());
     sendToWire(requestQueue.peek());
   }
 
   private void sendToWire(MessageRoundtrip messageRoundtrip) {
 
-    if (messageRoundtrip != null && messageRoundtrip.getRetryTimes() == 0) {
-      // TODO: retry logic || messageRoundtrip.hasToRetry()){
+    if (messageRoundtrip == null){
+      return;
+    }
 
-      Message msg = messageRoundtrip.getMsg();
+    if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()){
+      return;
+    }
 
-      //TODO#p2p#peerDel : let node know
-      logger.info(msg.toString());
+    if (messageRoundtrip.getRetryTimes() > 0){
+      logger.warn("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
+      ctx.close();
+      return;
+    }
 
-      ctx.writeAndFlush(msg.getSendData())
-          .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+    Message msg = messageRoundtrip.getMsg();
 
-      if (msg.getAnswerMessage() != null) {
-        messageRoundtrip.incRetryTimes();
-        messageRoundtrip.saveTime();
-      }
+    ctx.writeAndFlush(msg.getSendData())
+            .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+
+    logger.debug("send to peer[{}] retry[{}], length:{} data:{}", ctx.channel().remoteAddress(),
+            messageRoundtrip.getRetryTimes(), msg.getSendData().readableBytes(), msg.toString());
+
+    if (msg.getAnswerMessage() != null) {
+      messageRoundtrip.incRetryTimes();
+      messageRoundtrip.saveTime();
     }
   }
 
   public void close() {
-    if (!timerTask.isCancelled()) {
-      timerTask.cancel(false);
-    }
+    sendMsgThread.interrupt();
+    timerTask.cancel(false);
   }
 }
