@@ -48,6 +48,10 @@ public class StoreAPI {
    *            account api               *
    *                                      *
    ****************************************/
+  public List<Account> getAccountAll() {
+    IndexedCollection<Account> index = indexHelper.getAccountIndex();
+    return index.stream().collect(Collectors.toList());
+  }
 
   public Account getAccountByAddress(String address) throws NonUniqueObjectException {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
@@ -206,11 +210,11 @@ public class StoreAPI {
     return Lists.newArrayList(resultSet);
   }
 
-  public List<Transaction> getAllTransactions(String address) {
+  public List<Transaction> getTransactionsRelatedToAccount(String accountAddress) {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
-        index.retrieve(or(equal(TransactionIndex.OWNERS, address),
-            equal(TransactionIndex.TOS, address)),
+        index.retrieve(or(equal(TransactionIndex.OWNERS, accountAddress),
+            equal(TransactionIndex.TOS, accountAddress)),
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
@@ -308,6 +312,11 @@ public class StoreAPI {
    *              AssetIssue api          *
    *                                      *
    ****************************************/
+
+  public List<AssetIssueContract> getAssetIssueAll() {
+    IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
+    return index.stream().collect(Collectors.toList());
+  }
 
   public List<AssetIssueContract> getAssetIssueByTime(long currentInMilliseconds)
       throws NonUniqueObjectException {
