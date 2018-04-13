@@ -92,8 +92,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
-      throws UnReachBlockException {
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
     if (dbManager.getHeadBlockNum() == 0) {
@@ -115,9 +114,11 @@ public class NodeDelegateImpl implements NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-          .filter(blockId -> containBlockInMainChain(blockId))
-          .findFirst()
-          .orElseThrow(UnReachBlockException::new);
+              .filter(blockId -> containBlockInMainChain(blockId))
+              .findFirst().orElse(null);
+      if (unForkedBlockId == null){
+        return new LinkedList<>();
+      }
       //todo: can not find any same block form peer's summary and my db.
     }
 
