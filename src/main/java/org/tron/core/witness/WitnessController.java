@@ -74,11 +74,11 @@ public class WitnessController {
     this.manager.getWitnessScheduleStore().saveActiveWitnesses(addresses);
   }
 
-//  public void addWitness(final WitnessCapsule witnessCapsule) {
-//    witsWrite.lock();
-//    this.wits.add(witnessCapsule);
-//    witsWrite.unlock();
-//  }
+  public void addWitness(ByteString address) {
+    List<ByteString> l = getActiveWitnesses();
+    l.add(address);
+    setActiveWitnesses(l);
+  }
 
   public List<ByteString> getCurrentShuffledWitnesses() {
     return this.manager.getWitnessScheduleStore().getCurrentShuffledWitnesses();

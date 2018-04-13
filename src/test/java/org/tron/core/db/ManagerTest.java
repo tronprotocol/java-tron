@@ -261,7 +261,7 @@ public class ManagerTest {
 
       WitnessCapsule witnessCapsule = new WitnessCapsule(address);
       dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-      dbManager.getWitnessController().addWitness(witnessCapsule);
+      dbManager.getWitnessController().addWitness(address);
 
       AccountCapsule accountCapsule =
           new AccountCapsule(Account.newBuilder().setAddress(address).build());
