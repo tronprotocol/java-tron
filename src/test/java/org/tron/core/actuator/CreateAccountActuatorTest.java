@@ -126,5 +126,6 @@ public class CreateAccountActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+    dbManager.destory();
   }
 }
