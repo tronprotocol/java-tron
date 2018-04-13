@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -135,8 +134,14 @@ public class ManagerTest {
       Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(),
           0);
     } else {
-      Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
-          dbManager.getBlockIdByNum(1).toString());
+      try {
+        Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
+            dbManager.getBlockIdByNum(1).toString());
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
     }
 
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
@@ -180,7 +185,6 @@ public class ManagerTest {
   }
 
   @Test
-  @Ignore
   public void fork() {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();

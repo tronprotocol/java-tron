@@ -49,7 +49,7 @@ public class Args {
   private static final Args INSTANCE = new Args();
 
   @Parameter(names = {"-c", "--config"}, description = "Config File")
-  private String confFile = "";
+  private String shellConfFileName = "";
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
@@ -198,15 +198,9 @@ public class Args {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final String configFilePath) {
-    Config config;
+  public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    File confFile = new File(INSTANCE.confFile);
-    if (confFile.exists()) {
-      config = Configuration.getByFile(confFile);
-    } else {
-      config = Configuration.getByPath(configFilePath);
-    }
+    Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       logger.debug("Got privateKey from cmd");

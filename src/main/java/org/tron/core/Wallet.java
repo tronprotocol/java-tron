@@ -246,7 +246,14 @@ public class Wallet {
   }
 
   public Block getBlockByNum(long blockNum) {
-    Sha256Hash headBlockId = dbManager.getBlockIdByNum(blockNum);
+    Sha256Hash headBlockId = null;
+    try {
+      headBlockId = dbManager.getBlockIdByNum(blockNum);
+    } catch (BadItemException e) {
+      logger.info(e.getMessage());
+    } catch (ItemNotFoundException e) {
+      logger.info(e.getMessage());
+    }
     try {
       return dbManager.getBlockById(headBlockId).getInstance();
     } catch (BadItemException e) {

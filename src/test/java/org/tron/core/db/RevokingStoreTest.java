@@ -25,7 +25,7 @@ public class RevokingStoreTest {
     revokingDatabase = new TestRevokingTronDatabase();
     revokingDatabase.enable();
     Args.setParam(new String[]{"-d", "output_revokingStore_test"},
-        Constant.NORMAL_CONF);
+        Constant.TEST_CONF);
   }
 
   @After
