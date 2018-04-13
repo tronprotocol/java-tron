@@ -233,9 +233,9 @@ public class ManagerTest {
     Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
-    Assert.assertEquals(blockCapsule2.getBlockId().getByteString(),
+    Assert.assertEquals(blockCapsule2.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
-    Assert.assertEquals(dbManager.getHead().getBlockId().getByteString(),
+    Assert.assertEquals(dbManager.getHead().getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
   }
 
