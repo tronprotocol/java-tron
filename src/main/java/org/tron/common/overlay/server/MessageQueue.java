@@ -173,7 +173,7 @@ public class MessageQueue {
 
     if (messageRoundtrip.getRetryTimes() > 0){
       logger.warn("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
-      ctx.close();
+      close();
       return;
     }
 
@@ -193,6 +193,11 @@ public class MessageQueue {
 
   public void close() {
     sendMsgThread.interrupt();
-    timerTask.cancel(false);
+    timerTask.cancel(true);
+    if (ctx != null){
+      ctx.close();
+      ctx = null;
+    }
   }
+
 }
