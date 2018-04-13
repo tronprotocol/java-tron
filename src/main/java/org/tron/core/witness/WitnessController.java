@@ -56,6 +56,9 @@ public class WitnessController {
     });
     setActiveWitnesses(witnessAddresses);
     sortWitness(witnessAddresses);
+    witnessAddresses.forEach(address -> {
+      logger.info("initWits shuffled addresses:" + ByteArray.toHexString(address.toByteArray()));
+    });
     setCurrentShuffledWitnesses(witnessAddresses);
   }
   

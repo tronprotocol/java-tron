@@ -90,7 +90,9 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
   }
 
   public void saveActiveWitnesses(List<ByteString> witnessesAddressList) {
-//    logger.debug("saveActiveWitnesses:" + witnessesAddressList);
+    witnessesAddressList.forEach(address -> {
+      logger.info("saveActiveWitnesses:" + ByteArray.toHexString(address.toByteArray()));
+    });
     saveData(ACTIVE_WITNESSES, witnessesAddressList);
   }
 
@@ -101,7 +103,9 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
 //  ByteArray.toHexString(scheduledWitness.toByteArray())
 
   public void saveCurrentShuffledWitnesses(List<ByteString> witnessesAddressList) {
-//    logger.debug("saveCurrentShuffledWitnesses:" + witnessesAddressList);
+    witnessesAddressList.forEach(address -> {
+      logger.info("saveCurrentShuffledWitnesses:" + ByteArray.toHexString(address.toByteArray()));
+    });
     saveData(CURRENT_SHUFFLED_WITNESSES, witnessesAddressList);
   }
 
