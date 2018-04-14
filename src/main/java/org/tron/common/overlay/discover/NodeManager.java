@@ -17,23 +17,35 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler.State;
-import org.tron.common.overlay.discover.message.*;
-import org.tron.common.overlay.discover.table.NodeTable;
-import org.tron.common.utils.CollectionUtils;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-
+import com.dianping.cat.Cat;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler.State;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.utils.CollectionUtils;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
@@ -177,6 +189,12 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   }
 
   public synchronized NodeHandler getNodeHandler(Node n) {
+    com.dianping.cat.message.Transaction t = Cat.newTransaction("tron", "tron");
+    Cat.logEvent("method", "pushblock");
+    Cat.logMetricForCount("pushBlock");
+    t.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    t.complete();
+
     String key = getKey(n);
     NodeHandler ret = nodeHandlerMap.get(key);
     if (ret == null) {

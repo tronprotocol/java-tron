@@ -13,6 +13,7 @@ mainClassName = 'org.tron.program.FullNode'
 
 repositories {
     maven { url 'http://mvnrepository.com' }
+    maven { url 'http://unidal.org/nexus/content/repositories/releases/' }
     mavenLocal()
     mavenCentral()
 }
@@ -120,6 +121,9 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
+    compile 'org.unidal.framework:foundation-service:4.0.0'
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 check.dependsOn 'lint'

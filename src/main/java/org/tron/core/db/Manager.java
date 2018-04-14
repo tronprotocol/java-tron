@@ -467,7 +467,6 @@ public class Manager {
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException, ValidateScheduleException {
-
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
