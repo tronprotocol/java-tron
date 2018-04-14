@@ -48,6 +48,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Scope("prototype")
 public class MessageQueue {
 
+  private static int start = 0;
+  private static int close = 0;
+
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
@@ -86,11 +89,14 @@ public class MessageQueue {
     }, 10, 10, TimeUnit.MILLISECONDS);
 
     sendMsgThread = new Thread(()->{
+      start++;
+      logger.info("start {} close {}", start, close);
      while (true) {
        try {
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData())
                  .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+         logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
        }catch (InterruptedException e){
          break;
        }catch (Exception e) {
@@ -132,7 +138,7 @@ public class MessageQueue {
 
   public void receivedMessage(Message msg) throws InterruptedException {
 
-    logger.debug("rcv from peer[{}], size:{} data:{}", ctx.channel().remoteAddress(), msg.getSendData().readableBytes(), msg.toString());
+    logger.info("rcv {} from {}",msg.getType(), ctx.channel().remoteAddress());
 
     if (requestQueue.peek() != null) {
       MessageRoundtrip messageRoundtrip = requestQueue.peek();
@@ -172,7 +178,7 @@ public class MessageQueue {
     }
 
     if (messageRoundtrip.getRetryTimes() > 0){
-      logger.warn("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
+      logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       close();
       return;
     }
@@ -182,8 +188,7 @@ public class MessageQueue {
     ctx.writeAndFlush(msg.getSendData())
             .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
-    logger.debug("send to peer[{}] retry[{}], length:{} data:{}", ctx.channel().remoteAddress(),
-            messageRoundtrip.getRetryTimes(), msg.getSendData().readableBytes(), msg.toString());
+    logger.info("send {} to {}",msg.getType(), ctx.channel().remoteAddress());
 
     if (msg.getAnswerMessage() != null) {
       messageRoundtrip.incRetryTimes();
@@ -195,6 +200,7 @@ public class MessageQueue {
     sendMsgThread.interrupt();
     timerTask.cancel(true);
     if (ctx != null){
+      close++;
       ctx.close();
       ctx = null;
     }
