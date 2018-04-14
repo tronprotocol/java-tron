@@ -20,6 +20,9 @@ package org.tron.common.overlay.server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -27,12 +30,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeManager;
-import org.tron.common.overlay.message.*;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.P2pMessage;
+import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
-
-import java.net.InetSocketAddress;
-import java.util.List;
 
 @Component
 @Scope("prototype")
@@ -78,26 +81,23 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       ctx.close();
       return;
     }
-
     final HelloMessage helloMessage = (HelloMessage) msg;
 
-    if (helloMessage.getVersion() != Args.getInstance().getNodeP2pVersion()) {
-      logger.info("version not support, you[{}] version[{}], my version[{}]",
-              ctx.channel().remoteAddress(), helloMessage.getVersion(), Args.getInstance().getNodeP2pVersion());
-      ctx.close();
-      return;
-    }
 
     if (remoteId.length != 64) { //not initiator
       remoteId = ByteArray.fromHexString(helloMessage.getPeerId());
       channel.initWithNode(remoteId, helloMessage.getListenPort());
+      channel.getNodeStatistics().p2pInHello.add();
+      if (!checkVersion(helloMessage, ctx.channel().remoteAddress())) {
+        channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+        return;
+      }
       channel.sendHelloMessage(ctx);
+    } else {
+      channel.getNodeStatistics().p2pInHello.add();
     }
 
-    channel.getNodeStatistics().p2pInHello.add();
-
     channel.publicHandshakeFinished(ctx, helloMessage);
-
     ctx.pipeline().remove(this);
 
     logger.info("Handshake done, removing HandshakeHandler from pipeline, {}", ctx.channel().remoteAddress());
@@ -109,10 +109,18 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     ctx.close();
   }
 
-
   public void setChannel(Channel channel, String remoteId) {
     this.channel = channel;
     this.remoteId = Hex.decode(remoteId);
+  }
+
+  private boolean checkVersion(HelloMessage helloMessage, SocketAddress address) {
+    if (helloMessage.getVersion() != Args.getInstance().getNodeP2pVersion()) {
+      logger.info("version not support, you[{}] version[{}], my version[{}]",
+          address, helloMessage.getVersion(), Args.getInstance().getNodeP2pVersion());
+      return false;
+    }
+    return true;
   }
 
 }

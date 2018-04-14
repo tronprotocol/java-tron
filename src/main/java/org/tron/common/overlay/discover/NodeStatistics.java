@@ -101,26 +101,26 @@ public class NodeStatistics {
     discoverReput += min(discoverInNeighbours.get(), 50) * 2;
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
-    int rlpxReput = 0;
-    rlpxReput += p2pHandShake.get() > 0 ? 20 : 0;
-    rlpxReput += min(tronInMessage.get(), 10) * 3;
+    int reput = 0;
+    reput += p2pHandShake.get() > 0 ? 20 : 0;
+    reput += min(tronInMessage.get(), 10) * 3;
 
     if (wasDisconnected()) {
       if (tronLastLocalDisconnectReason == null && tronLastRemoteDisconnectReason == null) {
         // means connection was dropped without reporting any reason - bad
-        rlpxReput *= 0.3;
+        reput *= 0.3;
       } else if (tronLastLocalDisconnectReason != ReasonCode.REQUESTED) {
         // the disconnect was not initiated by discover mode
         if (tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS) {
           // The peer is popular, but we were unlucky
-          rlpxReput *= 0.3;
+          reput *= 0.3;
         } else if (tronLastRemoteDisconnectReason != ReasonCode.REQUESTED) {
           // other disconnect reasons
-          rlpxReput *= 0.2;
+          reput *= 0.2;
         }
       }
     }
-    return discoverReput + 100 * rlpxReput;
+    return discoverReput + 10 * reput;
   }
 
   public int getReputation() {
@@ -146,7 +146,9 @@ public class NodeStatistics {
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL;
   }
 
   public void nodeDisconnectedRemote(ReasonCode reason) {

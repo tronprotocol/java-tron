@@ -22,6 +22,9 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +40,6 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Scope("prototype")
@@ -139,6 +138,7 @@ public class Channel {
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
+        getNodeStatistics().p2pOutHello.add();
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -206,6 +206,8 @@ public class Channel {
 
     public void disconnect(ReasonCode reason) {
         logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
+        getNodeStatistics()
+            .nodeDisconnectedLocal(reason);
         msgQueue.disconnect(reason);
     }
 
