@@ -3,7 +3,6 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -38,7 +37,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
 
   private static WitnessScheduleStore instance;
 
-  public void destroy() {
+  public static void destroy() {
     instance = null;
   }
 

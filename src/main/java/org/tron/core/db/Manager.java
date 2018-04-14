@@ -212,12 +212,14 @@ public class Manager {
   }
 
   public void destory() {
-    getAccountStore().destroy();
-    getTransactionStore().destroy();
-    getBlockStore().destroy();
-    getWitnessStore().destory();
-    getAssetIssueStore().destroy();
-    getDynamicPropertiesStore().destroy();
+    AccountStore.destroy();
+    TransactionStore.destroy();
+    BlockStore.destroy();
+    WitnessStore.destory();
+    AssetIssueStore.destroy();
+    DynamicPropertiesStore.destroy();
+    WitnessScheduleStore.destroy();
+    BlockIndexStore.destroy();
   }
 
   /**
