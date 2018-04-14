@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeManager;
+import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
@@ -77,12 +78,19 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     P2pMessage msg = factory.create(encoded);
 
     if (!(msg instanceof HelloMessage)) {
-      logger.info("rcv not hello msg, {}", ctx.channel().remoteAddress());
+      if (msg instanceof DisconnectMessage && remoteId.length == 64) {
+        channel.getNodeStatistics()
+            .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage)msg).getReason()));
+        logger.info("rcv disconnect msg, {}, reason:", ctx.channel().remoteAddress()
+            , ((DisconnectMessage)msg).getReason());
+      } else {
+        logger.info("rcv not hello msg, {}", ctx.channel().remoteAddress());
+      }
       ctx.close();
       return;
     }
-    final HelloMessage helloMessage = (HelloMessage) msg;
 
+    final HelloMessage helloMessage = (HelloMessage) msg;
 
     if (remoteId.length != 64) { //not initiator
       remoteId = ByteArray.fromHexString(helloMessage.getPeerId());
@@ -90,6 +98,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
       if (!checkVersion(helloMessage, ctx.channel().remoteAddress())) {
         channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.INCOMPATIBLE_PROTOCOL);
+        ctx.writeAndFlush(new DisconnectMessage(ReasonCode.INCOMPATIBLE_PROTOCOL));
         ctx.close();
         return;
       }
