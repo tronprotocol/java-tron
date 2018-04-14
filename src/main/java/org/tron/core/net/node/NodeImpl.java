@@ -4,11 +4,18 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
-import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -38,7 +45,6 @@ import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
@@ -745,11 +751,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
 
-    if (!peer.isNeedSyncFromPeer()
-        && !summaryChainIds.isEmpty()
-        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
-      startSyncWithPeer(peer);
-    }
+    //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
+//    if (!peer.isNeedSyncFromPeer()
+//        && !summaryChainIds.isEmpty()
+//        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
+//      startSyncWithPeer(peer);
+//    }
 
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
