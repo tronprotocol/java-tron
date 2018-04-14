@@ -28,7 +28,6 @@ public class WitnessStoreTest {
 
   @Before
   public void initDb() {
-//    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     this.witnessStore = context.getBean(WitnessStore.class);
   }
 

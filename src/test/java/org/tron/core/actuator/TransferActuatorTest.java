@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -42,7 +43,7 @@ public class TransferActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
+        Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 

@@ -67,10 +67,7 @@ public class ParticipateAssetIssueActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-//    Args.setParam(new String[]{"--output-directory", dbPath},
-//        "config-junit.conf");
-//    dbManager = new Manager();
-    //  dbManager.init();
+
   }
 
   /**
