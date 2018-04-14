@@ -504,8 +504,32 @@ public class Manager {
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn("switch fork! new head num = {}, blockid = {}", newBlock.getNum(),
               newBlock.getBlockId());
+
+          logger.error("******** before switchFork ******* push block: " + block
+              + ", new block:" + newBlock
+              + ", dynamic head num: " + dynamicPropertiesStore.getLatestBlockHeaderNumber()
+              + ", dynamic head hash: " + dynamicPropertiesStore.getLatestBlockHeaderHash()
+              + ", dynamic head timestamp: " + dynamicPropertiesStore
+              .getLatestBlockHeaderTimestamp()
+              + ", khaosDb head: " + khaosDb.getHead()
+              + ", khaosDb miniStore size: " + khaosDb.getMiniStore().size()
+              + ", khaosDb unlinkMiniStore size: " + khaosDb.getMiniUnlinkedStore().size()
+          );
+
           switchFork(newBlock);
           logger.info("save block: " + newBlock);
+
+          logger.error("******** after switchFork ******* push block: " + block
+              + ", new block:" + newBlock
+              + ", dynamic head num: " + dynamicPropertiesStore.getLatestBlockHeaderNumber()
+              + ", dynamic head hash: " + dynamicPropertiesStore.getLatestBlockHeaderHash()
+              + ", dynamic head timestamp: " + dynamicPropertiesStore
+              .getLatestBlockHeaderTimestamp()
+              + ", khaosDb head: " + khaosDb.getHead()
+              + ", khaosDb miniStore size: " + khaosDb.getMiniStore().size()
+              + ", khaosDb unlinkMiniStore size: " + khaosDb.getMiniUnlinkedStore().size()
+          );
+
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {

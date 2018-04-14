@@ -287,11 +287,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   @Override
   public String toString() {
-    return "BlockCapsule{" +
-        "blockId=" + blockId +
-        ", num=" + getNum() +
-        ", parentId=" + getParentHash() +
-        ", generatedByMyself=" + generatedByMyself +
-        '}';
+    return "BlockCapsule{"
+        + "blockId=" + blockId
+        + ", num=" + getNum()
+        + ", parentId=" + getParentHash()
+        + ", generatedByMyself=" + generatedByMyself
+        + '}';
   }
 }
