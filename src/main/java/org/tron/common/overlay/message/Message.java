@@ -2,6 +2,7 @@ package org.tron.common.overlay.message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,17 +52,20 @@ public abstract class Message {
   //public byte getCode() { return type; }
 
   @Override
-  public int hashCode() {
-    return getMessageId().hashCode();
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Message)) {
+      return false;
+    }
+    Message message = (Message) o;
+    return Arrays.equals(data, message.data);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof Message)) {
-      return false;
-    }
-    Message msg = (Message) obj;
-    return getMessageId().equals(msg.getMessageId());
+  public int hashCode() {
+    return Arrays.hashCode(data);
   }
 
   public abstract MessageTypes getType();
