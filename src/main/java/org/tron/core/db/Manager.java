@@ -70,11 +70,13 @@ public class Manager {
   private TransactionStore transactionStore;
   @Autowired
   private BlockStore blockStore;
+  @Autowired
   private UtxoStore utxoStore;
   @Autowired
   private WitnessStore witnessStore;
   @Autowired
   private AssetIssueStore assetIssueStore;
+  @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Autowired
@@ -83,6 +85,7 @@ public class Manager {
 
 
   private LevelDbDataSourceImpl numHashCache;
+  @Autowired
   private KhaosDatabase khaosDb;
   @Getter
   private BlockCapsule head;
@@ -199,8 +202,6 @@ public class Manager {
 
   @PostConstruct
   public void initOther() {
-    this.setUtxoStore(UtxoStore.create("utxo"));
-    this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
     this.setWitnessController(WitnessController.createInstance(this));
 
     revokingStore = RevokingStore.getInstance();
@@ -208,7 +209,6 @@ public class Manager {
     this.numHashCache = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "block" + "_NUM_HASH");
     this.numHashCache.initDB();
-    this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();

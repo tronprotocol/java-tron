@@ -4,11 +4,15 @@ import com.google.protobuf.ByteString;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 
 @Slf4j
+@Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
@@ -28,7 +32,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private DateTime nextMaintenanceTime = new DateTime(
       Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
 
-  private DynamicPropertiesStore(String dbName) {
+  @Autowired
+  private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
     super(dbName);
     try {
       this.getLatestBlockHeaderTimestamp();
