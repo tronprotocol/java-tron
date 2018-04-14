@@ -133,6 +133,7 @@ public class Channel {
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
         setTronState(TronState.HANDSHAKE_FINISHED);
+        getNodeStatistics().p2pHandShake.add();
     }
 
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {

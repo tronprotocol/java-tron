@@ -87,15 +87,17 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (remoteId.length != 64) { //not initiator
       remoteId = ByteArray.fromHexString(helloMessage.getPeerId());
       channel.initWithNode(remoteId, helloMessage.getListenPort());
-      channel.getNodeStatistics().p2pInHello.add();
+
       if (!checkVersion(helloMessage, ctx.channel().remoteAddress())) {
-        channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+        channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.INCOMPATIBLE_PROTOCOL);
+        ctx.close();
         return;
       }
       channel.sendHelloMessage(ctx);
-    } else {
-      channel.getNodeStatistics().p2pInHello.add();
     }
+
+    channel.getNodeStatistics().p2pInHello.add();
+
 
     channel.publicHandshakeFinished(ctx, helloMessage);
     ctx.pipeline().remove(this);
