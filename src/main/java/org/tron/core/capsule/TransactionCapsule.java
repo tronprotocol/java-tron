@@ -31,7 +31,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
@@ -67,12 +66,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  public TransactionCapsule(String key, long value) {
-
+  public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
+    if (!Wallet.addressValid(key)) {
+      throw new IllegalArgumentException("Invalidate address");
+    }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)
         .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
-        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(key)))
+        .setToAddress(ByteString.copyFrom(key))
         .build();
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
         TransactionType.ContractType).addContract(
@@ -176,7 +177,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * cheack balance of the address.
    */
-  public boolean checkBalance(byte[] address, String to, long amount, long balance) {
+  public boolean checkBalance(byte[] address, byte[] to, long amount, long balance) {
     if (!Wallet.addressValid(address)) {
       logger.error("address invalid");
       return false;
