@@ -648,6 +648,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       } catch (UnLinkedBlockException e) {
         //reSync
+        logger.info("get a unlink block ,so start sync!");
         startSyncWithPeer(peer);
       }
     }
@@ -969,7 +970,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       });
       List<Sha256Hash> ids = new LinkedList<>();
       ids.addAll(blockIds);
-      peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+      if (!ids.isEmpty()) {
+        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+      }
     });
 
     send.clear();

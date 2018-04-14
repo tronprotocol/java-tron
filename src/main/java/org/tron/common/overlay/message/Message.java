@@ -55,6 +55,15 @@ public abstract class Message {
     return getMessageId().hashCode();
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof Message)) {
+      return false;
+    }
+    Message msg = (Message) obj;
+    return getMessageId().equals(msg.getMessageId());
+  }
+
   public abstract MessageTypes getType();
 
 }

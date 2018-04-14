@@ -190,9 +190,9 @@ public class SyncPool {
 
       //TODO: use reputation sysytem
 
-      if (!nodeManager.isNodeAlive(handler)){
-        return false;
-      }
+//      if (!nodeManager.isNodeAlive(handler)){
+//        return false;
+//      }
 
       if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
