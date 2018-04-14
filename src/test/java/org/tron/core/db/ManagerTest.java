@@ -9,6 +9,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -16,22 +17,28 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Slf4j
 public class ManagerTest {
 
-  private static Manager dbManager = new Manager();
+  private static Manager dbManager;
+  private static AnnotationConfigApplicationContext context;
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
 
-  @BeforeClass
-  public static void init() {
+  static {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
         Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
-    dbManager.init();
+  @BeforeClass
+  public static void init() {
+
+    dbManager = context.getBean(Manager.class);
 
     blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
         .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
@@ -50,7 +57,7 @@ public class ManagerTest {
   public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    dbManager.destory();
+    context.destroy();
   }
 
   @Test

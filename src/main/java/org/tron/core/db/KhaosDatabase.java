@@ -9,11 +9,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.UnLinkedBlockException;
 
+@Component
 public class KhaosDatabase extends TronDatabase {
 
   private class KhaosBlock {
@@ -80,7 +84,7 @@ public class KhaosDatabase extends TronDatabase {
     public void insert(KhaosBlock block) {
       hashKblkMap.put(block.id, block);
       numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>())
-                .add(block);
+          .add(block);
     }
 
     public boolean remove(Sha256Hash hash) {
@@ -114,7 +118,8 @@ public class KhaosDatabase extends TronDatabase {
 
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
-  protected KhaosDatabase(String dbName) {
+  @Autowired
+  protected KhaosDatabase(@Qualifier("block_KDB") String dbName) {
     super(dbName);
   }
 
@@ -166,10 +171,10 @@ public class KhaosDatabase extends TronDatabase {
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
-            .filter(Objects::nonNull)
-            .map(block -> block.blk)
-            .findFirst()
-            .orElse(null);
+        .filter(Objects::nonNull)
+        .map(block -> block.blk)
+        .findFirst()
+        .orElse(null);
   }
 
   /**

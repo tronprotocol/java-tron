@@ -12,12 +12,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -34,6 +36,7 @@ public class ParticipateAssetIssueActuatorTest {
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_participateAsset_test";
+  private static AnnotationConfigApplicationContext context;
 
 
   private static final String OWNER_ADDRESS =
@@ -52,18 +55,20 @@ public class ParticipateAssetIssueActuatorTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
 
+  static {
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        "config-junit.conf");
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
-    dbManager = new Manager();
-    dbManager.init();
-  }
+    dbManager = context.getBean(Manager.class);
 
+  }
 
   /**
    * Release resources.
@@ -76,6 +81,7 @@ public class ParticipateAssetIssueActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+    context.destroy();
   }
 
   /**

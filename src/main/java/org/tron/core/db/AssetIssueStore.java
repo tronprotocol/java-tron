@@ -1,17 +1,24 @@
 package org.tron.core.db;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.db.common.iterator.AssetIssueIterator;
 
 @Slf4j
+@Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   private static AssetIssueStore instance;
 
-  private AssetIssueStore(String dbName) {
+  @Autowired
+  private AssetIssueStore(@Qualifier("asset-issue") String dbName) {
     super(dbName);
   }
 
@@ -53,6 +60,14 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return null != assetIssue;
   }
 
+  @Override
+  public void put(byte[] key, AssetIssueCapsule item) {
+    if (indexHelper != null) {
+      indexHelper.add(item.getInstance());
+    }
+    super.put(key, item);
+  }
+
   /**
    * get all asset issues.
    */
@@ -61,4 +76,10 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
         .map(this::get)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public Iterator<AssetIssueCapsule> iterator() {
+    return new AssetIssueIterator(dbSource.iterator());
+  }
+
 }
