@@ -21,14 +21,13 @@ public class WitnessStoreTest {
   @Before
   public void initDb() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    this.witnessStore = this.witnessStore.create("witness-test");
+    this.witnessStore = WitnessStore.create("witness-test");
   }
 
   @After
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    WitnessStore.destory();
   }
 
   @Test

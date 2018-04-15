@@ -104,14 +104,13 @@ public class CreateAccountActuatorTest {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
       Assert.assertNotNull(accountCapsule);
       Assert.assertEquals(accountCapsule.getInstance().getAccountName(),
           ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND));
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+
     }
   }
 
@@ -126,6 +125,6 @@ public class CreateAccountActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    dbManager.destroy();
   }
 }

@@ -24,8 +24,6 @@ public class BlockStoreTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    BlockStore.destroy();
-
   }
 
   @Test

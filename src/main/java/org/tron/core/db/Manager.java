@@ -200,13 +200,7 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
-  public void destory() {
-    getAccountStore().destroy();
-    getTransactionStore().destroy();
-    getBlockStore().destroy();
-    getWitnessStore().destory();
-    getAssetIssueStore().destroy();
-    getDynamicPropertiesStore().destroy();
+  public void destroy() {
   }
 
   /**

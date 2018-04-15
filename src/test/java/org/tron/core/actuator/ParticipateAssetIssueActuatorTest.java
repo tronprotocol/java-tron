@@ -76,7 +76,7 @@ public class ParticipateAssetIssueActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    dbManager.destroy();
   }
 
   /**

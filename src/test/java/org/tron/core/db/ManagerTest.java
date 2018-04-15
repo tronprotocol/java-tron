@@ -65,7 +65,7 @@ public class ManagerTest {
   public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    dbManager.destory();
+    dbManager.destroy();
   }
 
   @Test
