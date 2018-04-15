@@ -9,14 +9,8 @@ import org.tron.core.capsule.AssetIssueCapsule;
 @Slf4j
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
-  private static AssetIssueStore instance;
-
   private AssetIssueStore(String dbName) {
     super(dbName);
-  }
-
-  public void destroy() {
-    instance = null;
   }
 
   /**
@@ -25,14 +19,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
    * @param dbName the name of database
    */
   public static AssetIssueStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AssetIssueStore.class) {
-        if (instance == null) {
-          instance = new AssetIssueStore(dbName);
-        }
-      }
-    }
-    return instance;
+    return new AssetIssueStore(dbName);
   }
 
   @Override

@@ -62,7 +62,7 @@ public class TransferActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    dbManager.destroy();
   }
 
   /**

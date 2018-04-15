@@ -37,23 +37,13 @@ public class UtxoStore extends TronDatabase {
     super(dbName);
   }
 
-
-  private static UtxoStore instance;
-
   /**
    * create fun.
    *
    * @param dbName the name of database
    */
   public static UtxoStore create(String dbName) {
-    if (instance == null) {
-      synchronized (UtxoStore.class) {
-        if (instance == null) {
-          instance = new UtxoStore(dbName);
-        }
-      }
-    }
-    return instance;
+    return new UtxoStore(dbName);
   }
 
 

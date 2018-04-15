@@ -92,12 +92,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return false;
   }
 
-  private static DynamicPropertiesStore instance;
-
-  public void destroy() {
-    instance = null;
-  }
-
   /**
    * create fun.
    *
@@ -105,14 +99,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    */
 
   public static DynamicPropertiesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (DynamicPropertiesStore.class) {
-        if (instance == null) {
-          instance = new DynamicPropertiesStore(dbName);
-        }
-      }
-    }
-    return instance;
+    return new DynamicPropertiesStore(dbName);
   }
 
   public String intArrayToString(int[] a) {

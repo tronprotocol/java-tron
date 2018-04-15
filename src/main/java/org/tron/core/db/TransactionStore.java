@@ -11,6 +11,10 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     super(dbName);
   }
 
+  public static TransactionStore create(String dbName) {
+    return new TransactionStore(dbName);
+  }
+
   @Override
   public TransactionCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);
@@ -32,29 +36,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return dbSource.getTotal();
   }
 
-  private static TransactionStore instance;
-
-  public static void destory() {
-    instance = null;
-  }
-
-  void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create Fun.
-   */
-  public static TransactionStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountStore.class) {
-        if (instance == null) {
-          instance = new TransactionStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
 
   /**
    * find a transaction  by it's id.

@@ -34,25 +34,11 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     super(dbName);
   }
 
-  private static BlockStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
   /**
    * create fun.
    */
   public static BlockStore create(String dbName) {
-    if (instance == null) {
-      synchronized (BlockStore.class) {
-        if (instance == null) {
-          logger.info("adafasdfasdfasdfasdf");
-          instance = new BlockStore(dbName);
-        }
-      }
-    }
-    return instance;
+    return new BlockStore(dbName);
   }
 
 

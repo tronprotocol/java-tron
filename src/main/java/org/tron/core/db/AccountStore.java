@@ -14,15 +14,9 @@ import org.tron.core.capsule.AccountCapsule;
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static Map<String, String> assertsAddress = new HashMap<String, String>();
-  private static AccountStore instance;
-
 
   private AccountStore(String dbName) {
     super(dbName);
-  }
-
-  public void destroy() {
-    instance = null;
   }
 
   /**
@@ -31,14 +25,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * @param dbName the name of database
    */
   public static AccountStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountStore.class) {
-        if (instance == null) {
-          instance = new AccountStore(dbName);
-        }
-      }
-    }
-    return instance;
+    return new AccountStore(dbName);
   }
 
   @Override
