@@ -301,14 +301,10 @@ public class Wallet {
     if (accountAddress == null || accountAddress.size() == 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    assetIssueCapsuleList.stream()
+    dbManager.getAssetIssueStore().getAllAssetIssues().stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 
@@ -316,14 +312,11 @@ public class Wallet {
     if (assetName == null || assetName.size() == 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
-    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
-      if (assetName.equals(assetIssueCapsule.getName())) {
-        return assetIssueCapsule.getInstance();
-      }
-    }
-    return null;
+    return dbManager.getAssetIssueStore().getAllAssetIssues().stream()
+            .filter(assetIssueCapsule -> assetName.equals(assetIssueCapsule.getName()))
+            .findFirst()
+            .map(AssetIssueCapsule::getInstance)
+            .orElse(null);
   }
 
   public NumberMessage totalTransaction() {
