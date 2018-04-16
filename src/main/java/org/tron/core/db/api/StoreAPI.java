@@ -14,13 +14,12 @@ import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
 import static com.googlecode.cqengine.query.QueryFactory.threshold;
 import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.resultset.ResultSet;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -50,7 +49,7 @@ public class StoreAPI {
    ****************************************/
   public List<Account> getAccountAll() {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
-    return index.stream().collect(Collectors.toList());
+    return ImmutableList.copyOf(index);
   }
 
   public Account getAccountByAddress(String address) throws NonUniqueObjectException {
@@ -125,7 +124,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Block> getBlocksByWitnessAddress(String WitnessAddress) {
@@ -135,7 +134,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Block> getBlocksByWitnessId(Long witnessId) {
@@ -145,7 +144,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Block> getLatestBlocks(int topN) {
@@ -158,9 +157,9 @@ public class StoreAPI {
         index.retrieve(all(Block.class), queryOptions(orderBy(descending(BlockIndex.Block_NUMBER)),
             applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Streams.stream(resultSet)
+    return ImmutableList.copyOf(Streams.stream(resultSet)
         .limit(topN)
-        .collect(Collectors.toList());
+        .iterator());
   }
 
   /****************************************
@@ -197,7 +196,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Transaction> getTransactionsToThis(String address) {
@@ -207,7 +206,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Transaction> getTransactionsRelatedToAccount(String accountAddress) {
@@ -218,7 +217,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Transaction> getTransactionsByTimestamp(
@@ -233,7 +232,7 @@ public class StoreAPI {
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public List<Transaction> getLatestTransactions(int topN) {
@@ -247,9 +246,9 @@ public class StoreAPI {
             queryOptions(orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
-    return Streams.stream(resultSet)
+    return ImmutableList.copyOf(Streams.stream(resultSet)
         .limit(topN)
-        .collect(Collectors.toList());
+        .iterator());
   }
 
   /****************************************
@@ -283,7 +282,7 @@ public class StoreAPI {
       return null;
     }
 
-    return Lists.newArrayList(resultSet);
+    return ImmutableList.copyOf(resultSet);
   }
 
   public Witness getWitnessByPublicKey(String publicKey) throws NonUniqueObjectException {
@@ -315,7 +314,7 @@ public class StoreAPI {
 
   public List<AssetIssueContract> getAssetIssueAll() {
     IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
-    return index.stream().collect(Collectors.toList());
+    return ImmutableList.copyOf(index);
   }
 
   public List<AssetIssueContract> getAssetIssueByTime(long currentInMilliseconds)
@@ -326,8 +325,7 @@ public class StoreAPI {
             and(lessThanOrEqualTo(AssetIssueIndex.AssetIssue_START, currentInMilliseconds),
                 greaterThan(AssetIssueIndex.AssetIssue_END, currentInMilliseconds)));
 
-    return Streams.stream(resultSet)
-        .collect(Collectors.toList());
+    return ImmutableList.copyOf(resultSet);
   }
 
   public AssetIssueContract getAssetIssueByName(String name) throws NonUniqueObjectException {
@@ -352,8 +350,7 @@ public class StoreAPI {
     ResultSet<AssetIssueContract> resultSet =
         index.retrieve(equal(AssetIssueIndex.AssetIssue_OWNER_RADDRESS, ownerAddress));
 
-    return Streams.stream(resultSet)
-        .collect(Collectors.toList());
+    return ImmutableList.copyOf(resultSet);
   }
 
 }
