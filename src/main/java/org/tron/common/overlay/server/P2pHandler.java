@@ -100,7 +100,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   public void closeChannel(ChannelHandlerContext ctx) {
     ctx.close();
-    pingTask.cancel(true);
+    pingTask.cancel(false);
     msgQueue.close();
   }
 
