@@ -2,7 +2,7 @@ package org.tron.common.overlay.discover.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
@@ -55,12 +55,11 @@ public class NeighborsMessage extends Message {
   }
 
   public List<Node> getNodes(){
-    List<Node> nodes = new ArrayList<>();
-    neighbours.getNeighboursList().forEach(neighbour -> nodes.add(
-            new Node(neighbour.getNodeId().toByteArray(),
-                ByteArray.toStr(neighbour.getAddress().toByteArray()),
-                neighbour.getPort())));
-    return nodes;
+    return neighbours.getNeighboursList().stream()
+            .map(neighbour -> new Node(neighbour.getNodeId().toByteArray(),
+            ByteArray.toStr(neighbour.getAddress().toByteArray()),
+            neighbour.getPort()))
+            .collect(Collectors.toList());
   }
 
   @Override

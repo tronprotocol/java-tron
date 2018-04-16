@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.Node;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created by kest on 5/25/15.
@@ -28,8 +30,6 @@ import java.util.*;
 public class NodeTable {
 
     static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeTable");
-
-
 
     private final Node node;  // our node
     private transient NodeBucket[] buckets;
@@ -46,14 +46,11 @@ public class NodeTable {
         return node;
     }
 
-    public final void initialize()
-    {
+    public final void initialize() {
         nodes = new ArrayList<>();
         buckets = new NodeBucket[KademliaOptions.BINS];
-        for (int i = 0; i < KademliaOptions.BINS; i++)
-        {
-            buckets[i] = new NodeBucket(i);
-        }
+        IntStream.range(0, KademliaOptions.BINS)
+                .forEachOrdered(i -> buckets[i] = new NodeBucket(i));
     }
 
     public synchronized Node addNode(Node n) {
@@ -76,32 +73,22 @@ public class NodeTable {
 
     public synchronized boolean contains(Node n) {
         NodeEntry e = new NodeEntry(node.getId(), n);
-        for (NodeBucket b : buckets) {
-            if (b.getNodes().contains(e)) {
-                return true;
-            }
-        }
-        return false;
+        return Arrays.stream(buckets)
+                .anyMatch(b -> b.getNodes().contains(e));
     }
 
     public synchronized void touchNode(Node n) {
         NodeEntry e = new NodeEntry(node.getId(), n);
-        for (NodeBucket b : buckets) {
-            if (b.getNodes().contains(e)) {
-                b.getNodes().get(b.getNodes().indexOf(e)).touch();
-                break;
-            }
-        }
+        Arrays.stream(buckets)
+                .filter(b -> b.getNodes().contains(e))
+                .findFirst()
+                .ifPresent(b -> b.getNodes().get(b.getNodes().indexOf(e)).touch());
     }
 
     public int getBucketsCount() {
-        int i = 0;
-        for (NodeBucket b : buckets) {
-            if (b.getNodesCount() > 0) {
-                i++;
-            }
-        }
-        return i;
+        return (int) Arrays.stream(buckets)
+                .filter(b -> b.getNodesCount() > 0)
+                .count();
     }
 
     public synchronized NodeBucket[] getBuckets() {
@@ -117,35 +104,22 @@ public class NodeTable {
         return nodes.size();
     }
 
-    public synchronized List<NodeEntry> getAllNodes()
-    {
-        List<NodeEntry> nodes = new ArrayList<>();
-
-        for (NodeBucket b : buckets)
-        {
-            for (NodeEntry e : b.getNodes())
-            {
-                if (!e.getNode().equals(node)) {
-                    nodes.add(e);
-                }
-            }
-        }
-
-        return nodes;
+    public synchronized List<NodeEntry> getAllNodes() {
+        return Arrays.stream(buckets)
+                .flatMap(b -> b.getNodes().stream())
+                .filter(e -> !e.getNode().equals(node))
+                .collect(Collectors.toList());
     }
 
     public synchronized List<Node> getClosestNodes(byte[] targetId) {
         List<NodeEntry> closestEntries = getAllNodes();
-        List<Node> closestNodes = new ArrayList<>();
-        Collections.sort(closestEntries, new DistanceComparator(targetId));
+        closestEntries.sort(new DistanceComparator(targetId));
         if (closestEntries.size() > KademliaOptions.BUCKET_SIZE) {
             closestEntries = closestEntries.subList(0, KademliaOptions.BUCKET_SIZE);
         }
-        for (NodeEntry e : closestEntries) {
-            if (!e.getNode().isDiscoveryNode()) {
-                closestNodes.add(e.getNode());
-            }
-        }
-        return closestNodes;
+        return closestEntries.stream()
+                .filter(e -> !e.getNode().isDiscoveryNode())
+                .map(NodeEntry::getNode)
+                .collect(Collectors.toList());
     }
 }

@@ -18,7 +18,6 @@
 package org.tron.common.overlay.discover.table;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,17 +52,15 @@ public class NodeBucket {
 
     private NodeEntry getLastSeen() {
         List<NodeEntry> sorted = nodes;
-        Collections.sort(sorted, new TimeComparator());
+        sorted.sort(new TimeComparator());
         return sorted.get(0);
     }
 
     public synchronized void dropNode(NodeEntry entry) {
-        for (NodeEntry e : nodes) {
-            if (e.getId().equals(entry.getId())) {
-                nodes.remove(e);
-                break;
-            }
-        }
+        nodes.stream().
+                filter(e -> e.getId().equals(entry.getId()))
+                .findFirst()
+                .ifPresent(e -> nodes.remove(e));
     }
 
     public int getNodesCount() {
