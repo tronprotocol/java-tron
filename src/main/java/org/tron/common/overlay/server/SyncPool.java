@@ -100,8 +100,12 @@ public class SyncPool {
     nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
 
     List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
-            n.getNode().getHexId(), false));
+    newNodes.forEach(n -> {
+      if (nodeManager.isNodeAlive(n)){
+        peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
+                n.getNode().getHexId(), false);
+      }
+    });
   }
 
   private synchronized void prepareActive() {
