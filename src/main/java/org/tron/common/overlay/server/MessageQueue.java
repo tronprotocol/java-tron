@@ -90,7 +90,7 @@ public class MessageQueue {
     sendMsgThread = new Thread(()->{
      while (sendMsgFlag) {
        try {
-         if (msgQueue.size() == 0){
+         if (msgQueue.isEmpty()){
            Thread.sleep(10);
            continue;
          }
