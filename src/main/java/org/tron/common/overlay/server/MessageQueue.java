@@ -48,10 +48,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Scope("prototype")
 public class MessageQueue {
 
-  private static int start = 0;
-  private static int close = 0;
-
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
+
+  private  boolean sendMsgFlag = true;
 
   private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
     private AtomicInteger cnt = new AtomicInteger(0);
@@ -74,8 +73,7 @@ public class MessageQueue {
   private ScheduledFuture<?> timerTask;
   private Channel channel;
 
-  public MessageQueue() {
-  }
+  public MessageQueue() {}
 
   public void activate(ChannelHandlerContext ctx) {
     this.ctx = ctx;
@@ -89,10 +87,12 @@ public class MessageQueue {
     }, 10, 10, TimeUnit.MILLISECONDS);
 
     sendMsgThread = new Thread(()->{
-      start++;
-      logger.info("start {} close {}", start, close);
-     while (true) {
+     while (sendMsgFlag) {
        try {
+         if (msgQueue.size() == 0){
+           Thread.sleep(10);
+           continue;
+         }
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData())
                  .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -104,6 +104,7 @@ public class MessageQueue {
        }
      }
     });
+    sendMsgThread.setName("sendMsgThread");
     sendMsgThread.start();
   }
 
@@ -132,8 +133,10 @@ public class MessageQueue {
   }
 
   private void disconnect(DisconnectMessage msg) {
-    ctx.writeAndFlush(msg);
-    ctx.close();
+    if (ctx != null){
+      ctx.writeAndFlush(msg);
+      ctx.close();
+    }
   }
 
   public void receivedMessage(Message msg) throws InterruptedException {
@@ -197,10 +200,9 @@ public class MessageQueue {
   }
 
   public void close() {
-    sendMsgThread.interrupt();
-    timerTask.cancel(true);
+    sendMsgFlag = false;
+    timerTask.cancel(false);
     if (ctx != null){
-      close++;
       ctx.close();
       ctx = null;
     }
