@@ -26,6 +26,8 @@ buildscript {
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+
+        classpath 'com.google.api.grpc:googleapis-common-protos:0.0.3'
     }
 }
 
