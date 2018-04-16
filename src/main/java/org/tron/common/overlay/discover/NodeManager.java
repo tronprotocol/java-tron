@@ -18,6 +18,7 @@
 package org.tron.common.overlay.discover;
 
 import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -189,11 +190,10 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   }
 
   public synchronized NodeHandler getNodeHandler(Node n) {
-    com.dianping.cat.message.Transaction t = Cat.newTransaction("tron", "tron");
-    Cat.logEvent("method", "pushblock");
-    Cat.logMetricForCount("pushBlock");
-    t.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    t.complete();
+    Transaction t = Cat.newTransaction("tron", "tron");
+    Cat.logEvent("class", "NodeManager");
+    Cat.logMetricForCount("getNodeHandler");
+    t.setStatus(Transaction.SUCCESS);
 
     String key = getKey(n);
     NodeHandler ret = nodeHandlerMap.get(key);
@@ -206,6 +206,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
+    t.complete();
     return ret;
   }
 
