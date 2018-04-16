@@ -407,6 +407,7 @@ public class Manager {
     } catch (RevokingStoreIllegalStateException e) {
       logger.debug(e.getMessage(), e);
     }
+    logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
@@ -844,9 +845,12 @@ public class Manager {
         dynamicPropertiesStore.getLatestBlockHeaderNumber()
             - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
     );
+    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public long getSyncBeginNumber() {
+    logger.info("syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size()));
+    logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
