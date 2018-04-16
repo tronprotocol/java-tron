@@ -13,10 +13,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -33,7 +33,8 @@ public class AssetIssueActuatorTest {
   private static Any contract;
   private static final String dbPath = "output_assetIssue_test";
 
-  private static final String OWNER_ADDRESS = "abd4b9367799eaa3197fecb144eb71de1e049150";
+  private static final String OWNER_ADDRESS =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   private static final String NAME = "trx-my";
   private static final long TOTAL_SUPPLY = 10000L;
   private static final int TRX_NUM = 10000;
@@ -49,7 +50,7 @@ public class AssetIssueActuatorTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath},
-        Configuration.getByPath("config-junit.conf"));
+        "config-junit.conf");
     dbManager = new Manager();
     dbManager.init();
   }
@@ -148,5 +149,6 @@ public class AssetIssueActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+    dbManager.destory();
   }
 }

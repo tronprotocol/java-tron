@@ -32,45 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class NodeHandler {
     static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeHandler");
 
-    static long PingTimeout = 15000; //KademliaOptions.REQ_TIMEOUT;
-    static final int WARN_PACKET_SIZE = 1400;
-    private static volatile int msgInCount = 0, msgOutCount = 0;
-    private static boolean initialLogging = true;
-
-    // gradually reducing log level for dumping discover messages
-    // they are not so informative when everything is already up and running
-    // but could be interesting when discovery just starts
-    private void logMessage(Message msg, boolean inbound) {
-        //logger.info("handle msg type: {}, len {}, date: {}", msg.getType(), msg.getSendData().length,  msg);
-        String s = String.format("%s[%s (%s)] %s", inbound ? " ===>  " : "<===  ", msg.getClass().getSimpleName(),
-                msg.getData().length, this);
-        if (msgInCount > 1024) {
-            logger.trace(s);
-        } else {
-            logger.debug(s);
-        }
-
-        if (!inbound && msg.getData().length > WARN_PACKET_SIZE) {
-            logger.warn("Sending UDP packet exceeding safe size of {} bytes, actual: {} bytes",
-                    WARN_PACKET_SIZE, msg.getData().length);
-            logger.warn(s);
-        }
-
-        if (initialLogging) {
-            if (msgOutCount == 0) {
-                logger.info("Pinging discovery nodes...");
-            }
-            if (msgInCount == 0 && inbound) {
-                logger.info("Received response.");
-            }
-            if (inbound && msg instanceof NeighborsMessage) {
-                logger.info("New peers discovered.");
-                initialLogging = false;
-            }
-        }
-
-        if (inbound) msgInCount++; else msgOutCount++;
-    }
+    static long PingTimeout = 15000;
 
     public enum State {
         /**
@@ -156,7 +118,7 @@ public class NodeHandler {
     }
 
     // Manages state transfers
-    private void changeState(State newState) {
+    public void changeState(State newState) {
         State oldState = state;
         if (newState == State.Discovered) {
             sendPing();
@@ -207,28 +169,27 @@ public class NodeHandler {
     }
 
     void handlePing(PingMessage msg) {
-        logMessage(msg, true);
-//        logMessage(" ===> [PING] " + this);
         getNodeStatistics().discoverInPing.add();
         if (!nodeManager.table.getNode().equals(node)) {
             sendPong();
         }
+        if(state.equals(State.NonActive) || state.equals(State.Dead)){
+            changeState(State.Discovered);
+        }
     }
 
     void handlePong(PongMessage msg) {
-        logMessage(msg, true);
-//        logMessage(" ===> [PONG] " + this);
         if (waitForPong) {
             waitForPong = false;
             getNodeStatistics().discoverInPong.add();
             getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
             getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
             changeState(State.Alive);
+            node.setId(msg.getNodeId());
         }
     }
 
     void handleNeighbours(NeighborsMessage msg) {
-        logMessage(msg, true);
         getNodeStatistics().discoverInNeighbours.add();
         for (Node n : msg.getNodes()) {
             if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())){
@@ -238,14 +199,13 @@ public class NodeHandler {
     }
 
     void handleFindNode(FindNodeMessage msg) {
-        logMessage(msg, true);
         getNodeStatistics().discoverInFind.add();
         List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
         sendNeighbours(closest);
     }
 
     void handleTimedOut() {
-        logger.info("ping timeout {} {} {}", node.getHost(),node.getPort(),node.getHexIdShort());
+        logger.debug("ping timeout {}", node);
         waitForPong = false;
         if (--pingTrials > 0) {
             sendPing();
@@ -262,7 +222,6 @@ public class NodeHandler {
 
     void sendPing() {
         Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
-        logMessage(ping, false);
         waitForPong = true;
         pingSent = System.currentTimeMillis();
         sendMessage(ping);
@@ -282,22 +241,19 @@ public class NodeHandler {
     }
 
     void sendPong() {
-        Message pong = new PongMessage(node);
-        logMessage(pong, false);
+        Message pong = new PongMessage(nodeManager.getPublicHomeNode());
         sendMessage(pong);
         getNodeStatistics().discoverOutPong.add();
     }
 
     void sendNeighbours(List<Node> neighbours) {
         Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
-        logMessage(neighbors, false);
         sendMessage(neighbors);
         getNodeStatistics().discoverOutNeighbours.add();
     }
 
     void sendFindNode(byte[] target) {
         Message findNode = new FindNodeMessage(node, target);
-        logMessage(findNode, false);
         sendMessage(findNode);
         getNodeStatistics().discoverOutFind.add();
     }

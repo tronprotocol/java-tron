@@ -22,6 +22,9 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +40,6 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Scope("prototype")
@@ -100,15 +99,14 @@ public class Channel {
     private PeerStatistics peerStats = new PeerStatistics();
 
     public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-        ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+                     ChannelManager channelManager, PeerConnectionDelegate peerDel) {
         this.channelManager = channelManager;
         this.remoteId = remoteId;
 
         isActive = remoteId != null && !remoteId.isEmpty();
 
         //TODO: use config here
-        pipeline.addLast("readTimeoutHandler",
-            new ReadTimeoutHandler(60, TimeUnit.SECONDS));
+        pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
@@ -128,7 +126,6 @@ public class Channel {
         tronHandler.setMsgQueue(msgQueue);
         tronHandler.setPeerDel(peerDel);
 
-        logger.info("Channel init finished");
     }
 
     public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
@@ -136,11 +133,13 @@ public class Channel {
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
         setTronState(TronState.HANDSHAKE_FINISHED);
+        getNodeStatistics().p2pHandShake.add();
     }
 
     public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
         final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
         ctx.writeAndFlush(helloMessage.getSendData()).sync();
+        getNodeStatistics().p2pOutHello.add();
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -207,7 +206,10 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-         msgQueue.disconnect(reason);
+        logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
+        getNodeStatistics()
+            .nodeDisconnectedLocal(reason);
+        msgQueue.disconnect(reason);
     }
 
     public InetSocketAddress getInetSocketAddress() {
@@ -257,3 +259,4 @@ public class Channel {
         return String.format("%s | %s", getPeerId(), inetSocketAddress);
     }
 }
+

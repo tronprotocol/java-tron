@@ -8,22 +8,24 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class BlockStoreTest {
+
   private static final String dbPath = "output-blockStore-test";
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", dbPath}, Configuration.getByPath(Constant.TEST_CONF));
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
   }
 
   @After
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    BlockStore.destroy();
+
   }
 
   @Test
@@ -34,5 +36,6 @@ public class BlockStoreTest {
     Assert.assertEquals(0, blockStore.getHeadBlockNum());
     Assert.assertEquals(blockStore.getGenesisTime(), blockStore.getHeadBlockTime());
     Assert.assertEquals(0, blockStore.currentASlot());
+
   }
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
+import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -53,7 +54,7 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
-  private class KhaosStore {
+  public class KhaosStore {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     //private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
@@ -80,7 +81,7 @@ public class KhaosDatabase extends TronDatabase {
     public void insert(KhaosBlock block) {
       hashKblkMap.put(block.id, block);
       numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>())
-                .add(block);
+          .add(block);
     }
 
     public boolean remove(Sha256Hash hash) {
@@ -106,12 +107,18 @@ public class KhaosDatabase extends TronDatabase {
     public KhaosBlock getByHash(Sha256Hash hash) {
       return hashKblkMap.get(hash);
     }
+
+    public int size() {
+      return hashKblkMap.size();
+    }
   }
 
   private KhaosBlock head;
 
+  @Getter
   private KhaosStore miniStore = new KhaosStore();
 
+  @Getter
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   protected KhaosDatabase(String dbName) {
@@ -166,10 +173,10 @@ public class KhaosDatabase extends TronDatabase {
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
-            .filter(Objects::nonNull)
-            .map(block -> block.blk)
-            .findFirst()
-            .orElse(null);
+        .filter(Objects::nonNull)
+        .map(block -> block.blk)
+        .findFirst()
+        .orElse(null);
   }
 
   /**
@@ -214,6 +221,37 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
+  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(Sha256Hash block1,
+      Sha256Hash block2) {
+    LinkedList<BlockCapsule> list1 = new LinkedList<>();
+    LinkedList<BlockCapsule> list2 = new LinkedList<>();
+    KhaosBlock kblk1 = miniStore.getByHash(block1);
+    KhaosBlock kblk2 = miniStore.getByHash(block2);
+
+    if (kblk1 != null && kblk2 != null) {
+      while (!Objects.equals(kblk1, kblk2)) {
+        if (kblk1.num > kblk2.num) {
+          list1.add(kblk1.blk);
+          kblk1 = kblk1.parent;
+        } else if (kblk1.num < kblk2.num) {
+          list2.add(kblk2.blk);
+          kblk2 = kblk2.parent;
+        } else {
+          list1.add(kblk1.blk);
+          list2.add(kblk2.blk);
+          kblk1 = kblk1.parent;
+          kblk2 = kblk2.parent;
+        }
+      }
+    }
+
+    return new Pair<>(list1, list2);
+  }
+
+  /**
+   * Find two block's most recent common parent block.
+   */
+  @Deprecated
   public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(BlockId block1,
       BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();

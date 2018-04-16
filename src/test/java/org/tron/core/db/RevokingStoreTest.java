@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import java.io.File;
-import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -11,7 +10,6 @@ import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProtoCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -26,7 +24,7 @@ public class RevokingStoreTest {
     revokingDatabase = new TestRevokingTronDatabase();
     revokingDatabase.enable();
     Args.setParam(new String[]{"-d", "output_revokingStore_test"},
-        Configuration.getByPath(Constant.NORMAL_CONF));
+        Constant.TEST_CONF);
   }
 
   @After
@@ -36,24 +34,22 @@ public class RevokingStoreTest {
   }
 
   @Test
-  public synchronized void testUndo() {
+  public synchronized void testUndo() throws RevokingStoreIllegalStateException {
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo", revokingDatabase);
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
-    DialogOptional dialog = DialogOptional.of(revokingDatabase.buildDialog());
-    IntStream.range(0, 10).forEach(i -> {
+    DialogOptional dialog = DialogOptional.instance().setValue(revokingDatabase.buildDialog());
+    for (int i = 0; i < 10; i++) {
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
         Assert.assertEquals(revokingDatabase.getStack().size(), 2);
         tmpDialog.merge();
         Assert.assertEquals(revokingDatabase.getStack().size(), 1);
-      } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
       }
-    });
+    }
 
     Assert.assertEquals(revokingDatabase.getStack().size(), 1);
 
@@ -66,13 +62,13 @@ public class RevokingStoreTest {
   }
 
   @Test
-  public synchronized void testPop() {
+  public synchronized void testPop() throws RevokingStoreIllegalStateException {
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testPop", revokingDatabase);
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
-    IntStream.rangeClosed(1, 10).forEach(i -> {
+    for (int i = 1; i < 11; i++) {
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
@@ -80,15 +76,13 @@ public class RevokingStoreTest {
         tmpDialog.commit();
         Assert.assertEquals(revokingDatabase.getStack().size(), i);
         Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
-      } catch (RevokingStoreIllegalStateException e) {
-        e.printStackTrace();
       }
-    });
+    }
 
     try {
       revokingDatabase.pop();
     } catch (RevokingStoreIllegalStateException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     }
 
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());

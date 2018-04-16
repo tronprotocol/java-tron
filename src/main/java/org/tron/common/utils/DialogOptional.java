@@ -1,42 +1,50 @@
 package org.tron.common.utils;
 
+import java.util.Optional;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 
-import java.util.Optional;
+public final class DialogOptional {
 
-public class DialogOptional<T extends Dialog> {
-  private static final DialogOptional<?> EMPTY = new DialogOptional<>();
+  private static final DialogOptional INSTANCE = OptionalEnum.INSTANCE.getInstance();
 
-  private Optional<T> value;
+  private Optional<Dialog> value;
 
   private DialogOptional() {
     this.value = Optional.empty();
   }
 
-  public static <T extends Dialog> DialogOptional<T> empty() {
-    @SuppressWarnings("unchecked")
-    DialogOptional<T> t = (DialogOptional<T>) EMPTY;
-    return t;
+  public synchronized DialogOptional setValue(Dialog value) {
+    if (!this.value.isPresent()) {
+      this.value = Optional.of(value);
+    }
+    return this;
   }
 
-  private DialogOptional(T value) {
-    this.value = Optional.of(value);
-  }
-
-  public static <T extends Dialog> DialogOptional<T> of(T value) {
-    return new DialogOptional<>(value);
-  }
-
-  public static <T extends Dialog> DialogOptional<T> ofNullable(T value) {
-    return value == null ? empty() : of(value);
-  }
-
-  public boolean valid() {
+  public synchronized boolean valid() {
     return value.isPresent();
   }
 
-  public void reset() {
+  public synchronized void reset() {
     value.ifPresent(Dialog::destroy);
     value = Optional.empty();
   }
+
+  public static DialogOptional instance() {
+    return INSTANCE;
+  }
+
+  private enum OptionalEnum {
+    INSTANCE;
+
+    private DialogOptional instance;
+
+    OptionalEnum() {
+      instance = new DialogOptional();
+    }
+
+    private DialogOptional getInstance() {
+      return instance;
+    }
+  }
+
 }

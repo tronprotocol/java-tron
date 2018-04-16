@@ -24,6 +24,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
@@ -64,7 +65,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
-   * get account from contract.
+   * construct account from AccountCreateContract.
    */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
@@ -73,6 +74,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setAddress(contract.getOwnerAddress())
         .setTypeValue(contract.getTypeValue())
         .build();
+  }
+
+  /**
+   * construct account from AccountUpdateContract
+   */
+  public AccountCapsule(final AccountUpdateContract contract) {
+
   }
 
   /**
@@ -141,6 +149,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getLatestOprationTime();
   }
 
+  public void setLatestOperationTime(long latest_time) {
+    this.account = this.account.toBuilder().setLatestOprationTime(latest_time).build();
+  }
+
   public void setBalance(long balance) {
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
@@ -174,6 +186,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getShare() {
     return this.account.getBalance();
   }
+
+  /**
+   * asset balance enough
+   */
+  public boolean assetBalanceEnough(ByteString name, long amount) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(name.toByteArray());
+    Long currentAmount = assetMap.get(nameKey);
+
+    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+      return true;
+    }
+    return false;
+  }
+
 
   /**
    * reduce asset amount.
@@ -210,6 +237,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().putAsset(nameKey, currentAmount + amount).build();
 
     return true;
+  }
+
+  /**
+   * set account name
+   */
+  public void setAccountName(byte[] name) {
+    this.account = this.account.toBuilder().setAccountName(ByteString.copyFrom(name)).build();
+
   }
 
   /**

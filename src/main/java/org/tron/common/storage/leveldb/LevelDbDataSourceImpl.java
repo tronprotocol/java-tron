@@ -56,7 +56,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     parentName += Args.getInstance().getStorage().getDirectory();
     this.parentName = parentName;
     this.dataBaseName = name;
-    logger.debug("New LevelDbDataSourceImpl: " + name);
   }
 
   @Override
@@ -168,7 +167,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     try {
       return database.get(key);
     } catch (DBException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -229,6 +228,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
 
   @Override
   public long getTotal() throws RuntimeException {
+    resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       long total = 0;
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {

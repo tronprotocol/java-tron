@@ -81,6 +81,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         bootNodes.add(Node.instanceOf(boot));
     }
 
+    logger.info("homeNode : {}", homeNode);
     logger.info("bootNodes : size= {}", bootNodes.size());
 
     table = new NodeTable(homeNode);
@@ -93,10 +94,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }, 1 * 1000, 60 * 1000);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
-
-    for (Node node : args.getNodeActive()) {
-        getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
   }
 
   public ScheduledExecutorService getPongTimer() {
@@ -132,22 +129,33 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
+
+      for (Node node : args.getNodeActive()) {
+        getNodeHandler(node).getNodeStatistics().setPredefined(true);
+      }
     }
+  }
+
+  public boolean isNodeAlive(NodeHandler nodeHandler){
+    return  nodeHandler.state.equals(State.Alive) ||
+            nodeHandler.state.equals(State.Active) ||
+            nodeHandler.state.equals(State.EvictCandidate);
   }
 
   private void dbRead() {
     Set<Node> Nodes = this.dbManager.readNeighbours();
     logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node));
+    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics().setPersistedReputation(node.getReputation()));
   }
 
   private void dbWrite() {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
-        if (!nodeHandler.state.equals(NodeHandler.State.Dead)) {
+        //if (isNodeAlive(nodeHandler)) {
+          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
           batch.add(nodeHandler.getNode());
-        }
+        //}
       }
     }
     logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
@@ -247,9 +255,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public void sendOutbound(DiscoveryEvent discoveryEvent) {
     if (discoveryEnabled && messageSender != null) {
-      logger.trace(" <===({}) {} [{}] {}", discoveryEvent.getAddress(),
-          discoveryEvent.getMessage().getClass().getSimpleName(), this,
-          discoveryEvent.getMessage());
       messageSender.accept(discoveryEvent);
     }
   }
@@ -274,16 +279,19 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       }
     }
 
-    logger.info("nodeHandlerMap size {} filter peer  size {}",nodeHandlerMap.size(), filtered.size());
+    logger.debug("nodeHandlerMap size {} filter peer  size {}", nodeHandlerMap.size(), filtered.size());
+
+    //TODO: here can use head num sort.
+    filtered.sort((o1, o2) -> o2.getNodeStatistics().getReputation() - o1.getNodeStatistics().getReputation());
 
     return CollectionUtils.truncate(filtered, limit);
   }
 
-  public List<NodeHandler> getActiveNodes() {
+  public List<NodeHandler> dumpActiveNodes() {
     List<NodeHandler> handlers = new ArrayList<>();
     for (NodeHandler handler :
         this.nodeHandlerMap.values()) {
-      if (handler.state == State.Alive || handler.state == State.Active) {
+      if (isNodeAlive(handler)) {
         handlers.add(handler);
       }
     }

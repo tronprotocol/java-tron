@@ -47,9 +47,14 @@
 </p>
 
 ## What's TRON?
-TRON is a block chain-based decentralized smart protocol and an application development platform. It allows each user to freely publish, store and own contents and data, and in the decentralized autonomous form, decides an incentive mechanism and enables application developers and content creators through digital asset distribution, circulation and transaction, thus forming a decentralized content entertainment ecosystem.
 
-TRON is a product of Web 4.0 and the decentralized internet of next generation.
+TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
+
+The Tron Protocol, one of the largest blockchain based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem. 
+
+TRON enables large-scale development and engagement. With over 2000 TPS, high concurrency, low latency and massive data transmission, TRON is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+
+TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their communities, with smart contracts making decentralized crowdfunding and token issuance easier than ever.
 
 # How to Build
 
@@ -69,6 +74,7 @@ git clone https://github.com/tronprotocol/java-tron.git
 ## Prepare dependencies
 
 * JDK 1.8 (JDK 1.9+ are not supported yet)
+* On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
 
 ## Building from source code
 
@@ -282,4 +288,4 @@ Read the [Quick Start](http://wiki.tron.network/en/latest/quick_start.html).
 
 * [TRON Protocol](https://github.com/tronprotocol/protocol)
 * [Wallet Client](https://github.com/tronprotocol/wallet-cli)
-* [Wallet Web](https://github.com/tronprotocol/Wallet_Web)
+* [Wallet Web](https://github.com/tronprotocol/wallet-web)

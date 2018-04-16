@@ -6,12 +6,12 @@
 
 ```shell
 > cd java-tron/docker
-> docker build -t tron-test .
+> docker image build -t tron-node .
 ```
 
 **Run built image（refer to the home page）**
 
 ```shell
-> docker run -it tron-test
-> ./gradlew run -Pserver=true
+> docker container run -p 18888:18888 -p 50051:50051 -it tronprotocol/tron-node /bin/bash
+> ./gradlew run -Pwitness
 ```

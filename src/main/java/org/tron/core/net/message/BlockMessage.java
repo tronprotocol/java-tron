@@ -51,6 +51,16 @@ public class BlockMessage extends TronMessage {
     //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
   public BlockId getBlockId() {
     return getBlockCapsule().getBlockId();
     //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());

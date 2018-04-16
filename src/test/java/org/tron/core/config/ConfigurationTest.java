@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 
 @Slf4j
 public class ConfigurationTest {
@@ -47,23 +48,23 @@ public class ConfigurationTest {
 
 //    log.debug("address = {}", ByteArray.toHexString(key.getOwnerAddress()));
 
-    assertEquals("125b6c87b3d67114b3873977888c34582f27bbb0",
+    assertEquals(Wallet.getAddressPreFixString() + "125b6c87b3d67114b3873977888c34582f27bbb0",
         ByteArray.toHexString(key.getAddress()));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenNullPathGetShouldThrowIllegalArgumentException() {
-    Configuration.getByPath(null);
+    Configuration.getByFileName(null, null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenEmptyPathGetShouldThrowIllegalArgumentException() {
-    Configuration.getByPath(StringUtils.EMPTY);
+    Configuration.getByFileName(StringUtils.EMPTY, StringUtils.EMPTY);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void getShouldNotFindConfiguration() {
-    Config config = Configuration.getByPath("notExistingPath");
+    Config config = Configuration.getByFileName("notExistingPath", "notExistingPath");
     assertFalse(config.hasPath("storage"));
     assertFalse(config.hasPath("overlay"));
     assertFalse(config.hasPath("seed.node"));
@@ -72,9 +73,8 @@ public class ConfigurationTest {
 
   @Test
   public void getShouldReturnConfiguration() {
-    Config config = Configuration.getByPath("config-test.conf");
+    Config config = Configuration.getByFileName("config-test.conf", "config-test.conf");
     assertTrue(config.hasPath("storage"));
-    assertTrue(config.hasPath("overlay"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
   }

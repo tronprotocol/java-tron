@@ -1,8 +1,13 @@
 package org.tron.core.db;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
+@Slf4j
 public abstract class TronDatabase<T> {
 
   protected LevelDbDataSourceImpl dbSource;
@@ -38,8 +43,10 @@ public abstract class TronDatabase<T> {
 
   public abstract void delete(byte[] key);
 
-  public abstract T get(byte[] key);
+  public abstract T get(byte[] key)
+      throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException;
 
   public abstract boolean has(byte[] key);
+
 
 }

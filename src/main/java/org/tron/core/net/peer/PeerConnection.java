@@ -3,9 +3,13 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -14,30 +18,42 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NetConstants;
 
 @Slf4j
 @Component
 @Scope("prototype")
-public class PeerConnection extends Channel{
+public class PeerConnection extends Channel {
 
   @Override
   public int hashCode() {
     return super.hashCode();
   }
 
+  public long getConnectTime() {
+    return connectTime;
+  }
+
+  public void setConnectTime(long connectTime) {
+    this.connectTime = connectTime;
+  }
+
+  private long connectTime;
+
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
-  private HashMap<Sha256Hash, Long> advObjSpreadToUs = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjSpreadToUs = new ConcurrentHashMap<>();
 
-  private HashMap<Sha256Hash, Long> advObjWeSpread = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
-  private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
+  private Map<Sha256Hash, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
-  public HashMap<Sha256Hash, Long> getAdvObjSpreadToUs() {
+  public Map<Sha256Hash, Long> getAdvObjSpreadToUs() {
     return advObjSpreadToUs;
   }
 
@@ -46,7 +62,7 @@ public class PeerConnection extends Channel{
     this.advObjSpreadToUs = advObjSpreadToUs;
   }
 
-  public HashMap<Sha256Hash, Long> getAdvObjWeSpread() {
+  public Map<Sha256Hash, Long> getAdvObjWeSpread() {
     return advObjWeSpread;
   }
 
@@ -55,31 +71,30 @@ public class PeerConnection extends Channel{
   }
 
   //sync chain
-  private BlockId headBlockWeBothHave;
+  private BlockId headBlockWeBothHave = new BlockId();
 
   private long headBlockTimeWeBothHave;
 
-  private Deque<BlockId> syncBlockToFetch = new LinkedList<>();
+  private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
-  private HashMap<BlockId, Long> syncBlockRequested = new HashMap<>();
+  private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
 
-  private Pair<LinkedList<BlockId>, Long> syncChainRequested = null;
+  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<LinkedList<BlockId>, Long> getSyncChainRequested() {
+  public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
   }
 
   public void setSyncChainRequested(
-      Pair<LinkedList<BlockId>, Long> syncChainRequested) {
+      Pair<Deque<BlockId>, Long> syncChainRequested) {
     this.syncChainRequested = syncChainRequested;
   }
 
-  public HashMap<BlockId, Long> getSyncBlockRequested() {
+  public Map<BlockId, Long> getSyncBlockRequested() {
     return syncBlockRequested;
   }
 
-  public void setSyncBlockRequested(
-      HashMap<BlockId, Long> syncBlockRequested) {
+  public void setSyncBlockRequested(ConcurrentHashMap<BlockId, Long> syncBlockRequested) {
     this.syncBlockRequested = syncBlockRequested;
   }
 
@@ -109,18 +124,37 @@ public class PeerConnection extends Channel{
 
   private Set<BlockId> blockInProc = new HashSet<>();
 
-  public HashMap<Sha256Hash, Long> getAdvObjWeRequested() {
+  public Map<Sha256Hash, Long> getAdvObjWeRequested() {
     return advObjWeRequested;
   }
 
-  public void setAdvObjWeRequested(HashMap<Sha256Hash, Long> advObjWeRequested) {
+  public void setAdvObjWeRequested(ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested) {
     this.advObjWeRequested = advObjWeRequested;
   }
 
 
   public void cleanInvGarbage() {
-    //TODO: clean advObjSpreadToUs and advObjWeSpread accroding cleaning strategy 
+    long oldestTimestamp =
+        Time.getCurrentMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 
+    Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+
+    iterator = this.advObjWeSpread.entrySet().iterator();
+
+    removeIterator(iterator, oldestTimestamp);
+  }
+
+  private void removeIterator(Iterator<Entry<Sha256Hash, Long>> iterator, long oldestTimestamp) {
+    while (iterator.hasNext()) {
+      Map.Entry entry = iterator.next();
+      Long ts = (Long) entry.getValue();
+
+      if (ts < oldestTimestamp) {
+        iterator.remove();
+      }
+    }
   }
 
   public boolean isBanned() {
@@ -189,23 +223,30 @@ public class PeerConnection extends Channel{
 //    long lifeTime = System.currentTimeMillis() - connectedTime;
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
+            + "connect time: %s\n"
             + "last know block num: %s\n "
             + "needSyncFromPeer:%b\n "
             + "needSyncFromUs:%b\n"
             + "syncToFetchSize:%d\n"
+            + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "unFetchSynNum:%d\n"
+            + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getPeerIdShort(),
-        (int)this.getPeerStats().getAvgLatency(),
+        (int) this.getPeerStats().getAvgLatency(),
+        Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
+        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         unfetchSyncNum,
-        blockInProc.size());
+        syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
+        blockInProc.size())
+        + nodeStatistics.toString() + "\n";
   }
 
   public boolean isBusy() {
@@ -220,7 +261,7 @@ public class PeerConnection extends Channel{
 
   public void sendMessage(Message message) {
     msgQueue.sendMessage(message);
-    nodeStatistics.ethOutbound.add();
+    nodeStatistics.tronOutMessage.add();
   }
 
   @Override

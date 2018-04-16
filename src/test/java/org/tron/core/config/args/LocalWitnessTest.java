@@ -29,7 +29,7 @@ public class LocalWitnessTest {
     localWitness
         .setPrivateKeys(
             Lists.newArrayList(
-                "00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+                "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
   }
 
   @Test
@@ -51,16 +51,16 @@ public class LocalWitnessTest {
   public void whenSetPrefixPrivateKey() {
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0x00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0X00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0Xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
   }
 
   @Test
   public void getPrivateKey() {
     Assert.assertEquals(Lists
-            .newArrayList("00f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+            .newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
         localWitness.getPrivateKeys());
   }
 }

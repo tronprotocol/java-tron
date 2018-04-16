@@ -27,7 +27,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -81,15 +80,14 @@ public class PeerServer {
             b.childHandler(tronChannelInitializer);
 
             // Start the client.
-            logger.info("Listening for incoming connections, port: [{}] ", port);
-            logger.info("NodeId: [{}] ", Hex.toHexString(this.args.getMyKey().getNodeId()));
+            logger.info("TCP listener started, bind port {}", port);
 
             channelFuture = b.bind(port).sync();
 
             listening = true;
             // Wait until the connection is closed.
             channelFuture.channel().closeFuture().sync();
-            logger.debug("Connection is closed");
+            logger.info("Connection is closed");
 
         } catch (Exception e) {
             logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
