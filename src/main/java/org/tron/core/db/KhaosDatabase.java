@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
+import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -53,7 +54,7 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
-  private class KhaosStore {
+  public class KhaosStore {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     //private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
@@ -106,12 +107,18 @@ public class KhaosDatabase extends TronDatabase {
     public KhaosBlock getByHash(Sha256Hash hash) {
       return hashKblkMap.get(hash);
     }
+
+    public int size() {
+      return hashKblkMap.size();
+    }
   }
 
   private KhaosBlock head;
 
+  @Getter
   private KhaosStore miniStore = new KhaosStore();
 
+  @Getter
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   protected KhaosDatabase(String dbName) {
