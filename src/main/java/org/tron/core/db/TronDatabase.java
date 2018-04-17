@@ -3,12 +3,13 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.Quitable;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
-public abstract class TronDatabase<T> {
+public abstract class TronDatabase<T> implements Quitable {
 
   protected LevelDbDataSourceImpl dbSource;
 
@@ -35,8 +36,11 @@ public abstract class TronDatabase<T> {
   /**
    * close the database.
    */
+  @Override
   public void close() {
+    System.err.println("******** begin to close " + getName() + " ********");
     dbSource.closeDB();
+    System.err.println("******** end to close " + getName() + " ********");
   }
 
   public abstract void put(byte[] key, T item);
@@ -48,5 +52,8 @@ public abstract class TronDatabase<T> {
 
   public abstract boolean has(byte[] key);
 
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
 
 }

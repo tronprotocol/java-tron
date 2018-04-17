@@ -133,10 +133,6 @@ public class UtxoStore extends TronDatabase {
             .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  public void close() {
-    dbSource.closeDB();
-  }
-
   @Override
   public void put(byte[] key, Object item) {
 

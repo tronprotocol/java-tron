@@ -63,13 +63,35 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
+    logger.info("******** application shutdown ********");
     p2pNode.setNodeDelegate(nodeDelegate);
     resetP2PNode();
   }
 
   @Override
   public void shutdown() {
+    System.err.println("******** begin to shutdown ********");
+    try {
+      p2pNode.close();
+    } catch (InterruptedException e) {
+      System.err.println("faild to close p2pNode");
+    }
 
+    System.err.println("******** begin to close db ********");
+    try {
+      dbManager.getAccountStore().close();
+      dbManager.getBlockStore().close();
+      dbManager.getWitnessStore().close();
+      dbManager.getAssetIssueStore().close();
+      dbManager.getDynamicPropertiesStore().close();
+      dbManager.getTransactionStore().close();
+      dbManager.getUtxoStore().close();
+    } catch (Exception e) {
+      System.err.println(e.toString());
+    }
+
+    System.err.println("******** end to close db ********");
+    System.err.println("******** end to shutdown ********");
   }
 
   @Override
