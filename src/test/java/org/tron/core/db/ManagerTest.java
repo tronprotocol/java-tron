@@ -25,6 +25,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -197,7 +198,7 @@ public class ManagerTest {
       UnLinkedBlockException,
       ValidateScheduleException,
       BadItemException,
-      ItemNotFoundException {
+      ItemNotFoundException, HeaderNotFound {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
 
