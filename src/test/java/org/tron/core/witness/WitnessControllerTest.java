@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.plaf.synth.SynthTabbedPaneUI;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,30 +41,12 @@ public class WitnessControllerTest {
   @Test
   public void testSlot() {
 
-    WitnessController controller = new WitnessController() {
-      BlockCapsule genesisBlock = new BlockCapsule(0L, blank, 1522847871000L, blank);
-      BlockCapsule headBlock = new BlockCapsule(1L, blank, 1522847890000L, blank);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
 
-      @Override
-      public BlockCapsule getHead() {
-        return headBlock;
-      }
-
-      @Override
-      public BlockCapsule getGenesisBlock() {
-        return genesisBlock;
-      }
-
-      @Override
-      public boolean lastHeadBlockIsMaintenance() {
-        return false;
-      }
-
-    };
-    assertEquals(1522847891000L, controller.getSlotTime(1L));
-    assertEquals(4, controller.getAbSlotAtTime(1522847891000L));
-    assertEquals(1, controller.getSlotAtTime(1522847891000L));
-    assertEquals(3, controller.getHeadSlot());
+    assertEquals(4, dbManager.getWitnessController().getAbSlotAtTime(21000));
+    assertEquals(1, dbManager.getWitnessController().getSlotAtTime(21000));
+    assertEquals(3, dbManager.getWitnessController().getHeadSlot());
 
   }
 
