@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.RevokingStore;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
@@ -76,6 +78,26 @@ public class ApplicationImpl implements Application {
     } catch (InterruptedException e) {
       System.err.println("faild to close p2pNode");
     }
+
+    System.err.println("******** begin to pop revokingDb ********");
+    boolean exit = false;
+    while (!exit) {
+      try {
+        RevokingStore.getInstance().commit();
+      } catch (RevokingStoreIllegalStateException e) {
+        exit = true;
+      }
+    }
+
+    while (true) {
+      try {
+        RevokingStore.getInstance().pop();
+      } catch (RevokingStoreIllegalStateException e) {
+        break;
+      }
+    }
+
+    System.err.println("******** end to pop revokingDb ********");
 
     System.err.println("******** begin to close db ********");
     try {
