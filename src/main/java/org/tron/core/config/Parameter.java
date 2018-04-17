@@ -11,7 +11,7 @@ public interface Parameter {
     long WITNESS_PAY_PER_BLOCK = 32000000;  // 32trx
     int BLOCK_PRODUCED_INTERVAL = 3; // 3sec
 
-    double SOLIDIFIED_THRESHOLD = 0.3;
+    double SOLIDIFIED_THRESHOLD = 0.7;
     int PRIVATE_KEY_LENGTH = 64;
   }
 

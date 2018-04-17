@@ -168,7 +168,6 @@ public class Manager {
   public BlockId getHeadBlockId() {
     return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash(),
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-
   }
 
 
@@ -241,6 +240,23 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
+    this.witnessController.initWits();
+    try {
+      this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+    } catch (ItemNotFoundException e) {
+      logger.error("Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",
+          getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    } catch (BadItemException e) {
+      e.printStackTrace();
+      logger.error("DB data broken!");
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    }
     revokingStore.enable();
   }
 
@@ -422,6 +438,7 @@ public class Manager {
     } catch (RevokingStoreIllegalStateException e) {
       logger.debug(e.getMessage(), e);
     }
+    logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
@@ -851,17 +868,21 @@ public class Manager {
         .collect(Collectors.toList());
 
     long size = witnessController.getActiveWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
     if (solidifiedPosition < 0) {
-      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
       return;
     }
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public long getSyncBeginNumber() {
+    logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    logger.info("syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size()));
+    logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 

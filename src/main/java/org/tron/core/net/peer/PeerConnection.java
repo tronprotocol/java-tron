@@ -3,13 +3,13 @@ package org.tron.core.net.peer;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.TransactionMessage;
 
 @Slf4j
 @Component
@@ -260,6 +262,10 @@ public class PeerConnection extends Channel {
   }
 
   public void sendMessage(Message message) {
+    if (!(message instanceof BlockMessage)
+        && !(message instanceof TransactionMessage)) {
+      logger.info("Send Message:" + message.toString() + " to\n" + this);
+    }
     msgQueue.sendMessage(message);
     nodeStatistics.tronOutMessage.add();
   }
