@@ -157,7 +157,6 @@ public class Manager {
   public BlockId getHeadBlockId() {
     return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash(),
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-
   }
 
 
@@ -228,7 +227,22 @@ public class Manager {
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
-    this.khaosDb.start(genesisBlock);
+    try {
+      this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+    } catch (ItemNotFoundException e) {
+      logger.error("Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",
+          getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    } catch (BadItemException e) {
+      e.printStackTrace();
+      logger.error("DB data broken!");
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    }
     revokingStore.enable();
   }
 

@@ -351,7 +351,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         synchronized (advObjToFetch) {
           InvToSend sendPackage = new InvToSend();
           advObjToFetch.entrySet()
-              .forEach(idToFetch -> {
+              .forEach(idToFetch ->
                 getActivePeer().stream().filter(peer -> !peer.isBusy()
                     && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
                     .findFirst()
@@ -361,8 +361,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       advObjToFetch.remove(idToFetch.getKey());
                       peer.getAdvObjWeRequested()
                           .put(idToFetch.getKey(), Time.getCurrentMillis());
-                    });
-              });
+                    })
+              );
           sendPackage.sendFetch();
         }
       }
@@ -377,7 +377,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       try {
         if (isHandleSyncBlockActive) {
           isHandleSyncBlockActive = false;
-//          Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
+          //Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
           handleSyncBlock();
         }
       } catch (Throwable t) {
