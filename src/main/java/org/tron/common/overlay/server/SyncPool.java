@@ -111,6 +111,7 @@ public class SyncPool {
         peerDel.onConnectPeer((PeerConnection)channel);
       }
     }
+    activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
   }
 
   synchronized void logActivePeers() {
@@ -175,9 +176,9 @@ public class SyncPool {
     @Override
     public boolean test(NodeHandler handler) {
 
-      if (!nodeManager.isNodeAlive(handler)){
-        return false;
-      }
+//      if (!nodeManager.isNodeAlive(handler)){
+//        return false;
+//      }
 
       if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
