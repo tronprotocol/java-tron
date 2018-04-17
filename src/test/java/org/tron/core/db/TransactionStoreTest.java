@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
@@ -15,8 +14,7 @@ public class TransactionStoreTest {
 
   private static String dbPath = "output_TransactionStore_test";
   private static TransactionStore transactionStore;
-  private static final byte[] data = TransactionStoreTest.randomBytes(32);
-  private static final String key = ByteArray.toHexString(data);
+  private static final byte[] key = TransactionStoreTest.randomBytes(32);
   private static final long value = 111L;
 
   @AfterClass
@@ -27,12 +25,12 @@ public class TransactionStoreTest {
   }
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws Exception {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
         Constant.TEST_CONF);
     transactionStore = TransactionStore.create(dbPath);
     TransactionCapsule transactionCapsule = new TransactionCapsule(key, value);
-    transactionStore.put(data, transactionCapsule);
+    transactionStore.put(key, transactionCapsule);
   }
 
   /*@Test
