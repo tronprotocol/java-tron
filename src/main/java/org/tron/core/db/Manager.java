@@ -76,6 +76,7 @@ public class Manager {
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockIndexStore blockIndexStore;
+  private WitnessScheduleStore witnessScheduleStore;
 
   @Autowired
   private PeersStore peersStore;
@@ -116,6 +117,14 @@ public class Manager {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
+  public WitnessScheduleStore getWitnessScheduleStore() {
+    return this.witnessScheduleStore;
+  }
+
+  public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
+    this.witnessScheduleStore = witnessScheduleStore;
+  }
+
   public List<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
@@ -133,13 +142,15 @@ public class Manager {
 
 
   //for test only
-  public List<WitnessCapsule> getWitnesses() {
-    return witnessController.getWitnesses();
+  public List<ByteString> getWitnesses() {
+    return witnessController.getActiveWitnesses();
   }
 
   //for test only
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    witnessController.addWitness(witnessCapsule);
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses = witnessController.getActiveWitnesses();
+    witnessAddresses.add(address);
+    witnessController.setActiveWitnesses(witnessAddresses);
   }
 
   public BlockCapsule getHead() throws HeaderNotFound {
@@ -201,12 +212,14 @@ public class Manager {
   }
 
   public void destory() {
-    getAccountStore().destroy();
-    getTransactionStore().destroy();
-    getBlockStore().destroy();
-    getWitnessStore().destory();
-    getAssetIssueStore().destroy();
-    getDynamicPropertiesStore().destroy();
+    AccountStore.destroy();
+    TransactionStore.destroy();
+    BlockStore.destroy();
+    WitnessStore.destory();
+    AssetIssueStore.destroy();
+    DynamicPropertiesStore.destroy();
+    WitnessScheduleStore.destroy();
+    BlockIndexStore.destroy();
   }
 
   /**
@@ -220,6 +233,7 @@ public class Manager {
     this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
+    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     revokingStore = RevokingStore.getInstance();
@@ -227,8 +241,7 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
-    this.witnessController.initWits();
-    this.khaosDb.start(genesisBlock);
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -269,6 +282,8 @@ public class Manager {
             this.genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
+        this.witnessController.initWits();
+        this.khaosDb.start(genesisBlock);
       }
     }
   }
@@ -825,12 +840,12 @@ public class Manager {
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers = witnessController.getWitnesses().stream()
-        .map(wit -> wit.getLatestBlockNum())
+    List<Long> numbers = witnessController.getActiveWitnesses().stream()
+        .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
 
-    long size = witnessController.getWitnesses().size();
+    long size = witnessController.getActiveWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
       logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",

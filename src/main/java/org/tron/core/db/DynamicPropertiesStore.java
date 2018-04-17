@@ -88,7 +88,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static DynamicPropertiesStore instance;
 
-  public void destroy() {
+  public static void destroy() {
     instance = null;
   }
 
