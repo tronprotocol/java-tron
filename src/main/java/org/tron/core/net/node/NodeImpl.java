@@ -189,7 +189,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg);
+    logger.info("Handle Message: " + msg + "\n Peer: " + peer);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -798,6 +798,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (peer.getSyncChainRequested() != null) {
         //List<BlockId> blockIds = msg.getBlockIds();
         Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
+        logger.info("Handle CHAIN_INV: "+ msg);
 
         //check if the peer is a traitor
         if (!blockIdWeGet.isEmpty()) {
@@ -1033,6 +1034,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setSyncChainRequested(
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
+      logger.info(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary).toString());
     } catch (TronException e) { //TODO: use tron excpetion here
       logger.info(e.getMessage());
       logger.debug(e.getMessage(), e);

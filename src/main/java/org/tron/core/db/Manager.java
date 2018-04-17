@@ -537,11 +537,11 @@ public class Manager {
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           this.processBlock(newBlock);
-          tmpDialog.commit();
           blockStore.put(block.getBlockId().getBytes(), block);
           this.blockIndexStore
               .put(ByteArray.fromLong(block.getNum()),
                   new BytesCapsule(block.getBlockId().getBytes()));
+          tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
         }
@@ -835,7 +835,7 @@ public class Manager {
         .collect(Collectors.toList());
 
     long size = witnessController.getWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
     if (solidifiedPosition < 0) {
       logger.warn("updateLNodatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
@@ -843,16 +843,11 @@ public class Manager {
     }
 
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
-        dynamicPropertiesStore.getLatestBlockHeaderNumber()
-            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
-    );
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public long getSyncBeginNumber() {
+    logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
     logger.info("syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size()));
     logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
