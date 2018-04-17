@@ -92,7 +92,7 @@ public class ChannelManager {
       return;
     }
     for (Channel peer : newPeers) {
-      if (peer.isProtocolsInitialized()) {
+      if (!peer.isProtocolsInitialized()) {
         continue;
       }else if (activePeers.containsKey(peer.getNodeIdWrapper())){
         disconnect(peer, DUPLICATE_PEER);
