@@ -1026,6 +1026,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
+    if (peer.getSyncChainRequested() != null){
+      logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
+      return;
+    }
     try {
       Deque<BlockId> chainSummary =
           del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),

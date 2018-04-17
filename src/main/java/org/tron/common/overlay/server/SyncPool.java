@@ -115,7 +115,8 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
-    nodeManager.dumpActiveNodes().forEach(handler -> logger.info(handler.getNode().toString()));
+    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("{} {}",
+            handler.getNodeStatistics().getReputation(), handler.getNode().toString()));
 
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
             channelManager.nodesInUse().size());
