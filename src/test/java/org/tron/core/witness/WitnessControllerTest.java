@@ -19,7 +19,7 @@ import org.tron.core.config.args.Args;
 
 public class WitnessControllerTest {
   private static Manager dbManager = new Manager();
-  private static String dbPath = "output_manager_test";
+  private static String dbPath = "output_witness_controller_test";
 
   @BeforeClass
   public static void init() {
