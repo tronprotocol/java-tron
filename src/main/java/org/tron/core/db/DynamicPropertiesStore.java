@@ -16,7 +16,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
-  private static final int SINGLE_REPEAT = 2;
+  private static final int SINGLE_REPEAT = 1;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();

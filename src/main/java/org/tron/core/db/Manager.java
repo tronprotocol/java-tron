@@ -240,7 +240,6 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
-    this.witnessController.initWits();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
     } catch (ItemNotFoundException e) {
