@@ -608,6 +608,11 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   /**
@@ -865,12 +870,12 @@ public class Manager {
     long size = witnessController.getActiveWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
     if (solidifiedPosition < 0) {
-      logger.warn("updateLNodatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
       return;
     }
-
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
