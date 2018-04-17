@@ -76,12 +76,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
   }
 
-
-  @Override
-  public void delete(byte[] key) {
-
-  }
-
   @Override
   public BytesCapsule get(byte[] key) {
     return null;

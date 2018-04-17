@@ -35,9 +35,10 @@ public class Constant {
   
   public static final String DATABASE_DIR = "storage.directory";
 
-  public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0xa1;   //a1 + address  ,a1 is version
-  public static final String ADD_PRE_FIX_STRING_MAINNET = "a1";
+  public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0xb0;   //b0 + address  ,b0 is version
+  public static final String ADD_PRE_FIX_STRING_MAINNET = "b0";
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address  ,a0 is version
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
   public static final int ADDRESS_SIZE = 42;
+  public static final int BASE58CHECK_ADDRESS_SIZE = 35;
 }

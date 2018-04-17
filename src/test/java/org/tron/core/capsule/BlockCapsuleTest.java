@@ -11,6 +11,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 
@@ -36,7 +37,7 @@ public class BlockCapsuleTest {
   }
 
   @Test
-  public void testCalcMerkleRoot() {
+  public void testCalcMerkleRoot() throws Exception {
     blockCapsule0.setMerkleRoot();
     Assert.assertEquals(
         Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
@@ -44,14 +45,19 @@ public class BlockCapsuleTest {
 
     logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
 
-    TransactionCapsule transactionCapsule1 = new TransactionCapsule("123", 1L);
-    TransactionCapsule transactionCapsule2 = new TransactionCapsule("124", 2L);
+    TransactionCapsule transactionCapsule1 = new TransactionCapsule(
+        ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"), 1L);
+    TransactionCapsule transactionCapsule2 = new TransactionCapsule(
+        ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"), 2L);
+
     blockCapsule0.addTransaction(transactionCapsule1);
     blockCapsule0.addTransaction(transactionCapsule2);
     blockCapsule0.setMerkleRoot();
 
     Assert.assertEquals(
-        "e44ff03f9dacdeb0986d2b82e1bc028b32e1270d3f7e602f14d087993b2afcb5",
+        "b7ad4783b23a97bf9ac2ccd9b4e73eb6c45dc63dc24925f2b77ce1f0b2a1b2e6",
         blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
