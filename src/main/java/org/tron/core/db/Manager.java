@@ -591,6 +591,11 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   /**
@@ -852,14 +857,8 @@ public class Manager {
           solidifiedPosition, size);
       return;
     }
-
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
-        dynamicPropertiesStore.getLatestBlockHeaderNumber()
-            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
-    );
   }
 
   public long getSyncBeginNumber() {
