@@ -146,9 +146,7 @@ public class NodeStatistics {
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
   }
 
   public void nodeDisconnectedRemote(ReasonCode reason) {

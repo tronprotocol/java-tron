@@ -46,6 +46,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -141,15 +142,14 @@ public class Manager {
     witnessController.addWitness(witnessCapsule);
   }
 
-  public BlockCapsule getHead() {
+  public BlockCapsule getHead() throws HeaderNotFound {
     try {
       return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     } catch (ItemNotFoundException e) {
       logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     }
   }
 
@@ -213,6 +213,8 @@ public class Manager {
    * all db should be init here.
    */
   public void init() {
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.disable();
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
     this.setBlockStore(BlockStore.create("block"));
@@ -222,13 +224,12 @@ public class Manager {
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
     this.khaosDb.start(genesisBlock);
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -576,6 +577,10 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   /**
@@ -800,7 +805,6 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
@@ -833,7 +837,7 @@ public class Manager {
     long size = witnessController.getWitnesses().size();
     int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
     if (solidifiedPosition < 0) {
-      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("updateLNodatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
       return;
     }
