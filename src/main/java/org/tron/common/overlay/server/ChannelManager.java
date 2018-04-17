@@ -98,7 +98,7 @@ public class ChannelManager {
         disconnect(peer, DUPLICATE_PEER);
       }else if(!peer.isActive() && activePeers.size() >= maxActivePeers) {
         disconnect(peer, TOO_MANY_PEERS);
-      }else if(peer.getNodeStatistics().getReputation() == 0){
+      }else if(peer.getNodeStatistics().isReputationPenalized()){
         disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
       }else {
         activePeers.put(peer.getNodeIdWrapper(), peer);

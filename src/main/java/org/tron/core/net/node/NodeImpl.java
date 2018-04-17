@@ -1056,7 +1056,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
+
+    if (!peer.getSyncBlockRequested().isEmpty()) {
+      peer.getSyncBlockRequested().keySet()
+          .forEach(blockId -> syncBlockIdWeRequested.remove(blockId));
       isFetchSyncActive = true;
+    }
+
+    if (!peer.getAdvObjWeRequested().isEmpty()) {
+      peer.getAdvObjWeRequested().keySet()
+          .forEach(blockId -> advObjWeRequested.remove(blockId));
+      //TODO: adv obj fetch trigger.
+    }
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {

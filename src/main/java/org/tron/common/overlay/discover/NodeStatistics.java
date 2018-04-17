@@ -146,7 +146,7 @@ public class NodeStatistics {
     return ReasonCode.UNKNOWN;
   }
 
-  private boolean isReputationPenalized() {
+  public boolean isReputationPenalized() {
     if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
       return true;
     }
