@@ -46,6 +46,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -152,15 +153,14 @@ public class Manager {
     witnessController.setActiveWitnesses(witnessAddresses);
   }
 
-  public BlockCapsule getHead() {
+  public BlockCapsule getHead() throws HeaderNotFound {
     try {
       return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     } catch (ItemNotFoundException e) {
       logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     }
   }
 
@@ -519,8 +519,32 @@ public class Manager {
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn("switch fork! new head num = {}, blockid = {}", newBlock.getNum(),
               newBlock.getBlockId());
+
+          logger.error("******** before switchFork ******* push block: " + block
+              + ", new block:" + newBlock
+              + ", dynamic head num: " + dynamicPropertiesStore.getLatestBlockHeaderNumber()
+              + ", dynamic head hash: " + dynamicPropertiesStore.getLatestBlockHeaderHash()
+              + ", dynamic head timestamp: " + dynamicPropertiesStore
+              .getLatestBlockHeaderTimestamp()
+              + ", khaosDb head: " + khaosDb.getHead()
+              + ", khaosDb miniStore size: " + khaosDb.getMiniStore().size()
+              + ", khaosDb unlinkMiniStore size: " + khaosDb.getMiniUnlinkedStore().size()
+          );
+
           switchFork(newBlock);
           logger.info("save block: " + newBlock);
+
+          logger.error("******** after switchFork ******* push block: " + block
+              + ", new block:" + newBlock
+              + ", dynamic head num: " + dynamicPropertiesStore.getLatestBlockHeaderNumber()
+              + ", dynamic head hash: " + dynamicPropertiesStore.getLatestBlockHeaderHash()
+              + ", dynamic head timestamp: " + dynamicPropertiesStore
+              .getLatestBlockHeaderTimestamp()
+              + ", khaosDb head: " + khaosDb.getHead()
+              + ", khaosDb miniStore size: " + khaosDb.getMiniStore().size()
+              + ", khaosDb unlinkMiniStore size: " + khaosDb.getMiniUnlinkedStore().size()
+          );
+
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
