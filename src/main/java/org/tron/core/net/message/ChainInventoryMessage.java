@@ -93,9 +93,9 @@ public class ChainInventoryMessage extends TronMessage {
   @Override
   public String toString() {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(getBlockIds());
-    return "First BlockID: " + blockIdWeGet.peek()
-    + "End Block ID: " + blockIdWeGet.peekLast()
-    + "Size: " +  blockIdWeGet.size();
+    return getType().toString() + ":First BlockID: " + blockIdWeGet.peek().getString()
+    + " End Block ID: " + blockIdWeGet.peekLast().getString()
+    + " Size: " +  blockIdWeGet.size();
   }
 
   @Override

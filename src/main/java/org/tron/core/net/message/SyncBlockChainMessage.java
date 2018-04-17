@@ -24,8 +24,8 @@ public class SyncBlockChainMessage extends BlockInventoryMessage {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder(this.type);
-    getBlockIds().forEach(blockId -> sb.append(blockId.getString()).append("\n"));
+    StringBuilder sb = new StringBuilder(getType().toString()).append(": ");
+    getBlockIds().forEach(blockId -> sb.append("\n").append(blockId.getString()));
     return sb.toString();
   }
 
