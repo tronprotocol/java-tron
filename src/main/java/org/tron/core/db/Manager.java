@@ -213,8 +213,6 @@ public class Manager {
    * all db should be init here.
    */
   public void init() {
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.disable();
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
     this.setBlockStore(BlockStore.create("block"));
@@ -224,12 +222,13 @@ public class Manager {
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.enable();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
     this.khaosDb.start(genesisBlock);
-    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -412,6 +411,15 @@ public class Manager {
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
+  private void applyBlock(BlockCapsule block)
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
+    processBlock(block);
+    this.blockStore.put(block.getBlockId().getBytes(), block);
+    this.blockIndexStore
+        .put(ByteArray.fromLong(block.getNum()),
+            new BytesCapsule(block.getBlockId().getBytes()));
+  }
+
   private void switchFork(BlockCapsule newHead) {
     Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree = khaosDb
         .getBranch(newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
@@ -435,11 +443,7 @@ public class Manager {
       branch.forEach(item -> {
         // todo  process the exception carefully later
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          processBlock(item);
-          this.blockStore.put(item.getBlockId().getBytes(), item);
-          this.blockIndexStore
-              .put(ByteArray.fromLong(item.getNum()),
-                  new BytesCapsule(item.getBlockId().getBytes()));
+          applyBlock(item);
           tmpDialog.commit();
         } catch (ValidateSignatureException e) {
           logger.debug(e.getMessage(), e);
@@ -535,12 +539,8 @@ public class Manager {
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          this.processBlock(newBlock);
+          applyBlock(newBlock);
           tmpDialog.commit();
-          blockStore.put(block.getBlockId().getBytes(), block);
-          this.blockIndexStore
-              .put(ByteArray.fromLong(block.getNum()),
-                  new BytesCapsule(block.getBlockId().getBytes()));
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
         }
@@ -576,10 +576,6 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
-        dynamicPropertiesStore.getLatestBlockHeaderNumber()
-            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
-    );
   }
 
   /**
@@ -804,6 +800,7 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
+    // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
@@ -844,6 +841,10 @@ public class Manager {
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   public long getSyncBeginNumber() {
