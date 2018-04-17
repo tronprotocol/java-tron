@@ -69,7 +69,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
-        closeChannel(ctx);
+        ctx.close();
         break;
       case P2P_PING:
         msgQueue.receivedMessage(msg);
@@ -81,7 +81,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         break;
       default:
         logger.info("Receive error msg, {}", ctx.channel().remoteAddress());
-        closeChannel(ctx);
+        ctx.close();
         break;
     }
   }
@@ -95,12 +95,11 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
-    closeChannel(ctx);
+    ctx.close();
   }
 
   public void closeChannel(ChannelHandlerContext ctx) {
-    ctx.close();
-    pingTask.cancel(true);
+    pingTask.cancel(false);
     msgQueue.close();
   }
 
