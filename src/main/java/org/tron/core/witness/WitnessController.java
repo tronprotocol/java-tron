@@ -27,8 +27,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.HeaderNotFound;
 
 @Slf4j
 public class WitnessController {
@@ -73,6 +72,7 @@ public class WitnessController {
     }
 
   }
+
   // witness
   public WitnessCapsule getWitnesseByAddress(ByteString address) {
     witsRead.lock();
@@ -130,15 +130,8 @@ public class WitnessController {
     return manager.getGenesisBlock();
   }
 
-  public BlockCapsule getHead() {
-    try {
-      return manager.getBlockStore()
-          .get(manager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
-    } catch (ItemNotFoundException e) {
-      return null;
-    } catch (BadItemException e) {
-      return null;
-    }
+  public BlockCapsule getHead() throws HeaderNotFound {
+    return manager.getHead();
   }
 
   public boolean lastHeadBlockIsMaintenance() {
@@ -161,7 +154,7 @@ public class WitnessController {
     }
     long interval = Manager.LOOP_INTERVAL;
 
-    if (getHead().getNum() == 0) {
+    if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return getGenesisBlock().getTimeStamp() + slotNum * interval;
     }
 
@@ -169,7 +162,7 @@ public class WitnessController {
       slotNum += manager.getSkipSlotInMaintenance();
     }
 
-    long headSlotTime = getHead().getTimeStamp();
+    long headSlotTime = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     headSlotTime = headSlotTime
         - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
@@ -183,9 +176,10 @@ public class WitnessController {
 
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
-    BlockCapsule head = getHead();
     //to deal with other condition later
-    if (head.getNum() != 0 && head.getBlockId().equals(block.getParentHash())) {
+    if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() != 0 && manager
+        .getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        .equals(block.getParentHash())) {
       long slot = getSlotAtTime(block.getTimeStamp());
       final ByteString scheduledWitness = getScheduledWitness(slot);
       if (!scheduledWitness.equals(witnessAddress)) {
@@ -226,7 +220,8 @@ public class WitnessController {
   }
 
   public long getHeadSlot() {
-    return (getHead().getTimeStamp() - getGenesisBlock().getTimeStamp())
+    return (manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp())
         / Manager.LOOP_INTERVAL;
   }
 
