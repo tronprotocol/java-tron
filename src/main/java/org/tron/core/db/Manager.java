@@ -241,8 +241,6 @@ public class Manager {
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
-    this.witnessController.initWits();
-    this.khaosDb.start(genesisBlock);
     revokingStore.enable();
   }
 
@@ -284,6 +282,8 @@ public class Manager {
             this.genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
+        this.witnessController.initWits();
+        this.khaosDb.start(genesisBlock);
       }
     }
   }
