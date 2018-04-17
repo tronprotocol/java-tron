@@ -195,7 +195,7 @@ public class MessageQueue {
 
     sendMsgFlag = false;
 
-    timerTask.cancel(true);
+    timerTask.cancel(false);
   }
 
 }
