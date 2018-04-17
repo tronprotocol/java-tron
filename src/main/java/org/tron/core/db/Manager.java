@@ -226,6 +226,8 @@ public class Manager {
    * all db should be init here.
    */
   public void init() {
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.disable();
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
     this.setBlockStore(BlockStore.create("block"));
@@ -236,13 +238,12 @@ public class Manager {
     this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
     this.witnessController.initWits();
     this.khaosDb.start(genesisBlock);
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -589,6 +590,10 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   /**
@@ -813,7 +818,6 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
@@ -854,10 +858,6 @@ public class Manager {
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
-        dynamicPropertiesStore.getLatestBlockHeaderNumber()
-            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
-    );
   }
 
   public long getSyncBeginNumber() {
