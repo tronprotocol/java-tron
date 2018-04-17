@@ -94,19 +94,17 @@ public class ChannelManager {
     for (Channel peer : newPeers) {
       if (peer.isProtocolsInitialized()) {
         continue;
-      }
-      if (activePeers.containsKey(peer.getNodeIdWrapper())){
+      }else if (activePeers.containsKey(peer.getNodeIdWrapper())){
         disconnect(peer, DUPLICATE_PEER);
-      }
-      if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+      }else if(!peer.isActive() && activePeers.size() >= maxActivePeers) {
         disconnect(peer, TOO_MANY_PEERS);
-      }
-      if (peer.getNodeStatistics().getReputation() == 0){
+      }else if(peer.getNodeStatistics().getReputation() == 0){
         disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+      }else {
+        activePeers.put(peer.getNodeIdWrapper(), peer);
+        newPeers.remove(peer);
+        logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
       }
-      activePeers.put(peer.getNodeIdWrapper(), peer);
-      newPeers.remove(peer);
-      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     }
   }
 

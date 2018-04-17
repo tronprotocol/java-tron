@@ -96,8 +96,8 @@ public class NodeStatistics {
   private int getSessionFairReputation() {
     int discoverReput = 0;
 
-    discoverReput +=
-        min(discoverInPong.get(), 50) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
+    discoverReput += discoverOutPing.get() == discoverInPong.get() ? 40 : 0;
+    discoverReput += discoverOutFind.get() == discoverInNeighbours.get() ? 40 : 0;
     discoverReput += min(discoverInNeighbours.get(), 50) * 2;
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
@@ -128,7 +128,13 @@ public class NodeStatistics {
   }
 
   public ReasonCode getDisconnectReason() {
-    return tronLastLocalDisconnectReason == null ? tronLastRemoteDisconnectReason : tronLastLocalDisconnectReason;
+    if (tronLastLocalDisconnectReason != null){
+      return tronLastLocalDisconnectReason;
+    }
+    if (tronLastRemoteDisconnectReason != null){
+      return tronLastRemoteDisconnectReason;
+    }
+    return ReasonCode.UNKNOWN;
   }
 
   private boolean isReputationPenalized() {
