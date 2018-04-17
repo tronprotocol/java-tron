@@ -36,7 +36,7 @@ public class BlockUtil {
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
             .map(key -> {
-              String address = key.getAddress();
+              byte[] address = key.getAddress();
               long balance = key.getBalance();
               return TransactionUtil.newGenesisTransaction(address, balance);
             })

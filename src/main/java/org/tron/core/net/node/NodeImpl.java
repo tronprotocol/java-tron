@@ -1026,6 +1026,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
+    if (peer.getSyncChainRequested() != null){
+      logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
+      return;
+    }
     try {
       Deque<BlockId> chainSummary =
           del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
@@ -1052,7 +1056,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
-    logger.info("on disconnect!! " + peer);
 
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet()

@@ -38,7 +38,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     instance = null;
   }
 
-  void destroy() {
+  public static void destroy() {
     instance = null;
   }
 

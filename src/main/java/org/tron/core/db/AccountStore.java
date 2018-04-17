@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 
 @Slf4j
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
-  private static Map<String, String> assertsAddress = new HashMap<String, String>();
+  private static Map<String, byte[]> assertsAddress = new HashMap<String, byte[]>();  //key = name , value = address
   private static AccountStore instance;
 
 
@@ -21,7 +21,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     super(dbName);
   }
 
-  public void destroy() {
+  public static void destroy() {
     instance = null;
   }
 
@@ -71,7 +71,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Max TRX account.
    */
   public AccountCapsule getSun() {
-    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Sun"))));
+    byte[] data = dbSource.getData(assertsAddress.get("Sun"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
@@ -80,7 +80,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Min TRX account.
    */
   public AccountCapsule getBlackhole() {
-    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Blackhole"))));
+    byte[] data = dbSource.getData(assertsAddress.get("Blackhole"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
@@ -89,7 +89,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Get foundation account info.
    */
   public AccountCapsule getZion() {
-    byte[] data = dbSource.getData((ByteArray.fromHexString(assertsAddress.get("Zion"))));
+    byte[] data = dbSource.getData(assertsAddress.get("Zion"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
@@ -99,7 +99,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     for (int i = 0; i < list.size(); i++) {
       ConfigObject obj = (ConfigObject) list.get(i);
       String accountName = obj.get("accountName").unwrapped().toString();
-      String address = obj.get("address").unwrapped().toString();
+      byte[] address = Wallet.decodeFromBase58Check(obj.get("address").unwrapped().toString());
       assertsAddress.put(accountName, address);
     }
   }

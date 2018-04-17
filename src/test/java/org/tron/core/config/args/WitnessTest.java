@@ -18,6 +18,7 @@ package org.tron.core.config.args;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
 public class WitnessTest {
@@ -30,7 +31,8 @@ public class WitnessTest {
   @Before
   public void setWitness() {
     witness
-        .setAddress(Wallet.getAddressPreFixString() + "448d53b2df0cd78158f6f0aecdf60c1c10b15413");
+        .setAddress(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "448d53b2df0cd78158f6f0aecdf60c1c10b15413"));
     witness.setUrl("http://Uranus.org");
     witness.setVoteCount(1000L);
   }
@@ -42,22 +44,23 @@ public class WitnessTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void whenSetEmptyAddressShouldThrowIllegalArgumentException() {
-    witness.setAddress("");
+    witness.setAddress(new byte[0]);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenSetBadFormatAddressShouldThrowIllegalArgumentException() {
     witness
-        .setAddress(Wallet.getAddressPreFixString() + "zf2141b2df0cd78158f6f0aecdf60c1c10b15413");
+        .setAddress(ByteArray.fromHexString("558d53b2df0cd78158f6f0aecdf60c1c10b15413"));
   }
 
   @Test
   public void setAddressRight() {
     witness
-        .setAddress(Wallet.getAddressPreFixString() + "558d53b2df0cd78158f6f0aecdf60c1c10b15413");
+        .setAddress(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "558d53b2df0cd78158f6f0aecdf60c1c10b15413"));
     Assert.assertEquals(
         Wallet.getAddressPreFixString() + "558d53b2df0cd78158f6f0aecdf60c1c10b15413",
-        witness.getAddress());
+        ByteArray.toHexString(witness.getAddress()));
   }
 
   @Test(expected = IllegalArgumentException.class)

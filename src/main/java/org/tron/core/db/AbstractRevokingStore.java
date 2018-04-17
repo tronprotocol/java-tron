@@ -168,7 +168,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
 
-    disable();
+    disabled = true;
 
     try {
       RevokingState state = stack.peekLast();
@@ -205,7 +205,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       throw new RevokingStoreIllegalStateException("stack is empty");
     }
 
-    disable();
+    disabled = true;
 
     try {
       RevokingState state = stack.peekLast();

@@ -1,18 +1,12 @@
 package org.tron.core.witness;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,15 +28,15 @@ public class WitnessController {
 
   @Setter
   private Manager manager;
-  private volatile List<WitnessCapsule> wits = new ArrayList<>();
+//  private volatile List<WitnessCapsule> wits = new ArrayList<>();
 
-  @Getter
-  @Setter
-  protected List<WitnessCapsule> shuffledWitnessStates;
+//  @Getter
+//  @Setter
+//  protected List<WitnessCapsule> shuffledWitnessStates;
 
-  private ReadWriteLock witsLock = new ReentrantReadWriteLock();
-  private Lock witsRead = witsLock.readLock();
-  private Lock witsWrite = witsLock.writeLock();
+//  private ReadWriteLock witsLock = new ReentrantReadWriteLock();
+//  private Lock witsRead = witsLock.readLock();
+//  private Lock witsWrite = witsLock.writeLock();
 
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
@@ -52,66 +46,46 @@ public class WitnessController {
 
 
   public void initWits() {
-    getWitnesses().clear();
+//    getWitnesses().clear();
+    List<ByteString> witnessAddresses = new ArrayList<>();
     manager.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
       if (witnessCapsule.getIsJobs()) {
-        addWitness(witnessCapsule);
+        witnessAddresses.add(witnessCapsule.getAddress());
       }
     });
-    sortWitness();
-    this.setShuffledWitnessStates(getWitnesses());
+    sortWitness(witnessAddresses);
+    setActiveWitnesses(witnessAddresses);
+    witnessAddresses.forEach(address -> {
+      logger.info("initWits shuffled addresses:" + ByteArray.toHexString(address.toByteArray()));
+    });
+    setCurrentShuffledWitnesses(witnessAddresses);
   }
 
-  // witness
-  public List<WitnessCapsule> getWitnesses() {
-    witsRead.lock();
-    try {
-      return this.wits;
-    } finally {
-      witsRead.unlock();
-    }
-
-  }
-
-  // witness
   public WitnessCapsule getWitnesseByAddress(ByteString address) {
-    witsRead.lock();
-    try {
-      final WitnessCapsule[] witnessCapsule = {null};
-      this.wits.forEach(wit -> {
-        if (Arrays.equals(address.toByteArray(), wit.getAddress().toByteArray())) {
-          witnessCapsule[0] = wit;
-          return;
-        }
-      });
-      return witnessCapsule[0];
-    } finally {
-      witsRead.unlock();
-    }
-
+    return this.manager.getWitnessStore().get(address.toByteArray());
   }
 
-  public void setWitnesses(List<WitnessCapsule> wits) {
-    witsWrite.lock();
-    this.wits = wits;
-    witsWrite.unlock();
+  public List<ByteString> getActiveWitnesses() {
+    return this.manager.getWitnessScheduleStore().getActiveWitnesses();
   }
 
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    witsWrite.lock();
-    this.wits.add(witnessCapsule);
-    witsWrite.unlock();
+  public void setActiveWitnesses(List<ByteString> addresses) {
+    this.manager.getWitnessScheduleStore().saveActiveWitnesses(addresses);
   }
 
-  public void sortWitness() {
-    witsWrite.lock();
-    try {
-      sortWitness(wits);
-    } finally {
-      witsWrite.unlock();
-    }
+  public void addWitness(ByteString address) {
+    List<ByteString> l = getActiveWitnesses();
+    l.add(address);
+    setActiveWitnesses(l);
   }
 
+  public List<ByteString> getCurrentShuffledWitnesses() {
+    return this.manager.getWitnessScheduleStore().getCurrentShuffledWitnesses();
+  }
+
+  public void setCurrentShuffledWitnesses(List<ByteString> addresses) {
+    this.manager.getWitnessScheduleStore().saveCurrentShuffledWitnesses(addresses);
+  }
 
   /**
    * get slot at time.
@@ -207,13 +181,16 @@ public class WitnessController {
     if (currentSlot < 0) {
       throw new RuntimeException("currentSlot should be positive.");
     }
-    final List<WitnessCapsule> currentShuffledWitnesses = this.getShuffledWitnessStates();
+    final List<ByteString> currentShuffledWitnesses = this.getCurrentShuffledWitnesses();
     if (CollectionUtils.isEmpty(currentShuffledWitnesses)) {
       throw new RuntimeException("ShuffledWitnesses is null.");
     }
     final int witnessIndex = (int) currentSlot % currentShuffledWitnesses.size();
+    logger.debug("currentSlot:" + currentSlot
+        + ", witnessIndex" + witnessIndex
+        + ", currentShuffledWitnesses size:" + currentShuffledWitnesses.size());
 
-    final ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex).getAddress();
+    final ByteString scheduledWitness = currentShuffledWitnesses.get(witnessIndex);
     //logger.info("scheduled_witness:" + scheduledWitness.toStringUtf8() + ",slot:" + currentSlot);
 
     return scheduledWitness;
@@ -229,23 +206,23 @@ public class WitnessController {
    * shuffle witnesses
    */
   public void updateWitnessSchedule() {
-    if (CollectionUtils.isEmpty(getWitnesses())) {
+    if (CollectionUtils.isEmpty(getActiveWitnesses())) {
       throw new RuntimeException("Witnesses is empty");
     }
 
-    List<String> currentWitsAddress = getWitnessStringList(getWitnesses());
+    List<ByteString> currentWitsAddress = getCurrentShuffledWitnesses();
     // TODO  what if the number of witness is not same in different slot.
     long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
-    if (num != 0 && num % getWitnesses().size() == 0) {
+    if (num != 0 && num % getActiveWitnesses().size() == 0) {
       logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
-      setShuffledWitnessStates(new RandomGenerator<WitnessCapsule>()
-          .shuffle(getWitnesses(), time));
+      setCurrentShuffledWitnesses(new RandomGenerator<ByteString>()
+          .shuffle(getActiveWitnesses(), time));
 
       logger.info(
-          "updateWitnessSchedule,before:{} ", currentWitsAddress
-              + ",\nafter:{} " + getWitnessStringList(getShuffledWitnessStates()));
+          "updateWitnessSchedule,before:{} ", getAddressStringList(currentWitsAddress)
+              + ",\nafter:{} " + getAddressStringList(getCurrentShuffledWitnesses()));
     }
   }
 
@@ -295,9 +272,9 @@ public class WitnessController {
     if (countWitness.size() == 0) {
       logger.info("No vote, no change to witness.");
     } else {
-      List<WitnessCapsule> currentWits = getWitnesses();
+      List<ByteString> currentWits = getActiveWitnesses();
+      List<ByteString> newWitnessAddressList = new ArrayList<>();
 
-      final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
       witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
         witnessCapsule.setVoteCount(0);
         witnessCapsule.setIsJobs(false);
@@ -329,7 +306,7 @@ public class WitnessController {
           } else {
             witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
             witnessCapsule.setIsJobs(false);
-            witnessCapsuleList.add(witnessCapsule);
+            newWitnessAddressList.add(witnessAddress);
             witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
             logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
                 witnessCapsule.getVoteCount());
@@ -337,22 +314,22 @@ public class WitnessController {
         }
       });
 
-      sortWitness(witnessCapsuleList);
-      if (witnessCapsuleList.size() > Manager.MAX_ACTIVE_WITNESS_NUM) {
-        setWitnesses(witnessCapsuleList.subList(0, Manager.MAX_ACTIVE_WITNESS_NUM));
+      sortWitness(newWitnessAddressList);
+      if (newWitnessAddressList.size() > Manager.MAX_ACTIVE_WITNESS_NUM) {
+        setActiveWitnesses(newWitnessAddressList.subList(0, Manager.MAX_ACTIVE_WITNESS_NUM));
       } else {
-        setWitnesses(witnessCapsuleList);
+        setActiveWitnesses(newWitnessAddressList);
       }
 
-      getWitnesses().forEach(witnessCapsule -> {
+      getActiveWitnesses().forEach(address -> {
+        WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
         witnessCapsule.setIsJobs(true);
         witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
       });
 
       logger.info(
-          "updateWitness,before:{} ",
-          getWitnessStringList(currentWits) + ",\nafter:{} " + getWitnessStringList(
-              getWitnesses()));
+          "updateWitness,before:{} ", getAddressStringList(currentWits)
+              + ",\nafter:{} " + getAddressStringList(getActiveWitnesses()));
     }
 
   }
@@ -361,18 +338,20 @@ public class WitnessController {
     return manager.getDynamicPropertiesStore().calculateFilledSlotsCount();
   }
 
-  private static List<String> getWitnessStringList(List<WitnessCapsule> witnessStates) {
-    return witnessStates.stream()
-        .map(witnessCapsule -> ByteArray.toHexString(witnessCapsule.getAddress().toByteArray()))
+  private static List<String> getAddressStringList(List<ByteString> witnessAddresses) {
+    return witnessAddresses.stream()
+        .map(witnessAddress-> ByteArray.toHexString(witnessAddress.toByteArray()))
         .collect(Collectors.toList());
   }
 
-  private static void sortWitness(List<WitnessCapsule> list) {
+  private void sortWitness(List<ByteString> list) {
     list.sort((a, b) -> {
-      if (b.getVoteCount() != a.getVoteCount()) {
-        return (int) (b.getVoteCount() - a.getVoteCount());
+      long aVoteCount = getWitnesseByAddress(a).getVoteCount();
+      long bVoteCount = getWitnesseByAddress(b).getVoteCount();
+      if (bVoteCount != aVoteCount) {
+        return (int) (bVoteCount - aVoteCount);
       } else {
-        return Long.compare(b.getAddress().hashCode(), a.getAddress().hashCode());
+        return Long.compare(b.hashCode(), a.hashCode());
       }
     });
   }
