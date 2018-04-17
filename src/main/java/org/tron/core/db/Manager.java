@@ -46,6 +46,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -141,15 +142,14 @@ public class Manager {
     witnessController.addWitness(witnessCapsule);
   }
 
-  public BlockCapsule getHead() {
+  public BlockCapsule getHead() throws HeaderNotFound {
     try {
       return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     } catch (ItemNotFoundException e) {
       logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     }
   }
 
