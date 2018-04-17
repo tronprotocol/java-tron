@@ -3,7 +3,6 @@ package org.tron.core.db;
 public class RevokingStore extends AbstractRevokingStore {
 
   private RevokingStore() {
-    enable();
   }
 
   public static RevokingDatabase getInstance() {
