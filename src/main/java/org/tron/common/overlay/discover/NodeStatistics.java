@@ -127,6 +127,10 @@ public class NodeStatistics {
     return isReputationPenalized() ? 0 : persistedReputation / 2 + getSessionReputation();
   }
 
+  public ReasonCode getDisconnectReason() {
+    return tronLastLocalDisconnectReason == null ? tronLastRemoteDisconnectReason : tronLastLocalDisconnectReason;
+  }
+
   private boolean isReputationPenalized() {
 //    if (wrongFork) {
 //      return true;
@@ -141,8 +145,6 @@ public class NodeStatistics {
     }
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
@@ -165,25 +167,9 @@ public class NodeStatistics {
     return lastDisconnectedTime > 0;
   }
 
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
   public void setPredefined(boolean isPredefined) {
     this.isPredefined = isPredefined;
   }
-
-  public boolean isPredefined() {
-    return isPredefined;
-  }
-
-//  private String getStatName() {
-//    return "ethj.discover.nodes." + node.getHost() + ":" + node.getPort();
-//  }
 
   public int getPersistedReputation() {
     return isReputationPenalized() ? 0 : (persistedReputation + getSessionFairReputation()) / 2;

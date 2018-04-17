@@ -100,37 +100,17 @@ public class SyncPool {
     nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
 
     List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> {
-      if (nodeManager.isNodeAlive(n)){
-        peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
-                n.getNode().getHexId(), false);
-      }
-    });
+    newNodes.forEach(n ->  peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
+                n.getNode().getHexId(), false));
   }
 
   private synchronized void prepareActive() {
-    List<Channel> managerActive = new ArrayList<>(channelManager.getActivePeers());
-    NodeSelector nodeSelector = new NodeSelector();
-    List<PeerConnection> active = new ArrayList<>();
-    for (Channel channel : managerActive) {
-      if (nodeSelector.test(nodeManager.getNodeHandler(channel.getNode()))) {
-        active.add((PeerConnection)channel);
-      }
-    }
-
-    if (active.isEmpty()) return;
-
-    //sort by latency
-    active.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-
-    for (PeerConnection channel : active) {
+    for (Channel channel : channelManager.getActivePeers()) {
       if (!activePeers.contains(channel)) {
-        peerDel.onConnectPeer(channel);
+        activePeers.add((PeerConnection)channel);
+        peerDel.onConnectPeer((PeerConnection)channel);
       }
     }
-
-    activePeers.clear();
-    activePeers.addAll(active);
   }
 
   synchronized void logActivePeers() {
@@ -165,8 +145,8 @@ public class SyncPool {
 
   public synchronized void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
-      peerDel.onDisconnectPeer((PeerConnection)peer);
       activePeers.remove(peer);
+      peerDel.onDisconnectPeer((PeerConnection)peer);
     }
   }
 
@@ -183,8 +163,6 @@ public class SyncPool {
 
     Set<String> nodesInUse;
 
-    public NodeSelector() {}
-
     public NodeSelector(Set<String> nodesInUse) {
       this.nodesInUse = nodesInUse;
     }
@@ -192,11 +170,9 @@ public class SyncPool {
     @Override
     public boolean test(NodeHandler handler) {
 
-      //TODO: use reputation sysytem
-
-//      if (!nodeManager.isNodeAlive(handler)){
-//        return false;
-//      }
+      if (!nodeManager.isNodeAlive(handler)){
+        return false;
+      }
 
       if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {

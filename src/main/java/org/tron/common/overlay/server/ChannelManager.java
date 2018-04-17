@@ -91,32 +91,23 @@ public class ChannelManager {
     if (newPeers.isEmpty()) {
       return;
     }
-    List<Channel> processed = new ArrayList<>();
-    int addCnt = 0;
     for (Channel peer : newPeers) {
       if (peer.isProtocolsInitialized()) {
-        if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
-          if (!peer.isActive() && activePeers.size() >= maxActivePeers //&& !trustedPeers.accept(peer.getNode())
-              ) {
-            disconnect(peer, TOO_MANY_PEERS);
-          } else {
-            logger.info("Add active peer {}", peer);
-            activePeers.put(peer.getNodeIdWrapper(), peer);
-            addCnt++;
-          }
-        } else {
-          disconnect(peer, DUPLICATE_PEER);
-        }
-        processed.add(peer);
+        continue;
       }
+      if (activePeers.containsKey(peer.getNodeIdWrapper())){
+        disconnect(peer, DUPLICATE_PEER);
+      }
+      if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+        disconnect(peer, TOO_MANY_PEERS);
+      }
+      if (peer.getNodeStatistics().getReputation() == 0){
+        disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+      }
+      activePeers.put(peer.getNodeIdWrapper(), peer);
+      newPeers.remove(peer);
+      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     }
-
-    if (addCnt > 0) {
-      logger.info("New peers processed: " + processed + ", active peers added: " + addCnt
-          + ", total active peers: " + activePeers.size());
-    }
-
-    newPeers.removeAll(processed);
   }
 
   public void disconnect(Channel peer, ReasonCode reason) {
