@@ -81,8 +81,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       if (msg instanceof DisconnectMessage && remoteId.length == 64) {
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage)msg).getReason()));
-        logger.info("rcv disconnect msg, {}, reason:", ctx.channel().remoteAddress()
-            , ((DisconnectMessage)msg).getReason());
+        logger.info("rcv disconnect msg  {}, {}", ctx.channel().remoteAddress()
+            , ReasonCode.fromInt (((DisconnectMessage)msg).getReason()));
       } else {
         logger.info("rcv not hello msg, {}", ctx.channel().remoteAddress());
       }
