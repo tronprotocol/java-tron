@@ -19,7 +19,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
   protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
     super(dbName);
     this.revokingDatabase = revokingDatabase;
-    revokingDatabase.enable();
   }
 
   @Override

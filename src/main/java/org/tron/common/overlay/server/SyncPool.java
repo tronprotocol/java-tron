@@ -111,10 +111,16 @@ public class SyncPool {
         peerDel.onConnectPeer((PeerConnection)channel);
       }
     }
+    activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
   }
 
   synchronized void logActivePeers() {
-    logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(), channelManager.nodesInUse().size());
+    logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
+    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("{} {}",
+            handler.getNodeStatistics().getReputation(), handler.getNode().toString()));
+
+    logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
+            channelManager.nodesInUse().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
     }
@@ -170,9 +176,9 @@ public class SyncPool {
     @Override
     public boolean test(NodeHandler handler) {
 
-      if (!nodeManager.isNodeAlive(handler)){
-        return false;
-      }
+//      if (!nodeManager.isNodeAlive(handler)){
+//        return false;
+//      }
 
       if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
               handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {

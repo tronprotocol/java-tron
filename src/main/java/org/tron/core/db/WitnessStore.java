@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.WitnessCapsule;
 
 @Slf4j
@@ -22,7 +23,14 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
-    logger.info("address is {},witness is {}", key, account);
+    if (account == null) {
+      //For debugging
+      String readableWitnessAddress = StringUtil.createReadableString(account);
+      List<String> allReadableWitnessAddress = StringUtil
+          .getAddressStringListFromByteArray(dbSource.allKeys());
+      logger.warn("address is {},witness is {},allWitness : ", key, readableWitnessAddress,
+          allReadableWitnessAddress);
+    }
     return null != account;
   }
 

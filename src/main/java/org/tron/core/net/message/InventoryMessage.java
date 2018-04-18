@@ -1,6 +1,8 @@
 package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
@@ -71,6 +73,13 @@ public class InventoryMessage extends TronMessage {
   public InventoryType getInventoryType() {
     unPack();
     return inv.getType();
+  }
+
+  @Override
+  public String toString() {
+    Deque<Sha256Hash> hashes = new LinkedList<>(getHashList());
+    return getType().toString() + ": First hash: " + hashes.peekFirst()
+        + " End hash: " + hashes.peekLast();
   }
 
   private synchronized void unPack() {

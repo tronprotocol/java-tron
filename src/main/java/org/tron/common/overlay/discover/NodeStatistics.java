@@ -21,12 +21,14 @@ package org.tron.common.overlay.discover;
 import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.tron.common.overlay.message.ReasonCode;
 
 public class NodeStatistics {
 
   public final static int REPUTATION_PREDEFINED = 1000500;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 10 * 1000;
+  public final static long FREQUENT_DISCONNECTION_TIMEOUT = 5 * 60 * 1000;
 
   public class StatHandler {
 
@@ -54,6 +56,8 @@ public class NodeStatistics {
   private boolean isPredefined = false;
 
   private int persistedReputation = 0;
+
+  private int disconnectTimes = 0;
 
   // discovery stat
   public final StatHandler discoverOutPing = new StatHandler();
@@ -96,9 +100,14 @@ public class NodeStatistics {
   private int getSessionFairReputation() {
     int discoverReput = 0;
 
-    discoverReput +=
-        min(discoverInPong.get(), 50) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 50) * 2;
+    discoverReput += discoverOutPing.get() == discoverInPong.get() ? 49 : 0;
+    if (discoverOutFind.get() > 0){
+      discoverReput += discoverOutFind.get() == discoverInNeighbours.get() ? 49 : 0;
+    }
+    discoverReput += discoverInNeighbours.get() * 6 - discoverOutFind.get() * 5;
+
+    discoverReput = discoverReput > 120 ? 120 : discoverReput;
+
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int reput = 0;
@@ -128,13 +137,19 @@ public class NodeStatistics {
   }
 
   public ReasonCode getDisconnectReason() {
-    return tronLastLocalDisconnectReason == null ? tronLastRemoteDisconnectReason : tronLastLocalDisconnectReason;
+    if (tronLastLocalDisconnectReason != null){
+      return tronLastLocalDisconnectReason;
+    }
+    if (tronLastRemoteDisconnectReason != null){
+      return tronLastRemoteDisconnectReason;
+    }
+    return ReasonCode.UNKNOWN;
   }
 
-  private boolean isReputationPenalized() {
-//    if (wrongFork) {
-//      return true;
-//    }
+  public boolean isReputationPenalized() {
+    if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
+      return true;
+    }
     if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS &&
         System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
       return true;
@@ -148,19 +163,19 @@ public class NodeStatistics {
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
   }
 
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
+    disconnectTimes++;
   }
 
   public void nodeDisconnectedLocal(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastLocalDisconnectReason = reason;
+    disconnectTimes++;
   }
 
   public boolean wasDisconnected() {
