@@ -262,12 +262,13 @@ public class RpcApiService implements Service {
         ByteString voteAddress = vote.getVoteAddress();
         WitnessCapsule witness = app.getDbManager().getWitnessStore()
             .get(voteAddress.toByteArray());
+        String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
 
         Preconditions.checkNotNull(witness,
-            "witness[" + StringUtil.createReadableString(witness.getAddress()) + "] not exists");
+            "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(
             vote.getVoteCount() <= 0,
-            "VoteAddress[" + StringUtil.createReadableString(voteAddress) + "],VotesCount[" + vote
+            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
       });
     }
