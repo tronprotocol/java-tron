@@ -144,8 +144,6 @@ public class ManagerTest {
       try {
         Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
             dbManager.getBlockIdByNum(1).toString());
-      } catch (BadItemException e) {
-        e.printStackTrace();
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
       }

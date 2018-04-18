@@ -222,6 +222,8 @@ public class Manager {
    * all db should be init here.
    */
   public void init() {
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.disable();
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
     this.setBlockStore(BlockStore.create("block"));
@@ -232,12 +234,9 @@ public class Manager {
     this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = new ArrayList<>();
     this.initGenesis();
-    this.witnessController.initWits();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
     } catch (ItemNotFoundException e) {
