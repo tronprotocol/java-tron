@@ -30,6 +30,7 @@ import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -248,7 +249,8 @@ public class RpcApiService implements Service {
       Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
       AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
-      Preconditions.checkNotNull(account, "OwnerAddress[" + ownerAddress + "] not exists");
+      Preconditions.checkNotNull(account,
+          "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
@@ -260,10 +262,13 @@ public class RpcApiService implements Service {
         ByteString voteAddress = vote.getVoteAddress();
         WitnessCapsule witness = app.getDbManager().getWitnessStore()
             .get(voteAddress.toByteArray());
-        Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
+
+        Preconditions.checkNotNull(witness,
+            "witness[" + StringUtil.createReadableString(witness.getAddress()) + "] not exists");
         Preconditions.checkArgument(
             vote.getVoteCount() <= 0,
-            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+            "VoteAddress[" + StringUtil.createReadableString(voteAddress) + "],VotesCount[" + vote
+                .getVoteCount() + "] <= 0");
       });
     }
 
