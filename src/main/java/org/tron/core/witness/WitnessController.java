@@ -6,14 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.RandomGenerator;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.AccountCapsule;
@@ -334,20 +331,14 @@ public class WitnessController {
       });
 
       logger.info(
-          "updateWitness,before:{} ", getAddressStringList(currentWits)
-              + ",\nafter:{} " + getAddressStringList(getActiveWitnesses()));
+          "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
+              + ",\nafter:{} " + StringUtil.getAddressStringList(getActiveWitnesses()));
     }
 
   }
 
   public int calculateParticipationRate() {
     return manager.getDynamicPropertiesStore().calculateFilledSlotsCount();
-  }
-
-  private static List<String> getAddressStringList(List<ByteString> witnessAddresses) {
-    return witnessAddresses.stream()
-        .map(witnessAddress-> ByteArray.toHexString(witnessAddress.toByteArray()))
-        .collect(Collectors.toList());
   }
 
   private void sortWitness(List<ByteString> list) {
