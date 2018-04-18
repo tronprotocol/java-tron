@@ -108,7 +108,7 @@ public enum ReasonCode {
         return type;
     }
 
-    public byte asByte() {
-        return (byte) reason;
+    public int getReason() {
+        return reason;
     }
 }

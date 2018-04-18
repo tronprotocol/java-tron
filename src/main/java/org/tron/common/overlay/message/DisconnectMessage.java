@@ -23,7 +23,7 @@ public class DisconnectMessage extends P2pMessage {
   public DisconnectMessage(ReasonCode reasonCode) {
     this.disconnectMessage = Protocol.DisconnectMessage
         .newBuilder()
-        .setReason(Protocol.ReasonCode.forNumber(reasonCode.asByte()))
+        .setReason(Protocol.ReasonCode.forNumber(reasonCode.getReason()))
         .build();
     this.type = MessageTypes.P2P_DISCONNECT.asByte();
     this.data = this.disconnectMessage.toByteArray();
@@ -53,12 +53,12 @@ public class DisconnectMessage extends P2pMessage {
   /**
    * Get reason of disconnect.
    */
-  public byte getReason() {
+  public int getReason() {
     if (!this.unpacked) {
       this.unPack();
     }
 
-    return ReasonCode.fromInt(this.disconnectMessage.getReason().getNumber()).asByte();
+    return this.disconnectMessage.getReason().getNumber();
   }
 
   /**
