@@ -51,8 +51,6 @@ public class NodeStatistics {
     }
   }
 
-  private final Node node;
-
   private boolean isPredefined = false;
 
   private int persistedReputation = 0;
@@ -71,17 +69,12 @@ public class NodeStatistics {
   public final SimpleStatter discoverMessageLatency;
   public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
 
-  // rlpx stat
+  //  stat
   public final StatHandler p2pOutHello = new StatHandler();
   public final StatHandler p2pInHello = new StatHandler();
   public final StatHandler p2pHandShake = new StatHandler();
   public final StatHandler tronOutMessage = new StatHandler();
   public final StatHandler tronInMessage = new StatHandler();
-  // Not the fork we are working on
-  // Set only after specific block hashes received
-  //public boolean wrongFork;
-
-  private String clientId = "";
 
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
@@ -89,7 +82,6 @@ public class NodeStatistics {
 
 
   public NodeStatistics(Node node) {
-    this.node = node;
     discoverMessageLatency = new SimpleStatter(node.getId().toString());
   }
 
@@ -100,14 +92,9 @@ public class NodeStatistics {
   private int getSessionFairReputation() {
     int discoverReput = 0;
 
-    discoverReput += discoverOutPing.get() == discoverInPong.get() ? 49 : 0;
-    if (discoverOutFind.get() > 0){
-      discoverReput += discoverOutFind.get() == discoverInNeighbours.get() ? 49 : 0;
-    }
-    discoverReput += discoverInNeighbours.get() * 6 - discoverOutFind.get() * 5;
-
-    discoverReput = discoverReput > 120 ? 120 : discoverReput;
-
+    discoverReput +=
+        min(discoverInPong.get(), 40) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
+    discoverReput += min(discoverInNeighbours.get(), 10) * 2;
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int reput = 0;
@@ -137,19 +124,19 @@ public class NodeStatistics {
   }
 
   public ReasonCode getDisconnectReason() {
-    if (tronLastLocalDisconnectReason != null){
+    if (tronLastLocalDisconnectReason != null) {
       return tronLastLocalDisconnectReason;
     }
-    if (tronLastRemoteDisconnectReason != null){
+    if (tronLastRemoteDisconnectReason != null) {
       return tronLastRemoteDisconnectReason;
     }
     return ReasonCode.UNKNOWN;
   }
 
   public boolean isReputationPenalized() {
-    if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
-      return true;
-    }
+//    if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
+//      return true;
+//    }
     if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS &&
         System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
       return true;
@@ -206,8 +193,7 @@ public class NodeStatistics {
         ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
         (wasDisconnected() ? "X " : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
-        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
-        "[" + clientId + "]";
+        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ");
   }
 
   public class SimpleStatter {
