@@ -17,20 +17,18 @@ import org.tron.protos.Contract.AssetIssueContract;
 public class AssetIssueIndex extends AbstractIndex<AssetIssueContract> {
 
   public static final Attribute<AssetIssueContract, String> AssetIssue_OWNER_RADDRESS =
-      attribute("assetIssue owner address",
+      attribute(
+          "assetIssue owner address",
           assetIssue -> ByteArray.toHexString(assetIssue.getOwnerAddress().toByteArray()));
 
   public static final Attribute<AssetIssueContract, String> AssetIssue_NAME =
-      attribute("assetIssue name",
-          assetIssue -> ByteArray.toHexString(assetIssue.getName().toByteArray()));
+      attribute("assetIssue name", assetIssue -> assetIssue.getName().toStringUtf8());
 
   public static final Attribute<AssetIssueContract, Long> AssetIssue_START =
-      attribute("assetIssue start time",
-          assetIssue -> assetIssue.getStartTime());
+      attribute("assetIssue start time", AssetIssueContract::getStartTime);
 
   public static final Attribute<AssetIssueContract, Long> AssetIssue_END =
-      attribute("assetIssue end time",
-          assetIssue -> assetIssue.getEndTime());
+      attribute("assetIssue end time", AssetIssueContract::getEndTime);
 
   public AssetIssueIndex() {
     super();
@@ -47,5 +45,4 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueContract> {
     addIndex(NavigableIndex.onAttribute(AssetIssue_START));
     addIndex(NavigableIndex.onAttribute(AssetIssue_END));
   }
-
 }

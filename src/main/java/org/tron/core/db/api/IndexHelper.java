@@ -22,21 +22,11 @@ import org.tron.protos.Protocol.Witness;
 @Slf4j
 public class IndexHelper {
 
-  @Getter
-  @Resource
-  private IndexedCollection<Transaction> transactionIndex;
-  @Getter
-  @Resource
-  private IndexedCollection<Block> blockIndex;
-  @Getter
-  @Resource
-  private IndexedCollection<Witness> witnessIndex;
-  @Getter
-  @Resource
-  private IndexedCollection<Account> accountIndex;
-  @Getter
-  @Resource
-  private IndexedCollection<AssetIssueContract> assetIssueIndex;
+  @Getter @Resource private IndexedCollection<Transaction> transactionIndex;
+  @Getter @Resource private IndexedCollection<Block> blockIndex;
+  @Getter @Resource private IndexedCollection<Witness> witnessIndex;
+  @Getter @Resource private IndexedCollection<Account> accountIndex;
+  @Getter @Resource private IndexedCollection<AssetIssueContract> assetIssueIndex;
 
   private BlockStore blockStore;
   private WitnessStore witnessStore;
@@ -44,9 +34,7 @@ public class IndexHelper {
   private TransactionStore transactionStore;
   private AssetIssueStore assetIssueStore;
 
-  /**
-   * init index
-   */
+  /** init index */
   @PostConstruct
   public void init() {
     blockStore.forEach(b -> blockIndex.add(b.getInstance()));
