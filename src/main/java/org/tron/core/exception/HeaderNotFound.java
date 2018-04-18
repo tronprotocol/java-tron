@@ -1,6 +1,6 @@
 package org.tron.core.exception;
 
-public class HeaderNotFound extends TronException {
+public class HeaderNotFound extends StoreException {
 
   public HeaderNotFound() {
     super();
