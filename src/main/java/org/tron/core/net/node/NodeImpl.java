@@ -25,6 +25,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -746,7 +747,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.isEmpty()) {
-      peer.setNeedSyncFromUs(false);
+      if (CollectionUtils.isNotEmpty(summaryChainIds) && summaryChainIds.get(0).getNum() < del
+          .getHeadBlockId().getNum()) {
+        logger.info("Node have a bad link,disconnect peer {}", peer);
+        peer.disconnect(ReasonCode.SYCN_FAIL);
+      } else {
+        peer.setNeedSyncFromUs(false);
+      }
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
