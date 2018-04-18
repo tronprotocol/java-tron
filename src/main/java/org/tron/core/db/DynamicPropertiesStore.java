@@ -83,8 +83,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
           Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
     }
 
-//  private DateTime nextMaintenanceTime = new DateTime(
-//      Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
   }
 
   @Override
@@ -265,15 +263,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void updateNextMaintenanceTime(long blockTime) {
 
-    long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime currentMaintenanceTime = new DateTime(getNextMaintenanceTime());
-    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    DateTime nextMaintenanceTime = currentMaintenanceTime
-        .plus((round + 1) * maintenanceTimeInterval);
-    saveNextMaintenanceTime(nextMaintenanceTime.getMillis());
+    long currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime) / MAINTENANCE_TIME_INTERVAL;
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * MAINTENANCE_TIME_INTERVAL;
+    saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "do update NEXT_MAINTENANCE_TIME,currentMaintenanceTime:{}, blockTime:{},NEXT_MAINTENANCE_TIME:{}",
+        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
