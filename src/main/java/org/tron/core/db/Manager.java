@@ -19,12 +19,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -34,7 +32,6 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -285,8 +282,7 @@ public class Manager {
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
         //this.pushBlock(this.genesisBlock);
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
-        this.blockIndexStore.put(ByteArray.fromLong(this.genesisBlock.getNum()),
-            new BytesCapsule(this.genesisBlock.getBlockId().getBytes()));
+        this.blockIndexStore.put(this.genesisBlock.getBlockId());
 
         logger.info("save block: " + this.genesisBlock);
         // init DynamicPropertiesStore
@@ -446,9 +442,7 @@ public class Manager {
       throws ContractValidateException, ContractExeException, ValidateSignatureException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
-    this.blockIndexStore
-        .put(ByteArray.fromLong(block.getNum()),
-            new BytesCapsule(block.getBlockId().getBytes()));
+    this.blockIndexStore.put(block.getBlockId());
   }
 
   private void switchFork(BlockCapsule newHead) {
@@ -715,23 +709,13 @@ public class Manager {
    * Get the block id from the number.
    */
   public BlockId getBlockIdByNum(final long num)
-      throws BadItemException, ItemNotFoundException {
-    final byte[] hash = this.blockIndexStore.get(ByteArray.fromLong(num)).getData();
-    return ArrayUtils.isEmpty(hash)
-        ? this.genesisBlock.getBlockId()
-        : new BlockId(Sha256Hash.wrap(hash), num);
+      throws ItemNotFoundException {
+    return this.blockIndexStore.get(num);
   }
 
-  /**
-   * Get number of block by the block id.
-   */
-  public long getBlockNumById(final Sha256Hash hash)
-      throws BadItemException, ItemNotFoundException {
-
-    if (this.khaosDb.containBlock(hash)) {
-      return this.khaosDb.getBlock(hash).getNum();
-    }
-    return blockStore.get(hash.getBytes()).getNum();
+  public BlockCapsule getBlockByNum(final long num)
+      throws ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -880,7 +864,9 @@ public class Manager {
 
   public long getSyncBeginNumber() {
     logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
-    logger.info("syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size()));
+    logger.info(
+        "syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore
+            .size()));
     logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
