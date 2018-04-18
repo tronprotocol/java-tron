@@ -6,6 +6,8 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Event;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +41,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
@@ -467,12 +471,17 @@ public class Manager {
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException,
       ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "PushBlock");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.info("The siganature is not validated.");
           //TODO: throw exception here.
+          catTransaction.setStatus(CatTransactionStatus.VALIDATE_SIGANATURE);
+          Cat.logEvent("Error", CatTransactionStatus.VALIDATE_SIGANATURE);
           return;
         }
 
@@ -480,12 +489,16 @@ public class Manager {
           logger.info("The merkler root doesn't match, Calc result is " + block.calcMerkleRoot()
               + " , the headers is " + block.getMerkleRoot());
           // TODO:throw exception here.
+          catTransaction.setStatus(CatTransactionStatus.VALIDATE_MERKLER);
+          Cat.logEvent("Error", CatTransactionStatus.VALIDATE_MERKLER);
           return;
         }
       }
 
       // checkWitness
       if (!witnessController.validateWitnessSchedule(block)) {
+        catTransaction.setStatus(CatTransactionStatus.VALIDATE_WITNESS_SCHEDULE);
+        Cat.logEvent("Error", CatTransactionStatus.VALIDATE_WITNESS_SCHEDULE);
         throw new ValidateScheduleException("validateWitnessSchedule error");
       }
 
@@ -493,10 +506,14 @@ public class Manager {
       //DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
+          catTransaction.setStatus(CatTransactionStatus.LOWER_BLOCK);
+          Cat.logEvent("Error", CatTransactionStatus.LOWER_BLOCK);
           return;
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+          catTransaction.setStatus(CatTransactionStatus.LOWER_BLOCK);
+          Cat.logEvent("Error", CatTransactionStatus.LOWER_BLOCK);
           return;
         }
         //switch fork
@@ -530,6 +547,8 @@ public class Manager {
               + ", khaosDb unlinkMiniStore size: " + khaosDb.getMiniUnlinkedStore().size()
           );
 
+          catTransaction.setStatus(CatTransactionStatus.SWITCH_FORK);
+          Cat.logEvent("Error", CatTransactionStatus.SWITCH_FORK);
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
@@ -539,11 +558,17 @@ public class Manager {
           this.blockIndexStore
               .put(ByteArray.fromLong(block.getNum()),
                   new BytesCapsule(block.getBlockId().getBytes()));
+          Cat.logEvent("Info", Event.SUCCESS);
+          Cat.logMetricForCount("PushBlockCount");
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
+          catTransaction.setStatus(CatTransactionStatus.REVOKING_STORE_ERROR);
+          Cat.logEvent("Error", CatTransactionStatus.REVOKING_STORE_ERROR);
         }
       }
       logger.info("save block: " + newBlock);
+    } finally {
+      catTransaction.complete();
     }
   }
 
