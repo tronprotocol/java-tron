@@ -16,6 +16,9 @@
 package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class StringUtil {
 
@@ -35,7 +38,23 @@ public class StringUtil {
     return string.toByteArray();
   }
 
+  public static String createReadableString(byte[] bytes) {
+    return ByteArray.toHexString(bytes);
+  }
+
   public static String createReadableString(ByteString string) {
-    return ByteArray.toHexString(string.toByteArray());
+    return createReadableString(string.toByteArray());
+  }
+
+  public static List<String> getAddressStringList(Collection<ByteString> collection) {
+    return collection.stream()
+        .map(bytes -> createReadableString(bytes))
+        .collect(Collectors.toList());
+  }
+
+  public static List<String> getAddressStringListFromByteArray(Collection<byte[]> collection) {
+    return collection.stream()
+        .map(bytes -> createReadableString(bytes))
+        .collect(Collectors.toList());
   }
 }

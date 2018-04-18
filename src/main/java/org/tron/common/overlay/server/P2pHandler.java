@@ -68,7 +68,8 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
-        logger.info("Receive error msg, {}", ctx.channel().remoteAddress());
+        logger.info("rcv disconnect msg  {}, {}", ctx.channel().remoteAddress(),
+               ReasonCode.fromInt (((DisconnectMessage) msg).getReason()));
         ctx.close();
         break;
       case P2P_PING:

@@ -29,12 +29,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
+  private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
+
   private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
 
   private int blockFilledSlotsIndex = 0;
 
-  private DateTime nextMaintenanceTime = new DateTime(
-      Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
@@ -75,6 +75,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       Arrays.fill(blockFilledSlots, 1);
       this.saveBlockFilledSlots(blockFilledSlots);
     }
+
+    try {
+      this.getNextMaintenanceTime();
+    } catch (IllegalArgumentException e) {
+      this.saveNextMaintenanceTime(
+          Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
+    }
+
   }
 
   @Override
@@ -158,6 +166,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(LATEST_SOLIDIFIED_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(number)));
   }
 
+
   public long getLatestSolidifiedBlockNum() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_SOLIDIFIED_BLOCK_NUM))
         .map(ByteArray::toLong)
@@ -231,8 +240,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public DateTime getNextMaintenanceTime() {
-    return nextMaintenanceTime;
+  public long getNextMaintenanceTime() {
+    return Optional.ofNullable(this.dbSource.getData(NEXT_MAINTENANCE_TIME))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NEXT_MAINTENANCE_TIME"));
   }
 
   public long getMaintenanceSkipSlots() {
@@ -243,18 +255,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return SINGLE_REPEAT;
   }
 
-  private void setNextMaintenanceTime(DateTime nextMaintenanceTime) {
-    this.nextMaintenanceTime = nextMaintenanceTime;
+  private void saveNextMaintenanceTime(long nextMaintenanceTime) {
+    this.put(NEXT_MAINTENANCE_TIME,
+        new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
   }
+
 
   public void updateNextMaintenanceTime(long blockTime) {
 
-    long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime currentMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    DateTime nextMaintenanceTime = currentMaintenanceTime
-        .plus((round + 1) * maintenanceTimeInterval);
-    setNextMaintenanceTime(nextMaintenanceTime);
+    long currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime) / MAINTENANCE_TIME_INTERVAL;
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * MAINTENANCE_TIME_INTERVAL;
+    saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
         "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
