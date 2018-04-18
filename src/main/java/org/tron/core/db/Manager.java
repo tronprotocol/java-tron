@@ -135,7 +135,8 @@ public class Manager {
   private List<TransactionCapsule> pendingTransactions;
 
   // transactions popped
-  private List<TransactionCapsule> popedTransactions = new ArrayList<>();
+  private List<TransactionCapsule> popedTransactions = Collections
+      .synchronizedList(new ArrayList<>());
 
 
   //for test only
@@ -235,7 +236,7 @@ public class Manager {
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
-    this.pendingTransactions = new ArrayList<>();
+    this.pendingTransactions = Collections.synchronizedList(new ArrayList<>());
     this.initGenesis();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
