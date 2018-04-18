@@ -4,15 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BlockStore;
-import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStore;
-import org.tron.core.db.TronDatabase;
+import org.tron.core.db.*;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -74,8 +73,10 @@ public class ApplicationImpl implements Application {
   public void shutdown() {
     System.err.println("******** begin to shutdown ********");
     closeConnection();
-    closeRevokingStore();
-    closeAllStore();
+    synchronized (RevokingStore.getInstance()) {
+      closeRevokingStore();
+      closeAllStore();
+    }
     System.err.println("******** end to shutdown ********");
   }
 
@@ -148,6 +149,8 @@ public class ApplicationImpl implements Application {
       System.err.println("******** faild to pop revokingStore. " + e);
     } finally {
       System.err.println("******** after revokingDb size:" + RevokingStore.getInstance().size());
+      System.err.println("******** after revokingDb contains:"
+          + ((AbstractRevokingStore) RevokingStore.getInstance()).getStack());
       System.err.println("******** end to pop revokingDb ********");
     }
   }

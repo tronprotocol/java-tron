@@ -246,7 +246,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public int size() {
+  public synchronized int size() {
     return stack.size();
   }
 
@@ -355,6 +355,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @AllArgsConstructor
   @EqualsAndHashCode
   @Getter
+  @ToString
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;
