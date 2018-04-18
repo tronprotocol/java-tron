@@ -42,6 +42,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
@@ -734,11 +735,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
-    LinkedList<BlockId> blockIds;
+    LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     long remainNum = 0;
 
-    blockIds = del.getLostBlockIds(summaryChainIds);
+    try {
+      blockIds = del.getLostBlockIds(summaryChainIds);
+    } catch (StoreException e) {
+      logger.error(e.getMessage());
+    }
 
     if (blockIds.isEmpty()) {
       peer.setNeedSyncFromUs(false);

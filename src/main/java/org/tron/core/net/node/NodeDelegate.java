@@ -10,8 +10,8 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.net.message.MessageTypes;
 
 public interface NodeDelegate {
@@ -21,10 +21,10 @@ public interface NodeDelegate {
 
   void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
-  LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary);
+  LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws StoreException;
 
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
-      throws UnLinkedBlockException;
+      throws UnLinkedBlockException, StoreException;
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
