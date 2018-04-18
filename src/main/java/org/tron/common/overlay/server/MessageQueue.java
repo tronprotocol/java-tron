@@ -128,7 +128,7 @@ public class MessageQueue {
 
   public void disconnect(ReasonCode reason) {
     if (sendMsgFlag){
-      ctx.writeAndFlush(new DisconnectMessage(reason));
+      ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
       ctx.close();
     }
   }

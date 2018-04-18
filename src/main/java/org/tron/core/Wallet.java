@@ -40,7 +40,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
-import org.tron.core.db.UtxoStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
@@ -57,8 +56,8 @@ import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.Transaction;
+
 
 @Slf4j
 public class Wallet {
@@ -66,7 +65,6 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Getter
-  private UtxoStore utxoStore;
   private Application app;
   private Node p2pnode;
   private Manager dbManager;
@@ -86,7 +84,6 @@ public class Wallet {
   public Wallet(Application app) {
     this.app = app;
     this.p2pnode = app.getP2pNode();
-    utxoStore = app.getDbManager().getUtxoStore();
     dbManager = app.getDbManager();
     this.ecKey = new ECKey(Utils.getRandom());
   }
@@ -185,14 +182,6 @@ public class Wallet {
     return address;
   }
 
-  /**
-   * Get balance by address.
-   */
-  public long getBalance(byte[] address) {
-    long balance = utxoStore.findUtxo(address).stream().mapToLong(TXOutput::getValue).sum();
-    logger.info("balance = {}", balance);
-    return balance;
-  }
 
   public Account getBalance(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
