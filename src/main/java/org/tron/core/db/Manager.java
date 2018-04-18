@@ -8,7 +8,6 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
