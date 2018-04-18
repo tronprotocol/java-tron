@@ -38,9 +38,7 @@ public abstract class TronDatabase<T> implements Quitable {
    */
   @Override
   public void close() {
-    System.err.println("******** begin to close " + getName() + " ********");
     dbSource.closeDB();
-    System.err.println("******** end to close " + getName() + " ********");
   }
 
   public abstract void put(byte[] key, T item);

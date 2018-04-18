@@ -261,9 +261,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void close() throws InterruptedException {
-    System.err.println("******** begin to clean network connection ********");
     getActivePeer().forEach(peer -> disconnectPeer(peer, ReasonCode.USER_REASON));
-    System.err.println("******** end to clean network connection ********");
   }
 
   private void activeTronPump() {
