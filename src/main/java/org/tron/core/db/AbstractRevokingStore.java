@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -28,6 +29,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private boolean disabled = true;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
+  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   @Override
   public Dialog buildDialog() {
@@ -209,9 +211,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
-      state.newIds.forEach(e -> e.database.deleteData(e.key));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
+      state.newIds.forEach(e -> e.database.deleteData(e.key, writeOptions));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
       stack.pollLast();
     } finally {
       disabled = false;
