@@ -98,7 +98,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
       if (!checkVersion(helloMessage, ctx.channel().remoteAddress())) {
         channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.INCOMPATIBLE_PROTOCOL);
-        ctx.writeAndFlush(new DisconnectMessage(ReasonCode.INCOMPATIBLE_PROTOCOL));
+        ctx.writeAndFlush(new DisconnectMessage(ReasonCode.INCOMPATIBLE_PROTOCOL).getSendData());
         ctx.close();
         return;
       }
