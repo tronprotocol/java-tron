@@ -33,19 +33,16 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
@@ -61,10 +58,10 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
+
 @Slf4j
 public class Wallet {
 
-  private BlockStore db;
   @Getter
   private final ECKey ecKey;
   @Getter
@@ -87,7 +84,6 @@ public class Wallet {
   public Wallet(Application app) {
     this.app = app;
     this.p2pnode = app.getP2pNode();
-    this.db = app.getBlockStoreS();
     dbManager = app.getDbManager();
     this.ecKey = new ECKey(Utils.getRandom());
   }
@@ -255,34 +251,18 @@ public class Wallet {
   }
 
   public Block getNowBlock() {
-    Sha256Hash headBlockId = dbManager.getHeadBlockId();
     try {
-
-      return dbManager.getBlockById(headBlockId).getInstance();
-    } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
-    } catch (ItemNotFoundException e) {
+      return dbManager.getHead().getInstance();
+    } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
     }
   }
 
   public Block getBlockByNum(long blockNum) {
-    Sha256Hash headBlockId = null;
     try {
-      headBlockId = dbManager.getBlockIdByNum(blockNum);
-    } catch (BadItemException e) {
-      logger.info(e.getMessage());
-    } catch (ItemNotFoundException e) {
-      logger.info(e.getMessage());
-    }
-    try {
-      return dbManager.getBlockById(headBlockId).getInstance();
-    } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
-    } catch (ItemNotFoundException e) {
+      return dbManager.getBlockByNum(blockNum).getInstance();
+    } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
     }

@@ -29,13 +29,12 @@ import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -121,12 +120,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
-      Sha256Hash headBlockId = app.getDbManager().getHeadBlockId();
       Block block = null;
       try {
-        block = app.getDbManager().getBlockById(headBlockId).getInstance();
-      } catch (BadItemException e) {
-      } catch (ItemNotFoundException e) {
+        block = app.getDbManager().getHead().getInstance();
+      } catch (StoreException e) {
+        logger.error(e.getMessage());
       }
       responseObserver.onNext(block);
       responseObserver.onCompleted();
@@ -134,19 +132,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
-      Sha256Hash headBlockId = null;
-      try {
-        headBlockId = app.getDbManager().getBlockIdByNum(request.getNum());
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
-      }
       Block block = null;
       try {
-        block = app.getDbManager().getBlockById(headBlockId).getInstance();
-      } catch (BadItemException e) {
-      } catch (ItemNotFoundException e) {
+        block = app.getDbManager().getBlockByNum(request.getNum()).getInstance();
+      } catch (StoreException e) {
+        logger.error(e.getMessage());
       }
       responseObserver.onNext(block);
       responseObserver.onCompleted();
@@ -248,7 +238,8 @@ public class RpcApiService implements Service {
       Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
       AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
-      Preconditions.checkNotNull(account, "OwnerAddress[" + ownerAddress + "] not exists");
+      Preconditions.checkNotNull(account,
+          "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
@@ -260,10 +251,14 @@ public class RpcApiService implements Service {
         ByteString voteAddress = vote.getVoteAddress();
         WitnessCapsule witness = app.getDbManager().getWitnessStore()
             .get(voteAddress.toByteArray());
-        Preconditions.checkNotNull(witness, "witness[" + voteAddress + "] not exists");
+        String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
+
+        Preconditions.checkNotNull(witness,
+            "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(
             vote.getVoteCount() <= 0,
-            "VoteAddress[" + voteAddress + "],VotesCount[" + vote.getVoteCount() + "] <= 0");
+            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
+                .getVoteCount() + "] <= 0");
       });
     }
 

@@ -22,8 +22,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnReachBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -92,7 +92,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) {
+  public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
+      throws StoreException {
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
     if (dbManager.getHeadBlockNum() == 0) {
@@ -114,9 +115,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-              .filter(blockId -> containBlockInMainChain(blockId))
-              .findFirst().orElse(null);
-      if (unForkedBlockId == null){
+          .filter(blockId -> containBlockInMainChain(blockId))
+          .findFirst().orElse(null);
+      if (unForkedBlockId == null) {
         return new LinkedList<>();
       }
       //todo: can not find any same block form peer's summary and my db.
@@ -129,21 +130,15 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     LinkedList<BlockId> blockIds = new LinkedList<>();
     for (long i = unForkedBlockIdNum; i <= len; i++) {
-      try {
-        BlockId id = dbManager.getBlockIdByNum(i);
-        blockIds.add(id);
-      } catch (BadItemException e) {
-        return new LinkedList<>();
-      } catch (ItemNotFoundException e) {
-        return new LinkedList<>();
-      }
+      BlockId id = dbManager.getBlockIdByNum(i);
+      blockIds.add(id);
     }
     return blockIds;
   }
 
   @Override
   public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch)
-      throws UnLinkedBlockException {
+      throws UnLinkedBlockException, StoreException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
@@ -177,13 +172,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     long realHighBlkNum = highBlkNum + blockIds.size();
     do {
       if (lowBlkNum <= highNoForkBlkNum) {
-        try {
-          retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
-        } catch (BadItemException e) {
-          logger.info(e.getMessage());
-        } catch (ItemNotFoundException e) {
-          logger.info(e.getMessage());
-        }
+        retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
       } else if (lowBlkNum <= highBlkNum) {
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
       } else {
@@ -191,6 +180,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;
     } while (lowBlkNum <= realHighBlkNum);
+
     return retSummary;
   }
 
