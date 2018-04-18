@@ -6,6 +6,7 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,7 +136,8 @@ public class Manager {
   private List<TransactionCapsule> pendingTransactions;
 
   // transactions popped
-  private List<TransactionCapsule> popedTransactions = new ArrayList<>();
+  private List<TransactionCapsule> popedTransactions = Collections
+      .synchronizedList(Lists.newArrayList());
 
 
   //for test only
@@ -235,7 +237,7 @@ public class Manager {
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
-    this.pendingTransactions = new ArrayList<>();
+    this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
