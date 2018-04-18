@@ -51,7 +51,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
 
     public String getString() {
-      return "Num: " + num + ",ID:" + super.toString();
+      return "Num:" + num + ",ID:" + super.toString();
     }
 
     @Override

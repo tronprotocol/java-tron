@@ -189,7 +189,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg);
+    logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -343,7 +343,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         synchronized (advObjToFetch) {
           InvToSend sendPackage = new InvToSend();
           advObjToFetch.entrySet()
-              .forEach(idToFetch -> {
+              .forEach(idToFetch ->
                 getActivePeer().stream().filter(peer -> !peer.isBusy()
                     && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
                     .findFirst()
@@ -353,8 +353,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       advObjToFetch.remove(idToFetch.getKey());
                       peer.getAdvObjWeRequested()
                           .put(idToFetch.getKey(), Time.getCurrentMillis());
-                    });
-              });
+                    })
+              );
           sendPackage.sendFetch();
         }
       }
@@ -369,7 +369,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       try {
         if (isHandleSyncBlockActive) {
           isHandleSyncBlockActive = false;
-//          Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
+          //Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
           handleSyncBlock();
         }
       } catch (Throwable t) {
@@ -1018,6 +1018,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
+    if (peer.getSyncChainRequested() != null){
+      logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
+      return;
+    }
     try {
       Deque<BlockId> chainSummary =
           del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
@@ -1044,7 +1048,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
     //TODO:when use new p2p framework, remove this
-    logger.info("on disconnect!! " + peer);
 
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet()
