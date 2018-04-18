@@ -20,7 +20,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 
 public class PushBlockTest {
-  private static final long COUNT = 10;
+  private static final long COUNT = 100000;
   private static final String TEST_CAT = "cat/config-cat.conf";
 
   private static Manager dbManager = new Manager();

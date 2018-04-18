@@ -473,6 +473,7 @@ public class Manager {
       ContractExeException, UnLinkedBlockException, ValidateScheduleException {
     com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "PushBlock");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("PushBlockTotalCount");
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -559,7 +560,7 @@ public class Manager {
               .put(ByteArray.fromLong(block.getNum()),
                   new BytesCapsule(block.getBlockId().getBytes()));
           Cat.logEvent("Info", Event.SUCCESS);
-          Cat.logMetricForCount("PushBlockCount");
+          Cat.logMetricForCount("PushBlockSuccessCount");
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
           catTransaction.setStatus(CatTransactionStatus.REVOKING_STORE_ERROR);
