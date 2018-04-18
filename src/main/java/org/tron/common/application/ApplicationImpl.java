@@ -65,7 +65,6 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
-    logger.info("******** application shutdown ********");
     p2pNode.setNodeDelegate(nodeDelegate);
     resetP2PNode();
   }
@@ -80,6 +79,7 @@ public class ApplicationImpl implements Application {
     }
 
     System.err.println("******** begin to pop revokingDb ********");
+    System.err.println("******** before revokingDb size:" + RevokingStore.getInstance().size());
     boolean exit = false;
     while (!exit) {
       try {
@@ -97,6 +97,7 @@ public class ApplicationImpl implements Application {
       }
     }
 
+    System.err.println("******** after revokingDb size:" + RevokingStore.getInstance().size());
     System.err.println("******** end to pop revokingDb ********");
 
     System.err.println("******** begin to close db ********");

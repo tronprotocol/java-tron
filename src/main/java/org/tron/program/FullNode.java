@@ -43,6 +43,7 @@ public class FullNode {
   }
 
   private static void shutdown(final Application app) {
+    logger.info("******** application shutdown ********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
   }
 }
