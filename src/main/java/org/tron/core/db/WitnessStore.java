@@ -24,6 +24,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
     if (account == null) {
+      //For debugging
       String readableWitnessAddress = StringUtil.createReadableString(account);
       List<String> allReadableWitnessAddress = StringUtil
           .getAddressStringListFromByteArray(dbSource.allKeys());
