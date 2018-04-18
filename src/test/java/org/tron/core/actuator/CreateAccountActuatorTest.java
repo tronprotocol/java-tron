@@ -9,11 +9,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -25,6 +28,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuatorTest {
 
+  private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
@@ -36,15 +40,22 @@ public class CreateAccountActuatorTest {
   private static final String OWNER_ADDRESS_SECOND =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
+  static {
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
+
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
-    dbManager = new Manager();
-    dbManager.init();
+    dbManager = context.getBean(Manager.class);
+//    Args.setParam(new String[]{"--output-directory", dbPath},
+//        "config-junit.conf");
+//    dbManager = new Manager();
+//    dbManager.init();
   }
 
   /**
@@ -126,6 +137,6 @@ public class CreateAccountActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    context.destroy();
   }
 }

@@ -16,14 +16,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -64,14 +68,20 @@ public class Manager {
   private static final long TRXS_SIZE = 2_000_000; // < 2MiB
   public static final long LOOP_INTERVAL = 5000L; // ms,produce block period, must be divisible by 60. millisecond
 
-
   // db store
+  @Autowired
   private AccountStore accountStore;
+  @Autowired
   private TransactionStore transactionStore;
+  @Autowired
   private BlockStore blockStore;
+  @Autowired
   private UtxoStore utxoStore;
+  @Autowired
   private WitnessStore witnessStore;
+  @Autowired
   private AssetIssueStore assetIssueStore;
+  @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockIndexStore blockIndexStore;
   private WitnessScheduleStore witnessScheduleStore;
@@ -81,6 +91,8 @@ public class Manager {
   private BlockCapsule genesisBlock;
 
 
+  private LevelDbDataSourceImpl numHashCache;
+  @Autowired
   private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
   @Getter
@@ -174,7 +186,6 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }
 
-
   public long getHeadBlockTimeStamp() {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
@@ -220,23 +231,11 @@ public class Manager {
     BlockIndexStore.destroy();
   }
 
-  /**
-   * all db should be init here.
-   */
-  public void init() {
+  @PostConstruct
+  public void initOther() {
     revokingStore = RevokingStore.getInstance();
-    revokingStore.disable();
-    this.setAccountStore(AccountStore.create("account"));
-    this.setTransactionStore(TransactionStore.create("trans"));
-    this.setBlockStore(BlockStore.create("block"));
-    this.setUtxoStore(UtxoStore.create("utxo"));
-    this.setWitnessStore(WitnessStore.create("witness"));
-    this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
-    this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
-    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
+    revokingStore.enable();
     this.setWitnessController(WitnessController.createInstance(this));
-    this.setBlockIndexStore(BlockIndexStore.create("block-index"));
-    this.khaosDb = new KhaosDatabase("block" + "_KDB");
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -256,6 +255,18 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
+  }
+
+  /**
+   * all db should be init here.
+   */
+  public void init() {
+    this.setAccountStore(AccountStore.create("account"));
+    this.setTransactionStore(TransactionStore.create("trans"));
+    this.setBlockStore(BlockStore.create("block"));
+    this.setWitnessStore(WitnessStore.create("witness"));
+
+    initOther();
   }
 
   public BlockId getGenesisBlockId() {

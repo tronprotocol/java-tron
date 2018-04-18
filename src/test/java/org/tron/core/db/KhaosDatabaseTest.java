@@ -7,10 +7,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
@@ -22,17 +24,25 @@ public class KhaosDatabaseTest {
 
   private static final String dbPath = "output-khaosDatabase-test";
   private static KhaosDatabase khaosDatabase;
+  private static AnnotationConfigApplicationContext context;
+
+  static {
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    khaosDatabase = new KhaosDatabase("test_khaos");
+    khaosDatabase = context.getBean(KhaosDatabase.class);
   }
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    context.destroy();
   }
 
   @Test

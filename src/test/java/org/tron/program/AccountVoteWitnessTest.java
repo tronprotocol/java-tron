@@ -8,8 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
@@ -17,18 +20,25 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class AccountVoteWitnessTest {
 
-  private static Manager dbManager = new Manager();
+  private static AnnotationConfigApplicationContext context;
+
+  private static Manager dbManager;
   private static String dbPath = "output_witness_test";
+
+  static {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * init db.
    */
   @BeforeClass
   public static void init() {
+    dbManager = context.getBean(Manager.class);
     //Args.setParam(new String[]{}, Constant.TEST_CONF);
-    Args.setParam(new String[]{"-d", dbPath},
-        "config-junit.conf");
-    dbManager.init();
+    //  dbManager = new Manager();
+    //  dbManager.init();
   }
 
   /**
@@ -44,7 +54,8 @@ public class AccountVoteWitnessTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    context.destroy();
+
   }
 
   private static Boolean deleteFolder(File index) {

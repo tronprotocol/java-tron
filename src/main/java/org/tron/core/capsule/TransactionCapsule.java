@@ -253,6 +253,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  // todo mv this static function to capsule util
+  public static byte[] getToAddress(Transaction.Contract contract) {
+    ByteString to;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case TransferContract:
+          to = contractParameter.unpack(TransferContract.class).getToAddress();
+          break;
+        case TransferAssetContract:
+          to = contractParameter.unpack(TransferAssetContract.class).getToAddress();
+          break;
+        case ParticipateAssetIssueContract:
+          to = contractParameter.unpack(ParticipateAssetIssueContract.class).getToAddress();
+          break;
+        // todo add other contract
+
+        default:
+          return null;
+      }
+      return to.toByteArray();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
   public static String getBase64FromByteString(ByteString sign) {
     byte[] r = sign.substring(0, 32).toByteArray();
     byte[] s = sign.substring(32, 64).toByteArray();

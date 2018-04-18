@@ -10,11 +10,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -30,7 +33,7 @@ public class TransferActuatorTest {
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_transfer_test";
-
+  private static AnnotationConfigApplicationContext context;
 
   private static final String OWNER_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -38,16 +41,22 @@ public class TransferActuatorTest {
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final long AMOUNT = 100;
 
+  static {
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
-    dbManager = new Manager();
-    dbManager.init();
+    dbManager = context.getBean(Manager.class);
+//    Args.setParam(new String[]{"--output-directory", dbPath},
+//        "config-junit.conf");
+//    dbManager = new Manager();
+//    dbManager.init();
   }
 
 
@@ -62,7 +71,7 @@ public class TransferActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    context.destroy();
   }
 
   /**

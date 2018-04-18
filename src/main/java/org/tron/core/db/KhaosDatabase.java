@@ -9,12 +9,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.UnLinkedBlockException;
 
+@Component
 public class KhaosDatabase extends TronDatabase {
 
   private class KhaosBlock {
@@ -121,7 +125,8 @@ public class KhaosDatabase extends TronDatabase {
   @Getter
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
-  protected KhaosDatabase(String dbName) {
+  @Autowired
+  protected KhaosDatabase(@Qualifier("block_KDB") String dbName) {
     super(dbName);
   }
 

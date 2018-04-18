@@ -1,16 +1,23 @@
 package org.tron.core.db;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.common.iterator.WitnessIterator;
 
 @Slf4j
+@Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
-  protected WitnessStore(String dbName) {
+  @Autowired
+  protected WitnessStore(@Qualifier("witness") String dbName) {
     super(dbName);
   }
 
@@ -40,6 +47,16 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     instance = null;
   }
 
+
+  @Override
+  public void put(byte[] key, WitnessCapsule item) {
+    if (indexHelper != null) {
+      indexHelper.add(item.getInstance());
+    }
+    super.put(key, item);
+  }
+
+
   /**
    * create fun.
    *
@@ -65,4 +82,8 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     ).collect(Collectors.toList());
   }
 
+  @Override
+  public Iterator<WitnessCapsule> iterator() {
+    return new WitnessIterator(dbSource.iterator());
+  }
 }

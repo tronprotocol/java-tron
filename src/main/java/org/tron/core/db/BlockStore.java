@@ -15,22 +15,31 @@
 
 package org.tron.core.db;
 
+import com.googlecode.cqengine.IndexedCollection;
+import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.db.common.iterator.BlockIterator;
+import org.tron.protos.Protocol.Block;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
+@Component
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
-
   private BlockCapsule head;
+  private IndexedCollection<Block> blockIndex;
 
-  private BlockStore(String dbName) {
+  @Autowired
+  private BlockStore(@Qualifier("block") String dbName) {
     super(dbName);
   }
 
@@ -38,6 +47,14 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   public static void destroy() {
     instance = null;
+  }
+
+  @Override
+  public void put(byte[] key, BlockCapsule item) {
+    if (indexHelper != null) {
+      indexHelper.add(item.getInstance());
+    }
+    super.put(key, item);
   }
 
   /**
@@ -102,4 +119,8 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return null != block;
   }
 
+  @Override
+  public Iterator<BlockCapsule> iterator() {
+    return new BlockIterator(dbSource.iterator());
+  }
 }
