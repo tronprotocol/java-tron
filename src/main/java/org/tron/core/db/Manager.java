@@ -889,7 +889,7 @@ public class Manager {
    * Determine if the current time is maintenance time.
    */
   public boolean needMaintenance(long blockTime) {
-    return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
+    return this.dynamicPropertiesStore.getNextMaintenanceTime() <= blockTime;
   }
 
   /**
