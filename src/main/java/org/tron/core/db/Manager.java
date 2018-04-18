@@ -425,7 +425,7 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  private void eraseBlock() throws BadItemException, ItemNotFoundException {
+  public void eraseBlock() throws BadItemException, ItemNotFoundException {
     dialog.reset();
     BlockCapsule oldHeadBlock = getBlockStore()
         .get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
