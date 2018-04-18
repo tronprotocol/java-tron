@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,6 +28,7 @@ import org.tron.core.exception.HeaderNotFound;
 public class WitnessController {
 
   @Setter
+  @Getter
   private Manager manager;
 //  private volatile List<WitnessCapsule> wits = new ArrayList<>();
 

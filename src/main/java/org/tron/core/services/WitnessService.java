@@ -176,6 +176,14 @@ public class WitnessService implements Service {
       return BlockProductionCondition.NOT_TIME_YET;
     }
 
+    if (now < controller.getManager().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()) {
+      logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
+          new DateTime(now), new DateTime(
+              this.tronApp.getDbManager().getDynamicPropertiesStore()
+                  .getLatestBlockHeaderTimestamp()));
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    }
+
     final ByteString scheduledWitness = controller.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
