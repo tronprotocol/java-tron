@@ -91,9 +91,15 @@ public class AssetIssueActuator extends AbstractActuator {
       }
       Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
 
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(assetIssueContract.getOwnerAddress().toByteArray());
+      if (accountCapsule == null) {
+        throw new ContractValidateException("Account is not exist");
+      }
+
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
           != null) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("Token is exist");
       }
 
     } catch (InvalidProtocolBufferException e) {
