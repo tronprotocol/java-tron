@@ -8,8 +8,8 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Event;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,7 +21,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -50,6 +49,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -79,6 +79,7 @@ public class Manager {
   private AssetIssueStore assetIssueStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockIndexStore blockIndexStore;
+  private WitnessScheduleStore witnessScheduleStore;
 
   @Autowired
   private PeersStore peersStore;
@@ -119,6 +120,14 @@ public class Manager {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
+  public WitnessScheduleStore getWitnessScheduleStore() {
+    return this.witnessScheduleStore;
+  }
+
+  public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
+    this.witnessScheduleStore = witnessScheduleStore;
+  }
+
   public List<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
@@ -132,28 +141,30 @@ public class Manager {
   private List<TransactionCapsule> pendingTransactions;
 
   // transactions popped
-  private List<TransactionCapsule> popedTransactions = new ArrayList<>();
+  private List<TransactionCapsule> popedTransactions = Collections
+      .synchronizedList(Lists.newArrayList());
 
 
   //for test only
-  public List<WitnessCapsule> getWitnesses() {
-    return witnessController.getWitnesses();
+  public List<ByteString> getWitnesses() {
+    return witnessController.getActiveWitnesses();
   }
 
   //for test only
-  public void addWitness(final WitnessCapsule witnessCapsule) {
-    witnessController.addWitness(witnessCapsule);
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses = witnessController.getActiveWitnesses();
+    witnessAddresses.add(address);
+    witnessController.setActiveWitnesses(witnessAddresses);
   }
 
-  public BlockCapsule getHead() {
+  public BlockCapsule getHead() throws HeaderNotFound {
     try {
       return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     } catch (ItemNotFoundException e) {
       logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     } catch (BadItemException e) {
-      logger.info(e.getMessage());
-      return null;
+      throw new HeaderNotFound(e.getMessage());
     }
   }
 
@@ -161,7 +172,6 @@ public class Manager {
   public BlockId getHeadBlockId() {
     return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash(),
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-
   }
 
 
@@ -204,19 +214,24 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  // fot test only
   public void destory() {
-    getAccountStore().destroy();
-    getTransactionStore().destroy();
-    getBlockStore().destroy();
-    getWitnessStore().destory();
-    getAssetIssueStore().destroy();
-    getDynamicPropertiesStore().destroy();
+    AccountStore.destroy();
+    TransactionStore.destroy();
+    BlockStore.destroy();
+    WitnessStore.destory();
+    AssetIssueStore.destroy();
+    DynamicPropertiesStore.destroy();
+    WitnessScheduleStore.destroy();
+    BlockIndexStore.destroy();
   }
 
   /**
    * all db should be init here.
    */
   public void init() {
+    revokingStore = RevokingStore.getInstance();
+    revokingStore.disable();
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
     this.setBlockStore(BlockStore.create("block"));
@@ -224,15 +239,29 @@ public class Manager {
     this.setWitnessStore(WitnessStore.create("witness"));
     this.setAssetIssueStore(AssetIssueStore.create("asset-issue"));
     this.setDynamicPropertiesStore(DynamicPropertiesStore.create("properties"));
+    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
-    revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
     this.khaosDb = new KhaosDatabase("block" + "_KDB");
-    this.pendingTransactions = new ArrayList<>();
+    this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
-    this.witnessController.initWits();
-    this.khaosDb.start(genesisBlock);
+    try {
+      this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+    } catch (ItemNotFoundException e) {
+      logger.error("Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",
+          getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    } catch (BadItemException e) {
+      e.printStackTrace();
+      logger.error("DB data broken!");
+      logger.error("Please delete database directory({}) and restart",
+          Args.getInstance().getOutputDirectory());
+      System.exit(1);
+    }
+    revokingStore.enable();
   }
 
   public BlockId getGenesisBlockId() {
@@ -261,8 +290,7 @@ public class Manager {
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
         //this.pushBlock(this.genesisBlock);
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
-        this.blockIndexStore.put(ByteArray.fromLong(this.genesisBlock.getNum()),
-            new BytesCapsule(this.genesisBlock.getBlockId().getBytes()));
+        this.blockIndexStore.put(this.genesisBlock.getBlockId());
 
         logger.info("save block: " + this.genesisBlock);
         // init DynamicPropertiesStore
@@ -273,6 +301,8 @@ public class Manager {
             this.genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
+        this.witnessController.initWits();
+        this.khaosDb.start(genesisBlock);
       }
     }
   }
@@ -286,10 +316,10 @@ public class Manager {
     genesisBlockArg.getAssets().forEach(account -> {
       account.setAccountType("Normal");//to be set in conf
       final AccountCapsule accountCapsule = new AccountCapsule(account.getAccountName(),
-          ByteString.copyFrom(account.getAddressBytes()),
+          ByteString.copyFrom(account.getAddress()),
           account.getAccountType(),
           account.getBalance());
-      this.accountStore.put(account.getAddressBytes(), accountCapsule);
+      this.accountStore.put(account.getAddress(), accountCapsule);
     });
   }
 
@@ -300,7 +330,7 @@ public class Manager {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg.getWitnesses().forEach(key -> {
-      byte[] keyAddress = ByteArray.fromHexString(key.getAddress());
+      byte[] keyAddress = key.getAddress();
       ByteString address = ByteString.copyFrom(keyAddress);
 
       if (!this.accountStore.has(keyAddress)) {
@@ -369,7 +399,7 @@ public class Manager {
     return true;
   }
 
-  void validateFreq(TransactionCapsule trx) throws HighFreqException {
+  private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
         .getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -377,18 +407,18 @@ public class Manager {
           || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
-        long balacne = accountCapsule.getBalance();
+        long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
-          doValidateFreq(balacne, 0, latestOperationTime);
-        } else {
-          accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+          doValidateFreq(balance, 0, latestOperationTime);
         }
+        accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+        this.getAccountStore().put(accountCapsule.createDbKey(),accountCapsule);
       }
     }
   }
 
-  void doValidateFreq(long balance, int transNumber, long latestOperationTime)
+  private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
     long now = Time.getCurrentMillis();
     // todo: avoid ddos, design more smoothly formula later.
@@ -411,8 +441,16 @@ public class Manager {
     } catch (RevokingStoreIllegalStateException e) {
       logger.debug(e.getMessage(), e);
     }
+    logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
+  }
+
+  private void applyBlock(BlockCapsule block)
+      throws ContractValidateException, ContractExeException, ValidateSignatureException {
+    processBlock(block);
+    this.blockStore.put(block.getBlockId().getBytes(), block);
+    this.blockIndexStore.put(block.getBlockId());
   }
 
   private void switchFork(BlockCapsule newHead) {
@@ -438,11 +476,7 @@ public class Manager {
       branch.forEach(item -> {
         // todo  process the exception carefully later
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          processBlock(item);
-          this.blockStore.put(item.getBlockId().getBytes(), item);
-          this.blockIndexStore
-              .put(ByteArray.fromLong(item.getNum()),
-                  new BytesCapsule(item.getBlockId().getBytes()));
+          applyBlock(item);
           tmpDialog.commit();
         } catch (ValidateSignatureException e) {
           logger.debug(e.getMessage(), e);
@@ -553,7 +587,7 @@ public class Manager {
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
-          this.processBlock(newBlock);
+          applyBlock(newBlock);
           tmpDialog.commit();
           blockStore.put(block.getBlockId().getBytes(), block);
           this.blockIndexStore
@@ -600,6 +634,11 @@ public class Manager {
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+
+    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
+        dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
+    );
   }
 
   /**
@@ -703,23 +742,13 @@ public class Manager {
    * Get the block id from the number.
    */
   public BlockId getBlockIdByNum(final long num)
-      throws BadItemException, ItemNotFoundException {
-    final byte[] hash = this.blockIndexStore.get(ByteArray.fromLong(num)).getData();
-    return ArrayUtils.isEmpty(hash)
-        ? this.genesisBlock.getBlockId()
-        : new BlockId(Sha256Hash.wrap(hash), num);
+      throws ItemNotFoundException {
+    return this.blockIndexStore.get(num);
   }
 
-  /**
-   * Get number of block by the block id.
-   */
-  public long getBlockNumById(final Sha256Hash hash)
-      throws BadItemException, ItemNotFoundException {
-
-    if (this.khaosDb.containBlock(hash)) {
-      return this.khaosDb.getBlock(hash).getNum();
-    }
-    return blockStore.get(hash.getBytes()).getNum();
+  public BlockCapsule getBlockByNum(final long num)
+      throws ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -849,29 +878,29 @@ public class Manager {
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers = witnessController.getWitnesses().stream()
-        .map(wit -> wit.getLatestBlockNum())
+    List<Long> numbers = witnessController.getActiveWitnesses().stream()
+        .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
 
-    long size = witnessController.getWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD)) - 1;
+    long size = witnessController.getActiveWitnesses().size();
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
     if (solidifiedPosition < 0) {
-      logger.warn("updateLatestSolidifiedBlock error,solidifiedPosition:{},wits.size:{}",
+      logger.warn("updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
           solidifiedPosition, size);
       return;
     }
-
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    ((AbstractRevokingStore) revokingStore).setMaxSize((int) (
-        dynamicPropertiesStore.getLatestBlockHeaderNumber()
-            - dynamicPropertiesStore.getLatestSolidifiedBlockNum() + 1)
-    );
+    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public long getSyncBeginNumber() {
+    logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    logger.info(
+        "syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore
+            .size()));
+    logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
@@ -879,7 +908,7 @@ public class Manager {
    * Determine if the current time is maintenance time.
    */
   public boolean needMaintenance(long blockTime) {
-    return this.dynamicPropertiesStore.getNextMaintenanceTime().getMillis() <= blockTime;
+    return this.dynamicPropertiesStore.getNextMaintenanceTime() <= blockTime;
   }
 
   /**

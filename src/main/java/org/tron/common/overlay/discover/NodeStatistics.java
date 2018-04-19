@@ -21,12 +21,14 @@ package org.tron.common.overlay.discover;
 import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.tron.common.overlay.message.ReasonCode;
 
 public class NodeStatistics {
 
   public final static int REPUTATION_PREDEFINED = 1000500;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 10 * 1000;
+  public final static long FREQUENT_DISCONNECTION_TIMEOUT = 5 * 60 * 1000;
 
   public class StatHandler {
 
@@ -49,11 +51,11 @@ public class NodeStatistics {
     }
   }
 
-  private final Node node;
-
   private boolean isPredefined = false;
 
   private int persistedReputation = 0;
+
+  private int disconnectTimes = 0;
 
   // discovery stat
   public final StatHandler discoverOutPing = new StatHandler();
@@ -67,17 +69,12 @@ public class NodeStatistics {
   public final SimpleStatter discoverMessageLatency;
   public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
 
-  // rlpx stat
+  //  stat
   public final StatHandler p2pOutHello = new StatHandler();
   public final StatHandler p2pInHello = new StatHandler();
   public final StatHandler p2pHandShake = new StatHandler();
   public final StatHandler tronOutMessage = new StatHandler();
   public final StatHandler tronInMessage = new StatHandler();
-  // Not the fork we are working on
-  // Set only after specific block hashes received
-  //public boolean wrongFork;
-
-  private String clientId = "";
 
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
@@ -85,7 +82,6 @@ public class NodeStatistics {
 
 
   public NodeStatistics(Node node) {
-    this.node = node;
     discoverMessageLatency = new SimpleStatter(node.getId().toString());
   }
 
@@ -97,8 +93,8 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 50) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 50) * 2;
+        min(discoverInPong.get(), 40) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
+    discoverReput += min(discoverInNeighbours.get(), 10) * 2;
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int reput = 0;
@@ -127,8 +123,18 @@ public class NodeStatistics {
     return isReputationPenalized() ? 0 : persistedReputation / 2 + getSessionReputation();
   }
 
-  private boolean isReputationPenalized() {
-//    if (wrongFork) {
+  public ReasonCode getDisconnectReason() {
+    if (tronLastLocalDisconnectReason != null) {
+      return tronLastLocalDisconnectReason;
+    }
+    if (tronLastRemoteDisconnectReason != null) {
+      return tronLastRemoteDisconnectReason;
+    }
+    return ReasonCode.UNKNOWN;
+  }
+
+  public boolean isReputationPenalized() {
+//    if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
 //      return true;
 //    }
     if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS &&
@@ -141,49 +147,31 @@ public class NodeStatistics {
     }
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
   }
 
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
+    disconnectTimes++;
   }
 
   public void nodeDisconnectedLocal(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastLocalDisconnectReason = reason;
+    disconnectTimes++;
   }
 
   public boolean wasDisconnected() {
     return lastDisconnectedTime > 0;
   }
 
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
   public void setPredefined(boolean isPredefined) {
     this.isPredefined = isPredefined;
   }
-
-  public boolean isPredefined() {
-    return isPredefined;
-  }
-
-//  private String getStatName() {
-//    return "ethj.discover.nodes." + node.getHost() + ":" + node.getPort();
-//  }
 
   public int getPersistedReputation() {
     return isReputationPenalized() ? 0 : (persistedReputation + getSessionFairReputation()) / 2;
@@ -205,8 +193,7 @@ public class NodeStatistics {
         ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
         (wasDisconnected() ? "X " : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
-        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
-        "[" + clientId + "]";
+        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ");
   }
 
   public class SimpleStatter {

@@ -16,6 +16,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
+  private static final int SINGLE_REPEAT = 1;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -28,12 +29,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
+  private static final byte[] BLOCK_FILLED_SLOTS_INDEX = "BLOCK_FILLED_SLOTS_INDEX".getBytes();
+
+  private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
+
   private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
 
-  private int blockFilledSlotsIndex = 0;
-
-  private DateTime nextMaintenanceTime = new DateTime(
-      Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
 
   private DynamicPropertiesStore(String dbName) {
     super(dbName);
@@ -68,17 +69,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getBlockFilledSlotsIndex();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockFilledSlotsIndex(0);
+    }
+
+    try {
       this.getBlockFilledSlots();
     } catch (IllegalArgumentException e) {
       int[] blockFilledSlots = new int[BLOCK_FILLED_SLOTS_NUMBER];
       Arrays.fill(blockFilledSlots, 1);
       this.saveBlockFilledSlots(blockFilledSlots);
     }
-  }
 
-
-  @Override
-  public void delete(byte[] key) {
+    try {
+      this.getNextMaintenanceTime();
+    } catch (IllegalArgumentException e) {
+      this.saveNextMaintenanceTime(
+          Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
+    }
 
   }
 
@@ -94,7 +103,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static DynamicPropertiesStore instance;
 
-  public void destroy() {
+  public static void destroy() {
     instance = null;
   }
 
@@ -132,6 +141,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return result;
   }
 
+  public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
+    logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
+    this.put(BLOCK_FILLED_SLOTS_INDEX,
+        new BytesCapsule(ByteArray.fromInt(blockFilledSlotsIndex)));
+  }
+
+  public int getBlockFilledSlotsIndex() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS_INDEX))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_INDEX"));
+  }
+
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
     this.put(BLOCK_FILLED_SLOTS,
@@ -144,13 +166,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(this::stringToIntArray)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
-    //return ByteArray.toLong(this.dbSource.getData(this.SOLIDIFIED_THRESHOLD));
   }
 
   public void applyBlock(boolean fillBlock) {
     int[] blockFilledSlots = getBlockFilledSlots();
+    int blockFilledSlotsIndex = getBlockFilledSlotsIndex();
     blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
-    blockFilledSlotsIndex = (blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER;
+    saveBlockFilledSlotsIndex((blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER);
     saveBlockFilledSlots(blockFilledSlots);
   }
 
@@ -162,6 +184,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveLatestSolidifiedBlockNum(long number) {
     this.put(LATEST_SOLIDIFIED_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(number)));
   }
+
 
   public long getLatestSolidifiedBlockNum() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_SOLIDIFIED_BLOCK_NUM))
@@ -236,26 +259,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public DateTime getNextMaintenanceTime() {
-    return nextMaintenanceTime;
+  public long getNextMaintenanceTime() {
+    return Optional.ofNullable(this.dbSource.getData(NEXT_MAINTENANCE_TIME))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NEXT_MAINTENANCE_TIME"));
   }
 
   public long getMaintenanceSkipSlots() {
     return MAINTENANCE_SKIP_SLOTS;
   }
 
-  private void setNextMaintenanceTime(DateTime nextMaintenanceTime) {
-    this.nextMaintenanceTime = nextMaintenanceTime;
+  public int getSingleRepeat() {
+    return SINGLE_REPEAT;
   }
+
+  private void saveNextMaintenanceTime(long nextMaintenanceTime) {
+    this.put(NEXT_MAINTENANCE_TIME,
+        new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
+  }
+
 
   public void updateNextMaintenanceTime(long blockTime) {
 
-    long maintenanceTimeInterval = MAINTENANCE_TIME_INTERVAL;
-    DateTime currentMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - currentMaintenanceTime.getMillis()) / maintenanceTimeInterval;
-    DateTime nextMaintenanceTime = currentMaintenanceTime
-        .plus((round + 1) * maintenanceTimeInterval);
-    setNextMaintenanceTime(nextMaintenanceTime);
+    long currentMaintenanceTime = getNextMaintenanceTime();
+    long round = (blockTime - currentMaintenanceTime) / MAINTENANCE_TIME_INTERVAL;
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * MAINTENANCE_TIME_INTERVAL;
+    saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
         "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",

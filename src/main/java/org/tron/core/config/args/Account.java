@@ -35,21 +35,21 @@ public class Account implements Serializable {
   private String accountType;
 
   @Getter
-  private String address;
+  private byte[] address;
 
   private String balance;
 
-  public byte[] getAddressBytes() {
-    return ByteArray.fromHexString(this.address);
-  }
+//  public byte[] getAddressBytes() {
+//    return ByteArray.fromHexString(this.address);
+//  }
 
   /**
-   * Account address is a 42-bits hex string.
+   * Account address is a 21-bits hex string.
    */
-  public void setAddress(final String address) {
+  public void setAddress(final byte[] address) {
     if (!Wallet.addressValid(address)){
       throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 42-bit hexadecimal string.");
+          "The address(" + address + ") must be a 21 bytes.");
     }
     this.address = address;
   }

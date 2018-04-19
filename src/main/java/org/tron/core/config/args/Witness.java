@@ -26,7 +26,7 @@ public class Witness implements Serializable {
   private static final long serialVersionUID = -7446501098542377380L;
 
   @Getter
-  private String address;
+  private byte[] address;
 
   @Getter
   private String url;
@@ -38,10 +38,10 @@ public class Witness implements Serializable {
   /**
    * set address.
    */
-  public void setAddress(final String address) {
+  public void setAddress(final byte[] address) {
     if ( !Wallet.addressValid(address)){
       throw new IllegalArgumentException(
-          "The address(" + address + ") must be a 42-bit hexadecimal string.");
+          "The address(" + address + ") must be a 21 bytes.");
     }
     this.address = address;
   }

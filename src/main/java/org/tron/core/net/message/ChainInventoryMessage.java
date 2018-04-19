@@ -2,6 +2,8 @@ package org.tron.core.net.message;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
@@ -88,6 +90,16 @@ public class ChainInventoryMessage extends TronMessage {
     unpacked = true;
   }
 
+  @Override
+  public String toString() {
+    Deque<BlockId> blockIdWeGet = new LinkedList<>(getBlockIds());
+    StringBuilder sb = new StringBuilder(getType().toString()).append(" :");
+    return blockIdWeGet.isEmpty()
+        ? sb.append(" empty inv").toString()
+        : sb.append(" first blockId: ").append(blockIdWeGet.peek().getString())
+            .append(" end blockId: ").append(blockIdWeGet.peekLast().getString())
+            .append(" size: ").append(blockIdWeGet.size()).toString();
+  }
 
   @Override
   public MessageTypes getType() {

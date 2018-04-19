@@ -23,7 +23,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class TransactionUtil {
 
-  public static Transaction newGenesisTransaction(String key, long value) {
+  public static Transaction newGenesisTransaction(byte[] key, long value) throws IllegalArgumentException {
     return new TransactionCapsule(key, value).getInstance();
   }
 

@@ -50,6 +50,8 @@ public class MessageQueue {
 
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
+  private boolean sendMsgFlag = false;
+
   private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
     private AtomicInteger cnt = new AtomicInteger(0);
 
@@ -75,7 +77,10 @@ public class MessageQueue {
   }
 
   public void activate(ChannelHandlerContext ctx) {
+
     this.ctx = ctx;
+
+    sendMsgFlag = true;
 
     timerTask = timer.scheduleAtFixedRate(() -> {
       try {
@@ -86,18 +91,22 @@ public class MessageQueue {
     }, 10, 10, TimeUnit.MILLISECONDS);
 
     sendMsgThread = new Thread(()->{
-     while (true) {
+     while (sendMsgFlag) {
        try {
+         if (msgQueue.isEmpty()){
+           Thread.sleep(10);
+           continue;
+         }
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData())
                  .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-       }catch (InterruptedException e){
-         break;
+         logger.debug("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
        }catch (Exception e) {
          logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
      }
     });
+    sendMsgThread.setName("sendMsgThread-" + ctx.channel().remoteAddress());
     sendMsgThread.start();
   }
 
@@ -117,22 +126,16 @@ public class MessageQueue {
       msgQueue.offer(msg);
   }
 
-  public void disconnect() {
-    disconnect(StaticMessages.DISCONNECT_MESSAGE);
-  }
-
   public void disconnect(ReasonCode reason) {
-    disconnect(new DisconnectMessage(reason));
-  }
-
-  private void disconnect(DisconnectMessage msg) {
-    ctx.writeAndFlush(msg);
-    ctx.close();
+    if (sendMsgFlag){
+      ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
+      ctx.close();
+    }
   }
 
   public void receivedMessage(Message msg) throws InterruptedException {
 
-    logger.debug("rcv from peer[{}], size:{} data:{}", ctx.channel().remoteAddress(), msg.getSendData().readableBytes(), msg.toString());
+    logger.debug("rcv {} from {}",msg.getType(), ctx.channel().remoteAddress());
 
     if (requestQueue.peek() != null) {
       MessageRoundtrip messageRoundtrip = requestQueue.peek();
@@ -142,6 +145,7 @@ public class MessageQueue {
 
       if (waitingMessage.getAnswerMessage() != null
           && msg.getClass() == waitingMessage.getAnswerMessage()) {
+        logger.info("rcv {} from {}",msg.getType(), ctx.channel().remoteAddress());
         messageRoundtrip.answer();
         channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
       }
@@ -154,16 +158,13 @@ public class MessageQueue {
   }
 
   private void nudgeQueue() {
-    // remove last answered message on the queue
     removeAnsweredMessage(requestQueue.peek());
-    // Now send the next message
-    //sendToWire(respondQueue.poll());
     sendToWire(requestQueue.peek());
   }
 
   private void sendToWire(MessageRoundtrip messageRoundtrip) {
 
-    if (messageRoundtrip == null){
+    if (!sendMsgFlag || messageRoundtrip == null){
       return;
     }
 
@@ -172,8 +173,8 @@ public class MessageQueue {
     }
 
     if (messageRoundtrip.getRetryTimes() > 0){
-      logger.warn("send msg timeout. close channel {}.", ctx.channel().remoteAddress());
-      close();
+      logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
+      ctx.close();
       return;
     }
 
@@ -182,8 +183,7 @@ public class MessageQueue {
     ctx.writeAndFlush(msg.getSendData())
             .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
-    logger.debug("send to peer[{}] retry[{}], length:{} data:{}", ctx.channel().remoteAddress(),
-            messageRoundtrip.getRetryTimes(), msg.getSendData().readableBytes(), msg.toString());
+    logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
 
     if (msg.getAnswerMessage() != null) {
       messageRoundtrip.incRetryTimes();
@@ -192,12 +192,10 @@ public class MessageQueue {
   }
 
   public void close() {
-    sendMsgThread.interrupt();
-    timerTask.cancel(true);
-    if (ctx != null){
-      ctx.close();
-      ctx = null;
-    }
+
+    sendMsgFlag = false;
+
+    timerTask.cancel(false);
   }
 
 }

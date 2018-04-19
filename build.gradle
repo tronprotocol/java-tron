@@ -124,6 +124,9 @@ dependencies {
     compile 'org.unidal.framework:foundation-service:4.0.0'
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+
 }
 
 check.dependsOn 'lint'

@@ -17,6 +17,23 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
+import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
+
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,26 +43,20 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
-import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
-
 
 @Component
 public class ChannelManager {
 
   private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
-  private static final int inboundConnectionBanTimeout = 10 * 1000;
+  private static final int inboundConnectionBanTimeout = 60 * 1000;
 
   private List<Channel> newPeers = new CopyOnWriteArrayList<>();
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
-  private Map<InetAddress, Date> recentlyDisconnected = Collections.synchronizedMap(new LRUMap<InetAddress, Date>(500));
+  private Map<InetAddress, Date> recentlyDisconnected = Collections
+      .synchronizedMap(new LRUMap<InetAddress, Date>(500));
 
   private ScheduledExecutorService mainWorker = Executors.newSingleThreadScheduledExecutor();
 
@@ -72,7 +83,7 @@ public class ChannelManager {
 
     if (this.args.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
-        "PeerServerThread").start();
+          "PeerServerThread").start();
     }
   }
 
@@ -91,32 +102,21 @@ public class ChannelManager {
     if (newPeers.isEmpty()) {
       return;
     }
-    List<Channel> processed = new ArrayList<>();
-    int addCnt = 0;
     for (Channel peer : newPeers) {
-      if (peer.isProtocolsInitialized()) {
-        if (!activePeers.containsKey(peer.getNodeIdWrapper())) {
-          if (!peer.isActive() && activePeers.size() >= maxActivePeers //&& !trustedPeers.accept(peer.getNode())
-              ) {
-            disconnect(peer, TOO_MANY_PEERS);
-          } else {
-            logger.info("Add active peer {}", peer);
-            activePeers.put(peer.getNodeIdWrapper(), peer);
-            addCnt++;
-          }
-        } else {
-          disconnect(peer, DUPLICATE_PEER);
-        }
-        processed.add(peer);
+      if (!peer.isProtocolsInitialized()) {
+        continue;
+      } else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
+        disconnect(peer, DUPLICATE_PEER);
+      } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+        disconnect(peer, TOO_MANY_PEERS);
+      } else if (peer.getNodeStatistics().isReputationPenalized()) {
+        disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+      } else {
+        activePeers.put(peer.getNodeIdWrapper(), peer);
+        newPeers.remove(peer);
+        logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
       }
     }
-
-    if (addCnt > 0) {
-      logger.info("New peers processed: " + processed + ", active peers added: " + addCnt
-          + ", total active peers: " + activePeers.size());
-    }
-
-    newPeers.removeAll(processed);
   }
 
   public void disconnect(Channel peer, ReasonCode reason) {

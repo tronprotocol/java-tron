@@ -9,7 +9,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Time;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -20,7 +19,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 
 public class PushBlockTest {
-  private static final long COUNT = 100000;
+  private static final long COUNT = 1;
   private static final String TEST_CAT = "cat/config-cat.conf";
 
   private static Manager dbManager = new Manager();

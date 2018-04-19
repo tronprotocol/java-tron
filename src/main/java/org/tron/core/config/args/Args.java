@@ -1,12 +1,9 @@
 package org.tron.core.config.args;
 
-import static org.tron.common.crypto.Hash.sha3;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -24,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -309,7 +305,7 @@ public class Args {
 
   private static Witness createWitness(final ConfigObject witnessAccount) {
     final Witness witness = new Witness();
-    witness.setAddress(witnessAccount.get("address").unwrapped().toString());
+    witness.setAddress(Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;
@@ -325,7 +321,7 @@ public class Args {
     final Account account = new Account();
     account.setAccountName(asset.get("accountName").unwrapped().toString());
     account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(asset.get("address").unwrapped().toString());
+    account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
   }

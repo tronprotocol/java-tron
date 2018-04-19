@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -54,6 +55,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         throw new ContractValidateException("Invalidate address");
       }
       ByteString ownerAddress = contract.getOwnerAddress();
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
       AccountStore accountStore = dbManager.getAccountStore();
       byte[] ownerAddressBytes = ownerAddress.toByteArray();
@@ -62,19 +64,20 @@ public class VoteWitnessActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] bytes = vote.getVoteAddress().toByteArray();
+        String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
         if (!dbManager.getAccountStore().has(bytes)) {
           throw new ContractValidateException(
-              "Account[" + contract.getOwnerAddress() + "] not exists");
+              "Account[" + readableWitnessAddress + "] not exists");
         }
         if (!dbManager.getWitnessStore().has(bytes)) {
           throw new ContractValidateException(
-              "Witness[" + contract.getOwnerAddress() + "] not exists");
+              "Witness[" + readableWitnessAddress + "] not exists");
         }
       }
 
       if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException(
-            "Account[" + contract.getOwnerAddress() + "] not exists");
+            "Account[" + readableOwnerAddress + "] not exists");
       }
 
       long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())

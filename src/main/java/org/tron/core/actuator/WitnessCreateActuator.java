@@ -5,6 +5,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -48,13 +49,14 @@ public class WitnessCreateActuator extends AbstractActuator {
       }
 
       final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
+      String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
 
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
       Preconditions.checkArgument(
           this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray()),
-          "account not exists");
+          "account[" + readableOwnerAddress + "] not exists");
 
       AccountCapsule accountCapsule = this.dbManager.getAccountStore()
           .get(contract.getOwnerAddress().toByteArray());
@@ -65,7 +67,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
       Preconditions.checkArgument(
           !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
-          "Witness has existed");
+          "Witness[" + readableOwnerAddress + "] has existed");
 
     } catch (final Exception ex) {
       ex.printStackTrace();
