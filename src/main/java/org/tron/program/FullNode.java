@@ -29,6 +29,7 @@ public class FullNode {
       return;
     }
     Application appT = ApplicationFactory.create(context);
+    shutdown(appT);
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = new RpcApiService(appT, context);
     appT.addService(rpcApiService);
@@ -38,7 +39,11 @@ public class FullNode {
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
-
     rpcApiService.blockUntilShutdown();
+  }
+
+  private static void shutdown(final Application app) {
+    logger.info("******** application shutdown ********");
+    Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
   }
 }
