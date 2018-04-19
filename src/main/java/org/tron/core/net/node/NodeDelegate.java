@@ -42,4 +42,6 @@ public interface NodeDelegate {
 
   BlockCapsule getGenesisBlock();
 
+  long getLatestBlockHeaderNumber();
+
 }

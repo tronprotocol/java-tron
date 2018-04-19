@@ -256,4 +256,9 @@ public class NodeDelegateImpl implements NodeDelegate {
     //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
+
+  @Override
+  public long getLatestBlockHeaderNumber() {
+    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+  }
 }
