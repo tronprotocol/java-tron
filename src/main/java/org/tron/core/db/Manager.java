@@ -381,8 +381,8 @@ public class Manager {
   }
 
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
-        .getContractList();
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
+        trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
@@ -393,7 +393,7 @@ public class Manager {
           doValidateFreq(balance, 0, latestOperationTime);
         }
         accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
-        this.getAccountStore().put(accountCapsule.createDbKey(),accountCapsule);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
   }
@@ -854,8 +854,8 @@ public class Manager {
   public long getSyncBeginNumber() {
     logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
     logger.info(
-        "syncBeginNumber:" + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore
-            .size()));
+        "syncBeginNumber:"
+            + (dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size()));
     logger.info("solidBlockNumber:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }

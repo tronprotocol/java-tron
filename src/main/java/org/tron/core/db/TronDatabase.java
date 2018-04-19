@@ -12,7 +12,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
-public abstract class TronDatabase<T> implements Iterable<T> , Quitable {
+public abstract class TronDatabase<T> implements Iterable<T>, Quitable {
 
   protected LevelDbDataSourceImpl dbSource;
 
