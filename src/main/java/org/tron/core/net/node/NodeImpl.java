@@ -101,10 +101,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private final List<Sha256Hash> trxToAdvertise = new ArrayList<>();
-
-  private final List<BlockId> blockToAdvertise = new ArrayList<>();
-
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
   //public
@@ -239,10 +235,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (msg instanceof BlockMessage) {
       logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
       freshBlockId.offer(((BlockMessage) msg).getBlockId());
-      blockToAdvertise.add(((BlockMessage) msg).getBlockId());
       type = InventoryType.BLOCK;
     } else if (msg instanceof TransactionMessage) {
-      trxToAdvertise.add(msg.getMessageId());
       type = InventoryType.TRX;
     } else {
       return;
