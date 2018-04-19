@@ -258,7 +258,12 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public long getLatestBlockHeaderNumber() {
+  public long getLatestSolidifiedBlockNum() {
     return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+  }
+
+  @Override
+  public long getSyncBeginNumber() {
+    return dbManager.getSyncBeginNumber();
   }
 }

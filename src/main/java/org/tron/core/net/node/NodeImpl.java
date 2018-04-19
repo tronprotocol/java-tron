@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
+import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -750,10 +751,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (blockIds.isEmpty()) {
       if (CollectionUtils.isNotEmpty(summaryChainIds) && summaryChainIds.get(0).getNum() < del
-          .getLatestBlockHeaderNumber()) {
+          .getLatestSolidifiedBlockNum()) {
         logger.info(
             "Node sync block fail, disconnect peer:{}, sync message:{}, latestBlockHeaderNumber:{}",
-            peer, syncMsg, del.getLatestBlockHeaderNumber());
+            peer, syncMsg, del.getLatestSolidifiedBlockNum());
         peer.disconnect(ReasonCode.SYNC_FAIL);
       } else {
         peer.setNeedSyncFromUs(false);
@@ -769,11 +770,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
-//    if (!peer.isNeedSyncFromPeer()
-//        && !summaryChainIds.isEmpty()
-//        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
-//      startSyncWithPeer(peer);
-//    }
+    if (!peer.isNeedSyncFromPeer()
+        && CollectionUtils.isNotEmpty(summaryChainIds)
+        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+        && summaryChainIds.get(0).getNum() >= del.getSyncBeginNumber()) {
+      startSyncWithPeer(peer);
+    }
 
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
