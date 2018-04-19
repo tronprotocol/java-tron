@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.RevokingStore;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
@@ -31,7 +32,7 @@ public class ApplicationImpl implements Application {
     //p2pNode.connectToP2PNetWork();
     p2pNode.syncFrom(blockStoreDb.getHeadBlockId());
   }
-  
+
   @Override
   public void setOptions(Args args) {
 
@@ -69,7 +70,13 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void shutdown() {
-
+    System.err.println("******** begin to shutdown ********");
+    closeConnection();
+    synchronized (RevokingStore.getInstance()) {
+      closeRevokingStore();
+      closeAllStore();
+    }
+    System.err.println("******** end to shutdown ********");
   }
 
   @Override
@@ -103,6 +110,25 @@ public class ApplicationImpl implements Application {
 
   public void setIsProducer(boolean producer) {
     isProducer = producer;
+  }
+
+  private void closeConnection() {
+    System.err.println("******** begin to shutdown connection ********");
+    try {
+      p2pNode.close();
+    } catch (Exception e) {
+      System.err.println("faild to close p2pNode. " + e);
+    } finally {
+      System.err.println("******** end to shutdown connection ********");
+    }
+  }
+
+  private void closeRevokingStore() {
+    RevokingStore.getInstance().shutdown();
+  }
+
+  private void closeAllStore() {
+    dbManager.closeAllStore();
   }
 
 }
