@@ -5,13 +5,14 @@ import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.Quitable;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
-public abstract class TronDatabase<T> implements Iterable<T> {
+public abstract class TronDatabase<T> implements Iterable<T> , Quitable {
 
   protected LevelDbDataSourceImpl dbSource;
 
@@ -36,6 +37,7 @@ public abstract class TronDatabase<T> implements Iterable<T> {
   }
 
   /** close the database. */
+  @Override
   public void close() {
     dbSource.closeDB();
   }
@@ -48,6 +50,10 @@ public abstract class TronDatabase<T> implements Iterable<T> {
       throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException;
 
   public abstract boolean has(byte[] key);
+
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
 
   @Override
   public Iterator<T> iterator() {
