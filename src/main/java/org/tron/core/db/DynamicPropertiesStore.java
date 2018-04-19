@@ -33,11 +33,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
+  private static final byte[] BLOCK_FILLED_SLOTS_INDEX = "BLOCK_FILLED_SLOTS_INDEX".getBytes();
+
   private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
 
   private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
-
-  private int blockFilledSlotsIndex = 0;
 
 
   @Autowired
@@ -71,6 +71,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestSolidifiedBlockNum();
     } catch (IllegalArgumentException e) {
       this.saveLatestSolidifiedBlockNum(0);
+    }
+
+    try {
+      this.getBlockFilledSlotsIndex();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockFilledSlotsIndex(0);
     }
 
     try {
@@ -140,6 +146,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return result;
   }
 
+  public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
+    logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
+    this.put(BLOCK_FILLED_SLOTS_INDEX,
+        new BytesCapsule(ByteArray.fromInt(blockFilledSlotsIndex)));
+  }
+
+  public int getBlockFilledSlotsIndex() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS_INDEX))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_INDEX"));
+  }
+
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
     this.put(BLOCK_FILLED_SLOTS,
@@ -152,13 +171,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(this::stringToIntArray)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
-    //return ByteArray.toLong(this.dbSource.getData(this.SOLIDIFIED_THRESHOLD));
   }
 
   public void applyBlock(boolean fillBlock) {
     int[] blockFilledSlots = getBlockFilledSlots();
+    int blockFilledSlotsIndex = getBlockFilledSlotsIndex();
     blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
-    blockFilledSlotsIndex = (blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER;
+    saveBlockFilledSlotsIndex((blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER);
     saveBlockFilledSlots(blockFilledSlots);
   }
 

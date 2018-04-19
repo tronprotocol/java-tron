@@ -197,6 +197,7 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  // fot test only
   public void destory() {
     AccountStore.destroy();
     TransactionStore.destroy();
@@ -379,25 +380,25 @@ public class Manager {
     return true;
   }
 
-  void validateFreq(TransactionCapsule trx) throws HighFreqException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
+  private void validateFreq(TransactionCapsule trx) throws HighFreqException {
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts = trx.getInstance().getRawData()
+        .getContractList();
     for (Transaction.Contract contract : contracts) {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
-        long balacne = accountCapsule.getBalance();
+        long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
-          doValidateFreq(balacne, 0, latestOperationTime);
-        } else {
-          accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+          doValidateFreq(balance, 0, latestOperationTime);
         }
+        accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+        this.getAccountStore().put(accountCapsule.createDbKey(),accountCapsule);
       }
     }
   }
 
-  void doValidateFreq(long balance, int transNumber, long latestOperationTime)
+  private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
     long now = Time.getCurrentMillis();
     // todo: avoid ddos, design more smoothly formula later.

@@ -668,6 +668,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       freshBlockId.offer(block.getBlockId());
       isAccept = true;
     } catch (BadBlockException e) {
+      logger.error("We get a bad block, reason is " + e.getMessage()
+          + "\n the block is" + block);
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       reason = ReasonCode.REQUESTED;
     } catch (UnLinkedBlockException e) {

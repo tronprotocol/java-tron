@@ -153,7 +153,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     synchronized (this) {
       for (NodeHandler nodeHandler: nodeHandlerMap.values()){
         //if (isNodeAlive(nodeHandler)) {
-          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
+          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getPersistedReputation());
           batch.add(nodeHandler.getNode());
         //}
       }

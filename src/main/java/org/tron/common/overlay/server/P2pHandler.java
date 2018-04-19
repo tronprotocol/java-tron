@@ -17,8 +17,15 @@
  */
 package org.tron.common.overlay.server;
 
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -26,14 +33,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.ReasonCode;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 @Component
 @Scope("prototype")
@@ -69,6 +68,8 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         msgQueue.receivedMessage(msg);
         channel.getNodeStatistics()
             .nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
+        logger.info("rcv disconnect msg  {}, {}", ctx.channel().remoteAddress(),
+               ReasonCode.fromInt (((DisconnectMessage) msg).getReason()));
         ctx.close();
         break;
       case P2P_PING:
