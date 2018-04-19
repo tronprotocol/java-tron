@@ -51,3 +51,5 @@ src/main/resources/META-INF/
 /output_witness/
 
 nodeId.properties
+
+blocks.txt
