@@ -150,8 +150,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
 
-  //sync
-  private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
+  //blocks we requested but not received
+  private Map<BlockId, Long> syncBlockIdWeRequested = new ConcurrentHashMap<>();
+
+  //blocks we received but not processed
+  private Map<BlockId, Long> syncBlockIdWeReceived = new ConcurrentHashMap<>();
 
   private Long unSyncNum = 0L;
 
@@ -598,6 +601,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       syncBlockRequested.remove(blockId);
       //peer.getSyncBlockToFetch().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
+      syncBlockIdWeReceived.put(blockId, System.currentTimeMillis());
       //TODO: maybe use consume pipe here better
       blockWaitToProcBak.add(blkMsg);
       isHandleSyncBlockActive = true;
@@ -695,6 +699,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           });
 
+      syncBlockIdWeReceived.remove(block.getBlockId());
       needSync.forEach(peer -> startSyncWithPeer(peer));
       needFetchAgain.forEach(peer -> syncNextBatchChainIds(peer));
     } else {
@@ -947,7 +952,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           for (BlockId blockId :
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
-                && !syncBlockIdWeRequested.containsKey(blockId)) {
+                && !syncBlockIdWeRequested.containsKey(blockId)
+                && !syncBlockIdWeReceived.containsKey(blockId)) {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
