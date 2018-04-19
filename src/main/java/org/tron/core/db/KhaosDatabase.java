@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -61,7 +61,7 @@ public class KhaosDatabase extends TronDatabase {
   public class KhaosStore {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
-    //private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
+    // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
     private int maxCapcity = 1024;
 
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
@@ -77,23 +77,21 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-
     public void setMaxCapcity(int maxCapcity) {
       this.maxCapcity = maxCapcity;
     }
 
     public void insert(KhaosBlock block) {
       hashKblkMap.put(block.id, block);
-      numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>())
-          .add(block);
+      numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>()).add(block);
     }
 
     public boolean remove(Sha256Hash hash) {
       KhaosBlock block = this.hashKblkMap.get(hash);
-      //Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
+      // Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
       if (block != null) {
         long num = block.num;
-        //parentHash = block.getParentHash();
+        // parentHash = block.getParentHash();
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id == hash);
@@ -119,11 +117,9 @@ public class KhaosDatabase extends TronDatabase {
 
   private KhaosBlock head;
 
-  @Getter
-  private KhaosStore miniStore = new KhaosStore();
+  @Getter private KhaosStore miniStore = new KhaosStore();
 
-  @Getter
-  private KhaosStore miniUnlinkedStore = new KhaosStore();
+  @Getter private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   @Autowired
   protected KhaosDatabase(@Qualifier("block_KDB") String dbName) {
@@ -131,14 +127,10 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   @Override
-  public void put(byte[] key, Object item) {
-
-  }
+  public void put(byte[] key, Object item) {}
 
   @Override
-  public void delete(byte[] key) {
-
-  }
+  public void delete(byte[] key) {}
 
   @Override
   public Object get(byte[] key) {
@@ -149,7 +141,6 @@ public class KhaosDatabase extends TronDatabase {
   public boolean has(byte[] key) {
     return false;
   }
-
 
   void start(BlockCapsule blk) {
     this.head = new KhaosBlock(blk);
@@ -166,16 +157,12 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
-  /**
-   * check if the id is contained in the KhoasDB.
-   */
+  /** check if the id is contained in the KhoasDB. */
   public Boolean containBlock(Sha256Hash hash) {
     return miniStore.getByHash(hash) != null || miniUnlinkedStore.getByHash(hash) != null;
   }
 
-  /**
-   * Get the Block form KhoasDB, if it doesn't exist ,return null.
-   */
+  /** Get the Block form KhoasDB, if it doesn't exist ,return null. */
   public BlockCapsule getBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
         .filter(Objects::nonNull)
@@ -184,9 +171,7 @@ public class KhaosDatabase extends TronDatabase {
         .orElse(null);
   }
 
-  /**
-   * Push the block in the KhoasDB.
-   */
+  /** Push the block in the KhoasDB. */
   public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
@@ -211,9 +196,7 @@ public class KhaosDatabase extends TronDatabase {
     return head.blk;
   }
 
-  /**
-   * pop the head block then remove it.
-   */
+  /** pop the head block then remove it. */
   public boolean pop() {
     KhaosBlock prev = head.parent;
     if (prev != null) {
@@ -223,11 +206,9 @@ public class KhaosDatabase extends TronDatabase {
     return false;
   }
 
-  /**
-   * Find two block's most recent common parent block.
-   */
-  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(Sha256Hash block1,
-      Sha256Hash block2) {
+  /** Find two block's most recent common parent block. */
+  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(
+      Sha256Hash block1, Sha256Hash block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
     KhaosBlock kblk1 = miniStore.getByHash(block1);
@@ -253,12 +234,10 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
 
-  /**
-   * Find two block's most recent common parent block.
-   */
+  /** Find two block's most recent common parent block. */
   @Deprecated
-  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(BlockId block1,
-      BlockId block2) {
+  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(
+      BlockId block1, BlockId block2) {
     LinkedList<BlockCapsule> list1 = new LinkedList<>();
     LinkedList<BlockCapsule> list2 = new LinkedList<>();
     KhaosBlock kblk1 = miniStore.getByHash(block1);

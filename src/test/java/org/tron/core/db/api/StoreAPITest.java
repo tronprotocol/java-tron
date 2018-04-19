@@ -98,7 +98,7 @@ public class StoreAPITest {
   private static Manager dbManager;
   private static StoreAPI storeAPI;
   private static AnnotationConfigApplicationContext context;
-  private static String dbPath = "output_IndexHelper_test";
+  private static String dbPath = "output_StoreAPI_test";
 
   static {
     Args.setParam(new String[] {"-d", dbPath, "-w"}, "config-test-index.conf");
@@ -308,8 +308,8 @@ public class StoreAPITest {
   @Test
   public void getAccountAll() {
     List<Account> accountAll = storeAPI.getAccountAll();
-    Assert.assertEquals("accountAll1", account2, accountAll.get(0));
-    Assert.assertEquals("accountAll2", account1, accountAll.get(1));
+    Assert.assertTrue("accountAll1", accountAll.contains(account1));
+    Assert.assertTrue("accountAll2", accountAll.contains(account2));
   }
 
   @Test
@@ -320,7 +320,7 @@ public class StoreAPITest {
       account = storeAPI.getAccountByAddress(ACCOUNT_ADDRESS_TWO);
       Assert.assertEquals("getAccountByAddress2", account2, account);
       account = storeAPI.getAccountByAddress(null);
-      Assert.assertEquals("getAccountByAddress2", null, account);
+      Assert.assertNull("getAccountByAddress2", account);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -356,9 +356,9 @@ public class StoreAPITest {
               new TransactionCapsule(transaction1).getTransactionId().toString());
       Assert.assertEquals("BlockByNumber1", block1, block);
       block = storeAPI.getBlockByTransactionId("");
-      Assert.assertEquals("BlockByNumber1", null, block);
+      Assert.assertNull("BlockByNumber1", block);
       block = storeAPI.getBlockByTransactionId(null);
-      Assert.assertEquals("BlockByNumber1", null, block);
+      Assert.assertNull("BlockByNumber1", block);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -418,9 +418,9 @@ public class StoreAPITest {
               new TransactionCapsule(transaction2).getTransactionId().toString());
       Assert.assertEquals("TransactionById2", transaction2, transaction);
       transaction = storeAPI.getTransactionById(null);
-      Assert.assertEquals("TransactionById3", null, transaction);
+      Assert.assertNull("TransactionById3", transaction);
       transaction = storeAPI.getTransactionById("");
-      Assert.assertEquals("TransactionById4", null, transaction);
+      Assert.assertNull("TransactionById4", transaction);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -509,9 +509,9 @@ public class StoreAPITest {
       witness = storeAPI.getWitnessByAddress(ACCOUNT_ADDRESS_FOUR);
       Assert.assertEquals("WitnessByAddress4", witness4, witness);
       witness = storeAPI.getWitnessByAddress(null);
-      Assert.assertEquals("WitnessByAddress5", null, witness);
+      Assert.assertNull("WitnessByAddress5", witness);
       witness = storeAPI.getWitnessByAddress("");
-      Assert.assertEquals("WitnessByAddress6", null, witness);
+      Assert.assertNull("WitnessByAddress6", witness);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -529,9 +529,9 @@ public class StoreAPITest {
       witness = storeAPI.getWitnessByUrl(WITNESS_URL_FOUR);
       Assert.assertEquals("WitnessByUrl4", witness4, witness);
       witness = storeAPI.getWitnessByUrl(null);
-      Assert.assertEquals("WitnessByUrl5", null, witness);
+      Assert.assertNull("WitnessByUrl5", witness);
       witness = storeAPI.getWitnessByUrl("");
-      Assert.assertEquals("WitnessByUrl6", null, witness);
+      Assert.assertNull("WitnessByUrl6", witness);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -549,9 +549,9 @@ public class StoreAPITest {
       witness = storeAPI.getWitnessByPublicKey(WITNESS_PUB_K_FOUR);
       Assert.assertEquals("WitnessByPublicKey4", witness4, witness);
       witness = storeAPI.getWitnessByPublicKey(null);
-      Assert.assertEquals("WitnessByPublicKey5", null, witness);
+      Assert.assertNull("WitnessByPublicKey5", witness);
       witness = storeAPI.getWitnessByPublicKey("");
-      Assert.assertEquals("WitnessByPublicKey6", null, witness);
+      Assert.assertNull("WitnessByPublicKey6", witness);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }
@@ -566,7 +566,10 @@ public class StoreAPITest {
   @Test
   public void getAssetIssueAll() {
     List<AssetIssueContract> assetIssueAll = storeAPI.getAssetIssueAll();
-    Assert.assertEquals("AssetIssueAll1", 4, assetIssueAll.size());
+    Assert.assertTrue("AssetIssueAll1", assetIssueAll.contains(assetIssue1));
+    Assert.assertTrue("AssetIssueAll2", assetIssueAll.contains(assetIssue2));
+    Assert.assertTrue("AssetIssueAll3", assetIssueAll.contains(assetIssue3));
+    Assert.assertTrue("AssetIssueAll4", assetIssueAll.contains(assetIssue4));
   }
 
   @Test
@@ -594,9 +597,9 @@ public class StoreAPITest {
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_FOUR);
       Assert.assertEquals("AssetIssueByName4", assetIssue4, assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(null);
-      Assert.assertEquals("AssetIssueByName5", null, assetIssueByName);
+      Assert.assertNull("AssetIssueByName5", assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName("");
-      Assert.assertEquals("AssetIssueByName6", null, assetIssueByName);
+      Assert.assertNull("AssetIssueByName6", assetIssueByName);
     } catch (NonUniqueObjectException e) {
       Assert.fail("Exception " + e);
     }

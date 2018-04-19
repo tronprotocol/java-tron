@@ -31,11 +31,14 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
     if (account == null) {
-      //For debugging
+      // For debugging
       String readableWitnessAddress = StringUtil.createReadableString(account);
-      List<String> allReadableWitnessAddress = StringUtil
-          .getAddressStringListFromByteArray(dbSource.allKeys());
-      logger.warn("address is {},witness is {},allWitness : ", key, readableWitnessAddress,
+      List<String> allReadableWitnessAddress =
+          StringUtil.getAddressStringListFromByteArray(dbSource.allKeys());
+      logger.warn(
+          "address is {},witness is {},allWitness : ",
+          key,
+          readableWitnessAddress,
           allReadableWitnessAddress);
     }
     return null != account;
@@ -47,7 +50,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     instance = null;
   }
 
-
   @Override
   public void put(byte[] key, WitnessCapsule item) {
     if (indexHelper != null) {
@@ -55,7 +57,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     }
     super.put(key, item);
   }
-
 
   /**
    * create fun.
@@ -73,13 +74,13 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     return instance;
   }
 
-  /**
-   * get all witnesses.
-   */
+  /** get all witnesses. */
   public List<WitnessCapsule> getAllWitnesses() {
-    return dbSource.allValues().stream().map(bytes ->
-        new WitnessCapsule(bytes)
-    ).collect(Collectors.toList());
+    return dbSource
+        .allValues()
+        .stream()
+        .map(bytes -> new WitnessCapsule(bytes))
+        .collect(Collectors.toList());
   }
 
   @Override

@@ -27,9 +27,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.common.iterator.BlockIterator;
-import org.tron.protos.Protocol.Block;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol.Block;
 
 @Slf4j
 @Component
@@ -57,9 +57,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     super.put(key, item);
   }
 
-  /**
-   * create fun.
-   */
+  /** create fun. */
   public static BlockStore create(String dbName) {
     if (instance == null) {
       synchronized (BlockStore.class) {
@@ -72,17 +70,12 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return instance;
   }
 
-
-  /**
-   * to do.
-   */
+  /** to do. */
   public Sha256Hash getHeadBlockId() {
     return head == null ? Sha256Hash.ZERO_HASH : head.getBlockId();
   }
 
-  /**
-   * Get the head block's number.
-   */
+  /** Get the head block's number. */
   @Deprecated
   public long getHeadBlockNum() {
     return head == null ? 0 : head.getNum();

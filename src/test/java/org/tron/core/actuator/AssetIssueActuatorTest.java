@@ -49,40 +49,36 @@ public class AssetIssueActuatorTest {
   private static final String URL = "tron-my.com";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /**
-   * Init data.
-   */
+  /** Init data. */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-//    Args.setParam(new String[]{"--output-directory", dbPath},
-//        "config-junit.conf");
-//    dbManager = new Manager();
-//    dbManager.init();
+    //    Args.setParam(new String[]{"--output-directory", dbPath},
+    //        "config-junit.conf");
+    //    dbManager = new Manager();
+    //    dbManager.init();
   }
 
-  /**
-   * create temp Capsule test need.
-   */
+  /** create temp Capsule test need. */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule = new AccountCapsule(
-        ByteString.copyFromUtf8("owner"),
-        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.AssetIssue,
-        ChainConstant.ASSET_ISSUE_FEE);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.AssetIssue,
+            ChainConstant.ASSET_ISSUE_FEE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
   private Any getContract() {
     long nowTime = new Date().getTime();
     return Any.pack(
-        Contract.AssetIssueContract
-            .newBuilder()
+        Contract.AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -104,10 +100,10 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-          .get(ByteString.copyFromUtf8(NAME).toByteArray());
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
 
       Assert.assertEquals(owner.getBalance(), 0L);
@@ -126,17 +122,20 @@ public class AssetIssueActuatorTest {
     AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
-      dbManager.getAssetIssueStore().put(ByteArray.fromString(NAME),
-          new AssetIssueCapsule(getContract().unpack(Contract.AssetIssueContract.class)));
+      dbManager
+          .getAssetIssueStore()
+          .put(
+              ByteArray.fromString(NAME),
+              new AssetIssueCapsule(getContract().unpack(Contract.AssetIssueContract.class)));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-          .get(ByteArray.fromString(NAME));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -148,10 +147,7 @@ public class AssetIssueActuatorTest {
     }
   }
 
-
-  /**
-   * Release resources.
-   */
+  /** Release resources. */
   @AfterClass
   public static void destroy() {
     Args.clearParam();

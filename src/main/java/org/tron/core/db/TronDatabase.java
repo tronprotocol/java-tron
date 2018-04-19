@@ -6,17 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.api.IndexHelper;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.db.api.IndexHelper;
 
 @Slf4j
 public abstract class TronDatabase<T> implements Iterable<T> {
 
   protected LevelDbDataSourceImpl dbSource;
 
-  @Autowired
-  protected IndexHelper indexHelper;
+  @Autowired protected IndexHelper indexHelper;
 
   protected TronDatabase(String dbName) {
     dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), dbName);
@@ -31,16 +30,12 @@ public abstract class TronDatabase<T> implements Iterable<T> {
     return dbSource;
   }
 
-  /**
-   * reset the database.
-   */
+  /** reset the database. */
   public void reset() {
     dbSource.resetDb();
   }
 
-  /**
-   * close the database.
-   */
+  /** close the database. */
   public void close() {
     dbSource.closeDB();
   }
@@ -58,5 +53,4 @@ public abstract class TronDatabase<T> implements Iterable<T> {
   public Iterator<T> iterator() {
     throw new UnsupportedOperationException();
   }
-
 }

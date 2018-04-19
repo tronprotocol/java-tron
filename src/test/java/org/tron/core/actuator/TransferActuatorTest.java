@@ -42,27 +42,21 @@ public class TransferActuatorTest {
   private static final long AMOUNT = 100;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /**
-   * Init data.
-   */
+  /** Init data. */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-//    Args.setParam(new String[]{"--output-directory", dbPath},
-//        "config-junit.conf");
-//    dbManager = new Manager();
-//    dbManager.init();
+    //    Args.setParam(new String[]{"--output-directory", dbPath},
+    //        "config-junit.conf");
+    //    dbManager = new Manager();
+    //    dbManager.init();
   }
 
-
-  /**
-   * Release resources.
-   */
+  /** Release resources. */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -74,17 +68,21 @@ public class TransferActuatorTest {
     context.destroy();
   }
 
-  /**
-   * create temp Capsule test need.
-   */
+  /** create temp Capsule test need. */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule = new AccountCapsule(
-        ByteString.copyFromUtf8("owner"),
-        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal, 10000L);
-    AccountCapsule toAccountCapsule = new AccountCapsule(
-        ByteString.copyFromUtf8("toAccount"),
-        ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 100L);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.Normal,
+            10000L);
+    AccountCapsule toAccountCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("toAccount"),
+            ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+            AccountType.Normal,
+            100L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
@@ -92,8 +90,7 @@ public class TransferActuatorTest {
   private Any getContract(long count) {
     long nowTime = new Date().getTime();
     return Any.pack(
-        Contract.TransferContract
-            .newBuilder()
+        Contract.TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAmount(count)
@@ -108,10 +105,10 @@ public class TransferActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), 10000 - AMOUNT - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), 100 + AMOUNT);
@@ -130,10 +127,10 @@ public class TransferActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), 10000 - 9999 - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), 10099L);
@@ -158,10 +155,8 @@ public class TransferActuatorTest {
       Assert.assertTrue(e instanceof ContractExeException);
       Assert.assertEquals(ret.getInstance().getRet(), code.FAILED);
     }
-    AccountCapsule owner = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    AccountCapsule toAccount = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(TO_ADDRESS));
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     logger.info(owner.getBalance() + ")))))");
     Assert.assertEquals(owner.getBalance(), 0 - ChainConstant.TRANSFER_FEE);
     Assert.assertEquals(toAccount.getBalance(), 10000 + 100L);

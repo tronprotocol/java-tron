@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
@@ -21,8 +20,8 @@ public class TransactionStoreTest {
   private static String dbPath = "output_TransactionStore_test";
   private static TransactionStore transactionStore;
   private static AnnotationConfigApplicationContext context;
-  private static final byte[] data = TransactionStoreTest.randomBytes(32);
-  private static final String key = ByteArray.toHexString(data);
+  private static final byte[] data = TransactionStoreTest.randomBytes(21);
+  private static final byte[] key = TransactionStoreTest.randomBytes(21);
   private static final long value = 111L;
 
   static {
@@ -49,19 +48,18 @@ public class TransactionStoreTest {
     // test get and has method
     try {
       Assert.assertTrue(transactionStore.has(data));
-      Assert.assertEquals(
+      Assert.assertArrayEquals(
           key,
-          ByteArray.toHexString(
-              transactionStore
-                  .get(data)
-                  .getInstance()
-                  .getRawData()
-                  .getContractList()
-                  .get(0)
-                  .getParameter()
-                  .unpack(TransferContract.class)
-                  .getToAddress()
-                  .toByteArray()));
+          transactionStore
+              .get(data)
+              .getInstance()
+              .getRawData()
+              .getContractList()
+              .get(0)
+              .getParameter()
+              .unpack(TransferContract.class)
+              .getToAddress()
+              .toByteArray());
       Assert.assertEquals(
           value,
           transactionStore
@@ -96,6 +94,7 @@ public class TransactionStoreTest {
     // generate the random number
     byte[] result = new byte[length];
     new Random().nextBytes(result);
+    result[0] = Constant.ADD_PRE_FIX_BYTE_TESTNET;
     return result;
   }
 }
