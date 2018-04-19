@@ -23,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -138,7 +139,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch)
-      throws UnLinkedBlockException, StoreException {
+      throws TronException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
@@ -151,6 +152,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
       if (containBlockInMainChain(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
+        if (highBlkNum == 0) {
+          throw new TronException(
+              "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
+                  + beginBLockId.getString());
+        }
         highNoForkBlkNum = highBlkNum;
         if (beginBLockId.getNum() < lowBlkNum) {
           lowBlkNum = beginBLockId.getNum();
@@ -181,7 +187,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {
       logger.error("Check ERROR: highBlkNum:" + highBlkNum + ",blockIdToSyncFirstNum is "
-      + blockIds.get(0).getNum() + ",blockIdToSyncEnd is " + blockIds.get(blockIds.size() - 1).getNum());
+          + blockIds.get(0).getNum() + ",blockIdToSyncEnd is " + blockIds.get(blockIds.size() - 1)
+          .getNum());
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
