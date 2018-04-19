@@ -82,7 +82,7 @@ public enum ReasonCode {
 
     RESET(0x11),
 
-    SYCN_FAIL(0x12),
+    SYNC_FAIL(0x12),
 
     /**
      * [0xFF] Reason not specified
