@@ -144,7 +144,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = dbManager.getSyncBeginNumber();
+    long lowBlkNum = dbManager.getSyncBeginNumber() < 0 ? 0 : dbManager.getSyncBeginNumber();
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
@@ -152,21 +152,36 @@ public class NodeDelegateImpl implements NodeDelegate {
       if (containBlockInMainChain(beginBLockId)) {
         highBlkNum = beginBLockId.getNum();
         highNoForkBlkNum = highBlkNum;
+        if (beginBLockId.getNum() < lowBlkNum) {
+          lowBlkNum = beginBLockId.getNum();
+        }
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
         if (forkList.size() < 2) {
-          throw new UnLinkedBlockException("unlink from :" + beginBLockId);
+          throw new UnLinkedBlockException(
+              "We want to find forkList of this block: " + beginBLockId.getString()
+                  + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
+                  + " we swift and pop it after that time. ");
         }
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
         Collections.reverse(forkList);
         highBlkNum = highNoForkBlkNum + forkList.size();
-        logger.info("highNum: " + highBlkNum);
-        logger.info("forkLastNum: " + forkList.peekLast().getNum());
+        if (highNoForkBlkNum < lowBlkNum) {
+          throw new UnLinkedBlockException(
+              "It is a too old block that we take it as a forked block long long ago"
+                  + "\n lowBlkNum:" + lowBlkNum
+                  + "\n highNoForkBlkNum" + highNoForkBlkNum);
+        }
       }
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
+    }
+
+    if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {
+      logger.error("Check ERROR: highBlkNum:" + highBlkNum + ",blockIdToSyncFirstNum is "
+      + blockIds.get(0).getNum() + ",blockIdToSyncEnd is " + blockIds.get(blockIds.size() - 1).getNum());
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
