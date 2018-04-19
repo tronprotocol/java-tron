@@ -1,10 +1,7 @@
-package org.tron.cat;
+package org.tron.program.cat;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -18,7 +15,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 
-public class PushBlockTest {
+public class PushBlock {
   private static final long COUNT = 1;
   private static final String TEST_CAT = "cat/config-cat.conf";
 
@@ -27,33 +24,29 @@ public class PushBlockTest {
   private static long currntNumber = 1;
   private static String currntParentHash = "718595be637d334a6aaae11afeca9b84f031ef5e45c311ac302eacd4c6cbb73b";
 
-  @BeforeClass
-  public static void init() {
+  public static void main(String[] args) {
+    init();
+
+    testPushBlock();
+
+    removeDb();
+  }
+
+  private static void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
         TEST_CAT);
     dbManager.init();
   }
 
-  @AfterClass
-  public static void removeDb() {
+  private static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
     dbManager.destory();
   }
 
-  @Test
-  public void t() {
+  private static void testPushBlock() {
     for(int i = 0; i < COUNT; ++i) {
-      BlockCapsule blockCapsule = new BlockCapsule(currntNumber, ByteString.copyFrom(ByteArray
-          .fromHexString(currntParentHash)),
-          Time.getCurrentMillis(),
-          ByteString.copyFrom(
-              ECKey.fromPrivate(ByteArray
-                  .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                  .getAddress()));
-      blockCapsule.setMerkleRoot();
-      blockCapsule.sign(
-          ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+      BlockCapsule blockCapsule = createBlockCapsule();
 
       currntNumber += 1;
       currntParentHash = blockCapsule.getBlockId().toString();
@@ -72,5 +65,23 @@ public class PushBlockTest {
         e.printStackTrace();
       }
     }
+  }
+
+  private static BlockCapsule createBlockCapsule() {
+    BlockCapsule blockCapsule = new BlockCapsule(currntNumber, ByteString.copyFrom(ByteArray
+        .fromHexString(currntParentHash)),
+        Time.getCurrentMillis(),
+        ByteString.copyFrom(
+            ECKey.fromPrivate(ByteArray
+                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                .getAddress()));
+
+
+
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(
+        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+
+    return blockCapsule;
   }
 }
