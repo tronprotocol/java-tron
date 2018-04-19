@@ -151,7 +151,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
 
   //sync
-  private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
+  private Map<BlockId, Long> syncBlockIdWeRequested = new ConcurrentHashMap<>();
 
   private Long unSyncNum = 0L;
 
@@ -457,6 +457,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             BlockCapsule block = msg.getBlockCapsule();
             //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
             processSyncBlock(block);
+            syncBlockIdWeRequested.remove(block.getBlockId());
             isBlockProc[0] = true;
           }
         }
@@ -597,7 +598,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       //sync mode
       syncBlockRequested.remove(blockId);
       //peer.getSyncBlockToFetch().remove(blockId);
-      syncBlockIdWeRequested.remove(blockId);
       //TODO: maybe use consume pipe here better
       blockWaitToProcBak.add(blkMsg);
       isHandleSyncBlockActive = true;
