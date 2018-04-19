@@ -82,6 +82,7 @@ public class Manager {
 
   private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
+
   @Getter
   private DialogOptional dialog = DialogOptional.instance();
 
@@ -385,7 +386,6 @@ public class Manager {
         RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
       processTransaction(trx);
       pendingTransactions.add(trx);
-
       tmpDialog.merge();
     } catch (RevokingStoreIllegalStateException e) {
       logger.debug(e.getMessage(), e);
@@ -407,7 +407,7 @@ public class Manager {
           doValidateFreq(balance, 0, latestOperationTime);
         }
         accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
-        this.getAccountStore().put(accountCapsule.createDbKey(),accountCapsule);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
   }
@@ -523,6 +523,7 @@ public class Manager {
       }
 
       BlockCapsule newBlock = this.khaosDb.push(block);
+
       //DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
@@ -698,7 +699,6 @@ public class Manager {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     for (Actuator act : actuatorList) {
-
       act.validate();
       act.execute(ret);
       trxCap.setResult(ret);
