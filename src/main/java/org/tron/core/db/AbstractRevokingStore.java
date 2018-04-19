@@ -258,6 +258,36 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return maxSize.get();
   }
 
+  public synchronized void shutdown() {
+    System.err.println("******** begin to pop revokingDb ********");
+    System.err.println("******** before revokingDb size:" + RevokingStore.getInstance().size());
+    try {
+      disable();
+      boolean exit = false;
+      while (!exit) {
+        try {
+          commit();
+        } catch (RevokingStoreIllegalStateException e) {
+          exit = true;
+        }
+      }
+
+      while (true) {
+        try {
+          pop();
+        } catch (RevokingStoreIllegalStateException e) {
+          break;
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("******** faild to pop revokingStore. " + e);
+    } finally {
+      System.err.println("******** after revokingStore size:" + stack.size());
+      System.err.println("******** after revokingStore contains:" + stack);
+      System.err.println("******** end to pop revokingStore ********");
+    }
+  }
+
   @Slf4j
   @Getter // only for unit test
   public static class Dialog implements AutoCloseable {

@@ -32,4 +32,6 @@ public interface RevokingDatabase {
   int size();
 
   void disable();
+
+  void shutdown();
 }
