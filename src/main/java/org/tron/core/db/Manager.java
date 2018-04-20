@@ -87,10 +87,6 @@ public class Manager {
   @Getter
   private DialogOptional dialog = DialogOptional.instance();
 
-  @Getter
-  @Setter
-  private boolean isSyncMode;
-
   @Getter @Setter private boolean isSyncMode;
 
   @Getter @Setter private String netType;
