@@ -343,16 +343,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           InvToSend sendPackage = new InvToSend();
           advObjToFetch.entrySet()
               .forEach(idToFetch ->
-                getActivePeer().stream().filter(peer -> !peer.isBusy()
-                    && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
-                    .findFirst()
-                    .ifPresent(peer -> {
-                      //TODO: don't fetch too much obj from only one peer
-                      sendPackage.add(idToFetch, peer);
-                      advObjToFetch.remove(idToFetch.getKey());
-                      peer.getAdvObjWeRequested()
-                          .put(idToFetch.getKey(), Time.getCurrentMillis());
-                    })
+                  getActivePeer().stream().filter(peer -> !peer.isBusy()
+                      && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
+                      .findFirst()
+                      .ifPresent(peer -> {
+                        //TODO: don't fetch too much obj from only one peer
+                        sendPackage.add(idToFetch, peer);
+                        advObjToFetch.remove(idToFetch.getKey());
+                        peer.getAdvObjWeRequested()
+                            .put(idToFetch.getKey(), Time.getCurrentMillis());
+                      })
               );
           sendPackage.sendFetch();
         }
@@ -1023,7 +1023,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    if (peer.getSyncChainRequested() != null){
+    if (peer.getSyncChainRequested() != null) {
       logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
       return;
     }
