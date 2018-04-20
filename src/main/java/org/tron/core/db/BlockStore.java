@@ -17,9 +17,6 @@ package org.tron.core.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -47,7 +44,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     if (instance == null) {
       synchronized (BlockStore.class) {
         if (instance == null) {
-          logger.info("adafasdfasdfasdfasdf");
           instance = new BlockStore(dbName);
         }
       }
@@ -55,36 +51,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return instance;
   }
 
-
-  /**
-   * to do.
-   */
-  public Sha256Hash getHeadBlockId() {
-    return head == null ? Sha256Hash.ZERO_HASH : head.getBlockId();
-  }
-
-  /**
-   * Get the head block's number.
-   */
-  @Deprecated
-  public long getHeadBlockNum() {
-    return head == null ? 0 : head.getNum();
-  }
-
-  @Deprecated
-  public DateTime getHeadBlockTime() {
-    return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
-  }
-
-  @Deprecated
-  public long currentASlot() {
-    return getHeadBlockNum(); // assume no missed slot
-  }
-
-  // genesis_time
-  public DateTime getGenesisTime() {
-    return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
-  }
 
   @Override
   public BlockCapsule get(byte[] key) throws ItemNotFoundException, BadItemException {
