@@ -25,6 +25,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.SpendableOutputs;
@@ -32,8 +35,11 @@ import org.tron.protos.Protocol.TXOutput;
 import org.tron.protos.Protocol.TXOutputs;
 
 @Slf4j
+@Component
 public class UtxoStore extends TronDatabase {
-  private UtxoStore(String dbName) {
+
+  @Autowired
+  private UtxoStore(@Qualifier("utxo") String dbName) {
     super(dbName);
   }
 
@@ -93,8 +99,8 @@ public class UtxoStore extends TronDatabase {
         for (int i = 0, len = txOutputs.getOutputsCount(); i < len; i++) {
           TXOutput txOutput = txOutputs.getOutputs(i);
           if (ByteArray.toHexString(ECKey.computeAddress(pubKeyHash))
-                  .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
-                  && accumulated < amount) {
+              .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray()))
+              && accumulated < amount) {
 
             accumulated += txOutput.getValue();
             long[] v = ArrayUtils.nullToEmpty(unspentOutputs.get(keyToHexString));
@@ -117,20 +123,20 @@ public class UtxoStore extends TronDatabase {
    */
   public ArrayList<TXOutput> findUtxo(byte[] address) {
     return getDbSource().allKeys().stream()
-            .map(key -> {
-              try {
-                return TXOutputs.parseFrom(getDbSource().getData(key));
-              } catch (InvalidProtocolBufferException e) {
-                logger.debug(e.getMessage(), e);
-                return null;
-              }
-            })
-            .filter(Objects::nonNull)
-            .map(TXOutputs::getOutputsList)
-            .flatMap(List::stream)
-            .filter(txOutput -> ByteArray.toHexString(ECKey.computeAddress(address))
-                    .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray())))
-            .collect(Collectors.toCollection(ArrayList::new));
+        .map(key -> {
+          try {
+            return TXOutputs.parseFrom(getDbSource().getData(key));
+          } catch (InvalidProtocolBufferException e) {
+            logger.debug(e.getMessage(), e);
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
+        .map(TXOutputs::getOutputsList)
+        .flatMap(List::stream)
+        .filter(txOutput -> ByteArray.toHexString(ECKey.computeAddress(address))
+            .equals(ByteArray.toHexString(txOutput.getPubKeyHash().toByteArray())))
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   @Override

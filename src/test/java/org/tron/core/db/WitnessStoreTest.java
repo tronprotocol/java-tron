@@ -3,32 +3,40 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class WitnessStoreTest {
 
   private static final String dbPath = "output-witnessStore-test";
+  private static AnnotationConfigApplicationContext context;
   WitnessStore witnessStore;
+
+  static {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
 
   @Before
   public void initDb() {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    this.witnessStore = this.witnessStore.create("witness-test");
+    this.witnessStore = context.getBean(WitnessStore.class);
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
     WitnessStore.destory();
+    context.destroy();
   }
 
   @Test

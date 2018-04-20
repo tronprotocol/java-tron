@@ -9,11 +9,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -25,6 +28,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuatorTest {
 
+  private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
@@ -36,54 +40,56 @@ public class CreateAccountActuatorTest {
   private static final String OWNER_ADDRESS_SECOND =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
-    dbManager = new Manager();
-    dbManager.init();
+  static {
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /**
-   * create temp Capsule test need.
-   */
+  /** Init data. */
+  @BeforeClass
+  public static void init() {
+    dbManager = context.getBean(Manager.class);
+    //    Args.setParam(new String[]{"--output-directory", dbPath},
+    //        "config-junit.conf");
+    //    dbManager = new Manager();
+    //    dbManager.init();
+  }
+
+  /** create temp Capsule test need. */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule = new AccountCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-        ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND), AccountType.AssetIssue);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
+            ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
+            AccountType.AssetIssue);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
   }
 
   private Any getContract(String name, String address) {
     return Any.pack(
-        Contract.AccountCreateContract
-            .newBuilder()
+        Contract.AccountCreateContract.newBuilder()
             .setAccountName(ByteString.copyFromUtf8(name))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
   }
 
-  /**
-   * Unit test.
-   */
+  /** Unit test. */
   @Test
   public void firstCreateAccount() {
-    CreateAccountActuator actuator = new CreateAccountActuator(
-        getContract(ACCOUNT_NAME_FRIST, OWNER_ADDRESS_FRIST), dbManager);
+    CreateAccountActuator actuator =
+        new CreateAccountActuator(getContract(ACCOUNT_NAME_FRIST, OWNER_ADDRESS_FRIST), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      AccountCapsule accountCapsule =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
       Assert.assertNotNull(accountCapsule);
-      Assert.assertEquals(accountCapsule.getInstance().getAccountName(),
+      Assert.assertEquals(
+          accountCapsule.getInstance().getAccountName(),
           ByteString.copyFromUtf8(ACCOUNT_NAME_FRIST));
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -92,32 +98,30 @@ public class CreateAccountActuatorTest {
     }
   }
 
-  /**
-   * Unit test.
-   */
+  /** Unit test. */
   @Test
   public void secondCreateAccount() {
-    CreateAccountActuator actuator = new CreateAccountActuator(
-        getContract(ACCOUNT_NAME_SECOND, OWNER_ADDRESS_SECOND), dbManager);
+    CreateAccountActuator actuator =
+        new CreateAccountActuator(
+            getContract(ACCOUNT_NAME_SECOND, OWNER_ADDRESS_SECOND), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
+      AccountCapsule accountCapsule =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
       Assert.assertNotNull(accountCapsule);
-      Assert.assertEquals(accountCapsule.getInstance().getAccountName(),
+      Assert.assertEquals(
+          accountCapsule.getInstance().getAccountName(),
           ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
-  /**
-   * Release resources.
-   */
+  /** Release resources. */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -126,6 +130,6 @@ public class CreateAccountActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    context.destroy();
   }
 }
