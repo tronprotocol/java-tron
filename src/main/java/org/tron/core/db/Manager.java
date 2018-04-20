@@ -212,7 +212,7 @@ public class Manager {
   @PostConstruct
   public void initOther() {
     revokingStore = RevokingStore.getInstance();
-    revokingStore.enable();
+    revokingStore.disable();
     this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
     this.setBlockIndexStore(BlockIndexStore.create("block-index"));
