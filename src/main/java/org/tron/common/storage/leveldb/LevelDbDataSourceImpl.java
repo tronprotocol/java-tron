@@ -49,7 +49,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   boolean alive;
   private String parentName;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   /**
    * constructor.
@@ -180,7 +179,17 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public void putData(byte[] key, byte[] value) {
     resetDbLock.readLock().lock();
     try {
-      database.put(key, value, writeOptions);
+      database.put(key, value);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void putData(byte[] key, byte[] value, WriteOptions options) {
+    resetDbLock.readLock().lock();
+    try {
+      database.put(key, value, options);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -190,7 +199,17 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
   public void deleteData(byte[] key) {
     resetDbLock.readLock().lock();
     try {
-      database.delete(key, writeOptions);
+      database.delete(key);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void deleteData(byte[] key, WriteOptions options) {
+    resetDbLock.readLock().lock();
+    try {
+      database.delete(key, options);
     } finally {
       resetDbLock.readLock().unlock();
     }

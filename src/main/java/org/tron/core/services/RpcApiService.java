@@ -31,9 +31,13 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -47,6 +51,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Slf4j
@@ -169,9 +174,6 @@ public class RpcApiService implements Service {
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
-        //      byte[] addressBa = addressBs.toByteArray();
-        //     long balance = wallet.getBalance(addressBa);
-        //    Account reply = Account.newBuilder().setBalance(balance).build();
         Account reply = wallet.getBalance(req);
         responseObserver.onNext(reply);
       } else {
@@ -181,18 +183,25 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createTransaction(TransferContract req,
+    public void createTransaction(TransferContract request,
         StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getOwnerAddress();
-      ByteString toBs = req.getToAddress();
-      long amount = req.getAmount();
-      if (fromBs != null && toBs != null && amount > 0) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver
+          .onNext(createTransactionCapsule(request, ContractType.TransferContract).getInstance());
       responseObserver.onCompleted();
+    }
+
+    private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
+        ContractType contractType) {
+      TransactionCapsule trx = new TransactionCapsule(message, contractType);
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, app.getDbManager());
+      try {
+        for (Actuator act : actList) {
+          act.validate();
+        }
+        return trx;
+      } catch (ContractValidateException e) {
+        return null;
+      }
     }
 
     @Override
@@ -207,13 +216,8 @@ public class RpcApiService implements Service {
     @Override
     public void createAccount(AccountCreateContract request,
         StreamObserver<Transaction> responseObserver) {
-      if (request.getType() == null || request.getAccountName() == null
-          || request.getOwnerAddress() == null) {
-        responseObserver.onNext(null);
-      } else {
-        Transaction trx = wallet.createAccount(request);
-        responseObserver.onNext(trx);
-      }
+      responseObserver.onNext(
+          createTransactionCapsule(request, ContractType.AccountCreateContract).getInstance());
       responseObserver.onCompleted();
     }
 
@@ -221,13 +225,8 @@ public class RpcApiService implements Service {
     @Override
     public void createAssetIssue(AssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
-      ByteString owner = request.getOwnerAddress();
-      if (owner != null) {
-        Transaction trx = wallet.createTransaction(request);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver.onNext(
+          createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       responseObserver.onCompleted();
     }
 
@@ -263,43 +262,27 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void voteWitnessAccount(VoteWitnessContract req,
-        StreamObserver<Transaction> response) {
-
-      try {
-//        checkVoteWitnessAccount(req);//to be complemented later
-        Transaction trx = wallet.createTransaction(req);
-        response.onNext(trx);
-      } catch (Exception ex) {
-        response.onNext(null);
-      }
-      response.onCompleted();
-    }
-
-    @Override
-    public void createWitness(WitnessCreateContract req,
+    public void voteWitnessAccount(VoteWitnessContract request,
         StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = req.getOwnerAddress();
-
-      if (fromBs != null) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver.onNext(
+          createTransactionCapsule(request, ContractType.VoteWitnessContract).getInstance());
       responseObserver.onCompleted();
     }
 
     @Override
-    public void updateWitness(Contract.WitnessUpdateContract req,
+    public void createWitness(WitnessCreateContract request,
         StreamObserver<Transaction> responseObserver) {
-      if (req.getOwnerAddress() != null) {
-        Transaction trx = wallet.createTransaction(req);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver.onNext(
+          createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
+      responseObserver.onCompleted();
+    }
 
+
+    @Override
+    public void updateWitness(Contract.WitnessUpdateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      responseObserver.onNext(
+          createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
       responseObserver.onCompleted();
     }
 
@@ -358,6 +341,7 @@ public class RpcApiService implements Service {
       ByteString fromBs = request.getOwnerAddress();
 
       if (fromBs != null) {
+
         Transaction trx = wallet.createTransaction(request);
         responseObserver.onNext(trx);
       } else {
