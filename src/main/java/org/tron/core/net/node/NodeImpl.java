@@ -19,6 +19,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -152,8 +153,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
 
-  //sync
-  private HashMap<BlockId, Long> syncBlockIdWeRequested = new HashMap<>();
+  //blocks we requested but not received
+  private ConcurrentSkipListMap<BlockId, Long> syncBlockIdWeRequested = new ConcurrentSkipListMap<>();
+
+  //blocks we received but not processed
+  private ConcurrentSkipListMap<BlockId, Long> syncBlockIdWeReceived = new ConcurrentSkipListMap<>();
 
   private Long unSyncNum = 0L;
 
@@ -477,6 +481,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     StringBuilder sb = new StringBuilder("LocalNode stats:\n");
     sb.append("============\n");
 
+    long requestHeadBlockNum = syncBlockIdWeRequested.isEmpty() ? 0 : syncBlockIdWeRequested.firstKey().getNum();
+    long requestTailBlockNum = syncBlockIdWeRequested.isEmpty() ? 0 : syncBlockIdWeRequested.lastKey().getNum();
+    long receivedHeadBlockNum = syncBlockIdWeReceived.isEmpty() ? 0 : syncBlockIdWeRequested.firstKey().getNum();
+    long receivedTailBlockNum = syncBlockIdWeReceived.isEmpty() ? 0 : syncBlockIdWeRequested.lastKey().getNum();
+
     sb.append(String.format(
         "MyHeadBlockNum: %d\n"
             + "advToSpreadNum: %d\n"
@@ -484,7 +493,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             + "advObjWeRequestedNum: %d\n"
             + "unSyncNum: %d\n"
             + "blockWaitToProcess: %d\n"
-            + "syncBlockIdWeRequested: %d\n"
+            + "syncBlockIdWeRequestedSize: %d\n"
+            + "syncBlockIdWeRequestedHeadNum: %d\n"
+            + "syncBlockIdWeRequestedTailNum: %d\n"
+            + "syncBlockIdWeReceivedSize: %d\n"
+            + "syncBlockIdWeReceivedHeadNum: %d\n"
+            + "syncBlockIdWeReceivedTailNum: %d\n"
             + "badAdvObjSize: %d\n",
         del.getHeadBlockId().getNum(),
         advObjToSpread.size(),
@@ -493,6 +507,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         getUnSyncNum(),
         blockWaitToProc.size(),
         syncBlockIdWeRequested.size(),
+        requestHeadBlockNum,
+        requestTailBlockNum,
+        syncBlockIdWeReceived.size(),
+        receivedHeadBlockNum,
+        receivedTailBlockNum,
         badAdvObj.size()
     ));
 
@@ -595,6 +614,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       syncBlockRequested.remove(blockId);
       //peer.getSyncBlockToFetch().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
+      syncBlockIdWeReceived.put(blockId, System.currentTimeMillis());
       //TODO: maybe use consume pipe here better
       blockWaitToProcBak.add(blkMsg);
       isHandleSyncBlockActive = true;
@@ -700,6 +720,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .forEach(peer -> disconnectPeer(peer, finalReason));
     }
 
+    syncBlockIdWeReceived.remove(block.getBlockId());
     isHandleSyncBlockActive = true;
   }
 
@@ -952,7 +973,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           for (BlockId blockId :
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
-                && !syncBlockIdWeRequested.containsKey(blockId)) {
+                && !syncBlockIdWeRequested.containsKey(blockId)
+                && !syncBlockIdWeReceived.containsKey(blockId)) {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
