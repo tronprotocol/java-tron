@@ -84,8 +84,7 @@ public class Manager {
   @Autowired private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
 
-  @Getter
-  private DialogOptional dialog = DialogOptional.instance();
+  @Getter private DialogOptional dialog = DialogOptional.instance();
 
   @Getter @Setter private boolean isSyncMode;
 
@@ -510,7 +509,7 @@ public class Manager {
 
       BlockCapsule newBlock = this.khaosDb.push(block);
 
-      //DB don't need lower block
+      // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
           return;
@@ -619,12 +618,14 @@ public class Manager {
   public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
     final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
         this.khaosDb.getBranch(
-            getDynamicPropertiesStore().getLatestBlockHeaderHash(),
-            forkBlockHash);
+            getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
 
-    LinkedList<BlockId> result = branch.getValue().stream()
-        .map(blockCapsule -> blockCapsule.getBlockId())
-        .collect(Collectors.toCollection(LinkedList::new));
+    LinkedList<BlockId> result =
+        branch
+            .getValue()
+            .stream()
+            .map(blockCapsule -> blockCapsule.getBlockId())
+            .collect(Collectors.toCollection(LinkedList::new));
     result.add(branch.getValue().peekLast().getParentBlockId());
     return result;
   }
@@ -969,5 +970,4 @@ public class Manager {
       System.err.println("******** end to close " + database.getName() + " ********");
     }
   }
-
 }
