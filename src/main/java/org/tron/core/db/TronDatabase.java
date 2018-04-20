@@ -16,7 +16,8 @@ public abstract class TronDatabase<T> implements Iterable<T>, Quitable {
 
   protected LevelDbDataSourceImpl dbSource;
 
-  @Autowired protected IndexHelper indexHelper;
+  @Autowired
+  protected IndexHelper indexHelper;
 
   protected TronDatabase(String dbName) {
     dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), dbName);
@@ -31,12 +32,16 @@ public abstract class TronDatabase<T> implements Iterable<T>, Quitable {
     return dbSource;
   }
 
-  /** reset the database. */
+  /**
+   * reset the database.
+   */
   public void reset() {
     dbSource.resetDb();
   }
 
-  /** close the database. */
+  /**
+   * close the database.
+   */
   @Override
   public void close() {
     dbSource.closeDB();

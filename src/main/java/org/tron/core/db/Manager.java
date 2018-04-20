@@ -67,30 +67,46 @@ public class Manager {
       5000L; // ms,produce block period, must be divisible by 60. millisecond
 
   // db store
-  @Autowired private AccountStore accountStore;
-  @Autowired private TransactionStore transactionStore;
-  @Autowired private BlockStore blockStore;
-  @Autowired private UtxoStore utxoStore;
-  @Autowired private WitnessStore witnessStore;
-  @Autowired private AssetIssueStore assetIssueStore;
-  @Autowired private DynamicPropertiesStore dynamicPropertiesStore;
+  @Autowired
+  private AccountStore accountStore;
+  @Autowired
+  private TransactionStore transactionStore;
+  @Autowired
+  private BlockStore blockStore;
+  @Autowired
+  private UtxoStore utxoStore;
+  @Autowired
+  private WitnessStore witnessStore;
+  @Autowired
+  private AssetIssueStore assetIssueStore;
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
   private BlockIndexStore blockIndexStore;
   private WitnessScheduleStore witnessScheduleStore;
 
-  @Autowired private PeersStore peersStore;
+  @Autowired
+  private PeersStore peersStore;
   private BlockCapsule genesisBlock;
 
   private LevelDbDataSourceImpl numHashCache;
-  @Autowired private KhaosDatabase khaosDb;
+  @Autowired
+  private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
 
-  @Getter private DialogOptional dialog = DialogOptional.instance();
+  @Getter
+  private DialogOptional dialog = DialogOptional.instance();
 
-  @Getter @Setter private boolean isSyncMode;
+  @Getter
+  @Setter
+  private boolean isSyncMode;
 
-  @Getter @Setter private String netType;
+  @Getter
+  @Setter
+  private String netType;
 
-  @Getter @Setter private WitnessController witnessController;
+  @Getter
+  @Setter
+  private WitnessController witnessController;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -241,7 +257,9 @@ public class Manager {
     revokingStore.enable();
   }
 
-  /** all db should be init here. */
+  /**
+   * all db should be init here.
+   */
   public void init() {
     this.setAccountStore(AccountStore.create("account"));
     this.setTransactionStore(TransactionStore.create("trans"));
@@ -259,7 +277,9 @@ public class Manager {
     return genesisBlock;
   }
 
-  /** init genesis block. */
+  /**
+   * init genesis block.
+   */
   public void initGenesis() {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
@@ -292,7 +312,9 @@ public class Manager {
     }
   }
 
-  /** save account into database. */
+  /**
+   * save account into database.
+   */
   public void initAccount() {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
@@ -311,7 +333,9 @@ public class Manager {
             });
   }
 
-  /** save witnesses into database. */
+  /**
+   * save witnesses into database.
+   */
   private void initWitness() {
     final Args args = Args.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
@@ -339,7 +363,9 @@ public class Manager {
     return this.accountStore;
   }
 
-  /** judge balance. */
+  /**
+   * judge balance.
+   */
   public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = getAccountStore().get(accountAddress);
@@ -355,10 +381,12 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
-  /** push transaction into db. */
+  /**
+   * push transaction into db.
+   */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          HighFreqException {
+      HighFreqException {
     logger.info("push transaction");
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -409,7 +437,9 @@ public class Manager {
     }
   }
 
-  /** when switch fork need erase blocks on fork branch. */
+  /**
+   * when switch fork need erase blocks on fork branch.
+   */
   public void eraseBlock() throws BadItemException, ItemNotFoundException {
     dialog.reset();
     BlockCapsule oldHeadBlock =
@@ -475,12 +505,13 @@ public class Manager {
 
   // TODO: if error need to rollback.
 
-  private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {}
+  private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {
+  }
 
   /** save a block. */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -614,7 +645,9 @@ public class Manager {
                     + 1));
   }
 
-  /** Get the fork branch. */
+  /**
+   * Get the fork branch.
+   */
   public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
     final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
         this.khaosDb.getBranch(
@@ -661,7 +694,9 @@ public class Manager {
     trans.setReference(headNum, headHash);
   }
 
-  /** Get a BlockCapsule by id. */
+  /**
+   * Get a BlockCapsule by id.
+   */
   public BlockCapsule getBlockById(final Sha256Hash hash)
       throws BadItemException, ItemNotFoundException {
     return this.khaosDb.containBlock(hash)
@@ -669,21 +704,17 @@ public class Manager {
         : blockStore.get(hash.getBytes());
   }
 
-  /** Delete a block. */
-  @Deprecated
-  public void deleteBlock(final Sha256Hash blockHash)
-      throws BadItemException, ItemNotFoundException {
-    final BlockCapsule block = this.getBlockById(blockHash);
-    this.khaosDb.removeBlk(blockHash);
-    blockStore.delete(blockHash.getBytes());
-  }
 
-  /** judge has blocks. */
+  /**
+   * judge has blocks.
+   */
   public boolean hasBlocks() {
     return blockStore.dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
   }
 
-  /** Process transaction. */
+  /**
+   * Process transaction.
+   */
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
@@ -703,7 +734,9 @@ public class Manager {
     return true;
   }
 
-  /** Get the block id from the number. */
+  /**
+   * Get the block id from the number.
+   */
   public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
     return this.blockIndexStore.get(num);
   }
@@ -712,11 +745,13 @@ public class Manager {
     return getBlockById(getBlockIdByNum(num));
   }
 
-  /** Generate a block. */
+  /**
+   * Generate a block.
+   */
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -807,7 +842,9 @@ public class Manager {
     this.utxoStore = utxoStore;
   }
 
-  /** process block. */
+  /**
+   * process block.
+   */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
     // todo set revoking db max size.
@@ -831,7 +868,9 @@ public class Manager {
     witnessController.updateWitnessSchedule();
   }
 
-  /** update the latest solidified block. */
+  /**
+   * update the latest solidified block.
+   */
   public void updateLatestSolidifiedBlock() {
     List<Long> numbers =
         witnessController
@@ -864,12 +903,16 @@ public class Manager {
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
-  /** Determine if the current time is maintenance time. */
+  /**
+   * Determine if the current time is maintenance time.
+   */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime() <= blockTime;
   }
 
-  /** Perform maintenance. */
+  /**
+   * Perform maintenance.
+   */
   private void processMaintenance(BlockCapsule block) {
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
@@ -877,7 +920,7 @@ public class Manager {
 
   /**
    * @param block the block update signed witness. set witness who signed block the 1. the latest
-   *     block num 2. pay the trx to witness. 3. the latest slot num.
+   * block num 2. pay the trx to witness. 3. the latest slot num.
    */
   public void updateSignedWitness(BlockCapsule block) {
     // TODO: add verification
