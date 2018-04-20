@@ -77,7 +77,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .recordStats().build();
 
   Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
-          .maximumSize(1000).expireAfterWrite(60, TimeUnit.SECONDS)
+          .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
           .recordStats().build();
 
   class InvToSend {
