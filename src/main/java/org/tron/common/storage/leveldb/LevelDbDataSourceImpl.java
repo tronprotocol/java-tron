@@ -24,9 +24,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
@@ -39,10 +42,12 @@ import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.common.iterator.StoreIterator;
 
 @Slf4j
 @NoArgsConstructor
-public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
+public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
+    Iterable<Map.Entry<byte[], byte[]>> {
 
   String dataBaseName;
   DB database;
@@ -311,5 +316,18 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]> {
     } finally {
       resetDbLock.writeLock().unlock();
     }
+  }
+
+  @Override
+  public org.tron.core.db.common.iterator.DBIterator iterator() {
+    return new StoreIterator(database.iterator());
+  }
+
+  public Stream<Entry<byte[], byte[]>> stream() {
+    return StreamSupport.stream(spliterator(), false);
+  }
+
+  public Stream<Entry<byte[], byte[]>> parallelStream() {
+    return StreamSupport.stream(spliterator(), true);
   }
 }
