@@ -354,6 +354,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         toStringBuff.append("from address=").append(getOwner(contract)).append("\n");
         toStringBuff.append("to address=").append(getToAddress(contract)).append("\n");
         if (contract.getType().equals(ContractType.TransferContract)) {
+          TransferContract transferContract;
+          try {
+            transferContract = contract.getParameter()
+                .unpack(TransferContract.class);
+            toStringBuff.append("transfer amount=").append(transferContract.getAmount())
+                .append("\n");
+          } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+          }
+        } else if (contract.getType().equals(ContractType.TransferAssetContract)) {
           TransferAssetContract transferAssetContract;
           try {
             transferAssetContract = contract.getParameter()
@@ -366,8 +376,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             e.printStackTrace();
           }
         }
-        toStringBuff.append("sign=").append(getBase64FromByteString(
-            this.transaction.getSignature(i.getAndIncrement()))).append("\n");
+        if ( this.transaction.getSignatureList().size() >= i.get() + 1) {
+          toStringBuff.append("sign=").append(getBase64FromByteString(
+              this.transaction.getSignature(i.getAndIncrement()))).append("\n");
+        }
       });
       toStringBuff.append("}\n");
     } else {
