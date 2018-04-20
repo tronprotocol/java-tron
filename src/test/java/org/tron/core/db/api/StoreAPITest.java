@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -32,6 +33,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Witness;
 
+@Ignore
 public class StoreAPITest {
 
   public static final String ACCOUNT_ADDRESS_ONE = "121212a9cf";
@@ -101,7 +103,7 @@ public class StoreAPITest {
   private static String dbPath = "output_StoreAPI_test";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
@@ -123,7 +125,9 @@ public class StoreAPITest {
     context.destroy();
   }
 
-  /** initAssetIssue. */
+  /**
+   * initAssetIssue.
+   */
   private static void initAssetIssue() {
     assetIssue1 =
         getBuildAssetIssueContract(
@@ -163,7 +167,9 @@ public class StoreAPITest {
         .build();
   }
 
-  /** initTransaction. */
+  /**
+   * initTransaction.
+   */
   private static void initTransaction() {
     transaction1 =
         getBuildTransaction(
@@ -208,7 +214,9 @@ public class StoreAPITest {
         .build();
   }
 
-  /** initWitness. */
+  /**
+   * initWitness.
+   */
   private static void initWitness() {
     witness1 =
         getBuildWitness(
@@ -244,7 +252,9 @@ public class StoreAPITest {
         .build();
   }
 
-  /** initBlock. */
+  /**
+   * initBlock.
+   */
   private static void initBlock() {
     block1 =
         getBuildBlock(
@@ -285,7 +295,10 @@ public class StoreAPITest {
         .addTransactions(transactionNext)
         .build();
   }
-  /** initAccount. */
+
+  /**
+   * initAccount.
+   */
   private static void initAccount() {
     account1 = getBuildAccount(ACCOUNT_ADDRESS_ONE, ACCOUNT_NAME_ONE);
     addAccountToStore(account1);
