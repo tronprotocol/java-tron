@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +44,34 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 
   private final byte[] bytes;
+
+
+  private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {
+    byte[] numBytes = Longs.toByteArray(blockNum);
+    byte[] hash = blockHash.getBytes();
+    System.arraycopy(numBytes, 0, hash, 0, 8);
+    return hash;
+  }
+
+  private byte[] generateBlockId(long blockNum, byte[] blockHash) {
+    byte[] numBytes = Longs.toByteArray(blockNum);
+    byte[] hash = blockHash;
+    System.arraycopy(numBytes, 0, hash, 0, 8);
+    return hash;
+  }
+
+  public Sha256Hash(long num, byte[] hash) {
+    byte[] rawHashBytes = this.generateBlockId(num, hash);
+    checkArgument(rawHashBytes.length == LENGTH);
+    this.bytes = rawHashBytes;
+  }
+
+  public Sha256Hash(long num, Sha256Hash hash) {
+    byte[] rawHashBytes = this.generateBlockId(num, hash);
+    checkArgument(rawHashBytes.length == LENGTH);
+    this.bytes = rawHashBytes;
+  }
+
 
   /**
    * Use {@link #wrap(byte[])} instead.
