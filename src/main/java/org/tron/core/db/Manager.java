@@ -668,17 +668,6 @@ public class Manager {
   }
 
   /**
-   * Delete a block.
-   */
-  @Deprecated
-  public void deleteBlock(final Sha256Hash blockHash)
-      throws BadItemException, ItemNotFoundException {
-    final BlockCapsule block = this.getBlockById(blockHash);
-    this.khaosDb.removeBlk(blockHash);
-    blockStore.delete(blockHash.getBytes());
-  }
-
-  /**
    * judge has blocks.
    */
   public boolean hasBlocks() {
