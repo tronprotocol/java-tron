@@ -417,7 +417,7 @@ public class Manager {
     try {
       revokingStore.pop();
     } catch (RevokingStoreIllegalStateException e) {
-      logger.debug(e.getMessage(), e);
+      logger.info(e.getMessage(), e);
     }
     logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
@@ -478,7 +478,7 @@ public class Manager {
   private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {}
 
   /** save a block. */
-  public void pushBlock(final BlockCapsule block)
+  public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
           UnLinkedBlockException, ValidateScheduleException {
 
