@@ -278,4 +278,14 @@ public class NodeDelegateImpl implements NodeDelegate {
     //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
+
+  @Override
+  public long getLatestSolidifiedBlockNum() {
+    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+  }
+
+  @Override
+  public long getSyncBeginNumber() {
+    return dbManager.getSyncBeginNumber();
+  }
 }

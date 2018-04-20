@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
+import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -748,7 +750,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.isEmpty()) {
-      peer.setNeedSyncFromUs(false);
+      if (CollectionUtils.isNotEmpty(summaryChainIds) && summaryChainIds.get(0).getNum() < del
+          .getLatestSolidifiedBlockNum()) {
+        logger.info(
+            "Node sync block fail, disconnect peer:{}, sync message:{}, latestBlockHeaderNumber:{}",
+            peer, syncMsg, del.getLatestSolidifiedBlockNum());
+        peer.disconnect(ReasonCode.SYNC_FAIL);
+      } else {
+        peer.setNeedSyncFromUs(false);
+      }
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
@@ -760,11 +770,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
-//    if (!peer.isNeedSyncFromPeer()
-//        && !summaryChainIds.isEmpty()
-//        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
-//      startSyncWithPeer(peer);
-//    }
+    if (!peer.isNeedSyncFromPeer()
+        && CollectionUtils.isNotEmpty(summaryChainIds)
+        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+        && summaryChainIds.get(0).getNum() >= del.getSyncBeginNumber()) {
+      startSyncWithPeer(peer);
+    }
 
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }

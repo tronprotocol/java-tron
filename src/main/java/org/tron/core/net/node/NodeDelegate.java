@@ -43,4 +43,8 @@ public interface NodeDelegate {
 
   BlockCapsule getGenesisBlock();
 
+  long getLatestSolidifiedBlockNum();
+
+  long getSyncBeginNumber();
+
 }
