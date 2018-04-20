@@ -276,6 +276,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }
 
+  public BlockId getParentBlockId() {
+    return new BlockId(getParentHash(), getNum() - 1);
+  }
+
   public ByteString getParentHashStr() {
     return this.block.getBlockHeader().getRawData().getParentHash();
   }

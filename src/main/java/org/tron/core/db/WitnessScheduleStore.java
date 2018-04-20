@@ -19,12 +19,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule>{
     super(dbName);
   }
 
-
-  @Override
-  public void delete(byte[] key) {
-
-  }
-
   @Override
   public BytesCapsule get(byte[] key) {
     return null;
