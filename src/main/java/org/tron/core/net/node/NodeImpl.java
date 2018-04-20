@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
+import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -320,7 +322,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                       sendPackage.add(idToSpread, peer);
                     });
-//                peer.cleanInvGarbage();
               });
 
           sendPackage.sendInv();
@@ -343,17 +344,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           InvToSend sendPackage = new InvToSend();
           advObjToFetch.entrySet()
               .forEach(idToFetch ->
-                getActivePeer().stream().filter(peer -> !peer.isBusy()
-                    && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
-                    .findFirst()
-                    .ifPresent(peer -> {
-                      //TODO: don't fetch too much obj from only one peer
-                      sendPackage.add(idToFetch, peer);
-                      advObjToFetch.remove(idToFetch.getKey());
-                      peer.getAdvObjWeRequested()
-                          .put(idToFetch.getKey(), Time.getCurrentMillis());
-                    })
-              );
+                  getActivePeer().stream().filter(peer -> !peer.isBusy()
+                      && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
+                      .findFirst()
+                      .ifPresent(peer -> {
+                        //TODO: don't fetch too much obj from only one peer
+                        sendPackage.add(idToFetch, peer);
+                        advObjToFetch.remove(idToFetch.getKey());
+                        peer.getAdvObjWeRequested()
+                            .put(idToFetch.getKey(), Time.getCurrentMillis());
+                      }));
           sendPackage.sendFetch();
         }
       }
@@ -532,9 +532,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    //logger.info("on handle advertise inventory message");
-//    peer.cleanInvGarbage();
-
     msg.getHashList().forEach(id -> {
       final boolean[] spreaded = {false};
       final boolean[] requested = {false};
@@ -631,7 +628,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               p.setHeadBlockTimeWeBothHave(block.getTimeStamp());
             });
 
-//        getActivePeer().forEach(p -> p.cleanInvGarbage());
         //rebroadcast
         broadcast(new BlockMessage(block));
 
@@ -738,7 +734,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.isEmpty()) {
-      peer.setNeedSyncFromUs(false);
+      if (CollectionUtils.isNotEmpty(summaryChainIds)
+          && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+        logger.info(
+            "Node sync block fail, disconnect peer:{}, sync message:{}",
+            peer, syncMsg);
+        peer.disconnect(ReasonCode.SYNC_FAIL);
+      } else {
+        peer.setNeedSyncFromUs(false);
+      }
     } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
@@ -750,11 +754,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
-//    if (!peer.isNeedSyncFromPeer()
-//        && !summaryChainIds.isEmpty()
-//        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)) {
-//      startSyncWithPeer(peer);
-//    }
+    if (!peer.isNeedSyncFromPeer()
+        && CollectionUtils.isNotEmpty(summaryChainIds)
+        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+        && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+      startSyncWithPeer(peer);
+    }
 
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
@@ -989,7 +994,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
     logger.info("on handle advertise blocks inventory message");
-//    peer.cleanInvGarbage();
 
     //todo: check this peer's advertise history and the history of our request to this peer.
     //simple implement here first
@@ -1004,9 +1008,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopFetchBlocks.push(fetchMsg);
   }
 
-//  private void startSync() {
-//    mapPeer.values().forEach(this::startSyncWithPeer);
-//  }
+  private void startSync() {
+    getActivePeer().forEach(this::startSyncWithPeer);
+  }
 
   private Collection<PeerConnection> getActivePeer() {
     return pool.getActivePeers();
@@ -1023,7 +1027,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    if (peer.getSyncChainRequested() != null){
+    if (peer.getSyncChainRequested() != null) {
       logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
       return;
     }
