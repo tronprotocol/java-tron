@@ -619,9 +619,12 @@ public class Manager {
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(),
             forkBlockHash);
-    return branch.getValue().stream()
+
+    LinkedList<BlockId> result = branch.getValue().stream()
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(LinkedList::new));
+    result.add(branch.getValue().peekLast().getParentBlockId());
+    return result;
   }
 
   /**

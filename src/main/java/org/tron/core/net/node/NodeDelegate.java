@@ -11,6 +11,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.net.message.MessageTypes;
 
@@ -24,7 +25,7 @@ public interface NodeDelegate {
   LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws StoreException;
 
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
-      throws UnLinkedBlockException, StoreException;
+      throws TronException;
 
   Message getData(Sha256Hash msgId, MessageTypes type);
 
