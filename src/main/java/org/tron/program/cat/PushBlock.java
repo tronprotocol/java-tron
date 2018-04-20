@@ -2,10 +2,7 @@ package org.tron.program.cat;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -30,14 +27,9 @@ public class PushBlock {
     File f = new File("blocks.txt");
     FileInputStream fis = new FileInputStream(f);
 
-    List<BlockCapsule> blockCapsuleList = new ArrayList<>();
     Block block;
     while ((block = Block.parseDelimitedFrom(fis)) != null) {
-      blockCapsuleList.add(new BlockCapsule(Block.newBuilder(block).build()));
-    }
-
-    for (BlockCapsule blockCapsule : blockCapsuleList) {
-      dbManager.pushBlock(blockCapsule);
+      dbManager.pushBlock(new BlockCapsule(Block.newBuilder(block).build()));
     }
 
     removeDb();
