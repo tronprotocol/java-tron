@@ -41,9 +41,12 @@ import org.tron.protos.Protocol.Witness;
 @Slf4j
 public class StoreAPI {
 
-  @Autowired private IndexHelper indexHelper;
+  @Autowired
+  private IndexHelper indexHelper;
 
-  /** ********************************** * account api * *************************************** */
+  /**
+   * ********************************* * account api * ***************************************
+   */
   public List<Account> getAccountAll() {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
     return ImmutableList.copyOf(index);
@@ -73,7 +76,9 @@ public class StoreAPI {
     return (long) index.size();
   }
 
-  /** ********************************* * block api * *************************************** */
+  /**
+   * ******************************** * block api * ***************************************
+   */
   public long getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
     return (long) index.size();
@@ -173,7 +178,9 @@ public class StoreAPI {
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
   }
 
-  /** ****************************** * transaction api * ************************************ */
+  /**
+   * ***************************** * transaction api * ************************************
+   */
   public long getTransactionCount() {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
     return (long) index.size();
@@ -281,7 +288,15 @@ public class StoreAPI {
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
   }
 
-  /** ********************************** * witness api * *************************************** */
+  /**
+   * ********************************* * witness api * ***************************************
+   */
+  
+  public List<Witness> getWitnessAll() {
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    return ImmutableList.copyOf(index);
+  }
+
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");
@@ -344,7 +359,9 @@ public class StoreAPI {
     return (long) index.size();
   }
 
-  /** ************************* * AssetIssue api * ******************************** */
+  /**
+   * ************************ * AssetIssue api * ********************************
+   */
   public List<AssetIssueContract> getAssetIssueAll() {
     IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     return ImmutableList.copyOf(index);
