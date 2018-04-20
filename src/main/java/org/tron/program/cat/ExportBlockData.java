@@ -39,7 +39,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 public class ExportBlockData {
-  private static final long COUNT = 10000;
+  private static final long COUNT = 100000;
   private static long currntNumber = 1;
   private static String currntParentHash = "cafabcd5e02545199ba49be971bf427b6728369a5e7fa956eba89ae761f97792";
 
