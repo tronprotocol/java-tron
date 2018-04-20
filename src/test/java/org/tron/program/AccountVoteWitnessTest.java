@@ -8,8 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
@@ -17,23 +20,26 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class AccountVoteWitnessTest {
 
-  private static Manager dbManager = new Manager();
+  private static AnnotationConfigApplicationContext context;
+
+  private static Manager dbManager;
   private static String dbPath = "output_witness_test";
 
-  /**
-   * init db.
-   */
-  @BeforeClass
-  public static void init() {
-    //Args.setParam(new String[]{}, Constant.TEST_CONF);
-    Args.setParam(new String[]{"-d", dbPath},
-        "config-junit.conf");
-    dbManager.init();
+  static {
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /**
-   * remo db when after test.
-   */
+  /** init db. */
+  @BeforeClass
+  public static void init() {
+    dbManager = context.getBean(Manager.class);
+    // Args.setParam(new String[]{}, Constant.TEST_CONF);
+    //  dbManager = new Manager();
+    //  dbManager.init();
+  }
+
+  /** remo db when after test. */
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
@@ -44,7 +50,7 @@ public class AccountVoteWitnessTest {
     } else {
       logger.info("Release resources failure.");
     }
-    dbManager.destory();
+    context.destroy();
   }
 
   private static Boolean deleteFolder(File index) {
@@ -63,15 +69,18 @@ public class AccountVoteWitnessTest {
   public void testAccountVoteWitness() {
     final List<AccountCapsule> accountCapsuleList = this.getAccountList();
     final List<WitnessCapsule> witnessCapsuleList = this.getWitnessList();
-    accountCapsuleList.forEach(accountCapsule -> {
-          dbManager.getAccountStore().put(accountCapsule.getAddress()
-              .toByteArray(), accountCapsule);
+    accountCapsuleList.forEach(
+        accountCapsule -> {
+          dbManager
+              .getAccountStore()
+              .put(accountCapsule.getAddress().toByteArray(), accountCapsule);
           this.printAccount(accountCapsule.getAddress());
-        }
-    );
-    witnessCapsuleList.forEach(witnessCapsule ->
-        dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule)
-    );
+        });
+    witnessCapsuleList.forEach(
+        witnessCapsule ->
+            dbManager
+                .getWitnessStore()
+                .put(witnessCapsule.getAddress().toByteArray(), witnessCapsule));
     dbManager.getWitnessController().updateWitness();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000002".getBytes()));
@@ -80,7 +89,6 @@ public class AccountVoteWitnessTest {
     this.printWitness(ByteString.copyFrom("00000000005".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000006".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000007".getBytes()));
-
   }
 
   private void printAccount(final ByteString address) {
@@ -89,7 +97,9 @@ public class AccountVoteWitnessTest {
       logger.info("address is {}  , account is null", address.toStringUtf8());
       return;
     }
-    logger.info("address is {}  ,countVoteSize is {}", accountCapsule.getAddress().toStringUtf8(),
+    logger.info(
+        "address is {}  ,countVoteSize is {}",
+        accountCapsule.getAddress().toStringUtf8(),
         accountCapsule.getVotesList().size());
   }
 
@@ -99,46 +109,58 @@ public class AccountVoteWitnessTest {
       logger.info("address is {}  , winess is null", address.toStringUtf8());
       return;
     }
-    logger.info("address is {}  ,countVote is {}", witnessCapsule.getAddress().toStringUtf8(),
+    logger.info(
+        "address is {}  ,countVote is {}",
+        witnessCapsule.getAddress().toStringUtf8(),
         witnessCapsule.getVoteCount());
   }
 
   private List<AccountCapsule> getAccountList() {
     final List<AccountCapsule> accountCapsuleList = Lists.newArrayList();
-    final AccountCapsule accountTron = new AccountCapsule(
-        ByteString.copyFrom("00000000001".getBytes()), ByteString.copyFromUtf8("Tron"),
-        AccountType.Normal);
-    final AccountCapsule accountMarcus = new AccountCapsule(
-        ByteString.copyFrom("00000000002".getBytes()), ByteString.copyFromUtf8("Marcus"),
-        AccountType.Normal);
-    final AccountCapsule accountOlivier = new AccountCapsule(
-        ByteString.copyFrom("00000000003".getBytes()), ByteString.copyFromUtf8("Olivier"),
-        AccountType.Normal);
-    final AccountCapsule accountSasaXie = new AccountCapsule(
-        ByteString.copyFrom("00000000004".getBytes()), ByteString.copyFromUtf8("SasaXie"),
-        AccountType.Normal);
-    final AccountCapsule accountVivider = new AccountCapsule(
-        ByteString.copyFrom("00000000005".getBytes()), ByteString.copyFromUtf8("Vivider"),
-        AccountType.Normal);
-    //accountTron addVotes
+    final AccountCapsule accountTron =
+        new AccountCapsule(
+            ByteString.copyFrom("00000000001".getBytes()),
+            ByteString.copyFromUtf8("Tron"),
+            AccountType.Normal);
+    final AccountCapsule accountMarcus =
+        new AccountCapsule(
+            ByteString.copyFrom("00000000002".getBytes()),
+            ByteString.copyFromUtf8("Marcus"),
+            AccountType.Normal);
+    final AccountCapsule accountOlivier =
+        new AccountCapsule(
+            ByteString.copyFrom("00000000003".getBytes()),
+            ByteString.copyFromUtf8("Olivier"),
+            AccountType.Normal);
+    final AccountCapsule accountSasaXie =
+        new AccountCapsule(
+            ByteString.copyFrom("00000000004".getBytes()),
+            ByteString.copyFromUtf8("SasaXie"),
+            AccountType.Normal);
+    final AccountCapsule accountVivider =
+        new AccountCapsule(
+            ByteString.copyFrom("00000000005".getBytes()),
+            ByteString.copyFromUtf8("Vivider"),
+            AccountType.Normal);
+    // accountTron addVotes
     accountTron.addVotes(accountMarcus.getAddress(), 100);
     accountTron.addVotes(accountOlivier.getAddress(), 100);
     accountTron.addVotes(accountSasaXie.getAddress(), 100);
     accountTron.addVotes(accountVivider.getAddress(), 100);
 
-    //accountMarcus addVotes
+    // accountMarcus addVotes
     accountMarcus.addVotes(accountTron.getAddress(), 100);
     accountMarcus.addVotes(accountOlivier.getAddress(), 100);
     accountMarcus.addVotes(accountSasaXie.getAddress(), 100);
     accountMarcus.addVotes(ByteString.copyFrom("00000000006".getBytes()), 100);
     accountMarcus.addVotes(ByteString.copyFrom("00000000007".getBytes()), 100);
-    //accountOlivier addVotes
+    // accountOlivier addVotes
     accountOlivier.addVotes(accountTron.getAddress(), 100);
     accountOlivier.addVotes(accountMarcus.getAddress(), 100);
     accountOlivier.addVotes(accountSasaXie.getAddress(), 100);
     accountOlivier.addVotes(accountVivider.getAddress(), 100);
-    //accountSasaXie addVotes
-    //accountVivider addVotes
+    // accountSasaXie addVotes
+    // accountVivider addVotes
     accountCapsuleList.add(accountTron);
     accountCapsuleList.add(accountMarcus);
     accountCapsuleList.add(accountOlivier);
@@ -149,14 +171,14 @@ public class AccountVoteWitnessTest {
 
   private List<WitnessCapsule> getWitnessList() {
     final List<WitnessCapsule> witnessCapsuleList = Lists.newArrayList();
-    final WitnessCapsule witnessTron = new WitnessCapsule(
-        ByteString.copyFrom("00000000001".getBytes()), 0, "");
-    final WitnessCapsule witnessOlivier = new WitnessCapsule(
-        ByteString.copyFrom("00000000003".getBytes()), 100, "");
-    final WitnessCapsule witnessVivider = new WitnessCapsule(
-        ByteString.copyFrom("00000000005".getBytes()), 200, "");
-    final WitnessCapsule witnessSenaLiu = new WitnessCapsule(
-        ByteString.copyFrom("00000000006".getBytes()), 300, "");
+    final WitnessCapsule witnessTron =
+        new WitnessCapsule(ByteString.copyFrom("00000000001".getBytes()), 0, "");
+    final WitnessCapsule witnessOlivier =
+        new WitnessCapsule(ByteString.copyFrom("00000000003".getBytes()), 100, "");
+    final WitnessCapsule witnessVivider =
+        new WitnessCapsule(ByteString.copyFrom("00000000005".getBytes()), 200, "");
+    final WitnessCapsule witnessSenaLiu =
+        new WitnessCapsule(ByteString.copyFrom("00000000006".getBytes()), 300, "");
     witnessCapsuleList.add(witnessTron);
     witnessCapsuleList.add(witnessOlivier);
     witnessCapsuleList.add(witnessVivider);

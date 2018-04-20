@@ -23,6 +23,7 @@ public class ApplicationImpl implements Application {
   private ServiceContainer services;
   private NodeDelegate nodeDelegate;
 
+  @Autowired
   private Manager dbManager;
 
   private boolean isProducer;
@@ -30,7 +31,7 @@ public class ApplicationImpl implements Application {
   private void resetP2PNode() {
     p2pNode.listen();
     //p2pNode.connectToP2PNetWork();
-    p2pNode.syncFrom(blockStoreDb.getHeadBlockId());
+    p2pNode.syncFrom(null);
   }
 
   @Override
@@ -43,8 +44,7 @@ public class ApplicationImpl implements Application {
   public void init(Args args) {
     //p2pNode = new NodeImpl();
     //p2pNode = ctx.getBean(NodeImpl.class);
-    dbManager = new Manager();
-    dbManager.init();
+//    dbManager.init();
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
     nodeDelegate = new NodeDelegateImpl(dbManager);

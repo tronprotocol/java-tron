@@ -28,6 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -254,6 +255,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  // todo mv this static function to capsule util
+  public static byte[] getToAddress(Transaction.Contract contract) {
+    ByteString to;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case TransferContract:
+          to = contractParameter.unpack(TransferContract.class).getToAddress();
+          break;
+        case TransferAssetContract:
+          to = contractParameter.unpack(TransferAssetContract.class).getToAddress();
+          break;
+        case ParticipateAssetIssueContract:
+          to = contractParameter.unpack(ParticipateAssetIssueContract.class).getToAddress();
+          break;
+        // todo add other contract
+
+        default:
+          return null;
+      }
+      return to.toByteArray();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
   public static String getBase64FromByteString(ByteString sign) {
     byte[] r = sign.substring(0, 32).toByteArray();
     byte[] s = sign.substring(32, 64).toByteArray();
@@ -307,8 +335,46 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction;
   }
 
+  private StringBuffer toStringBuff = new StringBuffer();
+
+
   @Override
   public String toString() {
-    return this.transaction.toString();
+
+    toStringBuff.setLength(0);
+    toStringBuff.append("TransactionCapsule \n[ ");
+
+    toStringBuff.append("hash=").append(getTransactionId()).append("\n");
+    AtomicInteger i = new AtomicInteger();
+    if (!getInstance().getRawData().getContractList().isEmpty()) {
+      toStringBuff.append("contract list:{ ");
+      getInstance().getRawData().getContractList().forEach(contract -> {
+        toStringBuff.append("[" + i + "] ").append("type: ").append(contract.getType())
+            .append("\n");
+        toStringBuff.append("from address=").append(getOwner(contract)).append("\n");
+        toStringBuff.append("to address=").append(getToAddress(contract)).append("\n");
+        if (contract.getType().equals(ContractType.TransferContract)) {
+          TransferAssetContract transferAssetContract;
+          try {
+            transferAssetContract = contract.getParameter()
+                .unpack(TransferAssetContract.class);
+            toStringBuff.append("transfer asset=").append(transferAssetContract.getAssetName())
+                .append("\n");
+            toStringBuff.append("transfer amount=").append(transferAssetContract.getAmount())
+                .append("\n");
+          } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+          }
+        }
+        toStringBuff.append("sign=").append(getBase64FromByteString(
+            this.transaction.getSignature(i.getAndIncrement()))).append("\n");
+      });
+      toStringBuff.append("}\n");
+    } else {
+      toStringBuff.append("contract list is empty\n");
+    }
+
+    toStringBuff.append("]");
+    return toStringBuff.toString();
   }
 }
