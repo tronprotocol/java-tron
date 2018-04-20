@@ -43,8 +43,6 @@ public interface NodeDelegate {
 
   BlockCapsule getGenesisBlock();
 
-  long getLatestSolidifiedBlockNum();
-
-  long getSyncBeginNumber();
+  boolean canChainRevoke(long num);
 
 }

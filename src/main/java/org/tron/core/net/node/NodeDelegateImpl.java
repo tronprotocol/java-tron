@@ -279,13 +279,18 @@ public class NodeDelegateImpl implements NodeDelegate {
     return dbManager.getGenesisBlock();
   }
 
+//  @Override
+//  public long getLatestSolidifiedBlockNum() {
+//    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+//  }
+//
+//  @Override
+//  public long getSyncBeginNumber() {
+//    return dbManager.getSyncBeginNumber();
+//  }
+//
   @Override
-  public long getLatestSolidifiedBlockNum() {
-    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-  }
-
-  @Override
-  public long getSyncBeginNumber() {
-    return dbManager.getSyncBeginNumber();
+  public boolean canChainRevoke(long num) {
+    return num >= dbManager.getSyncBeginNumber();
   }
 }
