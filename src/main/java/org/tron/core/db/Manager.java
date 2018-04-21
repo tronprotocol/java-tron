@@ -46,6 +46,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -381,8 +382,14 @@ public class Manager {
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      HighFreqException {
+      HighFreqException, DupTransactionException {
     logger.info("push transaction");
+
+    if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
+      logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
+      throw new DupTransactionException("dup trans");
+    }
+
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
