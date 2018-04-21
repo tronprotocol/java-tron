@@ -20,6 +20,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
@@ -89,6 +90,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadTransactionException();
     } catch (HighFreqException e) {
       logger.info(e.getMessage());
+    } catch (DupTransactionException e) {
+      logger.debug("dup trans");
     }
   }
 
@@ -279,7 +282,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     return dbManager.getGenesisBlock();
   }
 
-//  @Override
+  //  @Override
 //  public long getLatestSolidifiedBlockNum() {
 //    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
 //  }
