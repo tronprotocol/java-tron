@@ -39,7 +39,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.BlockConstant;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.BadBlockException;
@@ -383,7 +383,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
-    }, 30000, BlockConstant.BLOCK_INTERVAL / 2, TimeUnit.MILLISECONDS);
+    }, 30000, ChainConstant.BLOCK_PRODUCED_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -516,7 +516,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       //TODO:optimize here
       if (!isDisconnected[0]) {
         if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
-            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / BlockConstant.BLOCK_INTERVAL
+            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / ChainConstant.BLOCK_PRODUCED_INTERVAL
             && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME
             && peer.getSyncBlockRequested().isEmpty()) {
           isDisconnected[0] = true;
