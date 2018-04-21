@@ -9,10 +9,11 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
     long WITNESS_PAY_PER_BLOCK = 32000000;  // 32trx
-    int BLOCK_PRODUCED_INTERVAL = 3; // 3sec
-
     double SOLIDIFIED_THRESHOLD = 0.7;
     int PRIVATE_KEY_LENGTH = 64;
+    int MAX_ACTIVE_WITNESS_NUM = 21;
+    int TRXS_SIZE = 2_000_000; // < 2MiB
+    int BLOCK_PRODUCED_INTERVAL = 5000; //ms,produce block period, must be divisible by 60. millisecond
   }
 
   interface NodeConstant {
@@ -26,9 +27,6 @@ public interface Parameter {
 
   }
 
-  interface BlockConstant {
-    long BLOCK_INTERVAL = 5000L;
-  }
 
   interface NetConstants {
     long ADV_TIME_OUT = 20000L;
@@ -37,7 +35,6 @@ public interface Parameter {
     long HEAD_NUM_CHECK_TIME = 60000L;
     long MAX_INVENTORY_SIZE_IN_MINUTES = 2L;
   }
-
 
 
 }

@@ -16,6 +16,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
@@ -27,15 +28,6 @@ public class WitnessController {
   @Setter
   @Getter
   private Manager manager;
-//  private volatile List<WitnessCapsule> wits = new ArrayList<>();
-
-//  @Getter
-//  @Setter
-//  protected List<WitnessCapsule> shuffledWitnessStates;
-
-//  private ReadWriteLock witsLock = new ReentrantReadWriteLock();
-//  private Lock witsRead = witsLock.readLock();
-//  private Lock witsWrite = witsLock.writeLock();
 
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
@@ -96,7 +88,7 @@ public class WitnessController {
     }
     logger
         .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
-    return (when - firstSlotTime) / Manager.LOOP_INTERVAL + 1;
+    return (when - firstSlotTime) / ChainConstant.BLOCK_PRODUCED_INTERVAL + 1;
   }
 
   public BlockCapsule getGenesisBlock() {
@@ -115,7 +107,7 @@ public class WitnessController {
    * get absolute Slot At Time
    */
   public long getAbSlotAtTime(long when) {
-    return (when - getGenesisBlock().getTimeStamp()) / Manager.LOOP_INTERVAL;
+    return (when - getGenesisBlock().getTimeStamp()) / ChainConstant.BLOCK_PRODUCED_INTERVAL;
   }
 
   /**
@@ -125,7 +117,7 @@ public class WitnessController {
     if (slotNum == 0) {
       return Time.getCurrentMillis();
     }
-    long interval = Manager.LOOP_INTERVAL;
+    long interval = ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return getGenesisBlock().getTimeStamp() + slotNum * interval;
@@ -202,7 +194,7 @@ public class WitnessController {
   public long getHeadSlot() {
     return (manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp())
-        / Manager.LOOP_INTERVAL;
+        / ChainConstant.BLOCK_PRODUCED_INTERVAL;
   }
 
   /**
@@ -318,8 +310,8 @@ public class WitnessController {
       });
 
       sortWitness(newWitnessAddressList);
-      if (newWitnessAddressList.size() > Manager.MAX_ACTIVE_WITNESS_NUM) {
-        setActiveWitnesses(newWitnessAddressList.subList(0, Manager.MAX_ACTIVE_WITNESS_NUM));
+      if (newWitnessAddressList.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
+        setActiveWitnesses(newWitnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
       } else {
         setActiveWitnesses(newWitnessAddressList);
       }
