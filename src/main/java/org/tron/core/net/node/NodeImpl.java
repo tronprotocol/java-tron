@@ -73,12 +73,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-          .maximumSize(10000).expireAfterWrite(60, TimeUnit.SECONDS)
-          .recordStats().build();
+      .maximumSize(10000).expireAfterWrite(60, TimeUnit.SECONDS)
+      .recordStats().build();
 
   Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
-          .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
-          .recordStats().build();
+      .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
+      .recordStats().build();
 
   class InvToSend {
 
@@ -171,9 +171,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Set<BlockMessage> blockWaitToProc = new ConcurrentSet<>();
 
-  private Set<BlockMessage> blockWaitToProcBak = new ConcurrentSet<>();
-
-  private Set<BlockId> blockInProc = new ConcurrentSet<>();
+  private Set<BlockMessage> blockJustReceived = new ConcurrentSet<>();
 
   private ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -254,7 +252,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
       type = InventoryType.BLOCK;
     } else if (msg instanceof TransactionMessage) {
-      TrxCache.put(msg.getMessageId(), (TransactionMessage)msg);
+      TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
       type = InventoryType.TRX;
     } else {
       return;
@@ -440,10 +438,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     final boolean[] isBlockProc = {false};
 
     do {
-      synchronized (blockWaitToProcBak) {
-        blockWaitToProc.addAll(blockWaitToProcBak);
+      synchronized (blockJustReceived) {
+        blockWaitToProc.addAll(blockJustReceived);
         //need lock here
-        blockWaitToProcBak.clear();
+        blockJustReceived.clear();
       }
 
       isBlockProc[0] = false;
@@ -463,13 +461,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         if (isFound[0]) {
           if (!freshBlockId.contains(msg.getBlockId())) {
-            blockInProc.add(msg.getBlockId());
             blockWaitToProc.remove(msg);
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
             //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
             processSyncBlock(block);
-            blockInProc.remove(msg.getBlockId());
             isBlockProc[0] = true;
           }
         }
@@ -497,8 +493,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             + "advObjWeRequestedNum: %d\n"
             + "unSyncNum: %d\n"
             + "blockWaitToProcess: %d\n"
+            + "blockJustReceived: %d\n"
             + "syncBlockIdWeRequested: %d\n"
-            + "blockInProc: %d\n"
             + "badAdvObj: %d\n",
         del.getHeadBlockId().getNum(),
         advObjToSpread.size(),
@@ -506,8 +502,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         advObjWeRequested.size(),
         getUnSyncNum(),
         blockWaitToProc.size(),
+        blockJustReceived.size(),
         syncBlockIdWeRequested.size(),
-        blockInProc.size(),
         badAdvObj.size()
     ));
 
@@ -611,7 +607,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       //peer.getSyncBlockToFetch().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
       //TODO: maybe use consume pipe here better
-      blockWaitToProcBak.add(blkMsg);
+      blockJustReceived.add(blkMsg);
       isHandleSyncBlockActive = true;
       //processSyncBlock(blkMsg.getBlockCapsule());
       if (!peer.isBusy()) {
@@ -788,17 +784,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //TODO:maybe can use message cache here
     BlockCapsule block = null;
     //get data and send it one by one
-    for (Sha256Hash hash : fetchInvDataMsg.getHashList()){
+    for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
 
       Message msg;
 
-      if (type == MessageTypes.BLOCK){
+      if (type == MessageTypes.BLOCK) {
         msg = BlockCache.getIfPresent(hash);
-      }else {
+      } else {
         msg = TrxCache.getIfPresent(hash);
       }
 
-      if (msg == null){
+      if (msg == null) {
         msg = del.getData(hash, type);
       }
 
@@ -982,7 +978,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
                 && !syncBlockIdWeRequested.containsKey(blockId)
-                && blockInProc.stream().noneMatch(blockIdInProc -> blockIdInProc.equals(blockId))) {
+                && blockWaitToProc.stream()
+                .noneMatch(blockMessage -> blockMessage.getBlockId().equals(blockId))
+                && blockJustReceived.stream()
+                .noneMatch(blockMessage -> blockMessage.getBlockId().equals(blockId))) {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
