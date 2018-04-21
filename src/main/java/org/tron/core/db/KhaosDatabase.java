@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.dianping.cat.Cat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
@@ -173,22 +176,34 @@ public class KhaosDatabase extends TronDatabase {
 
   /** Push the block in the KhoasDB. */
   public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
-    KhaosBlock block = new KhaosBlock(blk);
-    if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
-      KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
-      if (kblock != null) {
-        block.parent = kblock;
-      } else {
-        miniUnlinkedStore.insert(block);
-        throw new UnLinkedBlockException();
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "KhaosDatabasePush");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("KhaosDatabasePushTotalCount");
+
+    try {
+      KhaosBlock block = new KhaosBlock(blk);
+      if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
+        KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
+        if (kblock != null) {
+          block.parent = kblock;
+        } else {
+          miniUnlinkedStore.insert(block);
+          Cat.logMetricForCount("KhaosDatabasePushUnLinkedBlockCount");
+          catTransaction.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
+          Cat.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
+          throw new UnLinkedBlockException();
+        }
       }
+
+      miniStore.insert(block);
+
+      if (head == null || block.num > head.num) {
+        head = block;
+      }
+    } finally {
+      catTransaction.complete();
     }
 
-    miniStore.insert(block);
-
-    if (head == null || block.num > head.num) {
-      head = block;
-    }
     return head.blk;
   }
 

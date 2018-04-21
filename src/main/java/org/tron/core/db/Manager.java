@@ -462,9 +462,18 @@ public class Manager {
 
   private void applyBlock(BlockCapsule block)
       throws ContractValidateException, ContractExeException, ValidateSignatureException {
-    processBlock(block);
-    this.blockStore.put(block.getBlockId().getBytes(), block);
-    this.blockIndexStore.put(block.getBlockId());
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ApplyBlock");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("ApplyBlockTotalCount");
+
+    try {
+      processBlock(block);
+
+      this.blockStore.put(block.getBlockId().getBytes(), block);
+      this.blockIndexStore.put(block.getBlockId());
+    } finally {
+      catTransaction.complete();
+    }
   }
 
   private void switchFork(BlockCapsule newHead) {
@@ -619,6 +628,7 @@ public class Manager {
 
           catTransaction.setStatus(CatTransactionStatus.SWITCH_FORK);
           Cat.logEvent("Error", CatTransactionStatus.SWITCH_FORK);
+          Cat.logMetricForCount("SwitchForkCount");
           return;
         }
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
@@ -643,38 +653,46 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
-    long slot = 1;
-    if (block.getNum() != 1) {
-      slot = witnessController.getSlotAtTime(block.getTimeStamp());
-    }
-    for (int i = 1; i < slot; ++i) {
-      if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
-        WitnessCapsule w =
-            this.witnessStore.get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
-        w.setTotalMissed(w.getTotalMissed() + 1);
-        this.witnessStore.put(w.createDbKey(), w);
-        logger.info(
-            "{} miss a block. totalMissed = {}", w.createReadableString(), w.getTotalMissed());
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "UpdateDynamicProperties");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("UpdateDynamicPropertiesTotalCount");
+
+    try {
+      long slot = 1;
+      if (block.getNum() != 1) {
+        slot = witnessController.getSlotAtTime(block.getTimeStamp());
       }
-      this.dynamicPropertiesStore.applyBlock(false);
+      for (int i = 1; i < slot; ++i) {
+        if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
+          WitnessCapsule w =
+              this.witnessStore.get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+          w.setTotalMissed(w.getTotalMissed() + 1);
+          this.witnessStore.put(w.createDbKey(), w);
+          logger.info(
+              "{} miss a block. totalMissed = {}", w.createReadableString(), w.getTotalMissed());
+        }
+        this.dynamicPropertiesStore.applyBlock(false);
+      }
+      this.dynamicPropertiesStore.applyBlock(true);
+
+      if (slot <= 0) {
+        logger.warn("missedBlocks [" + slot + "] is illegal");
+      }
+
+      logger.info("update head, num = {}", block.getNum());
+      this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+      this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
+      this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
+
+      ((AbstractRevokingStore) revokingStore)
+          .setMaxSize(
+              (int)
+                  (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+                      - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+                      + 1));
+    } finally {
+      catTransaction.complete();
     }
-    this.dynamicPropertiesStore.applyBlock(true);
-
-    if (slot <= 0) {
-      logger.warn("missedBlocks [" + slot + "] is illegal");
-    }
-
-    logger.info("update head, num = {}", block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
-    this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-
-    ((AbstractRevokingStore) revokingStore)
-        .setMaxSize(
-            (int)
-                (dynamicPropertiesStore.getLatestBlockHeaderNumber()
-                    - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
-                    + 1));
   }
 
   /**
@@ -749,20 +767,29 @@ public class Manager {
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ProcessTransaction");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("ProcessTransactionTotalCount");
 
-    TransactionResultCapsule transRet;
-    if (trxCap == null || !trxCap.validateSignature()) {
-      return false;
-    }
-    final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      TransactionResultCapsule transRet;
+      if (trxCap == null || !trxCap.validateSignature()) {
+        return false;
+      }
+      final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    for (Actuator act : actuatorList) {
-      act.validate();
-      act.execute(ret);
-      trxCap.setResult(ret);
+      for (Actuator act : actuatorList) {
+        act.validate();
+        act.execute(ret);
+        trxCap.setResult(ret);
+      }
+      transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+      Cat.logMetricForCount("ProcessTransactionSuccessCount");
+    } finally {
+      catTransaction.complete();
     }
-    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+
     return true;
   }
 
@@ -879,51 +906,69 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
-    // todo set revoking db max size.
-    this.updateDynamicProperties(block);
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ProcessBlock");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("ProcessBlockTotalCount");
 
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      processTransaction(transactionCapsule);
-    }
+    try {
+      // todo set revoking db max size.
+      this.updateDynamicProperties(block);
+      this.updateSignedWitness(block);
+      this.updateLatestSolidifiedBlock();
 
-    boolean needMaint = needMaintenance(block.getTimeStamp());
-    if (needMaint) {
-      if (block.getNum() == 1) {
-        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-      } else {
-        this.processMaintenance(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        processTransaction(transactionCapsule);
       }
+
+      boolean needMaint = needMaintenance(block.getTimeStamp());
+      if (needMaint) {
+        if (block.getNum() == 1) {
+          this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+        } else {
+          this.processMaintenance(block);
+        }
+      }
+      updateMaintenanceState(needMaint);
+      witnessController.updateWitnessSchedule();
+    } finally {
+      catTransaction.complete();
     }
-    updateMaintenanceState(needMaint);
-    witnessController.updateWitnessSchedule();
   }
 
   /**
    * update the latest solidified block.
    */
   public void updateLatestSolidifiedBlock() {
-    List<Long> numbers =
-        witnessController
-            .getActiveWitnesses()
-            .stream()
-            .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
-            .sorted()
-            .collect(Collectors.toList());
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "UpdateLatestSolidifiedBlock");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("UpdateLatestSolidifiedBlockTotalCount");
 
-    long size = witnessController.getActiveWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
-    if (solidifiedPosition < 0) {
-      logger.warn(
-          "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
-          solidifiedPosition,
-          size);
-      return;
+    try {
+      List<Long> numbers =
+          witnessController
+              .getActiveWitnesses()
+              .stream()
+              .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
+              .sorted()
+              .collect(Collectors.toList());
+
+      long size = witnessController.getActiveWitnesses().size();
+      int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
+      if (solidifiedPosition < 0) {
+        logger.warn(
+            "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
+            solidifiedPosition,
+            size);
+        catTransaction.setStatus(CatTransactionStatus.UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR);
+        return;
+      }
+      long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+      getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+      logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
+      Cat.logMetricForCount("UpdateLatestSolidifiedBlockSuccessCount");
+    } finally {
+      catTransaction.complete();
     }
-    long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public long getSyncBeginNumber() {
@@ -955,41 +1000,49 @@ public class Manager {
    * block num 2. pay the trx to witness. 3. the latest slot num.
    */
   public void updateSignedWitness(BlockCapsule block) {
-    // TODO: add verification
-    WitnessCapsule witnessCapsule =
-        witnessStore.get(
-            block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
-    witnessCapsule.setLatestBlockNum(block.getNum());
-    witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "UpdateSignedWitness");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("UpdateSignedWitnessTotalCount");
 
-    // Update memory witness status
-    WitnessCapsule wit = witnessController.getWitnesseByAddress(block.getWitnessAddress());
-    if (wit != null) {
-      wit.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
-      wit.setLatestBlockNum(block.getNum());
-      wit.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
-    }
-
-    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-
-    AccountCapsule sun = accountStore.getSun();
     try {
-      adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-    }
-    try {
-      adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-    }
+      // TODO: add verification
+      WitnessCapsule witnessCapsule =
+          witnessStore.get(
+              block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+      witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
+      witnessCapsule.setLatestBlockNum(block.getNum());
+      witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
 
-    logger.debug(
-        "updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.createReadableString(),
-        block.getNum(),
-        witnessCapsule.getTotalProduced());
+      // Update memory witness status
+      WitnessCapsule wit = witnessController.getWitnesseByAddress(block.getWitnessAddress());
+      if (wit != null) {
+        wit.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
+        wit.setLatestBlockNum(block.getNum());
+        wit.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
+      }
+
+      this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
+
+      AccountCapsule sun = accountStore.getSun();
+      try {
+        adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
+      } catch (BalanceInsufficientException e) {
+        logger.debug(e.getMessage(), e);
+      }
+      try {
+        adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      } catch (BalanceInsufficientException e) {
+        logger.debug(e.getMessage(), e);
+      }
+
+      logger.debug(
+          "updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+          witnessCapsule.createReadableString(),
+          block.getNum(),
+          witnessCapsule.getTotalProduced());
+    } finally {
+      catTransaction.complete();
+    }
   }
 
   public void updateMaintenanceState(boolean needMaint) {

@@ -45,6 +45,12 @@ public interface Parameter {
     String LOWER_BLOCK = "Lower block.";
     String SWITCH_FORK = "Switch fork.";
     String REVOKING_STORE_ERROR = "Revoking store illegal state exception.";
+    String GET_WITNESS_ERROR_SLOT = "CurrentSlot should be positive.";
+    String GET_WITNESS_ERROR_NULL = "Active Witnesses is null.";
+    String UNLINKED_BLOCK = "Unlinked block.";
+    String UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR = "Update latest solidified block error.";
+    String TRANSACTION_VALIDATE_SIGNATURE_ERROR = "Miss sig or contract.";
+    String BLOCK_VALIDATE_ERROR = "Block validate signature error.";
   }
 
 }

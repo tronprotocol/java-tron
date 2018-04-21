@@ -1,5 +1,6 @@
 package org.tron.core.witness;
 
+import com.dianping.cat.Cat;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.WitnessStore;
@@ -146,27 +148,36 @@ public class WitnessController {
    * validate witness schedule.
    */
   public boolean validateWitnessSchedule(BlockCapsule block) {
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ValidateWitnessSchedule");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("ValidateWitnessScheduleTotalCount");
 
-    ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-        .getWitnessAddress();
-    //to deal with other condition later
-    if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() != 0 && manager
-        .getDynamicPropertiesStore().getLatestBlockHeaderHash()
-        .equals(block.getParentHash())) {
-      long slot = getSlotAtTime(block.getTimeStamp());
-      final ByteString scheduledWitness = getScheduledWitness(slot);
-      if (!scheduledWitness.equals(witnessAddress)) {
-        logger.warn(
-            "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
-            ByteArray.toHexString(scheduledWitness.toByteArray()),
-            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
-            slot);
-        return false;
+    try {
+      ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
+          .getWitnessAddress();
+      //to deal with other condition later
+      if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() != 0 && manager
+          .getDynamicPropertiesStore().getLatestBlockHeaderHash()
+          .equals(block.getParentHash())) {
+        long slot = getSlotAtTime(block.getTimeStamp());
+        final ByteString scheduledWitness = getScheduledWitness(slot);
+        if (!scheduledWitness.equals(witnessAddress)) {
+          logger.warn(
+              "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
+              ByteArray.toHexString(scheduledWitness.toByteArray()),
+              ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+              slot);
+          Cat.logMetricForCount("ValidateWitnessScheduleOutOfOrderCount");
+          return false;
+        }
       }
+
+      logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
+          ByteArray.toHexString(witnessAddress.toByteArray()));
+    } finally {
+      catTransaction.complete();
     }
 
-    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
-        ByteArray.toHexString(witnessAddress.toByteArray()));
     return true;
   }
 
@@ -174,27 +185,41 @@ public class WitnessController {
    * get ScheduledWitness by slot.
    */
   public ByteString getScheduledWitness(final long slot) {
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "GetScheduledWitness");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("GetScheduledWitnessTotalCount");
 
-    final long currentSlot = getHeadSlot() + slot;
+    final ByteString scheduledWitness;
 
-    if (currentSlot < 0) {
-      throw new RuntimeException("currentSlot should be positive.");
+    try {
+      final long currentSlot = getHeadSlot() + slot;
+
+      if (currentSlot < 0) {
+        catTransaction.setStatus(CatTransactionStatus.GET_WITNESS_ERROR_SLOT);
+        Cat.logEvent("Error", CatTransactionStatus.GET_WITNESS_ERROR_SLOT);
+        throw new RuntimeException("currentSlot should be positive.");
+      }
+
+      int numberActiveWitness = this.getActiveWitnesses().size();
+      int sigleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
+      if (numberActiveWitness <= 0) {
+        catTransaction.setStatus(CatTransactionStatus.GET_WITNESS_ERROR_NULL);
+        Cat.logEvent("Error", CatTransactionStatus.GET_WITNESS_ERROR_NULL);
+        throw new RuntimeException("Active Witnesses is null.");
+      }
+      int witnessIndex = (int) currentSlot % (numberActiveWitness * sigleRepeat);
+      witnessIndex /= sigleRepeat;
+      logger.debug("currentSlot:" + currentSlot
+          + ", witnessIndex" + witnessIndex
+          + ", currentActiveWitnesses size:" + numberActiveWitness);
+
+      scheduledWitness = this.getActiveWitnesses().get(witnessIndex);
+      logger.info("scheduledWitness:" + ByteArray.toHexString(scheduledWitness.toByteArray())
+          + ", currentSlot:" + currentSlot);
+      Cat.logMetricForCount("GetScheduledWitnessSuccessCount");
+    } finally {
+      catTransaction.complete();
     }
-
-    int numberActiveWitness = this.getActiveWitnesses().size();
-    int sigleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
-    if (numberActiveWitness <= 0) {
-      throw new RuntimeException("Active Witnesses is null.");
-    }
-    int witnessIndex = (int) currentSlot % (numberActiveWitness * sigleRepeat);
-    witnessIndex /= sigleRepeat;
-    logger.debug("currentSlot:" + currentSlot
-        + ", witnessIndex" + witnessIndex
-        + ", currentActiveWitnesses size:" + numberActiveWitness);
-
-    final ByteString scheduledWitness = this.getActiveWitnesses().get(witnessIndex);
-    logger.info("scheduledWitness:" + ByteArray.toHexString(scheduledWitness.toByteArray())
-        + ", currentSlot:" + currentSlot);
 
     return scheduledWitness;
   }

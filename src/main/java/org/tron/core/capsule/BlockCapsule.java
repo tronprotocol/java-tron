@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import com.dianping.cat.Cat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -32,6 +33,8 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
@@ -208,14 +211,22 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public boolean validateSignature() throws ValidateSignatureException {
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "BlockValidateSignature");
+    Cat.logMetricForCount("BlockValidateSignatureTotalCount");
     try {
+      catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               TransactionCapsule
                   .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
+      catTransaction.setStatus(CatTransactionStatus.VALIDATE_SIGANATURE);
+      Cat.logMetricForCount("BlockValidateSignatureErrorCount");
+      Cat.logEvent("Error", CatTransactionStatus.BLOCK_VALIDATE_ERROR);
       throw new ValidateSignatureException(e.getMessage());
+    } finally {
+      catTransaction.complete();
     }
   }
 
@@ -227,18 +238,31 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash calcMerkleRoot() {
-    List<Transaction> transactionsList = this.block.getTransactionsList();
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "CalcMerkleRoot");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("CalcMerkleRootTotalCount");
 
-    if (CollectionUtils.isEmpty(transactionsList)) {
-      return Sha256Hash.ZERO_HASH;
+    Sha256Hash merkleRoot;
+
+    try {
+      List<Transaction> transactionsList = this.block.getTransactionsList();
+
+      if (CollectionUtils.isEmpty(transactionsList)) {
+        Cat.logMetricForCount("CalcMerkleRootZeroCount");
+        return Sha256Hash.ZERO_HASH;
+      }
+
+      Vector<Sha256Hash> ids = transactionsList.stream()
+          .map(TransactionCapsule::new)
+          .map(TransactionCapsule::getHash)
+          .collect(Collectors.toCollection(Vector::new));
+
+      merkleRoot = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    } finally {
+      catTransaction.complete();
     }
 
-    Vector<Sha256Hash> ids = transactionsList.stream()
-        .map(TransactionCapsule::new)
-        .map(TransactionCapsule::getHash)
-        .collect(Collectors.toCollection(Vector::new));
-
-    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    return merkleRoot;
   }
 
   public void setMerkleRoot() {
