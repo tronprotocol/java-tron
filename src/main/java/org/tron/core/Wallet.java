@@ -229,15 +229,18 @@ public class Wallet {
     return false;
   }
 
+  @Deprecated
   public Transaction createAccount(AccountCreateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
+  @Deprecated
   public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
     return new TransactionCapsule(voteWitnessContract).getInstance();
   }
 
+  @Deprecated
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     return new TransactionCapsule(assetIssueContract).getInstance();
   }
@@ -246,6 +249,7 @@ public class Wallet {
     return new TransactionCapsule(witnessCreateContract).getInstance();
   }
 
+  @Deprecated
   public Transaction createTransaction(WitnessUpdateContract witnessUpdateContract) {
     return new TransactionCapsule(witnessUpdateContract).getInstance();
   }

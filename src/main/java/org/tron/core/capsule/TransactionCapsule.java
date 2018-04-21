@@ -141,6 +141,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
+  @Deprecated
   public TransactionCapsule(AssetIssueContract assetIssueContract) {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
   }
@@ -248,6 +249,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           return null;
       }
       return owner.toByteArray();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static byte[] getToAddress(Transaction.Contract contract) {
+    ByteString to;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case TransferContract:
+          to = contractParameter.unpack(TransferContract.class).getToAddress();
+          break;
+        case TransferAssetContract:
+          to = contractParameter.unpack(TransferAssetContract.class).getToAddress();
+          break;
+        case ParticipateAssetIssueContract:
+          to = contractParameter.unpack(ParticipateAssetIssueContract.class).getToAddress();
+          break;
+        // todo add other contract
+
+        default:
+          return null;
+      }
+      return to.toByteArray();
     } catch (Exception ex) {
       ex.printStackTrace();
       return null;
