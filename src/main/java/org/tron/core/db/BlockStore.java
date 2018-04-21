@@ -19,12 +19,9 @@ import com.googlecode.cqengine.IndexedCollection;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
@@ -69,36 +66,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
       }
     }
     return instance;
-  }
-
-  /**
-   * to do.
-   */
-  public Sha256Hash getHeadBlockId() {
-    return head == null ? Sha256Hash.ZERO_HASH : head.getBlockId();
-  }
-
-  /**
-   * Get the head block's number.
-   */
-  @Deprecated
-  public long getHeadBlockNum() {
-    return head == null ? 0 : head.getNum();
-  }
-
-  @Deprecated
-  public DateTime getHeadBlockTime() {
-    return head == null ? getGenesisTime() : new DateTime(head.getTimeStamp());
-  }
-
-  @Deprecated
-  public long currentASlot() {
-    return getHeadBlockNum(); // assume no missed slot
-  }
-
-  // genesis_time
-  public DateTime getGenesisTime() {
-    return DateTime.parse("20180101", DateTimeFormat.forPattern("yyyyMMdd"));
   }
 
   @Override
