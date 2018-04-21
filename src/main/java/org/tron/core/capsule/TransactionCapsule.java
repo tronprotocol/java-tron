@@ -28,6 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -335,8 +336,58 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction;
   }
 
+  private StringBuffer toStringBuff = new StringBuffer();
+
+
   @Override
   public String toString() {
-    return this.transaction.toString();
+
+    toStringBuff.setLength(0);
+    toStringBuff.append("TransactionCapsule \n[ ");
+
+    toStringBuff.append("hash=").append(getTransactionId()).append("\n");
+    AtomicInteger i = new AtomicInteger();
+    if (!getInstance().getRawData().getContractList().isEmpty()) {
+      toStringBuff.append("contract list:{ ");
+      getInstance().getRawData().getContractList().forEach(contract -> {
+        toStringBuff.append("[" + i + "] ").append("type: ").append(contract.getType())
+            .append("\n");
+        toStringBuff.append("from address=").append(getOwner(contract)).append("\n");
+        toStringBuff.append("to address=").append(getToAddress(contract)).append("\n");
+        if (contract.getType().equals(ContractType.TransferContract)) {
+          TransferContract transferContract;
+          try {
+            transferContract = contract.getParameter()
+                .unpack(TransferContract.class);
+            toStringBuff.append("transfer amount=").append(transferContract.getAmount())
+                .append("\n");
+          } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+          }
+        } else if (contract.getType().equals(ContractType.TransferAssetContract)) {
+          TransferAssetContract transferAssetContract;
+          try {
+            transferAssetContract = contract.getParameter()
+                .unpack(TransferAssetContract.class);
+            toStringBuff.append("transfer asset=").append(transferAssetContract.getAssetName())
+                .append("\n");
+            toStringBuff.append("transfer amount=").append(transferAssetContract.getAmount())
+                .append("\n");
+          } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+          }
+        }
+        if ( this.transaction.getSignatureList().size() >= i.get() + 1) {
+          toStringBuff.append("sign=").append(getBase64FromByteString(
+              this.transaction.getSignature(i.getAndIncrement()))).append("\n");
+        }
+      });
+      toStringBuff.append("}\n");
+    } else {
+      toStringBuff.append("contract list is empty\n");
+    }
+
+    toStringBuff.append("]");
+    return toStringBuff.toString();
   }
 }

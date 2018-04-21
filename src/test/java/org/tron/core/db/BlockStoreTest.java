@@ -3,7 +3,6 @@ package org.tron.core.db;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -40,12 +39,5 @@ public class BlockStoreTest {
 
   @Test
   public void testCreateBlockStore() {
-
-    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
-        blockStore.getHeadBlockId().toString());
-    Assert.assertEquals(0, blockStore.getHeadBlockNum());
-    Assert.assertEquals(blockStore.getGenesisTime(), blockStore.getHeadBlockTime());
-    Assert.assertEquals(0, blockStore.currentASlot());
-
   }
 }

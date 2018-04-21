@@ -3,7 +3,6 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.Quitable;
 import org.tron.core.config.args.Args;
@@ -31,12 +30,16 @@ public abstract class TronDatabase<T> implements Iterable<T>, Quitable {
     return dbSource;
   }
 
-  /** reset the database. */
+  /**
+   * reset the database.
+   */
   public void reset() {
     dbSource.resetDb();
   }
 
-  /** close the database. */
+  /**
+   * close the database.
+   */
   @Override
   public void close() {
     dbSource.closeDB();
