@@ -242,7 +242,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       return;
     }
     //TODO: here need to cache fresh message to let peer fetch these data not from DB
-    advObjToSpread.put(msg.getMessageId(), type);
+    synchronized (advObjToSpread) {
+      advObjToSpread.put(msg.getMessageId(), type);
+    }
   }
 
   @Override
@@ -298,68 +300,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     advertiseLoopThread = new Thread(() -> {
       while (isAdvertiseActive) {
-        if (advObjToSpread.isEmpty()) {
-          try {
-            Thread.sleep(1000);
-            continue;
-          } catch (InterruptedException e) {
-            logger.debug(e.getMessage(), e);
-          }
-        }
-
-        synchronized (advObjToSpread) {
-          HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
-          InvToSend sendPackage = new InvToSend();
-          spread.putAll(advObjToSpread);
-          advObjToSpread.clear();
-
-          getActivePeer().stream()
-              .filter(peer -> !peer.isNeedSyncFromUs())
-              .forEach(peer -> {
-                spread.entrySet().stream()
-                    .filter(idToSpread ->
-                        !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
-                            && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
-                    .forEach(idToSpread -> {
-                      peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
-                      sendPackage.add(idToSpread, peer);
-                    });
-//                peer.cleanInvGarbage();
-              });
-
-          sendPackage.sendInv();
-        }
+        consumerAdvObjToSpread();
       }
     });
 
     advObjFetchLoopThread = new Thread(() -> {
       while (isFetchActive) {
-        if (advObjToFetch.isEmpty()) {
-          try {
-            Thread.sleep(1000);
-            continue;
-          } catch (InterruptedException e) {
-            logger.debug(e.getMessage(), e);
-          }
-        }
-
-        synchronized (advObjToFetch) {
-          InvToSend sendPackage = new InvToSend();
-          advObjToFetch.entrySet()
-              .forEach(idToFetch ->
-                getActivePeer().stream().filter(peer -> !peer.isBusy()
-                    && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
-                    .findFirst()
-                    .ifPresent(peer -> {
-                      //TODO: don't fetch too much obj from only one peer
-                      sendPackage.add(idToFetch, peer);
-                      advObjToFetch.remove(idToFetch.getKey());
-                      peer.getAdvObjWeRequested()
-                          .put(idToFetch.getKey(), Time.getCurrentMillis());
-                    })
-              );
-          sendPackage.sendFetch();
-        }
+        consumerAdvObjToFetch();
       }
     });
 
@@ -419,6 +366,66 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Unhandled exception", t);
       }
     }, 10, 1, TimeUnit.SECONDS);
+  }
+
+  private void consumerAdvObjToFetch() {
+    if (advObjToFetch.isEmpty()) {
+      try {
+        Thread.sleep(100);
+        return;
+      } catch (InterruptedException e) {
+        logger.debug(e.getMessage(), e);
+      }
+    }
+
+    synchronized (advObjToFetch) {
+      InvToSend sendPackage = new InvToSend();
+      advObjToFetch.entrySet()
+          .forEach(idToFetch ->
+              getActivePeer().stream().filter(peer -> !peer.isBusy()
+                  && peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
+                  .findFirst()
+                  .ifPresent(peer -> {
+                    //TODO: don't fetch too much obj from only one peer
+                    sendPackage.add(idToFetch, peer);
+                    advObjToFetch.remove(idToFetch.getKey());
+                    peer.getAdvObjWeRequested()
+                        .put(idToFetch.getKey(), Time.getCurrentMillis());
+                  })
+          );
+      sendPackage.sendFetch();
+    }
+  }
+
+  private void consumerAdvObjToSpread() {
+    if (advObjToSpread.isEmpty()) {
+      try {
+        Thread.sleep(100);
+        return;
+      } catch (InterruptedException e) {
+        logger.debug(e.getMessage(), e);
+      }
+    }
+    InvToSend sendPackage = new InvToSend();
+    HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
+    synchronized (advObjToSpread) {
+      spread.putAll(advObjToSpread);
+      advObjToSpread.clear();
+    }
+    getActivePeer().stream()
+        .filter(peer -> !peer.isNeedSyncFromUs())
+        .forEach(peer -> {
+          spread.entrySet().stream()
+              .filter(idToSpread ->
+                  !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
+                      && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
+              .forEach(idToSpread -> {
+                peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
+                sendPackage.add(idToSpread, peer);
+              });
+//                peer.cleanInvGarbage();
+        });
+    sendPackage.sendInv();
   }
 
   private synchronized void handleSyncBlock() {
