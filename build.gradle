@@ -9,7 +9,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
-mainClassName = 'org.tron.program.cat.PushBlock'
+mainClassName = 'org.tron.program.FullNode'
 
 repositories {
     maven { url 'http://mvnrepository.com' }
@@ -209,7 +209,7 @@ run {
 }
 
 shadowJar {
-    baseName = 'push-block'
+    baseName = 'java-tron'
     classifier = null
     version = null
 }
