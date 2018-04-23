@@ -135,4 +135,12 @@ public class WalletSolidity {
         .addAllTransaction(transactionsFromThis).build();
     return transactionList;
   }
+
+  public TransactionList getTransactionsToThis(ByteString toAddress) {
+    List<Transaction> transactionsToThis = storeAPI
+        .getTransactionsToThis(ByteArray.toHexString(toAddress.toByteArray()));
+    TransactionList transactionList = TransactionList.newBuilder()
+        .addAllTransaction(transactionsToThis).build();
+    return transactionList;
+  }
 }

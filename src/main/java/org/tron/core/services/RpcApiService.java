@@ -323,8 +323,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void getTransactionsToThis(Account request,
-        StreamObserver<NumberMessage> responseObserver) {
-      super.getTransactionsToThis(request, responseObserver);
+        StreamObserver<TransactionList> responseObserver) {
+      ByteString toAddress = request.getAddress();
+      if (null != toAddress) {
+        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onCompleted();
+      }
     }
   }
 
