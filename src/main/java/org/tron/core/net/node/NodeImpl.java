@@ -203,7 +203,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnMessageTotalCount");
 
@@ -257,7 +257,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    * @param msg msg to bradcast
    */
   public void broadcast(Message msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "Broadcast");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "Broadcast");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("BroadcastTotalCount");
 
@@ -566,7 +566,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleInventoryMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleInventoryMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleInventoryMessageTotalCount");
 
@@ -619,7 +619,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleBlockMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleBlockMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleBlockMessageTotalCount");
 
@@ -662,7 +662,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ProcessAdvBlock");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "ProcessAdvBlock");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("ProcessAdvBlockTotalCount");
 
@@ -767,7 +767,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleTransactionMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleTransactionMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleTransactionMessageTotalCount");
 
@@ -796,7 +796,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleSyncBlockChainMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleSyncBlockChainMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleSyncBlockChainMessageTotalCount");
 
@@ -850,7 +850,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleFetchDataMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleFetchDataMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleFetchDataMessageTotalCount");
 
@@ -901,7 +901,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleChainInventoryMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleChainInventoryMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleChainInventoryMessageTotalCount");
 
@@ -1117,7 +1117,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleBlockInventoryMessage");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleBlockInventoryMessage");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("OnHandleBlockInventoryMessageTotalCount");
 
@@ -1159,7 +1159,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "SyncNextBatchChainIds");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "SyncNextBatchChainIds");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("SyncNextBatchChainIdsTotalCount");
 
