@@ -1,5 +1,7 @@
 package org.tron.core.config;
 
+import org.springframework.transaction.TransactionException;
+
 public interface Parameter {
 
   interface ChainConstant {
@@ -49,6 +51,11 @@ public interface Parameter {
     String UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR = "Update latest solidified block error.";
     String TRANSACTION_VALIDATE_SIGNATURE_ERROR = "Miss sig or contract.";
     String BLOCK_VALIDATE_ERROR = "Block validate signature error.";
+    String BAD_BLOCK_EXCEPTION = "Bad block exception.";
+    String TRON_EXCEPTION = "TRON exception.";
+    String TRAITOR_PEER_EXCEPTION = "Traitor peer exception.";
+    String BAD_TRANSACTION_EXCEPTION = "Bad transaction exception.";
+    String ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION = "On handle chain inventory message exception.";
   }
 
 

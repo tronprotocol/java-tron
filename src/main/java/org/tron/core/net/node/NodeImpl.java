@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
+import com.dianping.cat.Cat;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
@@ -41,6 +42,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -200,31 +203,40 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
-    switch (msg.getType()) {
-      case BLOCK:
-        onHandleBlockMessage(peer, (BlockMessage) msg);
-        break;
-      case TRX:
-        onHandleTransactionMessage(peer, (TransactionMessage) msg);
-        break;
-      case SYNC_BLOCK_CHAIN:
-        onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
-        break;
-      case FETCH_INV_DATA:
-        onHandleFetchDataMessage(peer, (FetchInvDataMessage) msg);
-        break;
-      case BLOCK_INVENTORY:
-        onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
-        break;
-      case BLOCK_CHAIN_INVENTORY:
-        onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
-        break;
-      case INVENTORY:
-        onHandleInventoryMessage(peer, (InventoryMessage) msg);
-        break;
-      default:
-        throw new IllegalArgumentException("No such message");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnMessageTotalCount");
+
+    try {
+      logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
+      switch (msg.getType()) {
+        case BLOCK:
+          onHandleBlockMessage(peer, (BlockMessage) msg);
+          break;
+        case TRX:
+          onHandleTransactionMessage(peer, (TransactionMessage) msg);
+          break;
+        case SYNC_BLOCK_CHAIN:
+          onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
+          break;
+        case FETCH_INV_DATA:
+          onHandleFetchDataMessage(peer, (FetchInvDataMessage) msg);
+          break;
+        case BLOCK_INVENTORY:
+          onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
+          break;
+        case BLOCK_CHAIN_INVENTORY:
+          onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
+          break;
+        case INVENTORY:
+          onHandleInventoryMessage(peer, (InventoryMessage) msg);
+          break;
+        default:
+          Cat.logMetricForCount("OnMessageErrorCount");
+          throw new IllegalArgumentException("No such message");
+      }
+    } finally {
+      catTransaction.complete();
     }
   }
 
@@ -245,20 +257,31 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    * @param msg msg to bradcast
    */
   public void broadcast(Message msg) {
-    InventoryType type;
-    if (msg instanceof BlockMessage) {
-      logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
-      freshBlockId.offer(((BlockMessage) msg).getBlockId());
-      BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
-      type = InventoryType.BLOCK;
-    } else if (msg instanceof TransactionMessage) {
-      TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
-      type = InventoryType.TRX;
-    } else {
-      return;
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "Broadcast");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("BroadcastTotalCount");
+
+    try {
+      InventoryType type;
+      if (msg instanceof BlockMessage) {
+        logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
+        freshBlockId.offer(((BlockMessage) msg).getBlockId());
+        BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
+        type = InventoryType.BLOCK;
+        Cat.logMetricForCount("BroadcastBlockCount");
+      } else if (msg instanceof TransactionMessage) {
+        TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
+        type = InventoryType.TRX;
+        Cat.logMetricForCount("BroadcastTransactionCount");
+      } else {
+        Cat.logMetricForCount("BroadcastOthersCount");
+        return;
+      }
+      //TODO: here need to cache fresh message to let peer fetch these data not from DB
+      advObjToSpread.put(msg.getMessageId(), type);
+    } finally {
+      catTransaction.complete();
     }
-    //TODO: here need to cache fresh message to let peer fetch these data not from DB
-    advObjToSpread.put(msg.getMessageId(), type);
   }
 
   @Override
@@ -543,29 +566,37 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    msg.getHashList().forEach(id -> {
-      final boolean[] spreaded = {false};
-      final boolean[] requested = {false};
-      getActivePeer().forEach(p -> {
-        if (p.getAdvObjWeSpread().containsKey(id)) {
-          spreaded[0] = true;
-        }
-        if (p.getAdvObjWeRequested().containsKey(id)) {
-          requested[0] = true;
-        }
-      });
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleInventoryMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleInventoryMessageTotalCount");
 
-      if (!spreaded[0]) {
-        //TODO: avoid TRX flood attack here.
-        peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
-        if (!requested[0]) {
-          //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
-          if (!badAdvObj.containsKey(id)) {
-            this.advObjToFetch.put(id, msg.getInventoryType());
+    try {
+      msg.getHashList().forEach(id -> {
+        final boolean[] spreaded = {false};
+        final boolean[] requested = {false};
+        getActivePeer().forEach(p -> {
+          if (p.getAdvObjWeSpread().containsKey(id)) {
+            spreaded[0] = true;
+          }
+          if (p.getAdvObjWeRequested().containsKey(id)) {
+            requested[0] = true;
+          }
+        });
+
+        if (!spreaded[0]) {
+          //TODO: avoid TRX flood attack here.
+          peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
+          if (!requested[0]) {
+            //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
+            if (!badAdvObj.containsKey(id)) {
+              this.advObjToFetch.put(id, msg.getInventoryType());
+            }
           }
         }
-      }
-    });
+      });
+    } finally {
+      catTransaction.complete();
+    }
   }
 
   @Override
@@ -588,69 +619,88 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    //logger.info("on handle block message");
-    //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleBlockMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleBlockMessageTotalCount");
 
-    Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
-    Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
-    BlockId blockId = blkMsg.getBlockId();
-    logger.info("handle Block number is " + blkMsg.getBlockId().getNum());
+    try {
+      //logger.info("on handle block message");
+      //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
-    if (advObjWeRequested.containsKey(blockId)) {
-      //broadcast mode
-      advObjWeRequested.remove(blockId);
-      processAdvBlock(peer, blkMsg.getBlockCapsule());
-      startFetchItem();
-    } else if (syncBlockRequested.containsKey(blockId)) {
-      //sync mode
-      syncBlockRequested.remove(blockId);
-      //peer.getSyncBlockToFetch().remove(blockId);
-      syncBlockIdWeRequested.remove(blockId);
-      //TODO: maybe use consume pipe here better
-      blockJustReceived.add(blkMsg);
-      isHandleSyncBlockActive = true;
-      //processSyncBlock(blkMsg.getBlockCapsule());
-      if (!peer.isBusy()) {
-        if (peer.getUnfetchSyncNum() > 0
-            && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
-          syncNextBatchChainIds(peer);
-        } else {
-          //startFetchSyncBlock();
-          isFetchSyncActive = true;
+      Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
+      Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
+      BlockId blockId = blkMsg.getBlockId();
+      logger.info("handle Block number is " + blkMsg.getBlockId().getNum());
+
+      if (advObjWeRequested.containsKey(blockId)) {
+        //broadcast mode
+        advObjWeRequested.remove(blockId);
+        processAdvBlock(peer, blkMsg.getBlockCapsule());
+        startFetchItem();
+      } else if (syncBlockRequested.containsKey(blockId)) {
+        //sync mode
+        syncBlockRequested.remove(blockId);
+        //peer.getSyncBlockToFetch().remove(blockId);
+        syncBlockIdWeRequested.remove(blockId);
+        //TODO: maybe use consume pipe here better
+        blockJustReceived.add(blkMsg);
+        isHandleSyncBlockActive = true;
+        //processSyncBlock(blkMsg.getBlockCapsule());
+        if (!peer.isBusy()) {
+          if (peer.getUnfetchSyncNum() > 0
+              && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
+            syncNextBatchChainIds(peer);
+          } else {
+            //startFetchSyncBlock();
+            isFetchSyncActive = true;
+          }
         }
       }
-
+    } finally {
+      catTransaction.complete();
     }
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    //TODO: lack the complete flow.
-    if (!freshBlockId.contains(block.getBlockId())) {
-      try {
-        LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
-        freshBlockId.offer(block.getBlockId());
-        trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "ProcessAdvBlock");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("ProcessAdvBlockTotalCount");
 
-        //TODO:save message cache again.
-        getActivePeer().stream()
-            .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
-            .forEach(p -> {
-              p.setHeadBlockWeBothHave(block.getBlockId());
-              p.setHeadBlockTimeWeBothHave(block.getTimeStamp());
-            });
+    try {
+      //TODO: lack the complete flow.
+      if (!freshBlockId.contains(block.getBlockId())) {
+        try {
+          LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
+          freshBlockId.offer(block.getBlockId());
+          trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
-        //rebroadcast
-        broadcast(new BlockMessage(block));
+          //TODO:save message cache again.
+          getActivePeer().stream()
+              .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
+              .forEach(p -> {
+                p.setHeadBlockWeBothHave(block.getBlockId());
+                p.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+              });
 
-      } catch (BadBlockException e) {
-        logger.error("We get a bad block, reason is " + e.getMessage()
-            + "\n the block is" + block);
-        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
-      } catch (UnLinkedBlockException e) {
-        //reSync
-        logger.info("get a unlink block ,so start sync!");
-        startSyncWithPeer(peer);
+          //rebroadcast
+          broadcast(new BlockMessage(block));
+          Cat.logMetricForCount("ProcessAdvBlockSuccessCount");
+        } catch (BadBlockException e) {
+          catTransaction.setStatus(CatTransactionStatus.BAD_BLOCK_EXCEPTION);
+          Cat.logEvent("Error", CatTransactionStatus.BAD_BLOCK_EXCEPTION);
+          logger.error("We get a bad block, reason is " + e.getMessage()
+              + "\n the block is" + block);
+          badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+        } catch (UnLinkedBlockException e) {
+          catTransaction.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
+          Cat.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
+          //reSync
+          logger.info("get a unlink block ,so start sync!");
+          startSyncWithPeer(peer);
+        }
       }
+    } finally {
+      catTransaction.complete();
     }
   }
 
@@ -717,101 +767,132 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    //logger.info("on handle transaction message");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleTransactionMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleTransactionMessageTotalCount");
+
     try {
-      if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
-        throw new TraitorPeerException("We don't send fetch request to" + peer);
-      } else {
-        peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
-        del.handleTransaction(trxMsg.getTransactionCapsule());
+      //logger.info("on handle transaction message");
+      try {
+        if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
+          catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+          throw new TraitorPeerException("We don't send fetch request to" + peer);
+        } else {
+          peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
+          del.handleTransaction(trxMsg.getTransactionCapsule());
+          Cat.logMetricForCount("OnHandleTransactionMessageSuccessCount");
+        }
+      } catch (TraitorPeerException e) {
+        catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+        logger.error(e.getMessage());
+        banTraitorPeer(peer);
+      } catch (BadTransactionException e) {
+        catTransaction.setStatus(CatTransactionStatus.BAD_TRANSACTION_EXCEPTION);
+        badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
       }
-    } catch (TraitorPeerException e) {
-      logger.error(e.getMessage());
-      banTraitorPeer(peer);
-    } catch (BadTransactionException e) {
-      badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
+    } finally {
+      catTransaction.complete();
     }
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    //logger.info("on handle sync block chain message");
-    peer.setTronState(TronState.SYNCING);
-    LinkedList<BlockId> blockIds = new LinkedList<>();
-    List<BlockId> summaryChainIds = syncMsg.getBlockIds();
-    long remainNum = 0;
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleSyncBlockChainMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleSyncBlockChainMessageTotalCount");
 
     try {
-      blockIds = del.getLostBlockIds(summaryChainIds);
-    } catch (StoreException e) {
-      logger.error(e.getMessage());
-    }
+      //logger.info("on handle sync block chain message");
+      peer.setTronState(TronState.SYNCING);
+      LinkedList<BlockId> blockIds = new LinkedList<>();
+      List<BlockId> summaryChainIds = syncMsg.getBlockIds();
+      long remainNum = 0;
 
-    if (blockIds.isEmpty()) {
-      if (CollectionUtils.isNotEmpty(summaryChainIds)
-          && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
-        logger.info(
-            "Node sync block fail, disconnect peer:{}, sync message:{}",
-            peer, syncMsg);
-        peer.disconnect(ReasonCode.SYNC_FAIL);
-      } else {
-        peer.setNeedSyncFromUs(false);
+      try {
+        blockIds = del.getLostBlockIds(summaryChainIds);
+      } catch (StoreException e) {
+        logger.error(e.getMessage());
       }
-    } else if (blockIds.size() == 1
-        && !summaryChainIds.isEmpty()
-        && (summaryChainIds.contains(blockIds.peekFirst())
-        || blockIds.peek().getNum() == 0)) {
-      peer.setNeedSyncFromUs(false);
-    } else {
-      peer.setNeedSyncFromUs(true);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
-    }
 
-    //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
-    if (!peer.isNeedSyncFromPeer()
-        && CollectionUtils.isNotEmpty(summaryChainIds)
-        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
-        && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
-      startSyncWithPeer(peer);
-    }
+      if (blockIds.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(summaryChainIds)
+            && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+          logger.info(
+              "Node sync block fail, disconnect peer:{}, sync message:{}",
+              peer, syncMsg);
+          peer.disconnect(ReasonCode.SYNC_FAIL);
+        } else {
+          peer.setNeedSyncFromUs(false);
+        }
+      } else if (blockIds.size() == 1
+          && !summaryChainIds.isEmpty()
+          && (summaryChainIds.contains(blockIds.peekFirst())
+          || blockIds.peek().getNum() == 0)) {
+        peer.setNeedSyncFromUs(false);
+      } else {
+        peer.setNeedSyncFromUs(true);
+        remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
+      }
 
-    peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
+      //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
+      if (!peer.isNeedSyncFromPeer()
+          && CollectionUtils.isNotEmpty(summaryChainIds)
+          && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+          && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+        startSyncWithPeer(peer);
+      }
+
+      peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
+      Cat.logMetricForCount("OnHandleSyncBlockChainMessageSuccessCount");
+      Cat.logMetricForCount("SendChainInventoryMessageCount");
+    } finally {
+      catTransaction.complete();
+    }
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
-    logger.info("on handle fetch block message");
-    MessageTypes type = fetchInvDataMsg.getInvMessageType();
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleFetchDataMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleFetchDataMessageTotalCount");
 
-    //TODO:maybe can use message cache here
-    BlockCapsule block = null;
-    //get data and send it one by one
-    for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+    try {
+      logger.info("on handle fetch block message");
+      MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
-      Message msg;
+      //TODO:maybe can use message cache here
+      BlockCapsule block = null;
+      //get data and send it one by one
+      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
 
-      if (type == MessageTypes.BLOCK) {
-        msg = BlockCache.getIfPresent(hash);
-      } else {
-        msg = TrxCache.getIfPresent(hash);
-      }
+        Message msg;
 
-      if (msg == null) {
-        msg = del.getData(hash, type);
-      }
-
-      if (msg != null) {
-        if (type.equals(MessageTypes.BLOCK)) {
-          block = ((BlockMessage) msg).getBlockCapsule();
+        if (type == MessageTypes.BLOCK) {
+          msg = BlockCache.getIfPresent(hash);
+        } else {
+          msg = TrxCache.getIfPresent(hash);
         }
-        peer.sendMessage(msg);
-      } else {
-        logger.error("fetch message {} {} failed.", type, hash);
-        peer.sendMessage(new ItemNotFound());
-      }
-    }
 
-    if (block != null) {
-      peer.setHeadBlockWeBothHave(block.getBlockId());
-      peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+        if (msg == null) {
+          msg = del.getData(hash, type);
+        }
+
+        if (msg != null) {
+          if (type.equals(MessageTypes.BLOCK)) {
+            block = ((BlockMessage) msg).getBlockCapsule();
+          }
+          peer.sendMessage(msg);
+          Cat.logMetricForCount("SendFetchBlockCount");
+        } else {
+          logger.error("fetch message {} {} failed.", type, hash);
+          peer.sendMessage(new ItemNotFound());
+        }
+      }
+
+      if (block != null) {
+        peer.setHeadBlockWeBothHave(block.getBlockId());
+        peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+      }
+    } finally {
+      catTransaction.complete();
     }
   }
 
@@ -820,132 +901,146 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    //logger.info("on handle block chain inventory message");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleChainInventoryMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleChainInventoryMessageTotalCount");
+
     try {
-      if (peer.getSyncChainRequested() != null) {
-        //List<BlockId> blockIds = msg.getBlockIds();
-        Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
+      //logger.info("on handle block chain inventory message");
+      try {
+        if (peer.getSyncChainRequested() != null) {
+          //List<BlockId> blockIds = msg.getBlockIds();
+          Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
 
-        //check if the peer is a traitor
-        if (!blockIdWeGet.isEmpty()) {
-          long num = blockIdWeGet.peek().getNum();
-          for (BlockId id : blockIdWeGet) {
-            if (id.getNum() != num++) {
-              throw new TraitorPeerException("We get a not continuous block inv from " + peer);
+          //check if the peer is a traitor
+          if (!blockIdWeGet.isEmpty()) {
+            long num = blockIdWeGet.peek().getNum();
+            for (BlockId id : blockIdWeGet) {
+              if (id.getNum() != num++) {
+                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                throw new TraitorPeerException("We get a not continuous block inv from " + peer);
+              }
             }
-          }
 
-          if (peer.getSyncChainRequested().getKey().isEmpty()) {
-            if (blockIdWeGet.peek().getNum() != 1) {
-              throw new TraitorPeerException(
-                  "We want a block inv starting from beginning from " + peer);
-            }
-          } else {
-            if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
-              throw new TraitorPeerException(String.format(
-                  "We get a unlinked block chain from " + peer
-                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
-                      .getString()
-                      + "\n Peer give us is " + blockIdWeGet.peek().getString()));
-            }
-          }
-        }
-        //check finish
-
-        //here this peer's answer is legal
-        peer.setSyncChainRequested(null);
-        if (msg.getRemainNum() == 0
-            && (blockIdWeGet.isEmpty()
-            || (blockIdWeGet.size() == 1
-            && del.containBlock(blockIdWeGet.peek())))
-            && peer.getSyncBlockToFetch().isEmpty()
-            && peer.getUnfetchSyncNum() == 0) {
-          peer.setNeedSyncFromPeer(false);
-          unSyncNum = getUnSyncNum();
-          if (unSyncNum == 0) {
-            del.syncToCli(0);
-          }
-          //TODO: check whole sync status and notify del sync status.
-          //TODO: if sync finish call del.syncToCli();
-          return;
-        }
-
-        if (!blockIdWeGet.isEmpty() && peer.getSyncBlockToFetch().isEmpty()) {
-          boolean isFound = false;
-
-          for (PeerConnection peerToCheck :
-              getActivePeer()) {
-            if (!peerToCheck.equals(peer)
-                && !peerToCheck.getSyncBlockToFetch().isEmpty()
-                && peerToCheck.getSyncBlockToFetch().peekFirst()
-                .equals(blockIdWeGet.peekFirst())) {
-              isFound = true;
-              break;
-            }
-          }
-
-          if (!isFound) {
-            while (!blockIdWeGet.isEmpty()
-                && del.containBlock(blockIdWeGet.peek())) {
-              updateBlockWeBothHave(peer, blockIdWeGet.peek());
-              blockIdWeGet.poll();
-            }
-          }
-        } else if (!blockIdWeGet.isEmpty()) {
-          while (!peer.getSyncBlockToFetch().isEmpty()) {
-            if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
-              peer.getSyncBlockToFetch().pollLast();
+            if (peer.getSyncChainRequested().getKey().isEmpty()) {
+              if (blockIdWeGet.peek().getNum() != 1) {
+                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                throw new TraitorPeerException(
+                    "We want a block inv starting from beginning from " + peer);
+              }
             } else {
-              break;
+              if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
+                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                throw new TraitorPeerException(String.format(
+                    "We get a unlinked block chain from " + peer
+                        + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                        .getString()
+                        + "\n Peer give us is " + blockIdWeGet.peek().getString()));
+              }
+            }
+          }
+          //check finish
+
+          //here this peer's answer is legal
+          peer.setSyncChainRequested(null);
+          if (msg.getRemainNum() == 0
+              && (blockIdWeGet.isEmpty()
+              || (blockIdWeGet.size() == 1
+              && del.containBlock(blockIdWeGet.peek())))
+              && peer.getSyncBlockToFetch().isEmpty()
+              && peer.getUnfetchSyncNum() == 0) {
+            peer.setNeedSyncFromPeer(false);
+            unSyncNum = getUnSyncNum();
+            if (unSyncNum == 0) {
+              del.syncToCli(0);
+            }
+            //TODO: check whole sync status and notify del sync status.
+            //TODO: if sync finish call del.syncToCli();
+            return;
+          }
+
+          if (!blockIdWeGet.isEmpty() && peer.getSyncBlockToFetch().isEmpty()) {
+            boolean isFound = false;
+
+            for (PeerConnection peerToCheck :
+                getActivePeer()) {
+              if (!peerToCheck.equals(peer)
+                  && !peerToCheck.getSyncBlockToFetch().isEmpty()
+                  && peerToCheck.getSyncBlockToFetch().peekFirst()
+                  .equals(blockIdWeGet.peekFirst())) {
+                isFound = true;
+                break;
+              }
+            }
+
+            if (!isFound) {
+              while (!blockIdWeGet.isEmpty()
+                  && del.containBlock(blockIdWeGet.peek())) {
+                updateBlockWeBothHave(peer, blockIdWeGet.peek());
+                blockIdWeGet.poll();
+              }
+            }
+          } else if (!blockIdWeGet.isEmpty()) {
+            while (!peer.getSyncBlockToFetch().isEmpty()) {
+              if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
+                peer.getSyncBlockToFetch().pollLast();
+              } else {
+                break;
+              }
+            }
+
+            if (peer.getSyncBlockToFetch().isEmpty()) {
+              updateBlockWeBothHave(peer, blockIdWeGet.peek());
+
+            }
+            //poll the block we both have.
+            blockIdWeGet.poll();
+          }
+
+          //sew it
+          peer.getSyncBlockToFetch().addAll(blockIdWeGet);
+          peer.setUnfetchSyncNum(msg.getRemainNum());
+
+          long newUnSyncNum = getUnSyncNum();
+          if (unSyncNum != newUnSyncNum) {
+            unSyncNum = newUnSyncNum;
+            del.syncToCli(unSyncNum);
+          }
+
+          if (msg.getRemainNum() == 0) {
+            if (!peer.getSyncBlockToFetch().isEmpty()) {
+              //startFetchSyncBlock();
+              isFetchSyncActive = true;
+            } else {
+              //let peer know we are sync.
+              syncNextBatchChainIds(peer);
+            }
+          } else {
+            if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
+              //one batch by one batch.
+              //startFetchSyncBlock();
+              isFetchSyncActive = true;
+            } else {
+              syncNextBatchChainIds(peer);
             }
           }
 
-          if (peer.getSyncBlockToFetch().isEmpty()) {
-            updateBlockWeBothHave(peer, blockIdWeGet.peek());
+          Cat.logMetricForCount("OnHandleChainInventoryMessageSuccessCount");
+          //TODO: check head block time is legal here
+          //TODO: refresh sync status to cli. call del.syncToCli() here
 
-          }
-          //poll the block we both have.
-          blockIdWeGet.poll();
-        }
-
-        //sew it
-        peer.getSyncBlockToFetch().addAll(blockIdWeGet);
-        peer.setUnfetchSyncNum(msg.getRemainNum());
-
-        long newUnSyncNum = getUnSyncNum();
-        if (unSyncNum != newUnSyncNum) {
-          unSyncNum = newUnSyncNum;
-          del.syncToCli(unSyncNum);
-        }
-
-        if (msg.getRemainNum() == 0) {
-          if (!peer.getSyncBlockToFetch().isEmpty()) {
-            //startFetchSyncBlock();
-            isFetchSyncActive = true;
-          } else {
-            //let peer know we are sync.
-            syncNextBatchChainIds(peer);
-          }
         } else {
-          if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
-            //one batch by one batch.
-            //startFetchSyncBlock();
-            isFetchSyncActive = true;
-          } else {
-            syncNextBatchChainIds(peer);
-          }
+          catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+          throw new TraitorPeerException("We don't send sync request to " + peer);
         }
 
-        //TODO: check head block time is legal here
-        //TODO: refresh sync status to cli. call del.syncToCli() here
-
-      } else {
-        throw new TraitorPeerException("We don't send sync request to " + peer);
+      } catch (TraitorPeerException e) {
+        catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+        logger.error(e.getMessage());
+        banTraitorPeer(peer);
       }
-
-    } catch (TraitorPeerException e) {
-      logger.error(e.getMessage());
-      banTraitorPeer(peer);
+    } finally {
+      catTransaction.complete();
     }
   }
 
@@ -1022,19 +1117,27 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle advertise blocks inventory message");
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "OnHandleBlockInventoryMessage");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("OnHandleBlockInventoryMessageTotalCount");
 
-    //todo: check this peer's advertise history and the history of our request to this peer.
-    //simple implement here first
-    List<Sha256Hash> fetchList = new ArrayList<>();
-    msg.getBlockIds().forEach(hash -> {
-      //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
-      logger.info("We will fetch " + hash + " from " + peer);
-      fetchList.add(hash);
-    });
-    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.getMessageId(), peer);
-    loopFetchBlocks.push(fetchMsg);
+    try {
+      logger.info("on handle advertise blocks inventory message");
+
+      //todo: check this peer's advertise history and the history of our request to this peer.
+      //simple implement here first
+      List<Sha256Hash> fetchList = new ArrayList<>();
+      msg.getBlockIds().forEach(hash -> {
+        //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
+        logger.info("We will fetch " + hash + " from " + peer);
+        fetchList.add(hash);
+      });
+      FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
+      fetchMap.put(fetchMsg.getMessageId(), peer);
+      loopFetchBlocks.push(fetchMsg);
+    } finally {
+      catTransaction.complete();
+    }
   }
 
   private void startSync() {
@@ -1056,21 +1159,32 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    if (peer.getSyncChainRequested() != null) {
-      logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
-      return;
-    }
+    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "SyncNextBatchChainIds");
+    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+    Cat.logMetricForCount("SyncNextBatchChainIdsTotalCount");
+
     try {
-      Deque<BlockId> chainSummary =
-          del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
-              peer.getSyncBlockToFetch());
-      peer.setSyncChainRequested(
-          new Pair<>(chainSummary, System.currentTimeMillis()));
-      peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (TronException e) { //TODO: use tron excpetion here
-      logger.info(e.getMessage());
-      logger.debug(e.getMessage(), e);
-      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
+      if (peer.getSyncChainRequested() != null) {
+        logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
+        return;
+      }
+      try {
+        Deque<BlockId> chainSummary =
+            del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
+                peer.getSyncBlockToFetch());
+        peer.setSyncChainRequested(
+            new Pair<>(chainSummary, System.currentTimeMillis()));
+        peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
+        Cat.logMetricForCount("SyncNextBatchChainIdsSuccessCount");
+        Cat.logMetricForCount("SendSyncBlockChainMessageCount");
+      } catch (TronException e) { //TODO: use tron excpetion here
+        catTransaction.setStatus(CatTransactionStatus.TRON_EXCEPTION);
+        logger.info(e.getMessage());
+        logger.debug(e.getMessage(), e);
+        disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
+      }
+    } finally {
+      catTransaction.complete();
     }
   }
 
