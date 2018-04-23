@@ -26,9 +26,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.JMonitor;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
@@ -42,7 +43,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -534,6 +534,7 @@ public class Manager {
     com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "PushBlock");
     catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
     Cat.logMetricForCount("PushBlockTotalCount");
+    long start = System.currentTimeMillis();
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -652,6 +653,7 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     } finally {
+      JMonitor.countAndDuration("pushBlock", System.currentTimeMillis() - start);
       catTransaction.complete();
     }
   }
