@@ -7,6 +7,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.api.IndexHelper;
 
 @Configuration
 @Import(CommonConfig.class)
@@ -62,6 +64,14 @@ public class DefaultConfig {
   @Bean(name = "block_KDB")
   public String blockKdb() {
     return "block_KDB";
+  }
+
+  @Bean
+  public IndexHelper indexHelper() {
+    if (!Args.getInstance().isSolidityNode()) {
+      return null;
+    }
+    return new IndexHelper();
   }
 
 }
