@@ -7,7 +7,6 @@ import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -28,7 +27,6 @@ import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
-@Ignore
 public class IndexHelperTest {
 
   private static Manager dbManager;
@@ -38,6 +36,7 @@ public class IndexHelperTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.getInstance().setSolidityNode(true);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 

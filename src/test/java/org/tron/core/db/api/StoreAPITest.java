@@ -104,6 +104,7 @@ public class StoreAPITest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.getInstance().setSolidityNode(true);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
