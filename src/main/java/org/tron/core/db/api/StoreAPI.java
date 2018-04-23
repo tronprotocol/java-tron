@@ -44,10 +44,9 @@ public class StoreAPI {
   @Autowired(required = false)
   private IndexHelper indexHelper;
 
-  /**
-   * ***************************************************************************************
-   * *                                   account api                                       *
-   * ***************************************************************************************
+  /* *******************************************************************************
+   * *                            account api                                      *
+   * *******************************************************************************
    */
   public List<Account> getAccountAll() {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
@@ -78,10 +77,9 @@ public class StoreAPI {
     return (long) index.size();
   }
 
-  /**
-   * ***************************************************************************************
-   * *                                  block api                                          *
-   * ***************************************************************************************
+  /* *******************************************************************************
+   * *                          block api                                          *
+   * *******************************************************************************
    */
   public long getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
@@ -182,10 +180,9 @@ public class StoreAPI {
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
   }
 
-  /**
-   * ***************************************************************************************
-   * *                               transaction api                                       *
-   * ***************************************************************************************
+  /* *******************************************************************************
+   * *                       transaction api                                       *
+   * *******************************************************************************
    */
   public long getTransactionCount() {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
@@ -294,10 +291,9 @@ public class StoreAPI {
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
   }
 
-  /**
-   * ***************************************************************************************
-   * *                                   witness api                                       *
-   * ***************************************************************************************
+  /* *******************************************************************************
+   * *                            witness api                                      *
+   * *******************************************************************************
    */
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     if (StringUtils.isEmpty(address)) {
@@ -361,10 +357,9 @@ public class StoreAPI {
     return (long) index.size();
   }
 
-  /**
-   * ***************************************************************************************
-   * *                                AssetIssue api                                       *
-   * ***************************************************************************************
+  /* *******************************************************************************
+   * *                        AssetIssue api                                       *
+   * *******************************************************************************
    */
   public List<AssetIssueContract> getAssetIssueAll() {
     IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
