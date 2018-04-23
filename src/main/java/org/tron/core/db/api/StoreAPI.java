@@ -45,7 +45,9 @@ public class StoreAPI {
   private IndexHelper indexHelper;
 
   /**
-   * ********************************* * account api * ***************************************
+   * ***************************************************************************************
+   * *                                   account api                                       *
+   * ***************************************************************************************
    */
   public List<Account> getAccountAll() {
     IndexedCollection<Account> index = indexHelper.getAccountIndex();
@@ -77,7 +79,9 @@ public class StoreAPI {
   }
 
   /**
-   * ******************************** * block api * ***************************************
+   * ***************************************************************************************
+   * *                                  block api                                          *
+   * ***************************************************************************************
    */
   public long getBlockCount() {
     IndexedCollection<Block> index = indexHelper.getBlockIndex();
@@ -179,7 +183,9 @@ public class StoreAPI {
   }
 
   /**
-   * ***************************** * transaction api * ************************************
+   * ***************************************************************************************
+   * *                               transaction api                                       *
+   * ***************************************************************************************
    */
   public long getTransactionCount() {
     IndexedCollection<Transaction> index = indexHelper.getTransactionIndex();
@@ -289,7 +295,9 @@ public class StoreAPI {
   }
 
   /**
-   * ********************************* * witness api * ***************************************
+   * ***************************************************************************************
+   * *                                   witness api                                       *
+   * ***************************************************************************************
    */
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     if (StringUtils.isEmpty(address)) {
@@ -354,7 +362,9 @@ public class StoreAPI {
   }
 
   /**
-   * ************************ * AssetIssue api * ********************************
+   * ***************************************************************************************
+   * *                                AssetIssue api                                       *
+   * ***************************************************************************************
    */
   public List<AssetIssueContract> getAssetIssueAll() {
     IndexedCollection<AssetIssueContract> index = indexHelper.getAssetIssueIndex();

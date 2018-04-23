@@ -47,7 +47,7 @@ public class IndexHelper {
    */
   @PostConstruct
   public void init() {
-    logger.info("+++++++++++++++++++IndexHelp init++++++++++++++++++++++++++++++");
+    logger.info("+++++++++++++++++++IndexHelper init++++++++++++++++++++++++++++++");
     blockStore.forEach(b -> blockIndex.add(b.getInstance()));
     witnessStore.forEach(w -> witnessIndex.add(w.getInstance()));
     transactionStore.forEach(t -> transactionIndex.add(t.getInstance()));
