@@ -108,6 +108,9 @@ public class RpcApiService implements Service {
   }
 
 
+  /**
+   * DatabaseApi.
+   */
   private class DatabaseApi extends DatabaseImplBase {
 
     private Application app;
@@ -167,6 +170,9 @@ public class RpcApiService implements Service {
     }
   }
 
+  /**
+   * WalletSolidityApi.
+   */
   private class WalletSolidityApi extends WalletSolidityImplBase {
 
     private WalletSolidity walletSolidity;
@@ -212,7 +218,7 @@ public class RpcApiService implements Service {
         StreamObserver<AssetIssueList> responseObserver) {
 
       long timestamp = request.getNum();
-      if (timestamp <= 0) {
+      if (timestamp > 0) {
         AssetIssueList reply = walletSolidity.getAssetIssueListByTimestamp(timestamp);
         responseObserver.onNext(reply);
       } else {
@@ -238,41 +244,81 @@ public class RpcApiService implements Service {
     @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
-      super.getAssetIssueByName(request, responseObserver);
+      ByteString name = request.getValue();
+      if (null != name) {
+        AssetIssueContract reply = walletSolidity.getAssetIssueByName(name);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
-      super.getNowBlock(request, responseObserver);
+      responseObserver.onNext(walletSolidity.getNowBlock());
+      responseObserver.onCompleted();
     }
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
-      super.getBlockByNum(request, responseObserver);
+      long num = request.getNum();
+      if (num > 0) {
+        Block reply = walletSolidity.getBlockByNum(num);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
     public void totalTransaction(EmptyMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      super.totalTransaction(request, responseObserver);
+      responseObserver.onNext(walletSolidity.totalTransaction());
+      responseObserver.onCompleted();
     }
 
     @Override
     public void getTransactionById(BytesMessage request,
         StreamObserver<Transaction> responseObserver) {
-      super.getTransactionById(request, responseObserver);
+      ByteString id = request.getValue();
+      if (null != id) {
+        Transaction reply = walletSolidity.getTransactionById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
+
 
     @Override
     public void getTransactionsByTimestamp(TimeMessage request,
         StreamObserver<TransactionList> responseObserver) {
-      super.getTransactionsByTimestamp(request, responseObserver);
+      long beginTime = request.getBeginInMilliseconds();
+      long endTime = request.getEndInMilliseconds();
+      if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
+        responseObserver.onNext(null);
+      } else {
+        TransactionList reply = walletSolidity.getTransactionsByTimestamp(beginTime, endTime);
+        responseObserver.onNext(reply);
+      }
+      responseObserver.onCompleted();
     }
+
 
     @Override
     public void getTransactionsFromThis(Account request,
         StreamObserver<TransactionList> responseObserver) {
-      super.getTransactionsFromThis(request, responseObserver);
+      ByteString thisAddress = request.getAddress();
+      if (null != thisAddress) {
+        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onCompleted();
+      }
     }
 
     @Override
@@ -282,6 +328,9 @@ public class RpcApiService implements Service {
     }
   }
 
+  /**
+   * WalletApi.
+   */
   private class WalletApi extends WalletImplBase {
 
     private Application app;
