@@ -60,7 +60,7 @@ public class Peer {
         return id;
     }
 
-    public void setId(byte[] ip) {
+    public void setId(byte[] id) {
         this.id = id;
     }
 
