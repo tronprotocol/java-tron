@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -28,6 +29,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private boolean disabled = true;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
+  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   @Override
   public Dialog buildDialog() {
@@ -209,9 +211,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
-      state.newIds.forEach(e -> e.database.deleteData(e.key));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
+      state.newIds.forEach(e -> e.database.deleteData(e.key, writeOptions));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
       stack.pollLast();
     } finally {
       disabled = false;
@@ -244,7 +246,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public int size() {
+  public synchronized int size() {
     return stack.size();
   }
 
@@ -254,6 +256,36 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   public int getMaxSize() {
     return maxSize.get();
+  }
+
+  public synchronized void shutdown() {
+    System.err.println("******** begin to pop revokingDb ********");
+    System.err.println("******** before revokingDb size:" + RevokingStore.getInstance().size());
+    try {
+      disable();
+      boolean exit = false;
+      while (!exit) {
+        try {
+          commit();
+        } catch (RevokingStoreIllegalStateException e) {
+          exit = true;
+        }
+      }
+
+      while (true) {
+        try {
+          pop();
+        } catch (RevokingStoreIllegalStateException e) {
+          break;
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("******** faild to pop revokingStore. " + e);
+    } finally {
+      System.err.println("******** after revokingStore size:" + stack.size());
+      System.err.println("******** after revokingStore contains:" + stack);
+      System.err.println("******** end to pop revokingStore ********");
+    }
   }
 
   @Slf4j
@@ -353,6 +385,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @AllArgsConstructor
   @EqualsAndHashCode
   @Getter
+  @ToString
   public static class RevokingTuple {
 
     private SourceInter<byte[], byte[]> database;

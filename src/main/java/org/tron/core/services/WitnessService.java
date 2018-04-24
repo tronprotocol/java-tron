@@ -12,8 +12,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -27,7 +27,7 @@ import org.tron.core.witness.WitnessController;
 @Slf4j
 public class WitnessService implements Service {
 
-  private static final int MIN_PARTICIPATION_RATE = 33; // MIN_PARTICIPATION_RATE * 1%
+  private static final int MIN_PARTICIPATION_RATE = Args.getInstance().getMinParticipationRate(); // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
@@ -65,11 +65,11 @@ public class WitnessService implements Service {
               Thread.sleep(500L);
             } else {
               DateTime time = DateTime.now();
-              long timeToNextSecond = Manager.LOOP_INTERVAL
+              long timeToNextSecond = ChainConstant.BLOCK_PRODUCED_INTERVAL
                   - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
-                  % Manager.LOOP_INTERVAL;
+                  % ChainConstant.BLOCK_PRODUCED_INTERVAL;
               if (timeToNextSecond < 50L) {
-                timeToNextSecond = timeToNextSecond + Manager.LOOP_INTERVAL;
+                timeToNextSecond = timeToNextSecond + ChainConstant.BLOCK_PRODUCED_INTERVAL;
               }
               DateTime nextTime = time.plus(timeToNextSecond);
               logger.debug(
@@ -205,8 +205,9 @@ public class WitnessService implements Service {
 
     try {
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
-      if (DateTime.now().getMillis() - now > Manager.LOOP_INTERVAL) {
-        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", Manager.LOOP_INTERVAL,
+      if (DateTime.now().getMillis() - now > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
+        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
+            ChainConstant.BLOCK_PRODUCED_INTERVAL,
             new DateTime(now), DateTime.now());
         return BlockProductionCondition.TIME_OUT;
       }

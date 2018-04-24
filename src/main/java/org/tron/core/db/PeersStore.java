@@ -28,14 +28,10 @@ public class PeersStore extends TronDatabase<Set<Node>> {
   }
 
   @Override
-  public void close() {
-    super.close();
-  }
-
-  @Override
   public void put(byte[] key, Set<Node> nodes) {
     StringBuffer sb = new StringBuffer();
-    nodes.forEach(node -> sb.append(node.getEnodeURL()).append("&").append(node.getReputation()).append("||"));
+    nodes.forEach(node -> sb.append(node.getEnodeURL()).append("&").append(node.getReputation())
+        .append("||"));
     dbSource.putData(key, sb.toString().getBytes());
   }
 
@@ -50,7 +46,7 @@ public class PeersStore extends TronDatabase<Set<Node>> {
     byte[] value = dbSource.getData(key);
     if (value != null) {
       StringTokenizer st = new StringTokenizer(new String(value), "||");
-      while(st.hasMoreElements()) {
+      while (st.hasMoreElements()) {
         String strN = st.nextToken();
         int ps = strN.indexOf("&");
         int rept;

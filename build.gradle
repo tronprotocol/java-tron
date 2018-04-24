@@ -61,7 +61,7 @@ dependencies {
     compile "com.madgag.spongycastle:core:1.53.0.0"
     compile "com.madgag.spongycastle:prov:1.53.0.0"
 
-    compile group: 'com.google.guava', name: 'guava', version: '18.0'
+    compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
 
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
 
@@ -120,7 +120,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
-
+    compile 'com.googlecode.cqengine:cqengine:2.12.4'
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 
 }

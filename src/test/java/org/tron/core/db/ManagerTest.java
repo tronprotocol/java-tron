@@ -11,6 +11,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -21,6 +22,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -38,54 +40,70 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class ManagerTest {
 
-  private static Manager dbManager = new Manager();
+  private static Manager dbManager;
+  private static AnnotationConfigApplicationContext context;
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
 
+  static {
+    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
+
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"},
-        Constant.TEST_CONF);
 
-    dbManager.init();
+    dbManager = context.getBean(Manager.class);
 
-    blockCapsule2 = new BlockCapsule(1, ByteString.copyFrom(ByteArray
-        .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
-        0,
-        ByteString.copyFrom(
-            ECKey.fromPrivate(ByteArray
-                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                .getAddress()));
+    blockCapsule2 =
+        new BlockCapsule(
+            1,
+            ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
+            0,
+            ByteString.copyFrom(
+                ECKey.fromPrivate(
+                        ByteArray.fromHexString(
+                            Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                    .getAddress()));
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
-
   }
 
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    dbManager.destory();
+    context.destroy();
   }
 
   @Test
   public void setBlockReference()
-      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, ContractValidateException, ValidateSignatureException {
+      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
+          ContractValidateException, ValidateSignatureException {
 
-    BlockCapsule blockCapsule = new BlockCapsule(1, dbManager.getGenesisBlockId().getByteString(),
-        0,
-        ByteString.copyFrom(
-            ECKey.fromPrivate(ByteArray
-                .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                .getAddress()));
+    BlockCapsule blockCapsule =
+        new BlockCapsule(
+            1,
+            dbManager.getGenesisBlockId().getByteString(),
+            0,
+            ByteString.copyFrom(
+                ECKey.fromPrivate(
+                        ByteArray.fromHexString(
+                            Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                    .getAddress()));
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
 
-    TransferContract tc = TransferContract.newBuilder().setAmount(10)
-        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
-        .setToAddress(ByteString.copyFromUtf8("bbb")).build();
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
 
     if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
@@ -120,7 +138,6 @@ public class ManagerTest {
     Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
     Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
-
   }
 
   @Test
@@ -134,15 +151,18 @@ public class ManagerTest {
       Assert.assertTrue("pushBlock is error", false);
     }
 
-    Assert.assertTrue("containBlock is error", dbManager.containBlock(Sha256Hash.wrap(ByteArray
-        .fromHexString(blockCapsule2.getBlockId().toString()))));
+    Assert.assertTrue(
+        "containBlock is error",
+        dbManager.containBlock(
+            Sha256Hash.wrap(ByteArray.fromHexString(blockCapsule2.getBlockId().toString()))));
 
     if (isUnlinked) {
-      Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(),
-          0);
+      Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(), 0);
     } else {
       try {
-        Assert.assertEquals("getBlockIdByNum is error", blockCapsule2.getBlockId().toString(),
+        Assert.assertEquals(
+            "getBlockIdByNum is error",
+            blockCapsule2.getBlockId().toString(),
             dbManager.getBlockIdByNum(1).toString());
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
@@ -150,54 +170,61 @@ public class ManagerTest {
     }
 
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
-
   }
-
 
   //    @Test
   public void updateWits() {
     int sizePrv = dbManager.getWitnesses().size();
-    dbManager.getWitnesses().forEach(witnessAddress -> {
-      logger.info("witness address is {}",
-          ByteArray.toHexString(witnessAddress.toByteArray()));
-    });
+    dbManager
+        .getWitnesses()
+        .forEach(
+            witnessAddress -> {
+              logger.info(
+                  "witness address is {}", ByteArray.toHexString(witnessAddress.toByteArray()));
+            });
     logger.info("------------");
-    WitnessCapsule witnessCapsulef = new WitnessCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString("0x0011")), "www.tron.net/first");
+    WitnessCapsule witnessCapsulef =
+        new WitnessCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString("0x0011")), "www.tron.net/first");
     witnessCapsulef.setIsJobs(true);
-    WitnessCapsule witnessCapsules = new WitnessCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString("0x0012")), "www.tron.net/second");
+    WitnessCapsule witnessCapsules =
+        new WitnessCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString("0x0012")), "www.tron.net/second");
     witnessCapsules.setIsJobs(true);
-    WitnessCapsule witnessCapsulet = new WitnessCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString("0x0013")), "www.tron.net/three");
+    WitnessCapsule witnessCapsulet =
+        new WitnessCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString("0x0013")), "www.tron.net/three");
     witnessCapsulet.setIsJobs(false);
 
-    dbManager.getWitnesses().forEach(witnessAddress -> {
-      logger.info("witness address is {}",
-          ByteArray.toHexString(witnessAddress.toByteArray()));
-    });
+    dbManager
+        .getWitnesses()
+        .forEach(
+            witnessAddress -> {
+              logger.info(
+                  "witness address is {}", ByteArray.toHexString(witnessAddress.toByteArray()));
+            });
     logger.info("---------");
     dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
     dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
     dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
     dbManager.getWitnessController().initWits();
-    dbManager.getWitnesses().forEach(witnessAddress -> {
-      logger.info("witness address is {}",
-          ByteArray.toHexString(witnessAddress.toByteArray()));
-    });
+    dbManager
+        .getWitnesses()
+        .forEach(
+            witnessAddress -> {
+              logger.info(
+                  "witness address is {}", ByteArray.toHexString(witnessAddress.toByteArray()));
+            });
     int sizeTis = dbManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
   }
 
   @Test
-  public void fork() throws ValidateSignatureException,
-      ContractValidateException,
-      ContractExeException,
-      UnLinkedBlockException,
-      ValidateScheduleException,
-      BadItemException,
-      ItemNotFoundException, HeaderNotFound {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+  public void fork()
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+          UnLinkedBlockException, ValidateScheduleException, BadItemException,
+          ItemNotFoundException, HeaderNotFound {
+    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -206,27 +233,34 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    IntStream.range(0, 1).forEach(i -> {
-      try {
-        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-      } catch (Exception e) {
-        logger.debug(e.getMessage(), e);
-      }
-    });
+    IntStream.range(0, 1)
+        .forEach(
+            i -> {
+              try {
+                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+              } catch (Exception e) {
+                logger.debug(e.getMessage(), e);
+              }
+            });
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    BlockCapsule blockCapsule0 = createTestBlockCapsule(num + 1,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
-        addressToProvateKeys);
+    BlockCapsule blockCapsule0 =
+        createTestBlockCapsule(
+            num + 1,
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+            addressToProvateKeys);
 
-    BlockCapsule blockCapsule1 = createTestBlockCapsule(num + 1,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
-        addressToProvateKeys);
+    BlockCapsule blockCapsule1 =
+        createTestBlockCapsule(
+            num + 1,
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+            addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 = createTestBlockCapsule(num + 2,
-        blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+    BlockCapsule blockCapsule2 =
+        createTestBlockCapsule(
+            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
@@ -241,39 +275,43 @@ public class ManagerTest {
 
     Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 3);
 
-    Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
-        blockCapsule1.getBlockId());
-    Assert.assertEquals(dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
-        blockCapsule1.getParentHash());
+    Assert.assertEquals(
+        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1), blockCapsule1.getBlockId());
+    Assert.assertEquals(
+        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2), blockCapsule1.getParentHash());
 
-    Assert.assertEquals(blockCapsule2.getBlockId(),
+    Assert.assertEquals(
+        blockCapsule2.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
-    Assert.assertEquals(dbManager.getHead().getBlockId(),
+    Assert.assertEquals(
+        dbManager.getHead().getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
     dbManager.getWitnesses().clear();
-    return IntStream.range(0, 2).mapToObj(i -> {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      String privateKey = ByteArray.toHexString(ecKey.getPrivKey().toByteArray());
-      ByteString address = ByteString.copyFrom(ecKey.getAddress());
+    return IntStream.range(0, 2)
+        .mapToObj(
+            i -> {
+              ECKey ecKey = new ECKey(Utils.getRandom());
+              String privateKey = ByteArray.toHexString(ecKey.getPrivKey().toByteArray());
+              ByteString address = ByteString.copyFrom(ecKey.getAddress());
 
-      WitnessCapsule witnessCapsule = new WitnessCapsule(address);
-      dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-      dbManager.getWitnessController().addWitness(address);
+              WitnessCapsule witnessCapsule = new WitnessCapsule(address);
+              dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
+              dbManager.getWitnessController().addWitness(address);
 
-      AccountCapsule accountCapsule =
-          new AccountCapsule(Account.newBuilder().setAddress(address).build());
-      dbManager.getAccountStore().put(address.toByteArray(), accountCapsule);
+              AccountCapsule accountCapsule =
+                  new AccountCapsule(Account.newBuilder().setAddress(address).build());
+              dbManager.getAccountStore().put(address.toByteArray(), accountCapsule);
 
-      return Maps.immutableEntry(address, privateKey);
-    })
+              return Maps.immutableEntry(address, privateKey);
+            })
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  private BlockCapsule createTestBlockCapsule(long number, ByteString hash,
-      Map<ByteString, String> addressToProvateKeys) {
+  private BlockCapsule createTestBlockCapsule(
+      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     long time = System.currentTimeMillis();
     WitnessController witnessController = dbManager.getWitnessController();
     ByteString witnessAddress =
@@ -284,5 +322,4 @@ public class ManagerTest {
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }
-
 }

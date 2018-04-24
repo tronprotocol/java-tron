@@ -1,6 +1,12 @@
 package org.tron.core.db;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,10 +44,10 @@ public class RevokingStoreTest {
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo", revokingDatabase);
-    TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
     DialogOptional dialog = DialogOptional.instance().setValue(revokingDatabase.buildDialog());
     for (int i = 0; i < 10; i++) {
+      TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("undo" + i).getBytes());
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
@@ -66,9 +72,9 @@ public class RevokingStoreTest {
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testPop", revokingDatabase);
-    TestProtoCapsule testProtoCapsule = new TestProtoCapsule();
 
     for (int i = 1; i < 11; i++) {
+      TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("pop" + i).getBytes());
       try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
@@ -79,27 +85,74 @@ public class RevokingStoreTest {
       }
     }
 
-    try {
+    for (int i = 1; i < 11; i++) {
       revokingDatabase.pop();
-    } catch (RevokingStoreIllegalStateException e) {
-      logger.debug(e.getMessage(), e);
+      Assert.assertEquals(10 - i, tronDatabase.getDbSource().allKeys().size());
+      Assert.assertEquals(10 - i, revokingDatabase.getStack().size());
     }
 
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
-    Assert.assertEquals(revokingDatabase.getStack().size(), 9);
-    tronDatabase.close();
+    Assert.assertEquals(revokingDatabase.getStack().size(), 0);
   }
 
+  @Test
+  public void shutdown() throws RevokingStoreIllegalStateException {
+    revokingDatabase.getStack().clear();
+    TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
+        "testrevokingtronstore-shutdown", revokingDatabase);
+
+    List<TestProtoCapsule> capsules = new ArrayList<>();
+    for (int i = 1; i < 11; i++) {
+      revokingDatabase.buildDialog();
+      TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("test" + i).getBytes());
+      capsules.add(testProtoCapsule);
+      tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+      Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
+      Assert.assertEquals(revokingDatabase.getActiveDialog(), i);
+      Assert.assertEquals(revokingDatabase.getStack().size(), i);
+    }
+
+    for (TestProtoCapsule capsule : capsules) {
+      logger.info(new String(capsule.getData()));
+      Assert.assertEquals(capsule, tronDatabase.get(capsule.getData()));
+    }
+
+    revokingDatabase.shutdown();
+
+    for (TestProtoCapsule capsule : capsules) {
+      logger.info(tronDatabase.get(capsule.getData()).toString());
+      Assert.assertEquals(null, tronDatabase.get(capsule.getData()).getData());
+    }
+
+    Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
+    Assert.assertEquals(revokingDatabase.getStack().size(), 0);
+    tronDatabase.close();
+
+  }
+
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @EqualsAndHashCode
   private static class TestProtoCapsule implements ProtoCapsule<Object> {
+
+    private byte[] value;
 
     @Override
     public byte[] getData() {
-      return new byte[0];
+      return value;
     }
 
     @Override
     public Object getInstance() {
-      return null;
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return "TestProtoCapsule{"
+          + "value=" + Arrays.toString(value)
+          + ", string=" + (value == null ? "" : new String(value))
+          + '}';
     }
   }
 
@@ -111,12 +164,12 @@ public class RevokingStoreTest {
 
     @Override
     public TestProtoCapsule get(byte[] key) {
-      return null;
+      return new TestProtoCapsule(dbSource.getData(key));
     }
 
     @Override
     public boolean has(byte[] key) {
-      return false;
+      return dbSource.getData(key) != null;
     }
   }
 
