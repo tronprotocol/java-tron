@@ -74,6 +74,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Autowired
   private SyncPool pool;
 
+  private  long clockMaximumDelay = 3600 * 1000;
+
   Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
       .maximumSize(10000).expireAfterWrite(60, TimeUnit.SECONDS)
       .recordStats().build();
@@ -852,10 +854,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > manager.getFutureBlockMaxNum()){
-            throw new TraitorPeerException(
-                "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
-                    + "is gt future max num " + manager.getFutureBlockMaxNum() + " from " + peer);
+          if (del.getHeadBlockId().getNum() > 0){
+            long maxRemainTime = clockMaximumDelay + System.currentTimeMillis() - del.getHeadBlockTimeStamp();
+            long maxFutureNum =  maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getHeadBlockId().getNum();
+            if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum){
+              throw new TraitorPeerException(
+                  "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
+                      + "is gt future max num " + maxFutureNum + " from " + peer);
+            }
           }
         }
         //check finish

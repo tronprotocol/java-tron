@@ -256,6 +256,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
+  public long getHeadBlockTimeStamp(){
+    return dbManager.getHeadBlockTimeStamp();
+  }
+
+  @Override
   public boolean containBlock(BlockId id) {
     return dbManager.containBlock(id);
   }
