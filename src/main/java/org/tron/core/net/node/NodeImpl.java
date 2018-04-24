@@ -1015,7 +1015,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
-    logger.info("update peer {} block both we have {}", peer.getNode().getHost(), block.getBlockId());
+    logger.info("update peer {} block both we have {}", peer.getNode().getHost(), block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
