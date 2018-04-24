@@ -22,7 +22,6 @@ import static org.tron.protos.Contract.VoteWitnessContract;
 import static org.tron.protos.Contract.WitnessCreateContract;
 import static org.tron.protos.Contract.WitnessUpdateContract;
 
-import com.dianping.cat.Cat;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -34,10 +33,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
-import org.tron.core.config.Parameter;
-import org.tron.core.config.Parameter.CatTransactionStatus;
+import org.tron.core.config.Parameter.JmonitorSessionType;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -302,15 +302,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    * validate signature
    */
   public boolean validateSignature() throws ValidateSignatureException {
-    com.dianping.cat.message.Transaction catTransaction = Cat
-        .newTransaction("Exec", "TransactionValidateSignature");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("TransactionValidateSignatureTotalCount");
+    Session session = JMonitor.newSession("Exec", "TransactionValidateSignature");
+    session.setStatus(Session.SUCCESS);
 
     try {
       if (this.getInstance().getSignatureCount() !=
           this.getInstance().getRawData().getContractCount()) {
-        catTransaction.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+        session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
         throw new ValidateSignatureException("miss sig or contract");
       }
 
@@ -322,19 +320,21 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
               getBase64FromByteString(this.transaction.getSignature(i)));
           if (!Arrays.equals(owner, address)) {
-            catTransaction.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+            session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
             throw new ValidateSignatureException("sig error");
           }
         } catch (SignatureException e) {
-          catTransaction.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+          session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
           throw new ValidateSignatureException(e.getMessage());
         }
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("TransactionValidateSignatureTotalCount",
+          session.getDurationInMillis());
     }
 
-    Cat.logMetricForCount("TransactionValidateSignatureSuccessCount");
+    JMonitor.logMetricForCount("TransactionValidateSignatureSuccessCount");
     return true;
   }
 

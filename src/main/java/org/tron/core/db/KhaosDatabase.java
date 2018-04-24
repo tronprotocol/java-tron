@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.dianping.cat.Cat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,11 +13,12 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter;
-import org.tron.core.config.Parameter.CatTransactionStatus;
+import org.tron.core.config.Parameter.JmonitorSessionType;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
@@ -176,9 +176,8 @@ public class KhaosDatabase extends TronDatabase {
 
   /** Push the block in the KhoasDB. */
   public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "KhaosDatabasePush");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("KhaosDatabasePushTotalCount");
+    Session session = JMonitor.newSession("Exec", "KhaosDatabasePush");
+    session.setStatus(Session.SUCCESS);
 
     try {
       KhaosBlock block = new KhaosBlock(blk);
@@ -188,9 +187,9 @@ public class KhaosDatabase extends TronDatabase {
           block.parent = kblock;
         } else {
           miniUnlinkedStore.insert(block);
-          Cat.logMetricForCount("KhaosDatabasePushUnLinkedBlockCount");
-          catTransaction.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
-          Cat.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
+          JMonitor.logMetricForCount("KhaosDatabasePushUnLinkedBlockCount");
+          session.setStatus(JmonitorSessionType.UNLINKED_BLOCK);
+          JMonitor.logEvent("Error", JmonitorSessionType.UNLINKED_BLOCK);
           throw new UnLinkedBlockException();
         }
       }
@@ -201,7 +200,8 @@ public class KhaosDatabase extends TronDatabase {
         head = block;
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("KhaosDatabasePushTotalCount", session.getDurationInMillis());
     }
 
     return head.blk;

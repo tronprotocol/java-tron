@@ -15,7 +15,6 @@
 
 package org.tron.core.capsule;
 
-import com.dianping.cat.Cat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -30,11 +29,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
-import org.tron.core.config.Parameter;
-import org.tron.core.config.Parameter.CatTransactionStatus;
+import org.tron.core.config.Parameter.JmonitorSessionType;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
@@ -211,22 +211,22 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public boolean validateSignature() throws ValidateSignatureException {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "BlockValidateSignature");
-    Cat.logMetricForCount("BlockValidateSignatureTotalCount");
+    Session session = JMonitor.newSession("Exec", "BlockValidateSignature");
     try {
-      catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+      session.setStatus(Session.SUCCESS);
       return Arrays
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               TransactionCapsule
                   .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      catTransaction.setStatus(CatTransactionStatus.VALIDATE_SIGANATURE);
-      Cat.logMetricForCount("BlockValidateSignatureErrorCount");
-      Cat.logEvent("Error", CatTransactionStatus.BLOCK_VALIDATE_ERROR);
+      session.setStatus(JmonitorSessionType.VALIDATE_SIGANATURE);
+      JMonitor.logMetricForCount("BlockValidateSignatureErrorCount");
+      JMonitor.logEvent("Error", JmonitorSessionType.BLOCK_VALIDATE_ERROR);
       throw new ValidateSignatureException(e.getMessage());
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("BlockValidateSignatureTotalCount", session.getDurationInMillis());
     }
   }
 
@@ -238,9 +238,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash calcMerkleRoot() {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "CalcMerkleRoot");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("CalcMerkleRootTotalCount");
+    Session session = JMonitor.newSession("Exec", "CalcMerkleRoot");
+    session.setStatus(Session.SUCCESS);
 
     Sha256Hash merkleRoot;
 
@@ -248,7 +247,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       List<Transaction> transactionsList = this.block.getTransactionsList();
 
       if (CollectionUtils.isEmpty(transactionsList)) {
-        Cat.logMetricForCount("CalcMerkleRootZeroCount");
+        JMonitor.logMetricForCount("CalcMerkleRootZeroCount");
         return Sha256Hash.ZERO_HASH;
       }
 
@@ -259,7 +258,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
       merkleRoot = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("CalcMerkleRootTotalCount", session.getDurationInMillis());
     }
 
     return merkleRoot;

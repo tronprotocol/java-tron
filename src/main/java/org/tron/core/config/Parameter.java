@@ -38,7 +38,7 @@ public interface Parameter {
     long MAX_INVENTORY_SIZE_IN_MINUTES = 2L;
   }
 
-  interface CatTransactionStatus {
+  interface JmonitorSessionType {
     String VALIDATE_SIGANATURE = "The siganature is not validated.";
     String VALIDATE_MERKLER = "The merkler root doesn't match it.";
     String VALIDATE_WITNESS_SCHEDULE = "Witness schedule is not validated.";

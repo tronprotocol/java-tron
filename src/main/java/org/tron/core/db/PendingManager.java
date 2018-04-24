@@ -1,9 +1,10 @@
 package org.tron.core.db;
 
-import com.dianping.cat.Cat;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -17,16 +18,16 @@ public class PendingManager implements AutoCloseable {
   Manager dbManager;
 
   public PendingManager(Manager db) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Exec", "PendingManager");
-    Cat.logMetricForCount("PendingManagerTotalCount");
+    Session session = JMonitor.newSession("Exec", "PendingManager");
     try {
       this.dbManager = db;
       tmpTransactions.addAll(db.getPendingTransactions());
       db.getPendingTransactions().clear();
       db.getDialog().reset();
-      catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
+      session.setStatus(session.SUCCESS);
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("PendingManagerTotalCount", session.getDurationInMillis());
     }
   }
 

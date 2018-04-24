@@ -17,8 +17,6 @@
  */
 package org.tron.common.overlay.discover;
 
-import com.dianping.cat.Cat;
-import com.dianping.cat.message.Transaction;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -45,6 +43,8 @@ import org.tron.common.overlay.discover.message.PingMessage;
 import org.tron.common.overlay.discover.message.PongMessage;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
@@ -190,10 +190,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   }
 
   public synchronized NodeHandler getNodeHandler(Node n) {
-    Transaction t = Cat.newTransaction("tron", "tron");
-    Cat.logEvent("class", "NodeManager");
-    Cat.logMetricForCount("getNodeHandler");
-    t.setStatus(Transaction.SUCCESS);
+    Session s = JMonitor.newSession("tron", "tron");
+    s.setStatus(Session.SUCCESS);
+    JMonitor.logEvent("class", "NodeManager");
 
     String key = getKey(n);
     NodeHandler ret = nodeHandlerMap.get(key);
@@ -206,7 +205,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
-    t.complete();
+    s.complete();
+    JMonitor.countAndDuration("getNodeHandler", s.getDurationInMillis());
     return ret;
   }
 

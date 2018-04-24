@@ -15,12 +15,12 @@ public interface JMonitor {
     }
   }
 
-  static Transaction newTransaction(String type, String name) {
+  static Session newSession(String type, String name) {
     if (isEnabled()) {
-      return Cat.newTransaction(type, name);
+      return new DefaultSession(type, name);
     }
 
-    return CheatTransaction.TRANSACTION;
+    return CheatSession.SESSION;
   }
 
   static void logEvent(String type, String name) {
@@ -63,16 +63,128 @@ public interface JMonitor {
     return true;
   }
 
-  interface Session extends Transaction {
+  interface Session extends Message {
+
+    Session addChild(Message var1);
+
+    List<Message> getChildren();
+
+    long getDurationInMicros();
+
+    long getDurationInMillis();
+
+    boolean hasChildren();
+
+    boolean isStandalone();
 
   }
 
-  final class CheatTransaction implements Session {
+  final class DefaultSession implements Session {
 
-    private static final Transaction TRANSACTION = new CheatTransaction();
+    private Transaction transaction;
+
+    public DefaultSession(String type, String name) {
+      transaction = Cat.newTransaction(type, name);
+    }
 
     @Override
-    public Transaction addChild(Message message) {
+    public Session addChild(Message var1) {
+      transaction.addChild(var1);
+      return this;
+    }
+
+    @Override
+    public List<Message> getChildren() {
+      return transaction.getChildren();
+    }
+
+    @Override
+    public long getDurationInMicros() {
+      return transaction.getDurationInMicros();
+    }
+
+    @Override
+    public long getDurationInMillis() {
+      return transaction.getDurationInMillis();
+    }
+
+    @Override
+    public boolean hasChildren() {
+      return transaction.hasChildren();
+    }
+
+    @Override
+    public boolean isStandalone() {
+      return transaction.isStandalone();
+    }
+
+    @Override
+    public void addData(String s) {
+      transaction.addData(s);
+    }
+
+    @Override
+    public void addData(String s, Object o) {
+      transaction.addData(s, o);
+    }
+
+    @Override
+    public void complete() {
+      transaction.complete();
+    }
+
+    @Override
+    public Object getData() {
+      return transaction.getData();
+    }
+
+    @Override
+    public String getName() {
+      return transaction.getName();
+    }
+
+    @Override
+    public String getStatus() {
+      return transaction.getStatus();
+    }
+
+    @Override
+    public long getTimestamp() {
+      return transaction.getTimestamp();
+    }
+
+    @Override
+    public String getType() {
+      return transaction.getType();
+    }
+
+    @Override
+    public boolean isCompleted() {
+      return transaction.isCompleted();
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return transaction.isSuccess();
+    }
+
+    @Override
+    public void setStatus(String s) {
+      transaction.setStatus(s);
+    }
+
+    @Override
+    public void setStatus(Throwable throwable) {
+      transaction.setStatus(throwable);
+    }
+  }
+
+  final class CheatSession implements Session {
+
+    private static final Session SESSION = new CheatSession();
+
+    @Override
+    public Session addChild(Message message) {
       return this;
     }
 
@@ -155,5 +267,9 @@ public interface JMonitor {
     @Override
     public void setStatus(Throwable throwable) {
     }
+  }
+
+  interface Event extends Message {
+
   }
 }
