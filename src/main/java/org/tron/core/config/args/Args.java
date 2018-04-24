@@ -160,6 +160,14 @@ public class Args {
 
   @Getter
   @Setter
+  private int rpcPort;
+
+  @Getter
+  @Setter
+  private long maintenanceTimeInterval; // (ms)
+
+  @Getter
+  @Setter
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
 
@@ -191,6 +199,8 @@ public class Args {
     INSTANCE.nodeP2pPingInterval = 0L;
     INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
+    INSTANCE.rpcPort = 0;
+    INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
@@ -298,6 +308,13 @@ public class Args {
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
+
+    INSTANCE.rpcPort =
+        config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
+
+    INSTANCE.maintenanceTimeInterval =
+        config.hasPath("block.maintenanceTimeInterval") ? config
+            .getInt("block.maintenanceTimeInterval") : 21600000L;
 
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;

@@ -2,16 +2,16 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
-import org.springframework.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.common.application.Application;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.db.Manager;
 import org.tron.core.db.api.StoreAPI;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -20,19 +20,12 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
+@Slf4j
+@Component
 public class WalletSolidity {
 
-  private Application app;
-  private Manager dbManager;
+  @Autowired
   private StoreAPI storeAPI;
-
-  /**
-   * constructor.
-   */
-  public WalletSolidity(ApplicationContext ctx) {
-    this.dbManager = ctx.getBean(Manager.class);
-    this.storeAPI = ctx.getBean(StoreAPI.class);
-  }
 
   public Account getAccount(ByteString addressBs) {
     Account accountByAddress = null;

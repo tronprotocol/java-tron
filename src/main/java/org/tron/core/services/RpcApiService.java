@@ -10,7 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
@@ -27,7 +28,6 @@ import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
@@ -41,6 +41,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
@@ -57,41 +58,39 @@ import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-
+@Component
 @Slf4j
 public class RpcApiService implements Service {
 
-  private int port = 50051;
+  private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
-  private Application app;
-  private ApplicationContext ctx;
 
+  @Autowired
+  private Manager dbManager;
+  @Autowired
   private NodeManager nodeManager;
-
-  public RpcApiService(Application app, ApplicationContext ctx) {
-    nodeManager = ctx.getBean(NodeManager.class);
-    this.app = app;
-    this.ctx = ctx;
-  }
+  @Autowired
+  private WalletSolidity walletSolidity;
+  @Autowired
+  private Wallet wallet;
 
   @Override
   public void init() {
-
   }
 
   @Override
   public void init(Args args) {
-
   }
 
   @Override
   public void start() {
     try {
-      ServerBuilder serverBuilder = ServerBuilder.forPort(port).addService(new DatabaseApi(app));
+      ServerBuilder serverBuilder = ServerBuilder.forPort(port)
+          .addService(new DatabaseApi());
       if (Args.getInstance().isSolidityNode()) {
-        serverBuilder = serverBuilder.addService(new WalletSolidityApi(ctx));
+        serverBuilder = serverBuilder.addService(new WalletSolidityApi());
       } else {
-        serverBuilder = serverBuilder.addService(new WalletApi(app));
+        serverBuilder = serverBuilder.addService(new WalletApi());
       }
       apiServer = serverBuilder.build().start();
     } catch (IOException e) {
@@ -113,18 +112,12 @@ public class RpcApiService implements Service {
    */
   private class DatabaseApi extends DatabaseImplBase {
 
-    private Application app;
-
-    private DatabaseApi(Application app) {
-      this.app = app;
-    }
-
     @Override
     public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
         io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
-      long headBlockNum = app.getDbManager().getDynamicPropertiesStore()
+      long headBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestBlockHeaderNumber();
-      byte[] blockHeaderHash = app.getDbManager().getDynamicPropertiesStore()
+      byte[] blockHeaderHash = dbManager.getDynamicPropertiesStore()
           .getLatestBlockHeaderHash().getBytes();
       BlockReference ref = BlockReference.newBuilder()
           .setBlockHash(ByteString.copyFrom(blockHeaderHash))
@@ -138,7 +131,7 @@ public class RpcApiService implements Service {
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = app.getDbManager().getHead().getInstance();
+        block = dbManager.getHead().getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -150,7 +143,7 @@ public class RpcApiService implements Service {
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = app.getDbManager().getBlockByNum(request.getNum()).getInstance();
+        block = dbManager.getBlockByNum(request.getNum()).getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -163,7 +156,7 @@ public class RpcApiService implements Service {
         StreamObserver<DynamicProperties> responseObserver) {
       DynamicProperties.Builder builder = DynamicProperties.newBuilder();
       builder.setLastSolidityBlockNum(
-          app.getDbManager().getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
       DynamicProperties dynamicProperties = builder.build();
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
@@ -174,12 +167,6 @@ public class RpcApiService implements Service {
    * WalletSolidityApi.
    */
   private class WalletSolidityApi extends WalletSolidityImplBase {
-
-    private WalletSolidity walletSolidity;
-
-    private WalletSolidityApi(ApplicationContext ctx) {
-      this.walletSolidity = new WalletSolidity(ctx);
-    }
 
     @Override
     public void getAccount(Account request, StreamObserver<Account> responseObserver) {
@@ -339,15 +326,6 @@ public class RpcApiService implements Service {
    */
   private class WalletApi extends WalletImplBase {
 
-    private Application app;
-    private Wallet wallet;
-
-    private WalletApi(Application app) {
-      this.app = app;
-      this.wallet = new Wallet(this.app);
-    }
-
-
     @Override
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
@@ -377,7 +355,7 @@ public class RpcApiService implements Service {
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
-      List<Actuator> actList = ActuatorFactory.createActuator(trx, app.getDbManager());
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
         act.validate();
       }
@@ -431,7 +409,7 @@ public class RpcApiService implements Service {
       ByteString ownerAddress = req.getOwnerAddress();
       Preconditions.checkNotNull(ownerAddress, "OwnerAddress is null");
 
-      AccountCapsule account = app.getDbManager().getAccountStore().get(ownerAddress.toByteArray());
+      AccountCapsule account = dbManager.getAccountStore().get(ownerAddress.toByteArray());
       Preconditions.checkNotNull(account,
           "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
 
@@ -442,7 +420,7 @@ public class RpcApiService implements Service {
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
-        WitnessCapsule witness = app.getDbManager().getWitnessStore()
+        WitnessCapsule witness = dbManager.getWitnessStore()
             .get(voteAddress.toByteArray());
         String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
 
