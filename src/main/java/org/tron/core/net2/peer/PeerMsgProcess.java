@@ -10,9 +10,9 @@ import org.tron.core.net2.nio.Address;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 
-public class PeerMsgProccess {
+public class PeerMsgProcess {
 
-    private static final Logger logger = LoggerFactory.getLogger("PeerMsgProccess");
+    private static final Logger logger = LoggerFactory.getLogger("PeerMsgProcess");
 
     public static void processMsg(TMessage msg){
         switch (msg.getMsgType()) {
