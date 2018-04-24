@@ -9,7 +9,7 @@ import org.tron.core.net2.nio.EventHandle;
 import org.tron.core.net2.nio.NioManager;
 import org.tron.core.net2.peer.PeerClient;
 import org.tron.core.net2.peer.PeerDiscover;
-import org.tron.core.net2.peer.PeerMsgProccess;
+import org.tron.core.net2.peer.PeerMsgProcess;
 import org.tron.core.net2.util.NetUtil;
 
 import java.lang.reflect.Method;
@@ -45,7 +45,7 @@ public class NetManager {
             msgHandle.init();
             eventHandle.init();
             peerClient.init();
-            regMsgHandle(PeerMsgProccess.class.getMethod("processMsg", TMessage.class));
+            regMsgHandle(PeerMsgProcess.class.getMethod("processMsg", TMessage.class));
             if(serverPort != null){
                 NioManager.startServer(serverPort);
             }
