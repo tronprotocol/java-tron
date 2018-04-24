@@ -13,7 +13,6 @@ import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -32,7 +31,7 @@ public class SolidityNodeTest {
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     Args.getInstance().setSolidityNode(true);
     appT = ApplicationFactory.create(context);
-    rpcApiService = new RpcApiService(appT, context);
+    rpcApiService = context.getBean(RpcApiService.class);
   }
 
   /**
