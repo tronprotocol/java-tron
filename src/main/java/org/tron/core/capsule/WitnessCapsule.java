@@ -133,4 +133,12 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
   public boolean getIsJobs() {
     return this.witness.getIsJobs();
   }
+
+  public void setUrl(final String url) {
+    this.witness = this.witness.toBuilder().setUrl(url).build();
+  }
+
+  public String getUrl() {
+    return this.witness.getUrl();
+  }
 }
