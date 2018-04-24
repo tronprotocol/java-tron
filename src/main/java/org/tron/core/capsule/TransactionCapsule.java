@@ -37,6 +37,7 @@ import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -92,6 +93,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
 
     createTransaction(contract, ContractType.AccountCreateContract);
+  }
+
+  public TransactionCapsule(AccountUpdateContract contract, AccountStore accountStore) {
+    AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
+    if (account == null) {
+      return;
+    }
+
+    createTransaction(contract, ContractType.AccountUpdateContract);
   }
 
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
@@ -218,6 +228,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       switch (contract.getType()) {
         case AccountCreateContract:
           owner = contractParameter.unpack(AccountCreateContract.class).getOwnerAddress();
+          break;
+        case AccountUpdateContract:
+          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
           break;
         case TransferContract:
           owner = contractParameter.unpack(TransferContract.class).getOwnerAddress();

@@ -49,6 +49,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Node;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -234,7 +235,13 @@ public class Wallet {
   }
 
   @Deprecated
-  public Transaction createAccount(AccountCreateContract contract) {
+  public Transaction createTransaction(AccountCreateContract contract) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    return new TransactionCapsule(contract, accountStore).getInstance();
+  }
+
+  @Deprecated
+  public Transaction createTransaction(AccountUpdateContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
