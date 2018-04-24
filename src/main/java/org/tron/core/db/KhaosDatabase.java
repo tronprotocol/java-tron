@@ -206,6 +206,11 @@ public class KhaosDatabase extends TronDatabase {
     return false;
   }
 
+  public void setMaxSize(int maxSize) {
+    miniUnlinkedStore.setMaxCapcity(maxSize);
+    miniStore.setMaxCapcity(maxSize);
+  }
+
   /** Find two block's most recent common parent block. */
   public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(
       Sha256Hash block1, Sha256Hash block2) {
