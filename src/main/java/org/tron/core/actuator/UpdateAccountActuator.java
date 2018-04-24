@@ -4,11 +4,13 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountUpdateContract;
 
 @Slf4j
@@ -40,6 +42,26 @@ public class UpdateAccountActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     // todo validate freq.
+    try {
+      if (!this.contract.is(Contract.AccountUpdateContract.class)) {
+        throw new ContractValidateException(
+                "contract type error,expected type [AccountUpdateContract],real type[" + this.contract
+                        .getClass() + "]");
+      }
+
+      final Contract.AccountUpdateContract contract = this.contract.unpack(Contract.AccountUpdateContract.class);
+      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Invalidate address");
+      }
+
+      if (!this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("Account not existed");
+      }
+    } catch (final Exception ex) {
+      ex.printStackTrace();
+      throw new ContractValidateException(ex.getMessage());
+    }
+
     return true;
   }
 
