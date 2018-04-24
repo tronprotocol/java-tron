@@ -39,6 +39,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
 
+  public static final int MAX_VOTE_NUMBER = 30;
+
 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
