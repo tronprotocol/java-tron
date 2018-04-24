@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +39,11 @@ public class WitnessController {
 
   public void initWits() {
 //    getWitnesses().clear();
-    List<ByteString> witnessAddresses = new ArrayList<>();
-    manager.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
-      if (witnessCapsule.getIsJobs()) {
-        witnessAddresses.add(witnessCapsule.getAddress());
-      }
-    });
+    List<ByteString> witnessAddresses =
+            manager.getWitnessStore().getAllWitnesses().stream()
+                    .filter(WitnessCapsule::getIsJobs)
+                    .map(WitnessCapsule::getAddress)
+                    .collect(Collectors.toList());
     sortWitness(witnessAddresses);
     setActiveWitnesses(witnessAddresses);
     witnessAddresses.forEach(address -> {
@@ -316,8 +316,7 @@ public class WitnessController {
         setActiveWitnesses(newWitnessAddressList);
       }
 
-      getActiveWitnesses().forEach(address -> {
-        WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
+      getActiveWitnesses().stream().map(this::getWitnesseByAddress).forEach(witnessCapsule -> {
         witnessCapsule.setIsJobs(true);
         witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
       });

@@ -20,10 +20,10 @@ package org.tron.common.overlay.discover;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.common.overlay.discover.table.NodeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DiscoverTask implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger("DiscoverTask");
@@ -85,10 +85,8 @@ public class DiscoverTask implements Runnable {
     }
 
     private String dumpNodes() {
-        String ret = "";
-        for (NodeEntry entry : nodeManager.getTable().getAllNodes()) {
-            ret += "    " + entry.getNode() + "\n";
-        }
-        return ret;
+        return nodeManager.getTable().getAllNodes().stream()
+                .map(entry -> "    " + entry.getNode() + "\n")
+                .collect(Collectors.joining());
     }
 }
