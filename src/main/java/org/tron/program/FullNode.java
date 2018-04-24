@@ -31,7 +31,7 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);
-    RpcApiService rpcApiService = new RpcApiService(appT, context);
+    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     if (cfgArgs.isWitness()) {
       appT.addService(new WitnessService(appT));
