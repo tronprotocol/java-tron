@@ -39,6 +39,8 @@ public interface NodeDelegate {
 
   boolean containBlock(BlockId id);
 
+  long getHeadBlockTimeStamp();
+
   boolean containBlockInMainChain(BlockId id);
 
   BlockCapsule getGenesisBlock();
