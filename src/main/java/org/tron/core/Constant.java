@@ -15,7 +15,7 @@
 
 package org.tron.core;
 
-import org.tron.utils.ByteArray;
+import org.tron.common.utils.ByteArray;
 
 public class Constant {
 
@@ -27,16 +27,18 @@ public class Constant {
   public static final String BLOCK_DB_NAME = "block_data";
   public static final String TRANSACTION_DB_NAME = "transaction_data";
 
-  // kafka
-  public static final String TOPIC_BLOCK = "block";
-  public static final String TOPIC_TRANSACTION = "transaction";
-  public static final Integer PARTITION = 0;
+  //config for testnet, mainnet, beta
+  public static final String TESTNET_CONF = "config.conf";
 
-  //config
-  public static final String NORMAL = "normal";
-  public static final String TEST = "test";
-  public static final String NORMAL_CONF = "tron.conf";
-  public static final String TEST_CONF = "tron-test.conf";
-  public static final String DATABASE_DIR = "database.directory";
+  //config for junit test
+  public static final String TEST_CONF = "config-test.conf";
+  
+  public static final String DATABASE_DIR = "storage.directory";
 
+  public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0xb0;   //b0 + address  ,b0 is version
+  public static final String ADD_PRE_FIX_STRING_MAINNET = "b0";
+  public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address  ,a0 is version
+  public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
+  public static final int ADDRESS_SIZE = 42;
+  public static final int BASE58CHECK_ADDRESS_SIZE = 35;
 }

@@ -5,20 +5,27 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.8
-mainClassName = 'org.tron.example.Tron'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+mainClassName = 'org.tron.program.FullNode'
 
 repositories {
+    maven { url 'http://mvnrepository.com' }
+    mavenLocal()
     mavenCentral()
 }
 
 buildscript {
     repositories {
+        maven { url 'http://mvnrepository.com' }
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
     }
 }
 
@@ -36,13 +43,15 @@ configurations.getByName('checkstyleConfig') {
 }
 
 dependencies {
+    //local libraries
+    compile fileTree(dir: 'libs', include: '*.jar')
+    // end local libraries
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
-    compile group: 'log4j', name: 'log4j', version: '1.2.17'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
     compile "org.projectlombok:lombok:1.16.18"
@@ -52,7 +61,7 @@ dependencies {
     compile "com.madgag.spongycastle:core:1.53.0.0"
     compile "com.madgag.spongycastle:prov:1.53.0.0"
 
-    compile group: 'com.google.guava', name: 'guava', version: '18.0'
+    compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
 
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
 
@@ -71,14 +80,8 @@ dependencies {
 
     compile "org.apache.commons:commons-lang3:3.4"
 
-    compile(group: 'org.apache.kafka', name: 'kafka_2.12', version: '0.11.0.2') {
-        exclude module: 'slf4j-log4j12'
-    }
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
-
-    compile(group: 'org.apache.kafka', name: 'kafka_2.12', version: '0.11.0.2') {
-        exclude module: 'slf4j-log4j12'
-    }
+    compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
 
     compile "org.apache.commons:commons-collections4:4.0"
 
@@ -86,9 +89,6 @@ dependencies {
 
     compile group: 'junit', name: 'junit', version: '4.8.1'
 
-    compile group: 'io.atomix.copycat', name: 'copycat-server', version: '1.1.4'
-    compile group: 'io.atomix.copycat', name: 'copycat-client', version: '1.1.4'
-    compile group: 'io.atomix.catalyst', name: 'catalyst-netty', version: '1.1.1'
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.16'
@@ -100,10 +100,43 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
 
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
+
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
 
     checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
+    // google grpc
+    compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
+    // end google grpc
 
+    compile group: 'io.scalecube', name: 'scalecube-services', version: '1.0.7'
+    compile group: 'io.scalecube', name: 'scalecube-cluster', version: '1.0.7'
+    compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
+
+    compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
+
+    compile 'org.aspectj:aspectjrt:1.8.13'
+    compile 'org.aspectj:aspectjweaver:1.8.13'
+    compile 'org.aspectj:aspectjtools:1.8.13'
+    compile 'com.googlecode.cqengine:cqengine:2.12.4'
+    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+
+}
+
+check.dependsOn 'lint'
+
+checkstyle {
+    toolVersion = "${versions.checkstyle}"
+    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+
+}
+
+checkstyleMain {
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
 }
 
 task lint(type: Checkstyle) {
@@ -118,13 +151,6 @@ task lint(type: Checkstyle) {
     ignoreFailures = false
 }
 
-checkstyle {
-    toolVersion = "${versions.checkstyle}"
-    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-}
-
-
-
 tasks.matching { it instanceof Test }.all {
     testLogging.events = ["failed", "passed", "skipped"]
 }
@@ -134,34 +160,57 @@ if (project.hasProperty("mainClass")) {
 }
 
 sourceSets {
-    src {
-        main {
-            proto {
-                srcDir 'src/main/proto'
-            }
+    main {
+        proto {
+            srcDir 'src/main/protos'
+        }
+        java {
+            srcDir 'src/main/gen'
+            srcDir 'src/main/java'
         }
     }
-}
 
-protobuf.protoc {
-    artifact = 'com.google.protobuf:protoc:3.4.0'
 }
 
 protobuf {
-    generatedFilesBaseDir = "$projectDir/src"
-
+    generatedFilesBaseDir = "$projectDir/src/"
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.5.1-1"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+        }
+    }
     generateProtoTasks {
         all().each { task ->
             task.builtins {
-                java {}
+                java { outputSubDir = "gen" }
+            }
+        }
+        all()*.plugins {
+            grpc {
+                outputSubDir = "gen"
             }
         }
     }
 }
 
 run {
-    if (project.hasProperty('server')) {
+    if (project.hasProperty('witness')) {
         standardInput = System.in
-        args = ['--type', 'server']
+        args = ['--witness']
+    }
+}
+
+shadowJar {
+    baseName = 'java-tron'
+    classifier = null
+    version = null
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
     }
 }

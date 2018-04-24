@@ -12,26 +12,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.core.events;
 
-import org.tron.overlay.Net;
-import org.tron.protos.core.TronBlock;
+import org.tron.protos.Protocol.Block;
 
 public interface BlockchainListener {
 
   /**
-   * New block added to blockchain
+   * New block added to blockchain.
    */
-  void addBlock(TronBlock.Block block);
+  void addBlock(Block block);
 
   /**
-   * New block added to blockchain
-   * includes net reference
+   * Genesis block added to blockchain.
    */
-  void addBlockNet(TronBlock.Block block, Net net);
-
-  /**
-   * Genesis block added to blockchain
-   */
-  void addGenesisBlock(TronBlock.Block block);
+  void addGenesisBlock(Block block);
 }
