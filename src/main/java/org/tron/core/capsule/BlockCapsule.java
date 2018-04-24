@@ -34,7 +34,7 @@ import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
-import org.tron.core.config.Parameter.JmonitorSessionType;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
@@ -220,9 +220,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
                   .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
               block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
-      session.setStatus(JmonitorSessionType.VALIDATE_SIGANATURE);
+      session.setStatus(CatTransactionStatus.VALIDATE_SIGANATURE);
       JMonitor.logMetricForCount("BlockValidateSignatureErrorCount");
-      JMonitor.logEvent("Error", JmonitorSessionType.BLOCK_VALIDATE_ERROR);
+      JMonitor.logEvent("Error", CatTransactionStatus.BLOCK_VALIDATE_ERROR);
       throw new ValidateSignatureException(e.getMessage());
     } finally {
       session.complete();

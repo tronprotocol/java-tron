@@ -4,7 +4,6 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FET
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
-import com.dianping.cat.Cat;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
@@ -38,11 +37,12 @@ import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
+import org.tron.common.utils.JMonitor;
+import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
@@ -203,9 +203,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
@@ -232,11 +231,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           onHandleInventoryMessage(peer, (InventoryMessage) msg);
           break;
         default:
-          Cat.logMetricForCount("OnMessageErrorCount");
+          JMonitor.logMetricForCount("OnMessageErrorCount");
           throw new IllegalArgumentException("No such message");
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnMessageTotalCount", session.getDurationInMillis());
     }
   }
 
@@ -257,9 +257,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    * @param msg msg to bradcast
    */
   public void broadcast(Message msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "Broadcast");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("BroadcastTotalCount");
+    Session session = JMonitor.newSession("Net", "Broadcast");
+    session.setStatus(Session.SUCCESS);
 
     try {
       InventoryType type;
@@ -268,19 +267,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         freshBlockId.offer(((BlockMessage) msg).getBlockId());
         BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
         type = InventoryType.BLOCK;
-        Cat.logMetricForCount("BroadcastBlockCount");
+        JMonitor.logMetricForCount("BroadcastBlockCount");
       } else if (msg instanceof TransactionMessage) {
         TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
         type = InventoryType.TRX;
-        Cat.logMetricForCount("BroadcastTransactionCount");
+        JMonitor.logMetricForCount("BroadcastTransactionCount");
       } else {
-        Cat.logMetricForCount("BroadcastOthersCount");
+        JMonitor.logMetricForCount("BroadcastOthersCount");
         return;
       }
       //TODO: here need to cache fresh message to let peer fetch these data not from DB
       advObjToSpread.put(msg.getMessageId(), type);
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("BroadcastTotalCount", session.getDurationInMillis());
     }
   }
 
@@ -566,9 +566,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleInventoryMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleInventoryMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleInventoryMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       msg.getHashList().forEach(id -> {
@@ -595,7 +594,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       });
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleInventoryMessageTotalCount",
+          session.getDurationInMillis());
     }
   }
 
@@ -619,9 +620,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleBlockMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleBlockMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleBlockMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       //logger.info("on handle block message");
@@ -657,14 +657,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleBlockMessageTotalCount", session.getDurationInMillis());
     }
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "ProcessAdvBlock");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("ProcessAdvBlockTotalCount");
+    Session session = JMonitor.newSession("Net", "ProcessAdvBlock");
+    session.setStatus(Session.SUCCESS);
 
     try {
       //TODO: lack the complete flow.
@@ -684,23 +684,24 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
           //rebroadcast
           broadcast(new BlockMessage(block));
-          Cat.logMetricForCount("ProcessAdvBlockSuccessCount");
+          JMonitor.logMetricForCount("ProcessAdvBlockSuccessCount");
         } catch (BadBlockException e) {
-          catTransaction.setStatus(CatTransactionStatus.BAD_BLOCK_EXCEPTION);
-          Cat.logEvent("Error", CatTransactionStatus.BAD_BLOCK_EXCEPTION);
+          session.setStatus(CatTransactionStatus.BAD_BLOCK_EXCEPTION);
+          JMonitor.logEvent("Error", CatTransactionStatus.BAD_BLOCK_EXCEPTION);
           logger.error("We get a bad block, reason is " + e.getMessage()
               + "\n the block is" + block);
           badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
         } catch (UnLinkedBlockException e) {
-          catTransaction.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
-          Cat.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
+          session.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
+          JMonitor.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
           //reSync
           logger.info("get a unlink block ,so start sync!");
           startSyncWithPeer(peer);
         }
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("ProcessAdvBlockTotalCount", session.getDurationInMillis());
     }
   }
 
@@ -767,38 +768,38 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleTransactionMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleTransactionMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleTransactionMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       //logger.info("on handle transaction message");
       try {
         if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
-          catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+          session.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
           throw new TraitorPeerException("We don't send fetch request to" + peer);
         } else {
           peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
           del.handleTransaction(trxMsg.getTransactionCapsule());
-          Cat.logMetricForCount("OnHandleTransactionMessageSuccessCount");
+          JMonitor.logMetricForCount("OnHandleTransactionMessageSuccessCount");
         }
       } catch (TraitorPeerException e) {
-        catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+        session.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
         logger.error(e.getMessage());
         banTraitorPeer(peer);
       } catch (BadTransactionException e) {
-        catTransaction.setStatus(CatTransactionStatus.BAD_TRANSACTION_EXCEPTION);
+        session.setStatus(CatTransactionStatus.BAD_TRANSACTION_EXCEPTION);
         badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleTransactionMessageTotalCount",
+          session.getDurationInMillis());
     }
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleSyncBlockChainMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleSyncBlockChainMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleSyncBlockChainMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       //logger.info("on handle sync block chain message");
@@ -842,17 +843,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
-      Cat.logMetricForCount("OnHandleSyncBlockChainMessageSuccessCount");
-      Cat.logMetricForCount("SendChainInventoryMessageCount");
+      JMonitor.logMetricForCount("OnHandleSyncBlockChainMessageSuccessCount");
+      JMonitor.logMetricForCount("SendChainInventoryMessageCount");
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleSyncBlockChainMessageTotalCount",
+          session.getDurationInMillis());
     }
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleFetchDataMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleFetchDataMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleFetchDataMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       logger.info("on handle fetch block message");
@@ -880,7 +882,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block = ((BlockMessage) msg).getBlockCapsule();
           }
           peer.sendMessage(msg);
-          Cat.logMetricForCount("SendFetchBlockCount");
+          JMonitor.logMetricForCount("SendFetchBlockCount");
         } else {
           logger.error("fetch message {} {} failed.", type, hash);
           peer.sendMessage(new ItemNotFound());
@@ -892,7 +894,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor
+          .countAndDuration("OnHandleFetchDataMessageTotalCount", session.getDurationInMillis());
     }
   }
 
@@ -901,9 +905,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleChainInventoryMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleChainInventoryMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleChainInventoryMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       //logger.info("on handle block chain inventory message");
@@ -917,20 +920,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             long num = blockIdWeGet.peek().getNum();
             for (BlockId id : blockIdWeGet) {
               if (id.getNum() != num++) {
-                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                session.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
                 throw new TraitorPeerException("We get a not continuous block inv from " + peer);
               }
             }
 
             if (peer.getSyncChainRequested().getKey().isEmpty()) {
               if (blockIdWeGet.peek().getNum() != 1) {
-                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                session.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
                 throw new TraitorPeerException(
                     "We want a block inv starting from beginning from " + peer);
               }
             } else {
               if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
-                catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+                session.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
                 throw new TraitorPeerException(String.format(
                     "We get a unlinked block chain from " + peer
                         + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
@@ -1025,22 +1028,24 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          Cat.logMetricForCount("OnHandleChainInventoryMessageSuccessCount");
+          JMonitor.logMetricForCount("OnHandleChainInventoryMessageSuccessCount");
           //TODO: check head block time is legal here
           //TODO: refresh sync status to cli. call del.syncToCli() here
 
         } else {
-          catTransaction.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
+          session.setStatus(CatTransactionStatus.ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION);
           throw new TraitorPeerException("We don't send sync request to " + peer);
         }
 
       } catch (TraitorPeerException e) {
-        catTransaction.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
+        session.setStatus(CatTransactionStatus.TRAITOR_PEER_EXCEPTION);
         logger.error(e.getMessage());
         banTraitorPeer(peer);
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleChainInventoryMessageTotalCount",
+          session.getDurationInMillis());
     }
   }
 
@@ -1117,9 +1122,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "OnHandleBlockInventoryMessage");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("OnHandleBlockInventoryMessageTotalCount");
+    Session session = JMonitor.newSession("Net", "OnHandleBlockInventoryMessage");
+    session.setStatus(Session.SUCCESS);
 
     try {
       logger.info("on handle advertise blocks inventory message");
@@ -1136,7 +1140,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       fetchMap.put(fetchMsg.getMessageId(), peer);
       loopFetchBlocks.push(fetchMsg);
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("OnHandleBlockInventoryMessageTotalCount",
+          session.getDurationInMillis());
     }
   }
 
@@ -1159,9 +1165,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    com.dianping.cat.message.Transaction catTransaction = Cat.newTransaction("Net", "SyncNextBatchChainIds");
-    catTransaction.setStatus(com.dianping.cat.message.Transaction.SUCCESS);
-    Cat.logMetricForCount("SyncNextBatchChainIdsTotalCount");
+    Session session = JMonitor.newSession("Net", "SyncNextBatchChainIds");
+    session.setStatus(Session.SUCCESS);
 
     try {
       if (peer.getSyncChainRequested() != null) {
@@ -1175,16 +1180,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.setSyncChainRequested(
             new Pair<>(chainSummary, System.currentTimeMillis()));
         peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-        Cat.logMetricForCount("SyncNextBatchChainIdsSuccessCount");
-        Cat.logMetricForCount("SendSyncBlockChainMessageCount");
+        JMonitor.logMetricForCount("SyncNextBatchChainIdsSuccessCount");
+        JMonitor.logMetricForCount("SendSyncBlockChainMessageCount");
       } catch (TronException e) { //TODO: use tron excpetion here
-        catTransaction.setStatus(CatTransactionStatus.TRON_EXCEPTION);
+        session.setStatus(CatTransactionStatus.TRON_EXCEPTION);
         logger.info(e.getMessage());
         logger.debug(e.getMessage(), e);
         disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
       }
     } finally {
-      catTransaction.complete();
+      session.complete();
+      JMonitor.countAndDuration("SyncNextBatchChainIdsTotalCount", session.getDurationInMillis());
     }
   }
 

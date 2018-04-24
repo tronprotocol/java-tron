@@ -43,8 +43,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.JmonitorSessionType;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
@@ -540,8 +540,8 @@ public class Manager {
         if (!block.validateSignature()) {
           logger.info("The siganature is not validated.");
           //TODO: throw exception here.
-          session.setStatus(JmonitorSessionType.VALIDATE_SIGANATURE);
-          JMonitor.logEvent("Error", JmonitorSessionType.VALIDATE_SIGANATURE);
+          session.setStatus(CatTransactionStatus.VALIDATE_SIGANATURE);
+          JMonitor.logEvent("Error", CatTransactionStatus.VALIDATE_SIGANATURE);
           // TODO: throw exception here.
           return;
         }
@@ -553,16 +553,16 @@ public class Manager {
                   + " , the headers is "
                   + block.getMerkleRoot());
           // TODO:throw exception here.
-          session.setStatus(JmonitorSessionType.VALIDATE_MERKLER);
-          JMonitor.logEvent("Error", JmonitorSessionType.VALIDATE_MERKLER);
+          session.setStatus(CatTransactionStatus.VALIDATE_MERKLER);
+          JMonitor.logEvent("Error", CatTransactionStatus.VALIDATE_MERKLER);
           return;
         }
       }
 
       // checkWitness
       if (!witnessController.validateWitnessSchedule(block)) {
-        session.setStatus(JmonitorSessionType.VALIDATE_WITNESS_SCHEDULE);
-        JMonitor.logEvent("Error", JmonitorSessionType.VALIDATE_WITNESS_SCHEDULE);
+        session.setStatus(CatTransactionStatus.VALIDATE_WITNESS_SCHEDULE);
+        JMonitor.logEvent("Error", CatTransactionStatus.VALIDATE_WITNESS_SCHEDULE);
         throw new ValidateScheduleException("validateWitnessSchedule error");
       }
 
@@ -571,14 +571,14 @@ public class Manager {
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
-          session.setStatus(JmonitorSessionType.LOWER_BLOCK);
-          JMonitor.logEvent("Error", JmonitorSessionType.LOWER_BLOCK);
+          session.setStatus(CatTransactionStatus.LOWER_BLOCK);
+          JMonitor.logEvent("Error", CatTransactionStatus.LOWER_BLOCK);
           return;
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
-          session.setStatus(JmonitorSessionType.LOWER_BLOCK);
-          JMonitor.logEvent("Error", JmonitorSessionType.LOWER_BLOCK);
+          session.setStatus(CatTransactionStatus.LOWER_BLOCK);
+          JMonitor.logEvent("Error", CatTransactionStatus.LOWER_BLOCK);
           return;
         }
         // switch fork
@@ -629,8 +629,8 @@ public class Manager {
                   + ", khaosDb unlinkMiniStore size: "
                   + khaosDb.getMiniUnlinkedStore().size());
 
-          session.setStatus(JmonitorSessionType.SWITCH_FORK);
-          JMonitor.logEvent("Error", JmonitorSessionType.SWITCH_FORK);
+          session.setStatus(CatTransactionStatus.SWITCH_FORK);
+          JMonitor.logEvent("Error", CatTransactionStatus.SWITCH_FORK);
           JMonitor.logMetricForCount("SwitchForkCount");
           return;
         }
@@ -645,8 +645,8 @@ public class Manager {
           JMonitor.logMetricForCount("PushBlockSuccessCount");
         } catch (RevokingStoreIllegalStateException e) {
           logger.debug(e.getMessage(), e);
-          session.setStatus(JmonitorSessionType.REVOKING_STORE_ERROR);
-          JMonitor.logEvent("Error", JmonitorSessionType.REVOKING_STORE_ERROR);
+          session.setStatus(CatTransactionStatus.REVOKING_STORE_ERROR);
+          JMonitor.logEvent("Error", CatTransactionStatus.REVOKING_STORE_ERROR);
         }
       }
       logger.info("save block: " + newBlock);
@@ -963,7 +963,7 @@ public class Manager {
             "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
             solidifiedPosition,
             size);
-        session.setStatus(JmonitorSessionType.UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR);
+        session.setStatus(CatTransactionStatus.UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR);
         return;
       }
       long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);

@@ -18,7 +18,7 @@ import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.JmonitorSessionType;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
@@ -188,8 +188,8 @@ public class KhaosDatabase extends TronDatabase {
         } else {
           miniUnlinkedStore.insert(block);
           JMonitor.logMetricForCount("KhaosDatabasePushUnLinkedBlockCount");
-          session.setStatus(JmonitorSessionType.UNLINKED_BLOCK);
-          JMonitor.logEvent("Error", JmonitorSessionType.UNLINKED_BLOCK);
+          session.setStatus(CatTransactionStatus.UNLINKED_BLOCK);
+          JMonitor.logEvent("Error", CatTransactionStatus.UNLINKED_BLOCK);
           throw new UnLinkedBlockException();
         }
       }

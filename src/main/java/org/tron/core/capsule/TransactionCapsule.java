@@ -37,7 +37,7 @@ import org.tron.common.utils.JMonitor;
 import org.tron.common.utils.JMonitor.Session;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
-import org.tron.core.config.Parameter.JmonitorSessionType;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -308,7 +308,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     try {
       if (this.getInstance().getSignatureCount() !=
           this.getInstance().getRawData().getContractCount()) {
-        session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+        session.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
         throw new ValidateSignatureException("miss sig or contract");
       }
 
@@ -320,11 +320,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
               getBase64FromByteString(this.transaction.getSignature(i)));
           if (!Arrays.equals(owner, address)) {
-            session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+            session.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
             throw new ValidateSignatureException("sig error");
           }
         } catch (SignatureException e) {
-          session.setStatus(JmonitorSessionType.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
+          session.setStatus(CatTransactionStatus.TRANSACTION_VALIDATE_SIGNATURE_ERROR);
           throw new ValidateSignatureException(e.getMessage());
         }
       }

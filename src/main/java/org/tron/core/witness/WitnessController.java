@@ -18,7 +18,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.JmonitorSessionType;
+import org.tron.core.config.Parameter.CatTransactionStatus;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
@@ -187,16 +187,16 @@ public class WitnessController {
       final long currentSlot = getHeadSlot() + slot;
 
       if (currentSlot < 0) {
-        session.setStatus(JmonitorSessionType.GET_WITNESS_ERROR_SLOT);
-        JMonitor.logEvent("Error", JmonitorSessionType.GET_WITNESS_ERROR_SLOT);
+        session.setStatus(CatTransactionStatus.GET_WITNESS_ERROR_SLOT);
+        JMonitor.logEvent("Error", CatTransactionStatus.GET_WITNESS_ERROR_SLOT);
         throw new RuntimeException("currentSlot should be positive.");
       }
 
       int numberActiveWitness = this.getActiveWitnesses().size();
       int sigleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
       if (numberActiveWitness <= 0) {
-        session.setStatus(JmonitorSessionType.GET_WITNESS_ERROR_NULL);
-        JMonitor.logEvent("Error", JmonitorSessionType.GET_WITNESS_ERROR_NULL);
+        session.setStatus(CatTransactionStatus.GET_WITNESS_ERROR_NULL);
+        JMonitor.logEvent("Error", CatTransactionStatus.GET_WITNESS_ERROR_NULL);
         throw new RuntimeException("Active Witnesses is null.");
       }
       int witnessIndex = (int) currentSlot % (numberActiveWitness * sigleRepeat);
