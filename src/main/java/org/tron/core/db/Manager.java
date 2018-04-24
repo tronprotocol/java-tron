@@ -658,8 +658,8 @@ public class Manager {
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
 
     LinkedList<BlockId> result = branch.getValue().stream()
-            .map(BlockCapsule::getBlockId)
-            .collect(Collectors.toCollection(LinkedList::new));
+        .map(BlockCapsule::getBlockId)
+        .collect(Collectors.toCollection(LinkedList::new));
     if (CollectionUtils.isNotEmpty(branch.getValue())) {
       result.add(branch.getValue().peekLast().getParentBlockId());
     }
