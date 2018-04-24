@@ -35,7 +35,8 @@ public class IndexHelperTest {
   private static String dbPath = "output_IndexHelper_test";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.getInstance().setSolidityNode(true);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 

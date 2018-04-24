@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ValidateSignatureException;
 
@@ -38,6 +39,8 @@ public class PendingManager implements AutoCloseable {
             logger.debug(e.getMessage(), e);
           } catch (HighFreqException e) {
             logger.debug(e.getMessage(), e);
+          } catch (DupTransactionException e) {
+            logger.debug("pending manager: dup trans", e);
           }
         });
     dbManager.getPoppedTransactions().stream()
@@ -47,13 +50,15 @@ public class PendingManager implements AutoCloseable {
           try {
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (ContractValidateException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (ContractExeException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
           } catch (HighFreqException e) {
-            e.printStackTrace();
+            logger.debug(e.getMessage(), e);
+          } catch (DupTransactionException e) {
+            logger.debug("pending manager: dup trans", e);
           }
         });
     dbManager.getPoppedTransactions().clear();

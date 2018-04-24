@@ -363,23 +363,25 @@ public class RpcApiService implements Service {
     @Override
     public void createTransaction(TransferContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver
-          .onNext(createTransactionCapsule(request, ContractType.TransferContract).getInstance());
+      try {
+        responseObserver
+            .onNext(createTransactionCapsule(request, ContractType.TransferContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
       responseObserver.onCompleted();
     }
 
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
-        ContractType contractType) {
+        ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
       List<Actuator> actList = ActuatorFactory.createActuator(trx, app.getDbManager());
-      try {
-        for (Actuator act : actList) {
-          act.validate();
-        }
-        return trx;
-      } catch (ContractValidateException e) {
-        return null;
+      for (Actuator act : actList) {
+        act.validate();
       }
+      return trx;
     }
 
     @Override
@@ -394,8 +396,15 @@ public class RpcApiService implements Service {
     @Override
     public void createAccount(AccountCreateContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver.onNext(
-          createTransactionCapsule(request, ContractType.AccountCreateContract).getInstance());
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.AccountCreateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+        responseObserver.onNext(null);
+      }
       responseObserver.onCompleted();
     }
 
@@ -403,8 +412,16 @@ public class RpcApiService implements Service {
     @Override
     public void createAssetIssue(AssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver.onNext(
-          createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+        responseObserver.onNext(null);
+
+      }
       responseObserver.onCompleted();
     }
 
@@ -439,16 +456,28 @@ public class RpcApiService implements Service {
     @Override
     public void voteWitnessAccount(VoteWitnessContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver.onNext(
-          createTransactionCapsule(request, ContractType.VoteWitnessContract).getInstance());
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.VoteWitnessContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
       responseObserver.onCompleted();
     }
 
     @Override
     public void createWitness(WitnessCreateContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver.onNext(
-          createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
       responseObserver.onCompleted();
     }
 
@@ -456,8 +485,14 @@ public class RpcApiService implements Service {
     @Override
     public void updateWitness(Contract.WitnessUpdateContract request,
         StreamObserver<Transaction> responseObserver) {
-      responseObserver.onNext(
-          createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
       responseObserver.onCompleted();
     }
 
