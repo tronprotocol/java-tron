@@ -117,8 +117,8 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
-    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("{} {}",
-            handler.getNode().getHost(), handler.getNodeStatistics().toString()));
+    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("address: {}:{}, ID:{} {}",
+            handler.getNode().getHost(),handler.getNode().getPort(),handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString()));
 
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
             channelManager.nodesInUse().size());
