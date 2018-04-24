@@ -290,11 +290,16 @@ public class StoreAPI {
 
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
   }
-
+  
   /* *******************************************************************************
    * *                            witness api                                      *
    * *******************************************************************************
    */
+  public List<Witness> getWitnessAll() {
+    IndexedCollection<Witness> index = indexHelper.getWitnessIndex();
+    return ImmutableList.copyOf(index);
+  }
+
   public Witness getWitnessByAddress(String address) throws NonUniqueObjectException {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");

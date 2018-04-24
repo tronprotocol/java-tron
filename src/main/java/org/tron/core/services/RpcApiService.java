@@ -22,8 +22,11 @@ import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.TimeMessage;
+import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc.WalletImplBase;
+import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.overlay.discover.NodeHandler;
@@ -31,6 +34,7 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
+import org.tron.core.WalletSolidity;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -60,12 +64,14 @@ public class RpcApiService implements Service {
   private int port = 50051;
   private Server apiServer;
   private Application app;
+  private ApplicationContext ctx;
 
   private NodeManager nodeManager;
 
   public RpcApiService(Application app, ApplicationContext ctx) {
     nodeManager = ctx.getBean(NodeManager.class);
     this.app = app;
+    this.ctx = ctx;
   }
 
   @Override
@@ -81,11 +87,13 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      apiServer = ServerBuilder.forPort(port)
-          .addService(new WalletApi(app))
-          .addService(new DatabaseApi(app))
-          .build()
-          .start();
+      ServerBuilder serverBuilder = ServerBuilder.forPort(port).addService(new DatabaseApi(app));
+      if (Args.getInstance().isSolidityNode()) {
+        serverBuilder = serverBuilder.addService(new WalletSolidityApi(ctx));
+      } else {
+        serverBuilder = serverBuilder.addService(new WalletApi(app));
+      }
+      apiServer = serverBuilder.build().start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -100,6 +108,9 @@ public class RpcApiService implements Service {
   }
 
 
+  /**
+   * DatabaseApi.
+   */
   private class DatabaseApi extends DatabaseImplBase {
 
     private Application app;
@@ -159,6 +170,173 @@ public class RpcApiService implements Service {
     }
   }
 
+  /**
+   * WalletSolidityApi.
+   */
+  private class WalletSolidityApi extends WalletSolidityImplBase {
+
+    private WalletSolidity walletSolidity;
+
+    private WalletSolidityApi(ApplicationContext ctx) {
+      this.walletSolidity = new WalletSolidity(ctx);
+    }
+
+    @Override
+    public void getAccount(Account request, StreamObserver<Account> responseObserver) {
+      ByteString addressBs = request.getAddress();
+      if (addressBs != null) {
+        Account reply = walletSolidity.getAccount(addressBs);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
+
+      responseObserver.onNext(walletSolidity.getAccountList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(walletSolidity.getWitnessList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueList(EmptyMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      responseObserver.onNext(walletSolidity.getAssetIssueList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueListByTimestamp(NumberMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+
+      long timestamp = request.getNum();
+      if (timestamp > 0) {
+        AssetIssueList reply = walletSolidity.getAssetIssueListByTimestamp(timestamp);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueByAccount(Account request,
+        StreamObserver<AssetIssueList> responseObserver) {
+
+      ByteString address = request.getAddress();
+      if (null != address) {
+        AssetIssueList reply = walletSolidity.getAssetIssueByAccount(address);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueByName(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      ByteString name = request.getValue();
+      if (null != name) {
+        AssetIssueContract reply = walletSolidity.getAssetIssueByName(name);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
+      responseObserver.onNext(walletSolidity.getNowBlock());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
+      long num = request.getNum();
+      if (num > 0) {
+        Block reply = walletSolidity.getBlockByNum(num);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(walletSolidity.totalTransaction());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionById(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        Transaction reply = walletSolidity.getTransactionById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void getTransactionsByTimestamp(TimeMessage request,
+        StreamObserver<TransactionList> responseObserver) {
+      long beginTime = request.getBeginInMilliseconds();
+      long endTime = request.getEndInMilliseconds();
+      if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
+        responseObserver.onNext(null);
+      } else {
+        TransactionList reply = walletSolidity.getTransactionsByTimestamp(beginTime, endTime);
+        responseObserver.onNext(reply);
+      }
+      responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void getTransactionsFromThis(Account request,
+        StreamObserver<TransactionList> responseObserver) {
+      ByteString thisAddress = request.getAddress();
+      if (null != thisAddress) {
+        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onCompleted();
+      }
+    }
+
+    @Override
+    public void getTransactionsToThis(Account request,
+        StreamObserver<TransactionList> responseObserver) {
+      ByteString toAddress = request.getAddress();
+      if (null != toAddress) {
+        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onCompleted();
+      }
+    }
+  }
+
+  /**
+   * WalletApi.
+   */
   private class WalletApi extends WalletImplBase {
 
     private Application app;
@@ -259,8 +437,7 @@ public class RpcApiService implements Service {
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
-      Preconditions.checkArgument(
-          account.getShare() < votesCount,
+      Preconditions.checkArgument(account.getShare() < votesCount,
           "Share[" + account.getShare() + "] <  VotesCount[" + votesCount + "]");
 
       req.getVotesList().forEach(vote -> {
@@ -269,10 +446,8 @@ public class RpcApiService implements Service {
             .get(voteAddress.toByteArray());
         String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
 
-        Preconditions.checkNotNull(witness,
-            "witness[" + readableWitnessAddress + "] not exists");
-        Preconditions.checkArgument(
-            vote.getVoteCount() <= 0,
+        Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
+        Preconditions.checkArgument(vote.getVoteCount() <= 0,
             "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
       });
