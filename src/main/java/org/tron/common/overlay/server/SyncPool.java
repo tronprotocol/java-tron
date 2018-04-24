@@ -66,12 +66,13 @@ public class SyncPool {
   private PeerClient peerClient;
 
   @Autowired
-  public SyncPool(PeerConnectionDelegate peerDel, PeerClient peerClient) {
-    this.peerDel = peerDel;
+  public SyncPool(PeerClient peerClient) {
     this.peerClient = peerClient;
   }
 
-  public void init() {
+  public void init(PeerConnectionDelegate peerDel) {
+    this.peerDel = peerDel;
+
     channelManager = ctx.getBean(ChannelManager.class);
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
