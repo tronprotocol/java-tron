@@ -270,16 +270,14 @@ public class Wallet {
 
   public AccountList getAllAccounts() {
     AccountList.Builder builder = AccountList.newBuilder();
-    List<AccountCapsule> accountCapsuleList =
-        dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
+    dbManager.getAccountStore().getAllAccounts()
+        .forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
     return builder.build();
   }
 
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
-    List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
-    witnessCapsuleList
+    dbManager.getWitnessStore().getAllWitnesses()
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
   }
@@ -304,14 +302,10 @@ public class Wallet {
     if (accountAddress == null || accountAddress.size() == 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    assetIssueCapsuleList.stream()
+    dbManager.getAssetIssueStore().getAllAssetIssues().stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 
@@ -319,14 +313,11 @@ public class Wallet {
     if (assetName == null || assetName.size() == 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
-    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
-      if (assetName.equals(assetIssueCapsule.getName())) {
-        return assetIssueCapsule.getInstance();
-      }
-    }
-    return null;
+    return dbManager.getAssetIssueStore().getAllAssetIssues().stream()
+            .filter(assetIssueCapsule -> assetName.equals(assetIssueCapsule.getName()))
+            .findFirst()
+            .map(AssetIssueCapsule::getInstance)
+            .orElse(null);
   }
 
   public NumberMessage totalTransaction() {
