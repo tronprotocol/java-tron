@@ -671,7 +671,7 @@ public class Manager {
         .map(blockCapsule -> blockCapsule.getBlockId())
         .collect(Collectors.toCollection(LinkedList::new));
 
-    result.add(branch.getValue().peekLast().getParentBlockId());
+    result.add(blockCapsules.peekLast().getParentBlockId());
 
     return result;
   }

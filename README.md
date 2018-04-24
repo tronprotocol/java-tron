@@ -61,8 +61,9 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 ## Getting the code
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
+** develop branch: the newnest code 
+** master branch: more stable than develop.
 In the shell command, type:
-
 ```bash
 git clone https://github.com/tronprotocol/java-tron.git
 ```
