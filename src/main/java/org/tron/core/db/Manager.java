@@ -43,6 +43,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.JmonitorSessionType;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
@@ -51,6 +52,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -65,12 +67,6 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 @Component
 public class Manager {
-
-  private static final long BLOCK_INTERVAL_SEC = 1;
-  public static final int MAX_ACTIVE_WITNESS_NUM = 21;
-  private static final long TRXS_SIZE = 2_000_000; // < 2MiB
-  public static final long LOOP_INTERVAL =
-      5000L; // ms,produce block period, must be divisible by 60. millisecond
 
   // db store
   @Autowired
@@ -392,8 +388,14 @@ public class Manager {
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      HighFreqException {
+      HighFreqException, DupTransactionException {
     logger.info("push transaction");
+
+    if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
+      logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
+      throw new DupTransactionException("dup trans");
+    }
+
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
@@ -523,10 +525,12 @@ public class Manager {
   private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {
   }
 
-  /** save a block. */
-  public void pushBlock(final BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException,
-      ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+  /**
+   * save a block.
+   */
+  public synchronized void pushBlock(final BlockCapsule block)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException {
     Session session = JMonitor.newSession("Exec", "PushBlock");
     session.setStatus(Session.SUCCESS);
 
@@ -664,7 +668,8 @@ public class Manager {
       for (int i = 1; i < slot; ++i) {
         if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
           WitnessCapsule w =
-              this.witnessStore.get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+              this.witnessStore
+                  .get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
           w.setTotalMissed(w.getTotalMissed() + 1);
           this.witnessStore.put(w.createDbKey(), w);
           logger.info(
@@ -835,7 +840,7 @@ public class Manager {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       currentTrxSize += RamUsageEstimator.sizeOf(trx);
       // judge block size
-      if (currentTrxSize > TRXS_SIZE) {
+      if (currentTrxSize > ChainConstant.TRXS_SIZE) {
         postponedTrxCount++;
         continue;
       }

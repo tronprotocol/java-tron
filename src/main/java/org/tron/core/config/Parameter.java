@@ -1,5 +1,7 @@
 package org.tron.core.config;
 
+import org.springframework.transaction.TransactionException;
+
 public interface Parameter {
 
   interface ChainConstant {
@@ -9,10 +11,11 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
     long WITNESS_PAY_PER_BLOCK = 32000000;  // 32trx
-    int BLOCK_PRODUCED_INTERVAL = 3; // 3sec
-
     double SOLIDIFIED_THRESHOLD = 0.7;
     int PRIVATE_KEY_LENGTH = 64;
+    int MAX_ACTIVE_WITNESS_NUM = 21;
+    int TRXS_SIZE = 2_000_000; // < 2MiB
+    int BLOCK_PRODUCED_INTERVAL = 5000; //ms,produce block period, must be divisible by 60. millisecond
   }
 
   interface NodeConstant {
@@ -26,9 +29,6 @@ public interface Parameter {
 
   }
 
-  interface BlockConstant {
-    long BLOCK_INTERVAL = 5000L;
-  }
 
   interface NetConstants {
     long ADV_TIME_OUT = 20000L;
@@ -51,6 +51,12 @@ public interface Parameter {
     String UPDATE_LATEST_SOLIDIFIED_BLOCK_ERROR = "Update latest solidified block error.";
     String TRANSACTION_VALIDATE_SIGNATURE_ERROR = "Miss sig or contract.";
     String BLOCK_VALIDATE_ERROR = "Block validate signature error.";
+    String BAD_BLOCK_EXCEPTION = "Bad block exception.";
+    String TRON_EXCEPTION = "TRON exception.";
+    String TRAITOR_PEER_EXCEPTION = "Traitor peer exception.";
+    String BAD_TRANSACTION_EXCEPTION = "Bad transaction exception.";
+    String ON_HANDLE_CHAIN_INVENTORY_MESSAGE_EXCEPTION = "On handle chain inventory message exception.";
   }
+
 
 }
