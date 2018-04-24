@@ -41,7 +41,7 @@ public class NioManager {
 
     public static void setSeedlist(List<InetSocketAddress> seeds){
         if (!CollectionUtils.isEmpty(seeds)){
-            seeds.forEach(seed -> seedlist.add(seed));
+            seedlist.addAll(seeds);
         }
         logger.info("add seeds [{}]", seedlist);
     }

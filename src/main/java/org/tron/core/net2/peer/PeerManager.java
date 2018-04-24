@@ -31,8 +31,6 @@ public class PeerManager {
     }
 
     public static List<PeerInfo> getPeers(){
-        List<PeerInfo> list = new ArrayList<>();
-        peers.values().forEach(peer-> list.add(peer));
-        return list;
+        return new ArrayList<>(peers.values());
     }
 }
