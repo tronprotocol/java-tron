@@ -6,7 +6,6 @@ import javax.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
@@ -18,15 +17,24 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
-@Component
 @Slf4j
 public class IndexHelper {
 
-  @Getter @Resource private IndexedCollection<Transaction> transactionIndex;
-  @Getter @Resource private IndexedCollection<Block> blockIndex;
-  @Getter @Resource private IndexedCollection<Witness> witnessIndex;
-  @Getter @Resource private IndexedCollection<Account> accountIndex;
-  @Getter @Resource private IndexedCollection<AssetIssueContract> assetIssueIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<Transaction> transactionIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<Block> blockIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<Witness> witnessIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<Account> accountIndex;
+  @Getter
+  @Resource
+  private IndexedCollection<AssetIssueContract> assetIssueIndex;
 
   private BlockStore blockStore;
   private WitnessStore witnessStore;
@@ -34,9 +42,12 @@ public class IndexHelper {
   private TransactionStore transactionStore;
   private AssetIssueStore assetIssueStore;
 
-  /** init index */
+  /**
+   * init index
+   */
   @PostConstruct
   public void init() {
+    logger.info("+++++++++++++++++++IndexHelper init++++++++++++++++++++++++++++++");
     blockStore.forEach(b -> blockIndex.add(b.getInstance()));
     witnessStore.forEach(w -> witnessIndex.add(w.getInstance()));
     transactionStore.forEach(t -> transactionIndex.add(t.getInstance()));
