@@ -894,8 +894,8 @@ public class Manager {
       return;
     }
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-    //if latestSolidifiedBlockNum == 0，（Over 30% of the numbers is 0），keep the previous value.
-    if (latestSolidifiedBlockNum == 0) {
+    //if current value is less than the previous value，keep the previous value.
+    if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
     }
