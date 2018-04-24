@@ -900,6 +900,11 @@ public class Manager {
       return;
     }
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+    //if current value is less than the previous value，keep the previous value.
+    if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
+      logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
+      return;
+    }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
