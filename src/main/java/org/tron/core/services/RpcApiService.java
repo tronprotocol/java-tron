@@ -68,6 +68,8 @@ public class RpcApiService implements Service {
   @Autowired
   private Manager dbManager;
   @Autowired
+  private NodeManager nodeManager;
+  @Autowired
   private WalletSolidity walletSolidity;
   @Autowired
   private Wallet wallet;
@@ -323,8 +325,6 @@ public class RpcApiService implements Service {
    * WalletApi.
    */
   private class WalletApi extends WalletImplBase {
-
-    NodeManager nodeManager;
 
     @Override
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
