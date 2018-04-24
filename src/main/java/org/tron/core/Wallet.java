@@ -22,12 +22,13 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.NumberMessage.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
@@ -47,7 +48,7 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.Node;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
@@ -62,13 +63,14 @@ import org.tron.protos.Protocol.Transaction;
 
 
 @Slf4j
+@Component
 public class Wallet {
 
   @Getter
   private final ECKey ecKey;
-  @Getter
-  private Application app;
-  private Node p2pnode;
+  @Autowired
+  private NodeImpl p2pNode;
+  @Autowired
   private Manager dbManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
@@ -77,16 +79,6 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.ecKey = new ECKey(Utils.getRandom());
-  }
-
-  /**
-   * constructor.
-   */
-  public Wallet(Application app) {
-    this.app = app;
-    this.p2pnode = app.getP2pNode();
-    dbManager = app.getDbManager();
     this.ecKey = new ECKey(Utils.getRandom());
   }
 
@@ -216,7 +208,7 @@ public class Wallet {
       if (trx.validateSignature()) {
         Message message = new TransactionMessage(signaturedTransaction);
         dbManager.pushTransactions(trx);
-        p2pnode.broadcast(message);
+        p2pNode.broadcast(message);
         return true;
       }
     } catch (ValidateSignatureException e) {
