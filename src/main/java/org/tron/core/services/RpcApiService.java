@@ -61,7 +61,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class RpcApiService implements Service {
 
-  private int port = 50051;
+  private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
   private Application app;
   private ApplicationContext ctx;
