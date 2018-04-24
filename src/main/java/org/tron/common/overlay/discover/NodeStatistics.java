@@ -93,8 +93,9 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 40) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 10) * 2;
+            min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
+    discoverReput += min(discoverInNeighbours.get(), 10) * 10;
+
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int reput = 0;
@@ -145,9 +146,7 @@ public class NodeStatistics {
 //        System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
 //      return true;
 //    }
-    if (System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT){
-      return true;
-    }
+
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
