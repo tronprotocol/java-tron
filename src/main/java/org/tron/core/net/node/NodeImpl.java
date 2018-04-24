@@ -1013,6 +1013,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+    logger.info("update peer {} block both we have, {}", peer.getNode().getHost(), blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
