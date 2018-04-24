@@ -43,6 +43,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.StoreException;
@@ -66,6 +67,9 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j
 @Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
+
+  @Autowired
+  private Manager manager;
 
   @Autowired
   private SyncPool pool;
@@ -846,6 +850,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                       .getString()
                       + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
+          }
+
+          if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > manager.getFutureBlockMaxNum()){
+            throw new TraitorPeerException(
+                "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
+                    + "is gt future max num " + manager.getFutureBlockMaxNum() + " from " + peer);
           }
         }
         //check finish

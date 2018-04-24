@@ -104,6 +104,10 @@ public class Manager {
   @Setter
   private WitnessController witnessController;
 
+  private  long clockMaximumDelay = 3600 * 1000;
+
+
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -174,6 +178,16 @@ public class Manager {
 
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+  }
+
+  public long getFutureBlockMaxNum(){
+    if (getHeadBlockNum() == 0){
+      return Long.MAX_VALUE;
+    }
+
+    long maxRemainTime = clockMaximumDelay + System.currentTimeMillis() - getHeadBlockTimeStamp();
+
+    return maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + getHeadBlockNum();
   }
 
   public long getHeadBlockTimeStamp() {
