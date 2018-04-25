@@ -205,12 +205,10 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      if (trx.validateSignature()) {
-        Message message = new TransactionMessage(signaturedTransaction);
-        dbManager.pushTransactions(trx);
-        p2pNode.broadcast(message);
-        return true;
-      }
+      dbManager.pushTransactions(trx);
+      Message message = new TransactionMessage(signaturedTransaction);
+      p2pNode.broadcast(message);
+      return true;
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {

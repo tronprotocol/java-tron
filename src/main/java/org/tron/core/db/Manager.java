@@ -390,10 +390,6 @@ public class Manager {
       throw new DupTransactionException("dup trans");
     }
 
-    if (!trx.validateSignature()) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
-
     validateFreq(trx);
 
     if (!dialog.valid()) {
@@ -731,9 +727,11 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
-    TransactionResultCapsule transRet;
-    if (trxCap == null || !trxCap.validateSignature()) {
+    if (trxCap == null) {
       return false;
+    }
+    if (!trxCap.validateSignature()) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
