@@ -417,6 +417,9 @@ public class Manager {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
+        if (accountCapsule == null) {
+          throw new HighFreqException("account is not exist");
+        }
         long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
@@ -657,13 +660,19 @@ public class Manager {
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
 
-    LinkedList<BlockId> result =
-        branch
-            .getValue()
-            .stream()
-            .map(blockCapsule -> blockCapsule.getBlockId())
-            .collect(Collectors.toCollection(LinkedList::new));
-    result.add(branch.getValue().peekLast().getParentBlockId());
+    LinkedList<BlockCapsule> blockCapsules = branch.getValue();
+
+    if (blockCapsules.isEmpty()) {
+      logger.info("empty branch {}", forkBlockHash);
+      return Lists.newLinkedList();
+    }
+
+    LinkedList<BlockId> result = blockCapsules.stream()
+        .map(blockCapsule -> blockCapsule.getBlockId())
+        .collect(Collectors.toCollection(LinkedList::new));
+
+    result.add(blockCapsules.peekLast().getParentBlockId());
+
     return result;
   }
 
@@ -894,6 +903,11 @@ public class Manager {
       return;
     }
     long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
+    //if current value is less than the previous value，keep the previous value.
+    if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
+      logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
+      return;
+    }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }

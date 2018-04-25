@@ -166,7 +166,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         }
       } else {
         forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
-        if (forkList.size() < 2) {
+        if (forkList.isEmpty()) {
           throw new UnLinkedBlockException(
               "We want to find forkList of this block: " + beginBLockId.getString()
                   + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
@@ -253,6 +253,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public BlockId getHeadBlockId() {
     return dbManager.getHeadBlockId();
+  }
+
+  @Override
+  public long getHeadBlockTimeStamp(){
+    return dbManager.getHeadBlockTimeStamp();
   }
 
   @Override

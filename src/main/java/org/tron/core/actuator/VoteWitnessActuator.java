@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -11,6 +12,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -80,10 +82,20 @@ public class VoteWitnessActuator extends AbstractActuator {
             "Account[" + readableOwnerAddress + "] not exists");
       }
 
+      if (contract.getVotesCount() > DynamicPropertiesStore.MAX_VOTE_NUMBER) {
+        throw new ContractValidateException(
+            "VoteNumber more than maxVoteNumber[30]");
+      }
+
       long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
           .getShare();
-      long sum = contract.getVotesList().stream().mapToLong(vote -> vote.getVoteCount()).sum();
-      sum *= 1000000;     //trx -> drop. The vote count is based on TRX
+
+      Long sum = 0L;
+      for (Vote vote : contract.getVotesList()) {
+        sum = LongMath.checkedAdd(sum, vote.getVoteCount());
+      }
+
+      sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
       if (sum > share) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the share[" + share + "]");

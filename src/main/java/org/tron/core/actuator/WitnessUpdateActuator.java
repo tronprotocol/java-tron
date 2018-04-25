@@ -15,16 +15,17 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class WitnessUpdateActuator extends AbstractActuator {
+
   WitnessUpdateActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
 
-  private void updateWitness(final WitnessUpdateContract witnessUpdateContract) {
-    final WitnessCapsule witnessCapsule = new WitnessCapsule(witnessUpdateContract.getOwnerAddress(),
-            0, witnessUpdateContract.getUpdateUrl().toString());
+  private void updateWitness(final WitnessUpdateContract contract) {
 
-    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(),
-            witnessCapsule);
+    WitnessCapsule witnessCapsule = this.dbManager.getWitnessStore()
+        .get(contract.getOwnerAddress().toByteArray());
+    witnessCapsule.setUrl(contract.getUpdateUrl().toString());
+    this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
   }
 
   @Override
@@ -53,7 +54,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
       }
 
       final WitnessUpdateContract contract = this.contract.unpack(WitnessUpdateContract.class);
-      if(!Wallet.addressValid(contract.getOwnerAddress().toByteArray())){
+      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
       if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {

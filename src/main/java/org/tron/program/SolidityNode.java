@@ -12,10 +12,15 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.*;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
-import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
 public class SolidityNode {
@@ -107,7 +112,7 @@ public class SolidityNode {
     }
     Application appT = ApplicationFactory.create(context);
     //appT.init(cfgArgs);
-    RpcApiService rpcApiService = new RpcApiService(appT, context);
+    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
 
     appT.initServices(cfgArgs);

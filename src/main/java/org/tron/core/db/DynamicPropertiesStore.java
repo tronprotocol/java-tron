@@ -18,7 +18,8 @@ import org.tron.core.config.args.Args;
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
-  private static final long MAINTENANCE_TIME_INTERVAL = 24 * 3600 * 1000;// (ms)
+  private static final long MAINTENANCE_TIME_INTERVAL = Args.getInstance()
+      .getMaintenanceTimeInterval();
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
   private static final int SINGLE_REPEAT = 1;
 
@@ -38,6 +39,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
 
   private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
+
+  public static final int MAX_VOTE_NUMBER = 30;
 
 
   @Autowired

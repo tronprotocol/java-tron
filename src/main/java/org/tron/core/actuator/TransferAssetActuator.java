@@ -90,9 +90,11 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       Preconditions.checkNotNull(transferAssetContract.getAssetName(), "AssetName is null");
       Preconditions.checkNotNull(transferAssetContract.getAmount(), "Amount is null");
+
       if (transferAssetContract.getOwnerAddress().equals(transferAssetContract.getToAddress())) {
         throw new ContractValidateException("Cannot transfer asset to yourself.");
       }
+
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
       if (!this.dbManager.getAccountStore().has(ownerKey)) {
         throw new ContractValidateException();
@@ -113,14 +115,18 @@ public class TransferAssetActuator extends AbstractActuator {
       long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
+      if (ownerAccount == null) {
+        throw new ContractValidateException();
+      }
       Map<String, Long> asset = ownerAccount.getAssetMap();
 
       if (asset.isEmpty()) {
         throw new ContractValidateException();
       }
 
-      Long assetAmount = asset.get(ByteArray.toStr(nameKey));
-      if (amount <= 0 || null == assetAmount || amount > assetAmount || assetAmount <= 0) {
+      Long assetBalance = asset.get(ByteArray.toStr(nameKey));
+
+      if (amount <= 0 || null == assetBalance || amount > assetBalance || assetBalance <= 0) {
         throw new ContractValidateException();
       }
     } catch (InvalidProtocolBufferException e) {

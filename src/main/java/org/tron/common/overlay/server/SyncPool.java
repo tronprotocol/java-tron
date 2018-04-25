@@ -41,7 +41,7 @@ public class SyncPool {
 
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
-  private static final long WORKER_TIMEOUT = 3;
+  private static final long WORKER_TIMEOUT = 15;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
 
@@ -66,12 +66,13 @@ public class SyncPool {
   private PeerClient peerClient;
 
   @Autowired
-  public SyncPool(PeerConnectionDelegate peerDel, PeerClient peerClient) {
-    this.peerDel = peerDel;
+  public SyncPool(PeerClient peerClient) {
     this.peerClient = peerClient;
   }
 
-  public void init() {
+  public void init(PeerConnectionDelegate peerDel) {
+    this.peerDel = peerDel;
+
     channelManager = ctx.getBean(ChannelManager.class);
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
@@ -116,8 +117,8 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
-    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("{} {}",
-            handler.getNodeStatistics().getReputation(), handler.getNode().toString()));
+    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("address: {}:{}, ID:{} {}",
+            handler.getNode().getHost(),handler.getNode().getPort(),handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString()));
 
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
             channelManager.nodesInUse().size());

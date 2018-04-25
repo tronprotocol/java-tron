@@ -27,7 +27,7 @@ import org.tron.common.overlay.message.ReasonCode;
 public class NodeStatistics {
 
   public final static int REPUTATION_PREDEFINED = 1000500;
-  public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 10 * 1000;
+  public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000;
   public final static long FREQUENT_DISCONNECTION_TIMEOUT = 5 * 60 * 1000;
 
   public class StatHandler {
@@ -93,8 +93,9 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 40) * (discoverOutPing.get() == discoverInPong.get() ? 2 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 10) * 2;
+            min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
+    discoverReput += min(discoverInNeighbours.get(), 10) * 10;
+
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
     int reput = 0;
@@ -137,16 +138,19 @@ public class NodeStatistics {
 //    if (disconnectTimes >= 3 && System.currentTimeMillis() - lastDisconnectedTime < FREQUENT_DISCONNECTION_TIMEOUT){
 //      return true;
 //    }
-    if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS &&
-        System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
-      return true;
-    }
-    if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.DUPLICATE_PEER &&
-        System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
-      return true;
-    }
+//    if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS &&
+//        System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
+//      return true;
+//    }
+//    if (wasDisconnected() && tronLastRemoteDisconnectReason == ReasonCode.DUPLICATE_PEER &&
+//        System.currentTimeMillis() - lastDisconnectedTime < TOO_MANY_PEERS_PENALIZE_TIMEOUT) {
+//      return true;
+//    }
+
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
