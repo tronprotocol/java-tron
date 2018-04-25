@@ -124,8 +124,11 @@ java -jar java-tron.jar
 
 ### How to run a Super Node
 
-you should modify the config.conf, genesis.block.witnesses replace to yourself address and localwitness replace to yourself private key
-
+You should modify the config.conf
+1、genesis.block.witnesses replace to yourself address
+2、localwitness replace to yourself private key
+3、seed.node ip.list replace to yourself ip list
+4、the first Super Node start, needSyncCheck should be set false
 * In the Terminal
 
 ```bash
