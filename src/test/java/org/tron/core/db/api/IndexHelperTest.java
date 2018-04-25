@@ -276,5 +276,8 @@ public class IndexHelperTest {
     Assert.assertEquals(1, resultSet.size());
     Assert.assertEquals(789, resultSet.uniqueResult().getBalance());
     logger.info("account3 balance: " + resultSet.uniqueResult().getBalance());
+
+    // del account
+    indexHelper.remove(account3);
   }
 }
