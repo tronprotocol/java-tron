@@ -1,9 +1,13 @@
 package org.tron.core.db.api;
 
+import static com.googlecode.cqengine.query.QueryFactory.equal;
+
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.googlecode.cqengine.IndexedCollection;
+import com.googlecode.cqengine.resultset.ResultSet;
 import java.io.File;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -19,6 +23,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db.api.index.AccountIndex;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -27,6 +32,7 @@ import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
+@Slf4j
 public class IndexHelperTest {
 
   private static Manager dbManager;
@@ -225,5 +231,53 @@ public class IndexHelperTest {
     ImmutableList<AssetIssueContract> accountImmutableList =
         ImmutableList.copyOf(assetIssueContractIndex);
     return accountImmutableList.size();
+  }
+
+  @Test
+  public void update() {
+    /*
+     * account1, account2, account3 has the same address, so in index there are only one instance.
+     */
+    // account1
+    Account account1 = Account.newBuilder()
+        .setAddress(ByteString.copyFrom("update123".getBytes()))
+        .setBalance(123)
+        .build();
+    indexHelper.update(account1);
+    ResultSet<Account> resultSet = indexHelper.getAccountIndex()
+        .retrieve(equal(AccountIndex.Account_ADDRESS,
+            ByteArray.toHexString(account1.getAddress().toByteArray())));
+    Assert.assertEquals(1, resultSet.size());
+    Assert.assertEquals(123, resultSet.uniqueResult().getBalance());
+    logger.info("account1 balance: " + resultSet.uniqueResult().getBalance());
+
+    // account2
+    Account account2 = Account.newBuilder()
+        .setAddress(ByteString.copyFrom("update123".getBytes()))
+        .setBalance(456)
+        .build();
+    indexHelper.update(account2);
+    resultSet = indexHelper.getAccountIndex()
+        .retrieve(equal(AccountIndex.Account_ADDRESS,
+            ByteArray.toHexString(account1.getAddress().toByteArray())));
+    Assert.assertEquals(1, resultSet.size());
+    Assert.assertEquals(456, resultSet.uniqueResult().getBalance());
+    logger.info("account2 balance: " + resultSet.uniqueResult().getBalance());
+
+    // account3
+    Account account3 = Account.newBuilder()
+        .setAddress(ByteString.copyFrom("update123".getBytes()))
+        .setBalance(789)
+        .build();
+    indexHelper.update(account3);
+    resultSet = indexHelper.getAccountIndex()
+        .retrieve(equal(AccountIndex.Account_ADDRESS,
+            ByteArray.toHexString(account1.getAddress().toByteArray())));
+    Assert.assertEquals(1, resultSet.size());
+    Assert.assertEquals(789, resultSet.uniqueResult().getBalance());
+    logger.info("account3 balance: " + resultSet.uniqueResult().getBalance());
+
+    // del account
+    indexHelper.remove(account3);
   }
 }

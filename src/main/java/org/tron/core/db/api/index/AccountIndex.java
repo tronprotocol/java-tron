@@ -1,7 +1,9 @@
 package org.tron.core.db.api.index;
 
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
+import static com.googlecode.cqengine.query.QueryFactory.equal;
 
+import com.google.common.collect.ImmutableList;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
@@ -30,10 +32,17 @@ public class AccountIndex extends AbstractIndex<Account> {
     super(persistence);
   }
 
+  @Override
+  public boolean update(Account account) {
+    return update(
+        retrieve(equal(Account_ADDRESS, ByteArray.toHexString(account.getAddress().toByteArray()))),
+        ImmutableList.of(account)
+    );
+  }
+
   @PostConstruct
   public void init() {
     addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
     addIndex(NavigableIndex.onAttribute(Account_BALANCE));
   }
-
 }
