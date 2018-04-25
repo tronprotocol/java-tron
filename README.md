@@ -58,6 +58,11 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 
 # How to Build
 
+## Prepare dependencies
+
+* JDK 1.8 (JDK 1.9+ are not supported yet)
+* On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
+
 ## Getting the code
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
@@ -72,11 +77,6 @@ git clone https://github.com/tronprotocol/java-tron.git
 
 * If you'd rather not use Git, [Download the ZIP](https://github.com/tronprotocol/java-tron/archive/develop.zip)
 
-## Prepare dependencies
-
-* JDK 1.8 (JDK 1.9+ are not supported yet)
-* On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
-
 ## Building from source code
 
 * Build in the Terminal
@@ -86,7 +86,7 @@ cd java-tron
 ./gradlew build
 ```
 
-* Build an executable JAE
+* Build an executable JAR
 
 ```bash
 ./gradlew clean shadowJar
@@ -103,7 +103,7 @@ cd java-tron
 
 ## Running a Private Testnet
 
-### Running a full node
+### How to run a full node
 
 * In the Terminal
 
@@ -111,7 +111,7 @@ cd java-tron
 ./gradlew run
 ```
 
-* Use the executable JAE
+* Use the executable JAR
 
 ```bash
 cd build/libs 
@@ -122,7 +122,9 @@ java -jar java-tron.jar
   1. After the building finishes, locate `FullNode` in the project structure view panel, which is on the path `java-tron/src/main/java/org.tron/program/FullNode`.
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
-### Running a Witness Node
+### How to run a Super Node
+
+you should modify the config.conf, genesis.block.witnesses replace to yourself address and localwitness replace to yourself private key
 
 * In the Terminal
 
@@ -221,11 +223,13 @@ balance: 420
 
 </details>
 
-* Use the executable JAE
+* Use the executable JAR
 
 ```bash
 cd build/libs 
-java -jar java-tron.jar --witness true 
+java -jar java-tron.jar --witness true
+or
+java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
 ```
 
 * In IntelliJ IDEA
