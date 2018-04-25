@@ -20,14 +20,16 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.NumberMessage.Builder;
+import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -330,8 +332,47 @@ public class Wallet {
   }
 
   public NumberMessage totalTransaction() {
-    Builder builder = NumberMessage.newBuilder()
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
         .setNum(dbManager.getTransactionStore().getTotalTransactions());
     return builder.build();
   }
+
+  public Block getBlockById(ByteString BlockId) {
+    Block blocke = null;
+    try {
+      blocke = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+    } catch (StoreException e) {
+    }
+    return blocke;
+  }
+
+  public BlockList getBlocksByLimit(long number, long limit) {
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    try {
+      dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+          blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    } catch (StoreException e) {
+    }
+    return blockListBuilder.build();
+  }
+
+  public Transaction getTransactionById(ByteString transactionId) {
+    Transaction transaction = null;
+    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
+        .get(transactionId.toByteArray());
+    if (Objects.nonNull(transactionCapsule)) {
+      transaction = transactionCapsule.getInstance();
+    }
+    return transaction;
+  }
+
+  public TransactionList getTransactionsByLimit(ByteString transactionId, long limit) {
+    TransactionList.Builder transactionListBuilder = TransactionList.newBuilder();
+    dbManager.getTransactionStore().getLimitNumber(transactionId.toByteArray(), limit).forEach(
+        transactionCapsule -> transactionListBuilder
+            .addTransaction(transactionCapsule.getInstance()));
+
+    return transactionListBuilder.build();
+  }
+
 }

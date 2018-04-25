@@ -322,7 +322,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
 
   public Sha256Hash getTransactionId() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    return Sha256Hash.getTransactionId(this.transaction.getRawData().getRefBlockNum(),
+        this.transaction.getRawData().toByteArray());
   }
 
   @Override
@@ -376,7 +377,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             e.printStackTrace();
           }
         }
-        if ( this.transaction.getSignatureList().size() >= i.get() + 1) {
+        if (this.transaction.getSignatureList().size() >= i.get() + 1) {
           toStringBuff.append("sign=").append(getBase64FromByteString(
               this.transaction.getSignature(i.getAndIncrement()))).append("\n");
         }

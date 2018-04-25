@@ -252,6 +252,37 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  public Set<byte[]> getLimitNumber(byte[] startNumber, long getLimit) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Set<byte[]> result = new HashSet<>();
+      long i = 0;
+      for (iterator.seek(startNumber); iterator.hasNext() && i++ < getLimit; iterator.next()) {
+        result.add(iterator.peekNext().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public byte[] getByNumKey(byte[] numBytes) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      iterator.seek(numBytes);
+      if (iterator.hasNext()) {
+        return iterator.peekNext().getValue();
+      }
+      return null;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -330,4 +361,5 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public Stream<Entry<byte[], byte[]>> parallelStream() {
     return StreamSupport.stream(spliterator(), true);
   }
+
 }

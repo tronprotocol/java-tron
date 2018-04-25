@@ -15,7 +15,6 @@
 
 package org.tron.core.db;
 
-import com.google.common.primitives.Longs;
 import com.googlecode.cqengine.IndexedCollection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -102,28 +102,19 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   }
 
   public BlockCapsule getByNum(long blockNum) throws ItemNotFoundException, BadItemException {
-    byte[] numBytes = getNumBlockId(blockNum);
-    byte[] value = dbSource.getByNumKey(numBytes);
+    BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, blockNum);
+    byte[] value = dbSource.getByNumKey(blockId.getBytes());
     if (ArrayUtils.isEmpty(value)) {
       throw new ItemNotFoundException();
     }
     return new BlockCapsule(value);
   }
 
-  private byte[] getNumBlockId(long blockNum) {
-    byte[] numBytes = Longs.toByteArray(blockNum);
-    byte[] hash = new byte[Sha256Hash.LENGTH];
-    System.arraycopy(numBytes, 0, hash, 0, 8);
-    return numBytes;
-  }
-
-  public List<BlockCapsule> getBetweenNums(long startNumber, long limit)
+  public List<BlockCapsule> getLimitNumber(long startNumber, long limit)
       throws ItemNotFoundException, BadItemException {
-    byte[] startBytes = getNumBlockId(startNumber);
-    return dbSource
-        .getBetweenNums(startNumber, limit)
-        .stream()
-        .map(bytes -> {
+    BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
+    return dbSource.getLimitNumber(startBlockId.getBytes(), limit)
+        .stream().map(bytes -> {
           try {
             return new BlockCapsule(bytes);
           } catch (BadItemException e) {

@@ -72,7 +72,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     this.bytes = rawHashBytes;
   }
 
-
   /**
    * Use {@link #wrap(byte[])} instead.
    */
@@ -80,6 +79,13 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   public Sha256Hash(byte[] rawHashBytes) {
     checkArgument(rawHashBytes.length == LENGTH);
     this.bytes = rawHashBytes;
+  }
+
+  public static Sha256Hash getTransactionId(long timestamp, byte[] rawBytes) {
+    byte[] timeBytes = Longs.toByteArray(timestamp);
+    byte[] hash = rawBytes;
+    System.arraycopy(timeBytes, 0, hash, 0, 8);
+    return wrap(hash);
   }
 
   /**
