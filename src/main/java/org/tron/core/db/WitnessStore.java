@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.common.iterator.WitnessIterator;
+import org.tron.protos.Protocol.Witness;
 
 @Slf4j
 @Component
@@ -58,6 +59,20 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     super.put(key, item);
   }
 
+  @Override
+  public void delete(byte[] key) {
+    onDelete(key);
+    super.delete(key);
+  }
+
+  private void onDelete(byte[] key) {
+    if (indexHelper != null) {
+      WitnessCapsule item = get(key);
+      Witness witness = item.getInstance();
+      indexHelper.remove(witness);
+    }
+  }
+
   /**
    * create fun.
    *
@@ -74,7 +89,9 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     return instance;
   }
 
-  /** get all witnesses. */
+  /**
+   * get all witnesses.
+   */
   public List<WitnessCapsule> getAllWitnesses() {
     return dbSource
         .allValues()

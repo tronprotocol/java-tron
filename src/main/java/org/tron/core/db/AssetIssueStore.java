@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.common.iterator.AssetIssueIterator;
+import org.tron.protos.Contract.AssetIssueContract;
 
 @Slf4j
 @Component
@@ -66,6 +67,20 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
       indexHelper.add(item.getInstance());
     }
     super.put(key, item);
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    onDelete(key);
+    super.delete(key);
+  }
+
+  private void onDelete(byte[] key) {
+    if (indexHelper != null) {
+      AssetIssueCapsule item = get(key);
+      AssetIssueContract assetIssue = item.getInstance();
+      indexHelper.remove(assetIssue);
+    }
   }
 
   /**

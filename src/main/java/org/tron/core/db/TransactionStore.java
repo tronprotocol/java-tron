@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.common.iterator.TransactionIterator;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 @Component
@@ -38,6 +39,20 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
       indexHelper.add(item.getInstance());
     }
     super.put(key, item);
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    onDelete(key);
+    super.delete(key);
+  }
+
+  private void onDelete(byte[] key) {
+    if (indexHelper != null) {
+      TransactionCapsule item = get(key);
+      Transaction transaction = item.getInstance();
+      indexHelper.remove(transaction);
+    }
   }
 
   /**
@@ -82,5 +97,5 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   public Iterator<TransactionCapsule> iterator() {
     return new TransactionIterator(dbSource.iterator());
   }
-  
+
 }

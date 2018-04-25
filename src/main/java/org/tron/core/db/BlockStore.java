@@ -15,17 +15,23 @@
 
 package org.tron.core.db;
 
+import com.google.common.primitives.Longs;
 import com.googlecode.cqengine.IndexedCollection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j
@@ -54,6 +60,24 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     super.put(key, item);
   }
 
+  @Override
+  public void delete(byte[] key) {
+    onDelete(key);
+    super.delete(key);
+  }
+
+  private void onDelete(byte[] key) {
+    if (indexHelper != null) {
+      Block block = null;
+      try {
+        BlockCapsule item = get(key);
+        block = item.getInstance();
+      } catch (StoreException e) {
+      }
+      indexHelper.remove(block);
+    }
+  }
+
   /**
    * create fun.
    */
@@ -75,6 +99,40 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
       throw new ItemNotFoundException();
     }
     return new BlockCapsule(value);
+  }
+
+  public BlockCapsule getByNum(long blockNum) throws ItemNotFoundException, BadItemException {
+    byte[] numBytes = getNumBlockId(blockNum);
+    byte[] value = dbSource.getByNumKey(numBytes);
+    if (ArrayUtils.isEmpty(value)) {
+      throw new ItemNotFoundException();
+    }
+    return new BlockCapsule(value);
+  }
+
+  private byte[] getNumBlockId(long blockNum) {
+    byte[] numBytes = Longs.toByteArray(blockNum);
+    byte[] hash = new byte[Sha256Hash.LENGTH];
+    System.arraycopy(numBytes, 0, hash, 0, 8);
+    return numBytes;
+  }
+
+  public List<BlockCapsule> getBetweenNums(long startNumber, long limit)
+      throws ItemNotFoundException, BadItemException {
+    byte[] startBytes = getNumBlockId(startNumber);
+    return dbSource
+        .getBetweenNums(startNumber, limit)
+        .stream()
+        .map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException e) {
+            e.printStackTrace();
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   @Override

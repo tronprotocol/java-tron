@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.common.iterator.AccountIterator;
+import org.tron.protos.Protocol.Account;
 
 @Slf4j
 @Component
@@ -73,7 +74,23 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     super.put(key, item);
   }
 
-  /** get all accounts. */
+  @Override
+  public void delete(byte[] key) {
+    onDelete(key);
+    super.delete(key);
+  }
+
+  private void onDelete(byte[] key) {
+    if (indexHelper != null) {
+      AccountCapsule item = get(key);
+      Account account = item.getInstance();
+      indexHelper.remove(account);
+    }
+  }
+
+  /**
+   * get all accounts.
+   */
   public List<AccountCapsule> getAllAccounts() {
     return dbSource
         .allValues()
@@ -82,21 +99,27 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         .collect(Collectors.toList());
   }
 
-  /** Max TRX account. */
+  /**
+   * Max TRX account.
+   */
   public AccountCapsule getSun() {
     byte[] data = dbSource.getData(assertsAddress.get("Sun"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
 
-  /** Min TRX account. */
+  /**
+   * Min TRX account.
+   */
   public AccountCapsule getBlackhole() {
     byte[] data = dbSource.getData(assertsAddress.get("Blackhole"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
 
-  /** Get foundation account info. */
+  /**
+   * Get foundation account info.
+   */
   public AccountCapsule getZion() {
     byte[] data = dbSource.getData(assertsAddress.get("Zion"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
