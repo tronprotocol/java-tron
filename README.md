@@ -105,6 +105,11 @@ cd java-tron
 
 ### How to run a full node
 
+* Prepare
+  You should modify the config.conf
+  1. genesis.block.witnesses replace to yourself address
+  2. seed.node ip.list replace to yourself ip list
+
 * In the Terminal
 
 ```bash
@@ -124,13 +129,24 @@ java -jar java-tron.jar
 
 ### How to run a Super Node
 
-You should modify the config.conf
-1、genesis.block.witnesses replace to yourself address
-2、localwitness replace to yourself private key
-3、seed.node ip.list replace to yourself ip list
-4、the first Super Node start, needSyncCheck should be set false
-* In the Terminal
+* Prepare
+  You should modify the config.conf
+  1. genesis.block.witnesses replace to yourself address
+  2. seed.node.ip.list replace to yourself ip list
+  3. the first Super Node start, needSyncCheck should be set false
 
+* Use the executable JAR(Recommend the way)
+
+```bash
+cd build/libs
+java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
+Example:
+java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+
+```
+
+* In the Terminal
+  in the config.conf localwitness add yourself private key
 ```bash
 ./gradlew run -Pwitness=true
 ```
@@ -226,15 +242,6 @@ balance: 420
 
 </details>
 
-* Use the executable JAR
-
-```bash
-cd build/libs 
-java -jar java-tron.jar --witness true
-or
-java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
-```
-
 * In IntelliJ IDEA
   
 <details>
@@ -270,9 +277,31 @@ For private testnet, the IPs are allocated by yourself.
 
 ### Running a Full Node
 
+* In the Terminal
+
+```bash
+./gradlew run
+```
+
+* Use the executable JAR
+
+```bash
+cd build/libs
+java -jar java-tron.jar
+
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
-### Running a Witness Node 
+### Running a Witness Node
+
+* Use the executable JAR(Recommend the way)
+
+```bash
+cd build/libs
+java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
+Example:
+java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+
+```
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
   
