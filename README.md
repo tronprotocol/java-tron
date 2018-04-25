@@ -105,8 +105,7 @@ cd java-tron
 
 ### How to run a full node
 
-* Prepare
-  You should modify the config.conf
+* You should modify the config.conf
   1. genesis.block.witnesses replace to yourself address
   2. seed.node ip.list replace to yourself ip list
 
@@ -129,8 +128,7 @@ java -jar java-tron.jar
 
 ### How to run a Super Node
 
-* Prepare
-  You should modify the config.conf
+* You should modify the config.conf
   1. genesis.block.witnesses replace to yourself address
   2. seed.node.ip.list replace to yourself ip list
   3. the first Super Node start, needSyncCheck should be set false
@@ -274,6 +272,8 @@ To run TRON on more than one node, you need to specify several seed nodes' IPs i
 For private testnet, the IPs are allocated by yourself.
 
 ## Running a local node and connecting to the public testnet 
+
+* Ensure that the version number is consistent with the version number of the test network. If it is not consistent, Please modify the node.p2p.version in the config.conf file, and delete the out-directory directory (if it exists)
 
 ### Running a Full Node
 
