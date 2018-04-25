@@ -8,6 +8,8 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
@@ -22,12 +24,27 @@ public class FullNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
+
+    if (cfgArgs.isNeedReplay()) {
+      String dataBaseDir = cfgArgs.getOutputDirectory();
+      ReplayTool.cleanDb(dataBaseDir);
+    }
+
+    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+
+    if (cfgArgs.isNeedReplay()) {
+      try {
+        Manager dbManager = context.getBean(Manager.class);
+        ReplayTool.replayBlock(dbManager);
+      } catch (BadBlockException e) {
+        logger.info("Bad block", e.getMessage());
+      }
+    }
+
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);
