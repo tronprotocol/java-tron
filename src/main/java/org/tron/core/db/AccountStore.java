@@ -68,12 +68,14 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void put(byte[] key, AccountCapsule item) {
     if (indexHelper != null) {
-      indexHelper.add(item.getInstance());
+      indexHelper.update(item.getInstance());
     }
     super.put(key, item);
   }
 
-  /** get all accounts. */
+  /**
+   * get all accounts.
+   */
   public List<AccountCapsule> getAllAccounts() {
     return dbSource
         .allValues()
@@ -82,21 +84,27 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         .collect(Collectors.toList());
   }
 
-  /** Max TRX account. */
+  /**
+   * Max TRX account.
+   */
   public AccountCapsule getSun() {
     byte[] data = dbSource.getData(assertsAddress.get("Sun"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
 
-  /** Min TRX account. */
+  /**
+   * Min TRX account.
+   */
   public AccountCapsule getBlackhole() {
     byte[] data = dbSource.getData(assertsAddress.get("Blackhole"));
     AccountCapsule accountCapsule = new AccountCapsule(data);
     return accountCapsule;
   }
 
-  /** Get foundation account info. */
+  /**
+   * Get foundation account info.
+   */
   public AccountCapsule getZion() {
     byte[] data = dbSource.getData(assertsAddress.get("Zion"));
     AccountCapsule accountCapsule = new AccountCapsule(data);

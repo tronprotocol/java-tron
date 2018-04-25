@@ -1,7 +1,9 @@
 package org.tron.core.db.api.index;
 
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
+import static com.googlecode.cqengine.query.QueryFactory.equal;
 
+import com.google.common.collect.ImmutableList;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
@@ -30,6 +32,14 @@ public class WitnessIndex extends AbstractIndex<Witness> {
 
   public WitnessIndex(Persistence<Witness, ? extends Comparable> persistence) {
     super(persistence);
+  }
+
+  @Override
+  public boolean update(Witness witness) {
+    return update(
+        retrieve(equal(Witness_ADDRESS, ByteArray.toHexString(witness.getAddress().toByteArray()))),
+        ImmutableList.of(witness)
+    );
   }
 
   @PostConstruct
