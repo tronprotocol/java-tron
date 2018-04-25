@@ -103,7 +103,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         ctx.close();
         return;
       }
-      ctx.writeAndFlush(new HelloMessage(nodeManager.getPublicHomeNode(), ((HelloMessage) msg).getTimestamp())).sync();
+      ctx.writeAndFlush(new HelloMessage(nodeManager.getPublicHomeNode(), ((HelloMessage) msg).getTimestamp()).getSendData()).sync();
       channel.getNodeStatistics().p2pOutHello.add();
     }
 
