@@ -84,25 +84,22 @@ public class TransferActuator extends AbstractActuator {
       long balance = ownerAccount.getBalance();
       long laststOperationTime = ownerAccount.getLatestOperationTime();
       long now = System.currentTimeMillis();
-      //TODO:
-      //if (now - laststOperationTime < balance) {
-      //throw new ContractValidateException();
-      //}
-
+      if (ownerAccount.getBalance() < calcFee()) {
+        throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
+      }
+      long amount = transferContract.getAmount();
+      if (amount <= 0) {
+        throw new ContractValidateException("Amount is less than 0.");
+      }
+      if (balance < amount) {
+        throw new ContractValidateException("balance is not sufficient.");
+      }
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferContract.getToAddress();
       if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
         AccountCapsule account = new AccountCapsule(toAddress,
             AccountType.Normal);
         dbManager.getAccountStore().put(toAddress.toByteArray(), account);
-      }
-
-      if (ownerAccount.getBalance() < calcFee()) {
-        throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
-      }
-      long amount = transferContract.getAmount();
-      if (amount < 0) {
-        throw new ContractValidateException("Amount is less than 0.");
       }
     } catch (Exception ex) {
       ex.printStackTrace();

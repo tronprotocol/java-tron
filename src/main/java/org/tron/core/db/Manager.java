@@ -417,6 +417,9 @@ public class Manager {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
+        if (accountCapsule == null) {
+          throw new HighFreqException("account is not exist");
+        }
         long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
@@ -659,14 +662,14 @@ public class Manager {
 
     LinkedList<BlockCapsule> blockCapsules = branch.getValue();
 
-    if (blockCapsules.isEmpty()){
+    if (blockCapsules.isEmpty()) {
       logger.info("empty branch {}", forkBlockHash);
       return Lists.newLinkedList();
     }
 
     LinkedList<BlockId> result = blockCapsules.stream()
-            .map(blockCapsule -> blockCapsule.getBlockId())
-            .collect(Collectors.toCollection(LinkedList::new));
+        .map(blockCapsule -> blockCapsule.getBlockId())
+        .collect(Collectors.toCollection(LinkedList::new));
 
     result.add(blockCapsules.peekLast().getParentBlockId());
 
