@@ -291,7 +291,7 @@ java -jar java-tron.jar
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
-### Running a Witness Node
+### Running a Super Node
 
 * Use the executable JAR(Recommend the way)
 
