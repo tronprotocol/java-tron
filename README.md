@@ -58,6 +58,11 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 
 # How to Build
 
+## Prepare dependencies
+
+* JDK 1.8 (JDK 1.9+ are not supported yet)
+* On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
+
 ## Getting the code
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
@@ -72,11 +77,6 @@ git clone https://github.com/tronprotocol/java-tron.git
 
 * If you'd rather not use Git, [Download the ZIP](https://github.com/tronprotocol/java-tron/archive/develop.zip)
 
-## Prepare dependencies
-
-* JDK 1.8 (JDK 1.9+ are not supported yet)
-* On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
-
 ## Building from source code
 
 * Build in the Terminal
@@ -86,7 +86,7 @@ cd java-tron
 ./gradlew build
 ```
 
-* Build an executable JAE
+* Build an executable JAR
 
 ```bash
 ./gradlew clean shadowJar
@@ -103,7 +103,11 @@ cd java-tron
 
 ## Running a Private Testnet
 
-### Running a full node
+### How to run a full node
+
+* You should modify the config.conf
+  1. genesis.block.witnesses replace to yourself address
+  2. seed.node ip.list replace to yourself ip list
 
 * In the Terminal
 
@@ -111,7 +115,7 @@ cd java-tron
 ./gradlew run
 ```
 
-* Use the executable JAE
+* Use the executable JAR
 
 ```bash
 cd build/libs 
@@ -122,10 +126,25 @@ java -jar java-tron.jar
   1. After the building finishes, locate `FullNode` in the project structure view panel, which is on the path `java-tron/src/main/java/org.tron/program/FullNode`.
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
-### Running a Witness Node
+### How to run a Super Node
+
+* You should modify the config.conf
+  1. genesis.block.witnesses replace to yourself address
+  2. seed.node.ip.list replace to yourself ip list
+  3. the first Super Node start, needSyncCheck should be set false
+
+* Use the executable JAR(Recommend the way)
+
+```bash
+cd build/libs
+java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
+Example:
+java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+
+```
 
 * In the Terminal
-
+  in the config.conf localwitness add yourself private key
 ```bash
 ./gradlew run -Pwitness=true
 ```
@@ -221,13 +240,6 @@ balance: 420
 
 </details>
 
-* Use the executable JAE
-
-```bash
-cd build/libs 
-java -jar java-tron.jar --witness true 
-```
-
 * In IntelliJ IDEA
   
 <details>
@@ -261,11 +273,36 @@ For private testnet, the IPs are allocated by yourself.
 
 ## Running a local node and connecting to the public testnet 
 
+* Ensure that the version number is consistent with the version number of the test network. If it is not consistent, Please modify the node.p2p.version in the config.conf file, and delete the out-directory directory (if it exists)
+
 ### Running a Full Node
+
+* In the Terminal
+
+```bash
+./gradlew run
+```
+
+* Use the executable JAR
+
+```bash
+cd build/libs
+java -jar java-tron.jar
+```
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
-### Running a Witness Node 
+### Running a Super Node
+
+* Use the executable JAR(Recommend the way)
+
+```bash
+cd build/libs
+java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
+Example:
+java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+
+```
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
   
