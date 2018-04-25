@@ -14,6 +14,10 @@ public abstract class AbstractIndex<T> extends ConcurrentIndexedCollection<T> im
     super(persistence);
   }
 
+  public boolean update(T t) {
+    return add(t);
+  }
+
   @Override
   public String getName() {
     return this.getClass().getSimpleName();

@@ -53,7 +53,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   @Override
   public void put(byte[] key, WitnessCapsule item) {
     if (indexHelper != null) {
-      indexHelper.add(item.getInstance());
+      indexHelper.update(item.getInstance());
     }
     super.put(key, item);
   }
@@ -74,7 +74,9 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     return instance;
   }
 
-  /** get all witnesses. */
+  /**
+   * get all witnesses.
+   */
   public List<WitnessCapsule> getAllWitnesses() {
     return dbSource
         .allValues()

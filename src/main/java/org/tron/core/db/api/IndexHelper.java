@@ -11,6 +11,7 @@ import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.db.api.index.AbstractIndex;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -77,6 +78,30 @@ public class IndexHelper {
 
   public void add(AssetIssueContract a) {
     add(assetIssueIndex, a);
+  }
+
+  public <T> void update(IndexedCollection<T> index, T t) {
+    ((AbstractIndex<T>) index).update(t);
+  }
+
+  public void update(Transaction t) {
+    update(transactionIndex, t);
+  }
+
+  public void update(Block b) {
+    update(blockIndex, b);
+  }
+
+  public void update(Witness w) {
+    update(witnessIndex, w);
+  }
+
+  public void update(Account a) {
+    update(accountIndex, a);
+  }
+
+  public void update(AssetIssueContract a) {
+    update(assetIssueIndex, a);
   }
 
   private <T> void remove(IndexedCollection<T> index, T t) {
