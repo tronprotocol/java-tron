@@ -252,12 +252,12 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public Set<byte[]> getLimitNumber(byte[] startNumber, long getLimit) {
+  public Set<byte[]> getSeekKeyLimitNext(byte[] startKey, long getLimit) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Set<byte[]> result = new HashSet<>();
       long i = 0;
-      for (iterator.seek(startNumber); iterator.hasNext() && i++ < getLimit; iterator.next()) {
+      for (iterator.seek(startKey); iterator.hasNext() && i++ < getLimit; iterator.next()) {
         result.add(iterator.peekNext().getValue());
       }
       return result;
@@ -268,12 +268,43 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public byte[] getByNumKey(byte[] numBytes) {
+  public Set<byte[]> getSeekKeyLimitPrev(byte[] startKey, long getLimit) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      iterator.seek(numBytes);
+      Set<byte[]> result = new HashSet<>();
+      long i = 0;
+      for (iterator.seek(startKey); iterator.hasPrev() && i++ < getLimit; iterator.prev()) {
+        result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public byte[] getBySeekKeyNext(byte[] keyBytes) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      iterator.seek(keyBytes);
       if (iterator.hasNext()) {
         return iterator.peekNext().getValue();
+      }
+      return null;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public byte[] getBySeekKeyPrev(byte[] keyBytes) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      iterator.seek(keyBytes);
+      if (iterator.hasPrev()) {
+        return iterator.peekPrev().getValue();
       }
       return null;
     } catch (IOException e) {

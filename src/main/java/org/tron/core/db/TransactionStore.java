@@ -29,7 +29,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   public List<TransactionCapsule> getLimitNumber(byte[] startTransactionId, long limit) {
-    return dbSource.getLimitNumber(startTransactionId, limit)
+    return dbSource.getSeekKeyLimitNext(startTransactionId, limit)
         .stream().map(bytes -> {
           return new TransactionCapsule(bytes);
         })

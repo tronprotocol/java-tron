@@ -103,7 +103,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   public BlockCapsule getByNum(long blockNum) throws ItemNotFoundException, BadItemException {
     BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, blockNum);
-    byte[] value = dbSource.getByNumKey(blockId.getBytes());
+    byte[] value = dbSource.getBySeekKeyNext(blockId.getBytes());
     if (ArrayUtils.isEmpty(value)) {
       throw new ItemNotFoundException();
     }
@@ -113,7 +113,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit)
       throws ItemNotFoundException, BadItemException {
     BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
-    return dbSource.getLimitNumber(startBlockId.getBytes(), limit)
+    return dbSource.getSeekKeyLimitNext(startBlockId.getBytes(), limit)
         .stream().map(bytes -> {
           try {
             return new BlockCapsule(bytes);
