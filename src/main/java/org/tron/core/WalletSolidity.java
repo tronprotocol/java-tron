@@ -30,7 +30,8 @@ public class WalletSolidity {
   public Account getAccount(ByteString addressBs) {
     Account accountByAddress = null;
     try {
-      accountByAddress = storeAPI.getAccountByAddress(ByteArray.toHexString(addressBs.toByteArray()));
+      accountByAddress = storeAPI
+          .getAccountByAddress(ByteArray.toHexString(addressBs.toByteArray()));
     } catch (NonUniqueObjectException e) {
       e.printStackTrace();
     }
