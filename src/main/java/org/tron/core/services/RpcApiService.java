@@ -304,8 +304,9 @@ public class RpcApiService implements Service {
         TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress);
         responseObserver.onNext(reply);
       } else {
-        responseObserver.onCompleted();
+        responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -316,8 +317,9 @@ public class RpcApiService implements Service {
         TransactionList reply = walletSolidity.getTransactionsToThis(toAddress);
         responseObserver.onNext(reply);
       } else {
-        responseObserver.onCompleted();
+        responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
     }
   }
 
