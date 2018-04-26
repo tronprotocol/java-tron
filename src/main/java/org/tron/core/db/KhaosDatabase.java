@@ -104,7 +104,7 @@ public class KhaosDatabase extends TronDatabase {
         // parentHash = block.getParentHash();
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
-          listBlk.removeIf(b -> b.id == hash);
+          listBlk.removeIf(b -> b.id.equals(hash));
         }
         this.hashKblkMap.remove(hash);
         return true;
@@ -292,6 +292,17 @@ public class KhaosDatabase extends TronDatabase {
     }
 
     return new Pair<>(list1, list2);
+  }
+
+
+  // only for unittest
+  public BlockCapsule getParentBlock(Sha256Hash hash) {
+    return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
+        .filter(Objects::nonNull)
+        .map(KhaosBlock::getParent)
+        .map(khaosBlock -> khaosBlock == null ? null : khaosBlock.blk)
+        .findFirst()
+        .orElse(null);
   }
 
   public boolean hasData() {

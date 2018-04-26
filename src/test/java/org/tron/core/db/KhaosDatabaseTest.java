@@ -85,4 +85,26 @@ public class KhaosDatabaseTest {
   }
 
 
+  @Test
+  public void checkWeakReference() throws UnLinkedBlockException {
+    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray
+                .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b82")))
+        )).build());
+    BlockCapsule blockCapsule2 = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            blockCapsule.getBlockId().getBytes())))).build());
+    Assert.assertEquals(blockCapsule.getBlockId(), blockCapsule2.getParentHash());
+
+    khaosDatabase.start(blockCapsule);
+    khaosDatabase.push(blockCapsule2);
+
+    khaosDatabase.removeBlk(blockCapsule.getBlockId());
+    logger.info("*** " + khaosDatabase.getBlock(blockCapsule.getBlockId()));
+    System.gc();
+    System.runFinalization();
+    System.gc();
+    Assert.assertNull(khaosDatabase.getParentBlock(blockCapsule2.getBlockId()));
+  }
 }
