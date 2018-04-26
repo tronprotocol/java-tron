@@ -31,7 +31,7 @@ public class BlockIndex extends AbstractIndex<Block> {
   public static final Attribute<Block, String> TRANSACTIONS =
       attribute(String.class, "transactions",
           block -> block.getTransactionsList().stream()
-              .map(t -> Sha256Hash.of(t.toByteArray()).toString())
+              .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
               .collect(Collectors.toList()));
   public static final Attribute<Block, Long> WITNESS_ID =
       attribute("witness id",
