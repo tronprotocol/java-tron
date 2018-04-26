@@ -54,9 +54,9 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -412,7 +412,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    validateBandwidth(trx);
+    consumeBandwidth(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
@@ -429,7 +429,7 @@ public class Manager {
   }
 
 
-  public void validateBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -439,15 +439,16 @@ public class Manager {
         throw new ValidateBandwidthException("account is not exist");
       }
       long bandwidth = accountCapsule.getBandwidth();
-      if (contract.getType() != FreezeBalanceContract &&
-          contract.getType() != UnfreezeBalanceContract &&
-          bandwidth < 1) {
-        throw new ValidateBandwidthException("bandwidth is not enough");
+      if (contract.getType() != FreezeBalanceContract
+          && contract.getType() != UnfreezeBalanceContract) {
+        if (bandwidth < 1) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+        }
+        accountCapsule.setBandwidth(bandwidth - 1);
       }
       accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
-      accountCapsule.setBandwidth(bandwidth - 1);
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-      }
+    }
   }
 
   @Deprecated
