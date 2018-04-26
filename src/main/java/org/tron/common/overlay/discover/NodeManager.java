@@ -17,23 +17,34 @@
  */
 package org.tron.common.overlay.discover;
 
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler.State;
-import org.tron.common.overlay.discover.message.*;
-import org.tron.common.overlay.discover.table.NodeTable;
-import org.tron.common.utils.CollectionUtils;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.NodeHandler.State;
+import org.tron.common.overlay.discover.message.FindNodeMessage;
+import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.overlay.discover.message.NeighborsMessage;
+import org.tron.common.overlay.discover.message.PingMessage;
+import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.utils.CollectionUtils;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 
 @Component
 public class NodeManager implements Consumer<DiscoveryEvent> {
@@ -52,7 +63,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   Consumer<DiscoveryEvent> messageSender;
 
   NodeTable table;
-  private Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
+  private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
   final Node homeNode;
   private List<Node> bootNodes = new ArrayList<>();
 
@@ -75,10 +86,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
+        args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
-        bootNodes.add(Node.instanceOf(boot));
+      bootNodes.add(Node.instanceOf(boot));
     }
 
     logger.info("homeNode : {}", homeNode);
@@ -116,7 +128,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
         }
       }, LISTENER_REFRESH_RATE, LISTENER_REFRESH_RATE);
 
-      if(args.isNodeDiscoveryPersist()){
+      if (args.isNodeDiscoveryPersist()) {
         dbRead();
         nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
           @Override
@@ -136,25 +148,27 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     }
   }
 
-  public boolean isNodeAlive(NodeHandler nodeHandler){
-    return  nodeHandler.state.equals(State.Alive) ||
-            nodeHandler.state.equals(State.Active) ||
-            nodeHandler.state.equals(State.EvictCandidate);
+  public boolean isNodeAlive(NodeHandler nodeHandler) {
+    return nodeHandler.state.equals(State.Alive) ||
+        nodeHandler.state.equals(State.Active) ||
+        nodeHandler.state.equals(State.EvictCandidate);
   }
 
   private void dbRead() {
     Set<Node> Nodes = this.dbManager.readNeighbours();
     logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics().setPersistedReputation(node.getReputation()));
+    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
+        .setPersistedReputation(node.getReputation()));
   }
 
   private void dbWrite() {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
-      for (NodeHandler nodeHandler: nodeHandlerMap.values()){
+      for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
         //if (isNodeAlive(nodeHandler)) {
-          nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getPersistedReputation());
-          batch.add(nodeHandler.getNode());
+        nodeHandler.getNode()
+            .setReputation(nodeHandler.getNodeStatistics().getPersistedReputation());
+        batch.add(nodeHandler.getNode());
         //}
       }
     }
@@ -195,7 +209,8 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
-      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
+      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics()
+          .getReputation());
 
       for (NodeHandler handler : sorted) {
         nodeHandlerMap.remove(getKey(handler.getNode()));
@@ -269,7 +284,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     return ret;
   }
 
-  public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate,  int limit) {
+  public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate, int limit) {
     ArrayList<NodeHandler> filtered = new ArrayList<>();
     synchronized (this) {
       for (NodeHandler handler : nodeHandlerMap.values()) {
@@ -279,10 +294,12 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       }
     }
 
-    logger.debug("nodeHandlerMap size {} filter peer  size {}", nodeHandlerMap.size(), filtered.size());
+    logger.debug("nodeHandlerMap size {} filter peer  size {}", nodeHandlerMap.size(),
+        filtered.size());
 
     //TODO: here can use head num sort.
-    filtered.sort((o1, o2) -> o2.getNodeStatistics().getReputation() - o1.getNodeStatistics().getReputation());
+    filtered.sort((o1, o2) -> o2.getNodeStatistics().getReputation() - o1.getNodeStatistics()
+        .getReputation());
 
     return CollectionUtils.truncate(filtered, limit);
   }
@@ -347,9 +364,11 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
   }
 
   private class ListenerHandler {
+
     Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
     DiscoverListener listener;
     Predicate<NodeStatistics> filter;
+
     ListenerHandler(DiscoverListener listener, Predicate<NodeStatistics> filter) {
       this.listener = listener;
       this.filter = filter;
