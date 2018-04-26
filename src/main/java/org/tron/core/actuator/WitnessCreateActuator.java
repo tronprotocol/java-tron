@@ -69,6 +69,11 @@ public class WitnessCreateActuator extends AbstractActuator {
           !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
           "Witness[" + readableOwnerAddress + "] has existed");
 
+      Preconditions.checkArgument(
+          accountCapsule.getBalance() >= dbManager.getDynamicPropertiesStore()
+              .getAccountUpgradeCost(),
+          "balance < AccountUpgradeCost");
+
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
@@ -93,6 +98,13 @@ public class WitnessCreateActuator extends AbstractActuator {
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
+
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(witnessCreateContract.getOwnerAddress().toByteArray());
+    long newBalance =
+        accountCapsule.getBalance() - dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
+    accountCapsule.setBalance(newBalance);
+    this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
 }
