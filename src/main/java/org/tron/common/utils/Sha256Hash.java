@@ -81,13 +81,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     this.bytes = rawHashBytes;
   }
 
-  public static Sha256Hash getTransactionId(long timestamp, byte[] rawBytes) {
-    byte[] timeBytes = Longs.toByteArray(timestamp);
-    byte[] hash = rawBytes;
-    System.arraycopy(timeBytes, 0, hash, 0, 8);
-    return wrap(hash);
-  }
-
   /**
    * Creates a new instance that wraps the given hash value.
    *
