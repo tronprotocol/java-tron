@@ -71,7 +71,7 @@ public class ActuatorFactory {
       case UnfreezeBalanceContract:
         return new UnfreezeBalanceActuator(contract.getParameter(), manager);
       case WithdrawBalanceContract:
-        //todo
+        return new WithdrawBalanceActuator(contract.getParameter(), manager);
       default:
 
     }

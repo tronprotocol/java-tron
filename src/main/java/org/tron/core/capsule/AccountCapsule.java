@@ -284,4 +284,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public List<Frozen> getFrozenList() {
     return getInstance().getFrozenList();
   }
+
+  public long getAllowance() {
+    return getInstance().getAllowance();
+  }
+
+  public long getLatestWithdrawTime() {
+    return getInstance().getLatestWithdrawTime();
+  }
 }
