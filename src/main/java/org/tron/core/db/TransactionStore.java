@@ -47,7 +47,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   @Override
   public void put(byte[] key, TransactionCapsule item) {
     if (indexHelper != null) {
-      indexHelper.add(item.getInstance());
+      indexHelper.update(item.getInstance());
     }
     super.put(key, item);
   }

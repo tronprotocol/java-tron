@@ -43,7 +43,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.StoreException;
@@ -72,7 +71,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(10000).expireAfterWrite(60, TimeUnit.SECONDS)
+      .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
       .recordStats().build();
 
   Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -524,14 +523,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       //TODO:optimize here
-      if (!isDisconnected[0]) {
-        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
-            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / ChainConstant.BLOCK_PRODUCED_INTERVAL
-            && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME
-            && peer.getSyncBlockRequested().isEmpty()) {
-          isDisconnected[0] = true;
-        }
-      }
+//      if (!isDisconnected[0]) {
+//        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
+//            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / ChainConstant.BLOCK_PRODUCED_INTERVAL
+//            && peer.getConnectTime() < Time.getCurrentMillis() - NetConstants.HEAD_NUM_CHECK_TIME
+//            && peer.getSyncBlockRequested().isEmpty()) {
+//          isDisconnected[0] = true;
+//        }
+//      }gi
 
       if (isDisconnected[0]) {
         //TODO use new reason
@@ -1015,7 +1014,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
-    logger.info("update peer {} block both we have {}", peer.getNode().getHost(), block.getBlockId());
+    logger.info("update peer {} block both we have {}", peer.getNode().getHost(), block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }

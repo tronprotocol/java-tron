@@ -41,7 +41,7 @@ public class SyncPool {
 
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
-  private static final long WORKER_TIMEOUT = 3;
+  private static final long WORKER_TIMEOUT = 15;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
 
@@ -87,9 +87,7 @@ public class SyncPool {
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logActivePeers();
-      } catch (Throwable t) {
-        logger.error("Exception in log worker", t);
-      }
+      } catch (Throwable t) {}
     }, 10, 10, TimeUnit.SECONDS);
   }
 

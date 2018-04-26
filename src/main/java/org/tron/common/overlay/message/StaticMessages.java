@@ -44,8 +44,8 @@ public class StaticMessages {
 
   public static final byte[] SYNC_TOKEN = Hex.decode("22400891");
 
-  public HelloMessage createHelloMessage(Node node) {
-    return new HelloMessage(node);
+  public HelloMessage createHelloMessage(Node node, long timestamp) {
+    return new HelloMessage(node, timestamp);
   }
 
   private String buildHelloAnnouncement() {
