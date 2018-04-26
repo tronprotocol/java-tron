@@ -21,6 +21,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final long MAINTENANCE_TIME_INTERVAL = Args.getInstance()
       .getMaintenanceTimeInterval();
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
+  private static final double VOTE_REWARD_RATE = 0.00001;
   private static final int SINGLE_REPEAT = 1;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
@@ -460,6 +461,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getMaintenanceSkipSlots() {
     return MAINTENANCE_SKIP_SLOTS;
+  }
+
+  public double getVoteRewardRate() {
+    return VOTE_REWARD_RATE;
   }
 
   public int getSingleRepeat() {

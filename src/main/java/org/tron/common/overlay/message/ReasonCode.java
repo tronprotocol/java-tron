@@ -84,6 +84,8 @@ public enum ReasonCode {
 
     SYNC_FAIL(0x12),
 
+    FETCH_FAIL(0x13),
+
     /**
      * [0xFF] Reason not specified
      */
