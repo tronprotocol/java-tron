@@ -87,9 +87,7 @@ public class SyncPool {
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logActivePeers();
-      } catch (Throwable t) {
-        logger.error("Exception in log worker", t);
-      }
+      } catch (Throwable t) {}
     }, 10, 10, TimeUnit.SECONDS);
   }
 

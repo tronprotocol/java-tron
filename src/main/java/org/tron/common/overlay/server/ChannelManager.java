@@ -21,14 +21,7 @@ import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -99,24 +92,34 @@ public class ChannelManager {
   }
 
   private void processNewPeers() {
-    if (newPeers.isEmpty()) {
-      return;
-    }
-    for (Channel peer : newPeers) {
-      if (!peer.isProtocolsInitialized()) {
-        continue;
-      } else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
-        disconnect(peer, DUPLICATE_PEER);
-      } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
-        disconnect(peer, TOO_MANY_PEERS);
-      } else if (peer.getNodeStatistics().isReputationPenalized()) {
-        disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
-      } else {
-        activePeers.put(peer.getNodeIdWrapper(), peer);
-        newPeers.remove(peer);
-        logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+
+      if (newPeers.isEmpty()) {
+          return;
       }
-    }
+
+      newPeers.sort(Comparator.comparingLong(c -> c.getStartTime()));
+
+      for (Channel peer : newPeers) {
+          if (!peer.isProtocolsInitialized()) {
+              continue;
+          }else if (peer.getNodeStatistics().isPenalized()) {
+              disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+          }else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+              disconnect(peer, TOO_MANY_PEERS);
+          }else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
+              Channel channel = activePeers.get(peer.getNodeIdWrapper());
+              if (channel.getStartTime() > peer.getStartTime()) {
+                  logger.info("disconnect connection established later, {}", channel.getNode());
+                  disconnect(channel, DUPLICATE_PEER);
+              } else {
+                  disconnect(peer, DUPLICATE_PEER);
+              }
+          }else {
+              activePeers.put(peer.getNodeIdWrapper(), peer);
+              newPeers.remove(peer);
+              logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+          }
+      }
   }
 
   public void disconnect(Channel peer, ReasonCode reason) {

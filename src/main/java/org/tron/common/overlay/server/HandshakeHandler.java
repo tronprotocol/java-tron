@@ -64,7 +64,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     channel.setInetSocketAddress((InetSocketAddress) ctx.channel().remoteAddress());
     if (remoteId.length == 64) {
       channel.initWithNode(remoteId, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());
-      channel.sendHelloMessage(ctx);
+      ctx.writeAndFlush(new HelloMessage(nodeManager.getPublicHomeNode(), System.currentTimeMillis()).getSendData()).sync();
+      channel.getNodeStatistics().p2pOutHello.add();
     }
   }
 
@@ -102,21 +103,18 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         ctx.close();
         return;
       }
-      channel.sendHelloMessage(ctx);
+      ctx.writeAndFlush(new HelloMessage(nodeManager.getPublicHomeNode(), ((HelloMessage) msg).getTimestamp()).getSendData()).sync();
+      channel.getNodeStatistics().p2pOutHello.add();
     }
 
     channel.getNodeStatistics().p2pInHello.add();
 
-
     channel.publicHandshakeFinished(ctx, helloMessage);
-    ctx.pipeline().remove(this);
-
-    logger.info("Handshake done, removing HandshakeHandler from pipeline, {}", ctx.channel().remoteAddress());
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {} {} ", ctx.channel().remoteAddress(), cause.getMessage());
+    logger.info("exception caught, {}", ctx.channel().remoteAddress(), cause);
     ctx.close();
   }
 
