@@ -733,6 +733,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       } else {
         peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
         del.handleTransaction(trxMsg.getTransactionCapsule());
+        broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
