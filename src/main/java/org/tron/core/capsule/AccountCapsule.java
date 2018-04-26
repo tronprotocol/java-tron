@@ -304,4 +304,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getBandwidth() {
     return getInstance().getBandwidth();
   }
+
+  public void setBandwidth(long bandwidth) {
+    this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
+
+  }
 }

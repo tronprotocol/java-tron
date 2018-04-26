@@ -35,11 +35,15 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
@@ -240,11 +244,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case DeployContract:
           owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
           break;
+        case WitnessUpdateContract:
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
         case ParticipateAssetIssueContract:
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
           break;
+        case AccountUpdateContract:
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
+        case FreezeBalanceContract:
+          owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case UnfreezeBalanceContract:
+          owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case WithdrawBalanceContract:
+          owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+          break;
         // todo add other contract
-
         default:
           return null;
       }

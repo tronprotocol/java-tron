@@ -2,8 +2,10 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.FreezeBalanceContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.UnfreezeBalanceContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
@@ -54,6 +56,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -382,7 +385,7 @@ public class Manager {
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      HighFreqException, DupTransactionException {
+      ValidateBandwidthException, DupTransactionException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -394,7 +397,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    validateFreq(trx);
+    validateBandwidth(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
@@ -410,6 +413,29 @@ public class Manager {
     return true;
   }
 
+
+  public void validateBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
+        trx.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      byte[] address = TransactionCapsule.getOwner(contract);
+      AccountCapsule accountCapsule = this.getAccountStore().get(address);
+      if (accountCapsule == null) {
+        throw new ValidateBandwidthException("account is not exist");
+      }
+      long bandwidth = accountCapsule.getBandwidth();
+      if (contract.getType() != FreezeBalanceContract &&
+          contract.getType() != UnfreezeBalanceContract &&
+          bandwidth < 1) {
+        throw new ValidateBandwidthException("bandwidth is not enough");
+      }
+      accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+      accountCapsule.setBandwidth(bandwidth - 1);
+      this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+      }
+  }
+
+  @Deprecated
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -431,6 +457,7 @@ public class Manager {
     }
   }
 
+  @Deprecated
   private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
     long now = Time.getCurrentMillis();
