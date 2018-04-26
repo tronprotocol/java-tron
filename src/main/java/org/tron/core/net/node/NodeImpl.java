@@ -718,9 +718,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void processBadPeer(PeerConnection peer, ReasonCode reasonCode){
     peer.setSyncFlag(false);
     while (!peer.getSyncBlockToFetch().isEmpty()){
-      syncBlockIdWeRequested.remove(peer.getSyncBlockToFetch().pop());
-      blockWaitToProc.remove(peer.getSyncBlockToFetch().pop());
-      blockJustReceived.remove(peer.getSyncBlockToFetch().pop());
+      BlockId blockId = peer.getSyncBlockToFetch().pop();
+      blockWaitToProc.remove(blockId);
+      blockJustReceived.remove(blockId);
     }
     disconnectPeer(peer, reasonCode);
   }
