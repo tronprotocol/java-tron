@@ -130,8 +130,6 @@ public class SolidityNode {
     channelManager.close();
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
-    PeerServer peerServer = context.getBean(PeerServer.class);
-    peerServer.close();
 
     SolidityNode node = new SolidityNode();
     node.setDbManager(appT.getDbManager());
