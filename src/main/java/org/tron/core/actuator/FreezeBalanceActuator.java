@@ -102,7 +102,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       long frozenDuration = freezeBalanceContract.getFrozenDuration();
       long oneDays = 24 * 3600 * 1000;
-      long thirtyDays = 30 * 24 *  3600 * 1000;
+      long thirtyDays = 30 * 24 * 3600 * 1000;
 
       if (!(frozenDuration >= oneDays && frozenDuration <= thirtyDays)) {
         throw new ContractValidateException(
