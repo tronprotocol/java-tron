@@ -602,6 +602,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } else if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()){
         logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
+        return;
       }
       //sync mode
       syncBlockRequested.remove(blockId);
