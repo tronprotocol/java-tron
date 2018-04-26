@@ -160,4 +160,69 @@ public class LevelDbDataSourceImplTest {
 
     assertFalse("Database is still alive after closing.", dataSourceTest.isAlive());
   }
+
+  @Test
+  public void seekTest() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_seek_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    String key1 = "0000000987b10fbb7f17110757321";
+    byte[] key = key1.getBytes();
+
+    String value1 = "50000";
+    byte[] value = value1.getBytes();
+
+    dataSource.putData(key, value);
+    String key3 = "000000431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    byte[] key2 = key3.getBytes();
+
+    String value3 = "30000";
+    byte[] value2 = value3.getBytes();
+
+    dataSource.putData(key2, value2);
+    dataSource.allKeys().forEach(keyOne -> {
+      logger.info(ByteArray.toStr(keyOne));
+    });
+    assertEquals(2, dataSource.allKeys().size());
+    dataSource.resetDb();
+  }
+
+  @Test
+  public void getSeekKeyLimitNext() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_find_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757321";
+    byte[] key = key1.getBytes();
+
+    String value1 = "50000";
+    byte[] value = value1.getBytes();
+
+    dataSource.putData(key, value);
+    String key3 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    byte[] key2 = key3.getBytes();
+
+    String value3 = "30000";
+    byte[] value2 = value3.getBytes();
+
+    dataSource.putData(key2, value2);
+    assertEquals(2, dataSource.allKeys().size());
+    dataSource.resetDb();
+  }
+
+  @Test
+  public void getSeekKeyLimitPrev() {
+  }
+
+  @Test
+  public void getBySeekKeyNext() {
+  }
+
+  @Test
+  public void getBySeekKeyPrev() {
+  }
 }
