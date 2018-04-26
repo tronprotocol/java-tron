@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
 
@@ -157,6 +158,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
+
   @Override
   public String toString() {
     return this.account.toString();
@@ -275,4 +277,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
+  public int getFrozenCount() {
+    return getInstance().getFrozenCount();
+  }
+
+  public List<Frozen> getFrozenList() {
+    return getInstance().getFrozenList();
+  }
+
+  public long getAllowance() {
+    return getInstance().getAllowance();
+  }
+
+  public long getLatestWithdrawTime() {
+    return getInstance().getLatestWithdrawTime();
+  }
 }
