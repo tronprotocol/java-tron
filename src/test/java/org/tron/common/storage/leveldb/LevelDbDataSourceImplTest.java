@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNull;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -162,25 +163,18 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
-  public void seekTest() {
+  public void allKeysTest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_seek_key");
+        Args.getInstance().getOutputDirectory(), "test_allKeysTest_key");
     dataSource.initDB();
     dataSource.resetDb();
 
-    String key1 = "0000000987b10fbb7f17110757321";
-    byte[] key = key1.getBytes();
-
-    String value1 = "50000";
-    byte[] value = value1.getBytes();
+    byte[] key = "0000000987b10fbb7f17110757321".getBytes();
+    byte[] value = "50000".getBytes();
+    byte[] key2 = "000000431cd8c8d5a".getBytes();
+    byte[] value2 = "30000".getBytes();
 
     dataSource.putData(key, value);
-    String key3 = "000000431cd8c8d5a";
-    byte[] key2 = key3.getBytes();
-
-    String value3 = "30000";
-    byte[] value2 = value3.getBytes();
-
     dataSource.putData(key2, value2);
     dataSource.allKeys().forEach(keyOne -> {
       logger.info(ByteArray.toStr(keyOne));
@@ -190,27 +184,64 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
-  public void getSeekKeyLimitNext() {
+  public void seekTest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_find_key");
+        Args.getInstance().getOutputDirectory(), "test_seek_key");
     dataSource.initDB();
     dataSource.resetDb();
 
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757321";
-    byte[] key = key1.getBytes();
+    byte[] value1 = "10000".getBytes();
+    byte[] value2 = "20000".getBytes();
+    byte[] value3 = "30000".getBytes();
+    byte[] value4 = "40000".getBytes();
+    byte[] value5 = "50000".getBytes();
+    byte[] value6 = "60000".getBytes();
+    byte[] key1 = "00000001aa".getBytes();
+    byte[] key2 = "00000002aa".getBytes();
+    byte[] key3 = "00000003aa".getBytes();
+    byte[] key4 = "00000004aa".getBytes();
+    byte[] key5 = "00000005aa".getBytes();
+    byte[] key6 = "00000006aa".getBytes();
 
-    String value1 = "50000";
-    byte[] value = value1.getBytes();
+    dataSource.putData(key1, value1);
+    dataSource.putData(key6, value2);
+    dataSource.putData(key2, value3);
+    dataSource.putData(key5, value4);
+    dataSource.putData(key3, value5);
+    dataSource.putData(key4, value6);
+    dataSource.resetDb();
+  }
 
-    dataSource.putData(key, value);
-    String key3 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
-    byte[] key2 = key3.getBytes();
+  @Test
+  public void getSeekKeyLimitNext() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getSeekKeyLimitNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
 
-    String value3 = "30000";
-    byte[] value2 = value3.getBytes();
+    byte[] value1 = "10000".getBytes();
+    byte[] value2 = "20000".getBytes();
+    byte[] value3 = "30000".getBytes();
+    byte[] value4 = "40000".getBytes();
+    byte[] value5 = "50000".getBytes();
+    byte[] value6 = "60000".getBytes();
+    byte[] key1 = "00000001aa".getBytes();
+    byte[] key2 = "00000002aa".getBytes();
+    byte[] key3 = "00000003aa".getBytes();
+    byte[] key4 = "00000004aa".getBytes();
+    byte[] key5 = "00000005aa".getBytes();
+    byte[] key6 = "00000006aa".getBytes();
 
+    dataSource.putData(key1, value1);
+    dataSource.putData(key6, value6);
     dataSource.putData(key2, value2);
-    assertEquals(2, dataSource.allKeys().size());
+    dataSource.putData(key5, value5);
+    dataSource.putData(key3, value3);
+    dataSource.putData(key4, value4);
+    Set<byte[]> seekKeyLimitNext = dataSource.getSeekKeyLimitNext("0000000300".getBytes(), 2);
+    seekKeyLimitNext.forEach(valeu -> {
+      logger.info(ByteArray.toStr(valeu));
+    });
     dataSource.resetDb();
   }
 
