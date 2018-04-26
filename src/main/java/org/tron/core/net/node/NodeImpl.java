@@ -452,8 +452,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                 !peer.getSyncBlockToFetch().isEmpty()
                     && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
             .forEach(peer -> {
-              peer.getSyncBlockToFetch().pop();
-              peer.getBlockInProc().add(msg.getBlockId());
+              //peer.getSyncBlockToFetch().pop();
+              //peer.getBlockInProc().add(msg.getBlockId());
               isFound[0] = true;
             });
 
@@ -463,7 +463,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
             //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
-            processSyncBlock(block);
+            if (processSyncBlock(block)){
+              getActivePeer().stream()
+                .filter(peer -> !peer.getSyncBlockToFetch().isEmpty()
+                         && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
+                .forEach(peer -> peer.getSyncBlockToFetch().pop());
+            }
+
             isBlockProc[0] = true;
           }
         }
@@ -600,8 +606,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       processAdvBlock(peer, blkMsg.getBlockCapsule());
       startFetchItem();
     } else if (syncBlockRequested.containsKey(blockId)) {
+      if (!peer.getSyncFlag()){
+        logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
+      }
       //sync mode
       syncBlockRequested.remove(blockId);
+      peer.getBlockInProc().add(blockId);
       //peer.getSyncBlockToFetch().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
       //TODO: maybe use consume pipe here better
@@ -649,7 +659,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void processSyncBlock(BlockCapsule block) {
+  private boolean processSyncBlock(BlockCapsule block) {
     //TODO: add processing backlog cache here, use multi thread
 
     boolean isAccept = false;
@@ -705,10 +715,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       ReasonCode finalReason = reason;
       getActivePeer().stream()
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
-          .forEach(peer -> disconnectPeer(peer, finalReason));
+          .forEach(peer -> processBadPeer(peer, finalReason));
     }
 
     isHandleSyncBlockActive = true;
+
+    return isAccept;
+  }
+
+  private void processBadPeer(PeerConnection peer, ReasonCode reasonCode){
+    peer.setSyncFlag(false);
+    peer.getBlockInProc().forEach(blockId -> {
+      syncBlockIdWeRequested.remove(blockId);
+      blockWaitToProc.remove(blockId);
+      blockJustReceived.remove(blockId);
+    });
+    disconnectPeer(peer, reasonCode);
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
