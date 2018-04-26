@@ -50,6 +50,8 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
 
+    testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
+
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
@@ -212,5 +214,16 @@ shadowJar {
 test {
     testLogging {
         exceptionFormat = 'full'
+    }
+}
+
+task stest(type:Test){
+    useTestNG{
+        suites( file('src/test/resources/testng.xml') )
+    }
+
+    testLogging {
+        exceptionFormat = 'full'
+        showStackTraces = "true"
     }
 }
