@@ -24,7 +24,7 @@ public class TransactionIndex extends AbstractIndex<Transaction> {
 
   public static final SimpleAttribute<Transaction, String> Transaction_ID =
       attribute("transaction id",
-          t -> Sha256Hash.of(t.toByteArray()).toString());
+          t -> Sha256Hash.of(t.getRawData().toByteArray()).toString());
   public static final Attribute<Transaction, String> OWNERS =
       attribute(String.class, "owner address",
           t -> t.getRawData().getContractList().stream()
