@@ -175,7 +175,7 @@ public class LevelDbDataSourceImplTest {
     byte[] value = value1.getBytes();
 
     dataSource.putData(key, value);
-    String key3 = "000000431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    String key3 = "000000431cd8c8d5a";
     byte[] key2 = key3.getBytes();
 
     String value3 = "30000";
