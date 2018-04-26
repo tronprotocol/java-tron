@@ -390,7 +390,7 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void mmultiplyOverflowTest() {
+  public void addOverflowTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     // First, increase the owner asset balance. Else can't complete this test case.
@@ -428,7 +428,7 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void addOverflowTest() {
+  public void mmultiplyOverflowTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     // First, increase the owner trx balance. Else can't complete this test case.

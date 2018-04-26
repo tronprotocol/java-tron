@@ -123,7 +123,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
       long fee = calcFee();
       //Whether the balance is enough
-      if (ac.getBalance() < participateAssetIssueContract.getAmount() + fee) {
+      if (ac.getBalance() < Math.addExact(participateAssetIssueContract.getAmount(), fee)) {
         throw new ContractValidateException("No enough balance !");
       }
 
