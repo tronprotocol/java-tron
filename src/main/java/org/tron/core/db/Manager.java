@@ -373,7 +373,7 @@ public class Manager {
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
-    account.setBalance(Math.subtractExact(balance, amount));
+    account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
