@@ -52,6 +52,12 @@ message Account {
 message acuthrity {
   AccountId account = 1;
   bytes permission_name = 2;
+
+}
+
+
+message permision {
+  AccountId account = 1;
 }
 
 // Witness
@@ -107,6 +113,7 @@ message Transaction {
       DeployContract = 7;
       WitnessUpdateContract = 8;
       ParticipateAssetIssueContract = 9;
+      AccountUpdateContract = 10;
       CustomContract = 20;
     }
     ContractType type = 1;
@@ -244,4 +251,5 @@ message DisconnectMessage {
 message HelloMessage {
   Endpoint from = 1;
   int32 version = 2;
+  int64 timestamp = 3;
 }

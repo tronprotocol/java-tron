@@ -71,7 +71,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(10000).expireAfterWrite(60, TimeUnit.SECONDS)
+      .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
       .recordStats().build();
 
   Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
