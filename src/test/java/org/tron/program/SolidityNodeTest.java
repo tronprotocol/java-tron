@@ -90,6 +90,7 @@ public class SolidityNodeTest {
     Assert.assertNotNull(databaseGrpcClient);
     DynamicProperties dynamicProperties = databaseGrpcClient.getDynamicProperties();
     Assert.assertNotNull(dynamicProperties);
+
     Block genisisBlock = databaseGrpcClient.getBlock(0);
     Assert.assertNotNull(genisisBlock);
     Assert.assertFalse(genisisBlock.getTransactionsList().isEmpty());
