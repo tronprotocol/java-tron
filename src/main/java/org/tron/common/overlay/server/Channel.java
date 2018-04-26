@@ -77,16 +77,11 @@ public class Channel {
 
     private Node node;
 
+    private long startTime;
+
     private PeerConnectionDelegate peerDel;
 
-    public TronState getTronState() {
-        return tronState;
-    }
 
-    public void setTronState(TronState tronState) {
-        //logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
-        this.tronState = tronState;
-    }
 
     private TronState tronState = TronState.INIT;
 
@@ -128,18 +123,15 @@ public class Channel {
 
     }
 
-    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage helloRemote) throws IOException, InterruptedException {
+    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) throws IOException, InterruptedException {
+        ctx.pipeline().remove(handshakeHandler);
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
+        setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
-    }
-
-    public void sendHelloMessage(ChannelHandlerContext ctx) throws IOException, InterruptedException {
-        final HelloMessage helloMessage = staticMessages.createHelloMessage(nodeManager.getPublicHomeNode());
-        ctx.writeAndFlush(helloMessage.getSendData()).sync();
-        getNodeStatistics().p2pOutHello.add();
+        logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 
     public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
@@ -232,6 +224,23 @@ public class Channel {
     public boolean isIdle() {
         // TODO: use peer's status.
         return  true;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getStartTime(){
+        return startTime;
+    }
+
+    public TronState getTronState() {
+        return tronState;
+    }
+
+    public void setTronState(TronState tronState) {
+        //logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
+        this.tronState = tronState;
     }
 
     @Override
