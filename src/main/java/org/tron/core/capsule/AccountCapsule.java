@@ -158,6 +158,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
+  public void setAllowance(long allowance) {
+    this.account = this.account.toBuilder().setAllowance(allowance).build();
+  }
+
 
   @Override
   public String toString() {

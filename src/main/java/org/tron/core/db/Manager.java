@@ -380,6 +380,21 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAllowance(byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().get(accountAddress);
+    long allowance = account.getAllowance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && allowance < -amount) {
+      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+    }
+    account.setAllowance(allowance + amount);
+    this.getAccountStore().put(account.getAddress().toByteArray(), account);
+  }
+
   /**
    * push transaction into db.
    */
@@ -905,7 +920,7 @@ public class Manager {
       }
     }
     updateMaintenanceState(needMaint);
-    witnessController.updateWitnessSchedule();
+    //witnessController.updateWitnessSchedule();
   }
 
   /**
@@ -993,7 +1008,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
     try {
-      adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
     }
