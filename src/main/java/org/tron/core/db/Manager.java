@@ -650,6 +650,10 @@ public class Manager {
                 (dynamicPropertiesStore.getLatestBlockHeaderNumber()
                     - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
                     + 1));
+    khaosDb.setMaxSize((int)
+        (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+            + 1));
   }
 
   /**
