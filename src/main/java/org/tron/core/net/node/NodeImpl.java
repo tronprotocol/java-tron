@@ -463,6 +463,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
             //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
+            processSyncBlock(block);
             isBlockProc[0] = true;
           }
         }
@@ -651,7 +652,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private boolean processSyncBlock(BlockCapsule block) {
+  private void processSyncBlock(BlockCapsule block) {
     //TODO: add processing backlog cache here, use multi thread
 
     boolean isAccept = false;
@@ -711,8 +712,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     isHandleSyncBlockActive = true;
-
-    return isAccept;
   }
 
   private void processBadPeer(PeerConnection peer, ReasonCode reasonCode){
