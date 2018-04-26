@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
@@ -40,6 +41,18 @@ public class LevelDbDataSourceImplTest {
 
   private static final String dbPath = "output-levelDb-test";
   LevelDbDataSourceImpl dataSourceTest;
+  private byte[] value1 = "10000".getBytes();
+  private byte[] value2 = "20000".getBytes();
+  private byte[] value3 = "30000".getBytes();
+  private byte[] value4 = "40000".getBytes();
+  private byte[] value5 = "50000".getBytes();
+  private byte[] value6 = "60000".getBytes();
+  private byte[] key1 = "00000001aa".getBytes();
+  private byte[] key2 = "00000002aa".getBytes();
+  private byte[] key3 = "00000003aa".getBytes();
+  private byte[] key4 = "00000004aa".getBytes();
+  private byte[] key5 = "00000005aa".getBytes();
+  private byte[] key6 = "00000006aa".getBytes();
 
   @Before
   public void initDb() {
@@ -183,6 +196,28 @@ public class LevelDbDataSourceImplTest {
     dataSource.resetDb();
   }
 
+  private void putSomeKeyValue(LevelDbDataSourceImpl dataSource) {
+    value1 = "10000".getBytes();
+    value2 = "20000".getBytes();
+    value3 = "30000".getBytes();
+    value4 = "40000".getBytes();
+    value5 = "50000".getBytes();
+    value6 = "60000".getBytes();
+    key1 = "00000001aa".getBytes();
+    key2 = "00000002aa".getBytes();
+    key3 = "00000003aa".getBytes();
+    key4 = "00000004aa".getBytes();
+    key5 = "00000005aa".getBytes();
+    key6 = "00000006aa".getBytes();
+
+    dataSource.putData(key1, value1);
+    dataSource.putData(key6, value6);
+    dataSource.putData(key2, value2);
+    dataSource.putData(key5, value5);
+    dataSource.putData(key3, value3);
+    dataSource.putData(key4, value4);
+  }
+
   @Test
   public void seekTest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
@@ -190,25 +225,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.initDB();
     dataSource.resetDb();
 
-    byte[] value1 = "10000".getBytes();
-    byte[] value2 = "20000".getBytes();
-    byte[] value3 = "30000".getBytes();
-    byte[] value4 = "40000".getBytes();
-    byte[] value5 = "50000".getBytes();
-    byte[] value6 = "60000".getBytes();
-    byte[] key1 = "00000001aa".getBytes();
-    byte[] key2 = "00000002aa".getBytes();
-    byte[] key3 = "00000003aa".getBytes();
-    byte[] key4 = "00000004aa".getBytes();
-    byte[] key5 = "00000005aa".getBytes();
-    byte[] key6 = "00000006aa".getBytes();
-
-    dataSource.putData(key1, value1);
-    dataSource.putData(key6, value2);
-    dataSource.putData(key2, value3);
-    dataSource.putData(key5, value4);
-    dataSource.putData(key3, value5);
-    dataSource.putData(key4, value6);
+    putSomeKeyValue(dataSource);
     dataSource.resetDb();
   }
 
@@ -219,25 +236,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.initDB();
     dataSource.resetDb();
 
-    byte[] value1 = "10000".getBytes();
-    byte[] value2 = "20000".getBytes();
-    byte[] value3 = "30000".getBytes();
-    byte[] value4 = "40000".getBytes();
-    byte[] value5 = "50000".getBytes();
-    byte[] value6 = "60000".getBytes();
-    byte[] key1 = "00000001aa".getBytes();
-    byte[] key2 = "00000002aa".getBytes();
-    byte[] key3 = "00000003aa".getBytes();
-    byte[] key4 = "00000004aa".getBytes();
-    byte[] key5 = "00000005aa".getBytes();
-    byte[] key6 = "00000006aa".getBytes();
-
-    dataSource.putData(key1, value1);
-    dataSource.putData(key6, value6);
-    dataSource.putData(key2, value2);
-    dataSource.putData(key5, value5);
-    dataSource.putData(key3, value3);
-    dataSource.putData(key4, value4);
+    putSomeKeyValue(dataSource);
     Set<byte[]> seekKeyLimitNext = dataSource.getSeekKeyLimitNext("0000000300".getBytes(), 2);
     seekKeyLimitNext.forEach(valeu -> {
       logger.info(ByteArray.toStr(valeu));
@@ -247,10 +246,46 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void getSeekKeyLimitPrev() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getSeekKeyLimitPrev_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    putSomeKeyValue(dataSource);
+    Set<byte[]> seekKeyLimitNext = dataSource.getSeekKeyLimitPrev("0000000300".getBytes(), 2);
+    Assert.assertTrue("getSeekKeyLimitPrev1", seekKeyLimitNext.contains(key1));
+    Assert.assertTrue("getSeekKeyLimitPrev2", seekKeyLimitNext.contains(key2));
+    seekKeyLimitNext.forEach(valeu -> {
+      logger.info(ByteArray.toStr(valeu));
+    });
+    seekKeyLimitNext = dataSource.getSeekKeyLimitPrev("0000000300".getBytes(), 2);
+    seekKeyLimitNext.forEach(valeu -> {
+      logger.info(ByteArray.toStr(valeu));
+    });
+    dataSource.resetDb();
   }
 
   @Test
   public void getBySeekKeyNext() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getBySeekKeyNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    putSomeKeyValue(dataSource);
+    byte[] bySeekKeyNext = dataSource.getBySeekKeyNext("0000000300".getBytes());
+    Assert.assertArrayEquals("getSeekKeyLimitPrev1", value3, bySeekKeyNext);
+    bySeekKeyNext = dataSource.getBySeekKeyNext("00000003ff".getBytes());
+    Assert.assertArrayEquals("getSeekKeyLimitPrev2", value4, bySeekKeyNext);
+    bySeekKeyNext = dataSource.getBySeekKeyNext("0000000100".getBytes());
+    Assert.assertArrayEquals("getSeekKeyLimitPrev3", value1, bySeekKeyNext);
+    bySeekKeyNext = dataSource.getBySeekKeyNext("00000001ff".getBytes());
+    Assert.assertArrayEquals("getSeekKeyLimitPrev4", value2, bySeekKeyNext);
+    bySeekKeyNext = dataSource.getBySeekKeyNext("0000000600".getBytes());
+    Assert.assertArrayEquals("getSeekKeyLimitPrev5", value6, bySeekKeyNext);
+    bySeekKeyNext = dataSource.getBySeekKeyNext("00000006ff".getBytes());
+    Assert.assertNull("getSeekKeyLimitPrev6", bySeekKeyNext);
+    dataSource.resetDb();
   }
 
   @Test
