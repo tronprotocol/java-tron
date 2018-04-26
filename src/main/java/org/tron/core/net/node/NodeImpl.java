@@ -709,13 +709,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       ReasonCode finalReason = reason;
       getActivePeer().stream()
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
-          .forEach(peer -> processBadPeer(peer, finalReason));
+          .forEach(peer -> cleanUpSyncPeer(peer, finalReason));
     }
 
     isHandleSyncBlockActive = true;
   }
 
-  private void processBadPeer(PeerConnection peer, ReasonCode reasonCode){
+  private void cleanUpSyncPeer(PeerConnection peer, ReasonCode reasonCode){
     peer.setSyncFlag(false);
     while (!peer.getSyncBlockToFetch().isEmpty()){
       BlockId blockId = peer.getSyncBlockToFetch().pop();
