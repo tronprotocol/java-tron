@@ -107,7 +107,8 @@ public class WalletSolidity {
 
   public Transaction getTransactionById(ByteString id) {
     try {
-      Transaction transactionById = storeAPI.getTransactionById(id.toStringUtf8());
+      Transaction transactionById = storeAPI.getTransactionById(ByteArray.toHexString(id.toByteArray()));
+      return transactionById;
     } catch (NonUniqueObjectException e) {
       e.printStackTrace();
     }
