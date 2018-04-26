@@ -452,8 +452,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                 !peer.getSyncBlockToFetch().isEmpty()
                     && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
             .forEach(peer -> {
-              //peer.getSyncBlockToFetch().pop();
-              //peer.getBlockInProc().add(msg.getBlockId());
+              peer.getSyncBlockToFetch().pop();
+              peer.getBlockInProc().add(msg.getBlockId());
               isFound[0] = true;
             });
 
@@ -463,13 +463,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
             //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
-            if (processSyncBlock(block)){
-              getActivePeer().stream()
-                .filter(peer -> !peer.getSyncBlockToFetch().isEmpty()
-                         && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
-                .forEach(peer -> peer.getSyncBlockToFetch().pop());
-            }
-
             isBlockProc[0] = true;
           }
         }
@@ -611,7 +604,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
       //sync mode
       syncBlockRequested.remove(blockId);
-      peer.getBlockInProc().add(blockId);
       //peer.getSyncBlockToFetch().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
       //TODO: maybe use consume pipe here better
@@ -725,11 +717,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void processBadPeer(PeerConnection peer, ReasonCode reasonCode){
     peer.setSyncFlag(false);
-    peer.getBlockInProc().forEach(blockId -> {
-      syncBlockIdWeRequested.remove(blockId);
-      blockWaitToProc.remove(blockId);
-      blockJustReceived.remove(blockId);
-    });
+    while (!peer.getSyncBlockToFetch().isEmpty()){
+      syncBlockIdWeRequested.remove(peer.getSyncBlockToFetch().pop());
+      blockWaitToProc.remove(peer.getSyncBlockToFetch().pop());
+      blockJustReceived.remove(peer.getSyncBlockToFetch().pop());
+    }
     disconnectPeer(peer, reasonCode);
   }
 
