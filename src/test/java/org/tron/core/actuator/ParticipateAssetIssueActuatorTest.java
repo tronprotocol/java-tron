@@ -111,7 +111,7 @@ public class ParticipateAssetIssueActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFromUtf8(ASSET_NAME))
-            .setAmount((int) count)
+            .setAmount(count)
             .build());
   }
 
@@ -122,7 +122,7 @@ public class ParticipateAssetIssueActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFromUtf8(assetName))
-            .setAmount((int) count)
+            .setAmount(count)
             .build());
   }
 
@@ -384,6 +384,86 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void mmultiplyOverflowTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    // First, increase the owner asset balance. Else can't complete this test case.
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.addAsset(ASSET_NAME, Long.MAX_VALUE);
+    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
+        getContract(1L),
+        dbManager);
+    //NUM = 2147483647;
+    //ASSET_BLANCE = Long.MAX_VALUE + 2147483647/2
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ArithmeticException e){
+      Assert.assertTrue(e instanceof ArithmeticException);
+      Assert.assertTrue(("long overflow").equals(e.getMessage()));
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), Long.MAX_VALUE);
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void addOverflowTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    // First, increase the owner trx balance. Else can't complete this test case.
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setBalance(100000000000000L);
+    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
+        getContract(8589934597L),
+        dbManager);
+    //NUM = 2147483647;
+    //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
+    //4294967298 * 2147483647 = 9223372036854775806 = 0x7ffffffffffffffe
+    //8589934596 * 2147483647 = 4294967298 * 2147483647 *2 = 0xfffffffffffffffc = -4
+    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643  vs 9223372036854775806*2 + 2147483647
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ArithmeticException e){
+      Assert.assertTrue(e instanceof ArithmeticException);
+      Assert.assertTrue(("long overflow").equals(e.getMessage()));
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), 100000000000000L);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

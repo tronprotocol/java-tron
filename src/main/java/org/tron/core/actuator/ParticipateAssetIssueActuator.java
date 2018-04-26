@@ -53,18 +53,22 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //subtract from owner address
       byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
-      ownerAccount.setBalance(ownerAccount.getBalance() - cost - fee);
+      long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
+      balance = Math.subtractExact(balance, fee);
+      ownerAccount.setBalance(balance);
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule =
           this.dbManager.getAssetIssueStore()
               .get(participateAssetIssueContract.getAssetName().toByteArray());
-      long exchangeAmount = cost * assetIssueCapsule.getNum() / assetIssueCapsule.getTrxNum();
+      long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
+      exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
       ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
+
       //add to to_address
       byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
-      toAccount.setBalance(toAccount.getBalance() + cost);
+      toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
       if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
@@ -99,7 +103,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (!Wallet.addressValid(participateAssetIssueContract.getToAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate toAddress");
       }
-      Preconditions.checkNotNull(participateAssetIssueContract.getAssetName(), "trx name is null");
+      Preconditions
+          .checkNotNull(participateAssetIssueContract.getAssetName(), "Asset name is null");
       if (participateAssetIssueContract.getAmount() <= 0) {
         throw new ContractValidateException("Trx Num must be positive!");
       }
@@ -146,7 +151,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
-      long exchangeAmount = cost * num / trxNum;
+      long exchangeAmount = Math.multiplyExact(cost, num);
+      exchangeAmount = Math.floorDiv(exchangeAmount, trxNum);
       if (exchangeAmount == 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
