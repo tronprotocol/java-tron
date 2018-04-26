@@ -186,7 +186,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getShare() {
-    return this.account.getBalance();
+    return this.account.getBalance() + getFrozenBalance() + this.account.getAllowance();
   }
 
   /**
@@ -283,6 +283,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public List<Frozen> getFrozenList() {
     return getInstance().getFrozenList();
+  }
+
+  public long getFrozenBalance() {
+    List<Frozen> frozenList = getFrozenList();
+    final long[] frozenBalance = {0};
+    frozenList.forEach(frozen -> frozenBalance[0] = Long.sum(frozenBalance[0],
+        frozen.getFrozenBalance()));
+    return frozenBalance[0];
   }
 
   public long getAllowance() {
