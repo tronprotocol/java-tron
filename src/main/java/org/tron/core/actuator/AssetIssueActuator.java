@@ -118,4 +118,9 @@ public class AssetIssueActuator extends AbstractActuator {
   public long calcFee() {
     return ChainConstant.ASSET_ISSUE_FEE;
   }
+
+
+  public long calcUsage() {
+    return 0;
+  }
 }

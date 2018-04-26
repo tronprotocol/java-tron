@@ -15,4 +15,5 @@ public interface Actuator {
   ByteString getOwnerAddress() throws InvalidProtocolBufferException;
 
   long calcFee();
+
 }
