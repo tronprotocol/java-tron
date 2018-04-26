@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -31,6 +32,7 @@ public class BroadTest {
   RpcApiService rpcApiService;
 
   @Test
+  @Ignore
   public void testBlockBroad() throws NoSuchFieldException, IllegalAccessException {
     Block block = Block.getDefaultInstance();
     BlockMessage blockMessage = new BlockMessage(block);
@@ -43,6 +45,7 @@ public class BroadTest {
   }
 
   @Test
+  @Ignore
   public void testTransactionBroad() throws NoSuchFieldException, IllegalAccessException {
     Transaction transaction = Transaction.getDefaultInstance();
     TransactionMessage transactionMessage = new TransactionMessage(transaction);
@@ -55,6 +58,7 @@ public class BroadTest {
   }
 
   @Test
+  @Ignore
   public void testConsumerAdvObjToSpread()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
     testBlockBroad();
@@ -65,13 +69,22 @@ public class BroadTest {
     consumerAdvObjToSpreadMethod.invoke(node);
   }
 
+  @Test
+  public void testConsumerAdvObjToFetch()
+      throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+    testConsumerAdvObjToSpread();
+    Method consumerAdvObjToFetchMethod = node.getClass().getDeclaredMethod("consumerAdvObjToFetch");
+    consumerAdvObjToFetchMethod.setAccessible(true);
+    consumerAdvObjToFetchMethod.invoke(node);
+  }
+
   @Before
   public void init() {
     new Thread(new Runnable() {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[0], "config-beta.conf");
+        Args.setParam(new String[0], "config.conf");
         Args cfgArgs = Args.getInstance();
 
         ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
@@ -83,7 +96,7 @@ public class BroadTest {
         Application appT = ApplicationFactory.create(context);
         shutdown(appT);
         //appT.init(cfgArgs);
-        rpcApiService = new RpcApiService(appT, context);
+        rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
           appT.addService(new WitnessService(appT));
