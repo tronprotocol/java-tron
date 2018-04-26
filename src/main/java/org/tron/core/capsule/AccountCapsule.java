@@ -300,4 +300,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getLatestWithdrawTime() {
     return getInstance().getLatestWithdrawTime();
   }
+
+  public long getBandwidth() {
+    return getInstance().getBandwidth();
+  }
 }

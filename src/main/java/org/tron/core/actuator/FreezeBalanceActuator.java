@@ -32,15 +32,20 @@ public class FreezeBalanceActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
+      long now = System.currentTimeMillis();
       Frozen newFrozen = Frozen.newBuilder().
           setFrozenBalance(freezeBalanceContract.getFrozenBalance())
-          .setExpireTime(freezeBalanceContract.getFrozenDuration())
+          .setExpireTime(freezeBalanceContract.getFrozenDuration() + now)
           .build();
 
       long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
+      long newBandwidth = accountCapsule.getBandwidth() + calculateBandwidth(freezeBalanceContract);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .addFrozen(newFrozen).setBalance(newBalance).build());
+          .addFrozen(newFrozen)
+          .setBalance(newBalance)
+          .setBandwidth(newBandwidth)
+          .build());
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -51,6 +56,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
     return true;
+  }
+
+  private long calculateBandwidth(FreezeBalanceContract freezeBalanceContract) {
+    return freezeBalanceContract.getFrozenBalance() * freezeBalanceContract.getFrozenDuration()
+        / 24 * 3600 * 1000;
   }
 
   @Override
@@ -92,9 +102,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       long frozenDuration = freezeBalanceContract.getFrozenDuration();
       long oneDays = 24 * 3600 * 1000;
-      long thirtyDays = 30 * 3600 * 1000;
+      long thirtyDays = 30 * 24 *  3600 * 1000;
 
-      if (!(frozenDuration > oneDays && frozenDuration < thirtyDays)) {
+      if (!(frozenDuration >= oneDays && frozenDuration <= thirtyDays)) {
         throw new ContractValidateException(
             "frozenDuration must be less than 30days and more than 1day");
       }
