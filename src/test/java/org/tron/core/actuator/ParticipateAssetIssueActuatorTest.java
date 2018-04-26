@@ -155,11 +155,12 @@ public class ParticipateAssetIssueActuatorTest {
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE-1000);
-      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE+1000);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1000);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + 1000);
       Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), (1000L) / TRX_NUM * NUM);
       Assert.assertEquals(
-          toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM);
+          toAccount.getAssetMap().get(ASSET_NAME).longValue(),
+          TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM);
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -181,6 +182,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("No longer valid period!".equals(e.getMessage()));
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount =
@@ -208,6 +210,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("No longer valid period!".equals(e.getMessage()));
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount =
@@ -238,9 +241,10 @@ public class ParticipateAssetIssueActuatorTest {
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), (999L*NUM) / TRX_NUM);
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), (999L * NUM) / TRX_NUM);
       Assert.assertEquals(
-          toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY - (999L*NUM) / TRX_NUM);
+          toAccount.getAssetMap().get(ASSET_NAME).longValue(),
+          TOTAL_SUPPLY - (999L * NUM) / TRX_NUM);
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -262,6 +266,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Trx Num must be positive!".equals(e.getMessage()));
 
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -272,6 +277,72 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void NotEnoughTrxTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    // First, reduce the owner trx balance. Else can't complete this test case.
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setBalance(100);
+    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(101),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("No enough balance !".equals(e.getMessage()));
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), 100);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void NotEnoughAssetTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    // First, reduce to account asset balance. Else can't complete this test case.
+    AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+    toAccount.reduceAssetAmount(ByteString.copyFrom(ASSET_NAME.getBytes()), TOTAL_SUPPLY-10000);
+    dbManager.getAccountStore().put(toAccount.getAddress().toByteArray(), toAccount);
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(1),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Asset balance is not enough !".equals(e.getMessage()));
+
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), 10000);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
