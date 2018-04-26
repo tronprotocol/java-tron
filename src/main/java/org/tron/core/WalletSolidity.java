@@ -66,7 +66,7 @@ public class WalletSolidity {
 
   public AssetIssueList getAssetIssueByAccount(ByteString address) {
     List<AssetIssueContract> assetIssueByOwnerAddress = storeAPI
-        .getAssetIssueByOwnerAddress(address.toStringUtf8());
+        .getAssetIssueByOwnerAddress(ByteArray.toHexString(address.toByteArray()));
     AssetIssueList assetIssueList =
         AssetIssueList.newBuilder().addAllAssetIssue(assetIssueByOwnerAddress).build();
     return assetIssueList;
@@ -107,7 +107,8 @@ public class WalletSolidity {
 
   public Transaction getTransactionById(ByteString id) {
     try {
-      Transaction transactionById = storeAPI.getTransactionById(id.toStringUtf8());
+      Transaction transactionById = storeAPI.getTransactionById(ByteArray.toHexString(id.toByteArray()));
+      return transactionById;
     } catch (NonUniqueObjectException e) {
       e.printStackTrace();
     }
