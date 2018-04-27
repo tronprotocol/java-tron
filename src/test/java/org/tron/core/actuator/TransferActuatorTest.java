@@ -40,13 +40,17 @@ public class TransferActuatorTest {
   private static final String TO_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final long AMOUNT = 100;
+  private static final long OWNER_BALANCE = 99999;
+  private static final long TO_BALANCE = 100001;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
@@ -56,7 +60,9 @@ public class TransferActuatorTest {
     //    dbManager.init();
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -68,7 +74,9 @@ public class TransferActuatorTest {
     context.destroy();
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule =
@@ -76,13 +84,13 @@ public class TransferActuatorTest {
             ByteString.copyFromUtf8("owner"),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
-            10000L);
+            OWNER_BALANCE);
     AccountCapsule toAccountCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("toAccount"),
             ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
             AccountType.Normal,
-            100L);
+            TO_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
@@ -98,7 +106,7 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void rightAssetIssue() {
+  public void rightTransfer() {
     TransferActuator actuator = new TransferActuator(getContract(AMOUNT), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -110,8 +118,9 @@ public class TransferActuatorTest {
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), 10000 - AMOUNT - ChainConstant.TRANSFER_FEE);
-      Assert.assertEquals(toAccount.getBalance(), 100 + AMOUNT);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - AMOUNT - ChainConstant.TRANSFER_FEE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + AMOUNT);
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -120,8 +129,9 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void perfectAssetIssue() {
-    TransferActuator actuator = new TransferActuator(getContract(9999L), dbManager);
+  public void perfectTransfer() {
+    TransferActuator actuator = new TransferActuator(
+        getContract(OWNER_BALANCE - ChainConstant.TRANSFER_FEE), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -132,8 +142,9 @@ public class TransferActuatorTest {
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), 10000 - 9999 - ChainConstant.TRANSFER_FEE);
-      Assert.assertEquals(toAccount.getBalance(), 10099L);
+      Assert.assertEquals(owner.getBalance(), 0);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + OWNER_BALANCE);
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -142,23 +153,22 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void moreAssetIssue() {
-    TransferActuator actuator = new TransferActuator(getContract(10000L), dbManager);
+  public void moreTransfer() {
+    TransferActuator actuator = new TransferActuator(getContract(OWNER_BALANCE + 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertTrue(true);
+      Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("balance is not sufficient.git".equals(e.getMessage()));
+      AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
-      Assert.assertTrue(e instanceof ContractExeException);
-      Assert.assertEquals(ret.getInstance().getRet(), code.FAILED);
+      Assert.assertFalse(e instanceof ContractExeException);
     }
-    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-    logger.info(owner.getBalance() + ")))))");
-    Assert.assertEquals(owner.getBalance(), 0 - ChainConstant.TRANSFER_FEE);
-    Assert.assertEquals(toAccount.getBalance(), 10000 + 100L);
   }
 }
