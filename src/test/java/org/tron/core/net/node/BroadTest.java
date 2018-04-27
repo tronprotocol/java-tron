@@ -2,23 +2,34 @@ package org.tron.core.net.node;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.server.Channel;
+import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol.Block;
@@ -30,53 +41,91 @@ public class BroadTest {
 
   private NodeImpl node;
   RpcApiService rpcApiService;
+  PeerClient peerClient;
+  ChannelManager channelManager;
+  SyncPool pool;
 
-  @Test
-  @Ignore
-  public void testBlockBroad() throws NoSuchFieldException, IllegalAccessException {
+  private class Condition {
+
+    private Sha256Hash blockId;
+    private Sha256Hash transactionId;
+
+    public Condition(Sha256Hash blockId, Sha256Hash transactionId) {
+      this.blockId = blockId;
+      this.transactionId = transactionId;
+    }
+
+    public Sha256Hash getBlockId() {
+      return blockId;
+    }
+
+    public Sha256Hash getTransactionId() {
+      return transactionId;
+    }
+
+  }
+
+  private Sha256Hash testBlockBroad() {
     Block block = Block.getDefaultInstance();
     BlockMessage blockMessage = new BlockMessage(block);
     node.broadcast(blockMessage);
-    Field advObjToSpreadField = node.getClass().getDeclaredField("advObjToSpread");
-    advObjToSpreadField.setAccessible(true);
-    ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = (ConcurrentHashMap<Sha256Hash, InventoryType>) advObjToSpreadField
-        .get(node);
+    ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils
+        .getFieldValue(node, "advObjToSpread");
     Assert.assertEquals(advObjToSpread.get(blockMessage.getMessageId()), InventoryType.BLOCK);
+    return blockMessage.getMessageId();
   }
 
-  @Test
-  @Ignore
-  public void testTransactionBroad() throws NoSuchFieldException, IllegalAccessException {
+  private Sha256Hash testTransactionBroad() {
     Transaction transaction = Transaction.getDefaultInstance();
     TransactionMessage transactionMessage = new TransactionMessage(transaction);
     node.broadcast(transactionMessage);
-    Field advObjToSpreadField = node.getClass().getDeclaredField("advObjToSpread");
-    advObjToSpreadField.setAccessible(true);
-    ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = (ConcurrentHashMap<Sha256Hash, InventoryType>) advObjToSpreadField
-        .get(node);
+    ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils
+        .getFieldValue(node, "advObjToSpread");
     Assert.assertEquals(advObjToSpread.get(transactionMessage.getMessageId()), InventoryType.TRX);
+    return transactionMessage.getMessageId();
   }
 
-  @Test
-  @Ignore
-  public void testConsumerAdvObjToSpread()
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
-    testBlockBroad();
-    testTransactionBroad();
-    Method consumerAdvObjToSpreadMethod = node.getClass()
-        .getDeclaredMethod("consumerAdvObjToSpread");
-    consumerAdvObjToSpreadMethod.setAccessible(true);
-    consumerAdvObjToSpreadMethod.invoke(node);
+  private Condition testConsumerAdvObjToSpread()
+      throws IllegalAccessException, NoSuchFieldException {
+    Sha256Hash blockId = testBlockBroad();
+    Sha256Hash transactionId = testTransactionBroad();
+
+    ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
+    Collection<PeerConnection> response = ReflectUtils.invokeMethod(node, "getActivePeer");
+
+    boolean result = true;
+    for (PeerConnection peerConnection : response) {
+      if (!peerConnection.getAdvObjWeSpread().containsKey(blockId)) {
+        result &= false;
+      }
+      if (!peerConnection.getAdvObjWeSpread().containsKey(transactionId)) {
+        result &= false;
+      }
+    }
+    for (PeerConnection peerConnection : response) {
+      peerConnection.getAdvObjWeSpread().clear();
+    }
+    Assert.assertTrue(result);
+    return new Condition(blockId, transactionId);
   }
 
   @Test
   public void testConsumerAdvObjToFetch()
-      throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
-    testConsumerAdvObjToSpread();
-    Method consumerAdvObjToFetchMethod = node.getClass().getDeclaredMethod("consumerAdvObjToFetch");
-    consumerAdvObjToFetchMethod.setAccessible(true);
-    consumerAdvObjToFetchMethod.invoke(node);
+      throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException, InterruptedException {
+    Condition condition = testConsumerAdvObjToSpread();
+    Thread.sleep(1000);
+    //
+    ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = ReflectUtils
+        .getFieldValue(node, "advObjToFetch");
+    Assert.assertEquals(advObjToFetch.get(condition.getBlockId()), InventoryType.BLOCK);
+    Assert.assertEquals(advObjToFetch.get(condition.getTransactionId()), InventoryType.TRX);
+    //
+    ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
+
+    Thread.sleep(2000);
   }
+
+  private static boolean go = false;
 
   @Before
   public void init() {
@@ -94,24 +143,30 @@ public class BroadTest {
           return;
         }
         Application appT = ApplicationFactory.create(context);
-        shutdown(appT);
-        //appT.init(cfgArgs);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
           appT.addService(new WitnessService(appT));
         }
-        appT.initServices(cfgArgs);
-        appT.startServices();
-        appT.startup();
+//        appT.initServices(cfgArgs);
+//        appT.startServices();
+//        appT.startup();
         node = context.getBean(NodeImpl.class);
-        doSomeThing();
+        peerClient = context.getBean(PeerClient.class);
+        channelManager = context.getBean(ChannelManager.class);
+        pool = context.getBean(SyncPool.class);
+        Manager dbManager = context.getBean(Manager.class);
+        NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
+        node.setNodeDelegate(nodeDelegate);
+        prepare();
         rpcApiService.blockUntilShutdown();
       }
     }).start();
-    while (node == null) {
+    while (node == null || peerClient == null
+        || channelManager == null || pool == null || !go) {
       try {
-        System.out.println("node is null");
+        logger.info("node:{},peerClient:{},channelManager:{},pool:{},{}", node, peerClient,
+            channelManager, pool, go);
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -119,27 +174,52 @@ public class BroadTest {
     }
   }
 
-  private void doSomeThing() {
+  private void prepare() {
     try {
       Class nodeClass = node.getClass();
-      Field broadPoolField = nodeClass.getDeclaredField("broadPool");
-      broadPoolField.setAccessible(true);
-      ExecutorService advertiseLoopThread = (ExecutorService) broadPoolField.get(node);
+      ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
       advertiseLoopThread.shutdownNow();
 
-      Field isAdvertiseActiveField = nodeClass.getDeclaredField("isAdvertiseActive");
-      isAdvertiseActiveField.setAccessible(true);
-      isAdvertiseActiveField.set(node, false);
-      Field isFetchActiveField = nodeClass.getDeclaredField("isFetchActive");
-      isFetchActiveField.setAccessible(true);
-      isFetchActiveField.set(node, false);
+      ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
+      ReflectUtils.setFieldValue(node, "isFetchActive", false);
+
+      ScheduledExecutorService mainWorker = ReflectUtils
+          .getFieldValue(channelManager, "mainWorker");
+      mainWorker.shutdownNow();
+
+      Node node = new Node(
+          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:18888");
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+        }
+      }).start();
+      Thread.sleep(1000);
+
+      List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
+      logger.info("newChanelList size : {}", newChanelList.size());
+
+      Field activePeersField = channelManager.getClass().getDeclaredField("activePeers");
+      activePeersField.setAccessible(true);
+      Map<ByteArrayWrapper, Channel> activePeersMap = (Map<ByteArrayWrapper, Channel>) activePeersField
+          .get(channelManager);
+
+      Field apField = pool.getClass().getDeclaredField("activePeers");
+      apField.setAccessible(true);
+      List<PeerConnection> activePeers = (List<PeerConnection>) apField.get(pool);
+
+      for (Channel channel : newChanelList) {
+        activePeersMap.put(channel.getNodeIdWrapper(), channel);
+        activePeers.add((PeerConnection) channel);
+      }
+      apField.set(pool, activePeers);
+      activePeersField.set(channelManager, activePeersMap);
+      //
+      go = true;
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  private void shutdown(final Application app) {
-    logger.info("******** application shutdown ********");
-//    Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
-  }
 }
