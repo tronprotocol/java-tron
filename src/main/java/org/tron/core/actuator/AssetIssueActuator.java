@@ -95,6 +95,18 @@ public class AssetIssueActuator extends AbstractActuator {
       }
       Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
 
+      if (assetIssueContract.getTotalSupply() <= 0) {
+        throw new ContractValidateException("TotalSupply must greater than 0!");
+      }
+
+      if (assetIssueContract.getTrxNum() <= 0) {
+        throw new ContractValidateException("TrxNum must greater than 0!");
+      }
+
+      if (assetIssueContract.getNum() <= 0) {
+        throw new ContractValidateException("Num must greater than 0!");
+      }
+
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
       if (accountCapsule == null) {

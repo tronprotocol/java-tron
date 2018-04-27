@@ -157,7 +157,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       int num = assetIssueCapsule.getNum();
       long exchangeAmount = Math.multiplyExact(cost, num);
       exchangeAmount = Math.floorDiv(exchangeAmount, trxNum);
-      if (exchangeAmount == 0) {
+      if (exchangeAmount <= 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
       AccountCapsule toAccount = this.dbManager.getAccountStore()

@@ -159,6 +159,282 @@ public class AssetIssueActuatorTest {
     }
   }
 
+  @Test
+  /*
+    Total supply must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void negativeTotalSupplyTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(-TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("TotalSupply must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  /*
+    Total supply must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void zeroTotalSupplyTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(0)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("TotalSupply must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  /*
+    Trx num must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void negativeTrxNumTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(-TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("TrxNum must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  /*
+    Trx num must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void zeroTrxNumTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(0)
+            .setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("TrxNum must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  /*
+    Num must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void negativeNumTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(-NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Num must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  /*
+    Trx num must greater than zero.Else can't asset issue and balance do not change.
+   */
+  public void zeroNumTest() {
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(0)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDecayRatio(DECAY_RATIO)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Num must greater than 0!".equals(e.getMessage()));
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
+      Assert.assertNull(assetIssueCapsule);
+      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
   /**
    * Release resources.
    */
