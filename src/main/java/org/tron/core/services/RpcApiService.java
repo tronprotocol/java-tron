@@ -632,7 +632,7 @@ public class RpcApiService implements Service {
         StreamObserver<BlockList> responseObserver) {
       long getNum = request.getNum();
 
-      if (getNum > 0) {
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         responseObserver.onNext(wallet.getBlockByLatestNum(getNum));
       } else {
         responseObserver.onNext(null);
