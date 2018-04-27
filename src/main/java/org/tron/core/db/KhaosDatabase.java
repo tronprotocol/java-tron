@@ -94,7 +94,7 @@ public class KhaosDatabase extends TronDatabase {
         // parentHash = block.getParentHash();
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
-          listBlk.removeIf(b -> b.id == hash);
+          listBlk.removeIf(b -> b.id.equals(hash));
         }
         this.hashKblkMap.remove(hash);
         return true;
