@@ -407,8 +407,10 @@ public class ParticipateAssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
-    } catch (ArithmeticException e){
-      Assert.assertTrue(e instanceof ArithmeticException);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertTrue(e instanceof ContractExeException);
       Assert.assertTrue(("long overflow").equals(e.getMessage()));
 
       owner =
@@ -420,10 +422,6 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), Long.MAX_VALUE);
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -449,8 +447,8 @@ public class ParticipateAssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
-    } catch (ArithmeticException e){
-      Assert.assertTrue(e instanceof ArithmeticException);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue(("long overflow").equals(e.getMessage()));
 
       owner =
@@ -462,8 +460,6 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

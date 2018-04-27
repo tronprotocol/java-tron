@@ -163,8 +163,10 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("balance is not sufficient.".equals(e.getMessage()));
-      AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
@@ -183,8 +185,10 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("Amount must greater than 0.".equals(e.getMessage()));
-      AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
@@ -203,10 +207,37 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("Amount must greater than 0.".equals(e.getMessage()));
-      AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void addOverflowTest() {
+    // First, increase the to balance. Else can't complete this test case.
+    AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+    toAccount.setBalance(Long.MAX_VALUE);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
+    TransferActuator actuator = new TransferActuator(getContract(1), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(("long overflow").equals(e.getMessage()));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), Long.MAX_VALUE);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
