@@ -265,7 +265,7 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void NegativeAmountTest() {
+  public void negativeAmountTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     ParticipateAssetIssueActuator actuator =
@@ -294,7 +294,36 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void NotEnoughTrxTest() {
+  public void zeroAmountTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ParticipateAssetIssueActuator actuator =
+        new ParticipateAssetIssueActuator(getContract(0), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Trx Num must be positive!".equals(e.getMessage()));
+
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void notEnoughTrxTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     // First, reduce the owner trx balance. Else can't complete this test case.
@@ -327,7 +356,7 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void NotEnoughAssetTest() {
+  public void notEnoughAssetTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
     // First, reduce to account asset balance. Else can't complete this test case.

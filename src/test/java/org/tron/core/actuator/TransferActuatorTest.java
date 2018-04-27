@@ -175,7 +175,7 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void ZeroAmountTest() {
+  public void zeroAmountTest() {
     TransferActuator actuator = new TransferActuator(getContract(0), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -197,7 +197,7 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void NegativeAmountTest() {
+  public void negativeAmountTest() {
     TransferActuator actuator = new TransferActuator(getContract(-AMOUNT), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
