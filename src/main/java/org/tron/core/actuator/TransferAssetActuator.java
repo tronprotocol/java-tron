@@ -129,6 +129,7 @@ public class TransferAssetActuator extends AbstractActuator {
       if (amount <= 0 || null == assetBalance || amount > assetBalance || assetBalance <= 0) {
         throw new ContractValidateException();
       }
+
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException();
     }
