@@ -346,7 +346,7 @@ public class Wallet {
     return blocke;
   }
 
-  public BlockList getBlocksByLimit(long number, long limit) {
+  public BlockList getBlocksByLimitNext(long number, long limit) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
     try {
       dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
@@ -366,12 +366,11 @@ public class Wallet {
     return transaction;
   }
 
-  public TransactionList getTransactionsByLimit(ByteString transactionId, long limit) {
+  public TransactionList getTransactionsByLimitPrev(ByteString transactionId, long limit) {
     TransactionList.Builder transactionListBuilder = TransactionList.newBuilder();
     dbManager.getTransactionStore().getLimitNumber(transactionId.toByteArray(), limit).forEach(
         transactionCapsule -> transactionListBuilder
             .addTransaction(transactionCapsule.getInstance()));
-
     return transactionListBuilder.build();
   }
 

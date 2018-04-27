@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -272,7 +273,15 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Set<byte[]> result = new HashSet<>();
+      if (getLimit <= 0) {
+        return result;
+      }
       long i = 0;
+      byte[] data = getData(startKey);
+      if (Objects.nonNull(data)) {
+        result.add(data);
+        i++;
+      }
       for (iterator.seek(startKey); iterator.hasPrev() && i++ < getLimit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
       }
