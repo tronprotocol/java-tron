@@ -85,6 +85,7 @@ public class Manager {
   private BlockCapsule genesisBlock;
 
   private LevelDbDataSourceImpl numHashCache;
+  @Getter
   @Autowired
   private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;

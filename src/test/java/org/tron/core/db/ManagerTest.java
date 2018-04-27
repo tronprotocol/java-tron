@@ -46,7 +46,7 @@ public class ManagerTest {
   private static String dbPath = "output_manager_test";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
@@ -64,8 +64,8 @@ public class ManagerTest {
             0,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                        ByteArray.fromHexString(
-                            Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                    ByteArray.fromHexString(
+                        Args.getInstance().getLocalWitnesses().getPrivateKey()))
                     .getAddress()));
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
@@ -82,7 +82,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
-          ContractValidateException, ValidateSignatureException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -91,8 +91,8 @@ public class ManagerTest {
             0,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                        ByteArray.fromHexString(
-                            Args.getInstance().getLocalWitnesses().getPrivateKey()))
+                    ByteArray.fromHexString(
+                        Args.getInstance().getLocalWitnesses().getPrivateKey()))
                     .getAddress()));
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(
@@ -105,36 +105,18 @@ public class ManagerTest {
             .setToAddress(ByteString.copyFromUtf8("bbb"))
             .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-
     if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
       dbManager.setBlockReference(trx);
       Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
     }
+
     while (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
-      try {
-        dbManager.eraseBlock();
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
-      }
+      dbManager.eraseBlock();
     }
-    try {
-      dbManager.pushBlock(blockCapsule);
-      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    } catch (ValidateSignatureException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (UnLinkedBlockException e) {
-      e.printStackTrace();
-    } catch (ValidateScheduleException e) {
-      e.printStackTrace();
-    }
+
+    dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
     Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
@@ -222,9 +204,9 @@ public class ManagerTest {
   @Test
   public void fork()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          UnLinkedBlockException, ValidateScheduleException, BadItemException,
-          ItemNotFoundException, HeaderNotFound {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+      UnLinkedBlockException, ValidateScheduleException, BadItemException,
+      ItemNotFoundException, HeaderNotFound {
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
