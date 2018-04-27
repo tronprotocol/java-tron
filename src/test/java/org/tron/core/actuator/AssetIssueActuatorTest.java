@@ -49,11 +49,13 @@ public class AssetIssueActuatorTest {
   private static final String URL = "tron-my.com";
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
@@ -63,7 +65,9 @@ public class AssetIssueActuatorTest {
     //    dbManager.init();
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule =
@@ -96,6 +100,7 @@ public class AssetIssueActuatorTest {
   public void rightAssetIssue() {
     AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+    Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -107,7 +112,9 @@ public class AssetIssueActuatorTest {
       Assert.assertNotNull(assetIssueCapsule);
 
       Assert.assertEquals(owner.getBalance(), 0L);
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), 10000L);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -121,6 +128,7 @@ public class AssetIssueActuatorTest {
   public void repeatAssetIssue() {
     AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       dbManager
           .getAssetIssueStore()
@@ -132,10 +140,14 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Token is exist".equals(e.getMessage()));
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance);
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -147,7 +159,9 @@ public class AssetIssueActuatorTest {
     }
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
