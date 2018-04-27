@@ -7,6 +7,10 @@ import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
+import org.tron.common.overlay.discover.NodeManager;
+import org.tron.common.overlay.discover.UDPListener;
+import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.overlay.server.PeerServer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -58,9 +62,9 @@ public class SolidityNode {
   }
 
   private void syncSolidityBlock() throws BadBlockException {
+    DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
+    long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
     while (true) {
-      DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
-      long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
       if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
@@ -118,6 +122,14 @@ public class SolidityNode {
     appT.initServices(cfgArgs);
     appT.startServices();
 //    appT.startup();
+
+    //Disable peer discovery for solidity node
+    UDPListener udpListener = context.getBean(UDPListener.class);
+    udpListener.close();
+    ChannelManager channelManager = context.getBean(ChannelManager.class);
+    channelManager.close();
+    NodeManager nodeManager = context.getBean(NodeManager.class);
+    nodeManager.close();
 
     SolidityNode node = new SolidityNode();
     node.setDbManager(appT.getDbManager());

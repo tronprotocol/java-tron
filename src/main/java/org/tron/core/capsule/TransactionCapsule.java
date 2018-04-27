@@ -203,6 +203,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return true;
   }
 
+  @Deprecated
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
