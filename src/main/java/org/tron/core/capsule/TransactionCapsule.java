@@ -323,8 +323,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
 
   public Sha256Hash getTransactionId() {
-    Sha256Hash transactionRawId = Sha256Hash.of(this.transaction.getRawData().toByteArray());
-    return new Sha256Hash(this.transaction.getRawData().getRefBlockNum(), transactionRawId);
+    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
   @Override
