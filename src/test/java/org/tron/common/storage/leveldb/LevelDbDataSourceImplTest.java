@@ -297,7 +297,7 @@ public class LevelDbDataSourceImplTest {
 
     putSomeKeyValue(dataSource);
     byte[] bySeekKeyPrev = dataSource.getValuePrev("00000003aa".getBytes());
-    Assert.assertArrayEquals("getValuePrev1", value2, bySeekKeyPrev);
+    Assert.assertArrayEquals("getValuePrev1", value3, bySeekKeyPrev);
     bySeekKeyPrev = dataSource.getValuePrev("0000000300".getBytes());
     Assert.assertArrayEquals("getValuePrev2", value2, bySeekKeyPrev);
     bySeekKeyPrev = dataSource.getValuePrev("0000000100".getBytes());
