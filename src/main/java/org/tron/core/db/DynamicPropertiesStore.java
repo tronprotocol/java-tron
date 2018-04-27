@@ -21,7 +21,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final long MAINTENANCE_TIME_INTERVAL = Args.getInstance()
       .getMaintenanceTimeInterval();
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
-  private static final double VOTE_REWARD_RATE = 0.00001;
+  private static final double VOTE_REWARD_RATE = 0;
   private static final int SINGLE_REPEAT = 1;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
@@ -55,6 +55,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
 
   private static final byte[] BANDWIDTH_PER_TRANSACTION = "BANDWIDTH_PER_TRANSACTION".getBytes();
+
+  private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
 
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
 
@@ -137,6 +139,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBandwidthPerTransaction();
     } catch (IllegalArgumentException e) {
       this.saveBandwidthPerTransaction(1);
+    }
+
+    try {
+      this.getBandwidthPerCoinday();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPerCoinday(1);
     }
 
     try {
@@ -307,6 +315,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BANDWIDTH_PER_TRANSACTION"));
+  }
+
+  public void saveBandwidthPerCoinday(long bandwidthPerCoinday) {
+    logger.debug("BANDWIDTH_PER_COINDAY:" + bandwidthPerCoinday);
+    this.put(BANDWIDTH_PER_COINDAY,
+        new BytesCapsule(ByteArray.fromLong(bandwidthPerCoinday)));
+  }
+
+  public long getBandwidthPerCoinday() {
+    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_COINDAY))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
   }
 
   public void saveAccountUpgradeCost(int accountUpgradeCost) {

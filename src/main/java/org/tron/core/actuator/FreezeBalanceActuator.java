@@ -33,13 +33,13 @@ public class FreezeBalanceActuator extends AbstractActuator {
           .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
       long now = System.currentTimeMillis();
-      Frozen newFrozen = Frozen.newBuilder().
-          setFrozenBalance(freezeBalanceContract.getFrozenBalance())
-          .setExpireTime(freezeBalanceContract.getFrozenDuration() + now)
+      long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000;
+      Frozen newFrozen = Frozen.newBuilder()
+          .setFrozenBalance(freezeBalanceContract.getFrozenBalance())
+          .setExpireTime(now + duration)
           .build();
 
       long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
-
       long newBandwidth = accountCapsule.getBandwidth() + calculateBandwidth(freezeBalanceContract);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addFrozen(newFrozen)
@@ -59,8 +59,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
   }
 
   private long calculateBandwidth(FreezeBalanceContract freezeBalanceContract) {
-    return freezeBalanceContract.getFrozenBalance() * freezeBalanceContract.getFrozenDuration()
-        / 24 * 3600 * 1000;
+
+    return freezeBalanceContract.getFrozenBalance() / 10000
+        * freezeBalanceContract.getFrozenDuration()
+        * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday();
   }
 
   @Override
@@ -86,7 +88,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       }
 
       long frozenBalance = freezeBalanceContract.getFrozenBalance();
-      if (frozenBalance < 0) {
+      if (frozenBalance <= 0) {
         throw new ContractValidateException("frozenBalance must be positive");
       }
       AccountCapsule accountCapsule = dbManager.getAccountStore()
@@ -95,18 +97,18 @@ public class FreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("frozenBalance must be less than accountBalance:");
       }
 
-      //todo:replaced by dynamicParameter
-      if (accountCapsule.getFrozenCount() >= 10) {
-        throw new ContractValidateException("max frozen number is 10");
+      if (accountCapsule.getFrozenCount()
+          >= dbManager.getDynamicPropertiesStore().getMaxFrozenNumber()) {
+        throw new ContractValidateException("max frozen number is 1");
       }
 
       long frozenDuration = freezeBalanceContract.getFrozenDuration();
-      long oneDays = 24 * 3600 * 1000;
-      long thirtyDays = 30 * 24 * 3600 * 1000;
+      long minFrozenTime = dbManager.getDynamicPropertiesStore().getMinFrozenTime();
+      long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
 
-      if (!(frozenDuration >= oneDays && frozenDuration <= thirtyDays)) {
+      if (!(frozenDuration >= minFrozenTime && frozenDuration <= maxFrozenTime)) {
         throw new ContractValidateException(
-            "frozenDuration must be less than 30days and more than 1day");
+            "frozenDuration must be less than 365 days and more than 3 days");
       }
 
     } catch (Exception ex) {

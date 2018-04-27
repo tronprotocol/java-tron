@@ -2,10 +2,8 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.FreezeBalanceContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.UnfreezeBalanceContract;
 
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
@@ -439,13 +437,16 @@ public class Manager {
         throw new ValidateBandwidthException("account is not exist");
       }
       long bandwidth = accountCapsule.getBandwidth();
-      if (contract.getType() != FreezeBalanceContract
-          && contract.getType() != UnfreezeBalanceContract) {
-        if (bandwidth < 1) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
-        }
-        accountCapsule.setBandwidth(bandwidth - 1);
+      long now = Time.getCurrentMillis();
+      long latestOperationTime = accountCapsule.getLatestOperationTime();
+      if (now - latestOperationTime < 5 * 60 * 1000) {
+        return;
       }
+      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
+      if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+      }
+      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }
