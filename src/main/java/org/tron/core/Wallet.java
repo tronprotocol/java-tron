@@ -374,4 +374,13 @@ public class Wallet {
     return transactionListBuilder.build();
   }
 
+  public BlockList getBlockByLatestNum(long getNum) {
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    try {
+      dbManager.getBlockStore().getLimitNumber(dbManager.getHeadBlockNum(), getNum).forEach(
+          blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    } catch (StoreException e) {
+    }
+    return blockListBuilder.build();
+  }
 }
