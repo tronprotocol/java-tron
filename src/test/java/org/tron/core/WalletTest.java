@@ -30,6 +30,7 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.api.GrpcAPI.BlockList;
@@ -278,6 +279,7 @@ public class WalletTest {
     Assert.assertFalse("getBlocksByLimit8", blocksByLimit.getBlockList().contains(block5));
   }
 
+  @Ignore
   @Test
   public void getTransactionById() {
     Transaction transactionById = wallet.getTransactionById(
@@ -297,6 +299,7 @@ public class WalletTest {
     Assert.assertEquals("getTransactionById5", transaction5, transactionById);
   }
 
+  @Ignore
   @Test
   public void getTransactionsByLimit() {
     TransactionList transactionsByLimit = wallet.getTransactionsByLimitPrev(
