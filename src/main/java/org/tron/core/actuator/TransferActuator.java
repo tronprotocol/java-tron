@@ -89,7 +89,7 @@ public class TransferActuator extends AbstractActuator {
       }
       long amount = transferContract.getAmount();
       if (amount <= 0) {
-        throw new ContractValidateException("Amount is less than 0.");
+        throw new ContractValidateException("Amount must greater than 0.");
       }
       if (balance < amount) {
         throw new ContractValidateException("balance is not sufficient.");
