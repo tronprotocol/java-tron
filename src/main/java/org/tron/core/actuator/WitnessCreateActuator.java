@@ -11,6 +11,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
@@ -99,12 +100,18 @@ public class WitnessCreateActuator extends AbstractActuator {
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
 
-    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
-        .get(witnessCreateContract.getOwnerAddress().toByteArray());
-    long newBalance =
-        accountCapsule.getBalance() - dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
-    accountCapsule.setBalance(newBalance);
-    this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
+          -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+
+      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(),
+          +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+
+    } catch (BalanceInsufficientException e) {
+      throw new RuntimeException(e);
+    }
+
+
   }
 
 }
