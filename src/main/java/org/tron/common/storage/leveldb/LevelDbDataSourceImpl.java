@@ -253,20 +253,20 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public Set<byte[]> getByLatestNum(long getLimit) {
+  public Set<byte[]> getlatestValues(long limit) {
+    if (limit <= 0) {
+      return new HashSet<>();
+    }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Set<byte[]> result = new HashSet<>();
-      if (getLimit <= 0) {
-        return result;
-      }
       long i = 0;
       iterator.seekToLast();
       if (iterator.hasNext()) {
         result.add(iterator.peekNext().getValue());
         i++;
       }
-      for (; iterator.hasPrev() && i++ < getLimit; iterator.prev()) {
+      for (; iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
       }
       return result;
@@ -277,12 +277,15 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public Set<byte[]> getSeekKeyLimitNext(byte[] startKey, long getLimit) {
+  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return new HashSet<>();
+    }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Set<byte[]> result = new HashSet<>();
       long i = 0;
-      for (iterator.seek(startKey); iterator.hasNext() && i++ < getLimit; iterator.next()) {
+      for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
         result.add(iterator.peekNext().getValue());
       }
       return result;
@@ -293,20 +296,20 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public Set<byte[]> getSeekKeyLimitPrev(byte[] startKey, long getLimit) {
+  public Set<byte[]> getValuesPrev(byte[] key, long limit) {
+    if (limit <= 0) {
+      return new HashSet<>();
+    }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Set<byte[]> result = new HashSet<>();
-      if (getLimit <= 0) {
-        return result;
-      }
       long i = 0;
-      byte[] data = getData(startKey);
+      byte[] data = getData(key);
       if (Objects.nonNull(data)) {
         result.add(data);
         i++;
       }
-      for (iterator.seek(startKey); iterator.hasPrev() && i++ < getLimit; iterator.prev()) {
+      for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
       }
       return result;
@@ -317,10 +320,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public byte[] getBySeekKeyNext(byte[] keyBytes) {
+  public byte[] getValueNext(byte[] key) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      iterator.seek(keyBytes);
+      iterator.seek(key);
       if (iterator.hasNext()) {
         return iterator.peekNext().getValue();
       }
@@ -332,10 +335,14 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public byte[] getBySeekKeyPrev(byte[] keyBytes) {
+  public byte[] getValuePrev(byte[] key) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      iterator.seek(keyBytes);
+      byte[] data = getData(key);
+      if (Objects.nonNull(data)) {
+        return data;
+      }
+      iterator.seek(key);
       if (iterator.hasPrev()) {
         return iterator.peekPrev().getValue();
       }
