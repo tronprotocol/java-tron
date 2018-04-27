@@ -1,7 +1,6 @@
 package org.tron.core.net.node;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -85,8 +84,7 @@ public class BroadTest {
     return transactionMessage.getMessageId();
   }
 
-  private Condition testConsumerAdvObjToSpread()
-      throws IllegalAccessException, NoSuchFieldException {
+  private Condition testConsumerAdvObjToSpread() {
     Sha256Hash blockId = testBlockBroad();
     Sha256Hash transactionId = testTransactionBroad();
 
@@ -110,13 +108,13 @@ public class BroadTest {
   }
 
   @Test
-  public void testConsumerAdvObjToFetch()
-      throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException, InterruptedException {
+  public void testConsumerAdvObjToFetch() throws InterruptedException {
     Condition condition = testConsumerAdvObjToSpread();
     Thread.sleep(1000);
     //
     ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = ReflectUtils
         .getFieldValue(node, "advObjToFetch");
+    logger.info("advObjToFetch:{}", advObjToFetch);
     Assert.assertEquals(advObjToFetch.get(condition.getBlockId()), InventoryType.BLOCK);
     Assert.assertEquals(advObjToFetch.get(condition.getTransactionId()), InventoryType.TRX);
     //
@@ -135,6 +133,11 @@ public class BroadTest {
         logger.info("Full node running.");
         Args.setParam(new String[0], "config.conf");
         Args cfgArgs = Args.getInstance();
+        cfgArgs.setNodeListenPort(17889);
+        cfgArgs.setNodeDiscoveryEnable(false);
+        cfgArgs.getSeedNode().getIpList().clear();
+        cfgArgs.setNeedSyncCheck(false);
+        cfgArgs.setNodeExternalIp("127.0.0.1");
 
         ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
@@ -188,7 +191,7 @@ public class BroadTest {
       mainWorker.shutdownNow();
 
       Node node = new Node(
-          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:18888");
+          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
       new Thread(new Runnable() {
         @Override
         public void run() {
