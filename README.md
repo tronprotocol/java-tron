@@ -306,7 +306,7 @@ java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348
 
 It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
-<detail>
+<details>
 <summary>Correct output</summary>
 
 ```bash
@@ -456,7 +456,7 @@ transfer amount=15000000000000000
 
 Then observe whether block synchronization success，If synchronization successfully explains the success of the super node
 
-</detail>
+</details>
 
 # Quick Start
 
