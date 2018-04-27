@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,8 +18,10 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.overlay.server.MessageQueue;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -27,6 +30,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
@@ -89,10 +93,10 @@ public class BroadTest {
     Sha256Hash transactionId = testTransactionBroad();
 
     ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
-    Collection<PeerConnection> response = ReflectUtils.invokeMethod(node, "getActivePeer");
+    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
 
     boolean result = true;
-    for (PeerConnection peerConnection : response) {
+    for (PeerConnection peerConnection : activePeers) {
       if (!peerConnection.getAdvObjWeSpread().containsKey(blockId)) {
         result &= false;
       }
@@ -100,7 +104,7 @@ public class BroadTest {
         result &= false;
       }
     }
-    for (PeerConnection peerConnection : response) {
+    for (PeerConnection peerConnection : activePeers) {
       peerConnection.getAdvObjWeSpread().clear();
     }
     Assert.assertTrue(result);
@@ -117,10 +121,33 @@ public class BroadTest {
     logger.info("advObjToFetch:{}", advObjToFetch);
     Assert.assertEquals(advObjToFetch.get(condition.getBlockId()), InventoryType.BLOCK);
     Assert.assertEquals(advObjToFetch.get(condition.getTransactionId()), InventoryType.TRX);
+    //To avoid writing the database, manually stop the sending of messages.
+    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
+    for (PeerConnection peerConnection : activePeers) {
+      MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
+      ReflectUtils.setFieldValue(messageQueue, "sendMsgFlag", false);
+    }
     //
     ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
-
-    Thread.sleep(2000);
+    Thread.sleep(1000);
+    boolean result = true;
+    for (PeerConnection peerConnection : activePeers) {
+      if (!peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())
+          && !peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
+        result &= false;
+      }
+      MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
+      BlockingQueue<Message> msgQueue = ReflectUtils.getFieldValue(messageQueue, "msgQueue");
+      for (Message message : msgQueue) {
+        if (message.getType() == MessageTypes.BLOCK) {
+          Assert.assertEquals(message.getMessageId(), condition.getBlockId());
+        }
+        if (message.getType() == MessageTypes.TRX) {
+          Assert.assertEquals(message.getMessageId(), condition.getTransactionId());
+        }
+      }
+    }
+    Assert.assertTrue(result);
   }
 
   private static boolean go = false;
@@ -165,7 +192,8 @@ public class BroadTest {
         rpcApiService.blockUntilShutdown();
       }
     }).start();
-    while (node == null || peerClient == null
+    int tryTimes = 0;
+    while (tryTimes < 10 || node == null || peerClient == null
         || channelManager == null || pool == null || !go) {
       try {
         logger.info("node:{},peerClient:{},channelManager:{},pool:{},{}", node, peerClient,
@@ -173,6 +201,8 @@ public class BroadTest {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         e.printStackTrace();
+      } finally {
+        ++tryTimes;
       }
     }
   }
