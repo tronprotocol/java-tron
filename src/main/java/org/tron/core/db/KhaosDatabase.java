@@ -301,6 +301,7 @@ public class KhaosDatabase extends TronDatabase {
         .filter(Objects::nonNull)
         .map(KhaosBlock::getParent)
         .map(khaosBlock -> khaosBlock == null ? null : khaosBlock.blk)
+        .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }

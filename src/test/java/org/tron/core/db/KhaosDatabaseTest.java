@@ -2,6 +2,8 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -91,10 +93,11 @@ public class KhaosDatabaseTest {
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
             ByteArray
                 .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b82")))
+            .setNumber(0)
         )).build());
     BlockCapsule blockCapsule2 = new BlockCapsule(Block.newBuilder().setBlockHeader(
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
-            blockCapsule.getBlockId().getBytes())))).build());
+            blockCapsule.getBlockId().getBytes())).setNumber(1))).build());
     Assert.assertEquals(blockCapsule.getBlockId(), blockCapsule2.getParentHash());
 
     khaosDatabase.start(blockCapsule);
@@ -102,9 +105,13 @@ public class KhaosDatabaseTest {
 
     khaosDatabase.removeBlk(blockCapsule.getBlockId());
     logger.info("*** " + khaosDatabase.getBlock(blockCapsule.getBlockId()));
+    Object object = new Object();
+    Reference<Object> objectReference = new WeakReference<>(object);
+    blockCapsule = null;
+    object = null;
     System.gc();
-    System.runFinalization();
-    System.gc();
+    logger.info("***** object ref:" + objectReference.get());
+    Assert.assertNull(objectReference.get());
     Assert.assertNull(khaosDatabase.getParentBlock(blockCapsule2.getBlockId()));
   }
 }
