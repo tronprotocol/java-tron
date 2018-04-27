@@ -86,6 +86,7 @@ public class Manager {
   private BlockCapsule genesisBlock;
 
   private LevelDbDataSourceImpl numHashCache;
+  @Getter
   @Autowired
   private KhaosDatabase khaosDb;
   private RevokingDatabase revokingStore;
@@ -694,6 +695,10 @@ public class Manager {
                 (dynamicPropertiesStore.getLatestBlockHeaderNumber()
                     - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
                     + 1));
+    khaosDb.setMaxSize((int)
+        (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+            + 1));
   }
 
   /**
