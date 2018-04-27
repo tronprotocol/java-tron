@@ -105,6 +105,7 @@ public class WalletTest {
     manager = context.getBean(Manager.class);
     initTransaction();
     initBlock();
+    manager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
   }
 
   /**
@@ -326,5 +327,12 @@ public class WalletTest {
         transactionsByLimit.getTransactionList().contains(transaction4));
     Assert.assertTrue("getTransactionsByLimit9",
         transactionsByLimit.getTransactionList().contains(transaction3));
+  }
+
+  @Test
+  public void getBlockByLatestNum() {
+    BlockList blockByLatestNum = wallet.getBlockByLatestNum(2);
+    Assert.assertTrue("getBlockByLatestNum1", blockByLatestNum.getBlockList().contains(block5));
+    Assert.assertTrue("getBlockByLatestNum2", blockByLatestNum.getBlockList().contains(block4));
   }
 }

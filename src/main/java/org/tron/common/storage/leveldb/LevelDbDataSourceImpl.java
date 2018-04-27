@@ -253,6 +253,30 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  public Set<byte[]> getByLatestNum(long getLimit) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Set<byte[]> result = new HashSet<>();
+      if (getLimit <= 0) {
+        return result;
+      }
+      long i = 0;
+      iterator.seekToLast();
+      if (iterator.hasNext()) {
+        result.add(iterator.peekNext().getValue());
+        i++;
+      }
+      for (; iterator.hasPrev() && i++ < getLimit; iterator.prev()) {
+        result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   public Set<byte[]> getSeekKeyLimitNext(byte[] startKey, long getLimit) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {

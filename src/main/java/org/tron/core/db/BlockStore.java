@@ -110,10 +110,24 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return new BlockCapsule(value);
   }
 
-  public List<BlockCapsule> getLimitNumber(long startNumber, long limit)
-      throws ItemNotFoundException, BadItemException {
+  public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
     BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
     return dbSource.getSeekKeyLimitNext(startBlockId.getBytes(), limit)
+        .stream().map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException e) {
+            e.printStackTrace();
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  public List<BlockCapsule> getBlockByLatestNum(long getNum) {
+
+    return dbSource.getByLatestNum(getNum)
         .stream().map(bytes -> {
           try {
             return new BlockCapsule(bytes);
@@ -137,4 +151,5 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   public Iterator<BlockCapsule> iterator() {
     return new BlockIterator(dbSource.iterator());
   }
+
 }

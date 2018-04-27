@@ -348,11 +348,8 @@ public class Wallet {
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    try {
-      dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
-          blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
-    } catch (StoreException e) {
-    }
+    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 
@@ -376,11 +373,8 @@ public class Wallet {
 
   public BlockList getBlockByLatestNum(long getNum) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    try {
-      dbManager.getBlockStore().getLimitNumber(dbManager.getHeadBlockNum(), getNum).forEach(
-          blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
-    } catch (StoreException e) {
-    }
+    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 }
