@@ -17,12 +17,12 @@ package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -225,7 +225,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      Set<byte[]> result = new HashSet<>();
+      Set<byte[]> result = Sets.newHashSet();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         result.add(iterator.peekNext().getKey());
       }
@@ -241,7 +241,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      Set<byte[]> result = new HashSet<>();
+      Set<byte[]> result = Sets.newHashSet();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         result.add(iterator.peekNext().getValue());
       }
@@ -255,11 +255,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public Set<byte[]> getlatestValues(long limit) {
     if (limit <= 0) {
-      return new HashSet<>();
+      return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      Set<byte[]> result = new HashSet<>();
+      Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       iterator.seekToLast();
       if (iterator.hasNext()) {
@@ -279,11 +279,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     if (limit <= 0) {
-      return new HashSet<>();
+      return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      Set<byte[]> result = new HashSet<>();
+      Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
         result.add(iterator.peekNext().getValue());
@@ -298,11 +298,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public Set<byte[]> getValuesPrev(byte[] key, long limit) {
     if (limit <= 0) {
-      return new HashSet<>();
+      return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
-      Set<byte[]> result = new HashSet<>();
+      Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       byte[] data = getData(key);
       if (Objects.nonNull(data)) {
