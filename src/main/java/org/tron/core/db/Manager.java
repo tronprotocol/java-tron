@@ -391,7 +391,7 @@ public class Manager {
       throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
     account.setAllowance(allowance + amount);
-    this.getAccountStore().put(account.getAddress().toByteArray(), account);
+    this.getAccountStore().put(account.createDbKey(), account);
   }
 
   /**
