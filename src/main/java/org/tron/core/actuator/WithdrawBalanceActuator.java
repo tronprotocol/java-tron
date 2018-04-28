@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -89,6 +90,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       if (accountCapsule.getAllowance() <= 0) {
         throw new ContractValidateException("witnessAccount does not have any allowance");
       }
+
+      LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
 
     } catch (Exception ex) {
       ex.printStackTrace();
