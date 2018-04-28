@@ -320,40 +320,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public byte[] getValueNext(byte[] key) {
-    resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
-      iterator.seek(key);
-      if (iterator.hasNext()) {
-        return iterator.peekNext().getValue();
-      }
-      return null;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
-  public byte[] getValuePrev(byte[] key) {
-    resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
-      byte[] data = getData(key);
-      if (Objects.nonNull(data)) {
-        return data;
-      }
-      iterator.seek(key);
-      if (iterator.hasPrev()) {
-        return iterator.peekPrev().getValue();
-      }
-      return null;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
