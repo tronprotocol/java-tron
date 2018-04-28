@@ -32,25 +32,14 @@ public enum ReasonCode {
     REQUESTED(0x00),
 
     /**
-     * [0x01]
-     */
-    TCP_ERROR(0x01),
-
-    /**
      * [0x02] Packets can not be parsed
      */
     BAD_PROTOCOL(0x02),
 
     /**
-     * [0x03] This peer is too slow or delivers unreliable data
-     */
-    USELESS_PEER(0x03),
-
-    /**
      * [0x04] Already too many connections with other peers
      */
     TOO_MANY_PEERS(0x04),
-
 
     /**
      * [0x05] Already have a running connection with this peer
@@ -83,6 +72,20 @@ public enum ReasonCode {
     RESET(0x11),
 
     SYNC_FAIL(0x12),
+
+    TIME_OUT(0x13),
+
+    BAD_TX(0x14),
+
+    BAD_BLOCK(0x15),
+
+    FORKED(0x16),
+
+    UNLINKABLE(0x17),
+
+    INCOMPATIBLE_VERSION(0x18),
+
+    INCOMPATIBLE_CHAIN(0x19),
 
     /**
      * [0xFF] Reason not specified
