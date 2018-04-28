@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,8 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockLimit;
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
@@ -73,6 +76,9 @@ public class RpcApiService implements Service {
   private WalletSolidity walletSolidity;
   @Autowired
   private Wallet wallet;
+
+  private static final long BLOCK_LIMIT_NUM = 100;
+  private static final long TRANSACTION_LIMIT_NUM = 1000;
 
   @Override
   public void init() {
@@ -594,6 +600,57 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getBlockById(BytesMessage request, StreamObserver<Block> responseObserver) {
+      ByteString blockId = request.getValue();
+
+      if (Objects.nonNull(blockId)) {
+        responseObserver.onNext(wallet.getBlockById(blockId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByLimitNext(BlockLimit request,
+        StreamObserver<BlockList> responseObserver) {
+      long startNum = request.getStartNum();
+      long endNum = request.getEndNum();
+
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        responseObserver.onNext(wallet.getBlocksByLimitNext(startNum, endNum - startNum));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByLatestNum(NumberMessage request,
+        StreamObserver<BlockList> responseObserver) {
+      long getNum = request.getNum();
+
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        responseObserver.onNext(wallet.getBlockByLatestNum(getNum));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionById(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString transactionId = request.getValue();
+
+      if (Objects.nonNull(transactionId)) {
+        responseObserver.onNext(wallet.getTransactionById(transactionId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   @Override

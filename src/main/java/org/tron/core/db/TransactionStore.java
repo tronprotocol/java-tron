@@ -24,7 +24,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
   }
 
-
   @Override
   public boolean has(byte[] key) {
     byte[] transaction = dbSource.getData(key);
