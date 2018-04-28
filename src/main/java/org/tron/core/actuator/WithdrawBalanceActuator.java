@@ -34,9 +34,12 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       long oldBalance = accountCapsule.getBalance();
       long allowance = accountCapsule.getAllowance();
 
+      long now = System.currentTimeMillis();
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .setBalance(oldBalance + allowance)
-          .setAllowance(0L).build());
+          .setAllowance(0L)
+          .setLatestWithdrawTime(now)
+          .build());
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
