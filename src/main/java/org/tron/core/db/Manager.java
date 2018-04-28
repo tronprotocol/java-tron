@@ -780,7 +780,6 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
-    TransactionResultCapsule transRet;
     if (trxCap == null || !trxCap.validateSignature()) {
       return false;
     }

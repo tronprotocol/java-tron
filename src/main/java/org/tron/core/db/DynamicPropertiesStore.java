@@ -108,19 +108,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaxFrozenNumber();
     } catch (IllegalArgumentException e) {
-      this.saveMaxFrozenNumber(10);
+      this.saveMaxFrozenNumber(1);
     }
 
     try {
       this.getMaxFrozenTime();
     } catch (IllegalArgumentException e) {
-      this.saveMaxFrozenTime(30);
+      this.saveMaxFrozenTime(3);
     }
 
     try {
       this.getMinFrozenTime();
     } catch (IllegalArgumentException e) {
-      this.saveMinFrozenTime(1);
+      this.saveMinFrozenTime(3);
     }
 
     try {
@@ -144,7 +144,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getBandwidthPerCoinday();
     } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerCoinday(1);
+      this.saveBandwidthPerCoinday(10);
     }
 
     try {

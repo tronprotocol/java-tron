@@ -94,12 +94,12 @@ public class FreezeBalanceActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ownerAddress.toByteArray());
       if (frozenBalance > accountCapsule.getBalance()) {
-        throw new ContractValidateException("frozenBalance must be less than accountBalance:");
+        throw new ContractValidateException("frozenBalance must be less than accountBalance");
       }
 
-      if (accountCapsule.getFrozenCount()
-          >= dbManager.getDynamicPropertiesStore().getMaxFrozenNumber()) {
-        throw new ContractValidateException("max frozen number is 1");
+      long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
+      if (accountCapsule.getFrozenCount() >= maxFrozenNumber) {
+        throw new ContractValidateException("max frozen number is: " + maxFrozenNumber);
       }
 
       long frozenDuration = freezeBalanceContract.getFrozenDuration();
@@ -108,7 +108,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       if (!(frozenDuration >= minFrozenTime && frozenDuration <= maxFrozenTime)) {
         throw new ContractValidateException(
-            "frozenDuration must be less than 365 days and more than 3 days");
+            "frozenDuration must be less than " + maxFrozenTime + " days "
+                + "and more than " + minFrozenTime + " days");
       }
 
     } catch (Exception ex) {
