@@ -59,20 +59,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     super.put(key, item);
   }
 
-  @Override
-  public void delete(byte[] key) {
-    onDelete(key);
-    super.delete(key);
-  }
-
-  private void onDelete(byte[] key) {
-    if (indexHelper != null) {
-      WitnessCapsule item = get(key);
-      Witness witness = item.getInstance();
-      indexHelper.remove(witness);
-    }
-  }
-
   /**
    * create fun.
    *

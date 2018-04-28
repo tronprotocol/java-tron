@@ -69,20 +69,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     super.put(key, item);
   }
 
-  @Override
-  public void delete(byte[] key) {
-    onDelete(key);
-    super.delete(key);
-  }
-
-  private void onDelete(byte[] key) {
-    if (indexHelper != null) {
-      AssetIssueCapsule item = get(key);
-      AssetIssueContract assetIssue = item.getInstance();
-      indexHelper.remove(assetIssue);
-    }
-  }
-
   /**
    * get all asset issues.
    */

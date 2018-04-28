@@ -52,20 +52,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     super.put(key, item);
   }
 
-  @Override
-  public void delete(byte[] key) {
-    onDelete(key);
-    super.delete(key);
-  }
-
-  private void onDelete(byte[] key) {
-    if (indexHelper != null) {
-      TransactionCapsule item = get(key);
-      Transaction transaction = item.getInstance();
-      indexHelper.remove(transaction);
-    }
-  }
-
   /**
    * get total transaction.
    */

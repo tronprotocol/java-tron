@@ -74,20 +74,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     super.put(key, item);
   }
 
-  @Override
-  public void delete(byte[] key) {
-    onDelete(key);
-    super.delete(key);
-  }
-
-  private void onDelete(byte[] key) {
-    if (indexHelper != null) {
-      AccountCapsule item = get(key);
-      Account account = item.getInstance();
-      indexHelper.remove(account);
-    }
-  }
-
   /**
    * get all accounts.
    */

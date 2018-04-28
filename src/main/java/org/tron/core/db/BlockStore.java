@@ -60,24 +60,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     super.put(key, item);
   }
 
-  @Override
-  public void delete(byte[] key) {
-    onDelete(key);
-    super.delete(key);
-  }
-
-  private void onDelete(byte[] key) {
-    if (indexHelper != null) {
-      Block block = null;
-      try {
-        BlockCapsule item = get(key);
-        block = item.getInstance();
-      } catch (StoreException e) {
-      }
-      indexHelper.remove(block);
-    }
-  }
-
   /**
    * create fun.
    */
