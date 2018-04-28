@@ -102,7 +102,6 @@ public class TransferActuator extends AbstractActuator {
         dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 
