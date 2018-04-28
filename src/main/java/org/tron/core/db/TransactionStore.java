@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +22,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   public TransactionCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);
     return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
-  }
-
-  public List<TransactionCapsule> getLimitNumber(byte[] startTransactionId, long limit) {
-    return dbSource.getValuesPrev(startTransactionId, limit)
-        .stream().map(bytes -> {
-          return new TransactionCapsule(bytes);
-        })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
   }
 
   @Override

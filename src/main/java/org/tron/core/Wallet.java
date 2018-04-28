@@ -29,7 +29,6 @@ import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -338,7 +337,7 @@ public class Wallet {
   }
 
   public Block getBlockById(ByteString BlockId) {
-    if(Objects.isNull(BlockId)){
+    if (Objects.isNull(BlockId)) {
       return null;
     }
     Block blocke = null;
@@ -350,14 +349,24 @@ public class Wallet {
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
+    if (limit <= 0) {
+      return null;
+    }
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
     dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
         blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 
+  public BlockList getBlockByLatestNum(long getNum) {
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    return blockListBuilder.build();
+  }
+
   public Transaction getTransactionById(ByteString transactionId) {
-    if(Objects.isNull(transactionId)){
+    if (Objects.isNull(transactionId)) {
       return null;
     }
     Transaction transaction = null;
@@ -367,23 +376,5 @@ public class Wallet {
       transaction = transactionCapsule.getInstance();
     }
     return transaction;
-  }
-
-  public TransactionList getTransactionsByLimitPrev(ByteString transactionId, long limit) {
-    if(Objects.isNull(transactionId)){
-      return null;
-    }
-    TransactionList.Builder transactionListBuilder = TransactionList.newBuilder();
-    dbManager.getTransactionStore().getLimitNumber(transactionId.toByteArray(), limit).forEach(
-        transactionCapsule -> transactionListBuilder
-            .addTransaction(transactionCapsule.getInstance()));
-    return transactionListBuilder.build();
-  }
-
-  public BlockList getBlockByLatestNum(long getNum) {
-    BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
-        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
-    return blockListBuilder.build();
   }
 }
