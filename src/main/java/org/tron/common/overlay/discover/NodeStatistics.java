@@ -149,17 +149,25 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
-        tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
+        tronLastLocalDisconnectReason == ReasonCode.BAD_BLOCK ||
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_BLOCK ||
+        tronLastLocalDisconnectReason == ReasonCode.BAD_TX ||
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_TX ||
+        tronLastLocalDisconnectReason == ReasonCode.FORKED ||
+        tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
+        tronLastLocalDisconnectReason ==  ReasonCode.UNLINKABLE ||
+        tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN;
   }
 
   public boolean isPenalized() {
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
             tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-            tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
-            tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
             tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
             tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
   }

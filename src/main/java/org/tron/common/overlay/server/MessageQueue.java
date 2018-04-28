@@ -182,6 +182,7 @@ public class MessageQueue {
     }
 
     if (messageRoundtrip.getRetryTimes() > 0){
+      channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
       logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       ctx.close();
       return;
