@@ -329,7 +329,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setExpireTime(expireTime)
         .build();
 
-    this.account.toBuilder()
+    this.account = this.account.toBuilder()
         .addFrozen(newFrozen)
         .build();
   }
