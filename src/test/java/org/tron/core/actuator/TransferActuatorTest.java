@@ -41,8 +41,6 @@ public class TransferActuatorTest {
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private static final String TO_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-  private static final String NOT_EXIT_ADDRESS =
-      Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
   private static final long AMOUNT = 100;
   private static final long OWNER_BALANCE = 99999;
   private static final long TO_BALANCE = 100001;
@@ -277,9 +275,9 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void iniviateOwnerAccount() {
+  public void noExitOwnerAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ACCOUNT_INVALIATE, NOT_EXIT_ADDRESS), dbManager);
+        getContract(100L, OWNER_ACCOUNT_INVALIATE, OWNER_ACCOUNT_INVALIATE), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -294,6 +292,41 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+  }
+
+  @Test
+  /**
+   * If to account not exit, creat it.
+   */
+  public void noExitToAccount() {
+    TransferActuator actuator = new TransferActuator(
+        getContract(100L, OWNER_ADDRESS, To_ACCOUNT_INVALIATE), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      AccountCapsule noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+      Assert.assertTrue(null == noExitAccount);
+      actuator.validate();
+      noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+      Assert.assertFalse(null == noExitAccount);    //Had created.
+      Assert.assertEquals(noExitAccount.getBalance(), 0);
+      actuator.execute(ret);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 100);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+      Assert.assertEquals(noExitAccount.getBalance(), 100);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -398,7 +431,8 @@ public class TransferActuatorTest {
       Assert.assertEquals("Validate TransferContract error, insufficient fee.", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
