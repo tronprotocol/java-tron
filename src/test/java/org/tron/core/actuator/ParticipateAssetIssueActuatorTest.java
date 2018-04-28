@@ -115,6 +115,17 @@ public class ParticipateAssetIssueActuatorTest {
             .build());
   }
 
+  private Any getContractWithOwner(long count, String ownerAddress) {
+    long nowTime = new Date().getTime();
+    return Any.pack(
+        Contract.ParticipateAssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAssetName(ByteString.copyFromUtf8(ASSET_NAME))
+            .setAmount(count)
+            .build());
+  }
+
   private Any getContract(long count, String assetName) {
     long nowTime = new Date().getTime();
     return Any.pack(
@@ -321,6 +332,40 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  @Test
+  /**
+   * Owner account is not exit
+   */
+  public void noExitOwnerTest() {
+    DateTime now = DateTime.now();
+    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    // First, reduce the owner trx balance. Else can't complete this test case.
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContractWithOwner(101, Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B"),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("Account does not exist!".equals(e.getMessage()));
+
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+      Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
+      Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
 
   @Test
   public void notEnoughTrxTest() {
