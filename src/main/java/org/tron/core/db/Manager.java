@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -77,17 +76,18 @@ public class Manager {
   private AssetIssueStore assetIssueStore;
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
+  @Autowired
   private BlockIndexStore blockIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
-
   @Autowired
   private PeersStore peersStore;
-  private BlockCapsule genesisBlock;
 
-  private LevelDbDataSourceImpl numHashCache;
-  @Getter
   @Autowired
   private KhaosDatabase khaosDb;
+
+
+  private BlockCapsule genesisBlock;
   private RevokingDatabase revokingStore;
 
   @Getter
@@ -224,12 +224,10 @@ public class Manager {
   }
 
   @PostConstruct
-  public void initOther() {
+  public void init() {
     revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
-    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
-    this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -252,18 +250,6 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
-  }
-
-  /**
-   * all db should be init here.
-   */
-  public void init() {
-    this.setAccountStore(AccountStore.create("account"));
-    this.setTransactionStore(TransactionStore.create("trans"));
-    this.setBlockStore(BlockStore.create("block"));
-    this.setWitnessStore(WitnessStore.create("witness"));
-
-    initOther();
   }
 
   public BlockId getGenesisBlockId() {
