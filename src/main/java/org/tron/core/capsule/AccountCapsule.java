@@ -334,4 +334,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  //for test only
+  public void setLatestWithdrawTime(long latestWithdrawTime) {
+    this.account = this.account.toBuilder()
+        .setLatestWithdrawTime(latestWithdrawTime)
+        .build();
+  }
+
 }
