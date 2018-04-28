@@ -379,7 +379,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.debug(e.getMessage(), e);
       }
     }
-
     synchronized (advObjToFetch) {
       InvToSend sendPackage = new InvToSend();
       advObjToFetch.entrySet()
@@ -393,8 +392,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                     advObjToFetch.remove(idToFetch.getKey());
                     peer.getAdvObjWeRequested()
                         .put(idToFetch.getKey(), Time.getCurrentMillis());
-                  })
-          );
+                  }));
       sendPackage.sendFetch();
     }
   }
@@ -416,7 +414,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromUs())
-        .forEach(peer -> {
+        .forEach(peer ->
           spread.entrySet().stream()
               .filter(idToSpread ->
                   !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
@@ -424,9 +422,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               .forEach(idToSpread -> {
                 peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                 sendPackage.add(idToSpread, peer);
-              });
-//                peer.cleanInvGarbage();
-        });
+              }));
     sendPackage.sendInv();
   }
 
