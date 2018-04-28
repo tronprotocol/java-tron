@@ -67,20 +67,24 @@ public class TransferAssetActuatorTest {
   private static final String URL = "https://tron.network";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, "config-junit.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-junit.conf");
     dbManager = context.getBean(Manager.class);
     //    dbManager = new Manager();
     //    dbManager.init();
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule =
@@ -127,6 +131,9 @@ public class TransferAssetActuatorTest {
             .build());
   }
 
+  /**
+   * Unit test.
+   */
   private Any getContract(long sendCoin, String assetName) {
     return Any.pack(
         Contract.TransferAssetContract.newBuilder()
@@ -160,7 +167,9 @@ public class TransferAssetActuatorTest {
     }
   }
 
-  /** Unit test. */
+  /**
+   * Unit test.
+   */
   @Test
   public void perfectTransfer() {
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE), dbManager);
@@ -184,7 +193,9 @@ public class TransferAssetActuatorTest {
     }
   }
 
-  /** Unit test. */
+  /**
+   * Unit test.
+   */
   @Test
   public void notEnoughAssetTest() {
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE+1), dbManager);
@@ -309,7 +320,9 @@ public class TransferAssetActuatorTest {
     return false;
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
