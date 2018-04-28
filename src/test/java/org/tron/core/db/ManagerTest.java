@@ -109,7 +109,8 @@ public class ManagerTest {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
       dbManager.setBlockReference(trx);
-      Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
+      Assert.assertEquals(1,
+          ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
     }
 
     while (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
@@ -119,7 +120,8 @@ public class ManagerTest {
     dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
-    Assert.assertEquals(1, trx.getInstance().getRawData().getRefBlockNum());
+    Assert.assertEquals(1,
+        ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
   }
 
   @Test

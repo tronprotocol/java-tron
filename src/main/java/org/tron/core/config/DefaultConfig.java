@@ -76,6 +76,11 @@ public class DefaultConfig {
     return "witness_schedule";
   }
 
+  @Bean(name = "recent-block")
+  public String recentBlock() {
+    return "recent-block";
+  }
+
 
   @Bean
   public IndexHelper indexHelper() {

@@ -48,6 +48,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -207,8 +208,8 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      dbManager.pushTransactions(trx);
       Message message = new TransactionMessage(signaturedTransaction);
+      dbManager.pushTransactions(trx);
       p2pNode.broadcast(message);
       return true;
     } catch (ValidateSignatureException e) {
@@ -221,6 +222,8 @@ public class Wallet {
       logger.debug("high freq", e);
     } catch (DupTransactionException e) {
       logger.debug("dup trans", e);
+    } catch (TaposException e) {
+      logger.debug("tapos error", e);
     }
     return false;
   }
