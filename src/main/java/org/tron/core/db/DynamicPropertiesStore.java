@@ -60,6 +60,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
 
+  private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
+      .getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
     super(dbName);
@@ -151,6 +154,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
       this.saveAccountUpgradeCost(100);
+    }
+
+    try {
+      this.getNonExistentAccountTransferMin();
+    } catch (IllegalArgumentException e) {
+      this.saveNonExistentAccountTransferLimit(1_000_000L);
     }
 
     try {
@@ -336,11 +345,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
   }
 
+  public void saveNonExistentAccountTransferLimit(long limit) {
+    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
+    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+
   public int getAccountUpgradeCost() {
     return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
+  }
+
+  public long getNonExistentAccountTransferMin() {
+    return Optional.ofNullable(this.dbSource.getData(NON_EXISTENT_ACCOUNT_TRANSFER_MIN))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NON_EXISTENT_ACCOUNT_TRANSFER_MIN"));
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
