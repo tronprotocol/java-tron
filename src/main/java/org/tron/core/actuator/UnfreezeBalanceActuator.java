@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -36,7 +37,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           .get(unfreezeBalanceContract.getOwnerAddress().toByteArray());
       long oldBalance = accountCapsule.getBalance();
       long unfreezeBalance = 0L;
-      List<Frozen> frozenList = accountCapsule.getFrozenList();
+      List<Frozen> frozenList = Lists.newArrayList();
+      frozenList.addAll(accountCapsule.getFrozenList());
       Iterator<Frozen> iterator = frozenList.iterator();
       long now = System.currentTimeMillis();
       while (iterator.hasNext()) {
