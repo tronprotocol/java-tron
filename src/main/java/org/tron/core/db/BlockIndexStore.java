@@ -1,15 +1,21 @@
 package org.tron.core.db;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
+@Component
 public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
-  public BlockIndexStore(String dbName) {
+
+  @Autowired
+  public BlockIndexStore(@Qualifier("block-index") String dbName) {
     super(dbName);
 
   }

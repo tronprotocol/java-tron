@@ -1,7 +1,9 @@
 package org.tron.core.db.api.index;
 
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
+import static com.googlecode.cqengine.query.QueryFactory.equal;
 
+import com.google.common.collect.ImmutableList;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
@@ -36,6 +38,14 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueContract> {
 
   public AssetIssueIndex(Persistence<AssetIssueContract, ? extends Comparable> persistence) {
     super(persistence);
+  }
+
+  @Override
+  public boolean update(AssetIssueContract assetIssue) {
+    return update(
+        retrieve(equal(AssetIssue_NAME, assetIssue.getName().toStringUtf8())),
+        ImmutableList.of(assetIssue)
+    );
   }
 
   @PostConstruct

@@ -66,6 +66,17 @@ public class DefaultConfig {
     return "block_KDB";
   }
 
+  @Bean(name = "block-index")
+  public String blockIndex() {
+    return "block-index";
+  }
+
+  @Bean(name = "witness_schedule")
+  public String witnessSchedule() {
+    return "witness_schedule";
+  }
+
+
   @Bean
   public IndexHelper indexHelper() {
     if (!Args.getInstance().isSolidityNode()) {

@@ -58,7 +58,8 @@ public class AssetIssueActuator extends AbstractActuator {
 
       dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
       ret.setStatus(fee, code.SUCESS);
-
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+          calcFee());//send to blackhole
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
 
@@ -69,10 +70,13 @@ public class AssetIssueActuator extends AbstractActuator {
           .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException();
+      throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
       ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException();
+      throw new ContractExeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
     return true;
   }
@@ -91,6 +95,18 @@ public class AssetIssueActuator extends AbstractActuator {
       }
       Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
 
+      if (assetIssueContract.getTotalSupply() <= 0) {
+        throw new ContractValidateException("TotalSupply must greater than 0!");
+      }
+
+      if (assetIssueContract.getTrxNum() <= 0) {
+        throw new ContractValidateException("TrxNum must greater than 0!");
+      }
+
+      if (assetIssueContract.getNum() <= 0) {
+        throw new ContractValidateException("Num must greater than 0!");
+      }
+
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
       if (accountCapsule == null) {
@@ -102,8 +118,12 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Token is exist");
       }
 
+      if (accountCapsule.getBalance() < calcFee()) {
+        throw new ContractValidateException("No enough blance for fee!");
+      }
+
     } catch (InvalidProtocolBufferException e) {
-      throw new ContractValidateException();
+      throw new ContractValidateException(e.getMessage());
     }
 
     return false;
@@ -117,5 +137,10 @@ public class AssetIssueActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return ChainConstant.ASSET_ISSUE_FEE;
+  }
+
+
+  public long calcUsage() {
+    return 0;
   }
 }

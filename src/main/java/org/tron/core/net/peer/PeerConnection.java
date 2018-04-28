@@ -44,6 +44,8 @@ public class PeerConnection extends Channel {
 
   private long connectTime;
 
+  private boolean syncFlag = true;
+
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
@@ -217,6 +219,14 @@ public class PeerConnection extends Channel {
 
   public void setInvWeAdv(Queue<Sha256Hash> invWeAdv) {
     this.invWeAdv = invWeAdv;
+  }
+
+  public boolean getSyncFlag(){
+    return syncFlag;
+  }
+
+  public void setSyncFlag(boolean syncFlag){
+    this.syncFlag = syncFlag;
   }
 
   public String logSyncStats() {

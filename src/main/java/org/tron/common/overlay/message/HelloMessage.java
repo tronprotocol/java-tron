@@ -33,7 +33,7 @@ public class HelloMessage extends P2pMessage {
   /**
    * Create hello message.
    */
-  public HelloMessage(Node from) {
+  public HelloMessage(Node from, long timestamp) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
@@ -45,6 +45,7 @@ public class HelloMessage extends P2pMessage {
 
     builder.setFrom(fromEndpoint);
     builder.setVersion(Args.getInstance().getNodeP2pVersion());
+    builder.setTimestamp(timestamp);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -69,6 +70,10 @@ public class HelloMessage extends P2pMessage {
    */
   public int getVersion() {
     return this.helloMessage.getVersion();
+  }
+
+  public long getTimestamp(){
+    return this.helloMessage.getTimestamp();
   }
 
   /**

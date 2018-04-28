@@ -17,12 +17,17 @@ package org.tron.core.db;
 
 import com.googlecode.cqengine.IndexedCollection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -49,7 +54,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   @Override
   public void put(byte[] key, BlockCapsule item) {
     if (indexHelper != null) {
-      indexHelper.add(item.getInstance());
+      indexHelper.update(item.getInstance());
     }
     super.put(key, item);
   }
@@ -77,6 +82,36 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return new BlockCapsule(value);
   }
 
+  public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
+    BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
+    return dbSource.getValuesNext(startBlockId.getBytes(), limit)
+        .stream().map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException e) {
+            e.printStackTrace();
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  public List<BlockCapsule> getBlockByLatestNum(long getNum) {
+
+    return dbSource.getlatestValues(getNum)
+        .stream().map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException e) {
+            e.printStackTrace();
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
   @Override
   public boolean has(byte[] key) {
     byte[] block = dbSource.getData(key);
@@ -88,4 +123,5 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   public Iterator<BlockCapsule> iterator() {
     return new BlockIterator(dbSource.iterator());
   }
+
 }

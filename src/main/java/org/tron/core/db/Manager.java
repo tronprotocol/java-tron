@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -77,16 +76,18 @@ public class Manager {
   private AssetIssueStore assetIssueStore;
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
+  @Autowired
   private BlockIndexStore blockIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
-
   @Autowired
   private PeersStore peersStore;
-  private BlockCapsule genesisBlock;
 
-  private LevelDbDataSourceImpl numHashCache;
   @Autowired
   private KhaosDatabase khaosDb;
+
+
+  private BlockCapsule genesisBlock;
   private RevokingDatabase revokingStore;
 
   @Getter
@@ -223,12 +224,10 @@ public class Manager {
   }
 
   @PostConstruct
-  public void initOther() {
+  public void init() {
     revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
-    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
-    this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -251,18 +250,6 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
-  }
-
-  /**
-   * all db should be init here.
-   */
-  public void init() {
-    this.setAccountStore(AccountStore.create("account"));
-    this.setTransactionStore(TransactionStore.create("trans"));
-    this.setBlockStore(BlockStore.create("block"));
-    this.setWitnessStore(WitnessStore.create("witness"));
-
-    initOther();
   }
 
   public BlockId getGenesisBlockId() {
@@ -373,7 +360,7 @@ public class Manager {
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
-    account.setBalance(balance + amount);
+    account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
@@ -388,10 +375,6 @@ public class Manager {
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
       logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
-    }
-
-    if (!trx.validateSignature()) {
-      throw new ValidateSignatureException("trans sig validate failed");
     }
 
     validateFreq(trx);
@@ -417,6 +400,9 @@ public class Manager {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
+        if (accountCapsule == null) {
+          throw new HighFreqException("account is not exist");
+        }
         long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
         if (latestOperationTime != 0) {
@@ -647,6 +633,10 @@ public class Manager {
                 (dynamicPropertiesStore.getLatestBlockHeaderNumber()
                     - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
                     + 1));
+    khaosDb.setMaxSize((int)
+        (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+            + 1));
   }
 
   /**
@@ -659,14 +649,14 @@ public class Manager {
 
     LinkedList<BlockCapsule> blockCapsules = branch.getValue();
 
-    if (blockCapsules.isEmpty()){
+    if (blockCapsules.isEmpty()) {
       logger.info("empty branch {}", forkBlockHash);
       return Lists.newLinkedList();
     }
 
     LinkedList<BlockId> result = blockCapsules.stream()
-            .map(blockCapsule -> blockCapsule.getBlockId())
-            .collect(Collectors.toCollection(LinkedList::new));
+        .map(blockCapsule -> blockCapsule.getBlockId())
+        .collect(Collectors.toCollection(LinkedList::new));
 
     result.add(blockCapsules.peekLast().getParentBlockId());
 
@@ -728,9 +718,11 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
-    TransactionResultCapsule transRet;
-    if (trxCap == null || !trxCap.validateSignature()) {
+    if (trxCap == null) {
       return false;
+    }
+    if (!trxCap.validateSignature()) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
