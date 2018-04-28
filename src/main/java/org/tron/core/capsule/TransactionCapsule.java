@@ -48,6 +48,7 @@ import org.tron.protos.Protocol.Transaction.TransactionType;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
+  private boolean isValidated = false;
 
   /**
    * constructor TransactionCapsule.
@@ -299,6 +300,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    * validate signature
    */
   public boolean validateSignature() throws ValidateSignatureException {
+
+    if (isValidated == true) {
+      return true;
+    }
+
     if (this.getInstance().getSignatureCount() !=
         this.getInstance().getRawData().getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
@@ -312,12 +318,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
+          isValidated = false;
           throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
+        isValidated = false;
         throw new ValidateSignatureException(e.getMessage());
       }
     }
+    isValidated = true;
     return true;
   }
 

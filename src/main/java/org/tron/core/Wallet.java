@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountList;
@@ -159,7 +160,7 @@ public class Wallet {
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (addressBase58 == null || addressBase58.length() == 0) {
+    if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
       return null;
     }
@@ -206,12 +207,10 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      if (trx.validateSignature()) {
-        Message message = new TransactionMessage(signaturedTransaction);
-        dbManager.pushTransactions(trx);
-        p2pNode.broadcast(message);
-        return true;
-      }
+      dbManager.pushTransactions(trx);
+      Message message = new TransactionMessage(signaturedTransaction);
+      p2pNode.broadcast(message);
+      return true;
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
