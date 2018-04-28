@@ -8,6 +8,7 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -24,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -34,6 +35,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -51,6 +53,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -78,17 +81,23 @@ public class Manager {
   private AssetIssueStore assetIssueStore;
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
+  @Autowired
   private BlockIndexStore blockIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
+  @Autowired
+  private RecentBlockStore recentBlockStore;
 
+  // for network
   @Autowired
   private PeersStore peersStore;
-  private BlockCapsule genesisBlock;
 
-  private LevelDbDataSourceImpl numHashCache;
-  @Getter
+
   @Autowired
   private KhaosDatabase khaosDb;
+
+
+  private BlockCapsule genesisBlock;
   private RevokingDatabase revokingStore;
 
   @Getter
@@ -225,12 +234,10 @@ public class Manager {
   }
 
   @PostConstruct
-  public void initOther() {
+  public void init() {
     revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
-    this.setWitnessScheduleStore(WitnessScheduleStore.create("witness_schedule"));
     this.setWitnessController(WitnessController.createInstance(this));
-    this.setBlockIndexStore(BlockIndexStore.create("block-index"));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -253,18 +260,6 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
-  }
-
-  /**
-   * all db should be init here.
-   */
-  public void init() {
-    this.setAccountStore(AccountStore.create("account"));
-    this.setTransactionStore(TransactionStore.create("trans"));
-    this.setBlockStore(BlockStore.create("block"));
-    this.setWitnessStore(WitnessStore.create("witness"));
-
-    initOther();
   }
 
   public BlockId getGenesisBlockId() {
@@ -375,7 +370,7 @@ public class Manager {
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(accountAddress + " Insufficient");
     }
-    account.setBalance(balance + amount);
+    account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
@@ -394,12 +389,29 @@ public class Manager {
     this.getAccountStore().put(account.createDbKey(), account);
   }
 
+  void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
+    byte[] refBlockHash = transactionCapsule.getInstance()
+        .getRawData().getRefBlockHash().toByteArray();
+    byte[] refBlockNumBytes = transactionCapsule.getInstance()
+        .getRawData().getRefBlockBytes().toByteArray();
+    try {
+      byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
+      if (Arrays.equals(blockHash, refBlockHash)) {
+        return;
+      } else {
+        throw new TaposException("tapos failed");
+      }
+    } catch (ItemNotFoundException e) {
+      throw new TaposException("tapos failed");
+    }
+  }
+
   /**
    * push transaction into db.
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException {
+      ValidateBandwidthException, DupTransactionException, TaposException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -407,11 +419,12 @@ public class Manager {
       throw new DupTransactionException("dup trans");
     }
 
+
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-
     consumeBandwidth(trx);
+    validateTapos(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
@@ -780,8 +793,11 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException {
 
-    if (trxCap == null || !trxCap.validateSignature()) {
+    if (trxCap == null) {
       return false;
+    }
+    if (!trxCap.validateSignature()) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -927,6 +943,12 @@ public class Manager {
     }
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
+  }
+
+  public void updateRecentBlock(BlockCapsule block) {
+    this.recentBlockStore.put(ByteArray.subArray(
+        ByteArray.fromLong(block.getNum()), 6, 8),
+        new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
   }
 
   /**

@@ -23,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
@@ -92,6 +93,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.info(e.getMessage());
     } catch (DupTransactionException e) {
       logger.debug("dup trans");
+    } catch (TaposException e) {
+      logger.debug("tapos error");
     }
   }
 
@@ -256,7 +259,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public long getHeadBlockTimeStamp(){
+  public long getHeadBlockTimeStamp() {
     return dbManager.getHeadBlockTimeStamp();
   }
 

@@ -20,14 +20,16 @@ package org.tron.core;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.NumberMessage.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -45,6 +47,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
@@ -158,7 +161,7 @@ public class Wallet {
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (addressBase58 == null || addressBase58.length() == 0) {
+    if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
       return null;
     }
@@ -205,12 +208,10 @@ public class Wallet {
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      if (trx.validateSignature()) {
-        Message message = new TransactionMessage(signaturedTransaction);
-        dbManager.pushTransactions(trx);
-        p2pNode.broadcast(message);
-        return true;
-      }
+      Message message = new TransactionMessage(signaturedTransaction);
+      dbManager.pushTransactions(trx);
+      p2pNode.broadcast(message);
+      return true;
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
@@ -221,6 +222,8 @@ public class Wallet {
       logger.debug("high freq", e);
     } catch (DupTransactionException e) {
       logger.debug("dup trans", e);
+    } catch (TaposException e) {
+      logger.debug("tapos error", e);
     }
     return false;
   }
@@ -330,8 +333,50 @@ public class Wallet {
   }
 
   public NumberMessage totalTransaction() {
-    Builder builder = NumberMessage.newBuilder()
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
         .setNum(dbManager.getTransactionStore().getTotalTransactions());
     return builder.build();
+  }
+
+  public Block getBlockById(ByteString BlockId) {
+    if (Objects.isNull(BlockId)) {
+      return null;
+    }
+    Block blocke = null;
+    try {
+      blocke = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+    } catch (StoreException e) {
+    }
+    return blocke;
+  }
+
+  public BlockList getBlocksByLimitNext(long number, long limit) {
+    if (limit <= 0) {
+      return null;
+    }
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    return blockListBuilder.build();
+  }
+
+  public BlockList getBlockByLatestNum(long getNum) {
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    return blockListBuilder.build();
+  }
+
+  public Transaction getTransactionById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    Transaction transaction = null;
+    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
+        .get(transactionId.toByteArray());
+    if (Objects.nonNull(transactionCapsule)) {
+      transaction = transactionCapsule.getInstance();
+    }
+    return transaction;
   }
 }

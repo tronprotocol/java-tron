@@ -62,9 +62,10 @@ public class WitnessCreateActuator extends AbstractActuator {
       AccountCapsule accountCapsule = this.dbManager.getAccountStore()
           .get(contract.getOwnerAddress().toByteArray());
 
-      Preconditions.checkArgument(accountCapsule.getShare() >= WitnessCapsule.MIN_BALANCE,
+      Preconditions.checkArgument(accountCapsule.getBalance() >= WitnessCapsule.MIN_BALANCE,
           "witnessAccount  has balance["
-              + accountCapsule.getShare() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
+              + accountCapsule.getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE
+              + "]");
 
       Preconditions.checkArgument(
           !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),

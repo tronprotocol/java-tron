@@ -49,6 +49,10 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
+    } catch (ArithmeticException e){
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
 
     return true;
@@ -89,11 +93,12 @@ public class TransferActuator extends AbstractActuator {
       }
       long amount = transferContract.getAmount();
       if (amount <= 0) {
-        throw new ContractValidateException("Amount is less than 0.");
+        throw new ContractValidateException("Amount must greater than 0.");
       }
-      if (balance < amount) {
+      if (balance < Math.addExact(amount, calcFee())) {
         throw new ContractValidateException("balance is not sufficient.");
       }
+
       // if account with to_address is not existed,  create it.
       ByteString toAddress = transferContract.getToAddress();
       if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
@@ -106,8 +111,9 @@ public class TransferActuator extends AbstractActuator {
             AccountType.Normal);
         dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
+      //check to account balance if overflow
+      balance = Math.addExact(dbManager.getAccountStore().get(toAddress.toByteArray()).getBalance(), amount);
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

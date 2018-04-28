@@ -20,17 +20,18 @@ package org.tron.common.utils;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.util.encoders.Hex;
 
 @Slf4j
 public class ByteArray {
+
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
   public static String toHexString(byte[] data) {
@@ -103,5 +104,20 @@ public class ByteArray {
       logger.error("objectToByteArray failed: " + e.getMessage(), e);
     }
     return bytes;
+  }
+
+  /**
+   * Generate a subarray of a given byte array.
+   *
+   * @param input the input byte array
+   * @param start the start index
+   * @param end the end index
+   * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
+   * (exclusively)
+   */
+  public static byte[] subArray(byte[] input, int start, int end) {
+    byte[] result = new byte[end - start];
+    System.arraycopy(input, start, result, 0, end - start);
+    return result;
   }
 }
