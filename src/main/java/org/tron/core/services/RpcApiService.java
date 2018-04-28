@@ -27,7 +27,6 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TimeMessage;
-import org.tron.api.GrpcAPI.TransactionLimit;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc.WalletImplBase;
@@ -647,21 +646,6 @@ public class RpcApiService implements Service {
 
       if (Objects.nonNull(transactionId)) {
         responseObserver.onNext(wallet.getTransactionById(transactionId));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionByLimitPrev(TransactionLimit request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString transactionId = request.getTransactionId();
-
-      long limitNum = request.getLimitNum();
-
-      if (Objects.nonNull(transactionId) && limitNum > 0) {
-        responseObserver.onNext(wallet.getTransactionsByLimitPrev(transactionId, limitNum));
       } else {
         responseObserver.onNext(null);
       }

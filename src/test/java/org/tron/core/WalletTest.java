@@ -34,7 +34,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -297,39 +296,6 @@ public class WalletTest {
     transactionById = wallet.getTransactionById(
         ByteString.copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()));
     Assert.assertEquals("getTransactionById5", transaction5, transactionById);
-  }
-
-  @Ignore
-  @Test
-  public void getTransactionsByLimit() {
-    TransactionList transactionsByLimit = wallet.getTransactionsByLimitPrev(
-        ByteString.copyFrom(new TransactionCapsule(transaction1).getTransactionId().getBytes()), 2);
-    Assert.assertEquals("getTransactionsByLimit1", 1,
-        transactionsByLimit.getTransactionList().size());
-    Assert.assertTrue("getTransactionsByLimit3",
-        transactionsByLimit.getTransactionList().contains(transaction1));
-    transactionsByLimit = wallet.getTransactionsByLimitPrev(
-        ByteString.copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()), 9);
-    Assert.assertEquals("getTransactionsByLimit2", 5,
-        transactionsByLimit.getTransactionList().size());
-    Assert.assertTrue("getTransactionsByLimit3",
-        transactionsByLimit.getTransactionList().contains(transaction5));
-    Assert.assertTrue("getTransactionsByLimit4",
-        transactionsByLimit.getTransactionList().contains(transaction4));
-    Assert.assertTrue("getTransactionsByLimit5",
-        transactionsByLimit.getTransactionList().contains(transaction3));
-    Assert.assertTrue("getTransactionsByLimit6",
-        transactionsByLimit.getTransactionList().contains(transaction2));
-    Assert.assertTrue("getTransactionsByLimit6",
-        transactionsByLimit.getTransactionList().contains(transaction1));
-    transactionsByLimit = wallet.getTransactionsByLimitPrev(
-        ByteString.copyFrom(new TransactionCapsule(transaction4).getTransactionId().getBytes()), 2);
-    Assert.assertEquals("getTransactionsByLimit7", 2,
-        transactionsByLimit.getTransactionList().size());
-    Assert.assertTrue("getTransactionsByLimit8",
-        transactionsByLimit.getTransactionList().contains(transaction4));
-    Assert.assertTrue("getTransactionsByLimit9",
-        transactionsByLimit.getTransactionList().contains(transaction3));
   }
 
   @Test
