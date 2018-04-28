@@ -26,7 +26,7 @@ import org.tron.common.overlay.message.ReasonCode;
 
 public class NodeStatistics {
 
-  public final static int REPUTATION_PREDEFINED = 1000500;
+  public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000;
 
   public class StatHandler {
@@ -94,6 +94,7 @@ public class NodeStatistics {
     discoverReput +=
             min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
     discoverReput += min(discoverInNeighbours.get(), 10) * 10;
+    discoverReput += min(discoverInFind.get(), 50);
 
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
