@@ -162,6 +162,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
       AccountCapsule toAccount = this.dbManager.getAccountStore()
           .get(participateAssetIssueContract.getToAddress().toByteArray());
+      if (toAccount == null) {
+        throw new ContractValidateException("To account does not exist!");
+      }
       if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }
