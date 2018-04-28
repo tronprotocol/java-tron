@@ -435,7 +435,7 @@ public class Manager {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = this.getAccountStore().get(address);
       if (accountCapsule == null) {
-        throw new ValidateBandwidthException("account is not exist");
+        throw new ValidateBandwidthException("account not exists");
       }
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
@@ -462,7 +462,7 @@ public class Manager {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         if (accountCapsule == null) {
-          throw new HighFreqException("account is not exist");
+          throw new HighFreqException("account not exists");
         }
         long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
