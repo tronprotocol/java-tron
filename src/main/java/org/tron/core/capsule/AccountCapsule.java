@@ -321,4 +321,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
 
   }
+
+  //for test only
+  public void setFrozen(long frozenBalance, long expireTime) {
+    Frozen newFrozen = Frozen.newBuilder()
+        .setFrozenBalance(frozenBalance)
+        .setExpireTime(expireTime)
+        .build();
+
+    this.account = this.account.toBuilder()
+        .addFrozen(newFrozen)
+        .build();
+  }
+
 }

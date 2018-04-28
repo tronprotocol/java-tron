@@ -96,7 +96,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
           .filter(frozen -> frozen.getExpireTime() <= now).count();
       if (allowedUnfreezeCount <= 0) {
-        throw new ContractValidateException("no frozenBalance");
+        throw new ContractValidateException("It's not time to unfreeze.");
       }
 
 
