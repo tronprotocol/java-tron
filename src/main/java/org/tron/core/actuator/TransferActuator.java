@@ -109,7 +109,6 @@ public class TransferActuator extends AbstractActuator {
       //check to account balance if overflow
       balance = Math.addExact(dbManager.getAccountStore().get(toAddress.toByteArray()).getBalance(), amount);
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 
