@@ -338,6 +338,9 @@ public class Wallet {
   }
 
   public Block getBlockById(ByteString BlockId) {
+    if(Objects.isNull(BlockId)){
+      return null;
+    }
     Block blocke = null;
     try {
       blocke = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
@@ -354,6 +357,9 @@ public class Wallet {
   }
 
   public Transaction getTransactionById(ByteString transactionId) {
+    if(Objects.isNull(transactionId)){
+      return null;
+    }
     Transaction transaction = null;
     TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
         .get(transactionId.toByteArray());
@@ -364,6 +370,9 @@ public class Wallet {
   }
 
   public TransactionList getTransactionsByLimitPrev(ByteString transactionId, long limit) {
+    if(Objects.isNull(transactionId)){
+      return null;
+    }
     TransactionList.Builder transactionListBuilder = TransactionList.newBuilder();
     dbManager.getTransactionStore().getLimitNumber(transactionId.toByteArray(), limit).forEach(
         transactionCapsule -> transactionListBuilder
