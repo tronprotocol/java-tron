@@ -277,7 +277,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Trx Num must be positive!".equals(e.getMessage()));
+      Assert.assertTrue("Amount must greater than 0!".equals(e.getMessage()));
 
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -306,7 +306,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Trx Num must be positive!".equals(e.getMessage()));
+      Assert.assertTrue("Amount must greater than 0!".equals(e.getMessage()));
 
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));

@@ -100,7 +100,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     try {
       final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
-
+      //Parameters check
       if (!Wallet.addressValid(participateAssetIssueContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
@@ -110,7 +110,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       Preconditions
           .checkNotNull(participateAssetIssueContract.getAssetName(), "Asset name is null");
       if (participateAssetIssueContract.getAmount() <= 0) {
-        throw new ContractValidateException("Trx Num must be positive!");
+        throw new ContractValidateException("Amount must greater than 0!");
       }
 
       if (participateAssetIssueContract.getOwnerAddress()
@@ -120,11 +120,11 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       byte[] addressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
       //Whether the account exist
-      if (!this.dbManager.getAccountStore().has(addressBytes)) {
+      AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
+      if (ac == null) {
         throw new ContractValidateException("Account does not exist!");
       }
 
-      AccountCapsule ac = this.dbManager.getAccountStore().get(addressBytes);
       long fee = calcFee();
       //Whether the balance is enough
       if (ac.getBalance() < Math.addExact(participateAssetIssueContract.getAmount(), fee)) {
