@@ -31,7 +31,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j

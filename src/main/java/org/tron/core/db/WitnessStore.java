@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.common.iterator.WitnessIterator;
-import org.tron.protos.Protocol.Witness;
 
 @Slf4j
 @Component

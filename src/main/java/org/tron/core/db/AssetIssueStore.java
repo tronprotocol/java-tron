@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.common.iterator.AssetIssueIterator;
-import org.tron.protos.Contract.AssetIssueContract;
 
 @Slf4j
 @Component

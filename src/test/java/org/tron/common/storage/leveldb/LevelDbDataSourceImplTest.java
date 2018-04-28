@@ -264,49 +264,4 @@ public class LevelDbDataSourceImplTest {
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
     dataSource.resetDb();
   }
-
-  @Test
-  public void getValueNext() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValueNext_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    byte[] bySeekKeyNext = dataSource.getValueNext("00000003aa".getBytes());
-    Assert.assertArrayEquals("getValueNext1", value3, bySeekKeyNext);
-    bySeekKeyNext = dataSource.getValueNext("00000003ff".getBytes());
-    Assert.assertArrayEquals("getValueNext2", value4, bySeekKeyNext);
-    bySeekKeyNext = dataSource.getValueNext("0000000100".getBytes());
-    Assert.assertArrayEquals("getValueNext3", value1, bySeekKeyNext);
-    bySeekKeyNext = dataSource.getValueNext("00000001ff".getBytes());
-    Assert.assertArrayEquals("getValueNext4", value2, bySeekKeyNext);
-    bySeekKeyNext = dataSource.getValueNext("0000000600".getBytes());
-    Assert.assertArrayEquals("getValueNext5", value6, bySeekKeyNext);
-    bySeekKeyNext = dataSource.getValueNext("00000006ff".getBytes());
-    Assert.assertNull("getValueNext6", bySeekKeyNext);
-    dataSource.resetDb();
-  }
-
-  @Test
-  public void getValuePrev() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuePrev_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    byte[] bySeekKeyPrev = dataSource.getValuePrev("00000003aa".getBytes());
-    Assert.assertArrayEquals("getValuePrev1", value3, bySeekKeyPrev);
-    bySeekKeyPrev = dataSource.getValuePrev("0000000300".getBytes());
-    Assert.assertArrayEquals("getValuePrev2", value2, bySeekKeyPrev);
-    bySeekKeyPrev = dataSource.getValuePrev("0000000100".getBytes());
-    Assert.assertNull("getValuePrev3", bySeekKeyPrev);
-    bySeekKeyPrev = dataSource.getValuePrev("00000001ff".getBytes());
-    Assert.assertArrayEquals("getValuePrev4", value1, bySeekKeyPrev);
-    bySeekKeyPrev = dataSource.getValuePrev("00000006ff".getBytes());
-    Assert.assertNull("getValuePrev5", bySeekKeyPrev);
-    bySeekKeyPrev = dataSource.getValuePrev("00000007ff".getBytes());
-    dataSource.resetDb();
-  }
 }

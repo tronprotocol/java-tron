@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.common.iterator.AccountIterator;
-import org.tron.protos.Protocol.Account;
 
 @Slf4j
 @Component
