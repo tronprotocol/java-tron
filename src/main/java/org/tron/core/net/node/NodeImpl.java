@@ -275,8 +275,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   @Override
-  public void close() throws InterruptedException {
-    getActivePeer().forEach(peer -> disconnectPeer(peer, ReasonCode.USER_REASON));
+  public void close() {
+    getActivePeer().forEach(peer -> disconnectPeer(peer, ReasonCode.REQUESTED));
   }
 
   private void activeTronPump() {
@@ -384,7 +384,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.debug(e.getMessage(), e);
       }
     }
-
     synchronized (advObjToFetch) {
       InvToSend sendPackage = new InvToSend();
       advObjToFetch.entrySet()
@@ -398,8 +397,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                     advObjToFetch.remove(idToFetch.getKey());
                     peer.getAdvObjWeRequested()
                         .put(idToFetch.getKey(), Time.getCurrentMillis());
-                  })
-          );
+                  }));
       sendPackage.sendFetch();
     }
   }
@@ -421,7 +419,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromUs())
-        .forEach(peer -> {
+        .forEach(peer ->
           spread.entrySet().stream()
               .filter(idToSpread ->
                   !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
@@ -429,9 +427,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               .forEach(idToSpread -> {
                 peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                 sendPackage.add(idToSpread, peer);
-              });
-//                peer.cleanInvGarbage();
-        });
+              }));
     sendPackage.sendInv();
   }
 
@@ -553,10 +549,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       if (isDisconnected[0]) {
         //TODO use new reason
-        //logger.debug("disconnect reason:" + reasonCode[0]);
-        disconnectPeer(peer, reasonCode[0]);
-      } else {
-        //logger.debug("not disconnect");
+        disconnectPeer(peer, ReasonCode.TIME_OUT);
       }
     });
   }
@@ -691,13 +684,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.error("We get a bad block, reason is " + e.getMessage()
           + "\n the block is" + block);
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
-      reason = ReasonCode.REQUESTED;
+      reason = ReasonCode.BAD_BLOCK;
     } catch (UnLinkedBlockException e) {
       //should not go here.
       logger.debug(e.getMessage(), e);
       logger.error("We get a unlinked block, we can't find this block's parent in our db\n"
           + "this block is " + block);
-      reason = ReasonCode.REQUESTED;
+      reason = ReasonCode.UNLINKABLE;
       //logger.error(e.getMessage());
     }
 
@@ -759,9 +752,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
-      banTraitorPeer(peer);
+      banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     } catch (BadTransactionException e) {
       badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
+      banTraitorPeer(peer, ReasonCode.BAD_TX);
     }
   }
 
@@ -846,8 +840,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void banTraitorPeer(PeerConnection peer) {
-    disconnectPeer(peer, ReasonCode.BAD_PROTOCOL); //TODO: ban it
+  private void banTraitorPeer(PeerConnection peer, ReasonCode reason) {
+    disconnectPeer(peer, reason); //TODO: ban it
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
@@ -986,7 +980,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
-      banTraitorPeer(peer);
+      banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     }
   }
 
@@ -1112,7 +1106,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TronException e) { //TODO: use tron excpetion here
       logger.info(e.getMessage());
       logger.debug(e.getMessage(), e);
-      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);//TODO: unlink?
+      disconnectPeer(peer, ReasonCode.FORKED);//TODO: unlink?
     }
   }
 
