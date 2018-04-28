@@ -318,9 +318,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
+          isValidated = false;
           throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
+        isValidated = false;
         throw new ValidateSignatureException(e.getMessage());
       }
     }
