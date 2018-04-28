@@ -41,6 +41,8 @@ public class TransferActuatorTest {
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private static final String TO_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String NOT_EXIT_ADDRESS =
+      Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
   private static final long AMOUNT = 100;
   private static final long OWNER_BALANCE = 99999;
   private static final long TO_BALANCE = 100001;
@@ -210,8 +212,13 @@ public class TransferActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-
       Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
 
     } catch (ContractExeException e) {
       Assert.assertTrue(e instanceof ContractExeException);
@@ -232,6 +239,12 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate toAddress", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -249,10 +262,16 @@ public class TransferActuatorTest {
       fail("Cannot transfer trx to yourself.");
 
     } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Cannot transfer trx to yourself.", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
-      Assert.assertTrue(e instanceof ContractExeException);
-      Assert.assertEquals(ret.getInstance().getRet(), code.FAILED);
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
   }
@@ -260,7 +279,7 @@ public class TransferActuatorTest {
   @Test
   public void iniviateOwnerAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ACCOUNT_INVALIATE, TO_ADDRESS), dbManager);
+        getContract(100L, OWNER_ACCOUNT_INVALIATE, NOT_EXIT_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -269,6 +288,12 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Validate TransferContract error, no OwnerAccount.", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -371,7 +396,11 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Validate TransferContract error, insufficient fee.", e.getMessage());
-
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
