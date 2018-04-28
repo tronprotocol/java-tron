@@ -51,6 +51,7 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -364,12 +365,27 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAllowance(byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().get(accountAddress);
+    long allowance = account.getAllowance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && allowance < -amount) {
+      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+    }
+    account.setAllowance(allowance + amount);
+    this.getAccountStore().put(account.getAddress().toByteArray(), account);
+  }
+
   /**
    * push transaction into db.
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      HighFreqException, DupTransactionException {
+      ValidateBandwidthException, DupTransactionException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -381,7 +397,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    validateFreq(trx);
+    consumeBandwidth(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
@@ -397,6 +413,33 @@ public class Manager {
     return true;
   }
 
+
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
+        trx.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      byte[] address = TransactionCapsule.getOwner(contract);
+      AccountCapsule accountCapsule = this.getAccountStore().get(address);
+      if (accountCapsule == null) {
+        throw new ValidateBandwidthException("account is not exist");
+      }
+      long bandwidth = accountCapsule.getBandwidth();
+      long now = Time.getCurrentMillis();
+      long latestOperationTime = accountCapsule.getLatestOperationTime();
+      if (now - latestOperationTime < 5 * 60 * 1000) {
+        return;
+      }
+      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
+      if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+      }
+      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+      accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+      this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    }
+  }
+
+  @Deprecated
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -418,6 +461,7 @@ public class Manager {
     }
   }
 
+  @Deprecated
   private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
     long now = Time.getCurrentMillis();
@@ -869,7 +913,7 @@ public class Manager {
       }
     }
     updateMaintenanceState(needMaint);
-    witnessController.updateWitnessSchedule();
+    //witnessController.updateWitnessSchedule();
   }
 
   /**
@@ -957,7 +1001,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
     try {
-      adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
     }

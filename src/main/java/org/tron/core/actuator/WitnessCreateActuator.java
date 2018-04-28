@@ -11,6 +11,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
@@ -69,6 +70,11 @@ public class WitnessCreateActuator extends AbstractActuator {
           !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
           "Witness[" + readableOwnerAddress + "] has existed");
 
+      Preconditions.checkArgument(
+          accountCapsule.getBalance() >= dbManager.getDynamicPropertiesStore()
+              .getAccountUpgradeCost(),
+          "balance < AccountUpgradeCost");
+
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
@@ -93,6 +99,19 @@ public class WitnessCreateActuator extends AbstractActuator {
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
+
+    try {
+      dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
+          -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+
+      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(),
+          +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+
+    } catch (BalanceInsufficientException e) {
+      throw new RuntimeException(e);
+    }
+
+
   }
 
 }
