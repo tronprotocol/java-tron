@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -89,7 +88,6 @@ public class Manager {
 
 
   private BlockCapsule genesisBlock;
-  private LevelDbDataSourceImpl numHashCache;
   private RevokingDatabase revokingStore;
 
   @Getter
@@ -639,6 +637,10 @@ public class Manager {
                 (dynamicPropertiesStore.getLatestBlockHeaderNumber()
                     - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
                     + 1));
+    khaosDb.setMaxSize((int)
+        (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+            - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+            + 1));
   }
 
   /**
