@@ -94,12 +94,12 @@ public class AssetIssueActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
       if (accountCapsule == null) {
-        throw new ContractValidateException("Account is not exist");
+        throw new ContractValidateException("Account not exist");
       }
 
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
           != null) {
-        throw new ContractValidateException("Token is exist");
+        throw new ContractValidateException("Token exist");
       }
 
     } catch (InvalidProtocolBufferException e) {
