@@ -114,8 +114,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    logger.info("exception caught, {}", ctx.channel().remoteAddress(), cause);
-    ctx.close();
+    channelManager.processException(ctx, cause);
   }
 
   public void setChannel(Channel channel, String remoteId) {
