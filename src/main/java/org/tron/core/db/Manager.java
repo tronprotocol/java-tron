@@ -408,7 +408,8 @@ public class Manager {
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    validateTapos(trx);
+
+    //validateTapos(trx);
         
     validateFreq(trx);
 
