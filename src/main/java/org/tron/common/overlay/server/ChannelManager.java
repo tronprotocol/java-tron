@@ -20,6 +20,7 @@ package org.tron.common.overlay.server;
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,11 +28,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
@@ -151,6 +156,17 @@ public class ChannelManager {
 
   public Collection<Channel> getActivePeers() {
     return new ArrayList<>(activePeers.values());
+  }
+
+  public void processException(ChannelHandlerContext ctx, Throwable throwable){
+      if (throwable instanceof ReadTimeoutException){
+          logger.error("Read timeout, {}", ctx.channel().remoteAddress());
+      }else if (throwable.getMessage().contains("Connection reset by peer")){
+          logger.error("Connection reset by peer, {}", ctx.channel().remoteAddress());
+      }else {
+          logger.error("exception caught, {}", ctx.channel().remoteAddress(), throwable);
+      }
+      ctx.close();
   }
 
   public void close() {

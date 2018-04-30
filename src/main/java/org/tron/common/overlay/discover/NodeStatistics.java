@@ -26,7 +26,7 @@ import org.tron.common.overlay.message.ReasonCode;
 
 public class NodeStatistics {
 
-  public final static int REPUTATION_PREDEFINED = 1000500;
+  public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000;
 
   public class StatHandler {
@@ -94,6 +94,7 @@ public class NodeStatistics {
     discoverReput +=
             min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
     discoverReput += min(discoverInNeighbours.get(), 10) * 10;
+    discoverReput += min(discoverInFind.get(), 50);
 
     //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
 
@@ -149,17 +150,25 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
-        tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
+        tronLastLocalDisconnectReason == ReasonCode.BAD_BLOCK ||
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_BLOCK ||
+        tronLastLocalDisconnectReason == ReasonCode.BAD_TX ||
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_TX ||
+        tronLastLocalDisconnectReason == ReasonCode.FORKED ||
+        tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
+        tronLastLocalDisconnectReason ==  ReasonCode.UNLINKABLE ||
+        tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN;
   }
 
   public boolean isPenalized() {
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
             tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-            tronLastLocalDisconnectReason == ReasonCode.USELESS_PEER ||
-            tronLastRemoteDisconnectReason == ReasonCode.USELESS_PEER ||
             tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
             tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
   }
