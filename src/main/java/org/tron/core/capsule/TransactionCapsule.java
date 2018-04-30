@@ -37,6 +37,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -248,6 +249,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case ParticipateAssetIssueContract:
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
+          break;
+        case AccountUpdateContract:
+          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
           break;
         // todo add other contract
 
