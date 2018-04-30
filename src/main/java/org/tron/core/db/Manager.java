@@ -424,7 +424,10 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
     consumeBandwidth(trx);
-    validateTapos(trx);
+
+    //validateTapos(trx);
+        
+    validateFreq(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
