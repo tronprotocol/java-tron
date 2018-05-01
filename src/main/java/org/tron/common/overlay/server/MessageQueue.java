@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.overlay.server;
 
 import io.netty.channel.ChannelFutureListener;
@@ -33,26 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.DisconnectMessage;
-import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.message.PingMessage;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.message.*;
 
-/**
- * This class contains the logic for sending messages in a queue
- *
- * Messages open by send and answered by receive of appropriate message
- *      PING by PONG
- *      GET_PEERS by PEERS
- *      GET_TRANSACTIONS by TRANSACTIONS
- *      GET_BLOCK_HASHES by BLOCK_HASHES
- *      GET_BLOCKS by BLOCKS
- *
- * The following messages will not be answered:
- *      PONG, PEERS, HELLO, STATUS, TRANSACTIONS, BLOCKS
- *
- * @author Roman Mandeleil
- */
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+
 @Component
 @Scope("prototype")
 public class MessageQueue {
@@ -61,29 +28,21 @@ public class MessageQueue {
 
   private boolean sendMsgFlag = false;
 
-  private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
-    private AtomicInteger cnt = new AtomicInteger(0);
-
-    public Thread newThread(Runnable r) {
-      return new Thread(r, "MessageQueueTimer-" + cnt.getAndIncrement());
-    }
-  });
-
   private Thread sendMsgThread;
 
-  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
-  //private Queue<MessageRoundtrip> respondQueue = new ConcurrentLinkedQueue<>();
-
-  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
+  private Channel channel;
 
   private ChannelHandlerContext ctx = null;
 
-  boolean hasPing = false;
-  private ScheduledFuture<?> timerTask;
-  private Channel channel;
+  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
 
-  public MessageQueue() {
-  }
+  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
+
+  private static ScheduledExecutorService sendTimer =
+          Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
+
+  private ScheduledFuture<?> sendTask;
+
 
   public void activate(ChannelHandlerContext ctx) {
 
@@ -91,11 +50,13 @@ public class MessageQueue {
 
     sendMsgFlag = true;
 
-    timerTask = timer.scheduleAtFixedRate(() -> {
+    sendTask = sendTimer.scheduleAtFixedRate(() -> {
       try {
-        nudgeQueue();
-      } catch (Throwable t) {
-        logger.error("Unhandled exception", t);
+        if (sendMsgFlag){
+          send();
+        }
+      } catch (Exception e) {
+        logger.error("Unhandled exception", e);
       }
     }, 10, 10, TimeUnit.MILLISECONDS);
 
@@ -107,9 +68,7 @@ public class MessageQueue {
            continue;
          }
          Message msg = msgQueue.take();
-         ctx.writeAndFlush(msg.getSendData())
-                 .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-         logger.debug("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
+         ctx.writeAndFlush(msg.getSendData()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
        }catch (Exception e) {
          logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
@@ -124,67 +83,40 @@ public class MessageQueue {
   }
 
   public void sendMessage(Message msg) {
-    if (msg instanceof PingMessage) {
-      if (hasPing) return;
-      hasPing = true;
-    }
-
+    logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
     if (msg.getAnswerMessage() != null)
       requestQueue.add(new MessageRoundtrip(msg));
     else
       msgQueue.offer(msg);
   }
 
-  public void disconnect(ReasonCode reason) {
-    if (sendMsgFlag){
-      ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
-      ctx.close();
-    }
-  }
-
-  public void receivedMessage(Message msg) throws InterruptedException {
-
-    logger.debug("rcv {} from {}",msg.getType(), ctx.channel().remoteAddress());
-
-    if (requestQueue.peek() != null) {
-      MessageRoundtrip messageRoundtrip = requestQueue.peek();
-      Message waitingMessage = messageRoundtrip.getMsg();
-
-      if (waitingMessage instanceof PingMessage) hasPing = false;
-
-      if (waitingMessage.getAnswerMessage() != null
-          && msg.getClass() == waitingMessage.getAnswerMessage()) {
-        logger.info("rcv {} from {}",msg.getType(), ctx.channel().remoteAddress());
-        messageRoundtrip.answer();
-        channel.getPeerStats().pong(messageRoundtrip.lastTimestamp);
-      }
-    }
-  }
-
-  private void removeAnsweredMessage(MessageRoundtrip messageRoundtrip) {
-    if (messageRoundtrip != null && messageRoundtrip.isAnswered()) 
+  public void receivedMessage(Message msg){
+    logger.info("rcv {} from {}", msg.getType(), ctx.channel().remoteAddress());
+    MessageRoundtrip messageRoundtrip = requestQueue.peek();
+    if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg.getClass()){
       requestQueue.remove();
+    }
   }
 
-  private void nudgeQueue() {
-    removeAnsweredMessage(requestQueue.peek());
-    sendToWire(requestQueue.peek());
+  public void close() {
+    sendMsgFlag = false;
+    if(sendTask != null && !sendTask.isCancelled()){
+      sendTask.cancel(false);
+    }
   }
 
-  private void sendToWire(MessageRoundtrip messageRoundtrip) {
-
+  private void send() {
+    MessageRoundtrip messageRoundtrip = requestQueue.peek();
     if (!sendMsgFlag || messageRoundtrip == null){
       return;
     }
-
     if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()){
       return;
     }
-
     if (messageRoundtrip.getRetryTimes() > 0){
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
       logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
-      ctx.close();
+      channel.close();
       return;
     }
 
@@ -199,13 +131,6 @@ public class MessageQueue {
       messageRoundtrip.incRetryTimes();
       messageRoundtrip.saveTime();
     }
-  }
-
-  public void close() {
-
-    sendMsgFlag = false;
-
-    timerTask.cancel(false);
   }
 
 }

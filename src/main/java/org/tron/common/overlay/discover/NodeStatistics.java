@@ -193,10 +193,6 @@ public class NodeStatistics {
     this.isPredefined = isPredefined;
   }
 
-  public int getPersistedReputation() {
-    return isReputationPenalized() ? 0 : (persistedReputation + getSessionFairReputation()) / 2;
-  }
-
   public void setPersistedReputation(int persistedReputation) {
     this.persistedReputation = persistedReputation;
   }
