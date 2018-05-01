@@ -277,7 +277,7 @@ public class TransferActuatorTest {
   @Test
   public void noExitOwnerAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ACCOUNT_INVALIATE, OWNER_ACCOUNT_INVALIATE), dbManager);
+        getContract(100L, OWNER_ACCOUNT_INVALIATE, TO_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -329,6 +329,8 @@ public class TransferActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
     }
 
   }
@@ -437,6 +439,8 @@ public class TransferActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
     }
   }
 
