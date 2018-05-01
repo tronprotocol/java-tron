@@ -326,7 +326,6 @@ public class TransferAssetActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-
   }
 
   @Test
