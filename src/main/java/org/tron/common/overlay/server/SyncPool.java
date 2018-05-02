@@ -106,6 +106,12 @@ public class SyncPool {
                 n.getNode().getHexId(), false));
   }
 
+  // for test only
+  public void addActivePeers(PeerConnection p) {
+    activePeers.add(p);
+  }
+
+
   synchronized void logActivePeers() {
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
     nodeManager.dumpActiveNodes().forEach(handler -> {
