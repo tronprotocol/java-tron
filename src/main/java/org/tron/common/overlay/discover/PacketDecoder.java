@@ -36,7 +36,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {
         ByteBuf buf = packet.content();
         int length = buf.readableBytes();
-        if (length <= 0 || length > maxSize){
+        if (length > maxSize){
             logger.error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
             return;
         }
