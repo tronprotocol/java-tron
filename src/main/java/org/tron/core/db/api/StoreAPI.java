@@ -1,5 +1,30 @@
 package org.tron.core.db.api;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
+import com.googlecode.cqengine.resultset.ResultSet;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.tron.core.db.api.index.AccountIndex;
+import org.tron.core.db.api.index.AssetIssueIndex;
+import org.tron.core.db.api.index.BlockIndex;
+import org.tron.core.db.api.index.Index;
+import org.tron.core.db.api.index.TransactionIndex;
+import org.tron.core.db.api.index.WitnessIndex;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Witness;
+
+import java.util.Collections;
+import java.util.List;
+
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.and;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
@@ -13,25 +38,6 @@ import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
 import static com.googlecode.cqengine.query.QueryFactory.threshold;
 import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Streams;
-import com.googlecode.cqengine.resultset.ResultSet;
-import java.util.Collections;
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.tron.core.db.api.index.*;
-import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.exception.NonUniqueObjectException;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Witness;
 
 @Component
 @Slf4j
