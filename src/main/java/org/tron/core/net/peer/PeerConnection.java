@@ -246,7 +246,7 @@ public class PeerConnection extends Channel {
             + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
-        this.getPeerIdShort(),
+        this.getNode().getHexIdShort(),
         (int) this.getPeerStats().getAvgLatency(),
         Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),

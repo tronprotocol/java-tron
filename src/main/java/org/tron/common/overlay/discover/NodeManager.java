@@ -47,7 +47,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 @Component
-public class NodeManager implements Consumer<DiscoveryEvent> {
+public class NodeManager {
 
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
@@ -165,11 +165,9 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     Set<Node> batch = new HashSet<>();
     synchronized (this) {
       for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
-        //if (isNodeAlive(nodeHandler)) {
-        nodeHandler.getNode()
-            .setReputation(nodeHandler.getNodeStatistics().getPersistedReputation());
+        int reputation = nodeHandler.getNodeStatistics().getReputation();
+        nodeHandler.getNode().setReputation(reputation);
         batch.add(nodeHandler.getNode());
-        //}
       }
     }
     logger.info("Write Node statistics to PeersStore: " + batch.size() + " nodes.");
@@ -197,9 +195,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
       trimTable();
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
-      logger.info("Add new node: {}, size={}", ret, nodeHandlerMap.size());
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      logger.info("Change node: old {} new {}, size ={}", ret, n, nodeHandlerMap.size());
       ret.node = n;
     }
     return ret;
@@ -209,9 +205,7 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());
       // reverse sort by reputation
-      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics()
-          .getReputation());
-
+      sorted.sort((o1, o2) -> o1.getNodeStatistics().getReputation() - o2.getNodeStatistics().getReputation());
       for (NodeHandler handler : sorted) {
         nodeHandlerMap.remove(getKey(handler.getNode()));
         if (nodeHandlerMap.size() <= MAX_NODES) {
@@ -231,11 +225,6 @@ public class NodeManager implements Consumer<DiscoveryEvent> {
 
   public NodeStatistics getNodeStatistics(Node n) {
     return getNodeHandler(n).getNodeStatistics();
-  }
-
-  @Override
-  public void accept(DiscoveryEvent discoveryEvent) {
-    handleInbound(discoveryEvent);
   }
 
   public void handleInbound(DiscoveryEvent discoveryEvent) {

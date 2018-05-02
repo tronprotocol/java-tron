@@ -82,7 +82,6 @@ public class SyncPool {
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
-        prepareActive();
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
@@ -107,25 +106,15 @@ public class SyncPool {
                 n.getNode().getHexId(), false));
   }
 
-  private synchronized void prepareActive() {
-    for (Channel channel : channelManager.getActivePeers()) {
-      if (!activePeers.contains(channel)) {
-        activePeers.add((PeerConnection)channel);
-        peerDel.onConnectPeer((PeerConnection)channel);
-      }
-    }
-    activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-  }
-
-  //for test only
-  public void addActivePeers(PeerConnection p) {
-    activePeers.add(p);
-  }
-
   synchronized void logActivePeers() {
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
-    nodeManager.dumpActiveNodes().forEach(handler -> logger.info("address: {}:{}, ID:{} {}",
-            handler.getNode().getHost(),handler.getNode().getPort(),handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString()));
+    nodeManager.dumpActiveNodes().forEach(handler -> {
+      if (handler.getNode().getPort() == 18888) {
+        logger.info("address: {}:{}, ID:{} {}",
+            handler.getNode().getHost(), handler.getNode().getPort(),
+            handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString());
+      }
+    });
 
     logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
             channelManager.nodesInUse().size());
@@ -146,7 +135,7 @@ public class SyncPool {
       sb.append("============\n");
       for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
         if (!activeSet.contains(peer.getNode())) {
-          sb.append(peer.logSyncStats()).append('\n');
+          sb.append(peer.getNode()).append('\n');
         }
       }
       logger.info(sb.toString());
@@ -157,7 +146,15 @@ public class SyncPool {
     return new ArrayList<>(activePeers);
   }
 
-  public synchronized void onDisconnect(Channel peer) {
+  public void onConnect(Channel peer) {
+    if (!activePeers.contains(peer)) {
+      activePeers.add((PeerConnection) peer);
+      activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
+      peerDel.onConnectPeer((PeerConnection) peer);
+    }
+  }
+
+  public void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
       activePeers.remove(peer);
       peerDel.onDisconnectPeer((PeerConnection)peer);
