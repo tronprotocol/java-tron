@@ -48,12 +48,14 @@ public class IndexHelper {
    */
   @PostConstruct
   public void init() {
-    logger.info("+++++++++++++++++++IndexHelper init++++++++++++++++++++++++++++++");
-    blockStore.forEach(b -> blockIndex.add(b.getInstance()));
-    witnessStore.forEach(w -> witnessIndex.add(w.getInstance()));
-    transactionStore.forEach(t -> transactionIndex.add(t.getInstance()));
-    accountStore.forEach(a -> accountIndex.add(a.getInstance()));
-    assetIssueStore.forEach(a -> assetIssueIndex.add(a.getInstance()));
+    long start = System.currentTimeMillis();
+    logger.info("begin to initialize indexHelper");
+    blockStore.forEach(b -> blockIndex.add(b.getValue().getInstance()));
+    witnessStore.forEach(w -> witnessIndex.add(w.getValue().getInstance()));
+    transactionStore.forEach(t -> transactionIndex.add(t.getValue().getInstance()));
+    accountStore.forEach(a -> accountIndex.add(a.getValue().getInstance()));
+    assetIssueStore.forEach(a -> assetIssueIndex.add(a.getValue().getInstance()));
+    logger.info("end to initialize indexHelper. cost:{}s", System.currentTimeMillis() - start);
   }
 
   private <T> void add(IndexedCollection<T> index, T t) {
