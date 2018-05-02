@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import java.util.Iterator;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +79,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   @Override
-  public Iterator<TransactionCapsule> iterator() {
+  public Iterator<Entry<byte[], TransactionCapsule>> iterator() {
     return new TransactionIterator(dbSource.iterator());
   }
 

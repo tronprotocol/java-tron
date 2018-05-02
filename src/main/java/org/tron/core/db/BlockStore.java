@@ -18,6 +18,7 @@ package org.tron.core.db;
 import com.googlecode.cqengine.IndexedCollection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +121,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   }
 
   @Override
-  public Iterator<BlockCapsule> iterator() {
+  public Iterator<Entry<byte[], BlockCapsule>> iterator() {
     return new BlockIterator(dbSource.iterator());
   }
 

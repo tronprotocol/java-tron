@@ -1,7 +1,6 @@
 package org.tron.core.db.common.iterator;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import org.tron.core.capsule.WitnessCapsule;
 
@@ -12,8 +11,7 @@ public class WitnessIterator extends AbstractIterator<WitnessCapsule> {
   }
 
   @Override
-  public WitnessCapsule next() {
-    Map.Entry<byte[], byte[]> entry = iterator.next();
-    return new WitnessCapsule(entry.getValue());
+  protected WitnessCapsule of(byte[] value) {
+    return new WitnessCapsule(value);
   }
 }
