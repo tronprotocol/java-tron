@@ -1,16 +1,11 @@
 package org.tron.core.db.api.index;
 
-import static com.googlecode.cqengine.query.QueryFactory.attribute;
-
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +15,12 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Transaction;
+
+import javax.annotation.PostConstruct;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
 @Slf4j

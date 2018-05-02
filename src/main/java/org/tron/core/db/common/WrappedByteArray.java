@@ -1,7 +1,8 @@
 package org.tron.core.db.common;
 
-import java.util.Arrays;
 import lombok.Value;
+
+import java.util.Arrays;
 
 @Value(staticConstructor = "of")
 public final class WrappedByteArray {
