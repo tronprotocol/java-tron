@@ -16,6 +16,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 
 
@@ -38,8 +39,8 @@ public class ReplayTool {
     };
 
     for (String db : dbs) {
-      System.out.println(Paths.get(dataBaseDir, db).toString());
       FileUtil.recursiveDelete(Paths.get(dataBaseDir, db).toString());
+      logger.info("delete local db:" + Paths.get(dataBaseDir, db).toString());
     }
   }
 
@@ -89,7 +90,7 @@ public class ReplayTool {
         continue;
       }
       try {
-        dbManager.replayBlock(blockCapsule);
+        dbManager.pushBlock(blockCapsule);
         dbManager.getDynamicPropertiesStore()
             .saveLatestSolidifiedBlockNum(replayIndex);
         logger.info(String.format("replay block %d success", replayIndex));
@@ -102,11 +103,13 @@ public class ReplayTool {
         throw new BadBlockException("validate unlink exception");
       } catch (ContractExeException e) {
         throw new BadBlockException("validate contract exe exception");
+      } catch (ValidateScheduleException e) {
+        throw new BadBlockException("validate schedule exception");
       }
     }
 
     logger.info("delete non-solidified block start");
-    if (replayIndex != 1L) {
+    if (replayIndex != 1) {
       while (iterator.hasNext()) {
         BlockCapsule blockCapsule = (BlockCapsule) iterator.next();
         logger.info("delete block:" + blockCapsule.toString());
@@ -116,7 +119,6 @@ public class ReplayTool {
     logger.info("Delete non-solidified block complete");
 
     logger.info("Replay solidified block complete");
-    logger.info("Local LatestSolidifiedBlockNum:" + replayTo);
     logger.info("Current LatestSolidifiedBlockNum:" + dbManager.getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
 

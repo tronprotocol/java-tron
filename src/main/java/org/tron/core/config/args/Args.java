@@ -181,7 +181,6 @@ public class Args {
   @Parameter(names = {"--replay-to"}, description = "the num of block to replay")
   private long replayTo;
 
-
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;

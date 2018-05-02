@@ -284,7 +284,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return SINGLE_REPEAT;
   }
 
-  public void saveNextMaintenanceTime(long nextMaintenanceTime) {
+  private void saveNextMaintenanceTime(long nextMaintenanceTime) {
     this.put(NEXT_MAINTENANCE_TIME,
         new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
   }
