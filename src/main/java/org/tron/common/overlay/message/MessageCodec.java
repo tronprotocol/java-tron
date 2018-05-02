@@ -71,7 +71,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     if (MessageTypes.inTronRange(type)) {
       return tronMessageFactory.create(encoded);
     }
-    throw new IllegalArgumentException(MessageFactory.ERR_NO_SUCH_MSG + ", type=" + type + ", len=" + encoded.length);
+    throw new Error(MessageFactory.ERR_NO_SUCH_MSG + ", type=" + type + ", len=" + encoded.length);
   }
 
 }

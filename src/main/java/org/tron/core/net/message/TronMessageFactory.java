@@ -18,7 +18,7 @@ public class TronMessageFactory extends MessageFactory {
       if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
         throw e;
       }else {
-        throw new RuntimeException(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
       }
     }
   }
@@ -56,7 +56,7 @@ public class TronMessageFactory extends MessageFactory {
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
-        throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", " + receivedTypes);
+        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + receivedTypes);
     }
   }
 }

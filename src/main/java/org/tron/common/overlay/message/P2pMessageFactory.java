@@ -33,7 +33,7 @@ public class P2pMessageFactory extends MessageFactory {
       if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
         throw e;
       }else {
-        throw new RuntimeException(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
       }
     }
   }
@@ -53,7 +53,7 @@ public class P2pMessageFactory extends MessageFactory {
       case P2P_PONG:
         return new PongMessage(type, rawData);
       default:
-        throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", " + messageType);
+        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + messageType);
     }
   }
 }
