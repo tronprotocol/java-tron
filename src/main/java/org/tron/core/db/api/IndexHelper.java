@@ -125,7 +125,7 @@ public class IndexHelper {
   }
 
   private byte[] getKey(Account a) {
-    return new AccountCapsule(a).getAddress().toByteArray();
+    return new AccountCapsule(a).createDbKey();
   }
 
   private byte[] getKey(AssetIssueContract a) {

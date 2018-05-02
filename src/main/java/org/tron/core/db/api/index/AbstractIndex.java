@@ -70,7 +70,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iterab
   }
 
   public boolean remove(WrappedByteArray bytes) {
-    return index.add(bytes);
+    return index.remove(bytes);
   }
 
   public long size() {
