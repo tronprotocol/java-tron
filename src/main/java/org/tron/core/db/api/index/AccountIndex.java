@@ -21,17 +21,8 @@ import org.tron.protos.Protocol.Account;
 @Slf4j
 public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
-  public final Attribute<WrappedByteArray, String> Account_ADDRESS = attribute("account address",
-      bytes -> ByteArray.toHexString(bytes.getBytes()));
-  public final Attribute<WrappedByteArray, Long> Account_BALANCE = attribute("account balance",
-      bytes -> {
-        try {
-          Account account = getObject(bytes);
-          return account.getBalance();
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
+  public static Attribute<WrappedByteArray, String> Account_ADDRESS;
+  public static Attribute<WrappedByteArray, Long> Account_BALANCE;
 
   @Autowired
   public AccountIndex(@Qualifier("accountStore") final TronDatabase<AccountCapsule> database) {
@@ -50,5 +41,21 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
     index.addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
     index.addIndex(NavigableIndex.onAttribute(Account_BALANCE));
     fill();
+  }
+
+  @Override
+  protected void setAttribute() {
+    Account_ADDRESS = attribute("account address",
+        bytes -> ByteArray.toHexString(bytes.getBytes()));
+    Account_BALANCE = attribute("account balance",
+        bytes -> {
+          try {
+            Account account = getObject(bytes);
+            return account.getBalance();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
+
   }
 }

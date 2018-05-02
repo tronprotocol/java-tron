@@ -20,14 +20,9 @@ import org.tron.protos.Protocol.Witness;
 @Slf4j
 public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 
-  public final Attribute<WrappedByteArray, String> Witness_ADDRESS =
-      attribute("witness address",
-          bytes -> ByteArray.toHexString(getObject(bytes).getAddress().toByteArray()));
-  public final Attribute<WrappedByteArray, String> PUBLIC_KEY =
-      attribute("public key",
-          bytes -> ByteArray.toHexString(getObject(bytes).getPubKey().toByteArray()));
-  public final Attribute<WrappedByteArray, String> Witness_URL =
-      attribute("witness url", bytes -> getObject(bytes).getUrl());
+  public static Attribute<WrappedByteArray, String> Witness_ADDRESS;
+  public static Attribute<WrappedByteArray, String> PUBLIC_KEY;
+  public static Attribute<WrappedByteArray, String> Witness_URL;
 
   @Autowired
   public WitnessIndex(
@@ -49,6 +44,19 @@ public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
     index.addIndex(SuffixTreeIndex.onAttribute(PUBLIC_KEY));
     index.addIndex(SuffixTreeIndex.onAttribute(Witness_URL));
     fill();
+  }
+
+  @Override
+  public void setAttribute() {
+    Witness_ADDRESS =
+        attribute("witness address",
+            bytes -> ByteArray.toHexString(getObject(bytes).getAddress().toByteArray()));
+    PUBLIC_KEY =
+        attribute("public key",
+            bytes -> ByteArray.toHexString(getObject(bytes).getPubKey().toByteArray()));
+    Witness_URL =
+        attribute("witness url", bytes -> getObject(bytes).getUrl());
+
   }
 
 }

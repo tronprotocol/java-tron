@@ -27,66 +27,13 @@ import org.tron.protos.Protocol.Block;
 @Slf4j
 public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
-  public final Attribute<WrappedByteArray, String> Block_ID =
-      attribute("block id",
-          bytes -> {
-            Block block = getObject(bytes);
-            return Sha256Hash.of(block.getBlockHeader().toByteArray()).toString();
-          });
-  public final Attribute<WrappedByteArray, Long> Block_NUMBER =
-      attribute("block number",
-          bytes -> {
-            Block block = getObject(bytes);
-            return block.getBlockHeader().getRawData().getNumber();
-          });
-  public final Attribute<WrappedByteArray, String> TRANSACTIONS =
-      attribute(String.class, "transactions",
-          bytes -> {
-            Block block = getObject(bytes);
-            return block.getTransactionsList().stream()
-                .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
-                .collect(Collectors.toList());
-          });
-  public final Attribute<WrappedByteArray, Long> WITNESS_ID =
-      attribute("witness id",
-          bytes -> {
-            Block block = getObject(bytes);
-            return block.getBlockHeader().getRawData().getWitnessId();
-          });
-  public final Attribute<WrappedByteArray, String> WITNESS_ADDRESS =
-      attribute("witness address",
-          bytes -> {
-            Block block = getObject(bytes);
-            return ByteArray.toHexString(
-                block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
-          });
-
-  public final Attribute<WrappedByteArray, String> OWNERS =
-      attribute(String.class, "owner address",
-          bytes -> {
-            Block block = getObject(bytes);
-            return block.getTransactionsList().stream()
-                .map(transaction -> transaction.getRawData().getContractList())
-                .flatMap(List::stream)
-                .map(TransactionCapsule::getOwner)
-                .filter(Objects::nonNull)
-                .distinct()
-                .map(ByteArray::toHexString)
-                .collect(Collectors.toList());
-          });
-  public final Attribute<WrappedByteArray, String> TOS =
-      attribute(String.class, "to address",
-          bytes -> {
-            Block block = getObject(bytes);
-            return block.getTransactionsList().stream()
-                .map(transaction -> transaction.getRawData().getContractList())
-                .flatMap(List::stream)
-                .map(TransactionCapsule::getToAddress)
-                .filter(Objects::nonNull)
-                .distinct()
-                .map(ByteArray::toHexString)
-                .collect(Collectors.toList());
-          });
+  public static Attribute<WrappedByteArray, String> Block_ID;
+  public static Attribute<WrappedByteArray, Long> Block_NUMBER;
+  public static Attribute<WrappedByteArray, String> TRANSACTIONS;
+  public static Attribute<WrappedByteArray, Long> WITNESS_ID;
+  public static Attribute<WrappedByteArray, String> WITNESS_ADDRESS;
+  public static Attribute<WrappedByteArray, String> OWNERS;
+  public static Attribute<WrappedByteArray, String> TOS;
 
   @Autowired
   public BlockIndex(
@@ -112,5 +59,69 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
     index.addIndex(SuffixTreeIndex.onAttribute(OWNERS));
     index.addIndex(SuffixTreeIndex.onAttribute(TOS));
     fill();
+  }
+
+  @Override
+  protected void setAttribute() {
+    Block_ID =
+        attribute("block id",
+            bytes -> {
+              Block block = getObject(bytes);
+              return Sha256Hash.of(block.getBlockHeader().toByteArray()).toString();
+            });
+    Block_NUMBER =
+        attribute("block number",
+            bytes -> {
+              Block block = getObject(bytes);
+              return block.getBlockHeader().getRawData().getNumber();
+            });
+    TRANSACTIONS =
+        attribute(String.class, "transactions",
+            bytes -> {
+              Block block = getObject(bytes);
+              return block.getTransactionsList().stream()
+                  .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
+                  .collect(Collectors.toList());
+            });
+    WITNESS_ID =
+        attribute("witness id",
+            bytes -> {
+              Block block = getObject(bytes);
+              return block.getBlockHeader().getRawData().getWitnessId();
+            });
+    WITNESS_ADDRESS =
+        attribute("witness address",
+            bytes -> {
+              Block block = getObject(bytes);
+              return ByteArray.toHexString(
+                  block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+            });
+
+    OWNERS =
+        attribute(String.class, "owner address",
+            bytes -> {
+              Block block = getObject(bytes);
+              return block.getTransactionsList().stream()
+                  .map(transaction -> transaction.getRawData().getContractList())
+                  .flatMap(List::stream)
+                  .map(TransactionCapsule::getOwner)
+                  .filter(Objects::nonNull)
+                  .distinct()
+                  .map(ByteArray::toHexString)
+                  .collect(Collectors.toList());
+            });
+    TOS =
+        attribute(String.class, "to address",
+            bytes -> {
+              Block block = getObject(bytes);
+              return block.getTransactionsList().stream()
+                  .map(transaction -> transaction.getRawData().getContractList())
+                  .flatMap(List::stream)
+                  .map(TransactionCapsule::getToAddress)
+                  .filter(Objects::nonNull)
+                  .distinct()
+                  .map(ByteArray::toHexString)
+                  .collect(Collectors.toList());
+            });
   }
 }

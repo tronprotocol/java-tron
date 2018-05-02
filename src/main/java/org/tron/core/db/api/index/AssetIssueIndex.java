@@ -21,31 +21,10 @@ import org.tron.protos.Contract.AssetIssueContract;
 @Slf4j
 public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssueContract> {
 
-  public final Attribute<WrappedByteArray, String> AssetIssue_OWNER_RADDRESS =
-      attribute(
-          "assetIssue owner address",
-          bytes -> {
-            AssetIssueContract assetIssue = getObject(bytes);
-            return ByteArray.toHexString(assetIssue.getOwnerAddress().toByteArray());
-          });
-
-  public final Attribute<WrappedByteArray, String> AssetIssue_NAME =
-      attribute("assetIssue name", bytes -> {
-        AssetIssueContract assetIssue = getObject(bytes);
-        return assetIssue.getName().toStringUtf8();
-      });
-
-  public final Attribute<WrappedByteArray, Long> AssetIssue_START =
-      attribute("assetIssue start time", bytes -> {
-        AssetIssueContract assetIssue = getObject(bytes);
-        return assetIssue.getStartTime();
-      });
-
-  public final Attribute<WrappedByteArray, Long> AssetIssue_END =
-      attribute("assetIssue end time", bytes -> {
-        AssetIssueContract assetIssue = getObject(bytes);
-        return assetIssue.getEndTime();
-      });
+  public static Attribute<WrappedByteArray, String> AssetIssue_OWNER_RADDRESS;
+  public static Attribute<WrappedByteArray, String> AssetIssue_NAME;
+  public static Attribute<WrappedByteArray, Long> AssetIssue_START;
+  public static Attribute<WrappedByteArray, Long> AssetIssue_END;
 
   @Autowired
   public AssetIssueIndex(
@@ -68,5 +47,35 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
     index.addIndex(NavigableIndex.onAttribute(AssetIssue_START));
     index.addIndex(NavigableIndex.onAttribute(AssetIssue_END));
     fill();
+  }
+
+  @Override
+  protected void setAttribute() {
+    AssetIssue_OWNER_RADDRESS =
+        attribute(
+            "assetIssue owner address",
+            bytes -> {
+              AssetIssueContract assetIssue = getObject(bytes);
+              return ByteArray.toHexString(assetIssue.getOwnerAddress().toByteArray());
+            });
+
+    AssetIssue_NAME =
+        attribute("assetIssue name", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getName().toStringUtf8();
+        });
+
+    AssetIssue_START =
+        attribute("assetIssue start time", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getStartTime();
+        });
+
+    AssetIssue_END =
+        attribute("assetIssue end time", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getEndTime();
+        });
+
   }
 }

@@ -13,25 +13,19 @@ import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
 
-public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iterable<T>, Iface {
+public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<T> {
 
   protected TronDatabase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
 
   public AbstractIndex() {
     index = new ConcurrentIndexedCollection<>();
+    setAttribute();
   }
 
   public AbstractIndex(Persistence<WrappedByteArray, ? extends Comparable> persistence) {
     index = new ConcurrentIndexedCollection<>(persistence);
-  }
-
-  public boolean update(WrappedByteArray bytes) {
-    return update(bytes);
-  }
-
-  public boolean update(byte[] bytes) {
-    return add(WrappedByteArray.of(bytes));
+    setAttribute();
   }
 
   @Override
@@ -57,26 +51,42 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iterab
     database.forEach(e -> index.add(WrappedByteArray.of(e.getKey())));
   }
 
+  @Override
   public boolean add(byte[] bytes) {
     return add(WrappedByteArray.of(bytes));
   }
 
+  @Override
   public boolean add(WrappedByteArray bytes) {
     return index.add(bytes);
   }
 
+  @Override
+  public boolean update(WrappedByteArray bytes) {
+    return update(bytes);
+  }
+
+  @Override
+  public boolean update(byte[] bytes) {
+    return add(WrappedByteArray.of(bytes));
+  }
+
+  @Override
   public boolean remove(byte[] bytes) {
     return remove(WrappedByteArray.of(bytes));
   }
 
+  @Override
   public boolean remove(WrappedByteArray bytes) {
     return index.remove(bytes);
   }
 
+  @Override
   public long size() {
     return index.size();
   }
 
+  @Override
   public ResultSet<T> retrieve(Query<WrappedByteArray> query) {
     ResultSet<WrappedByteArray> resultSet = index.retrieve(query);
     return new WrappedResultSet<T>(resultSet) {
@@ -87,6 +97,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iterab
     };
   }
 
+  @Override
   public ResultSet<T> retrieve(Query<WrappedByteArray> query, QueryOptions options) {
     ResultSet<WrappedByteArray> resultSet = index.retrieve(query, options);
     return new WrappedResultSet<T>(resultSet) {
@@ -102,4 +113,5 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iterab
     return Iterables.transform(index, AbstractIndex.this::getObject).iterator();
   }
 
+  protected abstract void setAttribute();
 }

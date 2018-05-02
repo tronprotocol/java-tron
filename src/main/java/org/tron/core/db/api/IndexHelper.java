@@ -9,12 +9,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.api.index.AbstractIndex;
-import org.tron.core.db.api.index.AccountIndex;
-import org.tron.core.db.api.index.AssetIssueIndex;
-import org.tron.core.db.api.index.BlockIndex;
-import org.tron.core.db.api.index.TransactionIndex;
-import org.tron.core.db.api.index.WitnessIndex;
+import org.tron.core.db.BlockStore;
+import org.tron.core.db.api.index.*;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -26,21 +22,21 @@ public class IndexHelper {
 
   @Getter
   @Resource
-  private TransactionIndex transactionIndex;
+  private Index.Iface<Transaction> transactionIndex;
   @Getter
   @Resource
-  private BlockIndex blockIndex;
+  private Index.Iface<Block> blockIndex;
   @Getter
   @Resource
-  private WitnessIndex witnessIndex;
+  private Index.Iface<Witness> witnessIndex;
   @Getter
   @Resource
-  private AccountIndex accountIndex;
+  private Index.Iface<Account> accountIndex;
   @Getter
   @Resource
-  private AssetIssueIndex assetIssueIndex;
+  private Index.Iface<AssetIssueContract> assetIssueIndex;
 
-  private <T> void add(AbstractIndex<? extends ProtoCapsule, T> index, byte[] bytes) {
+  private <T> void add(Index.Iface<T> index, byte[] bytes) {
     index.add(bytes);
   }
 
@@ -64,7 +60,7 @@ public class IndexHelper {
     add(assetIssueIndex, getKey(a));
   }
 
-  private <T> void update(AbstractIndex<? extends ProtoCapsule, T> index, byte[] bytes) {
+  private <T> void update(Index.Iface<T> index, byte[] bytes) {
     index.update(bytes);
   }
 
@@ -88,7 +84,7 @@ public class IndexHelper {
     update(assetIssueIndex, getKey(a));
   }
 
-  private <T> void remove(AbstractIndex<? extends ProtoCapsule, T> index, byte[] bytes) {
+  private <T> void remove(Index.Iface<T> index, byte[] bytes) {
     index.remove(bytes);
   }
 

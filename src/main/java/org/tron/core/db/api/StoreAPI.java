@@ -24,11 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.tron.core.db.api.index.AccountIndex;
-import org.tron.core.db.api.index.AssetIssueIndex;
-import org.tron.core.db.api.index.BlockIndex;
-import org.tron.core.db.api.index.TransactionIndex;
-import org.tron.core.db.api.index.WitnessIndex;
+import org.tron.core.db.api.index.*;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -49,7 +45,7 @@ public class StoreAPI {
    * *******************************************************************************
    */
   public List<Account> getAccountAll() {
-    AccountIndex index = indexHelper.getAccountIndex();
+    Index.Iface<Account> index = indexHelper.getAccountIndex();
     return ImmutableList.copyOf(index);
   }
 
@@ -58,8 +54,8 @@ public class StoreAPI {
       logger.info("address is empty");
       return null;
     }
-    AccountIndex index = indexHelper.getAccountIndex();
-    ResultSet<Account> resultSet = index.retrieve(equal(index.Account_ADDRESS, address));
+    Index.Iface<Account> index = indexHelper.getAccountIndex();
+    ResultSet<Account> resultSet = index.retrieve(equal(AccountIndex.Account_ADDRESS, address));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -73,7 +69,7 @@ public class StoreAPI {
   }
 
   public long getAccountCount() {
-    AccountIndex index = indexHelper.getAccountIndex();
+    Index.Iface<Account> index = indexHelper.getAccountIndex();
     return index.size();
   }
 
@@ -82,13 +78,13 @@ public class StoreAPI {
    * *******************************************************************************
    */
   public long getBlockCount() {
-    BlockIndex index = indexHelper.getBlockIndex();
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
     return index.size();
   }
 
   public Block getBlockByNumber(long number) throws NonUniqueObjectException {
-    BlockIndex index = indexHelper.getBlockIndex();
-    ResultSet<Block> resultSet = index.retrieve(equal(index.Block_NUMBER, number));
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet = index.retrieve(equal(BlockIndex.Block_NUMBER, number));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -106,8 +102,8 @@ public class StoreAPI {
       logger.info("transactionId is empty");
       return null;
     }
-    BlockIndex index = indexHelper.getBlockIndex();
-    ResultSet<Block> resultSet = index.retrieve(equal(index.TRANSACTIONS, transactionId));
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
+    ResultSet<Block> resultSet = index.retrieve(equal(BlockIndex.TRANSACTIONS, transactionId));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -126,12 +122,12 @@ public class StoreAPI {
       return Lists.newArrayList();
     }
 
-    BlockIndex index = indexHelper.getBlockIndex();
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(
-            or(equal(index.OWNERS, accountAddress), equal(index.TOS, accountAddress)),
+            or(equal(BlockIndex.OWNERS, accountAddress), equal(BlockIndex.TOS, accountAddress)),
             queryOptions(
-                orderBy(descending(index.Block_NUMBER)),
+                orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -142,24 +138,24 @@ public class StoreAPI {
       logger.info("WitnessAddress is empty");
       return Lists.newArrayList();
     }
-    BlockIndex index = indexHelper.getBlockIndex();
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(
-            equal(index.WITNESS_ADDRESS, WitnessAddress),
+            equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
             queryOptions(
-                orderBy(descending(index.Block_NUMBER)),
+                orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
   }
 
   public List<Block> getBlocksByWitnessId(Long witnessId) {
-    BlockIndex index = indexHelper.getBlockIndex();
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(
-            equal(index.WITNESS_ID, witnessId),
+            equal(BlockIndex.WITNESS_ID, witnessId),
             queryOptions(
-                orderBy(descending(index.Block_NUMBER)),
+                orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -170,12 +166,12 @@ public class StoreAPI {
       return Collections.emptyList();
     }
 
-    BlockIndex index = indexHelper.getBlockIndex();
+    Index.Iface<Block> index = indexHelper.getBlockIndex();
     ResultSet<Block> resultSet =
         index.retrieve(
             all(WrappedByteArray.class),
             queryOptions(
-                orderBy(descending(index.Block_NUMBER)),
+                orderBy(descending(BlockIndex.Block_NUMBER)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
@@ -186,7 +182,7 @@ public class StoreAPI {
    * *******************************************************************************
    */
   public long getTransactionCount() {
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     return index.size();
   }
 
@@ -195,8 +191,8 @@ public class StoreAPI {
       logger.info("id is empty");
       return null;
     }
-    TransactionIndex index = indexHelper.getTransactionIndex();
-    ResultSet<Transaction> resultSet = index.retrieve(equal(index.Transaction_ID, id));
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    ResultSet<Transaction> resultSet = index.retrieve(equal(TransactionIndex.Transaction_ID, id));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -214,12 +210,12 @@ public class StoreAPI {
       logger.info("address is empty");
       return Lists.newArrayList();
     }
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(index.OWNERS, address),
+            equal(TransactionIndex.OWNERS, address),
             queryOptions(
-                orderBy(descending(index.TIMESTAMP)),
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -230,12 +226,12 @@ public class StoreAPI {
       logger.info("address is empty");
       return Lists.newArrayList();
     }
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(index.TOS, address),
+            equal(TransactionIndex.TOS, address),
             queryOptions(
-                orderBy(descending(index.TIMESTAMP)),
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -246,14 +242,14 @@ public class StoreAPI {
       logger.info("accountAddress is empty");
       return Lists.newArrayList();
     }
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(
             or(
-                equal(index.OWNERS, accountAddress),
-                equal(index.TOS, accountAddress)),
+                equal(TransactionIndex.OWNERS, accountAddress),
+                equal(TransactionIndex.TOS, accountAddress)),
             queryOptions(
-                orderBy(descending(index.TIMESTAMP)),
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -265,12 +261,12 @@ public class StoreAPI {
       return Collections.emptyList();
     }
 
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(
-            between(index.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
+            between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
             queryOptions(
-                orderBy(descending(index.TIMESTAMP)),
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -281,12 +277,12 @@ public class StoreAPI {
       return Collections.emptyList();
     }
 
-    TransactionIndex index = indexHelper.getTransactionIndex();
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     ResultSet<Transaction> resultSet =
         index.retrieve(
             all(WrappedByteArray.class),
             queryOptions(
-                orderBy(descending(index.TIMESTAMP)),
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
@@ -297,7 +293,7 @@ public class StoreAPI {
    * *******************************************************************************
    */
   public List<Witness> getWitnessAll() {
-    WitnessIndex index = indexHelper.getWitnessIndex();
+    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
     return ImmutableList.copyOf(index);
   }
 
@@ -306,8 +302,8 @@ public class StoreAPI {
       logger.info("address is empty");
       return null;
     }
-    WitnessIndex index = indexHelper.getWitnessIndex();
-    ResultSet<Witness> resultSet = index.retrieve(equal(index.Witness_ADDRESS, address));
+    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet = index.retrieve(equal(WitnessIndex.Witness_ADDRESS, address));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -325,8 +321,8 @@ public class StoreAPI {
       logger.info("url is empty");
       return null;
     }
-    WitnessIndex index = indexHelper.getWitnessIndex();
-    ResultSet<Witness> resultSet = index.retrieve(equal(index.Witness_URL, url));
+    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet = index.retrieve(equal(WitnessIndex.Witness_URL, url));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -344,8 +340,8 @@ public class StoreAPI {
       logger.info("publicKey is empty");
       return null;
     }
-    WitnessIndex index = indexHelper.getWitnessIndex();
-    ResultSet<Witness> resultSet = index.retrieve(equal(index.PUBLIC_KEY, publicKey));
+    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
+    ResultSet<Witness> resultSet = index.retrieve(equal(WitnessIndex.PUBLIC_KEY, publicKey));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -359,7 +355,7 @@ public class StoreAPI {
   }
 
   public long getWitnessCount() {
-    WitnessIndex index = indexHelper.getWitnessIndex();
+    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
     return index.size();
   }
 
@@ -368,19 +364,19 @@ public class StoreAPI {
    * *******************************************************************************
    */
   public List<AssetIssueContract> getAssetIssueAll() {
-    AssetIssueIndex index = indexHelper.getAssetIssueIndex();
+    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     return ImmutableList.copyOf(index);
   }
 
   public List<AssetIssueContract> getAssetIssueByTime(long currentInMilliseconds) {
-    AssetIssueIndex index = indexHelper.getAssetIssueIndex();
+    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     ResultSet<AssetIssueContract> resultSet =
         index.retrieve(
             and(
-                lessThan(index.AssetIssue_START, currentInMilliseconds),
-                greaterThanOrEqualTo(index.AssetIssue_END, currentInMilliseconds)),
+                lessThan(AssetIssueIndex.AssetIssue_START, currentInMilliseconds),
+                greaterThanOrEqualTo(AssetIssueIndex.AssetIssue_END, currentInMilliseconds)),
             queryOptions(
-                orderBy(descending(index.AssetIssue_END)),
+                orderBy(descending(AssetIssueIndex.AssetIssue_END)),
                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))));
 
     return ImmutableList.copyOf(resultSet);
@@ -391,9 +387,9 @@ public class StoreAPI {
       logger.info("name is empty");
       return null;
     }
-    AssetIssueIndex index = indexHelper.getAssetIssueIndex();
+    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     ResultSet<AssetIssueContract> resultSet =
-        index.retrieve(equal(index.AssetIssue_NAME, name));
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_NAME, name));
 
     if (resultSet.isEmpty()) {
       return null;
@@ -411,9 +407,9 @@ public class StoreAPI {
       logger.info("ownerAddress is empty");
       return Lists.newArrayList();
     }
-    AssetIssueIndex index = indexHelper.getAssetIssueIndex();
+    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     ResultSet<AssetIssueContract> resultSet =
-        index.retrieve(equal(index.AssetIssue_OWNER_RADDRESS, ownerAddress));
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_OWNER_RADDRESS, ownerAddress));
 
     return ImmutableList.copyOf(resultSet);
   }

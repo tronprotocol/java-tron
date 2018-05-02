@@ -25,25 +25,10 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transaction> {
 
-  public final SimpleAttribute<WrappedByteArray, String> Transaction_ID =
-      attribute("transaction id",
-          bytes -> new TransactionCapsule(getObject(bytes)).getRawHash().toString());
-  public final Attribute<WrappedByteArray, String> OWNERS =
-      attribute(String.class, "owner address",
-          bytes -> getObject(bytes).getRawData().getContractList().stream()
-              .map(TransactionCapsule::getOwner)
-              .filter(Objects::nonNull)
-              .map(ByteArray::toHexString)
-              .collect(Collectors.toList()));
-  public final Attribute<WrappedByteArray, String> TOS =
-      attribute(String.class, "to address",
-          bytes -> getObject(bytes).getRawData().getContractList().stream()
-              .map(TransactionCapsule::getToAddress)
-              .filter(Objects::nonNull)
-              .map(ByteArray::toHexString)
-              .collect(Collectors.toList()));
-  public final Attribute<WrappedByteArray, Long> TIMESTAMP =
-      attribute("timestamp", bytes -> getObject(bytes).getRawData().getTimestamp());
+  public static SimpleAttribute<WrappedByteArray, String> Transaction_ID;
+  public static Attribute<WrappedByteArray, String> OWNERS;
+  public static Attribute<WrappedByteArray, String> TOS;
+  public static Attribute<WrappedByteArray, Long> TIMESTAMP;
 
   @Autowired
   public TransactionIndex(
@@ -66,5 +51,29 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
     index.addIndex(HashIndex.onAttribute(TOS));
     index.addIndex(NavigableIndex.onAttribute(TIMESTAMP));
     fill();
+  }
+
+  @Override
+  protected void setAttribute() {
+    Transaction_ID =
+        attribute("transaction id",
+            bytes -> new TransactionCapsule(getObject(bytes)).getRawHash().toString());
+    OWNERS =
+        attribute(String.class, "owner address",
+            bytes -> getObject(bytes).getRawData().getContractList().stream()
+                .map(TransactionCapsule::getOwner)
+                .filter(Objects::nonNull)
+                .map(ByteArray::toHexString)
+                .collect(Collectors.toList()));
+    TOS =
+        attribute(String.class, "to address",
+            bytes -> getObject(bytes).getRawData().getContractList().stream()
+                .map(TransactionCapsule::getToAddress)
+                .filter(Objects::nonNull)
+                .map(ByteArray::toHexString)
+                .collect(Collectors.toList()));
+    TIMESTAMP =
+        attribute("timestamp", bytes -> getObject(bytes).getRawData().getTimestamp());
+
   }
 }
