@@ -12,49 +12,59 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TronDatabase;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j
-public class TransactionIndex extends AbstractIndex<Transaction> {
+public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transaction> {
 
-  public static final SimpleAttribute<Transaction, String> Transaction_ID =
+  public final SimpleAttribute<WrappedByteArray, String> Transaction_ID =
       attribute("transaction id",
-          t -> Sha256Hash.of(t.getRawData().toByteArray()).toString());
-  public static final Attribute<Transaction, String> OWNERS =
+          bytes -> new TransactionCapsule(getObject(bytes)).getRawHash().toString());
+  public final Attribute<WrappedByteArray, String> OWNERS =
       attribute(String.class, "owner address",
-          t -> t.getRawData().getContractList().stream()
+          bytes -> getObject(bytes).getRawData().getContractList().stream()
               .map(TransactionCapsule::getOwner)
               .filter(Objects::nonNull)
               .map(ByteArray::toHexString)
               .collect(Collectors.toList()));
-  public static final Attribute<Transaction, String> TOS =
+  public final Attribute<WrappedByteArray, String> TOS =
       attribute(String.class, "to address",
-          t -> t.getRawData().getContractList().stream()
+          bytes -> getObject(bytes).getRawData().getContractList().stream()
               .map(TransactionCapsule::getToAddress)
               .filter(Objects::nonNull)
               .map(ByteArray::toHexString)
               .collect(Collectors.toList()));
-  public static final Attribute<Transaction, Long> TIMESTAMP =
-      attribute("timestamp", t -> t.getRawData().getTimestamp());
+  public final Attribute<WrappedByteArray, Long> TIMESTAMP =
+      attribute("timestamp", bytes -> getObject(bytes).getRawData().getTimestamp());
 
-  public TransactionIndex() {
+  @Autowired
+  public TransactionIndex(
+      @Qualifier("transactionStore") final TronDatabase<TransactionCapsule> database) {
     super();
+    this.database = database;
   }
 
-  public TransactionIndex(Persistence<Transaction, ? extends Comparable> persistence) {
+  public TransactionIndex(
+      final TronDatabase<TransactionCapsule> database,
+      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
     super(persistence);
+    this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    addIndex(SuffixTreeIndex.onAttribute(Transaction_ID));
-    addIndex(HashIndex.onAttribute(OWNERS));
-    addIndex(HashIndex.onAttribute(TOS));
-    addIndex(NavigableIndex.onAttribute(TIMESTAMP));
+    index.addIndex(SuffixTreeIndex.onAttribute(Transaction_ID));
+    index.addIndex(HashIndex.onAttribute(OWNERS));
+    index.addIndex(HashIndex.onAttribute(TOS));
+    index.addIndex(NavigableIndex.onAttribute(TIMESTAMP));
+    fill();
   }
 }

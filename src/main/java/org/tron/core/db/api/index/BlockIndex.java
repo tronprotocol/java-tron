@@ -12,72 +12,105 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TronDatabase;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Block;
 
 @Component
 @Slf4j
-public class BlockIndex extends AbstractIndex<Block> {
+public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
-  public static final Attribute<Block, String> Block_ID =
+  public final Attribute<WrappedByteArray, String> Block_ID =
       attribute("block id",
-          block -> Sha256Hash.of(block.getBlockHeader().toByteArray()).toString());
-  public static final Attribute<Block, Long> Block_NUMBER =
+          bytes -> {
+            Block block = getObject(bytes);
+            return Sha256Hash.of(block.getBlockHeader().toByteArray()).toString();
+          });
+  public final Attribute<WrappedByteArray, Long> Block_NUMBER =
       attribute("block number",
-          block -> block.getBlockHeader().getRawData().getNumber());
-  public static final Attribute<Block, String> TRANSACTIONS =
+          bytes -> {
+            Block block = getObject(bytes);
+            return block.getBlockHeader().getRawData().getNumber();
+          });
+  public final Attribute<WrappedByteArray, String> TRANSACTIONS =
       attribute(String.class, "transactions",
-          block -> block.getTransactionsList().stream()
-              .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
-              .collect(Collectors.toList()));
-  public static final Attribute<Block, Long> WITNESS_ID =
+          bytes -> {
+            Block block = getObject(bytes);
+            return block.getTransactionsList().stream()
+                .map(t -> Sha256Hash.of(t.getRawData().toByteArray()).toString())
+                .collect(Collectors.toList());
+          });
+  public final Attribute<WrappedByteArray, Long> WITNESS_ID =
       attribute("witness id",
-          block -> block.getBlockHeader().getRawData().getWitnessId());
-  public static final Attribute<Block, String> WITNESS_ADDRESS =
+          bytes -> {
+            Block block = getObject(bytes);
+            return block.getBlockHeader().getRawData().getWitnessId();
+          });
+  public final Attribute<WrappedByteArray, String> WITNESS_ADDRESS =
       attribute("witness address",
-          block -> ByteArray.toHexString(
-              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray()));
+          bytes -> {
+            Block block = getObject(bytes);
+            return ByteArray.toHexString(
+                block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+          });
 
-  public static final Attribute<Block, String> OWNERS =
+  public final Attribute<WrappedByteArray, String> OWNERS =
       attribute(String.class, "owner address",
-          b -> b.getTransactionsList().stream()
-              .map(transaction -> transaction.getRawData().getContractList())
-              .flatMap(List::stream)
-              .map(TransactionCapsule::getOwner)
-              .filter(Objects::nonNull)
-              .distinct()
-              .map(ByteArray::toHexString)
-              .collect(Collectors.toList()));
-  public static final Attribute<Block, String> TOS =
+          bytes -> {
+            Block block = getObject(bytes);
+            return block.getTransactionsList().stream()
+                .map(transaction -> transaction.getRawData().getContractList())
+                .flatMap(List::stream)
+                .map(TransactionCapsule::getOwner)
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(ByteArray::toHexString)
+                .collect(Collectors.toList());
+          });
+  public final Attribute<WrappedByteArray, String> TOS =
       attribute(String.class, "to address",
-          b -> b.getTransactionsList().stream()
-              .map(transaction -> transaction.getRawData().getContractList())
-              .flatMap(List::stream)
-              .map(TransactionCapsule::getToAddress)
-              .filter(Objects::nonNull)
-              .distinct()
-              .map(ByteArray::toHexString)
-              .collect(Collectors.toList()));
+          bytes -> {
+            Block block = getObject(bytes);
+            return block.getTransactionsList().stream()
+                .map(transaction -> transaction.getRawData().getContractList())
+                .flatMap(List::stream)
+                .map(TransactionCapsule::getToAddress)
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(ByteArray::toHexString)
+                .collect(Collectors.toList());
+          });
 
-  public BlockIndex() {
+  @Autowired
+  public BlockIndex(
+      @Qualifier("blockStore") final TronDatabase<BlockCapsule> database) {
     super();
+    this.database = database;
   }
 
-  public BlockIndex(Persistence<Block, ? extends Comparable> persistence) {
+  public BlockIndex(
+      final TronDatabase<BlockCapsule> database,
+      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
     super(persistence);
+    this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    addIndex(SuffixTreeIndex.onAttribute(Block_ID));
-    addIndex(NavigableIndex.onAttribute(Block_NUMBER));
-    addIndex(HashIndex.onAttribute(TRANSACTIONS));
-    addIndex(NavigableIndex.onAttribute(WITNESS_ID));
-    addIndex(SuffixTreeIndex.onAttribute(WITNESS_ADDRESS));
-    addIndex(SuffixTreeIndex.onAttribute(OWNERS));
-    addIndex(SuffixTreeIndex.onAttribute(TOS));
+    index.addIndex(SuffixTreeIndex.onAttribute(Block_ID));
+    index.addIndex(NavigableIndex.onAttribute(Block_NUMBER));
+    index.addIndex(HashIndex.onAttribute(TRANSACTIONS));
+    index.addIndex(NavigableIndex.onAttribute(WITNESS_ID));
+    index.addIndex(SuffixTreeIndex.onAttribute(WITNESS_ADDRESS));
+    index.addIndex(SuffixTreeIndex.onAttribute(OWNERS));
+    index.addIndex(SuffixTreeIndex.onAttribute(TOS));
+    fill();
   }
 }

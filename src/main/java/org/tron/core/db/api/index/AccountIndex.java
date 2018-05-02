@@ -1,48 +1,54 @@
 package org.tron.core.db.api.index;
 
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
-import static com.googlecode.cqengine.query.QueryFactory.equal;
 
-import com.google.common.collect.ImmutableList;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.TronDatabase;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j
-public class AccountIndex extends AbstractIndex<Account> {
+public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
-  public static final Attribute<Account, String> Account_ADDRESS =
-      attribute("account address",
-          account -> ByteArray.toHexString(account.getAddress().toByteArray()));
-  public static final Attribute<Account, Long> Account_BALANCE =
-      attribute("account balance", Account::getBalance);
+  public final Attribute<WrappedByteArray, String> Account_ADDRESS = attribute("account address",
+      bytes -> ByteArray.toHexString(bytes.getBytes()));
+  public final Attribute<WrappedByteArray, Long> Account_BALANCE = attribute("account balance",
+      bytes -> {
+        try {
+          Account account = getObject(bytes);
+          return account.getBalance();
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
 
-  public AccountIndex() {
+  @Autowired
+  public AccountIndex(@Qualifier("accountStore") final TronDatabase<AccountCapsule> database) {
     super();
+    this.database = database;
   }
 
-  public AccountIndex(Persistence<Account, ? extends Comparable> persistence) {
+  public AccountIndex(final TronDatabase<AccountCapsule> database,
+      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
     super(persistence);
-  }
-
-  @Override
-  public boolean update(Account account) {
-    return update(
-        retrieve(equal(Account_ADDRESS, ByteArray.toHexString(account.getAddress().toByteArray()))),
-        ImmutableList.of(account)
-    );
+    this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
-    addIndex(NavigableIndex.onAttribute(Account_BALANCE));
+    index.addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
+    index.addIndex(NavigableIndex.onAttribute(Account_BALANCE));
+    fill();
   }
 }

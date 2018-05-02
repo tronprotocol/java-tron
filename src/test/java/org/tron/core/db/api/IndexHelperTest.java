@@ -4,7 +4,6 @@ import static com.googlecode.cqengine.query.QueryFactory.equal;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.resultset.ResultSet;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +23,10 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.api.index.AccountIndex;
+import org.tron.core.db.api.index.AssetIssueIndex;
+import org.tron.core.db.api.index.BlockIndex;
+import org.tron.core.db.api.index.TransactionIndex;
+import org.tron.core.db.api.index.WitnessIndex;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -134,7 +137,7 @@ public class IndexHelperTest {
   }
 
   private int getIndexSizeOfAccount() {
-    IndexedCollection<Account> accountIndex = indexHelper.getAccountIndex();
+    AccountIndex accountIndex = indexHelper.getAccountIndex();
     ImmutableList<Account> accountImmutableList = ImmutableList.copyOf(accountIndex);
     return accountImmutableList.size();
   }
@@ -158,7 +161,7 @@ public class IndexHelperTest {
   }
 
   private int getIndexSizeOfBlock() {
-    IndexedCollection<Block> blockIndex = indexHelper.getBlockIndex();
+    BlockIndex blockIndex = indexHelper.getBlockIndex();
     ImmutableList<Block> accountImmutableList = ImmutableList.copyOf(blockIndex);
     return accountImmutableList.size();
   }
@@ -179,7 +182,7 @@ public class IndexHelperTest {
   }
 
   private int getIndexSizeOfWitness() {
-    IndexedCollection<Witness> witnessIndex = indexHelper.getWitnessIndex();
+    WitnessIndex witnessIndex = indexHelper.getWitnessIndex();
     ImmutableList<Witness> wtinessImmutableList = ImmutableList.copyOf(witnessIndex);
     return wtinessImmutableList.size();
   }
@@ -204,7 +207,7 @@ public class IndexHelperTest {
   }
 
   private int getIndexSizeOfTransaction() {
-    IndexedCollection<Transaction> transactionIndex = indexHelper.getTransactionIndex();
+    TransactionIndex transactionIndex = indexHelper.getTransactionIndex();
     ImmutableList<Transaction> accountImmutableList = ImmutableList.copyOf(transactionIndex);
     return accountImmutableList.size();
   }
@@ -226,7 +229,7 @@ public class IndexHelperTest {
   }
 
   private int getIndexSizeOfAssetIssue() {
-    IndexedCollection<AssetIssueContract> assetIssueContractIndex =
+    AssetIssueIndex assetIssueContractIndex =
         indexHelper.getAssetIssueIndex();
     ImmutableList<AssetIssueContract> accountImmutableList =
         ImmutableList.copyOf(assetIssueContractIndex);
@@ -245,7 +248,7 @@ public class IndexHelperTest {
         .build();
     indexHelper.update(account1);
     ResultSet<Account> resultSet = indexHelper.getAccountIndex()
-        .retrieve(equal(AccountIndex.Account_ADDRESS,
+        .retrieve(equal(indexHelper.getAccountIndex().Account_ADDRESS,
             ByteArray.toHexString(account1.getAddress().toByteArray())));
     Assert.assertEquals(1, resultSet.size());
     Assert.assertEquals(123, resultSet.uniqueResult().getBalance());
@@ -258,7 +261,7 @@ public class IndexHelperTest {
         .build();
     indexHelper.update(account2);
     resultSet = indexHelper.getAccountIndex()
-        .retrieve(equal(AccountIndex.Account_ADDRESS,
+        .retrieve(equal(indexHelper.getAccountIndex().Account_ADDRESS,
             ByteArray.toHexString(account1.getAddress().toByteArray())));
     Assert.assertEquals(1, resultSet.size());
     Assert.assertEquals(456, resultSet.uniqueResult().getBalance());
@@ -271,7 +274,7 @@ public class IndexHelperTest {
         .build();
     indexHelper.update(account3);
     resultSet = indexHelper.getAccountIndex()
-        .retrieve(equal(AccountIndex.Account_ADDRESS,
+        .retrieve(equal(indexHelper.getAccountIndex().Account_ADDRESS,
             ByteArray.toHexString(account1.getAddress().toByteArray())));
     Assert.assertEquals(1, resultSet.size());
     Assert.assertEquals(789, resultSet.uniqueResult().getBalance());
