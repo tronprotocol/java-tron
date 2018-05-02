@@ -9,8 +9,25 @@ import org.tron.common.overlay.message.MessageFactory;
 public class TronMessageFactory extends MessageFactory {
 
   @Override
-  public TronMessage create(byte type, byte[] packed) {
+  public TronMessage create(byte[] data) {
+    try {
+      byte type = data[0];
+      byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
+      return create(type, rawData);
+    } catch (Exception e) {
+      if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
+        throw e;
+      }else {
+        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+      }
+    }
+  }
+
+  private TronMessage create(byte type, byte[] packed) {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
+    if (receivedTypes == null){
+      throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", type=" + type);
+    }
     switch (receivedTypes) {
       case TRX:
         return new TransactionMessage(packed);
@@ -39,14 +56,7 @@ public class TronMessageFactory extends MessageFactory {
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
-        throw new IllegalArgumentException("No such message");
+        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + receivedTypes);
     }
-  }
-
-  @Override
-  public TronMessage create(byte[] data) {
-    byte type = data[0];
-    byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
-    return create(type, rawData);
   }
 }

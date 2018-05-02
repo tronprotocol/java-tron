@@ -42,71 +42,36 @@ import org.tron.core.net.message.TronMessageFactory;
 @Scope("prototype")
 public class MessageCodec extends ByteToMessageDecoder {
 
-  private static final Logger loggerNet = LoggerFactory.getLogger("net");
-
   private Channel channel;
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
   private TronMessageFactory tronMessageFactory = new TronMessageFactory();
 
-  @Autowired
-  private MessageCodec(ApplicationContext ctx) {
-    //setMaxFramePayloadSize(config.rlpxMaxFrameSize());
-  }
-
-  private Message decodeMessage(ChannelHandlerContext ctx, ByteBuf buffer) throws IOException {
-
+  @Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
     byte[] encoded = new byte[buffer.readableBytes()];
     buffer.readBytes(encoded);
-    byte code = encoded[0];
-    byte[] payload = ArrayUtils.subarray(encoded, 1, encoded.length);
-
-    Message msg;
     try {
-      msg = createMessage(code, payload);
-    } catch (Exception ex) {
-      loggerNet.info("Incorrectly encoded message from: \t{}, dropping peer", channel);
-      loggerNet.info(ex.getMessage());
-      channel.disconnect(ReasonCode.BAD_PROTOCOL);
-      return null;
+      Message msg = createMessage(encoded);
+      channel.getNodeStatistics().tronInMessage.add();
+      out.add(msg);
+    } catch (Exception e) {
+      channel.processException(e);
     }
-
-    if (loggerNet.isDebugEnabled()) {
-      loggerNet.debug("From: {}    Recv:  {}", channel, msg.toString());
-    }
-
-    //TODO: let peer know.
-    //ethereumListener.onRecvMessage(channel, msg);
-
-    channel.getNodeStatistics().tronInMessage.add();
-    return msg;
   }
-
-  private Message createMessage(byte code, byte[] payload) {
-    if (MessageTypes.inP2pRange(code)) {
-      return p2pMessageFactory.create(code, payload);
-    }
-
-    if (MessageTypes.inTronRange(code)) {
-      return tronMessageFactory.create(code, payload);
-    }
-
-    throw new IllegalArgumentException(
-        "No such message: " + code + " [" + Hex.toHexString(payload) + "]");
-  }
-
-
-  @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out)
-      throws Exception {
-
-    Message message = decodeMessage(ctx, in);
-    out.add(message);
-
-  }
-
 
   public void setChannel(Channel channel) {
     this.channel = channel;
+  }
+
+  private Message createMessage(byte[] encoded) {
+    byte type = encoded[0];
+    if (MessageTypes.inP2pRange(type)) {
+      return p2pMessageFactory.create(encoded);
+    }
+    if (MessageTypes.inTronRange(type)) {
+      return tronMessageFactory.create(encoded);
+    }
+    throw new Error(MessageFactory.ERR_NO_SUCH_MSG + ", type=" + type + ", len=" + encoded.length);
   }
 
 }
