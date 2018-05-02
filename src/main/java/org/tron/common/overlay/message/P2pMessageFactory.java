@@ -24,8 +24,25 @@ import org.tron.core.net.message.MessageTypes;
 public class P2pMessageFactory extends MessageFactory {
 
   @Override
-  public P2pMessage create(byte type, byte[] rawData) {
+  public P2pMessage create(byte[] data) {
+    try {
+      byte type = data[0];
+      byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
+      return create(type, rawData);
+    } catch (Exception e) {
+      if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
+        throw e;
+      }else {
+        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+      }
+    }
+  }
+
+  private P2pMessage create(byte type, byte[] rawData) {
     MessageTypes messageType = MessageTypes.fromByte(type);
+    if (messageType == null){
+      throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", type=" + type);
+    }
     switch (messageType) {
       case P2P_HELLO:
         return new HelloMessage(type, rawData);
@@ -36,14 +53,7 @@ public class P2pMessageFactory extends MessageFactory {
       case P2P_PONG:
         return new PongMessage(type, rawData);
       default:
-        throw new IllegalArgumentException("No such message");
+        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + messageType);
     }
-  }
-
-  @Override
-  public P2pMessage create(byte[] data) {
-    byte type = data[0];
-    byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
-    return create(type, rawData);
   }
 }

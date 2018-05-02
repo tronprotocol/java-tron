@@ -135,6 +135,9 @@ public class TransferAssetActuatorTest {
             .build());
   }
 
+  /**
+   * Unit test.
+   */
   private Any getContract(long sendCoin, String assetName) {
     return Any.pack(
         Contract.TransferAssetContract.newBuilder()

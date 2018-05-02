@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -193,8 +194,8 @@ public class BroadTest {
       }
     }).start();
     int tryTimes = 0;
-    while (tryTimes < 10 || node == null || peerClient == null
-        || channelManager == null || pool == null || !go) {
+    while (tryTimes < 10 && (node == null || peerClient == null
+        || channelManager == null || pool == null || !go)) {
       try {
         logger.info("node:{},peerClient:{},channelManager:{},pool:{},{}", node, peerClient,
             channelManager, pool, go);
@@ -209,7 +210,6 @@ public class BroadTest {
 
   private void prepare() {
     try {
-      Class nodeClass = node.getClass();
       ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
       advertiseLoopThread.shutdownNow();
 
@@ -229,8 +229,11 @@ public class BroadTest {
         }
       }).start();
       Thread.sleep(1000);
-
       List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
+      int tryTimes = 0;
+      while (CollectionUtils.isEmpty(newChanelList) && ++tryTimes < 10) {
+        Thread.sleep(1000);
+      }
       logger.info("newChanelList size : {}", newChanelList.size());
 
       Field activePeersField = channelManager.getClass().getDeclaredField("activePeers");

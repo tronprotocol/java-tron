@@ -27,18 +27,26 @@ import org.tron.common.overlay.discover.message.Message;
 import java.util.List;
 
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger("PacketDecoder");
+
+    private int maxSize = 2048;
 
     @Override
     public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {
         ByteBuf buf = packet.content();
-        byte[] encoded = new byte[buf.readableBytes()];
+        int length = buf.readableBytes();
+        if (length > maxSize){
+            logger.error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
+            return;
+        }
+        byte[] encoded = new byte[length];
         buf.readBytes(encoded);
         try {
             DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
             out.add(event);
         } catch (Exception e) {
-            logger.error("parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length, ctx.channel().remoteAddress());
+            logger.error("Parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length, ctx.channel().remoteAddress());
         }
     }
 }

@@ -141,9 +141,9 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-  @Getter
-  @Setter
-  private long syncNodeCount;
+//  @Getter
+//  @Setter
+//  private long syncNodeCount;
 
   @Getter
   @Setter
@@ -197,7 +197,7 @@ public class Args {
     INSTANCE.nodeExternalIp = "";
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
     INSTANCE.nodeP2pPingInterval = 0L;
-    INSTANCE.syncNodeCount = 0;
+    //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
@@ -302,9 +302,9 @@ public class Args {
 
     INSTANCE.nodeP2pPingInterval =
         config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
-
-    INSTANCE.syncNodeCount =
-        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
+//
+//    INSTANCE.syncNodeCount =
+//        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;

@@ -110,7 +110,6 @@ public class TransferActuator extends AbstractActuator {
                 amount);
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

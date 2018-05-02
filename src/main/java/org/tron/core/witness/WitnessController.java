@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class WitnessController {
 
 
   public void initWits() {
-//    getWitnesses().clear();
+    // getWitnesses().clear();
     List<ByteString> witnessAddresses = new ArrayList<>();
     manager.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
       if (witnessCapsule.getIsJobs()) {
@@ -162,6 +163,15 @@ public class WitnessController {
     return true;
   }
 
+  public boolean activeWitnessesContain(final Set<ByteString> localWitnesses) {
+    List<ByteString> activeWitnesses = this.getActiveWitnesses();
+    for (ByteString witnessAddress : localWitnesses) {
+      if (activeWitnesses.contains(witnessAddress)) {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * get ScheduledWitness by slot.
    */
@@ -174,12 +184,12 @@ public class WitnessController {
     }
 
     int numberActiveWitness = this.getActiveWitnesses().size();
-    int sigleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
+    int singleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
     if (numberActiveWitness <= 0) {
       throw new RuntimeException("Active Witnesses is null.");
     }
-    int witnessIndex = (int) currentSlot % (numberActiveWitness * sigleRepeat);
-    witnessIndex /= sigleRepeat;
+    int witnessIndex = (int) currentSlot % (numberActiveWitness * singleRepeat);
+    witnessIndex /= singleRepeat;
     logger.debug("currentSlot:" + currentSlot
         + ", witnessIndex" + witnessIndex
         + ", currentActiveWitnesses size:" + numberActiveWitness);

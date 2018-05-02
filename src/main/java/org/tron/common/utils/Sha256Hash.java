@@ -72,7 +72,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     this.bytes = rawHashBytes;
   }
 
-
   /**
    * Use {@link #wrap(byte[])} instead.
    */
