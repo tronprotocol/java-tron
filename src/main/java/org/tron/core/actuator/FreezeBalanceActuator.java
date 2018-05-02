@@ -33,7 +33,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
           .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
       long now = System.currentTimeMillis();
-      long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000;
+      long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000L;
       Frozen newFrozen = Frozen.newBuilder()
           .setFrozenBalance(freezeBalanceContract.getFrozenBalance())
           .setExpireTime(now + duration)
@@ -60,7 +60,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   private long calculateBandwidth(FreezeBalanceContract freezeBalanceContract) {
 
-    return freezeBalanceContract.getFrozenBalance() / 1_000_000
+    return freezeBalanceContract.getFrozenBalance() / 1_000_000L
         * freezeBalanceContract.getFrozenDuration()
         * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday();
   }
