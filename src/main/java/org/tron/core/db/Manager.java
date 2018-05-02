@@ -426,8 +426,8 @@ public class Manager {
     consumeBandwidth(trx);
 
     //validateTapos(trx);
-        
-    validateFreq(trx);
+
+    //validateFreq(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
