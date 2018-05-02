@@ -45,15 +45,20 @@ public class ReplayTool {
 
   public static void main(String[] args) throws BadBlockException {
     Args.setParam(args, Constant.TESTNET_CONF);
-    String dataBaseDir = Args.getInstance().getOutputDirectory();
+    Args cfgArgs = Args.getInstance();
+
+    String dataBaseDir = cfgArgs.getOutputDirectory();
     cleanDb(dataBaseDir);
+
 
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     Manager dbManager = context.getBean(Manager.class);
-//    replayBlock(dbManager);
 
-    replayBlock(dbManager, 100L);
-
+    if (cfgArgs.getReplayTo() > 0) {
+      replayBlock(dbManager, cfgArgs.getReplayTo());
+    } else {
+      replayBlock(dbManager);
+    }
     System.exit(0);
   }
 

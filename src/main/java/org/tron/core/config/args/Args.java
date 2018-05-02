@@ -176,6 +176,11 @@ public class Args {
   @Parameter(names = {"--need-replay"}, description = "need-replay")
   private boolean needReplay = false;
 
+  @Getter
+  @Setter
+  @Parameter(names = {"--replay-to"}, description = "the num of block to replay")
+  private long replayTo;
+
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -211,6 +216,7 @@ public class Args {
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
     INSTANCE.needReplay = false;
+    INSTANCE.replayTo = 0;
   }
 
   /**

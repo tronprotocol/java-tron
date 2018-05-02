@@ -37,11 +37,15 @@ public class FullNode {
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
     if (cfgArgs.isNeedReplay()) {
+      Manager dbManager = context.getBean(Manager.class);
       try {
-        Manager dbManager = context.getBean(Manager.class);
-        ReplayTool.replayBlock(dbManager);
+        if (cfgArgs.getReplayTo() > 0) {
+          ReplayTool.replayBlock(dbManager, cfgArgs.getReplayTo());
+        } else {
+          ReplayTool.replayBlock(dbManager);
+        }
       } catch (BadBlockException e) {
-        logger.info("Bad block", e.getMessage());
+        logger.info("Replay failed", e.getMessage());
       }
     }
 
