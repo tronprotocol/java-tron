@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -33,10 +34,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
-import org.tron.common.overlay.message.HelloMessage;
-import org.tron.common.overlay.message.MessageCodec;
-import org.tron.common.overlay.message.ReasonCode;
-import org.tron.common.overlay.message.StaticMessages;
+import org.tron.common.overlay.message.*;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
@@ -73,6 +71,8 @@ public class Channel {
 
     private ChannelManager channelManager;
 
+    private ChannelHandlerContext ctx;
+
     private InetSocketAddress inetSocketAddress;
 
     private Node node;
@@ -81,12 +81,10 @@ public class Channel {
 
     private PeerConnectionDelegate peerDel;
 
-
-
     private TronState tronState = TronState.INIT;
 
     protected NodeStatistics nodeStatistics;
-    private boolean discoveryMode;
+
     private boolean isActive;
 
     private String remoteId;
@@ -95,7 +93,9 @@ public class Channel {
 
     public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
                      ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+
         this.channelManager = channelManager;
+
         this.remoteId = remoteId;
 
         isActive = remoteId != null && !remoteId.isEmpty();
@@ -105,10 +105,10 @@ public class Channel {
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
+
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
 
-        this.discoveryMode = discoveryMode;
         this.peerDel = peerDel;
 
         messageCodec.setChannel(this);
@@ -123,8 +123,9 @@ public class Channel {
 
     }
 
-    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) throws IOException, InterruptedException {
+    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
         ctx.pipeline().remove(handshakeHandler);
+        msgQueue.activate(ctx);
         ctx.pipeline().addLast("messageCodec", messageCodec);
         ctx.pipeline().addLast("p2p", p2pHandler);
         ctx.pipeline().addLast("data", tronHandler);
@@ -134,82 +135,39 @@ public class Channel {
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 
-    public void setInetSocketAddress(InetSocketAddress inetSocketAddress) {
-        this.inetSocketAddress = inetSocketAddress;
-    }
-
-    public NodeStatistics getNodeStatistics() {
-        return nodeStatistics;
-    }
-
     /**
      * Set node and register it in NodeManager if it is not registered yet.
      */
-    public void initWithNode(byte[] nodeId, int remotePort) {
+    public void initNode(byte[] nodeId, int remotePort) {
         node = new Node(nodeId, inetSocketAddress.getHostString(), remotePort);
         nodeStatistics = nodeManager.getNodeStatistics(node);
     }
 
-    public Node getNode() {
-        return node;
-    }
-
-    public boolean isProtocolsInitialized() {
-        return tronState.ordinal() > TronState.INIT.ordinal();
-    }
-
-    public String logSyncStats() {
-        //TODO: return tron sync status here.
-//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
-//    long lifeTime = System.currentTimeMillis() - connectedTime;
-        return "";
-//        return String.format(
-//            "Peer %s: [ %18s, ping %6s ms, last know block num %s ]: needSyncFromPeer:%b needSyncFromUs:%b",
-//            this.getNode().getHost() + ":" + this.getNode().getPort(),
-//            this.getPeerIdShort(),
-//            (int)this.getPeerStats().getAvgLatency(),
-//            headBlockWeBothHave.getNum(),
-//            isNeedSyncFromPeer(),
-//            isNeedSyncFromUs());
-    }
-
-    public String getPeerId() {
-        return node == null ? "<null>" : node.getHexId();
-    }
-
-    public String getPeerIdShort() {
-        return node == null ? (remoteId != null && remoteId.length() >= 8 ? remoteId.substring(0,8) :remoteId)
-                : node.getHexIdShort();
-    }
-
-    public byte[] getNodeId() {
-        return node == null ? null : node.getId();
-    }
-
-    /**
-     * Indicates whether this connection was initiated by our peer
-     */
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public ByteArrayWrapper getNodeIdWrapper() {
-        return node == null ? null : new ByteArrayWrapper(node.getId());
-    }
-
     public void disconnect(ReasonCode reason) {
-        logger.info("Channel disconnect {}, reason:{}", inetSocketAddress, reason);
-        getNodeStatistics()
-            .nodeDisconnectedLocal(reason);
-        msgQueue.disconnect(reason);
+        logger.info("Send disconnect {}, reason:{}", ctx.channel().remoteAddress(), reason);
+        getNodeStatistics().nodeDisconnectedLocal(reason);
+        ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
+        close();
     }
 
-    public InetSocketAddress getInetSocketAddress() {
-        return inetSocketAddress;
+    public void processException(Throwable throwable){
+        String errMsg = throwable.getMessage();
+        if (throwable instanceof ReadTimeoutException){
+            logger.error("Read timeout, {}", ctx.channel().remoteAddress());
+        }else if (errMsg != null && (errMsg.contains(MessageFactory.ERR_NO_SUCH_MSG) ||
+                errMsg.contains(MessageFactory.ERR_PARSE_FAILED) ||
+                errMsg.contains("Connection reset by peer"))){
+            logger.error("{}, {}", errMsg, ctx.channel().remoteAddress());
+        }else {
+            logger.error("exception caught, {}", ctx.channel().remoteAddress(), throwable);
+        }
+        close();
     }
 
-    public PeerStatistics getPeerStats() {
-        return peerStats;
+    public void close(){
+        p2pHandler.close();
+        msgQueue.close();
+        ctx.close();
     }
 
     public enum TronState {
@@ -221,9 +179,37 @@ public class Channel {
         SYNC_FAILED
     }
 
-    public boolean isIdle() {
-        // TODO: use peer's status.
-        return  true;
+    public PeerStatistics getPeerStats() {
+        return peerStats;
+    }
+
+    public Node getNode() {
+        return node;
+    }
+
+    public byte[] getNodeId() {
+        return node == null ? null : node.getId();
+    }
+
+    public ByteArrayWrapper getNodeIdWrapper() {
+        return node == null ? null : new ByteArrayWrapper(node.getId());
+    }
+
+    public String getPeerId() {
+        return node == null ? "<null>" : node.getHexId();
+    }
+
+    public void setChannelHandlerContext(ChannelHandlerContext ctx){
+        this.ctx = ctx;
+        this.inetSocketAddress = ctx == null ? null: (InetSocketAddress)ctx.channel().remoteAddress();
+    }
+
+    public ChannelHandlerContext getChannelHandlerContext(){
+        return this.ctx;
+    }
+
+    public NodeStatistics getNodeStatistics() {
+        return nodeStatistics;
     }
 
     public void setStartTime(long startTime) {
@@ -234,23 +220,28 @@ public class Channel {
         return startTime;
     }
 
+    public void setTronState(TronState tronState) {
+        this.tronState = tronState;
+    }
+
     public TronState getTronState() {
         return tronState;
     }
 
-    public void setTronState(TronState tronState) {
-        //logger.info("channel {} state [{}] change to [{}]", inetSocketAddress, this.tronState, tronState);
-        this.tronState = tronState;
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public boolean isProtocolsInitialized() {
+        return tronState.ordinal() > TronState.INIT.ordinal();
     }
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Channel channel = (Channel) o;
-
-
         if (inetSocketAddress != null ? !inetSocketAddress.equals(channel.inetSocketAddress) : channel.inetSocketAddress != null) return false;
         if (node != null ? !node.equals(channel.node) : channel.node != null) return false;
         return this == channel;
@@ -265,7 +256,7 @@ public class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s | %s", getPeerId(), inetSocketAddress);
+        return String.format("%s | %s", inetSocketAddress, getPeerId());
     }
 }
 

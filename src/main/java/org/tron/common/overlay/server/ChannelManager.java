@@ -22,6 +22,7 @@ import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -122,15 +123,16 @@ public class ChannelManager {
           }else {
               activePeers.put(peer.getNodeIdWrapper(), peer);
               newPeers.remove(peer);
+              syncPool.onConnect(peer);
               logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
           }
       }
   }
 
   public void disconnect(Channel peer, ReasonCode reason) {
-    logger.info("Disconnecting peer with reason " + reason + ": " + peer);
     peer.disconnect(reason);
-    recentlyDisconnected.put(peer.getInetSocketAddress().getAddress(), new Date());
+    InetSocketAddress socketAddress = (InetSocketAddress)peer.getChannelHandlerContext().channel().remoteAddress();
+    recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
   public void notifyDisconnect(Channel channel) {
@@ -158,16 +160,7 @@ public class ChannelManager {
     return new ArrayList<>(activePeers.values());
   }
 
-  public void processException(ChannelHandlerContext ctx, Throwable throwable){
-      if (throwable instanceof ReadTimeoutException){
-          logger.error("Read timeout, {}", ctx.channel().remoteAddress());
-      }else if (throwable.getMessage().contains("Connection reset by peer")){
-          logger.error("Connection reset by peer, {}", ctx.channel().remoteAddress());
-      }else {
-          logger.error("exception caught, {}", ctx.channel().remoteAddress(), throwable);
-      }
-      ctx.close();
-  }
+
 
   public void close() {
     try {

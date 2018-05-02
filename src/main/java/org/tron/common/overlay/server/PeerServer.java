@@ -85,9 +85,11 @@ public class PeerServer {
             channelFuture = b.bind(port).sync();
 
             listening = true;
+
             // Wait until the connection is closed.
             channelFuture.channel().closeFuture().sync();
-            logger.info("Connection is closed");
+
+            logger.info("TCP listener is closed");
 
         } catch (Exception e) {
             logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
@@ -109,9 +111,5 @@ public class PeerServer {
                 logger.warn("Problems closing server channel", e);
             }
         }
-    }
-
-    public boolean isListening() {
-        return listening;
     }
 }
