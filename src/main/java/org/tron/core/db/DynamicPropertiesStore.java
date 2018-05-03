@@ -18,11 +18,11 @@ import org.tron.core.config.args.Args;
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
-  private static final long MAINTENANCE_TIME_INTERVAL = Args.getInstance()
-      .getMaintenanceTimeInterval();
+  private static final byte[] MAINTENANCE_TIME_INTERVAL = "MAINTENANCE_TIME_INTERVAL".getBytes();
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
-  private static final double VOTE_REWARD_RATE = 0;
-  private static final int SINGLE_REPEAT = 1;
+
+  private static final byte[] VOTE_REWARD_RATE = "VOTE_REWARD_RATE".getBytes(); // percent
+  private static final byte[] SINGLE_REPEAT = "SINGLE_REPEAT".getBytes();
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -49,8 +49,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MIN_FROZEN_TIME = "MIN_FROZEN_TIME".getBytes();
 
-  private static final byte[] ACCOUNT_CREATE_COST = "ACCOUNT_CREATE_COST".getBytes();
-
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
@@ -66,6 +64,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
     super(dbName);
+    try {
+      this.getMaintenanceTimeInterval();
+    } catch (IllegalArgumentException e) {
+      this.saveMaintenanceTimeInterval(Args.getInstance().getMaintenanceTimeInterval());
+    }
+
+    try {
+      this.getVoteRewardRate();
+    } catch (IllegalArgumentException e) {
+      this.saveVoteRewardRate(0);
+    }
+
+    try {
+      this.getSingleRepeat();
+    } catch (IllegalArgumentException e) {
+      this.saveSingleRepeat(6);
+    }
+
     try {
       this.getLatestBlockHeaderTimestamp();
     } catch (IllegalArgumentException e) {
@@ -127,12 +143,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAccountCreateCost();
-    } catch (IllegalArgumentException e) {
-      this.saveAccountCreateCost(1);
-    }
-
-    try {
       this.getWitnessAllowanceFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveWitnessAllowanceFrozenTime(1);
@@ -153,7 +163,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
-      this.saveAccountUpgradeCost(100);
+      this.saveAccountUpgradeCost(100_000_000);
     }
 
     try {
@@ -235,6 +245,46 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return result;
   }
 
+  public void saveMaintenanceTimeInterval(long maintenanceTimeInterval) {
+    logger.debug("MaintenanceTimeInterval:" + maintenanceTimeInterval);
+    this.put(MAINTENANCE_TIME_INTERVAL,
+        new BytesCapsule(ByteArray.fromObject(maintenanceTimeInterval)));
+  }
+
+  public long getMaintenanceTimeInterval() {
+    return Optional.ofNullable(this.dbSource.getData(MAINTENANCE_TIME_INTERVAL))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAINTENANCE_TIME_INTERVAL"));
+  }
+
+  public void saveVoteRewardRate(double voteRewardRate) {
+    logger.debug("VoteRewardRate:" + voteRewardRate);
+    this.put(VOTE_REWARD_RATE,
+        new BytesCapsule(ByteArray.fromString(Double.toString(voteRewardRate))));
+  }
+
+  public double getVoteRewardRate() {
+    return Optional.ofNullable(this.dbSource.getData(VOTE_REWARD_RATE))
+        .map(ByteArray::toStr)
+        .map(Double::parseDouble)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found VOTE_REWARD_RATE"));
+  }
+
+  public void saveSingleRepeat(int singleRepeat) {
+    logger.debug("SingleRepeat:" + singleRepeat);
+    this.put(SINGLE_REPEAT,
+        new BytesCapsule(ByteArray.fromInt(singleRepeat)));
+  }
+
+  public int getSingleRepeat() {
+    return Optional.ofNullable(this.dbSource.getData(SINGLE_REPEAT))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SINGLE_REPEAT"));
+  }
+
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
     logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
     this.put(BLOCK_FILLED_SLOTS_INDEX,
@@ -287,19 +337,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
   }
 
-  public void saveAccountCreateCost(int accountCreateCost) {
-    logger.debug("ACCOUNT_CREATE_COST:" + accountCreateCost);
-    this.put(ACCOUNT_CREATE_COST,
-        new BytesCapsule(ByteArray.fromInt(accountCreateCost)));
-  }
-
-  public int getAccountCreateCost() {
-    return Optional.ofNullable(this.dbSource.getData(ACCOUNT_CREATE_COST))
-        .map(ByteArray::toInt)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ACCOUNT_CREATE_COST"));
-  }
-
   public void saveWitnessAllowanceFrozenTime(int witnessAllowanceFrozenTime) {
     logger.debug("WITNESS_ALLOWANCE_FROZEN_TIME:" + witnessAllowanceFrozenTime);
     this.put(WITNESS_ALLOWANCE_FROZEN_TIME,
@@ -345,18 +382,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
   }
 
-  public void saveNonExistentAccountTransferLimit(long limit) {
-    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
-    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
-        new BytesCapsule(ByteArray.fromLong(limit)));
-  }
-
-
   public int getAccountUpgradeCost() {
     return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
+  }
+
+  public void saveNonExistentAccountTransferLimit(long limit) {
+    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
+    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
+        new BytesCapsule(ByteArray.fromLong(limit)));
   }
 
   public long getNonExistentAccountTransferMin() {
@@ -507,14 +543,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return MAINTENANCE_SKIP_SLOTS;
   }
 
-  public double getVoteRewardRate() {
-    return VOTE_REWARD_RATE;
-  }
-
-  public int getSingleRepeat() {
-    return SINGLE_REPEAT;
-  }
-
   private void saveNextMaintenanceTime(long nextMaintenanceTime) {
     this.put(NEXT_MAINTENANCE_TIME,
         new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
@@ -524,8 +552,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void updateNextMaintenanceTime(long blockTime) {
 
     long currentMaintenanceTime = getNextMaintenanceTime();
-    long round = (blockTime - currentMaintenanceTime) / MAINTENANCE_TIME_INTERVAL;
-    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * MAINTENANCE_TIME_INTERVAL;
+    long round = (blockTime - currentMaintenanceTime) / getMaintenanceTimeInterval();
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * getMaintenanceTimeInterval();
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
