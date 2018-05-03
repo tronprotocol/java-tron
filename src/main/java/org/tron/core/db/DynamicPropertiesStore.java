@@ -49,8 +49,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MIN_FROZEN_TIME = "MIN_FROZEN_TIME".getBytes();
 
-  private static final byte[] ACCOUNT_CREATE_COST = "ACCOUNT_CREATE_COST".getBytes();
-
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
@@ -142,12 +140,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getMinFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveMinFrozenTime(3);
-    }
-
-    try {
-      this.getAccountCreateCost();
-    } catch (IllegalArgumentException e) {
-      this.saveAccountCreateCost(1);
     }
 
     try {
@@ -345,19 +337,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
   }
 
-  public void saveAccountCreateCost(int accountCreateCost) {
-    logger.debug("ACCOUNT_CREATE_COST:" + accountCreateCost);
-    this.put(ACCOUNT_CREATE_COST,
-        new BytesCapsule(ByteArray.fromInt(accountCreateCost)));
-  }
-
-  public int getAccountCreateCost() {
-    return Optional.ofNullable(this.dbSource.getData(ACCOUNT_CREATE_COST))
-        .map(ByteArray::toInt)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ACCOUNT_CREATE_COST"));
-  }
-
   public void saveWitnessAllowanceFrozenTime(int witnessAllowanceFrozenTime) {
     logger.debug("WITNESS_ALLOWANCE_FROZEN_TIME:" + witnessAllowanceFrozenTime);
     this.put(WITNESS_ALLOWANCE_FROZEN_TIME,
@@ -403,18 +382,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
   }
 
-  public void saveNonExistentAccountTransferLimit(long limit) {
-    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
-    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
-        new BytesCapsule(ByteArray.fromLong(limit)));
-  }
-
-
   public int getAccountUpgradeCost() {
     return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
+  }
+
+  public void saveNonExistentAccountTransferLimit(long limit) {
+    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
+    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
+        new BytesCapsule(ByteArray.fromLong(limit)));
   }
 
   public long getNonExistentAccountTransferMin() {

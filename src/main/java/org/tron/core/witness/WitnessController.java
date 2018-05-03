@@ -245,7 +245,7 @@ public class WitnessController {
       if (sum.isPresent()) {
         if (sum.get() <= account.getShare()) {
           long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
-              .getVoteRewardRate()) / 100;
+              .getVoteRewardRate());
           account.setBalance(account.getBalance() + reward);
           accountStore.put(account.createDbKey(), account);
           account.getVotesList().forEach(vote -> {
