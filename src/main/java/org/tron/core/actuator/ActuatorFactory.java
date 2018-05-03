@@ -8,10 +8,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.TransactionType;
 
 @Slf4j
 public class ActuatorFactory {
+
   public static final ActuatorFactory INSTANCE = new ActuatorFactory();
 
   private ActuatorFactory() {
@@ -31,16 +31,11 @@ public class ActuatorFactory {
       logger.info("transactionCapsule or Transaction is null");
       return actuatorList;
     }
-    //    if (null == manager) {
-    //      logger.info("manager is null");
-    //      return actuatorList;
-    //    }
+
     Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
-    if (TransactionType.ContractType.equals(rawData.getType())) {
-      rawData.getContractList()
-          .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
-    }
+    rawData.getContractList()
+        .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     return actuatorList;
   }
 
