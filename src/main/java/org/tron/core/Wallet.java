@@ -213,17 +213,19 @@ public class Wallet {
       p2pNode.broadcast(message);
       return true;
     } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ContractValidateException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ContractExeException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ValidateBandwidthException e) {
-      logger.debug("high freq", e);
+      logger.error("high freq", e);
     } catch (DupTransactionException e) {
-      logger.debug("dup trans", e);
+      logger.error("dup trans", e);
     } catch (TaposException e) {
-      logger.debug("tapos error", e);
+      logger.error("tapos error", e);
+    }catch (Exception e){
+      logger.error("exception caught", e);
     }
     return false;
   }

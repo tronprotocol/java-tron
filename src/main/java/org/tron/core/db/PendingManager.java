@@ -33,17 +33,17 @@ public class PendingManager implements AutoCloseable {
           try {
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
-            logger.debug(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
           } catch (ContractValidateException e) {
-            logger.debug(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
           } catch (ContractExeException e) {
-            logger.debug(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
           } catch (ValidateBandwidthException e) {
-            logger.debug(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
           } catch (DupTransactionException e) {
-            logger.debug("pending manager: dup trans", e);
+            logger.error("pending manager: dup trans", e);
           } catch (TaposException e) {
-            logger.debug("pending manager: tapos exception", e);
+            logger.error("pending manager: tapos exception", e);
           }
         });
     dbManager.getPoppedTransactions().stream()
