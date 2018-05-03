@@ -9,7 +9,7 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
     long WITNESS_PAY_PER_BLOCK = 32000000;  // 32trx
-    double SOLIDIFIED_THRESHOLD = 0.7;
+    double SOLIDIFIED_THRESHOLD = 0.6;
     int PRIVATE_KEY_LENGTH = 64;
     int MAX_ACTIVE_WITNESS_NUM = 15;
     int TRXS_SIZE = 2_000_000; // < 2MiB
@@ -19,17 +19,17 @@ public interface Parameter {
 
   interface NodeConstant {
     long SYNC_RETURN_BATCH_NUM = 1000;
-    long SYNC_FETCH_BATCH_NUM = 500;
+    long SYNC_FETCH_BATCH_NUM = 2000;
     long MAX_BLOCKS_IN_PROCESS = 400;
     long MAX_BLOCKS_ALREADY_FETCHED = 800;
-    long MAX_BLOCKS_SYNC_FROM_ONE_PEER = 200;
+    long MAX_BLOCKS_SYNC_FROM_ONE_PEER = 1000;
     long SYNC_CHAIN_LIMIT_NUM = 500;
   }
 
 
   interface NetConstants {
 
-    long ADV_TIME_OUT = 20000L;
+    long ADV_TIME_OUT = 5000L;
     long SYNC_TIME_OUT = 5000L;
     long HEAD_NUM_MAX_DELTA = 1000L;
     long HEAD_NUM_CHECK_TIME = 60000L;

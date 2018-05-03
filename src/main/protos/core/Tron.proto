@@ -69,7 +69,6 @@ message Account {
 message acuthrity {
   AccountId account = 1;
   bytes permission_name = 2;
-
 }
 
 
@@ -154,6 +153,7 @@ message Transaction {
 
   message raw {
     TransactionType type = 1;
+    bytes ref_block_bytes = 2;
     int64 ref_block_num = 3;
     bytes ref_block_hash = 4;
     int64 expiration = 8;
@@ -261,6 +261,13 @@ enum ReasonCode {
   USER_REASON = 0x10;
   RESET = 0x11;
   SYNC_FAIL = 0x12;
+  TIME_OUT = 0x13;
+  BAD_TX = 0x14;
+  BAD_BLOCK = 0x15;
+  FORKED = 0x16;
+  UNLINKABLE = 0x17;
+  INCOMPATIBLE_VERSION = 0x18;
+  INCOMPATIBLE_CHAIN = 0x19;
   UNKNOWN = 0xFF;
 }
 

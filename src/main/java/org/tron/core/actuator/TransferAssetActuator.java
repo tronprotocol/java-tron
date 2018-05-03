@@ -71,7 +71,10 @@ public class TransferAssetActuator extends AbstractActuator {
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException();
+      throw new ContractExeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
     return true;
   }
@@ -97,7 +100,7 @@ public class TransferAssetActuator extends AbstractActuator {
 
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
       if (!this.dbManager.getAccountStore().has(ownerKey)) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("No owner account!");
       }
 
       // if account with to_address is not existed,  create it.
@@ -109,28 +112,41 @@ public class TransferAssetActuator extends AbstractActuator {
 
       byte[] nameKey = transferAssetContract.getAssetName().toByteArray();
       if (!this.dbManager.getAssetIssueStore().has(nameKey)) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("No asset !");
       }
 
       long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
       if (ownerAccount == null) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("Owner account is null!");
       }
       Map<String, Long> asset = ownerAccount.getAssetMap();
 
       if (asset.isEmpty()) {
-        throw new ContractValidateException();
+        throw new ContractValidateException("Owner no asset!");
       }
 
       Long assetBalance = asset.get(ByteArray.toStr(nameKey));
-
-      if (amount <= 0 || null == assetBalance || amount > assetBalance || assetBalance <= 0) {
-        throw new ContractValidateException();
+      if (amount <= 0) {
+        throw new ContractValidateException("Amount must greater than 0.");
       }
+      if (null == assetBalance || assetBalance <= 0) {
+        throw new ContractValidateException("assetBalance must greater than 0.");
+      }
+      if (amount > assetBalance) {
+        throw new ContractValidateException("assetBalance is not sufficient.");
+      }
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress.toByteArray());
+      assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
+      if (assetBalance == null) {
+        assetBalance = 0L;
+      }
+      assetBalance = Math.addExact(assetBalance, amount);
     } catch (InvalidProtocolBufferException e) {
-      throw new ContractValidateException();
+      throw new ContractValidateException(e.getMessage());
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

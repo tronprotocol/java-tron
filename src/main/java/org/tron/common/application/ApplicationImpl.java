@@ -71,11 +71,11 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     System.err.println("******** begin to shutdown ********");
-    closeConnection();
     synchronized (RevokingStore.getInstance()) {
       closeRevokingStore();
       closeAllStore();
     }
+    closeConnection();
     System.err.println("******** end to shutdown ********");
   }
 

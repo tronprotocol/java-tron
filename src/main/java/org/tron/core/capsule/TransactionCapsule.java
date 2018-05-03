@@ -32,14 +32,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.TransactionType;
@@ -48,6 +54,7 @@ import org.tron.protos.Protocol.Transaction.TransactionType;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
+  private boolean isValidated = false;
 
   /**
    * constructor TransactionCapsule.
@@ -130,8 +137,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
-    Transaction.raw rawData = this.transaction.getRawData().toBuilder().setRefBlockNum(blockNum)
-        .setRefBlockHash(ByteString.copyFrom(blockHash)).build();
+    byte[] refBlockNum = ByteArray.fromLong(blockNum);
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockHash(ByteString.copyFrom(ByteArray.subArray(blockHash, 8, 16)))
+        .setRefBlockBytes(ByteString.copyFrom(ByteArray.subArray(refBlockNum, 6, 8)))
+        .build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
@@ -241,11 +251,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case DeployContract:
           owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
           break;
+        case WitnessUpdateContract:
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
         case ParticipateAssetIssueContract:
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
           break;
+        case AccountUpdateContract:
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
+        case FreezeBalanceContract:
+          owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case UnfreezeBalanceContract:
+          owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case WithdrawBalanceContract:
+          owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+          break;
         // todo add other contract
-
         default:
           return null;
       }
@@ -299,6 +323,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    * validate signature
    */
   public boolean validateSignature() throws ValidateSignatureException {
+
+    if (isValidated == true) {
+      return true;
+    }
+
     if (this.getInstance().getSignatureCount() !=
         this.getInstance().getRawData().getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
@@ -312,12 +341,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
+          isValidated = false;
           throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
+        isValidated = false;
         throw new ValidateSignatureException(e.getMessage());
       }
     }
+    isValidated = true;
     return true;
   }
 
@@ -377,7 +409,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             e.printStackTrace();
           }
         }
-        if ( this.transaction.getSignatureList().size() >= i.get() + 1) {
+        if (this.transaction.getSignatureList().size() >= i.get() + 1) {
           toStringBuff.append("sign=").append(getBase64FromByteString(
               this.transaction.getSignature(i.getAndIncrement()))).append("\n");
         }

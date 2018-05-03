@@ -21,6 +21,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final long MAINTENANCE_TIME_INTERVAL = Args.getInstance()
       .getMaintenanceTimeInterval();
   private static final long MAINTENANCE_SKIP_SLOTS = 2;
+  private static final double VOTE_REWARD_RATE = 0;
   private static final int SINGLE_REPEAT = 1;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
@@ -38,10 +39,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
 
-  private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
+  private static final byte[] BLOCK_FILLED_SLOTS_NUMBER = "BLOCK_FILLED_SLOTS_NUMBER".getBytes();
 
-  public static final int MAX_VOTE_NUMBER = 30;
+  private static final byte[] MAX_VOTE_NUMBER = "MAX_VOTE_NUMBER".getBytes();
 
+  private static final byte[] MAX_FROZEN_NUMBER = "MAX_FROZEN_NUMBER".getBytes();
+
+  private static final byte[] MAX_FROZEN_TIME = "MAX_FROZEN_TIME".getBytes();
+
+  private static final byte[] MIN_FROZEN_TIME = "MIN_FROZEN_TIME".getBytes();
+
+  private static final byte[] ACCOUNT_CREATE_COST = "ACCOUNT_CREATE_COST".getBytes();
+
+  private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
+      .getBytes();
+
+  private static final byte[] BANDWIDTH_PER_TRANSACTION = "BANDWIDTH_PER_TRANSACTION".getBytes();
+
+  private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
+
+  private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
+
+  private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
+      .getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
@@ -83,9 +103,75 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getMaxVoteNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxVoteNumber(30);
+    }
+
+    try {
+      this.getMaxFrozenNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxFrozenNumber(1);
+    }
+
+    try {
+      this.getMaxFrozenTime();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxFrozenTime(3);
+    }
+
+    try {
+      this.getMinFrozenTime();
+    } catch (IllegalArgumentException e) {
+      this.saveMinFrozenTime(3);
+    }
+
+    try {
+      this.getAccountCreateCost();
+    } catch (IllegalArgumentException e) {
+      this.saveAccountCreateCost(1);
+    }
+
+    try {
+      this.getWitnessAllowanceFrozenTime();
+    } catch (IllegalArgumentException e) {
+      this.saveWitnessAllowanceFrozenTime(1);
+    }
+
+    try {
+      this.getBandwidthPerTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPerTransaction(1);
+    }
+
+    try {
+      this.getBandwidthPerCoinday();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPerCoinday(10);
+    }
+
+    try {
+      this.getAccountUpgradeCost();
+    } catch (IllegalArgumentException e) {
+      this.saveAccountUpgradeCost(100);
+    }
+
+    try {
+      this.getNonExistentAccountTransferMin();
+    } catch (IllegalArgumentException e) {
+      this.saveNonExistentAccountTransferLimit(1_000_000L);
+    }
+
+    try {
+      this.getBlockFilledSlotsNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockFilledSlotsNumber(128);
+    }
+
+    try {
       this.getBlockFilledSlots();
     } catch (IllegalArgumentException e) {
-      int[] blockFilledSlots = new int[BLOCK_FILLED_SLOTS_NUMBER];
+      int[] blockFilledSlots = new int[getBlockFilledSlotsNumber()];
       Arrays.fill(blockFilledSlots, 1);
       this.saveBlockFilledSlots(blockFilledSlots);
     }
@@ -162,6 +248,124 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_INDEX"));
   }
 
+  public void saveMaxFrozenNumber(int maxFrozenNumber) {
+    logger.debug("MAX_FROZEN_NUMBER:" + maxFrozenNumber);
+    this.put(MAX_FROZEN_NUMBER,
+        new BytesCapsule(ByteArray.fromInt(maxFrozenNumber)));
+  }
+
+  public int getMaxFrozenNumber() {
+    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_NUMBER))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_FROZEN_NUMBER"));
+  }
+
+  public void saveMaxFrozenTime(int maxFrozenTime) {
+    logger.debug("MAX_FROZEN_NUMBER:" + maxFrozenTime);
+    this.put(MAX_FROZEN_TIME,
+        new BytesCapsule(ByteArray.fromInt(maxFrozenTime)));
+  }
+
+  public int getMaxFrozenTime() {
+    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_TIME))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_FROZEN_TIME"));
+  }
+
+  public void saveMinFrozenTime(int minFrozenTime) {
+    logger.debug("MIN_FROZEN_NUMBER:" + minFrozenTime);
+    this.put(MIN_FROZEN_TIME,
+        new BytesCapsule(ByteArray.fromInt(minFrozenTime)));
+  }
+
+  public int getMinFrozenTime() {
+    return Optional.ofNullable(this.dbSource.getData(MIN_FROZEN_TIME))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
+  }
+
+  public void saveAccountCreateCost(int accountCreateCost) {
+    logger.debug("ACCOUNT_CREATE_COST:" + accountCreateCost);
+    this.put(ACCOUNT_CREATE_COST,
+        new BytesCapsule(ByteArray.fromInt(accountCreateCost)));
+  }
+
+  public int getAccountCreateCost() {
+    return Optional.ofNullable(this.dbSource.getData(ACCOUNT_CREATE_COST))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ACCOUNT_CREATE_COST"));
+  }
+
+  public void saveWitnessAllowanceFrozenTime(int witnessAllowanceFrozenTime) {
+    logger.debug("WITNESS_ALLOWANCE_FROZEN_TIME:" + witnessAllowanceFrozenTime);
+    this.put(WITNESS_ALLOWANCE_FROZEN_TIME,
+        new BytesCapsule(ByteArray.fromInt(witnessAllowanceFrozenTime)));
+  }
+
+  public int getWitnessAllowanceFrozenTime() {
+    return Optional.ofNullable(this.dbSource.getData(WITNESS_ALLOWANCE_FROZEN_TIME))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found WITNESS_ALLOWANCE_FROZEN_TIME"));
+  }
+
+  public void saveBandwidthPerTransaction(int bandwidthPerTransaction) {
+    logger.debug("BANDWIDTH_PER_TRANSACTION:" + bandwidthPerTransaction);
+    this.put(BANDWIDTH_PER_TRANSACTION,
+        new BytesCapsule(ByteArray.fromInt(bandwidthPerTransaction)));
+  }
+
+  public int getBandwidthPerTransaction() {
+    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_TRANSACTION))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PER_TRANSACTION"));
+  }
+
+  public void saveBandwidthPerCoinday(long bandwidthPerCoinday) {
+    logger.debug("BANDWIDTH_PER_COINDAY:" + bandwidthPerCoinday);
+    this.put(BANDWIDTH_PER_COINDAY,
+        new BytesCapsule(ByteArray.fromLong(bandwidthPerCoinday)));
+  }
+
+  public long getBandwidthPerCoinday() {
+    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_COINDAY))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
+  }
+
+  public void saveAccountUpgradeCost(int accountUpgradeCost) {
+    logger.debug("ACCOUNT_UPGRADE_COST:" + accountUpgradeCost);
+    this.put(ACCOUNT_UPGRADE_COST,
+        new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
+  }
+
+  public void saveNonExistentAccountTransferLimit(long limit) {
+    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + limit);
+    this.put(NON_EXISTENT_ACCOUNT_TRANSFER_MIN,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+
+  public int getAccountUpgradeCost() {
+    return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
+  }
+
+  public long getNonExistentAccountTransferMin() {
+    return Optional.ofNullable(this.dbSource.getData(NON_EXISTENT_ACCOUNT_TRANSFER_MIN))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NON_EXISTENT_ACCOUNT_TRANSFER_MIN"));
+  }
+
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
     this.put(BLOCK_FILLED_SLOTS,
@@ -176,17 +380,42 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
   }
 
+  public int getBlockFilledSlotsNumber() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS_NUMBER))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_NUMBER"));
+  }
+
+  public void saveBlockFilledSlotsNumber(int blockFilledSlotsNumber) {
+    logger.debug("blockFilledSlotsNumber:" + blockFilledSlotsNumber);
+    this.put(BLOCK_FILLED_SLOTS_NUMBER,
+        new BytesCapsule(ByteArray.fromInt(blockFilledSlotsNumber)));
+  }
+
+  public int getMaxVoteNumber() {
+    return Optional.ofNullable(this.dbSource.getData(MAX_VOTE_NUMBER))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_VOTE_NUMBER"));
+  }
+
+  public void saveMaxVoteNumber(int maxVoteNumber) {
+    logger.debug("MAX_VOTE_NUMBER:" + maxVoteNumber);
+    this.put(MAX_VOTE_NUMBER,
+        new BytesCapsule(ByteArray.fromInt(maxVoteNumber)));
+  }
   public void applyBlock(boolean fillBlock) {
     int[] blockFilledSlots = getBlockFilledSlots();
     int blockFilledSlotsIndex = getBlockFilledSlotsIndex();
     blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
-    saveBlockFilledSlotsIndex((blockFilledSlotsIndex + 1) % BLOCK_FILLED_SLOTS_NUMBER);
+    saveBlockFilledSlotsIndex((blockFilledSlotsIndex + 1) % getBlockFilledSlotsNumber());
     saveBlockFilledSlots(blockFilledSlots);
   }
 
   public int calculateFilledSlotsCount() {
     int[] blockFilledSlots = getBlockFilledSlots();
-    return 100 * IntStream.of(blockFilledSlots).sum() / BLOCK_FILLED_SLOTS_NUMBER;
+    return 100 * IntStream.of(blockFilledSlots).sum() / getBlockFilledSlotsNumber();
   }
 
   public void saveLatestSolidifiedBlockNum(long number) {
@@ -276,6 +505,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getMaintenanceSkipSlots() {
     return MAINTENANCE_SKIP_SLOTS;
+  }
+
+  public double getVoteRewardRate() {
+    return VOTE_REWARD_RATE;
   }
 
   public int getSingleRepeat() {

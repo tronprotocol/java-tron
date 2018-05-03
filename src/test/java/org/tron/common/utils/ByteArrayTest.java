@@ -24,10 +24,19 @@ import org.spongycastle.util.encoders.Hex;
 
 @Slf4j
 public class ByteArrayTest {
+
   @Test
   public void testToHexString() {
     //logger.info("Byte: byte 16 to hex string = {}", ByteArray.toHexString(new byte[]{16}));
     assertEquals("byte to hex string is wrong", "10", ByteArray.toHexString(new byte[]{16}));
+  }
+
+  @Test
+  public void long2Bytes() {
+    long a = 0x123456;
+    byte[] bb = ByteArray.fromLong(a);
+    System.out.println(bb[6]);
+    System.out.println(bb[7]);
   }
 
   @Test

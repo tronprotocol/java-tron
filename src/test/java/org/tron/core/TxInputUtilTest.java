@@ -24,6 +24,15 @@ import org.tron.protos.Protocol.TXInput;
 
 @Slf4j
 public class TxInputUtilTest {
+
+  @Test
+  public void testNewput() {
+    byte[] bytes = new byte[32];
+    for (int i = 0; i < bytes.length; i++) {
+      System.out.println("-----------" + bytes[i]);
+    }
+  }
+
   @Test
   public void testNewTxInput() {
     byte[] txId = ByteArray

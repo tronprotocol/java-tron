@@ -149,6 +149,7 @@ public class StoreAPITest {
         getBuildAssetIssueContract(
             ASSETISSUE_NAME_FOUR, ACCOUNT_ADDRESS_ONE, ASSETISSUE_START_FOUR, ASSETISSUE_END_FOUR);
     addAssetIssueToStore(assetIssue4);
+    dbManager.getAssetIssueStore().delete(ASSETISSUE_NAME_FOUR.getBytes());
   }
 
   private static void addAssetIssueToStore(AssetIssueContract assetIssueContract) {
@@ -583,7 +584,7 @@ public class StoreAPITest {
     Assert.assertTrue("AssetIssueAll1", assetIssueAll.contains(assetIssue1));
     Assert.assertTrue("AssetIssueAll2", assetIssueAll.contains(assetIssue2));
     Assert.assertTrue("AssetIssueAll3", assetIssueAll.contains(assetIssue3));
-    Assert.assertTrue("AssetIssueAll4", assetIssueAll.contains(assetIssue4));
+    Assert.assertFalse("AssetIssueAll4", assetIssueAll.contains(assetIssue4));
   }
 
   @Test
@@ -609,7 +610,7 @@ public class StoreAPITest {
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_THREE);
       Assert.assertEquals("AssetIssueByName3", assetIssue3, assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_FOUR);
-      Assert.assertEquals("AssetIssueByName4", assetIssue4, assetIssueByName);
+      Assert.assertEquals("AssetIssueByName4", null, assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(null);
       Assert.assertNull("AssetIssueByName5", assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName("");
@@ -623,7 +624,7 @@ public class StoreAPITest {
   public void getAssetIssueByOwnerAddress() {
     List<AssetIssueContract> assetIssueList =
         storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_ONE);
-    Assert.assertEquals("AssetIssueByOwnerAddress1", 2, assetIssueList.size());
+    Assert.assertEquals("AssetIssueByOwnerAddress1", 1, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_TWO);
     Assert.assertEquals("AssetIssueByOwnerAddress2", 1, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_THREE);

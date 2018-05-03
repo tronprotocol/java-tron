@@ -20,18 +20,24 @@ package org.tron.common.overlay.server;
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
@@ -117,15 +123,16 @@ public class ChannelManager {
           }else {
               activePeers.put(peer.getNodeIdWrapper(), peer);
               newPeers.remove(peer);
+              syncPool.onConnect(peer);
               logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
           }
       }
   }
 
   public void disconnect(Channel peer, ReasonCode reason) {
-    logger.info("Disconnecting peer with reason " + reason + ": " + peer);
     peer.disconnect(reason);
-    recentlyDisconnected.put(peer.getInetSocketAddress().getAddress(), new Date());
+    InetSocketAddress socketAddress = (InetSocketAddress)peer.getChannelHandlerContext().channel().remoteAddress();
+    recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
   public void notifyDisconnect(Channel channel) {
@@ -152,6 +159,8 @@ public class ChannelManager {
   public Collection<Channel> getActivePeers() {
     return new ArrayList<>(activePeers.values());
   }
+
+
 
   public void close() {
     try {

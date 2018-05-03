@@ -44,6 +44,8 @@ public class PeerConnection extends Channel {
 
   private long connectTime;
 
+  private boolean syncFlag = true;
+
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
@@ -219,6 +221,14 @@ public class PeerConnection extends Channel {
     this.invWeAdv = invWeAdv;
   }
 
+  public boolean getSyncFlag(){
+    return syncFlag;
+  }
+
+  public void setSyncFlag(boolean syncFlag){
+    this.syncFlag = syncFlag;
+  }
+
   public String logSyncStats() {
     //TODO: return tron sync status here.
 //    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
@@ -236,7 +246,7 @@ public class PeerConnection extends Channel {
             + "syncChainRequested:%s\n"
             + "blockInPorc:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
-        this.getPeerIdShort(),
+        this.getNode().getHexIdShort(),
         (int) this.getPeerStats().getAvgLatency(),
         Time.getTimeString(getConnectTime()),
         headBlockWeBothHave.getNum(),

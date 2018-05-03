@@ -21,11 +21,12 @@ import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -88,10 +89,12 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       throw new BadTransactionException();
-    } catch (HighFreqException e) {
+    } catch (ValidateBandwidthException e) {
       logger.info(e.getMessage());
     } catch (DupTransactionException e) {
       logger.debug("dup trans");
+    } catch (TaposException e) {
+      logger.debug("tapos error");
     }
   }
 
@@ -256,7 +259,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public long getHeadBlockTimeStamp(){
+  public long getHeadBlockTimeStamp() {
     return dbManager.getHeadBlockTimeStamp();
   }
 
