@@ -456,7 +456,7 @@ public class Manager {
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      if (now - latestOperationTime < 5 * 60 * 1000) {
+      if (now - latestOperationTime >= 5 * 60 * 1000) {
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
