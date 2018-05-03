@@ -49,7 +49,7 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e){
+    } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -78,16 +78,14 @@ public class TransferActuator extends AbstractActuator {
       if (transferContract.getOwnerAddress().equals(transferContract.getToAddress())) {
         throw new ContractValidateException("Cannot transfer trx to yourself.");
       }
-      if (!dbManager.getAccountStore().has(transferContract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
-      }
 
       AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(transferContract.getOwnerAddress().toByteArray());
+      if (ownerAccount == null) {
+        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+      }
 
       long balance = ownerAccount.getBalance();
-      long laststOperationTime = ownerAccount.getLatestOperationTime();
-      long now = System.currentTimeMillis();
       if (ownerAccount.getBalance() < calcFee()) {
         throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
       }
@@ -100,19 +98,22 @@ public class TransferActuator extends AbstractActuator {
       }
 
       // if account with to_address is not existed,  create it.
-      ByteString toAddress = transferContract.getToAddress();
-      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(transferContract.getToAddress().toByteArray());
+      if (toAccount == null) {
         long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
         if (amount < min) {
           throw new ContractValidateException(
               "For a non-existent account transfer, the minimum amount is 1 TRX");
         }
-        AccountCapsule account = new AccountCapsule(toAddress,
-            AccountType.Normal);
-        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
+        toAccount = new AccountCapsule(transferContract.getToAddress(), AccountType.Normal);
+        dbManager.getAccountStore().put(transferContract.getToAddress().toByteArray(), toAccount);
+      } else {
+        //check to account balance if overflow
+        balance = Math
+            .addExact(toAccount.getBalance(),
+                amount);
       }
-      //check to account balance if overflow
-      balance = Math.addExact(dbManager.getAccountStore().get(toAddress.toByteArray()).getBalance(), amount);
     } catch (Exception ex) {
       throw new ContractValidateException(ex.getMessage());
     }
