@@ -42,7 +42,7 @@ public class TransferActuatorTest {
   private static final String TO_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final long AMOUNT = 100;
-  private static final long OWNER_BALANCE = 99999;
+  private static final long OWNER_BALANCE = 9999999;
   private static final long TO_BALANCE = 100001;
 
 
@@ -304,7 +304,7 @@ public class TransferActuatorTest {
    */
   public void noExitToAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ADDRESS, To_ACCOUNT_INVALIATE), dbManager);
+        getContract(1_000_000L, OWNER_ADDRESS, To_ACCOUNT_INVALIATE), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       AccountCapsule noExitAccount = dbManager.getAccountStore()
@@ -320,11 +320,11 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 100);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
-      Assert.assertEquals(noExitAccount.getBalance(), 100);
+      Assert.assertEquals(noExitAccount.getBalance(), 1_000_000L);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
