@@ -425,7 +425,7 @@ public class Manager {
     }
     consumeBandwidth(trx);
 
-    //validateTapos(trx);
+    validateTapos(trx);
 
     //validateFreq(trx);
 
@@ -946,6 +946,7 @@ public class Manager {
     }
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
+    updateRecentBlock(block);
   }
 
   public void updateRecentBlock(BlockCapsule block) {

@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
@@ -65,12 +66,15 @@ public class ChannelManager {
 
   private PeerServer peerServer;
 
+  private PeerClient peerClient;
+
   @Autowired
   private SyncPool syncPool;
 
   @Autowired
-  private ChannelManager(final PeerServer peerServer) {
+  private ChannelManager(final PeerServer peerServer, final PeerClient peerClient) {
     this.peerServer = peerServer;
+    this.peerClient = peerClient;
 
     mainWorker.scheduleWithFixedDelay(() -> {
       try {
@@ -115,7 +119,7 @@ public class ChannelManager {
           }else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
               Channel channel = activePeers.get(peer.getNodeIdWrapper());
               if (channel.getStartTime() > peer.getStartTime()) {
-                  logger.info("disconnect connection established later, {}", channel.getNode());
+                  logger.info("Disconnect connection established later, {}", channel.getNode());
                   disconnect(channel, DUPLICATE_PEER);
               } else {
                   disconnect(peer, DUPLICATE_PEER);
@@ -160,8 +164,6 @@ public class ChannelManager {
     return new ArrayList<>(activePeers.values());
   }
 
-
-
   public void close() {
     try {
       mainWorker.shutdownNow();
@@ -170,6 +172,7 @@ public class ChannelManager {
       logger.warn("Problems shutting down", e);
     }
     peerServer.close();
+    peerClient.close();
 
     ArrayList<Channel> allPeers = new ArrayList<>(activePeers.values());
     allPeers.addAll(newPeers);
