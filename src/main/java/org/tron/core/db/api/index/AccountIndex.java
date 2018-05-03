@@ -1,9 +1,13 @@
 package org.tron.core.db.api.index;
 
 import com.googlecode.cqengine.attribute.Attribute;
+import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
+import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,25 +26,17 @@ import static com.googlecode.cqengine.query.QueryFactory.attribute;
 @Slf4j
 public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
-  public static Attribute<WrappedByteArray, String> Account_ADDRESS;
-  public static Attribute<WrappedByteArray, Long> Account_BALANCE;
+  public static SimpleAttribute<WrappedByteArray, String> Account_ADDRESS;
 
   @Autowired
   public AccountIndex(@Qualifier("accountStore") final TronDatabase<AccountCapsule> database) {
-    super();
-    this.database = database;
-  }
-
-  public AccountIndex(final TronDatabase<AccountCapsule> database,
-      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
-    super(persistence);
     this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    index.addIndex(SuffixTreeIndex.onAttribute(Account_ADDRESS));
-    index.addIndex(NavigableIndex.onAttribute(Account_BALANCE));
+    initIndex(DiskPersistence.onPrimaryKey(Account_ADDRESS));
+//    index.addIndex(DiskIndex.onAttribute(Account_ADDRESS));
     fill();
   }
 
@@ -48,15 +44,5 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
   protected void setAttribute() {
     Account_ADDRESS = attribute("account address",
         bytes -> ByteArray.toHexString(bytes.getBytes()));
-    Account_BALANCE = attribute("account balance",
-        bytes -> {
-          try {
-            Account account = getObject(bytes);
-            return account.getBalance();
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        });
-
   }
 }

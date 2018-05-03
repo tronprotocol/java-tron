@@ -2,10 +2,14 @@ package org.tron.core.db.api.index;
 
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
 import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
+import com.googlecode.cqengine.persistence.offheap.OffHeapPersistence;
+import com.googlecode.cqengine.persistence.onheap.OnHeapPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,23 +38,16 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
   @Autowired
   public TransactionIndex(
       @Qualifier("transactionStore") final TronDatabase<TransactionCapsule> database) {
-    super();
-    this.database = database;
-  }
-
-  public TransactionIndex(
-      final TronDatabase<TransactionCapsule> database,
-      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
-    super(persistence);
     this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    index.addIndex(SuffixTreeIndex.onAttribute(Transaction_ID));
-    index.addIndex(HashIndex.onAttribute(OWNERS));
-    index.addIndex(HashIndex.onAttribute(TOS));
-    index.addIndex(NavigableIndex.onAttribute(TIMESTAMP));
+    initIndex(DiskPersistence.onPrimaryKey(Transaction_ID));
+//    index.addIndex(DiskIndex.onAttribute(Transaction_ID));
+    index.addIndex(DiskIndex.onAttribute(OWNERS));
+    index.addIndex(DiskIndex.onAttribute(TOS));
+    index.addIndex(DiskIndex.onAttribute(TIMESTAMP));
     fill();
   }
 

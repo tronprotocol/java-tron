@@ -1,8 +1,12 @@
 package org.tron.core.db.api.index;
 
 import com.googlecode.cqengine.attribute.Attribute;
+import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
+import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,29 +25,22 @@ import static com.googlecode.cqengine.query.QueryFactory.attribute;
 @Slf4j
 public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 
-  public static Attribute<WrappedByteArray, String> Witness_ADDRESS;
+  public static SimpleAttribute<WrappedByteArray, String> Witness_ADDRESS;
   public static Attribute<WrappedByteArray, String> PUBLIC_KEY;
   public static Attribute<WrappedByteArray, String> Witness_URL;
 
   @Autowired
   public WitnessIndex(
       @Qualifier("witnessStore") final TronDatabase<WitnessCapsule> database) {
-    super();
-    this.database = database;
-  }
-
-  public WitnessIndex(
-      final TronDatabase<WitnessCapsule> database,
-      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
-    super(persistence);
     this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    index.addIndex(SuffixTreeIndex.onAttribute(Witness_ADDRESS));
-    index.addIndex(SuffixTreeIndex.onAttribute(PUBLIC_KEY));
-    index.addIndex(SuffixTreeIndex.onAttribute(Witness_URL));
+    initIndex(DiskPersistence.onPrimaryKey(Witness_ADDRESS));
+//    index.addIndex(DiskIndex.onAttribute(Witness_ADDRESS));
+    index.addIndex(DiskIndex.onAttribute(PUBLIC_KEY));
+    index.addIndex(DiskIndex.onAttribute(Witness_URL));
     fill();
   }
 

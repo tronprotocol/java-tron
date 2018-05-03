@@ -1,10 +1,13 @@
 package org.tron.core.db.api.index;
 
 import com.googlecode.cqengine.attribute.Attribute;
+import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
 import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,7 +31,7 @@ import static com.googlecode.cqengine.query.QueryFactory.attribute;
 @Slf4j
 public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
-  public static Attribute<WrappedByteArray, String> Block_ID;
+  public static SimpleAttribute<WrappedByteArray, String> Block_ID;
   public static Attribute<WrappedByteArray, Long> Block_NUMBER;
   public static Attribute<WrappedByteArray, String> TRANSACTIONS;
   public static Attribute<WrappedByteArray, Long> WITNESS_ID;
@@ -39,26 +42,19 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
   @Autowired
   public BlockIndex(
       @Qualifier("blockStore") final TronDatabase<BlockCapsule> database) {
-    super();
-    this.database = database;
-  }
-
-  public BlockIndex(
-      final TronDatabase<BlockCapsule> database,
-      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
-    super(persistence);
     this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    index.addIndex(SuffixTreeIndex.onAttribute(Block_ID));
-    index.addIndex(NavigableIndex.onAttribute(Block_NUMBER));
-    index.addIndex(HashIndex.onAttribute(TRANSACTIONS));
-    index.addIndex(NavigableIndex.onAttribute(WITNESS_ID));
-    index.addIndex(SuffixTreeIndex.onAttribute(WITNESS_ADDRESS));
-    index.addIndex(SuffixTreeIndex.onAttribute(OWNERS));
-    index.addIndex(SuffixTreeIndex.onAttribute(TOS));
+    initIndex(DiskPersistence.onPrimaryKey(Block_ID));
+//    index.addIndex(DiskIndex.onAttribute(Block_ID));
+    index.addIndex(DiskIndex.onAttribute(Block_NUMBER));
+    index.addIndex(DiskIndex.onAttribute(TRANSACTIONS));
+    index.addIndex(DiskIndex.onAttribute(WITNESS_ID));
+    index.addIndex(DiskIndex.onAttribute(WITNESS_ADDRESS));
+    index.addIndex(DiskIndex.onAttribute(OWNERS));
+    index.addIndex(DiskIndex.onAttribute(TOS));
     fill();
   }
 

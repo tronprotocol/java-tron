@@ -1,9 +1,13 @@
 package org.tron.core.db.api.index;
 
 import com.googlecode.cqengine.attribute.Attribute;
+import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
+import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,30 +27,23 @@ import static com.googlecode.cqengine.query.QueryFactory.attribute;
 public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssueContract> {
 
   public static Attribute<WrappedByteArray, String> AssetIssue_OWNER_RADDRESS;
-  public static Attribute<WrappedByteArray, String> AssetIssue_NAME;
+  public static SimpleAttribute<WrappedByteArray, String> AssetIssue_NAME;
   public static Attribute<WrappedByteArray, Long> AssetIssue_START;
   public static Attribute<WrappedByteArray, Long> AssetIssue_END;
 
   @Autowired
   public AssetIssueIndex(
       @Qualifier("assetIssueStore") final TronDatabase<AssetIssueCapsule> database) {
-    super();
-    this.database = database;
-  }
-
-  public AssetIssueIndex(
-      final TronDatabase<AssetIssueCapsule> database,
-      Persistence<WrappedByteArray, ? extends Comparable> persistence) {
-    super(persistence);
     this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    index.addIndex(SuffixTreeIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
-    index.addIndex(SuffixTreeIndex.onAttribute(AssetIssue_NAME));
-    index.addIndex(NavigableIndex.onAttribute(AssetIssue_START));
-    index.addIndex(NavigableIndex.onAttribute(AssetIssue_END));
+    initIndex(DiskPersistence.onPrimaryKey(AssetIssue_NAME));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
+//    index.addIndex(DiskIndex.onAttribute(AssetIssue_NAME));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_START));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_END));
     fill();
   }
 

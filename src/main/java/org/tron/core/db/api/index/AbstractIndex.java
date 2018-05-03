@@ -20,13 +20,11 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
 
   public AbstractIndex() {
-    index = new ConcurrentIndexedCollection<>();
     setAttribute();
   }
 
-  public AbstractIndex(Persistence<WrappedByteArray, ? extends Comparable> persistence) {
+  public void initIndex(Persistence<WrappedByteArray, ? extends Comparable> persistence) {
     index = new ConcurrentIndexedCollection<>(persistence);
-    setAttribute();
   }
 
   @Override
