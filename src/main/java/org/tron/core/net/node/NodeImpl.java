@@ -324,11 +324,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     handleSyncBlockExecutor.scheduleWithFixedDelay(() -> {
       try {
-        if (isHandleSyncBlockActive) {
-          isHandleSyncBlockActive = false;
-          //Thread handleSyncBlockThread = new Thread(() -> handleSyncBlock());
-          handleSyncBlock();
-        }
+        handleSyncBlock();
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -450,9 +446,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       isBlockProc[0] = false;
-      Set<BlockMessage> pool = new HashSet<>();
-      pool.addAll(blockWaitToProc);
-      pool.forEach(msg -> {
+      blockWaitToProc.forEach(msg -> {
         final boolean[] isFound = {false};
         getActivePeer().stream()
             .filter(peer ->
@@ -466,13 +460,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         if (isFound[0]) {
           if (!freshBlockId.contains(msg.getBlockId())) {
-            blockWaitToProc.remove(msg);
-            //TODO: blockWaitToProc and handle thread.
             BlockCapsule block = msg.getBlockCapsule();
-            //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
             processSyncBlock(block);
-            isBlockProc[0] = true;
           }
+          blockWaitToProc.remove(msg);
+          isBlockProc[0] = true;
         }
       });
 
@@ -484,7 +476,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       }
 
-    } while (isBlockProc[0]);
+    } while (isBlockProc[0] && !blockWaitToProc.isEmpty());
   }
 
   private synchronized void logNodeStatus() {
@@ -726,8 +718,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
           .forEach(peer -> cleanUpSyncPeer(peer, finalReason));
     }
-
-    isHandleSyncBlockActive = true;
   }
 
   private void cleanUpSyncPeer(PeerConnection peer, ReasonCode reasonCode){
