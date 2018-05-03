@@ -69,7 +69,6 @@ message Account {
 message acuthrity {
   AccountId account = 1;
   bytes permission_name = 2;
-
 }
 
 

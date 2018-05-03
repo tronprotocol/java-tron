@@ -139,7 +139,7 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress.toByteArray());
       assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
-      if ( assetBalance == null ){
+      if (assetBalance == null) {
         assetBalance = 0L;
       }
       assetBalance = Math.addExact(assetBalance, amount);

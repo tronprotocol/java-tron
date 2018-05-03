@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Time;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
 
@@ -157,6 +159,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
+  public void setAllowance(long allowance) {
+    this.account = this.account.toBuilder().setAllowance(allowance).build();
+  }
+
+
   @Override
   public String toString() {
     return this.account.toString();
@@ -184,7 +191,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getShare() {
-    return this.account.getBalance();
+    long share = 0;
+    long now = Time.getCurrentMillis();
+    for (int i = 0; i < account.getFrozenCount(); ++i) {
+      if (account.getFrozen(i).getExpireTime() > now) {
+        share += account.getFrozen(i).getFrozenBalance() / 10000;
+      }
+    }
+    return share;
   }
 
   /**
@@ -275,6 +289,58 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
 
     return assetMap;
+  }
+
+  public int getFrozenCount() {
+    return getInstance().getFrozenCount();
+  }
+
+  public List<Frozen> getFrozenList() {
+    return getInstance().getFrozenList();
+  }
+
+  public long getFrozenBalance() {
+    List<Frozen> frozenList = getFrozenList();
+    final long[] frozenBalance = {0};
+    frozenList.forEach(frozen -> frozenBalance[0] = Long.sum(frozenBalance[0],
+        frozen.getFrozenBalance()));
+    return frozenBalance[0];
+  }
+
+  public long getAllowance() {
+    return getInstance().getAllowance();
+  }
+
+  public long getLatestWithdrawTime() {
+    return getInstance().getLatestWithdrawTime();
+  }
+
+  public long getBandwidth() {
+    return getInstance().getBandwidth();
+  }
+
+  public void setBandwidth(long bandwidth) {
+    this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
+
+  }
+
+  //for test only
+  public void setFrozen(long frozenBalance, long expireTime) {
+    Frozen newFrozen = Frozen.newBuilder()
+        .setFrozenBalance(frozenBalance)
+        .setExpireTime(expireTime)
+        .build();
+
+    this.account = this.account.toBuilder()
+        .addFrozen(newFrozen)
+        .build();
+  }
+
+  //for test only
+  public void setLatestWithdrawTime(long latestWithdrawTime) {
+    this.account = this.account.toBuilder()
+        .setLatestWithdrawTime(latestWithdrawTime)
+        .build();
   }
 
 }

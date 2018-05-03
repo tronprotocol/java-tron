@@ -111,6 +111,8 @@ public class WitnessCreateActuatorTest {
   public void firstCreateWitness() {
     WitnessCreateActuator actuator =
         new WitnessCreateActuator(getContract(OWNER_ADDRESS_FRIST, URL), dbManager);
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

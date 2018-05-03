@@ -157,7 +157,8 @@ public class TransferAssetActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE-100);
+      Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(),
+          OWNER_ASSET_BALANCE - 100);
       Assert.assertEquals(toAccount.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 100L);
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
@@ -172,7 +173,8 @@ public class TransferAssetActuatorTest {
    */
   @Test
   public void perfectTransfer() {
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -198,7 +200,8 @@ public class TransferAssetActuatorTest {
    */
   @Test
   public void notEnoughAssetTest() {
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE+1), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE + 1),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -267,7 +270,8 @@ public class TransferAssetActuatorTest {
 
   @Test
   public void noneExistAssetTest() {
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, "TTTTTTTTTTTT"), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, "TTTTTTTTTTTT"),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -287,6 +291,7 @@ public class TransferAssetActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
   @Test
   public void addOverflowTest() {
     // First, increase the to balance. Else can't complete this test case.
@@ -309,6 +314,7 @@ public class TransferAssetActuatorTest {
       Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), Long.MAX_VALUE);
     } catch (ContractExeException e) {
+      logger.info("===========" + e.getMessage());
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }

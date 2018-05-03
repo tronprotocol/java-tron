@@ -46,9 +46,9 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -218,7 +218,7 @@ public class Wallet {
       logger.debug(e.getMessage(), e);
     } catch (ContractExeException e) {
       logger.debug(e.getMessage(), e);
-    } catch (HighFreqException e) {
+    } catch (ValidateBandwidthException e) {
       logger.debug("high freq", e);
     } catch (DupTransactionException e) {
       logger.debug("dup trans", e);
