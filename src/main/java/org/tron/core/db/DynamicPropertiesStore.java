@@ -153,7 +153,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
-      this.saveAccountUpgradeCost(100);
+      this.saveAccountUpgradeCost(100_000_000);
     }
 
     try {

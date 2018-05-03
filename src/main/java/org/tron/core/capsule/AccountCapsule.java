@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Time;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
@@ -192,11 +191,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getShare() {
     long share = 0;
-    long now = Time.getCurrentMillis();
+    //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
-      if (account.getFrozen(i).getExpireTime() > now) {
-        share += account.getFrozen(i).getFrozenBalance() / 10000;
-      }
+      share += account.getFrozen(i).getFrozenBalance() / 1_000_000;
     }
     return share;
   }
