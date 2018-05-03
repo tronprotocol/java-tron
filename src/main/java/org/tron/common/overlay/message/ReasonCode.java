@@ -73,7 +73,7 @@ public enum ReasonCode {
 
     SYNC_FAIL(0x12),
 
-    TIME_OUT(0x13),
+    FETCH_FAIL(0x13),
 
     BAD_TX(0x14),
 
@@ -86,6 +86,8 @@ public enum ReasonCode {
     INCOMPATIBLE_VERSION(0x18),
 
     INCOMPATIBLE_CHAIN(0x19),
+
+    TIME_OUT(0x20),
 
     /**
      * [0xFF] Reason not specified

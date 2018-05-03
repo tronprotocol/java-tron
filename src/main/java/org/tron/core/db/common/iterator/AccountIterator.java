@@ -11,8 +11,7 @@ public class AccountIterator extends AbstractIterator<AccountCapsule> {
   }
 
   @Override
-  public AccountCapsule next() {
-    Entry<byte[], byte[]> entry = iterator.next();
-    return new AccountCapsule(entry.getValue());
+  protected AccountCapsule of(byte[] value) {
+    return new AccountCapsule(value);
   }
 }

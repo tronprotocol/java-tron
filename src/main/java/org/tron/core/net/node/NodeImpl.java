@@ -237,6 +237,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     this.del = nodeDel;
   }
 
+  // for test only
+  public void setPool(SyncPool pool) {
+    this.pool = pool;
+  }
+
   /**
    * broadcast msg.
    *
@@ -510,18 +515,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info(sb.toString());
   }
 
-  private synchronized void disconnectInactive() {
+  public synchronized void disconnectInactive() {
+    //logger.debug("size of activePeer: " + getActivePeer().size());
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
+      final ReasonCode[] reasonCode = {ReasonCode.USER_REASON};
 
       peer.getAdvObjWeRequested().values().stream()
           .filter(time -> time < Time.getCurrentMillis() - NetConstants.ADV_TIME_OUT)
-          .findFirst().ifPresent(time -> isDisconnected[0] = true);
+          .findFirst().ifPresent(time -> {
+        isDisconnected[0] = true;
+        reasonCode[0] = ReasonCode.FETCH_FAIL;
+      });
 
       if (!isDisconnected[0]) {
         peer.getSyncBlockRequested().values().stream()
             .filter(time -> time < Time.getCurrentMillis() - NetConstants.SYNC_TIME_OUT)
-            .findFirst().ifPresent(time -> isDisconnected[0] = true);
+            .findFirst().ifPresent(time -> {
+          isDisconnected[0] = true;
+          reasonCode[0] = ReasonCode.SYNC_FAIL;
+        });
       }
 
       //TODO:optimize here
@@ -532,7 +545,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 //            && peer.getSyncBlockRequested().isEmpty()) {
 //          isDisconnected[0] = true;
 //        }
-//      }gi
+//      }
 
       if (isDisconnected[0]) {
         //TODO use new reason

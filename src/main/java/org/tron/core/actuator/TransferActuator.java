@@ -101,6 +101,11 @@ public class TransferActuator extends AbstractActuator {
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(transferContract.getToAddress().toByteArray());
       if (toAccount == null) {
+        long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
+        if (amount < min) {
+          throw new ContractValidateException(
+              "For a non-existent account transfer, the minimum amount is 1 TRX");
+        }
         toAccount = new AccountCapsule(transferContract.getToAddress(), AccountType.Normal);
         dbManager.getAccountStore().put(transferContract.getToAddress().toByteArray(), toAccount);
       } else {

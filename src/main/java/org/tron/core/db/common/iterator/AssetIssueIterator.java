@@ -11,8 +11,7 @@ public class AssetIssueIterator extends AbstractIterator<AssetIssueCapsule> {
   }
 
   @Override
-  public AssetIssueCapsule next() {
-    Entry<byte[], byte[]> entry = iterator.next();
-    return new AssetIssueCapsule(entry.getValue());
+  protected AssetIssueCapsule of(byte[] value) {
+    return new AssetIssueCapsule(value);
   }
 }

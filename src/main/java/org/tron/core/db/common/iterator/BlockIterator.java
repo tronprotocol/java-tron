@@ -12,13 +12,11 @@ public class BlockIterator extends AbstractIterator<BlockCapsule> {
   }
 
   @Override
-  public BlockCapsule next() {
+  protected BlockCapsule of(byte[] value) {
     try {
-      Entry<byte[], byte[]> entry = iterator.next();
-      return new BlockCapsule(entry.getValue());
+      return new BlockCapsule(value);
     } catch (BadItemException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return null;
   }
 }

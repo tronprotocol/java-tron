@@ -11,8 +11,7 @@ public class TransactionIterator extends AbstractIterator<TransactionCapsule> {
   }
 
   @Override
-  public TransactionCapsule next() {
-    Entry<byte[], byte[]> entry = iterator.next();
-    return new TransactionCapsule(entry.getValue());
+  protected TransactionCapsule of(byte[] value) {
+    return new TransactionCapsule(value);
   }
 }
