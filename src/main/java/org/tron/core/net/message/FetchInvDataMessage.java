@@ -33,7 +33,7 @@ public class FetchInvDataMessage extends InventoryMessage {
 
   @Override
   public String toString() {
-    return super.toString();
+    return super.toString() + ", type=" + MessageTypes.fromByte(this.type);
   }
 
   public MessageTypes getInvType() {
