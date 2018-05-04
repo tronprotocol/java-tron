@@ -43,13 +43,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.StoreException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.ValidateBandwidthException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.*;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -209,21 +203,28 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
       Message message = new TransactionMessage(signaturedTransaction);
+      if (message.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
+        throw new TooBigTransactionException("too big transaction, the size is " + message.getData().length + " bytes");
+      }
       dbManager.pushTransactions(trx);
       p2pNode.broadcast(message);
       return true;
     } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ContractValidateException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ContractExeException e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (ValidateBandwidthException e) {
-      logger.debug("high freq", e);
+      logger.error("high freq", e);
     } catch (DupTransactionException e) {
-      logger.debug("dup trans", e);
+      logger.error("dup trans", e);
     } catch (TaposException e) {
       logger.debug("tapos error", e);
+    } catch (TooBigTransactionException e) {
+      logger.debug("transaction error", e);
+    } catch (Exception e){
+      logger.error("exception caught", e);
     }
     return false;
   }
@@ -342,12 +343,12 @@ public class Wallet {
     if (Objects.isNull(BlockId)) {
       return null;
     }
-    Block blocke = null;
+    Block block = null;
     try {
-      blocke = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
     } catch (StoreException e) {
     }
-    return blocke;
+    return block;
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {

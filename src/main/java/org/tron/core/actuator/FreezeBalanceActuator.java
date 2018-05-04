@@ -60,7 +60,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   private long calculateBandwidth(FreezeBalanceContract freezeBalanceContract) {
 
-    return freezeBalanceContract.getFrozenBalance() / 1_000_000L
+    return freezeBalanceContract.getFrozenBalance()
         * freezeBalanceContract.getFrozenDuration()
         * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday();
   }

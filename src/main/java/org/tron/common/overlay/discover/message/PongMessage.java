@@ -45,6 +45,10 @@ public class PongMessage extends Message {
     return node;
   }
 
+  public int getVersion(){
+    return this.pongMessage.getEcho();
+  }
+
   @Override
   public byte[] getNodeId() {
     return this.pongMessage.getFrom().getNodeId().toByteArray();

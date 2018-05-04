@@ -367,6 +367,8 @@ public class RpcApiService implements Service {
       for (Actuator act : actList) {
         act.validate();
       }
+      trx.setReference(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+              dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
       return trx;
     }
 
