@@ -8,6 +8,7 @@ import com.googlecode.cqengine.query.Query;
 import com.googlecode.cqengine.query.option.QueryOptions;
 import com.googlecode.cqengine.resultset.ResultSet;
 import org.tron.core.capsule.ProtoCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
@@ -23,7 +24,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
 
   protected TronDatabase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
-  private File parent = new File("out-index");
+  private File parent = new File(Args.getInstance().getOutputDirectory() + "index");
   protected File indexPath;
   private ExecutorService service = Executors.newSingleThreadExecutor();
 
