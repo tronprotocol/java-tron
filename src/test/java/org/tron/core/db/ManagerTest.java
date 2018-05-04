@@ -221,9 +221,7 @@ public class ManagerTest {
         .forEach(
             i -> {
               try {
-                BlockCapsule blockCapsule = dbManager
-                    .generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-                dbManager.pushBlock(blockCapsule);
+                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
               } catch (Exception e) {
                 logger.debug(e.getMessage(), e);
               }
