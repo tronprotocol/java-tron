@@ -127,11 +127,12 @@ java -jar java-tron.jar
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
 ### How to run a Super Node
-
+* use master branch
 * You should modify the config.conf
   1. genesis.block.witnesses replace to yourself address
   2. seed.node.ip.list replace to yourself ip list
   3. the first Super Node start, needSyncCheck should be set false
+  4. set p2pversion to 61 
 
 * Use the executable JAR(Recommend the way)
 
