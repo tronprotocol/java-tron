@@ -29,7 +29,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferAssetActuator extends AbstractActuator {
@@ -131,15 +130,12 @@ public class TransferAssetActuator extends AbstractActuator {
       AccountCapsule toAccount = this.dbManager.getAccountStore()
           .get(transferAssetContract.getToAddress().toByteArray());
       if (toAccount == null) {
-        toAccount = new AccountCapsule(transferAssetContract.getToAddress(), AccountType.Normal, System.currentTimeMillis());
+        throw new ContractValidateException("To account is not exit!");
+      }
 
-        dbManager.getAccountStore()
-            .put(transferAssetContract.getToAddress().toByteArray(), toAccount);
-      } else {
-        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
-        if (assetBalance != null) {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
-        }
+      assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
+      if (assetBalance != null) {
+        assetBalance = Math.addExact(assetBalance, amount); //check if overflow
       }
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
