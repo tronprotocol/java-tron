@@ -21,6 +21,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Transaction;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,7 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
 
   @PostConstruct
   public void init() {
-    initIndex(DiskPersistence.onPrimaryKey(Transaction_ID));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(Transaction_ID, indexPath));
 //    index.addIndex(DiskIndex.onAttribute(Transaction_ID));
     index.addIndex(DiskIndex.onAttribute(OWNERS));
     index.addIndex(DiskIndex.onAttribute(TOS));

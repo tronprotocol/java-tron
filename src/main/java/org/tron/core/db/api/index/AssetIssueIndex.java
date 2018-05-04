@@ -20,6 +20,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 
 import javax.annotation.PostConstruct;
 
+import java.io.File;
+
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
@@ -39,7 +41,7 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
 
   @PostConstruct
   public void init() {
-    initIndex(DiskPersistence.onPrimaryKey(AssetIssue_NAME));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(AssetIssue_NAME, indexPath));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
 //    index.addIndex(DiskIndex.onAttribute(AssetIssue_NAME));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_START));

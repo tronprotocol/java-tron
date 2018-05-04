@@ -21,6 +21,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Block;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
   @PostConstruct
   public void init() {
-    initIndex(DiskPersistence.onPrimaryKey(Block_ID));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(Block_ID, indexPath));
 //    index.addIndex(DiskIndex.onAttribute(Block_ID));
     index.addIndex(DiskIndex.onAttribute(Block_NUMBER));
     index.addIndex(DiskIndex.onAttribute(TRANSACTIONS));

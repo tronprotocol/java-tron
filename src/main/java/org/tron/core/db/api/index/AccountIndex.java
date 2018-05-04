@@ -1,5 +1,6 @@
 package org.tron.core.db.api.index;
 
+import com.google.common.io.Files;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.disk.DiskIndex;
@@ -20,6 +21,8 @@ import org.tron.protos.Protocol.Account;
 
 import javax.annotation.PostConstruct;
 
+import java.io.File;
+
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
@@ -35,7 +38,7 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
   @PostConstruct
   public void init() {
-    initIndex(DiskPersistence.onPrimaryKey(Account_ADDRESS));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(Account_ADDRESS, indexPath));
 //    index.addIndex(DiskIndex.onAttribute(Account_ADDRESS));
     fill();
   }

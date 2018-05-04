@@ -1,6 +1,7 @@
 package org.tron.core.db.api.index;
 
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.googlecode.cqengine.ConcurrentIndexedCollection;
 import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.query.Query;
@@ -12,14 +13,25 @@ import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<T> {
 
   protected TronDatabase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
+  private File parent = new File("out-index");
+  protected File indexPath;
+  private ExecutorService service = Executors.newSingleThreadExecutor();
 
   public AbstractIndex() {
+    if (!parent.exists()) {
+      parent.mkdirs();
+    }
+    indexPath = new File(parent, getName() + ".index");
     setAttribute();
   }
 
@@ -47,7 +59,10 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
   }
 
   protected void fill() {
-    database.forEach(e -> index.add(WrappedByteArray.of(e.getKey())));
+    int size = Iterables.size(database);
+    if (!indexPath.exists() || index.size() != size) {
+      service.execute(() -> database.forEach(e -> add(e.getKey())));
+    }
   }
 
   @Override
@@ -56,7 +71,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
   }
 
   @Override
-  public boolean add(WrappedByteArray bytes) {
+  public synchronized boolean add(WrappedByteArray bytes) {
     return index.add(bytes);
   }
 

@@ -19,6 +19,8 @@ import org.tron.protos.Protocol.Witness;
 
 import javax.annotation.PostConstruct;
 
+import java.io.File;
+
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
@@ -37,7 +39,7 @@ public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 
   @PostConstruct
   public void init() {
-    initIndex(DiskPersistence.onPrimaryKey(Witness_ADDRESS));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(Witness_ADDRESS, indexPath));
 //    index.addIndex(DiskIndex.onAttribute(Witness_ADDRESS));
     index.addIndex(DiskIndex.onAttribute(PUBLIC_KEY));
     index.addIndex(DiskIndex.onAttribute(Witness_URL));
