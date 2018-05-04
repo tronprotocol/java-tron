@@ -229,8 +229,6 @@ public class WitnessService implements Service {
           this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
 
-      controller.getManager().pushBlock(block);
-
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
       logger.error(e.getMessage(), e);

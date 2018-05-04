@@ -862,8 +862,8 @@ public class Manager {
         continue;
       }
 
-      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.8) {
-        logger.debug("Processing transaction time exceeds the 80% producing time。");
+      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
+        logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
 
@@ -897,6 +897,7 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
+    this.pushBlock(blockCapsule);
     return blockCapsule;
   }
 
