@@ -424,7 +424,6 @@ public class Manager {
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    consumeBandwidth(trx);
 
     validateTapos(trx);
 
@@ -435,6 +434,7 @@ public class Manager {
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+      consumeBandwidth(trx);
       processTransaction(trx);
       pendingTransactions.add(trx);
       tmpDialog.merge();
@@ -457,7 +457,10 @@ public class Manager {
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      if (now - latestOperationTime >= 5 * 60 * 1000) {
+      //5 * 60 * 1000
+      if (now - latestOperationTime >= 300_000L) {
+        accountCapsule.setLatestOperationTime(now);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
