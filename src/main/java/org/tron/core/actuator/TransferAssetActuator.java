@@ -131,7 +131,8 @@ public class TransferAssetActuator extends AbstractActuator {
       AccountCapsule toAccount = this.dbManager.getAccountStore()
           .get(transferAssetContract.getToAddress().toByteArray());
       if (toAccount == null) {
-        toAccount = new AccountCapsule(transferAssetContract.getToAddress(), AccountType.Normal);
+        toAccount = new AccountCapsule(transferAssetContract.getToAddress(), AccountType.Normal, System.currentTimeMillis());
+
         dbManager.getAccountStore()
             .put(transferAssetContract.getToAddress().toByteArray(), toAccount);
       } else {

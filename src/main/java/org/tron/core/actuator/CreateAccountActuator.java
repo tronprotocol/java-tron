@@ -29,7 +29,8 @@ public class CreateAccountActuator extends AbstractActuator {
     try {
 
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
-      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
+      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
+          System.currentTimeMillis());
       dbManager.getAccountStore()
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
