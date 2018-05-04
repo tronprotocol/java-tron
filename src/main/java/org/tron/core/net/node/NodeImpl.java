@@ -804,12 +804,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
-    logger.info("on handle fetch block message");
+
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
-    //TODO:maybe can use message cache here
     BlockCapsule block = null;
-    //get data and send it one by one
+
     for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
 
       Message msg;
