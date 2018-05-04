@@ -151,13 +151,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getBandwidthPerTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerTransaction(1);
+      this.saveBandwidthPerTransaction(100_000);
     }
 
     try {
       this.getBandwidthPerCoinday();
     } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerCoinday(10);
+      this.saveBandwidthPerCoinday(1);
     }
 
     try {

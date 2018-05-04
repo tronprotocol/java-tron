@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -423,9 +424,8 @@ public class Manager {
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    consumeBandwidth(trx);
 
-    //validateTapos(trx);
+    validateTapos(trx);
 
     //validateFreq(trx);
 
@@ -434,6 +434,7 @@ public class Manager {
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+      consumeBandwidth(trx);
       processTransaction(trx);
       pendingTransactions.add(trx);
       tmpDialog.merge();
@@ -456,7 +457,10 @@ public class Manager {
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      if (now - latestOperationTime >= 5 * 60 * 1000) {
+      //5 * 60 * 1000
+      if (now - latestOperationTime >= 300_000L) {
+        accountCapsule.setLatestOperationTime(now);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
@@ -860,6 +864,12 @@ public class Manager {
         postponedTrxCount++;
         continue;
       }
+
+      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
+        logger.debug("Processing transaction time exceeds the 50% producing time。");
+        break;
+      }
+
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
@@ -946,6 +956,7 @@ public class Manager {
     }
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
+    updateRecentBlock(block);
   }
 
   public void updateRecentBlock(BlockCapsule block) {
