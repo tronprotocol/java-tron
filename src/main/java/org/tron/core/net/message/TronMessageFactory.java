@@ -2,6 +2,7 @@ package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.overlay.message.MessageFactory;
+import org.tron.core.exception.P2pException;
 
 /**
  * msg factory.
@@ -9,21 +10,21 @@ import org.tron.common.overlay.message.MessageFactory;
 public class TronMessageFactory extends MessageFactory {
 
   @Override
-  public TronMessage create(byte[] data) {
+  public TronMessage create(byte[] data) throws Exception{
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (Exception e) {
-      if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
+      if (e instanceof P2pException){
         throw e;
       }else {
-        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED, "type=" + data[0] + ", len=" + data.length);
       }
     }
   }
 
-  private TronMessage create(byte type, byte[] packed) {
+  private TronMessage create(byte type, byte[] packed) throws Exception{
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null){
       throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", type=" + type);
@@ -56,7 +57,7 @@ public class TronMessageFactory extends MessageFactory {
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
-        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + receivedTypes);
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, receivedTypes.toString());
     }
   }
 }

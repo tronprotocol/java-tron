@@ -19,29 +19,30 @@
 package org.tron.common.overlay.message;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 
 public class P2pMessageFactory extends MessageFactory {
 
   @Override
-  public P2pMessage create(byte[] data) {
+  public P2pMessage create(byte[] data) throws Exception{
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (Exception e) {
-      if (e.getMessage() != null && e.getMessage().contains(MessageFactory.ERR_NO_SUCH_MSG)){
+      if (e instanceof P2pException){
         throw e;
       }else {
-        throw new Error(MessageFactory.ERR_PARSE_FAILED + ", type=" + data[0] + ", len=" + data.length);
+        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED, "type=" + data[0] + ", len=" + data.length);
       }
     }
   }
 
-  private P2pMessage create(byte type, byte[] rawData) {
+  private P2pMessage create(byte type, byte[] rawData) throws  Exception{
     MessageTypes messageType = MessageTypes.fromByte(type);
     if (messageType == null){
-      throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", type=" + type);
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);
     }
     switch (messageType) {
       case P2P_HELLO:
@@ -53,7 +54,7 @@ public class P2pMessageFactory extends MessageFactory {
       case P2P_PONG:
         return new PongMessage(type, rawData);
       default:
-        throw new Error(MessageFactory.ERR_NO_SUCH_MSG +  ", " + messageType);
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, messageType.toString());
     }
   }
 }
