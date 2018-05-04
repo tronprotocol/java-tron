@@ -71,6 +71,7 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 In the shell command, type:
 ```bash
 git clone https://github.com/tronprotocol/java-tron.git
+git checkout -t origin/master
 ```
 
 * For Mac, you can also install **[GitHub for Mac](https://mac.github.com/)** then **[fork and clone our repository](https://guides.github.com/activities/forking/)**. 
