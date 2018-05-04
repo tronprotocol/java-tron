@@ -45,8 +45,8 @@ src/main/resources/META-INF/
 /.apt_generated/
 
 # output directory
+/output_*_test/
 /output-directory/
-
 /output_manager/
 /output_witness/
 
