@@ -61,7 +61,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
 
   protected void fill() {
     int size = Iterables.size(database);
-    if (!indexPath.exists() || index.size() != size) {
+    if (size != 0 && (!indexPath.exists() || index.size() != size)) {
       service.execute(() -> database.forEach(e -> add(e.getKey())));
     }
   }
