@@ -48,7 +48,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -380,22 +379,6 @@ public class RpcApiService implements Service {
       responseObserver.onNext(retur);
       responseObserver.onCompleted();
     }
-
-    @Override
-    public void createAccount(AccountCreateContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.AccountCreateContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
