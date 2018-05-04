@@ -341,12 +341,12 @@ public class Wallet {
     if (Objects.isNull(BlockId)) {
       return null;
     }
-    Block blocke = null;
+    Block block = null;
     try {
-      blocke = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
     } catch (StoreException e) {
     }
-    return blocke;
+    return block;
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
