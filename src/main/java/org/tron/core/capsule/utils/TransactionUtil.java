@@ -15,32 +15,31 @@
 
 package org.tron.core.capsule.utils;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol.TXOutput;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
 public class TransactionUtil {
 
-  public static Transaction newGenesisTransaction(byte[] key, long value) throws IllegalArgumentException {
-    return new TransactionCapsule(key, value).getInstance();
-  }
+  public static Transaction newGenesisTransaction(byte[] key, long value)
+      throws IllegalArgumentException {
 
-  /**
-   * Determine whether the transaction is a coin-base transaction.
-   *
-   * @param transaction {@link Transaction} transaction.
-   * @return boolean true for coinbase, false for not coinbase.
-   */
-  /*public static boolean isCoinbaseTransaction(Transaction transaction) {
-    Transaction.raw rawData = transaction.getRawData();
-    return rawData.getVinList().size() == 1
-        && rawData.getVin(0).getRawData().getTxID().size() == 0
-        && rawData.getVin(0).getRawData().getVout() == -1;
-  }*/
-  private static boolean checkTxOutUnSpent(TXOutput prevOut) {
-    return true;//todo :check prevOut is unspent
+    if (!Wallet.addressValid(key)) {
+      throw new IllegalArgumentException("Invalidate address");
+    }
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(value)
+        .setOwnerAddress(ByteString.copyFrom("0x000000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(key))
+        .build();
+
+    return new TransactionCapsule(transferContract,
+        Contract.ContractType.TransferContract).getInstance();
   }
 
   /**

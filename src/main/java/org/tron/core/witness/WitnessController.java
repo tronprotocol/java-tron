@@ -244,6 +244,10 @@ public class WitnessController {
           .reduce((a, b) -> a + b);
       if (sum.isPresent()) {
         if (sum.get() <= account.getShare()) {
+          long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
+              .getVoteRewardRate());
+          account.setBalance(account.getBalance() + reward);
+          accountStore.put(account.createDbKey(), account);
           account.getVotesList().forEach(vote -> {
             //TODO validate witness //active_witness
             ByteString voteAddress = vote.getVoteAddress();

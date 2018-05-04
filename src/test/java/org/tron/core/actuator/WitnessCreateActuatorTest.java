@@ -72,20 +72,20 @@ public class WitnessCreateActuatorTest {
     WitnessCapsule ownerCapsule =
         new WitnessCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-            10L,
+            10_000_000L,
             URL);
     AccountCapsule ownerAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
             AccountType.Normal,
-            300L);
+            300_000_000L);
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FRIST),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FRIST)),
             AccountType.Normal,
-            200L);
+            200_000_000L);
 
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
@@ -111,6 +111,8 @@ public class WitnessCreateActuatorTest {
   public void firstCreateWitness() {
     WitnessCreateActuator actuator =
         new WitnessCreateActuator(getContract(OWNER_ADDRESS_FRIST, URL), dbManager);
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

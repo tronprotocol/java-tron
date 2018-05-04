@@ -367,6 +367,8 @@ public class RpcApiService implements Service {
       for (Actuator act : actList) {
         act.validate();
       }
+      trx.setReference(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+              dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
       return trx;
     }
 
@@ -474,6 +476,48 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void freezeBalance(Contract.FreezeBalanceContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.FreezeBalanceContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void unfreezeBalance(Contract.UnfreezeBalanceContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.UnfreezeBalanceContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void withdrawBalance(Contract.WithdrawBalanceContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.WithdrawBalanceContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
