@@ -114,7 +114,7 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
           - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
-      Assert.assertEquals(owner.getBandwidth(), frozenBalance / 1_000_000
+      Assert.assertEquals(owner.getBandwidth(), frozenBalance
           * duration
           * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday());
     } catch (ContractValidateException e) {
