@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static junit.framework.TestCase.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -54,6 +56,8 @@ public class TransferAssetActuatorTest {
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   private static final String TO_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
+  private static final String NOT_EXIT_ADDRESS =
+      Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
   private static final long OWNER_ASSET_BALANCE = 99999;
 
   private static final long TOTAL_SUPPLY = 10L;
@@ -144,7 +148,19 @@ public class TransferAssetActuatorTest {
             .build());
   }
 
-  /** Unit test. */
+  private Any getContract(long sendCoin, String owner, String to) {
+    return Any.pack(
+        Contract.TransferAssetContract.newBuilder()
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owner)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(to)))
+            .setAmount(sendCoin)
+            .build());
+  }
+
+  /**
+   * Unit test.
+   */
   @Test
   public void rightTransfer() {
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
@@ -293,6 +309,63 @@ public class TransferAssetActuatorTest {
   }
 
   @Test
+  public void noExitOwnerAccount() {
+    TransferAssetActuator actuator = new TransferAssetActuator(
+        getContract(100L, NOT_EXIT_ADDRESS, TO_ADDRESS), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("Validate TransferContract error, no OwnerAccount.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("No owner account!", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
+      Assert.assertTrue(isNullOrZero(toAccount.getAssetMap().get(ASSET_NAME)));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  /**
+   * If to account not exit, creat it.
+   */
+  public void noExitToAccount() {
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      AccountCapsule noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
+      Assert.assertTrue(null == noExitAccount);
+      actuator.validate();
+      noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
+      Assert.assertFalse(null == noExitAccount);    //Had created.
+      Assert.assertEquals(noExitAccount.getBalance(), 0);
+      actuator.execute(ret);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert
+          .assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE - 100);
+      noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
+      Assert.assertEquals(noExitAccount.getAssetMap().get(ASSET_NAME).longValue(), 100);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
+    }
+
+  }
+
+  @Test
   public void addOverflowTest() {
     // First, increase the to balance. Else can't complete this test case.
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
@@ -314,7 +387,6 @@ public class TransferAssetActuatorTest {
       Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), Long.MAX_VALUE);
     } catch (ContractExeException e) {
-      logger.info("===========" + e.getMessage());
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }

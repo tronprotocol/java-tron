@@ -93,21 +93,19 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       Preconditions.checkNotNull(transferAssetContract.getAssetName(), "AssetName is null");
       Preconditions.checkNotNull(transferAssetContract.getAmount(), "Amount is null");
+      long amount = transferAssetContract.getAmount();
+      if (amount <= 0) {
+        throw new ContractValidateException("Amount must greater than 0.");
+      }
 
       if (transferAssetContract.getOwnerAddress().equals(transferAssetContract.getToAddress())) {
         throw new ContractValidateException("Cannot transfer asset to yourself.");
       }
 
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
-      if (!this.dbManager.getAccountStore().has(ownerKey)) {
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
+      if (ownerAccount == null) {
         throw new ContractValidateException("No owner account!");
-      }
-
-      // if account with to_address is not existed,  create it.
-      ByteString toAddress = transferAssetContract.getToAddress();
-      if (!dbManager.getAccountStore().has(toAddress.toByteArray())) {
-        AccountCapsule account = new AccountCapsule(toAddress, AccountType.Normal);
-        dbManager.getAccountStore().put(toAddress.toByteArray(), account);
       }
 
       byte[] nameKey = transferAssetContract.getAssetName().toByteArray();
@@ -115,12 +113,6 @@ public class TransferAssetActuator extends AbstractActuator {
         throw new ContractValidateException("No asset !");
       }
 
-      long amount = transferAssetContract.getAmount();
-
-      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerKey);
-      if (ownerAccount == null) {
-        throw new ContractValidateException("Owner account is null!");
-      }
       Map<String, Long> asset = ownerAccount.getAssetMap();
 
       if (asset.isEmpty()) {
@@ -128,21 +120,26 @@ public class TransferAssetActuator extends AbstractActuator {
       }
 
       Long assetBalance = asset.get(ByteArray.toStr(nameKey));
-      if (amount <= 0) {
-        throw new ContractValidateException("Amount must greater than 0.");
-      }
       if (null == assetBalance || assetBalance <= 0) {
         throw new ContractValidateException("assetBalance must greater than 0.");
       }
       if (amount > assetBalance) {
         throw new ContractValidateException("assetBalance is not sufficient.");
       }
-      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress.toByteArray());
-      assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
-      if (assetBalance == null) {
-        assetBalance = 0L;
+
+      // if account with to_address is not existed,  create it.
+      AccountCapsule toAccount = this.dbManager.getAccountStore()
+          .get(transferAssetContract.getToAddress().toByteArray());
+      if (toAccount == null) {
+        toAccount = new AccountCapsule(transferAssetContract.getToAddress(), AccountType.Normal);
+        dbManager.getAccountStore()
+            .put(transferAssetContract.getToAddress().toByteArray(), toAccount);
+      } else {
+        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(nameKey));
+        if (assetBalance != null) {
+          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+        }
       }
-      assetBalance = Math.addExact(assetBalance, amount);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     } catch (ArithmeticException e) {
