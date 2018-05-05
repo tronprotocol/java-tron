@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +49,7 @@ public class HandleSyncBlockTest {
     PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
+    private static final String dbPath = "output-nodeImplTest/handleSyncBlock";
 
     private class Condition {
 
@@ -151,7 +152,7 @@ public class HandleSyncBlockTest {
             @Override
             public void run() {
                 logger.info("Full node running.");
-                Args.setParam(new String[]{"-d","output-handleSyncBlock-test"}, "config.conf");
+                Args.setParam(new String[]{"-d",dbPath}, "config.conf");
                 Args cfgArgs = Args.getInstance();
                 cfgArgs.setNodeListenPort(17889);
                 cfgArgs.setNodeDiscoveryEnable(false);
@@ -199,14 +200,6 @@ public class HandleSyncBlockTest {
             }
         }
     }
-
-    @AfterClass
-    public static void destroy() {
-        Args.clearParam();
-        FileUtil.deleteDir(new File("output-handleSyncBlock-test"));
-//        context.destroy();
-    }
-
 
     private void prepare() {
         try {
@@ -256,5 +249,10 @@ public class HandleSyncBlockTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @After
+    public void destroy() {
+        FileUtil.deleteDir(new File("output-nodeImplTest"));
     }
 }

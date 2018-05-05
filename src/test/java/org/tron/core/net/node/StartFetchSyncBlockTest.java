@@ -2,7 +2,7 @@ package org.tron.core.net.node;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +44,7 @@ public class StartFetchSyncBlockTest {
     PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
+    private static final String dbPath = "output-nodeImplTest/startFetchSyncBlockTest";
 
     private class Condition {
 
@@ -115,7 +116,7 @@ public class StartFetchSyncBlockTest {
             @Override
             public void run() {
                 logger.info("Full node running.");
-                Args.setParam(new String[]{"-d","output-startFetchSyncBlock-test"}, "config.conf");
+                Args.setParam(new String[]{"-d",dbPath}, "config.conf");
                 Args cfgArgs = Args.getInstance();
                 cfgArgs.setNodeListenPort(17889);
                 cfgArgs.setNodeDiscoveryEnable(false);
@@ -170,14 +171,6 @@ public class StartFetchSyncBlockTest {
         }
     }
 
-    @AfterClass
-    public static void destroy() {
-        Args.clearParam();
-        FileUtil.deleteDir(new File("output-startFetchSyncBlock-test"));
-//        context.destroy();
-
-    }
-
     private void prepare() {
         try {
             ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
@@ -226,5 +219,10 @@ public class StartFetchSyncBlockTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @After
+    public void destroy() {
+        FileUtil.deleteDir(new File("output-nodeImplTest"));
     }
 }

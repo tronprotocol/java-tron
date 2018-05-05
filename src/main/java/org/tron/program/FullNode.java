@@ -22,12 +22,12 @@ public class FullNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
+    
+    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);
