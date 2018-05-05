@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +26,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.DefaultConfig;
@@ -48,6 +51,7 @@ public class BroadTest {
   PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
+  private static final String dbPath = "output-nodeImplTest/broad";
 
   private class Condition {
 
@@ -132,10 +136,13 @@ public class BroadTest {
     ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
     Thread.sleep(1000);
     boolean result = true;
+    int count = 0;
     for (PeerConnection peerConnection : activePeers) {
-      if (!peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())
-          && !peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
-        result &= false;
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
+        ++count;
+      }
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())) {
+        ++count;
       }
       MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
       BlockingQueue<Message> msgQueue = ReflectUtils.getFieldValue(messageQueue, "msgQueue");
@@ -148,7 +155,7 @@ public class BroadTest {
         }
       }
     }
-    Assert.assertTrue(result);
+    Assert.assertTrue(count >= 2);
   }
 
   private static boolean go = false;
@@ -159,7 +166,7 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[0], "config.conf");
+        Args.setParam(new String[]{"-d",dbPath}, "config.conf");
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);
@@ -256,6 +263,11 @@ public class BroadTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  @After
+  public void destroy() {
+    FileUtil.deleteDir(new File("output-nodeImplTest"));
   }
 
 }
