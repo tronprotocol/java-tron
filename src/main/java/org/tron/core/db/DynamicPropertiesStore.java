@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -561,6 +563,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
+  }
+
+  public void resetToGenesisBlock() {
+
+    BlockCapsule genesisBlock = BlockUtil.newGenesisBlockCapsule();
+
+    this.saveLatestBlockHeaderTimestamp(0);
+    this.saveLatestBlockHeaderNumber(0);
+    this.saveLatestBlockHeaderHash(genesisBlock.getBlockId().getByteString());
+    this.saveStateFlag(0);
+    this.saveLatestSolidifiedBlockNum(0);
+    this.saveBlockFilledSlotsIndex(0);
+
+    int[] blockFilledSlots = new int[BLOCK_FILLED_SLOTS_NUMBER];
+    Arrays.fill(blockFilledSlots, 1);
+    this.saveBlockFilledSlots(blockFilledSlots);
+
+    this.saveNextMaintenanceTime(genesisBlock.getTimeStamp());
   }
 
 }

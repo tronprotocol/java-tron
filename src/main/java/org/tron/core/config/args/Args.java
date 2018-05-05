@@ -171,6 +171,16 @@ public class Args {
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
 
+  @Getter
+  @Setter
+  @Parameter(names = {"--need-replay"}, description = "need-replay")
+  private boolean needReplay = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--replay-to"}, description = "the num of block to replay")
+  private long replayTo;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -204,6 +214,8 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
+    INSTANCE.needReplay = false;
+    INSTANCE.replayTo = 0;
   }
 
   /**

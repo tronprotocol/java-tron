@@ -306,6 +306,15 @@ public class Manager {
     }
   }
 
+  public void resetToGenesisBlock() {
+    this.dynamicPropertiesStore.resetToGenesisBlock();
+
+    this.initAccount();
+    this.initWitness();
+    this.witnessController.initWits();
+    this.khaosDb.start(genesisBlock);
+  }
+
   /**
    * save account into database.
    */
