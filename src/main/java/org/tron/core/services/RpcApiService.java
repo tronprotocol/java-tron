@@ -575,13 +575,13 @@ public class RpcApiService implements Service {
     @Override
     public void participateAssetIssue(ParticipateAssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
-      ByteString fromBs = request.getOwnerAddress();
-
-      if (fromBs != null) {
-        Transaction trx = wallet.createTransaction(request);
-        responseObserver.onNext(trx);
-      } else {
-        responseObserver.onNext(null);
+      try {
+        responseObserver
+            .onNext(createTransactionCapsule(request, ContractType.ParticipateAssetIssueContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
       }
       responseObserver.onCompleted();
     }
