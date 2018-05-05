@@ -223,8 +223,8 @@ public class WitnessService implements Service {
       }
 
       logger.info(
-          "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
+          "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(), block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
