@@ -142,7 +142,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       sendHelloMsg(ctx, msg.getTimestamp());
     }
 
-    ((PeerConnection)channel).setMessage(msg);
+    ((PeerConnection)channel).setHelloMessage(msg);
 
     channel.getNodeStatistics().p2pInHello.add();
 

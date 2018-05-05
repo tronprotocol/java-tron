@@ -32,7 +32,7 @@ public class PeerConnection extends Channel {
 
   private boolean syncFlag = true;
 
-  private HelloMessage message;
+  private HelloMessage helloMessage;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -124,12 +124,12 @@ public class PeerConnection extends Channel {
     this.advObjWeRequested = advObjWeRequested;
   }
 
-  public void setMessage(HelloMessage message) {
-    this.message = message;
+  public void setHelloMessage(HelloMessage helloMessage) {
+    this.helloMessage = helloMessage;
   }
 
-  public HelloMessage getMessage(){
-    return this.message;
+  public HelloMessage getHelloMessage(){
+    return this.helloMessage;
   }
 
   public void cleanInvGarbage() {
@@ -264,10 +264,6 @@ public class PeerConnection extends Channel {
   }
 
   public void sendMessage(Message message) {
-    if (!(message instanceof BlockMessage)
-        && !(message instanceof TransactionMessage)) {
-      logger.info("Send Message:" + message.toString() + " to\n" + this);
-    }
     msgQueue.sendMessage(message);
     nodeStatistics.tronOutMessage.add();
   }

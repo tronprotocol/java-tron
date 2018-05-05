@@ -1117,7 +1117,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onConnectPeer(PeerConnection peer) {
-    if (peer.getMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()){
+    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()){
       peer.setTronState(TronState.SYNCING);
       startSyncWithPeer(peer);
     }else {
