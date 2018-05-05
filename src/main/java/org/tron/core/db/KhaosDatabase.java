@@ -240,6 +240,7 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
+    miniUnlinkedStore.setCapacity(maxSize);
     miniStore.setCapacity(maxSize);
   }
 
