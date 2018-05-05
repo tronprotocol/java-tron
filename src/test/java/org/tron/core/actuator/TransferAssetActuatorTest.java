@@ -336,7 +336,8 @@ public class TransferAssetActuatorTest {
    * If to account not exit, creat it.
    */
   public void noExitToAccount() {
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(
+        getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       AccountCapsule noExitAccount = dbManager.getAccountStore()
@@ -348,19 +349,18 @@ public class TransferAssetActuatorTest {
       Assert.assertFalse(null == noExitAccount);    //Had created.
       Assert.assertEquals(noExitAccount.getBalance(), 0);
       actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("To account is not exit!", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert
-          .assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE - 100);
-      noExitAccount = dbManager.getAccountStore()
+          .assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
+      AccountCapsule noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
-      Assert.assertEquals(noExitAccount.getAssetMap().get(ASSET_NAME).longValue(), 100);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
+      Assert.assertTrue(noExitAccount == null);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
-      dbManager.getAccountStore().delete(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
     }
 
   }

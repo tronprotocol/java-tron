@@ -19,6 +19,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -223,8 +224,8 @@ public class WitnessService implements Service {
       }
 
       logger.info(
-          "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
+          "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(), block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
@@ -246,7 +247,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
