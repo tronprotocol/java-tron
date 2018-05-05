@@ -38,6 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 public class StartFetchSyncBlockTest {
+    private static AnnotationConfigApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -123,7 +124,7 @@ public class StartFetchSyncBlockTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");

@@ -1,157 +1,130 @@
 package org.tron.core.db.api;
 
-import com.googlecode.cqengine.IndexedCollection;
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.AssetIssueStore;
-import org.tron.core.db.BlockStore;
-import org.tron.core.db.TransactionStore;
-import org.tron.core.db.WitnessStore;
-import org.tron.core.db.api.index.AbstractIndex;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.api.index.Index;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
+import javax.annotation.Resource;
+
 @Slf4j
 public class IndexHelper {
 
   @Getter
   @Resource
-  private IndexedCollection<Transaction> transactionIndex;
+  private Index.Iface<Transaction> transactionIndex;
   @Getter
   @Resource
-  private IndexedCollection<Block> blockIndex;
+  private Index.Iface<Block> blockIndex;
   @Getter
   @Resource
-  private IndexedCollection<Witness> witnessIndex;
+  private Index.Iface<Witness> witnessIndex;
   @Getter
   @Resource
-  private IndexedCollection<Account> accountIndex;
+  private Index.Iface<Account> accountIndex;
   @Getter
   @Resource
-  private IndexedCollection<AssetIssueContract> assetIssueIndex;
+  private Index.Iface<AssetIssueContract> assetIssueIndex;
 
-  private BlockStore blockStore;
-  private WitnessStore witnessStore;
-  private AccountStore accountStore;
-  private TransactionStore transactionStore;
-  private AssetIssueStore assetIssueStore;
-
-  /**
-   * init index
-   */
-  @PostConstruct
-  public void init() {
-    long start = System.currentTimeMillis();
-    logger.info("begin to initialize indexHelper");
-    blockStore.forEach(b -> blockIndex.add(b.getValue().getInstance()));
-    witnessStore.forEach(w -> witnessIndex.add(w.getValue().getInstance()));
-    transactionStore.forEach(t -> transactionIndex.add(t.getValue().getInstance()));
-    accountStore.forEach(a -> accountIndex.add(a.getValue().getInstance()));
-    assetIssueStore.forEach(a -> assetIssueIndex.add(a.getValue().getInstance()));
-    logger.info("end to initialize indexHelper. cost:{}s", System.currentTimeMillis() - start);
-  }
-
-  private <T> void add(IndexedCollection<T> index, T t) {
-    index.add(t);
+  private <T> void add(Index.Iface<T> index, byte[] bytes) {
+    index.add(bytes);
   }
 
   public void add(Transaction t) {
-    add(transactionIndex, t);
+    add(transactionIndex, getKey(t));
   }
 
   public void add(Block b) {
-    add(blockIndex, b);
+    add(blockIndex, getKey(b));
   }
 
   public void add(Witness w) {
-    add(witnessIndex, w);
+    add(witnessIndex, getKey(w));
   }
 
   public void add(Account a) {
-    add(accountIndex, a);
+    add(accountIndex, getKey(a));
   }
 
   public void add(AssetIssueContract a) {
-    add(assetIssueIndex, a);
+    add(assetIssueIndex, getKey(a));
   }
 
-  public <T> void update(IndexedCollection<T> index, T t) {
-    ((AbstractIndex<T>) index).update(t);
+  private <T> void update(Index.Iface<T> index, byte[] bytes) {
+    index.update(bytes);
   }
 
   public void update(Transaction t) {
-    update(transactionIndex, t);
+    update(transactionIndex, getKey(t));
   }
 
   public void update(Block b) {
-    update(blockIndex, b);
+    update(blockIndex, getKey(b));
   }
 
   public void update(Witness w) {
-    update(witnessIndex, w);
+    update(witnessIndex, getKey(w));
   }
 
   public void update(Account a) {
-    update(accountIndex, a);
+    update(accountIndex, getKey(a));
   }
 
   public void update(AssetIssueContract a) {
-    update(assetIssueIndex, a);
+    update(assetIssueIndex, getKey(a));
   }
 
-  private <T> void remove(IndexedCollection<T> index, T t) {
-    index.remove(t);
+  private <T> void remove(Index.Iface<T> index, byte[] bytes) {
+    index.remove(bytes);
   }
 
   public void remove(Transaction t) {
-    remove(transactionIndex, t);
+    remove(transactionIndex, getKey(t));
   }
 
   public void remove(Block b) {
-    remove(blockIndex, b);
+    remove(blockIndex, getKey(b));
   }
 
   public void remove(Witness w) {
-    remove(witnessIndex, w);
+    remove(witnessIndex, getKey(w));
   }
 
   public void remove(Account a) {
-    remove(accountIndex, a);
+    remove(accountIndex, getKey(a));
   }
 
   public void remove(AssetIssueContract a) {
-    remove(assetIssueIndex, a);
+    remove(assetIssueIndex, getKey(a));
   }
 
-  @Autowired
-  public void setBlockStore(BlockStore blockStore) {
-    this.blockStore = blockStore;
+  private byte[] getKey(Transaction t) {
+    return new TransactionCapsule(t).getTransactionId().getBytes();
   }
 
-  @Autowired
-  public void setWitnessStore(WitnessStore witnessStore) {
-    this.witnessStore = witnessStore;
+  private byte[] getKey(Block b) {
+    return new BlockCapsule(b).getBlockId().getBytes();
   }
 
-  @Autowired
-  public void setAccountStore(AccountStore accountStore) {
-    this.accountStore = accountStore;
+  private byte[] getKey(Witness w) {
+    return new WitnessCapsule(w).createDbKey();
   }
 
-  @Autowired
-  public void setTransactionStore(TransactionStore transactionStore) {
-    this.transactionStore = transactionStore;
+  private byte[] getKey(Account a) {
+    return new AccountCapsule(a).createDbKey();
   }
 
-  @Autowired
-  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
-    this.assetIssueStore = assetIssueStore;
+  private byte[] getKey(AssetIssueContract a) {
+    return new AssetIssueCapsule(a).getName().toByteArray();
   }
+
 }

@@ -42,8 +42,8 @@ public class FullNode {
     rpcApiService.blockUntilShutdown();
   }
 
-  private static void shutdown(final Application app) {
-    logger.info("********register application shutdown ********");
+  public static void shutdown(final Application app) {
+    logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
   }
 }
