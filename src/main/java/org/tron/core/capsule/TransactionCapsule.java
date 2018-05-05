@@ -360,6 +360,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.toByteArray();
   }
 
+  public long getSerializedSize() {
+    return this.transaction.getSerializedSize();
+  }
+
   @Override
   public Transaction getInstance() {
     return this.transaction;

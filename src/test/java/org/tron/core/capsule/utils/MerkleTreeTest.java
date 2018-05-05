@@ -1,126 +1,170 @@
 package org.tron.core.capsule.utils;
 
-import static org.junit.Assert.assertEquals;
-
-import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
+import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol;
+import org.tron.core.capsule.utils.MerkleTree.Leaf;
 
 @Slf4j
 public class MerkleTreeTest {
 
-  private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
-      .copyFrom(ByteArray
-          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
-      ByteString.copyFrom("1234567".getBytes()));
-
-  private static BlockCapsule blockCapsule1 = new BlockCapsule(1, ByteString
-      .copyFrom(ByteArray
-          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
-      ByteString.copyFrom("1234567".getBytes()));
-
-  /* private TransactionCapsule transactionCapsule1 = new TransactionCapsule(
-      ByteArray.fromHexString(
-          Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"), 1L);
-  private TransactionCapsule transactionCapsule2 = new TransactionCapsule(
-      ByteArray.fromHexString(
-          Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"), 2L);
-  private TransactionCapsule transactionCapsule3 = new TransactionCapsule(
-      ByteArray.fromHexString(
-          Wallet.getAddressPreFixString() + "F25675B364B0E45E2668C1CDD59370136AD8EC2F"), 2L);
-          */
-
-  public MerkleTreeTest() throws Exception {
-  }
-
-  @Ignore
-  @Test
-  public void testMerkleTreeTest() {
-    Sha256Hash hash1 = getBeforeZeroHash();
-    MerkleTree tree = MerkleTree.getInstance().createTree(getZeroIds());
-
-    logger.info("Transaction[X] Compare :");
-    logger.info("left: {}", hash1);
-    logger.info("right: {}", tree.getRoot().getHash());
-
-    assertEquals(hash1, tree.getRoot().getHash());
-
-    Sha256Hash hash2 = getBeforeTxHash();
-    tree.createTree(getTxIds2(blockCapsule1));
-
-    logger.info("Transaction[O] Compare :");
-    logger.info("left: {}", hash2);
-    logger.info("right: {}", tree.getRoot().getHash());
-
-    assertEquals(hash2, tree.getRoot().getHash());
-  }
-
-  private Sha256Hash getBeforeHash(Vector<Sha256Hash> ids) {
-    int hashNum = ids.size();
-
-    while (hashNum > 1) {
-      int max = hashNum - (hashNum & 1);
-      int k = 0;
-      for (int i = 0; i < max; i += 2) {
-        ids.set(k++, Sha256Hash.of((ids.get(i).getByteString()
-            .concat(ids.get(i + 1).getByteString()))
-            .toByteArray()));
-      }
-
-      if (hashNum % 2 == 1) {
-        ids.set(k++, ids.get(max));
-      }
-      hashNum = k;
+  private static List<Sha256Hash> getHash(int hashNum) {
+    List<Sha256Hash> hashList = new ArrayList<Sha256Hash>();
+    for (int i = 0; i < hashNum; i++) {
+      byte[] bytes = new byte[4];
+      bytes[3] = (byte) (i & 0xFF);
+      bytes[2] = (byte) ((i >> 8) & 0xFF);
+      bytes[1] = (byte) ((i >> 16) & 0xFF);
+      bytes[0] = (byte) ((i >> 24) & 0xFF);
+      hashList.add(Sha256Hash.of(bytes));
     }
-
-    return ids.firstElement();
+    return hashList;
   }
 
-  private Sha256Hash getBeforeZeroHash() {
-    return getBeforeHash(getZeroIds());
+  private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
+    return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
-  private Sha256Hash getBeforeTxHash() {
-    return getBeforeHash(getTxIds1(blockCapsule0));
+  @Test
+  /**
+   * Make a merkletree with no hash.
+   * Will throw a exception.
+   */
+  public void test0HashNum() {
+    List<Sha256Hash> hashList = getHash(0);  //Empty list.
+    try {
+      MerkleTree.getInstance().createTree(hashList);
+      Assert.assertFalse(true);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IndexOutOfBoundsException);
+    }
   }
 
-  private Vector<Sha256Hash> getZeroIds() {
-    Vector<Sha256Hash> ids = new Vector<>();
-    ids.add(Sha256Hash.ZERO_HASH);
-    return ids;
+  @Test
+  /**
+   * Make a merkletree with 1 hash.
+   *      root
+   *      /    \
+   *    H1   null
+   *   /   \
+   *  null null
+   */
+  public void test1HashNum() {
+    List<Sha256Hash> hashList = getHash(1);
+    MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
+    Leaf root = tree.getRoot();
+    Assert.assertEquals(root.getHash(), hashList.get(0));
+
+    Leaf left = root.getLeft();
+    Assert.assertEquals(left.getHash(), hashList.get(0));
+    Assert.assertTrue(left.getLeft() == null);
+    Assert.assertTrue(left.getRight() == null);
+
+    Assert.assertTrue(root.getRight() == null);
   }
 
-  private Vector<Sha256Hash> getTxIds1(BlockCapsule blockCapsule) {
-    return getSha256Hashes(blockCapsule);
+  @Test
+  /**
+   * Make a merkletree with 2 hash.
+   *        root
+   *      /     \
+   *    H1       H2
+   *  /   \    /   \
+   *null null null null
+   */
+  public void test2HashNum() {
+    List<Sha256Hash> hashList = getHash(2);
+    MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
+    Leaf root = tree.getRoot();
+    Assert.assertEquals(root.getHash(), computeHash(hashList.get(0), hashList.get(1)));
+
+    Leaf left = root.getLeft();
+    Assert.assertEquals(left.getHash(), hashList.get(0));
+    Assert.assertTrue(left.getLeft() == null);
+    Assert.assertTrue(left.getRight() == null);
+
+    Leaf right = root.getRight();
+    Assert.assertEquals(right.getHash(), hashList.get(1));
+    Assert.assertTrue(right.getLeft() == null);
+    Assert.assertTrue(right.getRight() == null);
   }
 
-  private Vector<Sha256Hash> getTxIds2(BlockCapsule blockCapsule) {
-    return getSha256Hashes(blockCapsule);
+  @Test
+  /**
+   * Make a merkletree with any num hash.
+   *
+   *rank0                                 root
+   *rank1                  0                                    1
+   *rank2          0                1                      2
+   *rank3      0      1        2         3             4
+   *rank4    0  1   2   3    4   5     6     7      8     9
+   *rank5  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+   *
+   * leftNum = 2 * headNum
+   * rightNum = leftNum + 1
+   * curBank < maxRank, there must have left child
+   * if have left child but no right child,  headHash = leftHash
+   * if both have left child and right child, headHash = SHA256(leftHash||rightHash)
+   * curBank = maxRank, no child, it is real leaf. Its hash in hashList.
+   */
+  public void testAnyHashNum() {
+    int maxNum = 128;
+    for (int hashNum = 1; hashNum <= maxNum; hashNum++){
+      int maxRank = getRank(hashNum);
+      List<Sha256Hash> hashList = getHash(hashNum);
+      MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
+      Leaf root = tree.getRoot();
+      pareTree(root, hashList, maxRank, 0, 0);
+    }
   }
 
-  private Vector<Sha256Hash> getSha256Hashes(BlockCapsule blockCapsule) {
-   /* blockCapsule.addTransaction(transactionCapsule1);
-    blockCapsule.addTransaction(transactionCapsule2);
-    blockCapsule.addTransaction(transactionCapsule3);
-
-    List<Protocol.Transaction> transactionList = blockCapsule.getInstance().getTransactionsList();
-    return getSha256Hashes(transactionList);  */
-    return null;
+  //number: the number of hash
+  private static void pareTree(Leaf head, List<Sha256Hash> hashList, int maxRank, int curBank,
+      int number) {
+    Leaf left = head.getLeft();
+    Leaf right = head.getRight();
+    if (curBank < maxRank) {
+      curBank++;
+      number = number << 1;
+      pareTree(left, hashList, maxRank, curBank, number);
+      number++;
+      if ( (number<<(maxRank-curBank)) >= hashList.size()) {    //The smallest leaf child number = number<<(maxRank-curBank)
+        Assert.assertTrue(right == null);
+        Assert.assertEquals(head.getHash(), left.getHash());  //No right, leaf = left
+      } else {
+        pareTree(right, hashList, maxRank, curBank, number);
+        Assert.assertEquals(head.getHash(), computeHash(left.getHash(), right.getHash())); //hash = sha256(left || right)
+      }
+    } else {
+      // last rank, no child, it is real leaf. Its hash in hashList.
+      Assert.assertTrue(left == null);
+      Assert.assertTrue(right == null);
+      Assert.assertEquals(head.getHash(), hashList.get(number));
+      System.out.println("curBank :" + curBank + " number :" + number);
+      System.out.println(ByteArray.toHexString(head.getHash().getBytes()));
+    }
   }
 
-  private Vector<Sha256Hash> getSha256Hashes(List<Protocol.Transaction> transactionList) {
-    return transactionList.stream()
-        .map(TransactionCapsule::new)
-        .map(TransactionCapsule::getHash)
-        .collect(Collectors.toCollection(Vector::new));
+  private static int getRank(int num) {
+    if (num <= 0) {
+      return 0;
+    }
+    if (num == 1) {
+      return 1;
+    }
+    int rank = 0;
+    int temp = num;
+    while (num > 0) {
+      num = num >> 1;
+      rank++;
+    }
+    if (temp == Math.pow(2, rank - 1)) {
+      rank -= 1;
+    }
+    return rank;
   }
 }

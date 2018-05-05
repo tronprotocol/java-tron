@@ -1,58 +1,81 @@
 package org.tron.core.db.api.index;
 
-import static com.googlecode.cqengine.query.QueryFactory.attribute;
-import static com.googlecode.cqengine.query.QueryFactory.equal;
-
-import com.google.common.collect.ImmutableList;
 import com.googlecode.cqengine.attribute.Attribute;
+import com.googlecode.cqengine.attribute.SimpleAttribute;
+import com.googlecode.cqengine.index.disk.DiskIndex;
+import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.navigable.NavigableIndex;
 import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.persistence.Persistence;
-import javax.annotation.PostConstruct;
+import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.db.TronDatabase;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Contract.AssetIssueContract;
+
+import javax.annotation.PostConstruct;
+
+import java.io.File;
+
+import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
 @Slf4j
-public class AssetIssueIndex extends AbstractIndex<AssetIssueContract> {
+public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssueContract> {
 
-  public static final Attribute<AssetIssueContract, String> AssetIssue_OWNER_RADDRESS =
-      attribute(
-          "assetIssue owner address",
-          assetIssue -> ByteArray.toHexString(assetIssue.getOwnerAddress().toByteArray()));
+  public static Attribute<WrappedByteArray, String> AssetIssue_OWNER_RADDRESS;
+  public static SimpleAttribute<WrappedByteArray, String> AssetIssue_NAME;
+  public static Attribute<WrappedByteArray, Long> AssetIssue_START;
+  public static Attribute<WrappedByteArray, Long> AssetIssue_END;
 
-  public static final Attribute<AssetIssueContract, String> AssetIssue_NAME =
-      attribute("assetIssue name", assetIssue -> assetIssue.getName().toStringUtf8());
-
-  public static final Attribute<AssetIssueContract, Long> AssetIssue_START =
-      attribute("assetIssue start time", AssetIssueContract::getStartTime);
-
-  public static final Attribute<AssetIssueContract, Long> AssetIssue_END =
-      attribute("assetIssue end time", AssetIssueContract::getEndTime);
-
-  public AssetIssueIndex() {
-    super();
-  }
-
-  public AssetIssueIndex(Persistence<AssetIssueContract, ? extends Comparable> persistence) {
-    super(persistence);
-  }
-
-  @Override
-  public boolean update(AssetIssueContract assetIssue) {
-    return update(
-        retrieve(equal(AssetIssue_NAME, assetIssue.getName().toStringUtf8())),
-        ImmutableList.of(assetIssue)
-    );
+  @Autowired
+  public AssetIssueIndex(
+      @Qualifier("assetIssueStore") final TronDatabase<AssetIssueCapsule> database) {
+    this.database = database;
   }
 
   @PostConstruct
   public void init() {
-    addIndex(SuffixTreeIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
-    addIndex(SuffixTreeIndex.onAttribute(AssetIssue_NAME));
-    addIndex(NavigableIndex.onAttribute(AssetIssue_START));
-    addIndex(NavigableIndex.onAttribute(AssetIssue_END));
+    initIndex(DiskPersistence.onPrimaryKeyInFile(AssetIssue_NAME, indexPath));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
+//    index.addIndex(DiskIndex.onAttribute(AssetIssue_NAME));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_START));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_END));
+    fill();
+  }
+
+  @Override
+  protected void setAttribute() {
+    AssetIssue_OWNER_RADDRESS =
+        attribute(
+            "assetIssue owner address",
+            bytes -> {
+              AssetIssueContract assetIssue = getObject(bytes);
+              return ByteArray.toHexString(assetIssue.getOwnerAddress().toByteArray());
+            });
+
+    AssetIssue_NAME =
+        attribute("assetIssue name", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getName().toStringUtf8();
+        });
+
+    AssetIssue_START =
+        attribute("assetIssue start time", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getStartTime();
+        });
+
+    AssetIssue_END =
+        attribute("assetIssue end time", bytes -> {
+          AssetIssueContract assetIssue = getObject(bytes);
+          return assetIssue.getEndTime();
+        });
+
   }
 }
