@@ -20,25 +20,28 @@ package org.tron.common.overlay.server;
 import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
 import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.timeout.ReadTimeoutException;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
@@ -143,6 +146,13 @@ public class ChannelManager {
     syncPool.onDisconnect(channel);
     activePeers.values().remove(channel);
     newPeers.remove(channel);
+    if (channel == null || channel.getChannelHandlerContext() == null
+        || channel.getChannelHandlerContext().channel() == null) {
+      return;
+    }
+    InetSocketAddress socketAddress = (InetSocketAddress) channel.getChannelHandlerContext()
+        .channel().remoteAddress();
+    recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
   public boolean isRecentlyDisconnected(InetAddress peerAddr) {
