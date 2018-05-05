@@ -159,7 +159,7 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[0], "config.conf");
+        Args.setParam(new String[]{"-d","output-nodeImplTest/broad"}, "config.conf");
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);
