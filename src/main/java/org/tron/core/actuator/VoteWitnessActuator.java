@@ -94,7 +94,6 @@ public class VoteWitnessActuator extends AbstractActuator {
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
       if (sum > share) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the share[" + share + "]");
