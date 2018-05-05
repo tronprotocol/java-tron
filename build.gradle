@@ -89,7 +89,7 @@ dependencies {
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
-    compile group: 'junit', name: 'junit', version: '4.8.1'
+    compile group: 'junit', name: 'junit', version: '4.12'
 
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
