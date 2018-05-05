@@ -193,7 +193,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     long share = 0;
     //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
-      share += account.getFrozen(i).getFrozenBalance() / 1_000_000;
+      share += account.getFrozen(i).getFrozenBalance();
     }
     return share;
   }
