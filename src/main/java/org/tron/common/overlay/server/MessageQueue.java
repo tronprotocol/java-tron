@@ -122,15 +122,12 @@ public class MessageQueue {
 
     Message msg = messageRoundtrip.getMsg();
 
-    ctx.writeAndFlush(msg.getSendData())
-            .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+    ctx.writeAndFlush(msg.getSendData());
 
     logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
 
-    if (msg.getAnswerMessage() != null) {
-      messageRoundtrip.incRetryTimes();
-      messageRoundtrip.saveTime();
-    }
+    messageRoundtrip.incRetryTimes();
+    messageRoundtrip.saveTime();
   }
 
 }

@@ -132,10 +132,13 @@ public class BroadTest {
     ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
     Thread.sleep(1000);
     boolean result = true;
+    int count = 0;
     for (PeerConnection peerConnection : activePeers) {
-      if (!peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())
-          && !peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
-        result &= false;
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
+        ++count;
+      }
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())) {
+        ++count;
       }
       MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
       BlockingQueue<Message> msgQueue = ReflectUtils.getFieldValue(messageQueue, "msgQueue");
@@ -148,7 +151,7 @@ public class BroadTest {
         }
       }
     }
-    Assert.assertTrue(result);
+    Assert.assertTrue(count >= 2);
   }
 
   private static boolean go = false;
@@ -159,7 +162,7 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[0], "config.conf");
+        Args.setParam(new String[]{"-d","output-nodeImplTest/broad"}, "config.conf");
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);

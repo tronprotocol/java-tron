@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -419,13 +420,11 @@ public class Manager {
       throw new DupTransactionException("dup trans");
     }
 
-
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    consumeBandwidth(trx);
 
-    //validateTapos(trx);
+    validateTapos(trx);
 
     //validateFreq(trx);
 
@@ -434,6 +433,7 @@ public class Manager {
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+      consumeBandwidth(trx);
       processTransaction(trx);
       pendingTransactions.add(trx);
       tmpDialog.merge();
@@ -456,12 +456,15 @@ public class Manager {
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      if (now - latestOperationTime >= 5 * 60 * 1000) {
+      //5 * 60 * 1000
+      if (now - latestOperationTime >= 300_000L) {
+        accountCapsule.setLatestOperationTime(now);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
       if (bandwidth < bandwidthPerTransaction) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
+        throw new ValidateBandwidthException("bandwidth is not enough");
       }
       accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
@@ -521,7 +524,7 @@ public class Manager {
   }
 
   private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -555,6 +558,8 @@ public class Manager {
             try (Dialog tmpDialog = revokingStore.buildDialog()) {
               applyBlock(item);
               tmpDialog.commit();
+            } catch (ValidateBandwidthException e) {
+              logger.error("high freq", e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -579,7 +584,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -794,7 +799,7 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
 
     if (trxCap == null) {
       return false;
@@ -804,6 +809,8 @@ public class Manager {
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    consumeBandwidth(trxCap);
 
     for (Actuator act : actuatorList) {
       act.validate();
@@ -831,7 +838,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -860,6 +867,12 @@ public class Manager {
         postponedTrxCount++;
         continue;
       }
+
+      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
+        logger.debug("Processing transaction time exceeds the 50% producing time。");
+        break;
+      }
+
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
@@ -926,7 +939,7 @@ public class Manager {
    * process block.
    */
   public void processBlock(BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
     // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
@@ -946,6 +959,7 @@ public class Manager {
     }
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
+    updateRecentBlock(block);
   }
 
   public void updateRecentBlock(BlockCapsule block) {

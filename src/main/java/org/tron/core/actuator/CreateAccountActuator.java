@@ -23,13 +23,15 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
+  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
     long fee = calcFee();
     try {
 
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
-      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract);
+      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
+          System.currentTimeMillis());
       dbManager.getAccountStore()
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
@@ -42,6 +44,7 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
+  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean validate() throws ContractValidateException {
     try {
       if (!contract.is(AccountCreateContract.class)) {
@@ -69,11 +72,13 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
+  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(AccountCreateContract.class).getOwnerAddress();
   }
 
   @Override
+  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public long calcFee() {
     return 0;
   }

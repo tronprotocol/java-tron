@@ -58,11 +58,27 @@ public class WitnessControllerTest {
     // no witness produce block
     assertEquals(0, dbManager.getHeadBlockNum());
 
-    // the second witness in sorted active witnesses
+    // test witnesses in genesis block
+    assertEquals(
+        "a0904fe896536f4bebc64c95326b5054a2c3d27df6", // first(current witness)
+        ByteArray.toHexString(
+            (dbManager.getWitnessController().getScheduledWitness(0).toByteArray())));
+    assertEquals(
+        "a0904fe896536f4bebc64c95326b5054a2c3d27df6",
+        ByteArray.toHexString(
+            (dbManager.getWitnessController().getScheduledWitness(5).toByteArray())));
+    assertEquals(
+        "a0807337f180b62a77576377c1d0c9c24df5c0dd62", // second(next witness)
+        ByteArray.toHexString(
+            (dbManager.getWitnessController().getScheduledWitness(6).toByteArray())));
     assertEquals(
         "a0807337f180b62a77576377c1d0c9c24df5c0dd62",
         ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(1).toByteArray())));
+            (dbManager.getWitnessController().getScheduledWitness(11).toByteArray())));
+    assertEquals(
+        "a05430a3f089154e9e182ddd6fe136a62321af22a7", // third
+        ByteArray.toHexString(
+            (dbManager.getWitnessController().getScheduledWitness(12).toByteArray())));
 
     // test maintenance
     ByteString a =
@@ -83,9 +99,9 @@ public class WitnessControllerTest {
     // update shuffled witness
     dbManager.getWitnessScheduleStore().saveCurrentShuffledWitnesses(w);
 
-    assertEquals(b, dbManager.getWitnessController().getScheduledWitness(1));
-    assertEquals(a, dbManager.getWitnessController().getScheduledWitness(2));
-    assertEquals(b, dbManager.getWitnessController().getScheduledWitness(3));
-    assertEquals(a, dbManager.getWitnessController().getScheduledWitness(4));
+    assertEquals(a, dbManager.getWitnessController().getScheduledWitness(1));
+    assertEquals(a, dbManager.getWitnessController().getScheduledWitness(5));
+    assertEquals(b, dbManager.getWitnessController().getScheduledWitness(6));
+    assertEquals(a, dbManager.getWitnessController().getScheduledWitness(12));
   }
 }

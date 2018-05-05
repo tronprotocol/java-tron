@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Time;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
@@ -79,6 +78,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
+   * construct account from AccountCreateContract and creatTime.
+   */
+  public AccountCapsule(final AccountCreateContract contract, long createTime) {
+    this.account = Account.newBuilder()
+        .setAccountName(contract.getAccountName())
+        .setType(contract.getType())
+        .setAddress(contract.getOwnerAddress())
+        .setTypeValue(contract.getTypeValue())
+        .setCreateTime(createTime)
+        .build();
+  }
+
+  /**
    * construct account from AccountUpdateContract
    */
   public AccountCapsule(final AccountUpdateContract contract) {
@@ -108,6 +120,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  /**
+   * get account from address.
+   */
+  public AccountCapsule(ByteString address,
+      AccountType accountType, long createTime) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAddress(address)
+        .setCreateTime(createTime)
+        .build();
+  }
 
   public AccountCapsule(Account account) {
     this.account = account;
@@ -192,11 +215,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getShare() {
     long share = 0;
-    long now = Time.getCurrentMillis();
+    //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
-      if (account.getFrozen(i).getExpireTime() > now) {
-        share += account.getFrozen(i).getFrozenBalance() / 10000;
-      }
+      share += account.getFrozen(i).getFrozenBalance();
     }
     return share;
   }

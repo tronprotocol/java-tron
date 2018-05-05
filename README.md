@@ -71,6 +71,7 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 In the shell command, type:
 ```bash
 git clone https://github.com/tronprotocol/java-tron.git
+git checkout -t origin/master
 ```
 
 * For Mac, you can also install **[GitHub for Mac](https://mac.github.com/)** then **[fork and clone our repository](https://guides.github.com/activities/forking/)**. 
@@ -127,11 +128,12 @@ java -jar java-tron.jar
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
 ### How to run a Super Node
-
+* use master branch
 * You should modify the config.conf
   1. genesis.block.witnesses replace to yourself address
   2. seed.node.ip.list replace to yourself ip list
   3. the first Super Node start, needSyncCheck should be set false
+  4. set p2pversion to 61 
 
 * Use the executable JAR(Recommend the way)
 

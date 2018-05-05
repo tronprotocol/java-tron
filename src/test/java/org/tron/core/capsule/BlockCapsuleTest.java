@@ -14,6 +14,8 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class BlockCapsuleTest {
@@ -45,19 +47,28 @@ public class BlockCapsuleTest {
 
     logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
 
-    TransactionCapsule transactionCapsule1 = new TransactionCapsule(
-        ByteArray.fromHexString(
-            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"), 1L);
-    TransactionCapsule transactionCapsule2 = new TransactionCapsule(
-        ByteArray.fromHexString(
-            Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"), 2L);
+    TransferContract transferContract1 = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
+        .build();
 
-    blockCapsule0.addTransaction(transactionCapsule1);
-    blockCapsule0.addTransaction(transactionCapsule2);
+    TransferContract transferContract2 = TransferContract.newBuilder()
+        .setAmount(2L)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
+        .build();
+
+    blockCapsule0
+        .addTransaction(new TransactionCapsule(transferContract1, ContractType.TransferContract));
+    blockCapsule0
+        .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
     blockCapsule0.setMerkleRoot();
 
     Assert.assertEquals(
-        "b7ad4783b23a97bf9ac2ccd9b4e73eb6c45dc63dc24925f2b77ce1f0b2a1b2e6",
+        "53421c1f1bcbbba67a4184cc3dbc1a59f90af7e2b0644dcfc8dc738fe30deffc",
         blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
