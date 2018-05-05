@@ -68,18 +68,20 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
+
   public class KhaosStore {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
-    private int maxCapcity = 1024;
+    private final int MAXIMUM_CAPACITY = 1024;
+    private int capacity;
 
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
         new LinkedHashMap<Long, ArrayList<KhaosBlock>>() {
 
           @Override
           protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
-            if (entry.getKey() < Long.max(0L, head.num - maxCapcity)) {
+            if (entry.getKey() < Long.max(0L, head.num - capacity)) {
               entry.getValue().forEach(b -> hashKblkMap.remove(b.id));
               return true;
             }
@@ -87,8 +89,16 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-    public void setMaxCapcity(int maxCapcity) {
-      this.maxCapcity = maxCapcity;
+    public KhaosStore() {
+      this.capacity = MAXIMUM_CAPACITY;
+    }
+
+    public void setCapacity(int capacity) {
+      if (capacity > MAXIMUM_CAPACITY) {
+        this.capacity = MAXIMUM_CAPACITY;
+      } else {
+        this.capacity = capacity;
+      }
     }
 
     public void insert(KhaosBlock block) {
@@ -230,8 +240,8 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
-    miniUnlinkedStore.setMaxCapcity(maxSize);
-    miniStore.setMaxCapcity(maxSize);
+    miniUnlinkedStore.setCapacity(maxSize);
+    miniStore.setCapacity(maxSize);
   }
 
   /**
