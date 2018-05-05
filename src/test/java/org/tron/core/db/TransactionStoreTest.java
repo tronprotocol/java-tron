@@ -28,8 +28,9 @@ public class TransactionStoreTest {
   private static String dbPath = "output_TransactionStore_test";
   private static TransactionStore transactionStore;
   private static AnnotationConfigApplicationContext context;
-  private static final byte[] data = TransactionStoreTest.randomBytes(21);
+  private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
   private static Manager dbManager;
+  private static final byte[] key2 = TransactionStoreTest.randomBytes(21);
 
 
   private static final String URL = "https://tron.network";
@@ -113,11 +114,11 @@ public class TransactionStoreTest {
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
         dbManager.getAccountStore());
-    transactionStore.put(data, ret);
+    transactionStore.put(key1, ret);
     Assert.assertEquals("Store CreateAccountTransaction is error",
-        transactionStore.get(data).getInstance(),
+        transactionStore.get(key1).getInstance(),
         ret.getInstance());
-    Assert.assertTrue(transactionStore.has(data));
+    Assert.assertTrue(transactionStore.has(key1));
   }
 
   /**
@@ -127,9 +128,9 @@ public class TransactionStoreTest {
   public void CreateWitnessTransactionStoreTest() {
     WitnessCreateContract witnessContract = getWitnessContract(OWNER_ADDRESS, URL);
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessContract);
-    transactionStore.put(data, transactionCapsule);
+    transactionStore.put(key1, transactionCapsule);
     Assert.assertEquals("Store CreateWitnessTransaction is error",
-        transactionStore.get(data).getInstance(),
+        transactionStore.get(key1).getInstance(),
         transactionCapsule.getInstance());
   }
 
@@ -149,9 +150,9 @@ public class TransactionStoreTest {
     TransferContract transferContract = getContract(AMOUNT, OWNER_ADDRESS, TO_ADDRESS);
     TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract,
         dbManager.getAccountStore());
-    transactionStore.put(data, transactionCapsule);
+    transactionStore.put(key1, transactionCapsule);
     Assert.assertEquals("Store TransferTransaction is error",
-        transactionStore.get(data).getInstance(),
+        transactionStore.get(key1).getInstance(),
         transactionCapsule.getInstance());
   }
 
@@ -175,12 +176,40 @@ public class TransactionStoreTest {
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     VoteWitnessContract actuator = getVoteWitnessContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L);
     TransactionCapsule transactionCapsule = new TransactionCapsule(actuator);
-    transactionStore.put(data, transactionCapsule);
+    transactionStore.put(key1, transactionCapsule);
     Assert.assertEquals("Store VoteWitnessTransaction is error",
-        transactionStore.get(data).getInstance(),
+        transactionStore.get(key1).getInstance(),
         transactionCapsule.getInstance());
   }
 
+  /**
+   * put value is null and get it.
+   */
+  @Test
+  public void TransactionValueNullTest() {
+    TransactionCapsule transactionCapsule = null;
+    transactionStore.put(key2, transactionCapsule);
+    Assert.assertNull("put value is null", transactionStore.get(key2));
+
+  }
+
+  /**
+   * put key is null and get it.
+   */
+  @Test
+  public void TransactionKeyNullTest() {
+    AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
+        OWNER_ADDRESS);
+    TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
+        dbManager.getAccountStore());
+    byte[] key = null;
+    transactionStore.put(key, ret);
+    try {
+      transactionStore.get(key);
+    } catch (RuntimeException e) {
+      Assert.assertEquals("The key argument cannot be null", e.getMessage());
+    }
+  }
   @AfterClass
   public static void destroy() {
     Args.clearParam();
