@@ -10,7 +10,6 @@ import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.UDPListener;
 import org.tron.common.overlay.server.ChannelManager;
-import org.tron.common.overlay.server.PeerServer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -20,6 +19,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -74,6 +74,8 @@ public class SolidityNode {
           dbManager.pushBlock(blockCapsule);
           dbManager.getDynamicPropertiesStore()
               .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
+        } catch (ValidateBandwidthException e) {
+          throw new BadBlockException("validate Bandwidth exception");
         } catch (ValidateScheduleException e) {
           throw new BadBlockException("validate schedule exception");
         } catch (ValidateSignatureException e) {
