@@ -46,7 +46,6 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BroadTest {
 
-  private static String dbPath = "output-nodeImplTest/broad";
   private static AnnotationConfigApplicationContext context;
   private NodeImpl node;
   RpcApiService rpcApiService;
@@ -167,7 +166,7 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[]{"--output-directory", dbPath}, "config.conf");
+        Args.setParam(new String[]{"-d", "output-BroadTest-test"}, "config.conf");
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);
@@ -220,8 +219,8 @@ public class BroadTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
-    context.destroy();
+    FileUtil.deleteDir(new File("output-BroadTest-test"));
+//    context.destroy();
   }
 
   private void prepare() {
