@@ -62,6 +62,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         return null;
       }
 
+    } catch (ValidateBandwidthException e) {
+      throw new BadBlockException("Validate Bandwidth exception");
     } catch (ValidateScheduleException e) {
       throw new BadBlockException("validate schedule exception");
     } catch (ValidateSignatureException e) {

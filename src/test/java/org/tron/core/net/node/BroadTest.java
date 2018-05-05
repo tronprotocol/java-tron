@@ -46,7 +46,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BroadTest {
 
-  private static String dbPath = "output_BroadTest_test";
+  private static String dbPath = "output-nodeImplTest/broad";
   private static AnnotationConfigApplicationContext context;
   private NodeImpl node;
   RpcApiService rpcApiService;
@@ -137,10 +137,13 @@ public class BroadTest {
     ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
     Thread.sleep(1000);
     boolean result = true;
+    int count = 0;
     for (PeerConnection peerConnection : activePeers) {
-      if (!peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())
-          && !peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
-        result &= false;
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
+        ++count;
+      }
+      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())) {
+        ++count;
       }
       MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
       BlockingQueue<Message> msgQueue = ReflectUtils.getFieldValue(messageQueue, "msgQueue");
@@ -153,7 +156,7 @@ public class BroadTest {
         }
       }
     }
-    Assert.assertTrue(result);
+    Assert.assertTrue(count >= 2);
   }
 
   private static boolean go = false;
