@@ -332,6 +332,39 @@ public class TransferActuatorTest {
     } finally {
       dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
     }
+  }
+
+  @Test
+  /**
+   * If to account not exit, transfer trx must great than 1_000_000L drop.
+   */
+  public void noExitToAccountTooLittle() {
+    TransferActuator actuator = new TransferActuator(
+        getContract(999_999L, OWNER_ADDRESS, To_ACCOUNT_INVALIATE), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      AccountCapsule noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+      Assert.assertTrue(null == noExitAccount);
+      actuator.validate();
+      Assert.assertEquals(noExitAccount.getBalance(), 0);
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      AccountCapsule noExitAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+      Assert.assertTrue(null == noExitAccount);
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
+    }
 
   }
 

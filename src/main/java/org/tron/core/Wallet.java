@@ -43,7 +43,14 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.*;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.ValidateBandwidthException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -191,6 +198,7 @@ public class Wallet {
   /**
    * Create a transaction by contract.
    */
+  @Deprecated
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
@@ -244,7 +252,7 @@ public class Wallet {
   public Transaction createTransaction(AssetIssueContract assetIssueContract) {
     return new TransactionCapsule(assetIssueContract).getInstance();
   }
-
+  @Deprecated
   public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
     return new TransactionCapsule(witnessCreateContract).getInstance();
   }
@@ -287,11 +295,11 @@ public class Wallet {
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
   }
-
+  @Deprecated
   public Transaction createTransaction(TransferAssetContract transferAssetContract) {
     return new TransactionCapsule(transferAssetContract).getInstance();
   }
-
+  @Deprecated
   public Transaction createTransaction(
       ParticipateAssetIssueContract participateAssetIssueContract) {
     return new TransactionCapsule(participateAssetIssueContract).getInstance();
