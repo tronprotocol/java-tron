@@ -124,27 +124,25 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (Arrays.equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())){
+    if (!Arrays.equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())){
       logger.info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
               msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
       channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     }
 
-    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && manager.containBlockInMainChain(msg.getSolidBlockId())){
+    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager.containBlockInMainChain(msg.getSolidBlockId())){
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
               msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
     }
 
-    if (manager.getHeadBlockNum() < msg.getHeadBlockId().getNum()){
-      ((PeerConnection)channel).setNeedSyncFromPeer(true);
-    }
-
     if (remoteId.length != 64) {
       sendHelloMsg(ctx, msg.getTimestamp());
     }
+
+    ((PeerConnection)channel).setMessage(msg);
 
     channel.getNodeStatistics().p2pInHello.add();
 
