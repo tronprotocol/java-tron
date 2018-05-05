@@ -861,7 +861,7 @@ public class Manager {
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += RamUsageEstimator.sizeOf(trx);
+      currentTrxSize += trx.getSerializedSize();
       // judge block size
       if (currentTrxSize > ChainConstant.TRXS_SIZE) {
         postponedTrxCount++;
