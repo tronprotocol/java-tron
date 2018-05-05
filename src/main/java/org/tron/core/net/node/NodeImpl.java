@@ -1114,7 +1114,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //TODO:when use new p2p framework, remove this
     logger.info("start sync with::" + peer);
     peer.setTronState(TronState.SYNCING);
-    peer.setConnectTime(Time.getCurrentMillis());
     startSyncWithPeer(peer);
   }
 

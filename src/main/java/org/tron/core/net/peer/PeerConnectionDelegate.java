@@ -14,7 +14,4 @@ public abstract class PeerConnectionDelegate {
 
   public abstract void onDisconnectPeer(PeerConnection peer);
 
-
-  //public abstract gvoid onConnectionClosed(PeerConnection peer);
-
 }

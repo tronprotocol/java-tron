@@ -2,9 +2,12 @@ package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -33,7 +36,8 @@ public class HelloMessage extends P2pMessage {
   /**
    * Create hello message.
    */
-  public HelloMessage(Node from, long timestamp) {
+  public HelloMessage(Node from, long timestamp, BlockCapsule.BlockId genesisBlockId,
+                      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId){
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
@@ -41,11 +45,29 @@ public class HelloMessage extends P2pMessage {
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .build();
 
+    Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(genesisBlockId.getByteString())
+            .setNumber(genesisBlockId.getNum())
+            .build();
+
+    Protocol.HelloMessage.BlockId sBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(solidBlockId.getByteString())
+            .setNumber(solidBlockId.getNum())
+            .build();
+
+    Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(headBlockId.getByteString())
+            .setNumber(headBlockId.getNum())
+            .build();
+
     Builder builder = Protocol.HelloMessage.newBuilder();
 
     builder.setFrom(fromEndpoint);
     builder.setVersion(Args.getInstance().getNodeP2pVersion());
     builder.setTimestamp(timestamp);
+    builder.setGenesisBlockId(gBlockId);
+    builder.setSolidBlockId(sBlockId);
+    builder.setHeadBlockId(hBlockId);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -76,41 +98,25 @@ public class HelloMessage extends P2pMessage {
     return this.helloMessage.getTimestamp();
   }
 
-  /**
-   * Get listen port.
-   */
-  public int getListenPort() {
-    return this.helloMessage.getFrom().getPort();
+  public Node getFrom() {
+    Endpoint from = this.helloMessage.getFrom();
+    return new Node(from.getNodeId().toByteArray(),
+            ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
   }
 
-  /**
-   * Get peer ID.
-   */
-  public String getPeerId() {
-    return ByteArray.toHexString(this.helloMessage.getFrom().getNodeId().toByteArray());
+  public BlockCapsule.BlockId getGenesisBlockId(){
+    return new BlockCapsule.BlockId(this.helloMessage.getGenesisBlockId().getHash(),
+            this.helloMessage.getGenesisBlockId().getNumber());
   }
 
-  /**
-   * Set version of p2p protocol.
-   */
-  public void setVersion(byte version) {
-    Builder builder = this.helloMessage.toBuilder();
-    builder.setVersion(version);
-    this.helloMessage = builder.build();
+  public BlockCapsule.BlockId getSolidBlockId(){
+    return new BlockCapsule.BlockId(this.helloMessage.getSolidBlockId().getHash(),
+            this.helloMessage.getSolidBlockId().getNumber());
   }
 
-  /**
-   * Get string.
-   */
-  public String toString() {
-    return helloMessage.toString();
-//    if (!this.unpacked) {
-//      this.unPack();
-//    }
-//    return "[" + this.getCommand().name() + " p2pVersion="
-//        + this.getVersion() + " clientId=" + this.getClientId()
-//        + " peerPort=" + this.getListenPort() + " peerId="
-//        + this.getPeerId() + "]";
+  public BlockCapsule.BlockId getHeadBlockId(){
+    return new BlockCapsule.BlockId(this.helloMessage.getHeadBlockId().getHash(),
+            this.helloMessage.getHeadBlockId().getNumber());
   }
 
   @Override
@@ -123,9 +129,9 @@ public class HelloMessage extends P2pMessage {
     return MessageTypes.fromByte(this.type);
   }
 
-  public Node getFrom() {
-    Endpoint from = this.helloMessage.getFrom();
-    return new Node(from.getNodeId().toByteArray(),
-        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
+  @Override
+  public String toString() {
+    return helloMessage.toString();
   }
+
 }
