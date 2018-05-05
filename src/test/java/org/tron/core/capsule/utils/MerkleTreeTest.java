@@ -88,7 +88,7 @@ public class MerkleTreeTest {
     Assert.assertTrue(left.getRight() == null);
 
     Leaf right = root.getRight();
-    Assert.assertEquals(right.getHash(), hashList.get(0));
+    Assert.assertEquals(right.getHash(), hashList.get(1));
     Assert.assertTrue(right.getLeft() == null);
     Assert.assertTrue(right.getRight() == null);
   }
