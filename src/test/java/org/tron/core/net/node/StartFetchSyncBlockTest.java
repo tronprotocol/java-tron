@@ -2,6 +2,7 @@ package org.tron.core.net.node;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +15,7 @@ import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -27,6 +29,7 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,11 +38,13 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 public class StartFetchSyncBlockTest {
+    private static AnnotationConfigApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
+    private static final String dbPath = "output-nodeImplTest/startFetchSyncBlockTest";
 
     private class Condition {
 
@@ -111,7 +116,7 @@ public class StartFetchSyncBlockTest {
             @Override
             public void run() {
                 logger.info("Full node running.");
-                Args.setParam(new String[]{"-d","output-nodeImplTest/startFetchSyncBlock"}, "config.conf");
+                Args.setParam(new String[]{"-d",dbPath}, "config.conf");
                 Args cfgArgs = Args.getInstance();
                 cfgArgs.setNodeListenPort(17889);
                 cfgArgs.setNodeDiscoveryEnable(false);
@@ -119,7 +124,7 @@ public class StartFetchSyncBlockTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");
@@ -214,5 +219,10 @@ public class StartFetchSyncBlockTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @After
+    public void destroy() {
+        FileUtil.deleteDir(new File("output-nodeImplTest"));
     }
 }

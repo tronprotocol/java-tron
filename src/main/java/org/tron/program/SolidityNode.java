@@ -51,7 +51,7 @@ public class SolidityNode {
         initGrpcClient(args.getTrustNodeAddr());
         syncSolidityBlock();
       } catch (Exception e) {
-        logger.error("Error in sync solidity block {}", e.getMessage());
+        logger.error("Error in sync solidity block " + e.getMessage(), e);
       }
       try {
         Thread.sleep(5000);
@@ -117,6 +117,7 @@ public class SolidityNode {
       return;
     }
     Application appT = ApplicationFactory.create(context);
+    FullNode.shutdown(appT);
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
