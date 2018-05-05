@@ -25,6 +25,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
 import org.tron.common.overlay.message.*;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.net.peer.TronHandler;
 
@@ -152,14 +154,15 @@ public class Channel {
 
     public void processException(Throwable throwable){
         String errMsg = throwable.getMessage();
+        SocketAddress address = ctx.channel().remoteAddress();
         if (throwable instanceof ReadTimeoutException){
-            logger.error("Read timeout, {}", ctx.channel().remoteAddress());
-        }else if (errMsg != null && (errMsg.contains(MessageFactory.ERR_NO_SUCH_MSG) ||
-                errMsg.contains(MessageFactory.ERR_PARSE_FAILED) ||
-                errMsg.contains("Connection reset by peer"))){
-            logger.error("{}, {}", errMsg, ctx.channel().remoteAddress());
+            logger.error("Read timeout, {}", address);
+        }else if (errMsg != null && errMsg.contains("Connection reset by peer")){
+            logger.error("{}, {}", errMsg, address);
+        }else if(throwable instanceof P2pException){
+            logger.error("type: {}, info: {}, {}", ((P2pException) throwable).getType(), errMsg, address);
         }else {
-            logger.error("exception caught, {}", ctx.channel().remoteAddress(), throwable);
+            logger.error("exception caught, {}", address, throwable);
         }
         close();
     }
