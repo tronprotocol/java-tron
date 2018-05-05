@@ -62,10 +62,6 @@ public class GrpcClient {
         return blockingStub.participateAssetIssue(contract);
     }
 
-    public Transaction createAccount(Contract.AccountCreateContract contract) {
-        return blockingStub.createAccount(contract);
-    }
-
     public Transaction createAssetIssue(Contract.AssetIssueContract contract) {
         return blockingStub.createAssetIssue(contract);
     }
