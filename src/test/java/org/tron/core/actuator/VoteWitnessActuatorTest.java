@@ -88,7 +88,7 @@ public class VoteWitnessActuatorTest {
             ByteString.copyFromUtf8(ACCOUNT_NAME),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
-            1_000_000_000_000L);
+            10_000_000_000_000L);
 
     dbManager.getAccountStore()
         .put(witnessAccountSecondCapsule.getAddress().toByteArray(), witnessAccountSecondCapsule);
@@ -133,6 +133,12 @@ public class VoteWitnessActuatorTest {
       freezeBalanceActuator.execute(ret);
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertEquals(1,
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+              .get(0).getVoteCount());
+      Assert.assertArrayEquals(ByteArray.fromHexString(WITNESS_ADDRESS),
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+              .get(0).getVoteAddress().toByteArray());
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -142,7 +148,7 @@ public class VoteWitnessActuatorTest {
   }
 
   /**
-   * use Invalidate Address voteWitness,result is failed,exception is "Invalidate address".
+   * use Invalidate ownerAddress voteWitness,result is failed,exception is "Invalidate address".
    */
   @Test
   public void invalidateAddress() {
@@ -177,8 +183,9 @@ public class VoteWitnessActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("Account[" + WITNESS_ADDRESS_NOACCOUNT + "] not exists");
-
     } catch (ContractValidateException e) {
+      Assert.assertEquals(0, dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account[" + WITNESS_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
@@ -209,8 +216,9 @@ public class VoteWitnessActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("Witness[" + OWNER_ADDRESS_NOACCOUNT + "] not exists");
-
     } catch (ContractValidateException e) {
+      Assert.assertEquals(0, dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Witness[" + WITNESS_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
@@ -266,8 +274,9 @@ public class VoteWitnessActuatorTest {
       actuator.execute(ret);
       fail("The total number of votes[" + 1000000 + "] is greater than the share["
           + balanceNotSufficientCapsule.getShare() + "]");
-
     } catch (ContractValidateException e) {
+      Assert.assertEquals(0, dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFIENT)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("The total number of votes[" + 1000000 + "] is greater than the share["
           + balanceNotSufficientCapsule.getShare() + "]", e.getMessage());
@@ -276,6 +285,41 @@ public class VoteWitnessActuatorTest {
     }
   }
 
+  /**
+   * Twice voteWitness,result is the last voteWitness.
+   */
+  @Test
+  public void voteWitnessTwice() {
+    long frozenBalance = 7_000_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    VoteWitnessActuator actuator =
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L), dbManager);
+    VoteWitnessActuator actuatorTwice =
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 3L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+      actuatorTwice.validate();
+      actuatorTwice.execute(ret);
+      Assert.assertEquals(3,
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+              .get(0).getVoteCount());
+      Assert.assertArrayEquals(ByteArray.fromHexString(WITNESS_ADDRESS),
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+              .get(0).getVoteAddress().toByteArray());
+
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
   /**
    * Release resources.
    */
