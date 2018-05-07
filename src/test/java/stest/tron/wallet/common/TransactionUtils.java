@@ -90,7 +90,7 @@ public class TransactionUtils {
      * 4. check balance
      */
     public static boolean validTransaction(Transaction signedTransaction) {
-        if (signedTransaction.getRawData().getType() == Transaction.TransactionType.ContractType) {
+        if (true) {
             assert (signedTransaction.getSignatureCount() ==
                     signedTransaction.getRawData().getContractCount());
             List<Contract> listContract = signedTransaction.getRawData().getContractList();
@@ -121,7 +121,7 @@ public class TransactionUtils {
         ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
         Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 
-        if (transaction.getRawData().getType() == Transaction.TransactionType.ContractType) {
+        if (true) {
             byte[] hash = sha256(transaction.getRawData().toByteArray());
             List<Contract> listContract = transaction.getRawData().getContractList();
             for (int i = 0; i < listContract.size(); i++) {

@@ -16,6 +16,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Account;
 import org.testng.Assert;
+import stest.tron.wallet.common.TransactionUtils;
 
 
 @Slf4j
@@ -140,7 +141,7 @@ public class WalletClient {
         }
         contractBuilder.setType(Transaction.Contract.ContractType.TransferContract);
         transactionBuilder.getRawDataBuilder().addContract(contractBuilder);
-        transactionBuilder.getRawDataBuilder().setType(Transaction.TransactionType.ContractType);
+        //transactionBuilder.getRawDataBuilder()..(Transaction..ContractType);
         Transaction transaction = transactionBuilder.build();
 
         return transaction;
