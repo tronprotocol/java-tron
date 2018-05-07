@@ -49,8 +49,6 @@ public abstract class Message {
 
   public abstract Class<?> getAnswerMessage();
 
-  //public byte getCode() { return type; }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {

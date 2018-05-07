@@ -1117,11 +1117,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onConnectPeer(PeerConnection peer) {
-    //TODO:when use new p2p framework, remove this
-    logger.info("start sync with::" + peer);
-    peer.setTronState(TronState.SYNCING);
-    peer.setConnectTime(Time.getCurrentMillis());
-    startSyncWithPeer(peer);
+    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()){
+      peer.setTronState(TronState.SYNCING);
+      startSyncWithPeer(peer);
+    }else {
+      peer.setTronState(TronState.SYNC_COMPLETED);
+    }
   }
 
   @Override

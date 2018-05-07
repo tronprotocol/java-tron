@@ -148,14 +148,14 @@ java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348
 * In the Terminal
   in the config.conf localwitness add yourself private key
 ```bash
-./gradlew run -Pwitness=true
+./gradlew run -Pwitness
 ```
   
 <details>
 <summary>Show Output</summary>
 
 ```bash
-> ./gradlew run -Pwitness=true
+> ./gradlew run -Pwitness
 
 > Task :generateProto UP-TO-DATE
 Using TaskInputs.file() with something that doesn't resolve to a File object has been deprecated and is scheduled to be removed in Gradle 5.0. Use TaskInputs.files() instead.

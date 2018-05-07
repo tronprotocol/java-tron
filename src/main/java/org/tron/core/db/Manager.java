@@ -1008,6 +1008,15 @@ public class Manager {
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
+  public BlockId getSolidBlockId() {
+    try{
+      long num = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    }catch (Exception e){
+      return getGenesisBlockId();
+    }
+  }
+
   /**
    * Determine if the current time is maintenance time.
    */
