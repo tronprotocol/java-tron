@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.collections.Lists;
 import org.tron.common.overlay.discover.Node;
@@ -14,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
+@Ignore
 public class ComparatorTest {
 
   @Test
