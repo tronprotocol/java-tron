@@ -75,7 +75,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         long otherNum = ((BlockId) other).getNum();
         if (num > otherNum) {
           return 1;
-        } else if (otherNum < num) {
+        } else if (otherNum > num) {
           return -1;
         }
       }

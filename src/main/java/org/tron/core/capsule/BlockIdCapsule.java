@@ -47,7 +47,7 @@ public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
       long otherNum = ((BlockIdCapsule) other).getNum();
       if (num > otherNum) {
         return 1;
-      } else if (otherNum < num) {
+      } else if (otherNum > num) {
         return -1;
       }
     }
