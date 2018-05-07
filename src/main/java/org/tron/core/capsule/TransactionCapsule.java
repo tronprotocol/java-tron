@@ -29,6 +29,7 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -53,6 +54,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
+  @Setter
   private boolean isValidated = false;
 
   /**
