@@ -34,18 +34,36 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       long now = System.currentTimeMillis();
       long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000L;
+
+      long newBandwidth = accountCapsule.getBandwidth()
+          + calculateBandwidth(freezeBalanceContract);
+      long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
+
+      long nowFrozenBalance = accountCapsule.getFrozenBalance();
+      long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + nowFrozenBalance;
+
       Frozen newFrozen = Frozen.newBuilder()
-          .setFrozenBalance(freezeBalanceContract.getFrozenBalance())
+          .setFrozenBalance(newFrozenBalance)
           .setExpireTime(now + duration)
           .build();
 
-      long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
-      long newBandwidth = accountCapsule.getBandwidth() + calculateBandwidth(freezeBalanceContract);
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .addFrozen(newFrozen)
-          .setBalance(newBalance)
-          .setBandwidth(newBandwidth)
-          .build());
+      long frozenCount = accountCapsule.getFrozenCount();
+      assert (frozenCount >= 0);
+      if (frozenCount == 0) {
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .addFrozen(newFrozen)
+            .setBalance(newBalance)
+            .setBandwidth(newBandwidth)
+            .build());
+      }else {
+        assert frozenCount == 1;
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setFrozen(0, newFrozen)
+            .setBalance(newBalance)
+            .setBandwidth(newBandwidth)
+            .build()
+        );
+      }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -101,10 +119,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("frozenBalance must be less than accountBalance");
       }
 
-      long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
-      if (accountCapsule.getFrozenCount() >= maxFrozenNumber) {
-        throw new ContractValidateException("max frozen number is: " + maxFrozenNumber);
-      }
+//      long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
+//      if (accountCapsule.getFrozenCount() >= maxFrozenNumber) {
+//        throw new ContractValidateException("max frozen number is: " + maxFrozenNumber);
+//      }
 
       long frozenDuration = freezeBalanceContract.getFrozenDuration();
       long minFrozenTime = dbManager.getDynamicPropertiesStore().getMinFrozenTime();
