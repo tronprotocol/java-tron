@@ -73,11 +73,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     public int compareTo(Sha256Hash other) {
       if (other.getClass().equals(BlockId.class)) {
         long otherNum = ((BlockId) other).getNum();
-        if (num > otherNum) {
-          return 1;
-        } else if (otherNum < num) {
-          return -1;
-        }
+        return Long.compare(num, otherNum);
       }
       return super.compareTo(other);
     }
