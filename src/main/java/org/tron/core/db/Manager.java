@@ -410,7 +410,7 @@ public class Manager {
   /**
    * push transaction into db.
    */
-  public synchronized boolean pushTransactions(final TransactionCapsule trx)
+  public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException {
     logger.info("push transaction");
@@ -427,17 +427,18 @@ public class Manager {
     validateTapos(trx);
 
     //validateFreq(trx);
+    synchronized (this) {
+      if (!dialog.valid()) {
+        dialog.setValue(revokingStore.buildDialog());
+      }
 
-    if (!dialog.valid()) {
-      dialog.setValue(revokingStore.buildDialog());
-    }
-
-    try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
-      processTransaction(trx);
-      pendingTransactions.add(trx);
-      tmpDialog.merge();
-    } catch (RevokingStoreIllegalStateException e) {
-      logger.debug(e.getMessage(), e);
+      try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+        processTransaction(trx);
+        pendingTransactions.add(trx);
+        tmpDialog.merge();
+      } catch (RevokingStoreIllegalStateException e) {
+        logger.debug(e.getMessage(), e);
+      }
     }
     return true;
   }
