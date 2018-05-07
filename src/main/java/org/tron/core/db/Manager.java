@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
-import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -946,6 +945,7 @@ public class Manager {
     this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      transactionCapsule.setValidated(block.generatedByMyself);
       processTransaction(transactionCapsule);
     }
 
