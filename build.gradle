@@ -227,3 +227,28 @@ task stest(type:Test){
         showStackTraces = "true"
     }
 }
+
+def binaryRelease(jarName,mainClass,jarVersion) {
+    return tasks.create("${jarName}", Jar) {
+        baseName = jarName
+        version = jarVersion
+        from(sourceSets.main.output) {
+            include "/**"
+        }
+
+        from {
+            configurations.compile.collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        }
+
+        manifest {
+            attributes "Main-Class": "${mainClass}"
+        }
+    }
+}
+
+artifacts {
+    archives(binaryRelease('java-tron-SolidityNode','org.tron.program.SolidityNode','1.0.0'),
+            binaryRelease('java-tron-FullNode',"org.tron.program.FullNode",'1.0.0'))
+}
