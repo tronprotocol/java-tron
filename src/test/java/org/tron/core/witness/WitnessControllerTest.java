@@ -47,9 +47,9 @@ public class WitnessControllerTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
 
-    assertEquals(4, dbManager.getWitnessController().getAbSlotAtTime(21000));
-    assertEquals(1, dbManager.getWitnessController().getSlotAtTime(21000));
-    assertEquals(3, dbManager.getWitnessController().getHeadSlot());
+    assertEquals(21, dbManager.getWitnessController().getAbSlotAtTime(21500));
+    assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
+    assertEquals(19, dbManager.getWitnessController().getHeadSlot());
   }
 
   @Test
