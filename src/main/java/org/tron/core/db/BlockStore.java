@@ -54,10 +54,10 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   @Override
   public void put(byte[] key, BlockCapsule item) {
+    super.put(key, item);
     if (indexHelper != null) {
       indexHelper.update(item.getInstance());
     }
-    super.put(key, item);
   }
 
   /**

@@ -1,9 +1,10 @@
 package org.tron.core.db.common.iterator;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.BadItemException;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 public class BlockIterator extends AbstractIterator<BlockCapsule> {
 

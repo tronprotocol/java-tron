@@ -15,6 +15,7 @@ import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
@@ -29,22 +30,9 @@ import org.tron.core.net.message.TransactionMessage;
 @Scope("prototype")
 public class PeerConnection extends Channel {
 
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  public long getConnectTime() {
-    return connectTime;
-  }
-
-  public void setConnectTime(long connectTime) {
-    this.connectTime = connectTime;
-  }
-
-  private long connectTime;
-
   private boolean syncFlag = true;
+
+  private HelloMessage helloMessage;
 
   //broadcast
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
@@ -136,6 +124,13 @@ public class PeerConnection extends Channel {
     this.advObjWeRequested = advObjWeRequested;
   }
 
+  public void setHelloMessage(HelloMessage helloMessage) {
+    this.helloMessage = helloMessage;
+  }
+
+  public HelloMessage getHelloMessage(){
+    return this.helloMessage;
+  }
 
   public void cleanInvGarbage() {
     long oldestTimestamp =
@@ -230,9 +225,6 @@ public class PeerConnection extends Channel {
   }
 
   public String logSyncStats() {
-    //TODO: return tron sync status here.
-//    int waitResp = lastReqSentTime > 0 ? (int) (System.currentTimeMillis() - lastReqSentTime) / 1000 : 0;
-//    long lifeTime = System.currentTimeMillis() - connectedTime;
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
             + "connect time: %s\n"
@@ -248,7 +240,7 @@ public class PeerConnection extends Channel {
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getNode().getHexIdShort(),
         (int) this.getPeerStats().getAvgLatency(),
-        Time.getTimeString(getConnectTime()),
+        Time.getTimeString(super.getStartTime()),
         headBlockWeBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
@@ -272,16 +264,7 @@ public class PeerConnection extends Channel {
   }
 
   public void sendMessage(Message message) {
-    if (!(message instanceof BlockMessage)
-        && !(message instanceof TransactionMessage)) {
-      logger.info("Send Message:" + message.toString() + " to\n" + this);
-    }
     msgQueue.sendMessage(message);
     nodeStatistics.tronOutMessage.add();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();// nodeStatistics.toString();
   }
 }

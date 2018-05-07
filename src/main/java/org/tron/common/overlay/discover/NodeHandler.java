@@ -17,9 +17,11 @@
  */
 package org.tron.common.overlay.discover;
 
+import com.sun.org.apache.xpath.internal.Arg;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.overlay.discover.message.*;
+import org.tron.core.config.args.Args;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -184,8 +186,12 @@ public class NodeHandler {
             getNodeStatistics().discoverInPong.add();
             getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
             getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
-            changeState(State.Alive);
             node.setId(msg.getNodeId());
+            if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
+                changeState(State.NonActive);
+            }else {
+                changeState(State.Alive);
+            }
         }
     }
 

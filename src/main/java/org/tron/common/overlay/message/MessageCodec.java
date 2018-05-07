@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.overlay.message;
 
 import io.netty.buffer.ByteBuf;
@@ -31,13 +14,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessageFactory;
 
-
-/**
- * The Netty codec which encodes/decodes RPLx frames to subprotocol Messages
- */
 @Component
 @Scope("prototype")
 public class MessageCodec extends ByteToMessageDecoder {
@@ -63,7 +43,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     this.channel = channel;
   }
 
-  private Message createMessage(byte[] encoded) {
+  private Message createMessage(byte[] encoded) throws Exception{
     byte type = encoded[0];
     if (MessageTypes.inP2pRange(type)) {
       return p2pMessageFactory.create(encoded);
@@ -71,7 +51,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     if (MessageTypes.inTronRange(type)) {
       return tronMessageFactory.create(encoded);
     }
-    throw new Error(MessageFactory.ERR_NO_SUCH_MSG + ", type=" + type + ", len=" + encoded.length);
+    throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + encoded[0]);
   }
 
 }

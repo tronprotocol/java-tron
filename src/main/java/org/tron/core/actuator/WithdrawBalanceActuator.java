@@ -83,12 +83,12 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ownerAddress.toByteArray());
 
-      long LatestWithdrawTime = accountCapsule.getLatestWithdrawTime();
+      long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
       long now = System.currentTimeMillis();
       long witnessAllowanceFrozenTime =
           dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 24 * 3600 * 1000L;
 
-      if (now - LatestWithdrawTime < witnessAllowanceFrozenTime) {
+      if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
         throw new ContractValidateException("The last withdraw time is less than 24 hours");
       }
 

@@ -115,22 +115,17 @@ public class MessageQueue {
     }
     if (messageRoundtrip.getRetryTimes() > 0){
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
-      logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
+      logger.warn("Wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       channel.close();
       return;
     }
 
     Message msg = messageRoundtrip.getMsg();
 
-    ctx.writeAndFlush(msg.getSendData())
-            .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+    ctx.writeAndFlush(msg.getSendData());
 
-    logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
-
-    if (msg.getAnswerMessage() != null) {
-      messageRoundtrip.incRetryTimes();
-      messageRoundtrip.saveTime();
-    }
+    messageRoundtrip.incRetryTimes();
+    messageRoundtrip.saveTime();
   }
 
 }
