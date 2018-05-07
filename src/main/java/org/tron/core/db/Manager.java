@@ -457,6 +457,7 @@ public class Manager {
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //5 * 60 * 1000
+      logger.info("now = {}, latestOpr = {}", now, latestOperationTime);
       if (now - latestOperationTime >= 300_000L) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);

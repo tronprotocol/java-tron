@@ -17,11 +17,11 @@ import org.testng.Assert;
 public class Wallettest_p0_001 {
 
     private WalletClient walletClient;
-    private final static  String SunKey        = "85a449304487085205d48a402c30877e888fcb34391d65cfdc9cad420127826f";
-    private final static  String ZionKey       = "32012d7b024b2e62e0ca145f137bcfd2468cac99a1880b275e2e499b23af265c";
+    private final static  String testKey001        = "85a449304487085205d48a402c30877e888fcb34391d65cfdc9cad420127826f";
+    private final static  String testKey002        = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
 
-    private static final byte[] FROM_ADDRESS = Base58.decodeFromBase58Check("27Vm12vh5Mm9HzPSWBDvbZu1U25xvyFvexF");
-    private static final byte[] TO_ADDRESS   = Base58.decodeFromBase58Check("27WuXYGzxHXU7ynKDzoudJd9mS9Bw4vmbER");
+    private static final byte[] FROM_ADDRESS = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+    private static final byte[] TO_ADDRESS   = Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
 
     private static final Long AMOUNT = 1000000L;
 
@@ -31,13 +31,13 @@ public class Wallettest_p0_001 {
 
     @BeforeClass
     public void beforeClass() {
-        walletClient = new WalletClient(SunKey);
+        walletClient = new WalletClient(testKey001);
         walletClient.init(0);
         logger.info("this is before class");
     }
 
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void checkTrade() {
 
         logger.info(ByteArray.toStr(walletClient.getAccount(FROM_ADDRESS).getAccountName().toByteArray()));
@@ -52,7 +52,7 @@ public class Wallettest_p0_001 {
         logger.info(ByteArray.toStr(walletClient.getAccount(TO_ADDRESS).getAccountName().toByteArray()));
         logger.info(Long.toString(walletClient.getAccount(TO_ADDRESS).getBalance()));
 
-        //Assert.assertTrue(ret);
+        Assert.assertTrue(ret);
 
         logger.info("this is TestNG test case");
     }
@@ -68,8 +68,6 @@ public class Wallettest_p0_001 {
             byte[]  fromaddr;
             byte[]  toaddr;
             accountList.getAccountsList().forEach(account -> {
-                String sendname = "Sun";
-                String recvname = "Zion";
                 logger.info(ByteArray.toStr(walletClient.getAccount(account.getAddress().toByteArray()).getAccountName().toByteArray()));
                 logger.info(Long.toString(walletClient.getAccount(account.getAddress().toByteArray()).getBalance()));
                 logger.info(ByteArray.toHexString(account.getAddress().toByteArray()));

@@ -86,7 +86,7 @@ public class WalletClient {
         Contract.TransferContract contract = createTransferContract(to, owner, amount);
         Transaction transaction = createTransaction(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            logger.info("sendCoin");
+            logger.info("sendCoin fail ");
             Assert.assertTrue(false);
             return false;
         }
@@ -111,7 +111,7 @@ public class WalletClient {
 
     private Transaction signTransaction(Transaction transaction) {
         if (this.ecKey == null || this.ecKey.getPrivKey() == null) {
-            logger.info("signTransaction");
+            logger.info("signTransaction fail");
             Assert.assertTrue(false);
             return null;
         }
@@ -135,7 +135,7 @@ public class WalletClient {
             Any anyTo = Any.pack(contract);
             contractBuilder.setParameter(anyTo);
         } catch (Exception e) {
-            logger.info("createTransaction");
+            logger.info("createTransaction fail");
             Assert.assertTrue(false);
             return null;
         }

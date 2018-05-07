@@ -76,6 +76,10 @@ public class GrpcClient {
         return blockingStub.createWitness(contract);
     }
 
+    public Transaction freezeBalance(Contract.FreezeBalanceContract contract) {
+        return blockingStub.freezeBalance(contract);
+    }
+
     public boolean broadcastTransaction(Transaction signaturedTransaction) {
         GrpcAPI.Return response = blockingStub.broadcastTransaction(signaturedTransaction);
         logger.info("broadcastTransaction");
