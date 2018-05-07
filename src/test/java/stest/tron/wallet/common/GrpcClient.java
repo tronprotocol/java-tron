@@ -19,7 +19,9 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GrpcClient {
 
     private final ManagedChannel channel;
@@ -80,6 +82,7 @@ public class GrpcClient {
 
     public boolean broadcastTransaction(Transaction signaturedTransaction) {
         GrpcAPI.Return response = blockingStub.broadcastTransaction(signaturedTransaction);
+        logger.info("broadcastTransaction");
         return response.getResult();
     }
 

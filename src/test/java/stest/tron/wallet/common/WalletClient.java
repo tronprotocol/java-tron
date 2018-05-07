@@ -7,12 +7,15 @@ import com.typesafe.config.Config;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.NodeList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
-
+import org.tron.protos.Protocol.Account;
+import org.testng.Assert;
 
 
 @Slf4j
@@ -21,6 +24,7 @@ public class WalletClient {
     private GrpcClient rpcCli;
     private ECKey ecKey;
     private String TARGET_GRPC_ADDRESS = "grpc.address";
+    private String CHECK_GRPC_ADDRESS  = "grpc.checkaddress";
 
     private Config config = Configuration.getByPath("testng.conf");
 
@@ -38,12 +42,28 @@ public class WalletClient {
         this.ecKey = temKey;
     }
 
-    public void init() {
-        if (!config.hasPath("storage")) {
-            logger.error("no target: {} = ip:host", TARGET_GRPC_ADDRESS);
+    public void init(int iType ) {
+        String grpcaddress = "";
+
+        if(0 == iType)
+        {
+            grpcaddress = TARGET_GRPC_ADDRESS;
+        }
+        else if(1 == iType)
+        {
+            grpcaddress = CHECK_GRPC_ADDRESS;
+        }
+        else
+        {
+            logger.error("have no ip:port to init");
             return;
         }
-        String target = config.getString(TARGET_GRPC_ADDRESS);
+
+        if (!config.hasPath("net")) {
+            logger.error("no target: {} = ip:host", grpcaddress);
+            return;
+        }
+        String target = config.getString(grpcaddress);
         logger.info("target: {}" + target);
         rpcCli = new GrpcClient(target);
     }
@@ -52,12 +72,21 @@ public class WalletClient {
         return rpcCli.listAccounts();
     }
 
+    public Optional<NodeList> listNodes() {
+        return rpcCli.listNodes();
+    }
+
+    public Account  getAccount(byte[] address) { return rpcCli.queryAccount( address);}
+
     public boolean sendCoin(byte[] to, long amount) {
         byte[] owner = getAddress();
+        logger.info("sendCoin");
 
         Contract.TransferContract contract = createTransferContract(to, owner, amount);
         Transaction transaction = createTransaction(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info("sendCoin");
+            Assert.assertTrue(false);
             return false;
         }
 
@@ -74,13 +103,20 @@ public class WalletClient {
         builder.setOwnerAddress(bsOwner);
         builder.setAmount(amount);
 
+        logger.info("createTransferContract");
+
         return builder.build();
     }
 
     private Transaction signTransaction(Transaction transaction) {
         if (this.ecKey == null || this.ecKey.getPrivKey() == null) {
+            logger.info("signTransaction");
+            Assert.assertTrue(false);
             return null;
         }
+
+        logger.info("signTransaction");
+
         transaction = TransactionUtils.setTimestamp(transaction);
         return TransactionUtils.sign(transaction, this.ecKey);
     }
@@ -90,12 +126,16 @@ public class WalletClient {
     }
 
     public static Transaction createTransaction(TransferContract contract) {
+        logger.info("createTransaction");
+
         Transaction.Builder transactionBuilder = Transaction.newBuilder();
         Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
         try {
             Any anyTo = Any.pack(contract);
             contractBuilder.setParameter(anyTo);
         } catch (Exception e) {
+            logger.info("createTransaction");
+            Assert.assertTrue(false);
             return null;
         }
         contractBuilder.setType(Transaction.Contract.ContractType.TransferContract);
