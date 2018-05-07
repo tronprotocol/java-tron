@@ -37,7 +37,7 @@ public class Wallettest_p0_001 {
     }
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void checkTrade() {
 
         logger.info(ByteArray.toStr(walletClient.getAccount(FROM_ADDRESS).getAccountName().toByteArray()));
