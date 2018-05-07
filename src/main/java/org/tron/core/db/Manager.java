@@ -433,7 +433,6 @@ public class Manager {
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
-      consumeBandwidth(trx);
       processTransaction(trx);
       pendingTransactions.add(trx);
       tmpDialog.merge();
