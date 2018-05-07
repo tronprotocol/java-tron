@@ -455,8 +455,8 @@ public class Manager {
       long bandwidth = accountCapsule.getBandwidth();
       long now = Time.getCurrentMillis();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      //5 * 60 * 1000
-      if (now - latestOperationTime >= 300_000L) {
+      //10 * 1000
+      if (now - latestOperationTime >= 10_000L) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
