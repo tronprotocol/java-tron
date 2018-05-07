@@ -41,4 +41,7 @@ public class Constant {
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
   public static final int ADDRESS_SIZE = 42;
   public static final int BASE58CHECK_ADDRESS_SIZE = 35;
+
+  // config for transaction
+  public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1024;
 }

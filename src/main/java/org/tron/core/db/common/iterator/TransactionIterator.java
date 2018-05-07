@@ -1,8 +1,9 @@
 package org.tron.core.db.common.iterator;
 
+import org.tron.core.capsule.TransactionCapsule;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
-import org.tron.core.capsule.TransactionCapsule;
 
 public class TransactionIterator extends AbstractIterator<TransactionCapsule> {
 
@@ -11,8 +12,7 @@ public class TransactionIterator extends AbstractIterator<TransactionCapsule> {
   }
 
   @Override
-  public TransactionCapsule next() {
-    Entry<byte[], byte[]> entry = iterator.next();
-    return new TransactionCapsule(entry.getValue());
+  protected TransactionCapsule of(byte[] value) {
+    return new TransactionCapsule(value);
   }
 }

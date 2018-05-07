@@ -36,15 +36,18 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.TransactionType;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -70,6 +73,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  /*lll
   public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
     if (!Wallet.addressValid(key)) {
       throw new IllegalArgumentException("Invalidate address");
@@ -79,13 +83,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
         .setToAddress(ByteString.copyFrom(key))
         .build();
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TransactionType.ContractType).addContract(
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
             Any.pack(transferContract)).build());
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
-  }
+  }*/
 
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
@@ -154,8 +157,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
 
   public TransactionCapsule(com.google.protobuf.Message message, ContractType contractType) {
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TransactionType.ContractType).addContract(
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
     logger.info("Transaction create succeeded！");
@@ -165,8 +167,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().setType(
-        TransactionType.ContractType).addContract(
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
     logger.info("Transaction create succeeded！");
@@ -247,14 +248,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case DeployContract:
           owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
           break;
+        case WitnessUpdateContract:
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
         case ParticipateAssetIssueContract:
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
           break;
         case AccountUpdateContract:
-          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          break;
+        case FreezeBalanceContract:
+          owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case UnfreezeBalanceContract:
+          owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case WithdrawBalanceContract:
+          owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
         // todo add other contract
-
         default:
           return null;
       }
@@ -346,6 +358,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Override
   public byte[] getData() {
     return this.transaction.toByteArray();
+  }
+
+  public long getSerializedSize() {
+    return this.transaction.getSerializedSize();
   }
 
   @Override

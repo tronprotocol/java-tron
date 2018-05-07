@@ -66,11 +66,12 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 ## Getting the code
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
-** develop branch: the newnest code 
-** master branch: more stable than develop.
+* develop branch: the newnest code 
+* master branch: more stable than develop.
 In the shell command, type:
 ```bash
 git clone https://github.com/tronprotocol/java-tron.git
+git checkout -t origin/master
 ```
 
 * For Mac, you can also install **[GitHub for Mac](https://mac.github.com/)** then **[fork and clone our repository](https://guides.github.com/activities/forking/)**. 
@@ -127,11 +128,12 @@ java -jar java-tron.jar
   2. Select `FullNode`, right click on it, and select `Run 'FullNode.main()'`, then `FullNode` starts running.
 
 ### How to run a Super Node
-
+* use master branch
 * You should modify the config.conf
   1. genesis.block.witnesses replace to yourself address
   2. seed.node.ip.list replace to yourself ip list
   3. the first Super Node start, needSyncCheck should be set false
+  4. set p2pversion to 61 
 
 * Use the executable JAR(Recommend the way)
 
@@ -146,14 +148,14 @@ java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348
 * In the Terminal
   in the config.conf localwitness add yourself private key
 ```bash
-./gradlew run -Pwitness=true
+./gradlew run -Pwitness
 ```
   
 <details>
 <summary>Show Output</summary>
 
 ```bash
-> ./gradlew run -Pwitness=true
+> ./gradlew run -Pwitness
 
 > Task :generateProto UP-TO-DATE
 Using TaskInputs.file() with something that doesn't resolve to a File object has been deprecated and is scheduled to be removed in Gradle 5.0. Use TaskInputs.files() instead.

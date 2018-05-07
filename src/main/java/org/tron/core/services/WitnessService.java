@@ -10,6 +10,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -18,6 +19,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -103,6 +105,9 @@ public class WitnessService implements Service {
       case NOT_SYNCED:
         logger.info("Not sync");
         break;
+      case UNELECTED:
+        logger.debug("Unelected");
+        break;
       case NOT_MY_TURN:
         logger.debug("It's not my turn");
         break;
@@ -184,10 +189,16 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
+    if (!controller.activeWitnessesContain(this.getLocalWitnessStateMap().keySet())) {
+      logger.info("Unelected. Elected Witnesses: {}",
+          StringUtil.getAddressStringList(controller.getActiveWitnesses()));
+      return BlockProductionCondition.UNELECTED;
+    }
+
     final ByteString scheduledWitness = controller.getScheduledWitness(slot);
 
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger.info("It's not my turn,ScheduledWitness[{}],slot[{}],abSlot[{}],",
+      logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
           controller.getAbSlotAtTime(now));
       return BlockProductionCondition.NOT_MY_TURN;
@@ -213,11 +224,12 @@ public class WitnessService implements Service {
       }
 
       logger.info(
-          "Produce block successfully, blockNumber:{},abSlot[{}],blockId:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
+          "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(), block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
+
       return BlockProductionCondition.PRODUCED;
     } catch (TronException e) {
       logger.error(e.getMessage(), e);
@@ -235,7 +247,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }

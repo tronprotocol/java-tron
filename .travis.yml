@@ -2,17 +2,12 @@ sudo: required
 language: java
 jdk: oraclejdk8
 script:
+- sh tron.sh
 - ./gradlew lint
-- ./gradlew test 
-- cat tron > ~/.ssh/id_rsa
-- chmod 600 ~/.ssh/id_rsa
+- ./gradlew test
 addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
-#  - 47.93.33.201:22008
-#  - 123.56.10.6:22008
-#  - 39.107.80.135:22008
-#  - 47.93.184.2:22008
 skip_build:
 - README.md
 - LICENSE
@@ -21,6 +16,5 @@ deploy:
   script: bash deploy.sh
   on:
     branch: develop
-before_install:
-- openssl aes-256-cbc -K $encrypted_e5855cb9e09c_key -iv $encrypted_e5855cb9e09c_iv
-  -in tron.enc -out tron -d
+after_deploy:
+  - ./gradlew stest

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -67,10 +68,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
+    super.put(key, item);
     if (indexHelper != null) {
       indexHelper.update(item.getInstance());
     }
-    super.put(key, item);
   }
 
   /**
@@ -122,7 +123,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   @Override
-  public Iterator<AccountCapsule> iterator() {
+  public Iterator<Entry<byte[], AccountCapsule>> iterator() {
     return new AccountIterator(dbSource.iterator());
   }
 }

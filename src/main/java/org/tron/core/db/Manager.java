@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -55,6 +56,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -373,12 +375,26 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAllowance(byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().get(accountAddress);
+    long allowance = account.getAllowance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && allowance < -amount) {
+      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+    }
+    account.setAllowance(allowance + amount);
+    this.getAccountStore().put(account.createDbKey(), account);
+  }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
-    byte[] refBlockHash = transactionCapsule.getInstance().
-        getRawData().getRefBlockHash().toByteArray();
-    byte[] refBlockNumBytes = transactionCapsule.getInstance().
-        getRawData().getRefBlockBytes().toByteArray();
+    byte[] refBlockHash = transactionCapsule.getInstance()
+        .getRawData().getRefBlockHash().toByteArray();
+    byte[] refBlockNumBytes = transactionCapsule.getInstance()
+        .getRawData().getRefBlockBytes().toByteArray();
     try {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (Arrays.equals(blockHash, refBlockHash)) {
@@ -396,7 +412,7 @@ public class Manager {
    */
   public synchronized boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      HighFreqException, DupTransactionException, TaposException {
+      ValidateBandwidthException, DupTransactionException, TaposException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -404,20 +420,20 @@ public class Manager {
       throw new DupTransactionException("dup trans");
     }
 
-
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    //validateTapos(trx);
-        
-    validateFreq(trx);
+    validateTapos(trx);
+
+    //validateFreq(trx);
 
     if (!dialog.valid()) {
       dialog.setValue(revokingStore.buildDialog());
     }
 
     try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+      consumeBandwidth(trx);
       processTransaction(trx);
       pendingTransactions.add(trx);
       tmpDialog.merge();
@@ -427,6 +443,36 @@ public class Manager {
     return true;
   }
 
+
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
+        trx.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      byte[] address = TransactionCapsule.getOwner(contract);
+      AccountCapsule accountCapsule = this.getAccountStore().get(address);
+      if (accountCapsule == null) {
+        throw new ValidateBandwidthException("account not exists");
+      }
+      long bandwidth = accountCapsule.getBandwidth();
+      long now = Time.getCurrentMillis();
+      long latestOperationTime = accountCapsule.getLatestOperationTime();
+      //5 * 60 * 1000
+      if (now - latestOperationTime >= 300_000L) {
+        accountCapsule.setLatestOperationTime(now);
+        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+        return;
+      }
+      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
+      if (bandwidth < bandwidthPerTransaction) {
+        throw new ValidateBandwidthException("bandwidth is not enough");
+      }
+      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+      accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+      this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    }
+  }
+
+  @Deprecated
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -435,7 +481,7 @@ public class Manager {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = this.getAccountStore().get(address);
         if (accountCapsule == null) {
-          throw new HighFreqException("account is not exist");
+          throw new HighFreqException("account not exists");
         }
         long balance = accountCapsule.getBalance();
         long latestOperationTime = accountCapsule.getLatestOperationTime();
@@ -448,6 +494,7 @@ public class Manager {
     }
   }
 
+  @Deprecated
   private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
       throws HighFreqException {
     long now = Time.getCurrentMillis();
@@ -477,7 +524,7 @@ public class Manager {
   }
 
   private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -511,6 +558,8 @@ public class Manager {
             try (Dialog tmpDialog = revokingStore.buildDialog()) {
               applyBlock(item);
               tmpDialog.commit();
+            } catch (ValidateBandwidthException e) {
+              logger.error("high freq", e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -535,7 +584,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -750,7 +799,7 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
 
     if (trxCap == null) {
       return false;
@@ -760,6 +809,8 @@ public class Manager {
     }
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    consumeBandwidth(trxCap);
 
     for (Actuator act : actuatorList) {
       act.validate();
@@ -787,7 +838,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -810,12 +861,18 @@ public class Manager {
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += RamUsageEstimator.sizeOf(trx);
+      currentTrxSize += trx.getSerializedSize();
       // judge block size
       if (currentTrxSize > ChainConstant.TRXS_SIZE) {
         postponedTrxCount++;
         continue;
       }
+
+      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
+        logger.debug("Processing transaction time exceeds the 50% producing time。");
+        break;
+      }
+
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
@@ -882,7 +939,7 @@ public class Manager {
    * process block.
    */
   public void processBlock(BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
     // todo set revoking db max size.
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
@@ -901,7 +958,8 @@ public class Manager {
       }
     }
     updateMaintenanceState(needMaint);
-    witnessController.updateWitnessSchedule();
+    //witnessController.updateWitnessSchedule();
+    updateRecentBlock(block);
   }
 
   public void updateRecentBlock(BlockCapsule block) {
@@ -950,6 +1008,15 @@ public class Manager {
     return dynamicPropertiesStore.getLatestBlockHeaderNumber() - revokingStore.size();
   }
 
+  public BlockId getSolidBlockId() {
+    try{
+      long num = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    }catch (Exception e){
+      return getGenesisBlockId();
+    }
+  }
+
   /**
    * Determine if the current time is maintenance time.
    */
@@ -995,7 +1062,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
     try {
-      adjustBalance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
     }

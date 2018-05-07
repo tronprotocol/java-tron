@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -52,10 +53,10 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   @Override
   public void put(byte[] key, WitnessCapsule item) {
+    super.put(key, item);
     if (indexHelper != null) {
       indexHelper.update(item.getInstance());
     }
-    super.put(key, item);
   }
 
   /**
@@ -86,7 +87,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   }
 
   @Override
-  public Iterator<WitnessCapsule> iterator() {
+  public Iterator<Entry<byte[], WitnessCapsule>> iterator() {
     return new WitnessIterator(dbSource.iterator());
   }
 }

@@ -2,6 +2,7 @@ package org.tron.common.overlay.discover.message;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.exception.P2pException;
 
 public abstract class Message {
 
@@ -46,7 +47,7 @@ public abstract class Message {
     return getMessageId().hashCode();
   }
 
-  public static Message parse(byte[] encode) {
+  public static Message parse(byte[] encode) throws  Exception{
     byte type = encode[0];
     byte[] data = ArrayUtils.subarray(encode, 1, encode.length);
     switch (type) {
@@ -59,7 +60,7 @@ public abstract class Message {
       case 4:
         return new NeighborsMessage(data);
       default:
-        throw new IllegalArgumentException("No such message");
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + encode[0]);
     }
   }
 }

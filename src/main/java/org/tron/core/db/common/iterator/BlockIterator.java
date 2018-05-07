@@ -1,9 +1,10 @@
 package org.tron.core.db.common.iterator;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.BadItemException;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 public class BlockIterator extends AbstractIterator<BlockCapsule> {
 
@@ -12,13 +13,11 @@ public class BlockIterator extends AbstractIterator<BlockCapsule> {
   }
 
   @Override
-  public BlockCapsule next() {
+  protected BlockCapsule of(byte[] value) {
     try {
-      Entry<byte[], byte[]> entry = iterator.next();
-      return new BlockCapsule(entry.getValue());
+      return new BlockCapsule(value);
     } catch (BadItemException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return null;
   }
 }
