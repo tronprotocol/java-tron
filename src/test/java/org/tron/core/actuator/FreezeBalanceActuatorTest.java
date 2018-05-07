@@ -254,7 +254,7 @@ public class FreezeBalanceActuatorTest {
     }
   }
 
-  @Test
+  //@Test
   public void moreThanFrozenNumber() {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
