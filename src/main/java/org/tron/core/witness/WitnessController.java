@@ -2,12 +2,14 @@ package org.tron.core.witness;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -173,6 +175,7 @@ public class WitnessController {
     }
     return false;
   }
+
   /**
    * get ScheduledWitness by slot.
    */
@@ -349,9 +352,18 @@ public class WitnessController {
   }
 
   private void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+    list.sort((a, b) -> {
+      long aVoteCount = getWitnesseByAddress(a).getVoteCount();
+      long bVoteCount = getWitnesseByAddress(b).getVoteCount();
+      if (bVoteCount != aVoteCount) {
+        return (int) (bVoteCount - aVoteCount);
+      } else {
+        return Long.compare(b.hashCode(), a.hashCode());
+      }
+    });
+//    list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
+//        .reversed()
+//        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }
