@@ -11,6 +11,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
@@ -114,27 +115,30 @@ public class VoteWitnessActuator extends AbstractActuator {
     ByteString ownerAddress = voteContract.getOwnerAddress();
     byte[] ownerAddressBytes = ownerAddress.toByteArray();
 
+    VotesCapsule votesCapsule;
     VotesStore votesStore = dbManager.getVotesStore();
+    AccountStore accountStore = dbManager.getAccountStore();
+
+    AccountCapsule accountCapsule = accountStore.get(ownerAddressBytes);
 
     if (!votesStore.has(ownerAddressBytes)) {
-
+      votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
+    } else {
+      votesCapsule = votesStore.get(ownerAddressBytes);
     }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
 
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 
     voteContract.getVotesList().forEach(vote -> {
-      //  String toStringUtf8 = vote.getVoteAddress().toStringUtf8();
-
       logger.debug("countVoteAccount,address[{}]",
           ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
 
-      accountCapsule.addVotes(vote.getVoteAddress(),
-          vote.getVoteCount());
+      votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
+      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    votesStore.put(ownerAddressBytes, votesCapsule);
   }
 
   @Override
