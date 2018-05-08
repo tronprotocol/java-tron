@@ -57,7 +57,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
 
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
-
+  // 1_000_000L
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
@@ -441,6 +441,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(MAX_VOTE_NUMBER,
         new BytesCapsule(ByteArray.fromInt(maxVoteNumber)));
   }
+
   public void applyBlock(boolean fillBlock) {
     int[] blockFilledSlots = getBlockFilledSlots();
     int blockFilledSlotsIndex = getBlockFilledSlotsIndex();
