@@ -55,14 +55,8 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -264,31 +258,6 @@ public class Wallet {
     }
   }
 
-  @Deprecated
-  public Transaction createAccount(AccountCreateContract contract) {
-    AccountStore accountStore = dbManager.getAccountStore();
-    return new TransactionCapsule(contract, accountStore).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
-    return new TransactionCapsule(voteWitnessContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(AssetIssueContract assetIssueContract) {
-    return new TransactionCapsule(assetIssueContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
-    return new TransactionCapsule(witnessCreateContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(WitnessUpdateContract witnessUpdateContract) {
-    return new TransactionCapsule(witnessUpdateContract).getInstance();
-  }
 
   public Block getNowBlock() {
     try {
@@ -322,17 +291,6 @@ public class Wallet {
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(TransferAssetContract transferAssetContract) {
-    return new TransactionCapsule(transferAssetContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(
-      ParticipateAssetIssueContract participateAssetIssueContract) {
-    return new TransactionCapsule(participateAssetIssueContract).getInstance();
   }
 
   public AssetIssueList getAssetIssueList() {
