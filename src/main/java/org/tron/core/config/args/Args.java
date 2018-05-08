@@ -168,6 +168,14 @@ public class Args {
 
   @Getter
   @Setter
+  private int tcpNettyWorkThreadNum;
+
+  @Getter
+  @Setter
+  private int udpNettyWorkThreadNum;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
 
@@ -201,6 +209,8 @@ public class Args {
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
+    INSTANCE.tcpNettyWorkThreadNum = 0;
+    INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
@@ -315,6 +325,12 @@ public class Args {
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
+
+    INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
+        .getInt("node.tcpNettyWorkThreadNum") : 0;
+
+    INSTANCE.udpNettyWorkThreadNum = config.hasPath("node.udpNettyWorkThreadNum") ? config
+        .getInt("node.udpNettyWorkThreadNum") : 1;
 
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
