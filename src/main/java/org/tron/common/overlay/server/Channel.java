@@ -153,14 +153,18 @@ public class Channel {
     }
 
     public void processException(Throwable throwable){
+        Throwable baseThrowable = throwable;
+        while (baseThrowable.getCause() != null){
+            baseThrowable = baseThrowable.getCause();
+        }
         String errMsg = throwable.getMessage();
         SocketAddress address = ctx.channel().remoteAddress();
         if (throwable instanceof ReadTimeoutException){
             logger.error("Read timeout, {}", address);
+        }else if(baseThrowable instanceof P2pException){
+            logger.error("type: {}, info: {}, {}", ((P2pException) throwable).getType(), errMsg, address);
         }else if (errMsg != null && errMsg.contains("Connection reset by peer")){
             logger.error("{}, {}", errMsg, address);
-        }else if(throwable instanceof P2pException){
-            logger.error("type: {}, info: {}, {}", ((P2pException) throwable).getType(), errMsg, address);
         }else {
             logger.error("exception caught, {}", address, throwable);
         }
