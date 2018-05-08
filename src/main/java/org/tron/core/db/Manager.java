@@ -88,7 +88,7 @@ public class Manager {
   @Autowired
   private RecentBlockStore recentBlockStore;
   @Autowired
-  private VoteStore voteStore;
+  private VotesStore votesStore;
 
   // for network
   @Autowired
@@ -356,6 +356,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return this.accountStore;
+  }
+
+  public VotesStore getVotesStore() {
+    return this.votesStore;
   }
 
   /**

@@ -13,6 +13,8 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.VotesStore;
+import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.VoteWitnessContract;
@@ -56,27 +58,28 @@ public class VoteWitnessActuator extends AbstractActuator {
         throw new ContractValidateException("Invalidate address");
       }
       ByteString ownerAddress = contract.getOwnerAddress();
+      byte[] ownerAddressBytes = ownerAddress.toByteArray();
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
       AccountStore accountStore = dbManager.getAccountStore();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
+      WitnessStore witnessStore = dbManager.getWitnessStore();
 
       Iterator<Vote> iterator = contract.getVotesList().iterator();
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] bytes = vote.getVoteAddress().toByteArray();
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if (!dbManager.getAccountStore().has(bytes)) {
+        if (!accountStore.has(bytes)) {
           throw new ContractValidateException(
               "Account[" + readableWitnessAddress + "] not exists");
         }
-        if (!dbManager.getWitnessStore().has(bytes)) {
+        if (!witnessStore.has(bytes)) {
           throw new ContractValidateException(
               "Witness[" + readableWitnessAddress + "] not exists");
         }
       }
 
-      if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+      if (!accountStore.has(ownerAddressBytes)) {
         throw new ContractValidateException(
             "Account[" + readableOwnerAddress + "] not exists");
       }
@@ -86,8 +89,7 @@ public class VoteWitnessActuator extends AbstractActuator {
             "VoteNumber more than maxVoteNumber[30]");
       }
 
-      long share = dbManager.getAccountStore().get(contract.getOwnerAddress().toByteArray())
-          .getShare();
+      long share = accountStore.get(ownerAddressBytes).getShare();
 
       Long sum = 0L;
       for (Vote vote : contract.getVotesList()) {
@@ -109,9 +111,16 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   private void countVoteAccount(VoteWitnessContract voteContract) {
+    ByteString ownerAddress = voteContract.getOwnerAddress();
+    byte[] ownerAddressBytes = ownerAddress.toByteArray();
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(voteContract.getOwnerAddress().toByteArray());
+    VotesStore votesStore = dbManager.getVotesStore();
+
+    if (!votesStore.has(ownerAddressBytes)) {
+
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
 
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
 

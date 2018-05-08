@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.VotesCapsule;
 
 @Component
-public class VoteStore extends TronStoreWithRevoking<VotesCapsule> {
+public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
 
   @Autowired
-  public VoteStore(@Qualifier("vote") String dbName) {
+  public VotesStore(@Qualifier("vote") String dbName) {
     super(dbName);
   }
 
-  private static VoteStore instance;
+  private static VotesStore instance;
 
   public static void destroy() {
     instance = null;
@@ -27,11 +27,11 @@ public class VoteStore extends TronStoreWithRevoking<VotesCapsule> {
    *
    * @param dbName the name of database
    */
-  public static VoteStore create(String dbName) {
+  public static VotesStore create(String dbName) {
     if (instance == null) {
-      synchronized (VoteStore.class) {
+      synchronized (VotesStore.class) {
         if (instance == null) {
-          instance = new VoteStore(dbName);
+          instance = new VotesStore(dbName);
         }
       }
     }
