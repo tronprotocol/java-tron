@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
@@ -73,11 +74,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     public int compareTo(Sha256Hash other) {
       if (other.getClass().equals(BlockId.class)) {
         long otherNum = ((BlockId) other).getNum();
-        if (num > otherNum) {
-          return 1;
-        } else if (otherNum < num) {
-          return -1;
-        }
+        return Long.compare(num, otherNum);
       }
       return super.compareTo(other);
     }
