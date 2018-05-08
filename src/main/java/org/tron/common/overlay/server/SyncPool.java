@@ -45,7 +45,7 @@ public class SyncPool {
 
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
-  private static final long WORKER_TIMEOUT = 15;
+  private static final long WORKER_TIMEOUT = 16;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
 
