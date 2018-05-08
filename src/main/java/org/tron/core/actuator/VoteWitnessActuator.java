@@ -127,7 +127,8 @@ public class VoteWitnessActuator extends AbstractActuator {
       votesCapsule = votesStore.get(ownerAddressBytes);
     }
 
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().clearVotes().build());
+    accountCapsule.clearVotes();
+    votesCapsule.clearNewVotes();
 
     voteContract.getVotesList().forEach(vote -> {
       logger.debug("countVoteAccount,address[{}]",

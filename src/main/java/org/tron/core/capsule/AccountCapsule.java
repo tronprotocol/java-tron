@@ -202,6 +202,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void clearVotes() {
+    this.account = this.account.toBuilder()
+        .clearVotes()
+        .build();
+  }
+
   /**
    * get votes.
    */

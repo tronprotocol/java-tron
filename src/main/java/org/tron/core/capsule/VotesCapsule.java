@@ -54,9 +54,9 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
     return this.votes.getNewVotesList();
   }
 
-  public void setNewVotes(List<Vote> newVotes) {
+  public void clearNewVotes() {
     this.votes = this.votes.toBuilder()
-        .addAllNewVotes(newVotes)
+        .clearNewVotes()
         .build();
   }
 
