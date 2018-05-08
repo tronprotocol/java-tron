@@ -262,6 +262,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
+  public BlockId getSolidBlockId(){
+    return dbManager.getSolidBlockId();
+  }
+
+  @Override
   public long getHeadBlockTimeStamp() {
     return dbManager.getHeadBlockTimeStamp();
   }
