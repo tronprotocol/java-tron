@@ -43,9 +43,6 @@ configurations.getByName('checkstyleConfig') {
 }
 
 dependencies {
-    //local libraries
-    compile fileTree(dir: 'libs', include: '*.jar')
-    // end local libraries
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
