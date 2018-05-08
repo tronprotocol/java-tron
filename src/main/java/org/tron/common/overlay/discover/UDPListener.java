@@ -72,7 +72,7 @@ public class UDPListener {
   }
 
   public void start() throws Exception {
-    NioEventLoopGroup group = new NioEventLoopGroup(1);
+    NioEventLoopGroup group = new NioEventLoopGroup(args.getUdpNettyWorkThreadNum());
     try {
       discoveryExecutor = new DiscoveryExecutor(nodeManager);
       discoveryExecutor.start();
