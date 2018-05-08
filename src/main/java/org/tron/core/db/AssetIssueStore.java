@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -83,4 +84,19 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return new AssetIssueIterator(dbSource.iterator());
   }
 
+  @Override
+  public void delete(byte[] key) {
+    deleteIndex(key);
+    super.delete(key);
+  }
+
+  private void deleteIndex(byte[] key) {
+    if (indexHelper != null) {
+      AssetIssueCapsule item = get(key);
+      if (Objects.isNull(item)) {
+        return;
+      }
+      indexHelper.remove(item.getInstance());
+    }
+  }
 }

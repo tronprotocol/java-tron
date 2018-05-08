@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -89,5 +90,21 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   @Override
   public Iterator<Entry<byte[], WitnessCapsule>> iterator() {
     return new WitnessIterator(dbSource.iterator());
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    deleteIndex(key);
+    super.delete(key);
+  }
+
+  private void deleteIndex(byte[] key) {
+    if (indexHelper != null) {
+      WitnessCapsule item = get(key);
+      if (Objects.isNull(item)) {
+        return;
+      }
+      indexHelper.remove(item.getInstance());
+    }
   }
 }
