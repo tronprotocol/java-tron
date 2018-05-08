@@ -1,20 +1,21 @@
 package org.tron.core.db.api;
 
+import javax.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.api.index.Index;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Votes;
 import org.tron.protos.Protocol.Witness;
-
-import javax.annotation.Resource;
 
 @Slf4j
 public class IndexHelper {
@@ -34,6 +35,9 @@ public class IndexHelper {
   @Getter
   @Resource
   private Index.Iface<AssetIssueContract> assetIssueIndex;
+  @Getter
+  @Resource
+  private Index.Iface<Votes> votesIndex;
 
   private <T> void add(Index.Iface<T> index, byte[] bytes) {
     index.add(bytes);
@@ -57,6 +61,10 @@ public class IndexHelper {
 
   public void add(AssetIssueContract a) {
     add(assetIssueIndex, getKey(a));
+  }
+
+  public void add(Votes v) {
+    add(votesIndex, getKey(v));
   }
 
   private <T> void update(Index.Iface<T> index, byte[] bytes) {
@@ -83,6 +91,10 @@ public class IndexHelper {
     update(assetIssueIndex, getKey(a));
   }
 
+  public void update(Votes v) {
+    update(votesIndex, getKey(v));
+  }
+
   private <T> void remove(Index.Iface<T> index, byte[] bytes) {
     index.remove(bytes);
   }
@@ -107,6 +119,10 @@ public class IndexHelper {
     remove(assetIssueIndex, getKey(a));
   }
 
+  public void remove(Votes v) {
+    remove(votesIndex, getKey(v));
+  }
+
   private byte[] getKey(Transaction t) {
     return new TransactionCapsule(t).getTransactionId().getBytes();
   }
@@ -127,4 +143,7 @@ public class IndexHelper {
     return new AssetIssueCapsule(a).getName().toByteArray();
   }
 
+  private byte[] getKey(Votes v) {
+    return new VotesCapsule(v).createDbKey();
+  }
 }
