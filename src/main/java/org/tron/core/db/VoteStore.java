@@ -6,10 +6,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.VotesCapsule;
 
 @Component
-public class VoteStore extends TronStoreWithRevoking<AccountCapsule> {
+public class VoteStore extends TronStoreWithRevoking<VotesCapsule> {
 
   @Autowired
   public VoteStore(@Qualifier("vote") String dbName) {
@@ -39,9 +39,9 @@ public class VoteStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   @Override
-  public AccountCapsule get(byte[] key) {
+  public VotesCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : new VotesCapsule(value);
   }
 
   /**
@@ -56,7 +56,7 @@ public class VoteStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   @Override
-  public void put(byte[] key, AccountCapsule item) {
+  public void put(byte[] key, VotesCapsule item) {
     super.put(key, item);
     if (indexHelper != null) {
       indexHelper.update(item.getInstance());
@@ -66,11 +66,11 @@ public class VoteStore extends TronStoreWithRevoking<AccountCapsule> {
   /**
    * get all accounts.
    */
-  public List<AccountCapsule> getAllVotes() {
+  public List<VotesCapsule> getAllVotes() {
     return dbSource
         .allValues()
         .stream()
-        .map(bytes -> new AccountCapsule(bytes))
+        .map(bytes -> new VotesCapsule(bytes))
         .collect(Collectors.toList());
   }
 }
