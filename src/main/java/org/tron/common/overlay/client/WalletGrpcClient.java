@@ -62,7 +62,6 @@ public class WalletGrpcClient {
     return walletBlockingStub.participateAssetIssue(contract);
   }
 
-
   public Transaction createAssetIssue(AssetIssueContract contract) {
     return walletBlockingStub.createAssetIssue(contract);
   }

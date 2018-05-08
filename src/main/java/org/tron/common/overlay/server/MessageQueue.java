@@ -115,7 +115,7 @@ public class MessageQueue {
     }
     if (messageRoundtrip.getRetryTimes() > 0){
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
-      logger.warn("wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
+      logger.warn("Wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       channel.close();
       return;
     }
@@ -123,8 +123,6 @@ public class MessageQueue {
     Message msg = messageRoundtrip.getMsg();
 
     ctx.writeAndFlush(msg.getSendData());
-
-    logger.info("send {} to {}", msg.getType(), ctx.channel().remoteAddress());
 
     messageRoundtrip.incRetryTimes();
     messageRoundtrip.saveTime();

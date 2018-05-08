@@ -146,7 +146,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-        logger.info("Send disconnect {}, reason:{}", ctx.channel().remoteAddress(), reason);
+        logger.info("Send disconnect to {}, reason:{}", ctx.channel().remoteAddress(), reason);
         getNodeStatistics().nodeDisconnectedLocal(reason);
         ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
         close();

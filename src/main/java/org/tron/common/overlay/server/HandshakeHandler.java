@@ -22,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,8 @@ import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.message.*;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
+import org.tron.core.net.peer.PeerConnection;
 
 import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
@@ -48,14 +51,14 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   private final NodeManager nodeManager;
 
-  private final ChannelManager channelManager;
+  private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
-  public HandshakeHandler(final NodeManager nodeManager, final ChannelManager channelManager) {
+  public HandshakeHandler(final NodeManager nodeManager, final Manager manager) {
     this.nodeManager = nodeManager;
-    this.channelManager = channelManager;
+    this.manager = manager;
   }
 
   @Override
@@ -73,6 +76,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     byte[] encoded = new byte[buffer.readableBytes()];
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
+
+    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
+
     switch (msg.getType()) {
       case P2P_HELLO:
         handleHelloMsg(ctx, (HelloMessage)msg);
@@ -100,21 +106,43 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void sendHelloMsg(ChannelHandlerContext ctx, long time){
-    ctx.writeAndFlush(new HelloMessage(nodeManager.getPublicHomeNode(), time).getSendData());
+    HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
+            manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().p2pOutHello.add();
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     if (remoteId.length != 64) {
-      channel.initNode(ByteArray.fromHexString(msg.getPeerId()), msg.getListenPort());
-      if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
-        logger.info("Peer {} version not support, peer->{}, me->{}",
-                ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
-        channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
-        return;
-      }
+      channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+    }
+
+    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
+      logger.info("Peer {} different p2p version, peer->{}, me->{}",
+              ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
+      channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      return;
+    }
+
+    if (!Arrays.equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())){
+      logger.info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
+              msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
+      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
+      return;
+    }
+
+    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager.containBlockInMainChain(msg.getSolidBlockId())){
+      logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
+              msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
+      channel.disconnect(ReasonCode.FORKED);
+      return;
+    }
+
+    if (remoteId.length != 64) {
       sendHelloMsg(ctx, msg.getTimestamp());
     }
+
+    ((PeerConnection)channel).setHelloMessage(msg);
 
     channel.getNodeStatistics().p2pInHello.add();
 
