@@ -282,6 +282,7 @@ public class WitnessController {
         }
       }
     });
+    votesStore.reset();
     return countWitness;
   }
 
