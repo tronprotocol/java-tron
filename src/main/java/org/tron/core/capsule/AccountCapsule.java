@@ -27,8 +27,8 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
-import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Vote;
 
 @Slf4j
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -343,6 +343,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void setBandwidth(long bandwidth) {
     this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
 
+  }
+
+  public boolean getIsWitness() {
+    return getInstance().getIsWitness();
+  }
+
+  public void setIsWitness(boolean isWitness) {
+    this.account = this.account.toBuilder().setIsWitness(isWitness).build();
+  }
+
+  public boolean getIsCommittee() {
+    return getInstance().getIsCommittee();
+  }
+
+  public void setIsCommittee(boolean isCommittee) {
+    this.account = this.account.toBuilder().setIsCommittee(isCommittee).build();
   }
 
   //for test only
