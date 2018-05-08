@@ -41,7 +41,7 @@ public class WitnessControllerTest {
 
   ByteString blank = ByteString.copyFrom(new byte[1]);
 
-  @Test
+//  @Test
   public void testSlot() {
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
