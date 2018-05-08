@@ -8,7 +8,6 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -33,7 +32,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Witness;
 
-@Ignore
+
 public class StoreAPITest {
 
   public static final String ACCOUNT_ADDRESS_ONE = "121212a9cf";
@@ -150,6 +149,7 @@ public class StoreAPITest {
             ASSETISSUE_NAME_FOUR, ACCOUNT_ADDRESS_ONE, ASSETISSUE_START_FOUR, ASSETISSUE_END_FOUR);
     addAssetIssueToStore(assetIssue4);
     dbManager.getAssetIssueStore().delete(ASSETISSUE_NAME_FOUR.getBytes());
+    dbManager.getAssetIssueStore().delete(ASSETISSUE_NAME_THREE.getBytes());
   }
 
   private static void addAssetIssueToStore(AssetIssueContract assetIssueContract) {
@@ -583,7 +583,7 @@ public class StoreAPITest {
     List<AssetIssueContract> assetIssueAll = storeAPI.getAssetIssueAll();
     Assert.assertTrue("AssetIssueAll1", assetIssueAll.contains(assetIssue1));
     Assert.assertTrue("AssetIssueAll2", assetIssueAll.contains(assetIssue2));
-    Assert.assertTrue("AssetIssueAll3", assetIssueAll.contains(assetIssue3));
+    Assert.assertFalse("AssetIssueAll3", assetIssueAll.contains(assetIssue3));
     Assert.assertFalse("AssetIssueAll4", assetIssueAll.contains(assetIssue4));
   }
 
@@ -591,7 +591,7 @@ public class StoreAPITest {
   public void getAssetIssueByTime() {
     List<AssetIssueContract> assetIssueList =
         storeAPI.getAssetIssueByTime(DateTime.now().getMillis());
-    Assert.assertEquals("AssetIssueByTime1", 2, assetIssueList.size());
+    Assert.assertEquals("AssetIssueByTime1", 1, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByTime(0);
     Assert.assertEquals("AssetIssueByTime2", 0, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByTime(DateTime.now().plusDays(2).getMillis());
@@ -608,9 +608,9 @@ public class StoreAPITest {
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_TWO);
       Assert.assertEquals("AssetIssueByName2", assetIssue2, assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_THREE);
-      Assert.assertEquals("AssetIssueByName3", assetIssue3, assetIssueByName);
+      Assert.assertNull("AssetIssueByName3", assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(ASSETISSUE_NAME_FOUR);
-      Assert.assertEquals("AssetIssueByName4", null, assetIssueByName);
+      Assert.assertNull("AssetIssueByName4", assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName(null);
       Assert.assertNull("AssetIssueByName5", assetIssueByName);
       assetIssueByName = storeAPI.getAssetIssueByName("");
@@ -628,7 +628,7 @@ public class StoreAPITest {
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_TWO);
     Assert.assertEquals("AssetIssueByOwnerAddress2", 1, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_THREE);
-    Assert.assertEquals("AssetIssueByOwnerAddress3", 1, assetIssueList.size());
+    Assert.assertEquals("AssetIssueByOwnerAddress3", 0, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(ACCOUNT_ADDRESS_FOUR);
     Assert.assertEquals("AssetIssueByOwnerAddress4", 0, assetIssueList.size());
     assetIssueList = storeAPI.getAssetIssueByOwnerAddress(null);

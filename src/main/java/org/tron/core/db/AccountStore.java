@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -69,7 +70,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -125,5 +126,20 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public Iterator<Entry<byte[], AccountCapsule>> iterator() {
     return new AccountIterator(dbSource.iterator());
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    deleteIndex(key);
+    super.delete(key);
+  }
+
+  private void deleteIndex(byte[] key) {
+    if (Objects.nonNull(indexHelper)) {
+      AccountCapsule item = get(key);
+      if (Objects.nonNull(item)) {
+        indexHelper.remove(item.getInstance());
+      }
+    }
   }
 }
