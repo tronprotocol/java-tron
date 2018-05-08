@@ -80,6 +80,7 @@ public class WalletClient {
     public Account  getAccount(byte[] address) { return rpcCli.queryAccount( address);}
 
     public boolean sendCoin(byte[] to, long amount) {
+
         byte[] owner = getAddress();
         logger.info("sendCoin");
 
@@ -93,6 +94,25 @@ public class WalletClient {
 
         transaction = signTransaction(transaction);
         return rpcCli.broadcastTransaction(transaction);
+    }
+
+    public boolean freezeCoin(long amount){
+
+        byte[] owner = getAddress();
+
+        Contract.FreezeBalanceContract contract = createFreezeBalanceContract(owner,amount);
+        rpcCli.freezeBalance(contract);
+
+        return true;
+    }
+
+    public static Contract.FreezeBalanceContract createFreezeBalanceContract(byte[] owner,long amount){
+        Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+        ByteString bsOwner = ByteString.copyFrom(owner);
+        builder.setOwnerAddress(bsOwner);
+        builder.setFrozenBalance(amount);
+
+        return builder.build();
     }
 
     public static Contract.TransferContract createTransferContract(byte[] to, byte[] owner,

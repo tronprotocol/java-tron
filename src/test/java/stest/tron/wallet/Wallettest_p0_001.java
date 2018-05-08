@@ -33,6 +33,9 @@ public class Wallettest_p0_001 {
     public void beforeClass() {
         walletClient = new WalletClient(testKey001);
         walletClient.init(0);
+        walletClient.freezeCoin(1000000L);
+        logger.info("freeze amount:");
+        logger.info(Long.toString(walletClient.getAccount(FROM_ADDRESS).getFrozenCount()));
         logger.info("this is before class");
     }
 
@@ -42,6 +45,7 @@ public class Wallettest_p0_001 {
 
         logger.info(ByteArray.toStr(walletClient.getAccount(FROM_ADDRESS).getAccountName().toByteArray()));
         logger.info(Long.toString(walletClient.getAccount(FROM_ADDRESS).getBalance()));
+        logger.info(Long.toString(walletClient.getAccount(FROM_ADDRESS).getFrozenCount()));
         logger.info(ByteArray.toStr(walletClient.getAccount(TO_ADDRESS).getAccountName().toByteArray()));
         logger.info(Long.toString(walletClient.getAccount(TO_ADDRESS).getBalance()));
 
