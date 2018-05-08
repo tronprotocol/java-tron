@@ -141,6 +141,10 @@ public class Manager {
     this.witnessScheduleStore = witnessScheduleStore;
   }
 
+  public VotesStore getVotesStore() {
+    return this.votesStore;
+  }
+
   public List<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
@@ -356,10 +360,6 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return this.accountStore;
-  }
-
-  public VotesStore getVotesStore() {
-    return this.votesStore;
   }
 
   /**

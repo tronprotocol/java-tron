@@ -58,9 +58,6 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
   @Override
   public void put(byte[] key, VotesCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
-      indexHelper.update(item.getInstance());
-    }
   }
 
   /**
