@@ -65,7 +65,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   @Override
   public void put(byte[] key, AssetIssueCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -91,12 +91,11 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   }
 
   private void deleteIndex(byte[] key) {
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       AssetIssueCapsule item = get(key);
-      if (Objects.isNull(item)) {
-        return;
+      if (Objects.nonNull(item)) {
+        indexHelper.remove(item.getInstance());
       }
-      indexHelper.remove(item.getInstance());
     }
   }
 }

@@ -70,7 +70,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -135,12 +135,11 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   private void deleteIndex(byte[] key) {
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       AccountCapsule item = get(key);
-      if (Objects.isNull(item)) {
-        return;
+      if (Objects.nonNull(item)) {
+        indexHelper.remove(item.getInstance());
       }
-      indexHelper.remove(item.getInstance());
     }
   }
 }

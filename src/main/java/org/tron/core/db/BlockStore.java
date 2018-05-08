@@ -56,7 +56,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   @Override
   public void put(byte[] key, BlockCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -133,10 +133,12 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   }
 
   private void deleteIndex(byte[] key) {
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       try {
         BlockCapsule item = get(key);
-        indexHelper.remove(item.getInstance());
+        if (Objects.nonNull(item)) {
+          indexHelper.remove(item.getInstance());
+        }
       } catch (StoreException e) {
         return;
       }

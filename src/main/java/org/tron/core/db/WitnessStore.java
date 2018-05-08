@@ -55,7 +55,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   @Override
   public void put(byte[] key, WitnessCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -99,12 +99,11 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   }
 
   private void deleteIndex(byte[] key) {
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       WitnessCapsule item = get(key);
-      if (Objects.isNull(item)) {
-        return;
+      if (Objects.nonNull(item)) {
+        indexHelper.remove(item.getInstance());
       }
-      indexHelper.remove(item.getInstance());
     }
   }
 }
