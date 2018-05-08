@@ -9,17 +9,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +31,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -106,14 +99,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     void sendInv() {
       send.forEach((peer, ids) ->
-          ids.forEach((key, value) -> peer.sendMessage(new InventoryMessage(value, key))));
+          ids.forEach((key, value) -> {
+            if (key.equals(InventoryType.BLOCK)){
+              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+            }
+            peer.sendMessage(new InventoryMessage(value, key));
+          }));
     }
 
     void sendFetch() {
       send.forEach((peer, ids) ->
-          ids.forEach((key, value) -> peer.sendMessage(new FetchInvDataMessage(value, key))));
+          ids.forEach((key, value) -> {
+            if (key.equals(InventoryType.BLOCK)){
+              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+            }
+            peer.sendMessage(new FetchInvDataMessage(value, key));
+          }));
     }
   }
+
+
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -391,20 +396,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     InvToSend sendPackage = new InvToSend();
     AtomicLong batchFecthResponseSize = new AtomicLong(0);
-    advObjToFetch.entrySet()
-        .forEach(idToFetch -> filterActivePeer.stream()
-            .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
-            .findFirst()
-            .ifPresent(peer -> {
-              //TODO: don't fetch too much obj from only one peer
-              sendPackage.add(idToFetch, peer);
-              advObjToFetch.remove(idToFetch.getKey());
-              peer.getAdvObjWeRequested()
-                  .put(idToFetch.getKey(), Time.getCurrentMillis());
-              if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
-                return;
-              }
-            }));
+    advObjToFetch.entrySet().forEach(idToFetch -> {
+      filterActivePeer.stream().filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
+      .findFirst().ifPresent(peer -> {
+        //TODO: don't fetch too much obj from only one peer
+        sendPackage.add(idToFetch, peer);
+        peer.getAdvObjWeRequested().put(idToFetch.getKey(), Time.getCurrentMillis());
+        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
+          return;
+        }
+      });
+      advObjToFetch.remove(idToFetch.getKey());
+    });
     sendPackage.sendFetch();
   }
 
@@ -881,8 +884,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
 
           if (del.getHeadBlockId().getNum() > 0){
-            long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - del.getHeadBlockTimeStamp();
-            long maxFutureNum =  maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getHeadBlockId().getNum();
+            long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - del.getBlockTime(del.getSolidBlockId());
+            long maxFutureNum =  maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getSolidBlockId().getNum();
             if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum){
               throw new TraitorPeerException(
                   "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
@@ -1148,5 +1151,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     // received yet, reschedule them to be fetched from another peer
     peer.disconnect(reason);
   }
+
 }
 

@@ -163,7 +163,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
-      this.saveAccountUpgradeCost(100_000_000);
+      this.saveAccountUpgradeCost(100_000_000_000L);
     }
 
     try {
@@ -376,15 +376,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
   }
 
-  public void saveAccountUpgradeCost(int accountUpgradeCost) {
+  public void saveAccountUpgradeCost(long accountUpgradeCost) {
     logger.debug("ACCOUNT_UPGRADE_COST:" + accountUpgradeCost);
     this.put(ACCOUNT_UPGRADE_COST,
-        new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
+        new BytesCapsule(ByteArray.fromLong(accountUpgradeCost)));
   }
 
-  public int getAccountUpgradeCost() {
+  public long getAccountUpgradeCost() {
     return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
-        .map(ByteArray::toInt)
+        .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
   }

@@ -179,6 +179,10 @@ public class KhaosDatabase extends TronDatabase {
     return miniStore.getByHash(hash) != null || miniUnlinkedStore.getByHash(hash) != null;
   }
 
+  public Boolean containBlockInMiniStore(Sha256Hash hash) {
+    return miniStore.getByHash(hash) != null;
+  }
+
   /**
    * Get the Block form KhoasDB, if it doesn't exist ,return null.
    */

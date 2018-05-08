@@ -157,10 +157,10 @@ public class WitnessController {
             slot);
         return false;
       }
+      logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
+          ByteArray.toHexString(witnessAddress.toByteArray()));
     }
 
-    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
-        ByteArray.toHexString(witnessAddress.toByteArray()));
     return true;
   }
 
@@ -173,6 +173,7 @@ public class WitnessController {
     }
     return false;
   }
+
   /**
    * get ScheduledWitness by slot.
    */
@@ -307,20 +308,13 @@ public class WitnessController {
           logger.warn(
               "witnessAccount[" + StringUtil.createReadableString(witnessAddress) + "] not exists");
         } else {
-          if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-            logger.warn(
-                "witnessAccount[" + StringUtil.createReadableString(witnessAddress)
-                    + "] has balance["
-                    + witnessAccountCapsule
-                    .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
-          } else {
-            witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-            witnessCapsule.setIsJobs(false);
-            newWitnessAddressList.add(witnessAddress);
-            witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-            logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
-                witnessCapsule.getVoteCount());
-          }
+          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          witnessCapsule.setIsJobs(false);
+          newWitnessAddressList.add(witnessAddress);
+          witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
+              witnessCapsule.getVoteCount());
+
         }
       });
 
