@@ -27,7 +27,7 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
-import org.tron.protos.Protocol.Account.Vote;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j

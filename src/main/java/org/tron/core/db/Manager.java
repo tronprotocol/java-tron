@@ -87,6 +87,8 @@ public class Manager {
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
+  @Autowired
+  private VoteStore voteStore;
 
   // for network
   @Autowired
