@@ -6,12 +6,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 
 @Component
 public class VoteStore extends TronStoreWithRevoking<AccountCapsule> {
-
 
   @Autowired
   public VoteStore(@Qualifier("vote") String dbName) {
