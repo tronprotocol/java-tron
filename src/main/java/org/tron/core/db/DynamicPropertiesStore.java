@@ -79,7 +79,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getSingleRepeat();
     } catch (IllegalArgumentException e) {
-      this.saveSingleRepeat(6);
+      this.saveSingleRepeat(1);
     }
 
     try {
