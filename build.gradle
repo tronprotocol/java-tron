@@ -6,6 +6,8 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "jacoco"
+
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -211,9 +213,26 @@ shadowJar {
     version = null
 }
 
+jacoco {
+    toolVersion = "0.7.9"
+    reportsDir = file("$buildDir/reports/jacoco/")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacoco/Html")
+    }
+}
+
 test {
     testLogging {
         exceptionFormat = 'full'
+    }
+    jacoco{
+        append = false
+        destinationFile = file("$buildDir/jacoco/trade.exec")
     }
 }
 
@@ -221,7 +240,10 @@ task stest(type:Test){
     useTestNG{
         suites( file('src/test/resources/testng.xml') )
     }
-
+    jacoco{
+        append = false
+        destinationFile = file("$buildDir/jacoco/trade.exec")
+    }
     testLogging {
         exceptionFormat = 'full'
         showStackTraces = "true"
