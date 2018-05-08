@@ -752,7 +752,7 @@ public class Manager {
    */
   public boolean containBlock(final Sha256Hash blockHash) {
     try {
-      return this.khaosDb.containBlock(blockHash) || blockStore.get(blockHash.getBytes()) != null;
+      return this.khaosDb.containBlockInMiniStore(blockHash) || blockStore.get(blockHash.getBytes()) != null;
     } catch (ItemNotFoundException e) {
       return false;
     } catch (BadItemException e) {
