@@ -1,12 +1,14 @@
 package org.tron.core.db.api.index;
 
 import com.google.common.collect.Iterables;
-import com.google.common.io.Files;
 import com.googlecode.cqengine.ConcurrentIndexedCollection;
 import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.query.Query;
 import com.googlecode.cqengine.query.option.QueryOptions;
 import com.googlecode.cqengine.resultset.ResultSet;
+import java.io.File;
+import java.util.Iterator;
+import java.util.Objects;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TronDatabase;
@@ -14,19 +16,12 @@ import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<T> {
+public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Iface<T> {
 
   protected TronDatabase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
   private File parent = new File(Args.getInstance().getOutputDirectory() + "index");
   protected File indexPath;
-  private ExecutorService service = Executors.newSingleThreadExecutor();
 
   public AbstractIndex() {
     if (!parent.exists()) {
@@ -47,9 +42,11 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
 
   protected T getObject(final byte[] key) {
     try {
-      @SuppressWarnings("unchecked")
-      T t = (T) database.get(key).getInstance();
-      return t;
+      E e = database.get(key);
+      if (Objects.isNull(e)) {
+        return null;
+      }
+      return e.getInstance();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -107,7 +104,9 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
     return new WrappedResultSet<T>(resultSet) {
       @Override
       public Iterator<T> iterator() {
-        return Iterables.transform(resultSet, AbstractIndex.this::getObject).iterator();
+        return Iterables
+            .filter(Iterables.transform(resultSet, AbstractIndex.this::getObject), Objects::nonNull)
+            .iterator();
       }
     };
   }
@@ -118,14 +117,18 @@ public abstract class AbstractIndex<E extends ProtoCapsule, T> implements Iface<
     return new WrappedResultSet<T>(resultSet) {
       @Override
       public Iterator<T> iterator() {
-        return Iterables.transform(resultSet, AbstractIndex.this::getObject).iterator();
+        return Iterables
+            .filter(Iterables.transform(resultSet, AbstractIndex.this::getObject), Objects::nonNull)
+            .iterator();
       }
     };
   }
 
   @Override
   public Iterator<T> iterator() {
-    return Iterables.transform(index, AbstractIndex.this::getObject).iterator();
+    return Iterables
+        .filter(Iterables.transform(index, AbstractIndex.this::getObject), Objects::nonNull)
+        .iterator();
   }
 
   protected abstract void setAttribute();
