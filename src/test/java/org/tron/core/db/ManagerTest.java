@@ -136,10 +136,10 @@ public class ManagerTest {
       Assert.assertTrue("pushBlock is error", false);
     }
 
-    Assert.assertTrue(
-        "containBlock is error",
-        dbManager.containBlock(
-            Sha256Hash.wrap(ByteArray.fromHexString(blockCapsule2.getBlockId().toString()))));
+//    Assert.assertTrue(
+//        "containBlock is error",
+//        dbManager.containBlock(
+//            Sha256Hash.wrap(ByteArray.fromHexString(blockCapsule2.getBlockId().toString()))));
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(), 0);
