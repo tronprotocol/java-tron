@@ -95,7 +95,7 @@ public class StartFetchSyncBlockTest {
   public void testStartFetchSyncBlock() throws InterruptedException {
     testConsumerAdvObjToSpread();
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
-    Thread.sleep(10000);
+    Thread.sleep(1000);
     ReflectUtils.setFieldValue(activePeers.iterator().next(), "needSyncFromPeer", true);
     // construct a block
     Protocol.Block block = Protocol.Block.getDefaultInstance();
