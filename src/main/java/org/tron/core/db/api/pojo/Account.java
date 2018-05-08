@@ -8,4 +8,8 @@ public class Account {
   private String address;
   private String name;
   private long balance;
+
+  void test() {
+
+  }
 }

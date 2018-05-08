@@ -21,12 +21,12 @@ import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -62,6 +62,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         return null;
       }
 
+    } catch (ValidateBandwidthException e) {
+      throw new BadBlockException("Validate Bandwidth exception");
     } catch (ValidateScheduleException e) {
       throw new BadBlockException("validate schedule exception");
     } catch (ValidateSignatureException e) {
@@ -80,21 +82,20 @@ public class NodeDelegateImpl implements NodeDelegate {
     try {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
-      logger.info("Contract validate failed");
-      logger.debug(e.getMessage(), e);
+      logger.error("Contract validate failed", e);
       throw new BadTransactionException();
     } catch (ContractExeException e) {
-      logger.info("Contract execute failed");
-      logger.debug(e.getMessage(), e);
+      logger.error("Contract execute failed", e);
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
+      logger.error("ValidateSignatureException");
       throw new BadTransactionException();
-    } catch (HighFreqException e) {
-      logger.info(e.getMessage());
+    } catch (ValidateBandwidthException e) {
+      logger.error("ValidateBandwidthException");
     } catch (DupTransactionException e) {
-      logger.debug("dup trans");
+      logger.error("dup trans");
     } catch (TaposException e) {
-      logger.debug("tapos error");
+      logger.error("tapos error");
     }
   }
 
@@ -144,36 +145,37 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIdsToFetch)
+  public Deque<BlockId> getBlockChainSummary(BlockId beginBlockId, Deque<BlockId> blockIdsToFetch)
       throws TronException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long lowBlkNum = dbManager.getSyncBeginNumber() < 0 ? 0 : dbManager.getSyncBeginNumber();
+    long syncBeginNumber = dbManager.getSyncBeginNumber();
+    long lowBlkNum = syncBeginNumber < 0 ? 0 : syncBeginNumber;
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (!beginBLockId.equals(getGenesisBlock().getBlockId())) {
-      if (containBlockInMainChain(beginBLockId)) {
-        highBlkNum = beginBLockId.getNum();
+    if (!beginBlockId.equals(getGenesisBlock().getBlockId())) {
+      if (containBlockInMainChain(beginBlockId)) {
+        highBlkNum = beginBlockId.getNum();
         if (highBlkNum == 0) {
           throw new TronException(
               "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
-                  + beginBLockId.getString());
+                  + beginBlockId.getString());
         }
         highNoForkBlkNum = highBlkNum;
-        if (beginBLockId.getNum() < lowBlkNum) {
-          lowBlkNum = beginBLockId.getNum();
+        if (beginBlockId.getNum() < lowBlkNum) {
+          lowBlkNum = beginBlockId.getNum();
         }
       } else {
-        forkList = dbManager.getBlockChainHashesOnFork(beginBLockId);
+        forkList = dbManager.getBlockChainHashesOnFork(beginBlockId);
         if (forkList.isEmpty()) {
           throw new UnLinkedBlockException(
-              "We want to find forkList of this block: " + beginBLockId.getString()
+              "We want to find forkList of this block: " + beginBlockId.getString()
                   + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
-                  + " we swift and pop it after that time. ");
+                  + " we switch and pop it after that time. ");
         }
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
@@ -189,6 +191,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
+
     }
 
     if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {
@@ -256,6 +259,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public BlockId getHeadBlockId() {
     return dbManager.getHeadBlockId();
+  }
+
+  @Override
+  public BlockId getSolidBlockId(){
+    return dbManager.getSolidBlockId();
   }
 
   @Override

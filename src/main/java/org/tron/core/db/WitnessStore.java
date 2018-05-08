@@ -53,10 +53,10 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   @Override
   public void put(byte[] key, WitnessCapsule item) {
+    super.put(key, item);
     if (indexHelper != null) {
       indexHelper.update(item.getInstance());
     }
-    super.put(key, item);
   }
 
   /**

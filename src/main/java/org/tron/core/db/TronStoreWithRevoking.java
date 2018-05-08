@@ -23,6 +23,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
 
   @Override
   public void put(byte[] key, T item) {
+    if (Objects.isNull(key) || Objects.isNull(item)) {
+      return;
+    }
     //logger.info("Address is {}, " + item.getClass().getSimpleName() + " is {}", key, item);
     byte[] value = dbSource.getData(key);
     if (ArrayUtils.isNotEmpty(value)) {

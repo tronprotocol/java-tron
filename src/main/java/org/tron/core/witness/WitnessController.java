@@ -3,6 +3,7 @@ package org.tron.core.witness;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -156,10 +157,10 @@ public class WitnessController {
             slot);
         return false;
       }
+      logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
+          ByteArray.toHexString(witnessAddress.toByteArray()));
     }
 
-    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
-        ByteArray.toHexString(witnessAddress.toByteArray()));
     return true;
   }
 
@@ -172,6 +173,7 @@ public class WitnessController {
     }
     return false;
   }
+
   /**
    * get ScheduledWitness by slot.
    */
@@ -244,6 +246,10 @@ public class WitnessController {
           .reduce((a, b) -> a + b);
       if (sum.isPresent()) {
         if (sum.get() <= account.getShare()) {
+          long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
+              .getVoteRewardRate());
+          account.setBalance(account.getBalance() + reward);
+          accountStore.put(account.createDbKey(), account);
           account.getVotesList().forEach(vote -> {
             //TODO validate witness //active_witness
             ByteString voteAddress = vote.getVoteAddress();
@@ -302,20 +308,13 @@ public class WitnessController {
           logger.warn(
               "witnessAccount[" + StringUtil.createReadableString(witnessAddress) + "] not exists");
         } else {
-          if (witnessAccountCapsule.getBalance() < WitnessCapsule.MIN_BALANCE) {
-            logger.warn(
-                "witnessAccount[" + StringUtil.createReadableString(witnessAddress)
-                    + "] has balance["
-                    + witnessAccountCapsule
-                    .getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE + "]");
-          } else {
-            witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-            witnessCapsule.setIsJobs(false);
-            newWitnessAddressList.add(witnessAddress);
-            witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-            logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
-                witnessCapsule.getVoteCount());
-          }
+          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          witnessCapsule.setIsJobs(false);
+          newWitnessAddressList.add(witnessAddress);
+          witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
+              witnessCapsule.getVoteCount());
+
         }
       });
 
@@ -344,15 +343,9 @@ public class WitnessController {
   }
 
   private void sortWitness(List<ByteString> list) {
-    list.sort((a, b) -> {
-      long aVoteCount = getWitnesseByAddress(a).getVoteCount();
-      long bVoteCount = getWitnesseByAddress(b).getVoteCount();
-      if (bVoteCount != aVoteCount) {
-        return (int) (bVoteCount - aVoteCount);
-      } else {
-        return Long.compare(b.hashCode(), a.hashCode());
-      }
-    });
+    list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
+        .reversed()
+        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }

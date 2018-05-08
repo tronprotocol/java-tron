@@ -13,8 +13,9 @@ public interface Parameter {
     int PRIVATE_KEY_LENGTH = 64;
     int MAX_ACTIVE_WITNESS_NUM = 15;
     int TRXS_SIZE = 2_000_000; // < 2MiB
-    int BLOCK_PRODUCED_INTERVAL = 5000; //ms,produce block period, must be divisible by 60. millisecond
+    int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     long CLOCK_MAX_DELAY = 3600 * 1000; //ms
+    long BATCH_FETCH_RESPONSE_SIZE = 1000; //for each inventory message from peer, the max count of fetch inv message
   }
 
   interface NodeConstant {
@@ -26,10 +27,8 @@ public interface Parameter {
     long SYNC_CHAIN_LIMIT_NUM = 500;
   }
 
-
   interface NetConstants {
-
-    long ADV_TIME_OUT = 5000L;
+    long ADV_TIME_OUT = 20000L;
     long SYNC_TIME_OUT = 5000L;
     long HEAD_NUM_MAX_DELTA = 1000L;
     long HEAD_NUM_CHECK_TIME = 60000L;

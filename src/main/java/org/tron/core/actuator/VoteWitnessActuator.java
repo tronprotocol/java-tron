@@ -12,7 +12,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -82,7 +81,7 @@ public class VoteWitnessActuator extends AbstractActuator {
             "Account[" + readableOwnerAddress + "] not exists");
       }
 
-      if (contract.getVotesCount() > DynamicPropertiesStore.MAX_VOTE_NUMBER) {
+      if (contract.getVotesCount() > dbManager.getDynamicPropertiesStore().getMaxVoteNumber()) {
         throw new ContractValidateException(
             "VoteNumber more than maxVoteNumber[30]");
       }
