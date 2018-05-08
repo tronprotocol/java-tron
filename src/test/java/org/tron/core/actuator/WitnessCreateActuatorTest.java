@@ -85,7 +85,7 @@ public class WitnessCreateActuatorTest {
             ByteString.copyFromUtf8(ACCOUNT_NAME_FRIST),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FRIST)),
             AccountType.Normal,
-            200_000_000L);
+            200_000_000_000L);
 
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
