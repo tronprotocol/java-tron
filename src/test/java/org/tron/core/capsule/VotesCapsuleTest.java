@@ -12,12 +12,12 @@ import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Vote;
 
-public class AccountCapsuleTest {
+public class VotesCapsuleTest {
 
-  private static String dbPath = "output_accountCapsule_test";
+  private static String dbPath = "output_votesCapsule_test";
   static AccountCapsule accountCapsuleTest;
   static AccountCapsule accountCapsule;
 
@@ -25,8 +25,8 @@ public class AccountCapsuleTest {
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"},
         Constant.TEST_CONF);
-    ByteString accountName = ByteString.copyFrom(AccountCapsuleTest.randomBytes(16));
-    ByteString address = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
+    ByteString accountName = ByteString.copyFrom(VotesCapsuleTest.randomBytes(16));
+    ByteString address = ByteString.copyFrom(VotesCapsuleTest.randomBytes(32));
     AccountType accountType = AccountType.forNumber(1);
     accountCapsuleTest = new AccountCapsule(accountName, address, accountType);
     byte[] accountByte = accountCapsuleTest.getData();
@@ -51,9 +51,9 @@ public class AccountCapsuleTest {
   }
 
   @Test
-  public void addVotesTest() {
+  public void addNewVotesTest() {
     //test addVote and getVotesList function
-    ByteString voteAddress = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
+    ByteString voteAddress = ByteString.copyFrom(VotesCapsuleTest.randomBytes(32));
     long voteAdd = 10L;
     accountCapsuleTest.addVotes(voteAddress, voteAdd);
     List<Vote> votesList = accountCapsuleTest.getVotesList();
