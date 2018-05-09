@@ -32,6 +32,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j
@@ -55,7 +56,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   @Override
   public void put(byte[] key, BlockCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -125,4 +126,22 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return new BlockIterator(dbSource.iterator());
   }
 
+  @Override
+  public void delete(byte[] key) {
+    deleteIndex(key);
+    super.delete(key);
+  }
+
+  private void deleteIndex(byte[] key) {
+    if (Objects.nonNull(indexHelper)) {
+      try {
+        BlockCapsule item = get(key);
+        if (Objects.nonNull(item)) {
+          indexHelper.remove(item.getInstance());
+        }
+      } catch (StoreException e) {
+        return;
+      }
+    }
+  }
 }

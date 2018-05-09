@@ -1,9 +1,25 @@
 package org.tron.core.db.api;
 
+import static com.googlecode.cqengine.query.QueryFactory.all;
+import static com.googlecode.cqengine.query.QueryFactory.and;
+import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
+import static com.googlecode.cqengine.query.QueryFactory.between;
+import static com.googlecode.cqengine.query.QueryFactory.descending;
+import static com.googlecode.cqengine.query.QueryFactory.equal;
+import static com.googlecode.cqengine.query.QueryFactory.greaterThan;
+import static com.googlecode.cqengine.query.QueryFactory.lessThan;
+import static com.googlecode.cqengine.query.QueryFactory.or;
+import static com.googlecode.cqengine.query.QueryFactory.orderBy;
+import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
+import static com.googlecode.cqengine.query.QueryFactory.threshold;
+import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.resultset.ResultSet;
+import java.util.Collections;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,23 +37,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
-
-import java.util.Collections;
-import java.util.List;
-
-import static com.googlecode.cqengine.query.QueryFactory.all;
-import static com.googlecode.cqengine.query.QueryFactory.and;
-import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
-import static com.googlecode.cqengine.query.QueryFactory.between;
-import static com.googlecode.cqengine.query.QueryFactory.descending;
-import static com.googlecode.cqengine.query.QueryFactory.equal;
-import static com.googlecode.cqengine.query.QueryFactory.greaterThanOrEqualTo;
-import static com.googlecode.cqengine.query.QueryFactory.lessThan;
-import static com.googlecode.cqengine.query.QueryFactory.or;
-import static com.googlecode.cqengine.query.QueryFactory.orderBy;
-import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
-import static com.googlecode.cqengine.query.QueryFactory.threshold;
-import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
 
 @Component
 @Slf4j
@@ -61,7 +60,8 @@ public class StoreAPI {
       return null;
     }
     Index.Iface<Account> index = indexHelper.getAccountIndex();
-    try (ResultSet<Account> resultSet = index.retrieve(equal(AccountIndex.Account_ADDRESS, address))) {
+    try (ResultSet<Account> resultSet = index
+        .retrieve(equal(AccountIndex.Account_ADDRESS, address))) {
       if (resultSet.isEmpty()) {
         return null;
       }
@@ -105,7 +105,8 @@ public class StoreAPI {
       return null;
     }
     Index.Iface<Block> index = indexHelper.getBlockIndex();
-    try (ResultSet<Block> resultSet = index.retrieve(equal(BlockIndex.TRANSACTIONS, transactionId))) {
+    try (ResultSet<Block> resultSet = index
+        .retrieve(equal(BlockIndex.TRANSACTIONS, transactionId))) {
       if (resultSet.isEmpty()) {
         return null;
       }
@@ -124,11 +125,11 @@ public class StoreAPI {
 
     Index.Iface<Block> index = indexHelper.getBlockIndex();
     try (ResultSet<Block> resultSet =
-             index.retrieve(
-                 or(equal(BlockIndex.OWNERS, accountAddress), equal(BlockIndex.TOS, accountAddress)),
-                 queryOptions(
-                     orderBy(descending(BlockIndex.Block_NUMBER)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            or(equal(BlockIndex.OWNERS, accountAddress), equal(BlockIndex.TOS, accountAddress)),
+            queryOptions(
+                orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -140,11 +141,11 @@ public class StoreAPI {
     }
     Index.Iface<Block> index = indexHelper.getBlockIndex();
     try (ResultSet<Block> resultSet =
-             index.retrieve(
-                 equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
-                 queryOptions(
-                     orderBy(descending(BlockIndex.Block_NUMBER)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            equal(BlockIndex.WITNESS_ADDRESS, WitnessAddress),
+            queryOptions(
+                orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -152,11 +153,11 @@ public class StoreAPI {
   public List<Block> getBlocksByWitnessId(Long witnessId) {
     Index.Iface<Block> index = indexHelper.getBlockIndex();
     try (ResultSet<Block> resultSet =
-             index.retrieve(
-                 equal(BlockIndex.WITNESS_ID, witnessId),
-                 queryOptions(
-                     orderBy(descending(BlockIndex.Block_NUMBER)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            equal(BlockIndex.WITNESS_ID, witnessId),
+            queryOptions(
+                orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -168,11 +169,11 @@ public class StoreAPI {
 
     Index.Iface<Block> index = indexHelper.getBlockIndex();
     try (ResultSet<Block> resultSet =
-             index.retrieve(
-                 all(WrappedByteArray.class),
-                 queryOptions(
-                     orderBy(descending(BlockIndex.Block_NUMBER)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            all(WrappedByteArray.class),
+            queryOptions(
+                orderBy(descending(BlockIndex.Block_NUMBER)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
     }
   }
@@ -192,7 +193,8 @@ public class StoreAPI {
       return null;
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
-    try (ResultSet<Transaction> resultSet = index.retrieve(equal(TransactionIndex.Transaction_ID, id))) {
+    try (ResultSet<Transaction> resultSet = index
+        .retrieve(equal(TransactionIndex.Transaction_ID, id))) {
       if (resultSet.isEmpty()) {
         return null;
       }
@@ -210,11 +212,11 @@ public class StoreAPI {
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-             index.retrieve(
-                 equal(TransactionIndex.OWNERS, address),
-                 queryOptions(
-                     orderBy(descending(TransactionIndex.TIMESTAMP)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            equal(TransactionIndex.OWNERS, address),
+            queryOptions(
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -226,11 +228,11 @@ public class StoreAPI {
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-             index.retrieve(
-                 equal(TransactionIndex.TOS, address),
-                 queryOptions(
-                     orderBy(descending(TransactionIndex.TIMESTAMP)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            equal(TransactionIndex.TOS, address),
+            queryOptions(
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -242,13 +244,13 @@ public class StoreAPI {
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-             index.retrieve(
-                 or(
-                     equal(TransactionIndex.OWNERS, accountAddress),
-                     equal(TransactionIndex.TOS, accountAddress)),
-                 queryOptions(
-                     orderBy(descending(TransactionIndex.TIMESTAMP)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            or(
+                equal(TransactionIndex.OWNERS, accountAddress),
+                equal(TransactionIndex.TOS, accountAddress)),
+            queryOptions(
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -261,11 +263,11 @@ public class StoreAPI {
 
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-             index.retrieve(
-                 between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
-                 queryOptions(
-                     orderBy(descending(TransactionIndex.TIMESTAMP)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
+            queryOptions(
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -277,11 +279,11 @@ public class StoreAPI {
 
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-             index.retrieve(
-                 all(WrappedByteArray.class),
-                 queryOptions(
-                     orderBy(descending(TransactionIndex.TIMESTAMP)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            all(WrappedByteArray.class),
+            queryOptions(
+                orderBy(descending(TransactionIndex.TIMESTAMP)),
+                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
       return ImmutableList.copyOf(Streams.stream(resultSet).limit(topN).iterator());
     }
   }
@@ -301,7 +303,8 @@ public class StoreAPI {
       return null;
     }
     Index.Iface<Witness> index = indexHelper.getWitnessIndex();
-    try (ResultSet<Witness> resultSet = index.retrieve(equal(WitnessIndex.Witness_ADDRESS, address))) {
+    try (ResultSet<Witness> resultSet = index
+        .retrieve(equal(WitnessIndex.Witness_ADDRESS, address))) {
       if (resultSet.isEmpty()) {
         return null;
       }
@@ -363,13 +366,11 @@ public class StoreAPI {
   public List<AssetIssueContract> getAssetIssueByTime(long currentInMilliseconds) {
     Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     try (ResultSet<AssetIssueContract> resultSet =
-             index.retrieve(
-                 and(
-                     lessThan(AssetIssueIndex.AssetIssue_START, currentInMilliseconds),
-                     greaterThanOrEqualTo(AssetIssueIndex.AssetIssue_END, currentInMilliseconds)),
-                 queryOptions(
-                     orderBy(descending(AssetIssueIndex.AssetIssue_END)),
-                     applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+        index.retrieve(
+            and(
+                lessThan(AssetIssueIndex.AssetIssue_START, currentInMilliseconds),
+                greaterThan(AssetIssueIndex.AssetIssue_END, currentInMilliseconds)))) {
+      resultSet.size();
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -381,7 +382,7 @@ public class StoreAPI {
     }
     Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     try (ResultSet<AssetIssueContract> resultSet =
-             index.retrieve(equal(AssetIssueIndex.AssetIssue_NAME, name))) {
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_NAME, name))) {
       if (resultSet.isEmpty()) {
         return null;
       }
@@ -399,7 +400,7 @@ public class StoreAPI {
     }
     Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
     try (ResultSet<AssetIssueContract> resultSet =
-             index.retrieve(equal(AssetIssueIndex.AssetIssue_OWNER_RADDRESS, ownerAddress))) {
+        index.retrieve(equal(AssetIssueIndex.AssetIssue_OWNER_ADDRESS, ownerAddress))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
