@@ -22,8 +22,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.TransactionMessage;
 
 @Slf4j
 @Component
@@ -45,6 +43,8 @@ public class PeerConnection extends Channel {
 
   private Map<Sha256Hash, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
+  private boolean advInhibit = false;
+
   public Map<Sha256Hash, Long> getAdvObjSpreadToUs() {
     return advObjSpreadToUs;
   }
@@ -60,6 +60,14 @@ public class PeerConnection extends Channel {
 
   public void setAdvObjWeSpread(HashMap<Sha256Hash, Long> advObjWeSpread) {
     this.advObjWeSpread = advObjWeSpread;
+  }
+
+  public boolean isAdvInhibit() {
+    return advInhibit;
+  }
+
+  public void setAdvInhibit(boolean advInhibit) {
+    this.advInhibit = advInhibit;
   }
 
   //sync chain

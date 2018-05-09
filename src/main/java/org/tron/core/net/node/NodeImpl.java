@@ -9,9 +9,18 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import io.netty.util.internal.ConcurrentSet;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +40,6 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -577,11 +585,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       });
 
-      if (!spreaded[0]) {
+      if (!spreaded[0]
+          && !peer.isNeedSyncFromPeer()
+          && !peer.isNeedSyncFromUs()) {
         //TODO: avoid TRX flood attack here.
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
-          //TODO: make a error cache here, Don't handle error TRX or BLK repeatedly.
           if (!badAdvObj.containsKey(id)) {
             this.advObjToFetch.put(id, msg.getInventoryType());
           }
