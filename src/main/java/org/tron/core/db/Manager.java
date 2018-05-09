@@ -87,6 +87,8 @@ public class Manager {
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
+  @Autowired
+  private VotesStore votesStore;
 
   // for network
   @Autowired
@@ -137,6 +139,10 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+  public VotesStore getVotesStore() {
+    return this.votesStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {

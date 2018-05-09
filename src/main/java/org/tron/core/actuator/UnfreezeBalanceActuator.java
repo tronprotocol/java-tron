@@ -11,6 +11,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -33,8 +34,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       UnfreezeBalanceContract unfreezeBalanceContract = contract
           .unpack(UnfreezeBalanceContract.class);
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(unfreezeBalanceContract.getOwnerAddress().toByteArray());
+      ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
+      byte[] ownerAddressBytes = ownerAddress.toByteArray();
+
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
       long oldBalance = accountCapsule.getBalance();
       long unfreezeBalance = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
@@ -52,7 +55,18 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .setBalance(oldBalance + unfreezeBalance)
           .clearFrozen().addAllFrozen(frozenList).build());
-      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+      VotesCapsule votesCapsule;
+      if (!dbManager.getVotesStore().has(ownerAddressBytes)) {
+        votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
+      } else {
+        votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      }
+      accountCapsule.clearVotes();
+      votesCapsule.clearNewVotes();
+
+      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+      dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
