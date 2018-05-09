@@ -17,10 +17,12 @@ import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.HeaderNotFound;
 
@@ -233,24 +235,36 @@ public class WitnessController {
 //    }
   }
 
-  private Map<ByteString, Long> countVote(AccountStore accountStore) {
-
+  private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
-    final List<AccountCapsule> accountList = accountStore.getAllAccounts();
-    //logger.info("there is account List size is {}", accountList.size());
-    accountList.forEach(account -> {
+    final List<VotesCapsule> votesList = votesStore.getAllVotes();
+    AccountStore accountStore = this.manager.getAccountStore();
+    logger.info("there is {} new votes in this epoch", votesList.size());
+    votesList.forEach(votes -> {
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
 
-      Optional<Long> sum = account.getVotesList().stream().map(vote -> vote.getVoteCount())
+      Optional<Long> sum = votes.getNewVotes().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
       if (sum.isPresent()) {
+        AccountCapsule account = accountStore.get(votes.createDbKey());
         if (sum.get() <= account.getShare()) {
-          long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
-              .getVoteRewardRate());
-          account.setBalance(account.getBalance() + reward);
-          accountStore.put(account.createDbKey(), account);
-          account.getVotesList().forEach(vote -> {
+          // TODO add vote reward
+          // long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
+          //    .getVoteRewardRate());
+          //account.setBalance(account.getBalance() + reward);
+          //accountStore.put(account.createDbKey(), account);
+          votes.getOldVotes().forEach(vote -> {
+            //TODO validate witness //active_witness
+            ByteString voteAddress = vote.getVoteAddress();
+            long voteCount = vote.getVoteCount();
+            if (countWitness.containsKey(voteAddress)) {
+              countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
+            } else {
+              countWitness.put(voteAddress, -voteCount);
+            }
+          });
+          votes.getNewVotes().forEach(vote -> {
             //TODO validate witness //active_witness
             ByteString voteAddress = vote.getVoteAddress();
             long voteCount = vote.getVoteCount();
@@ -263,11 +277,12 @@ public class WitnessController {
         } else {
           logger.info(
               "account" + account.createReadableString() + ",share[" + account.getShare()
-                  + "] > voteSum["
+                  + "] < voteSum["
                   + sum.get() + "]");
         }
       }
     });
+    votesStore.reset();
     return countWitness;
   }
 
@@ -276,8 +291,10 @@ public class WitnessController {
    */
   public void updateWitness() {
     WitnessStore witnessStore = manager.getWitnessStore();
+    VotesStore votesStore = manager.getVotesStore();
     AccountStore accountStore = manager.getAccountStore();
-    Map<ByteString, Long> countWitness = countVote(accountStore);
+
+    Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
     if (countWitness.size() == 0) {
@@ -285,32 +302,28 @@ public class WitnessController {
     } else {
       List<ByteString> currentWits = getActiveWitnesses();
       List<ByteString> newWitnessAddressList = new ArrayList<>();
-
       witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-        witnessCapsule.setVoteCount(0);
-        witnessCapsule.setIsJobs(false);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+        newWitnessAddressList.add(witnessCapsule.getAddress());
       });
 
       countWitness.forEach((address, voteCount) -> {
-        final WitnessCapsule witnessCapsule = witnessStore.get(StringUtil.createDbKey(address));
+        final WitnessCapsule witnessCapsule = witnessStore
+            .get(StringUtil.createDbKey(address));
         if (null == witnessCapsule) {
-          logger
-              .warn("witnessCapsule is null.address is {}",
+          logger.warn("witnessCapsule is null.address is {}",
                   StringUtil.createReadableString(address));
           return;
         }
 
-        ByteString witnessAddress = witnessCapsule.getInstance().getAddress();
         AccountCapsule witnessAccountCapsule = accountStore
-            .get(StringUtil.createDbKey(witnessAddress));
+            .get(StringUtil.createDbKey(address));
         if (witnessAccountCapsule == null) {
           logger.warn(
-              "witnessAccount[" + StringUtil.createReadableString(witnessAddress) + "] not exists");
+              "witnessAccount[" + StringUtil.createReadableString(address) + "] not exists");
         } else {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
-          newWitnessAddressList.add(witnessAddress);
+//          newWitnessAddressList.add(address);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());

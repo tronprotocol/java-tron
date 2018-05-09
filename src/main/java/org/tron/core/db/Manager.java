@@ -87,6 +87,8 @@ public class Manager {
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
+  @Autowired
+  private VotesStore votesStore;
 
   // for network
   @Autowired
@@ -137,6 +139,10 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+  public VotesStore getVotesStore() {
+    return this.votesStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -453,7 +459,7 @@ public class Manager {
         throw new ValidateBandwidthException("account not exists");
       }
       long bandwidth = accountCapsule.getBandwidth();
-      long now = Time.getCurrentMillis();
+      long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
       if (now - latestOperationTime >= 10_000L) {
@@ -466,7 +472,7 @@ public class Manager {
         throw new ValidateBandwidthException("bandwidth is not enough");
       }
       accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-      accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+      accountCapsule.setLatestOperationTime(now);
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }
   }

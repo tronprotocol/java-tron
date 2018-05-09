@@ -46,6 +46,11 @@ public class DefaultConfig {
     return "block";
   }
 
+  @Bean(name = "votes")
+  public String votes() {
+    return "votes";
+  }
+
   @Bean(name = "trans")
   public String trans() {
     return "trans";
