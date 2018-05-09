@@ -71,6 +71,11 @@ public class DefaultConfig {
     return "block-index";
   }
 
+  @Bean(name = "account-index")
+  public String accountIndex() {
+    return "account-index";
+  }
+
   @Bean(name = "witness_schedule")
   public String witnessSchedule() {
     return "witness_schedule";
