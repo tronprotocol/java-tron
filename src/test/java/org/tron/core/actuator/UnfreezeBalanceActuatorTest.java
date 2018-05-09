@@ -253,6 +253,7 @@ public class UnfreezeBalanceActuatorTest {
         getContract(OWNER_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
+    dbManager.getVotesStore().reset();
     Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
     try {
       actuator.validate();
