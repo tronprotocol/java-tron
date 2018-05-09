@@ -20,7 +20,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -147,12 +146,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
       //Whether the exchange can be processed: to see if the exchange can be the exact int
       long cost = participateAssetIssueContract.getAmount();
-
-      DateTime now = DateTime.now();
-      if (now.getMillis() >= assetIssueCapsule.getEndTime() || now.getMillis() < assetIssueCapsule
+      long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+      if (now >= assetIssueCapsule.getEndTime() || now < assetIssueCapsule
           .getStartTime()) {
         throw new ContractValidateException("No longer valid period!");
       }
+
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
       long exchangeAmount = Math.multiplyExact(cost, num);
