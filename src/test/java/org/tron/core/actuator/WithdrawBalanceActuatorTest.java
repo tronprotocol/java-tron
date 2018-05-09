@@ -20,14 +20,12 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -103,6 +101,7 @@ public class WithdrawBalanceActuatorTest {
   @Test
   public void testWithdrawBalance() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try{
       dbManager.adjustAllowance(address, allowance);
@@ -208,6 +207,8 @@ public class WithdrawBalanceActuatorTest {
   @Test
   public void noAllowance() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
@@ -237,6 +238,8 @@ public class WithdrawBalanceActuatorTest {
   @Test
   public void notTimeToWithdraw() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try{
       dbManager.adjustAllowance(address, allowance);
@@ -265,7 +268,8 @@ public class WithdrawBalanceActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("The last withdraw time is less than 24 hours", e.getMessage());
+      Assert.assertEquals("The last withdraw time is "
+          + now + ",less than 24 hours", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
