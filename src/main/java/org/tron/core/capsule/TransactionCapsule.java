@@ -146,6 +146,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
+  /**
+   *
+   * @param expiration must be in milliseconds format
+   */
   public void setExpiration(long expiration) {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder().setExpiration(expiration)
         .build();
