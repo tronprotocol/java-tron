@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   @Override
   public void put(byte[] key, TransactionCapsule item) {
     super.put(key, item);
-    if (indexHelper != null) {
+    if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
   }
@@ -83,4 +84,18 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return new TransactionIterator(dbSource.iterator());
   }
 
+  @Override
+  public void delete(byte[] key) {
+    deleteIndex(key);
+    super.delete(key);
+  }
+
+  private void deleteIndex(byte[] key) {
+    if (Objects.nonNull(indexHelper)) {
+      TransactionCapsule item = get(key);
+      if (Objects.nonNull(item)) {
+        indexHelper.remove(item.getInstance());
+      }
+    }
+  }
 }
