@@ -326,6 +326,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
+              this.accountIndexStore.put(accountCapsule);
             });
   }
 

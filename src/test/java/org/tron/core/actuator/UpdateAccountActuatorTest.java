@@ -33,11 +33,12 @@ public class UpdateAccountActuatorTest {
   private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
 
-  private static final String OWNER_ADDRESS_NOT_EXIT =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String ACCOUNT_NAME = "ownerTest";
+  private static final String ACCOUNT_NAME_1 = "ownerTest1";
   private static final String OWNER_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS_1 =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
 
   static {
@@ -61,10 +62,12 @@ public class UpdateAccountActuatorTest {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.copyFromUtf8(ACCOUNT_NAME),
+            ByteString.EMPTY,
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOT_EXIT));
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME_1.getBytes());
   }
 
   private Any getContract(String name, String address) {
@@ -101,6 +104,7 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -116,9 +120,109 @@ public class UpdateAccountActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void noExitAccount() {
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    UpdateAccountActuator actuator = new UpdateAccountActuator(
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Account has not existed", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  /*
+   * Can update name only one time.
+   */
+  public void twiceUpdateAccount() {
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    UpdateAccountActuator actuator = new UpdateAccountActuator(
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
+    UpdateAccountActuator actuator1 = new UpdateAccountActuator(
+        getContract(ACCOUNT_NAME_1, OWNER_ADDRESS), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    try {
+      actuator1.validate();
+      actuator1.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This account name already exist", e.getMessage());
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void nameAlreadyUsed() {
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    UpdateAccountActuator actuator = new UpdateAccountActuator(
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
+    UpdateAccountActuator actuator1 = new UpdateAccountActuator(
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_1)),
+            ByteString.EMPTY,
+            AccountType.Normal);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    try {
+      actuator1.validate();
+      actuator1.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This name has existed", e.getMessage());
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -136,7 +240,9 @@ public class UpdateAccountActuatorTest {
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals("testname0123456789abcdefghijgklm", accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals("testname0123456789abcdefghijgklm",
+          accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -149,6 +255,7 @@ public class UpdateAccountActuatorTest {
           getContract(ByteString.EMPTY, OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
@@ -162,6 +269,7 @@ public class UpdateAccountActuatorTest {
           getContract("testname0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
@@ -175,6 +283,7 @@ public class UpdateAccountActuatorTest {
           getContract("t e", OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
@@ -188,6 +297,7 @@ public class UpdateAccountActuatorTest {
           getContract("测试", OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());

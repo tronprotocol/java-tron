@@ -8,6 +8,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -41,10 +42,13 @@ public class UpdateAccountActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     try {
       AccountStore accountStore = dbManager.getAccountStore();
+      AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
       AccountCapsule account = accountStore.get(ownerAddress);
 
       account.setAccountName(accountName);
       accountStore.put(ownerAddress, account);
+      accountIndexStore.put(account);
+
       ret.setStatus(fee, code.SUCESS);
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
@@ -72,9 +76,16 @@ public class UpdateAccountActuator extends AbstractActuator {
       if (!Wallet.addressValid(ownerAddress)) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
-      //TO do  唯一性校验
-      if (!dbManager.getAccountStore().has(ownerAddress)) {
+
+      AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+      if (account == null) {
         throw new ContractValidateException("Account has not existed");
+      }
+      if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
+        throw new ContractValidateException("This account name already exist");
+      }
+      if (dbManager.getAccountIndexStore().has(accountName)) {
+        throw new ContractValidateException("This name has existed");
       }
     } catch (Exception ex) {
       ex.printStackTrace();
