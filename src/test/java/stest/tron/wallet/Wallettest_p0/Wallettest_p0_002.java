@@ -1,4 +1,4 @@
-package stest.tron.wallet;
+package stest.tron.wallet.Wallettest_p0;
 
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.*;

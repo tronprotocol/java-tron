@@ -1,4 +1,4 @@
-package stest.tron.wallet;
+package stest.tron.wallet.Wallettest_p0;
 
 import java.util.Optional;
 
@@ -18,17 +18,23 @@ public class Wallettest_p0_001 {
 
     private WalletClient walletClient;
 
-    //testKey001 frozen fail
-    private final static  String testKey001        = "85a449304487085205d48a402c30877e888fcb34391d65cfdc9cad420127826f";
-    private final static  String testKey002        = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-    private final static  String testKey003        = "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
+    //Devaccount
+    private final static  String testKey001        = "effa55b420a2fe39e3f73d14b8c46824fd0d5ee210840b9c27b2e2f42a09f1f9";
+    //Zion
+    private final static  String testKey002        = "32012d7b024b2e62e0ca145f137bcfd2468cac99a1880b275e2e499b23af265c";
+    //Sun
+    private final static  String testKey003        = "85a449304487085205d48a402c30877e888fcb34391d65cfdc9cad420127826f";
 
-    //BACK_ADDRESS  == testKey001
-    private static final byte[] BACK_ADDRESS = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-    private static final byte[] FROM_ADDRESS = Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-    private static final byte[] TO_ADDRESS   = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+    //Devaccount
+    private static final byte[] BACK_ADDRESS = Base58.decodeFromBase58Check("27d3byPxZXKQWfXX7sJvemJJuv5M65F3vjS");
+    //Zion
+    private static final byte[] FROM_ADDRESS = Base58.decodeFromBase58Check("27fXgQ46DcjEsZ444tjZPKULcxiUfDrDjqj");
+    //Sun
+    private static final byte[] TO_ADDRESS   = Base58.decodeFromBase58Check("27SWXcHuQgFf9uv49FknBBBYBaH3DUk4JPx");
 
-    private static final Long AMOUNT = 1000000L;
+    private static final Long AMOUNT     = 1000000L;
+    private static final Long F_DURATION = 3L;
+
 
     public static void main(String[] args){
         logger.info("test man.");
@@ -38,10 +44,16 @@ public class Wallettest_p0_001 {
     public void beforeClass() {
         walletClient = new WalletClient(testKey002);
         walletClient.init(0);
-        walletClient.freezeBalance(1000000L,3);
+
+
+        boolean ret = walletClient.freezeBalance(AMOUNT,F_DURATION);
+        Assert.assertTrue(ret);
+
         logger.info("freeze amount:");
-        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
+        logger.info(Integer.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
+        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBandwidth()));
         logger.info("this is before class");
+
     }
 
 
@@ -50,15 +62,12 @@ public class Wallettest_p0_001 {
 
         logger.info(ByteArray.toStr(walletClient.queryAccount(FROM_ADDRESS).getAccountName().toByteArray()));
         logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBalance()));
-        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
-        logger.info(ByteArray.toStr(walletClient.queryAccount(TO_ADDRESS).getAccountName().toByteArray()));
-        logger.info(Long.toString(walletClient.queryAccount(TO_ADDRESS).getBalance()));
-
-        long   frozenbefore   =  walletClient.queryAccount(FROM_ADDRESS).getFrozenCount();
-        boolean ret           =  walletClient.freezeBalance(AMOUNT,3);
-        long   frozenafter    =  walletClient.queryAccount(FROM_ADDRESS).getFrozenCount();
+        long   frozenbefore   =  walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
+        boolean ret           =  walletClient.freezeBalance(AMOUNT,F_DURATION);
+        long   frozenafter    =  walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
         Assert.assertTrue(ret);
-        Assert.assertEquals( AMOUNT.longValue() ,(frozenbefore - frozenafter) );
+        Assert.assertEquals( (frozenafter - frozenbefore), AMOUNT.longValue() * F_DURATION );
+
         boolean ret1  = walletClient.sendCoin(TO_ADDRESS,AMOUNT);
 
         logger.info(ByteArray.toStr(walletClient.queryAccount(FROM_ADDRESS).getAccountName().toByteArray()));
