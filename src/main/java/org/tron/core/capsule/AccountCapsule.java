@@ -367,8 +367,4 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
   }
-
-  public ByteString getName() {
-    return this.account.getAccountName();
-  }
 }

@@ -42,7 +42,7 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void put(AccountCapsule accountCapsule) {
-    put(accountCapsule.getName().toByteArray(),
+    put(accountCapsule.getAccountName().toByteArray(),
         new BytesCapsule(accountCapsule.getAddress().toByteArray()));
   }
 
