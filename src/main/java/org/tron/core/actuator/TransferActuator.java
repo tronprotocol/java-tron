@@ -114,7 +114,7 @@ public class TransferActuator extends AbstractActuator {
               "For a non-existent account transfer, the minimum amount is 1 TRX");
         }
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            System.currentTimeMillis());
+            dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccount);
       } else {
         //check to account balance if overflow

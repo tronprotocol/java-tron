@@ -32,7 +32,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
-      long now = System.currentTimeMillis();
+      long now = dbManager.getHeadBlockTimeStamp();
       long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000L;
 
       long newBandwidth = accountCapsule.getBandwidth()

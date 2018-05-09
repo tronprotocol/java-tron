@@ -100,6 +100,8 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void testUnfreezeBalance() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozen(frozenBalance, now);
@@ -135,6 +137,8 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void invalidOwnerAddress() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozen(1_000_000_000L, now);
@@ -161,6 +165,8 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void invalidOwnerAccount() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozen(1_000_000_000L, now);
@@ -207,6 +213,8 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void notTimeToUnfreeze() {
     long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozen(1_000_000_000L, now + 60000);
