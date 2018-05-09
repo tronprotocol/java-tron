@@ -30,6 +30,7 @@ import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
+import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -44,20 +45,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.BalanceInsufficientException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HeaderNotFound;
-import org.tron.core.exception.HighFreqException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.RevokingStoreIllegalStateException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
-import org.tron.core.exception.ValidateScheduleException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.*;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -406,12 +394,26 @@ public class Manager {
     }
   }
 
+  void validateCommon(TransactionCapsule transactionCapsule) throws TransactionExpirationException, TooBigTransactionException {
+    if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
+      throw new TooBigTransactionException(
+              "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
+    }
+    long transactionExpiration = transactionCapsule.getExpiration();
+    long headBlockTime = getHeadBlockTimeStamp();
+    if (transactionExpiration <= headBlockTime ||
+            transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
+      throw new TransactionExpirationException(
+              "transaction expiration, transaction expiration time is " + transactionExpiration
+                      + ", but headBlockTime is " + headBlockTime);
+    }
+  }
   /**
    * push transaction into db.
    */
   public boolean pushTransactions(final TransactionCapsule trx)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException {
+          throws ValidateSignatureException, ContractValidateException, ContractExeException,
+          ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -424,6 +426,8 @@ public class Manager {
     }
 
     validateTapos(trx);
+
+    validateCommon(trx);
 
     //validateFreq(trx);
     synchronized (this) {
