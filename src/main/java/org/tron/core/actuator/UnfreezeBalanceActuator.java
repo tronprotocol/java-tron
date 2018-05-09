@@ -40,7 +40,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       List<Frozen> frozenList = Lists.newArrayList();
       frozenList.addAll(accountCapsule.getFrozenList());
       Iterator<Frozen> iterator = frozenList.iterator();
-      long now = System.currentTimeMillis();
+      long now = dbManager.getHeadBlockTimeStamp();
       while (iterator.hasNext()) {
         Frozen next = iterator.next();
         if (next.getExpireTime() <= now) {
@@ -92,7 +92,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("no frozenBalance");
       }
 
-      long now = System.currentTimeMillis();
+      long now = dbManager.getHeadBlockTimeStamp();
       long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
           .filter(frozen -> frozen.getExpireTime() <= now).count();
       if (allowedUnfreezeCount <= 0) {

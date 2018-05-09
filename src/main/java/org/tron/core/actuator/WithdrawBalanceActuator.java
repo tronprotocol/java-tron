@@ -35,7 +35,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       long oldBalance = accountCapsule.getBalance();
       long allowance = accountCapsule.getAllowance();
 
-      long now = System.currentTimeMillis();
+      long now = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .setBalance(oldBalance + allowance)
           .setAllowance(0L)
@@ -84,7 +84,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           .get(ownerAddress.toByteArray());
 
       long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-      long now = System.currentTimeMillis();
+      long now = dbManager.getHeadBlockTimeStamp();
       long witnessAllowanceFrozenTime =
           dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 24 * 3600 * 1000L;
 
