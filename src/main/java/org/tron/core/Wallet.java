@@ -38,6 +38,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -111,7 +112,7 @@ public class Wallet {
   }
 
   public static boolean addressValid(byte[] address) {
-    if (address == null || address.length == 0) {
+    if (ByteUtil.isNullOrZeroArray(address)) {
       logger.warn("Warning: Address is empty !!");
       return false;
     }
