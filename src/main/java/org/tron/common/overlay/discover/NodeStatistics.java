@@ -92,7 +92,7 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 101 : 1);
+        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 51 : 1);
     discoverReput += min(discoverInNeighbours.get(), 10) * 10;
     discoverReput += min(discoverInFind.get(), 50);
 
@@ -151,6 +151,7 @@ public class NodeStatistics {
         && (System.currentTimeMillis() - lastDisconnectedTime) > CLEAR_CYCLE_TIME) {
       tronLastLocalDisconnectReason = null;
       tronLastRemoteDisconnectReason = null;
+      disconnectTimes = 0;
       persistedReputation = 0;
     }
 
