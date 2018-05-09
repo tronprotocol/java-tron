@@ -66,9 +66,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       votesCapsule.clearNewVotes();
 
       dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
-      if (votesCapsule.getOldVotes().size() != 0) {
-        dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
-      }
+      dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
