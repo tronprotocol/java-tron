@@ -12,7 +12,7 @@ import org.tron.core.capsule.VotesCapsule;
 public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
 
   @Autowired
-  public VotesStore(@Qualifier("vote") String dbName) {
+  public VotesStore(@Qualifier("votes") String dbName) {
     super(dbName);
   }
 
@@ -61,7 +61,7 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
   }
 
   /**
-   * get all accounts.
+   * get all votes.
    */
   public List<VotesCapsule> getAllVotes() {
     return dbSource
