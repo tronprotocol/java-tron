@@ -207,6 +207,10 @@ public class SyncPool {
       if (handler.getNodeStatistics().getReputation() < 100) {
         return false;
       }
+      
+      if (handler.getNodeStatistics().isPenalized()) {
+        return false;
+      }
 
       return  true;
     }
