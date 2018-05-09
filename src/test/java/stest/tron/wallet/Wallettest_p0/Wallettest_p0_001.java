@@ -1,5 +1,6 @@
 package stest.tron.wallet.Wallettest_p0;
 
+import java.util.HashMap;
 import java.util.Optional;
 
 import org.tron.api.GrpcAPI;
@@ -16,6 +17,7 @@ import org.testng.Assert;
 @Slf4j
 public class Wallettest_p0_001 {
 
+    private Base58       base58;
     private WalletClient walletClient;
 
     //Devaccount
@@ -32,8 +34,9 @@ public class Wallettest_p0_001 {
     //Sun
     private static final byte[] TO_ADDRESS   = Base58.decodeFromBase58Check("27SWXcHuQgFf9uv49FknBBBYBaH3DUk4JPx");
 
-    private static final Long AMOUNT     = 1000000L;
-    private static final Long F_DURATION = 3L;
+    private static final Long AMOUNT         = 1000000L;
+    private static final Long F_DURATION     = 3L;
+    private static final Long ZUIDIXIAOFEI   = 100000L;
 
 
     public static void main(String[] args){
@@ -45,50 +48,142 @@ public class Wallettest_p0_001 {
         walletClient = new WalletClient(testKey002);
         walletClient.init(0);
 
+        //check config-beta env
+        Assert.assertTrue(checkENV());
 
-        boolean ret = walletClient.freezeBalance(AMOUNT,F_DURATION);
+        boolean ret = walletClient.freezeBalance(10000000000L,F_DURATION);
         Assert.assertTrue(ret);
 
-        logger.info("freeze amount:");
-        logger.info(Integer.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
-        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBandwidth()));
-        logger.info("this is before class");
+        //logger.info("freeze amount:");
+        //logger.info(Integer.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
+        //logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBandwidth()));
+        //logger.info("this is before class");
 
     }
 
 
     @Test(enabled = true)
-    public void checkTrade() {
+    public void checkTrxCoinTrade() {
 
-        logger.info(ByteArray.toStr(walletClient.queryAccount(FROM_ADDRESS).getAccountName().toByteArray()));
-        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBalance()));
-        long   frozenbefore   =  walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
-        boolean ret           =  walletClient.freezeBalance(AMOUNT,F_DURATION);
-        long   frozenafter    =  walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
+        //init check node
+        WalletClient checkclient = new WalletClient(testKey001);
+        checkclient.init(1);
+
+        //check freezeBalance
+        long frozenbefore = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
+        boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
+        long frozenafter = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
         Assert.assertTrue(ret);
-        Assert.assertEquals( (frozenafter - frozenbefore), AMOUNT.longValue() * F_DURATION );
+        logger.info(Long.toString(frozenbefore));
+        logger.info(Long.toString(frozenafter));
+        Assert.assertEquals((frozenafter - frozenbefore), AMOUNT.longValue() * F_DURATION - ZUIDIXIAOFEI) ;
+        Assert.assertEquals(checkclient.queryAccount(FROM_ADDRESS).getBandwidth(), walletClient.queryAccount(FROM_ADDRESS).getBandwidth());
 
-        boolean ret1  = walletClient.sendCoin(TO_ADDRESS,AMOUNT);
+        //check sendcoin
+        long balancebefore = walletClient.queryAccount(FROM_ADDRESS).getBalance();
+        ret = walletClient.sendCoin(TO_ADDRESS, AMOUNT);
+        Assert.assertEquals(walletClient.queryAccount(FROM_ADDRESS).getBalance(), balancebefore - AMOUNT);
+        Assert.assertEquals(walletClient.queryAccount(FROM_ADDRESS).getBalance(), checkclient.queryAccount(FROM_ADDRESS).getBalance());
+        Assert.assertTrue(ret);
 
-        logger.info(ByteArray.toStr(walletClient.queryAccount(FROM_ADDRESS).getAccountName().toByteArray()));
-        logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBalance()));
-        logger.info(ByteArray.toStr(walletClient.queryAccount(TO_ADDRESS).getAccountName().toByteArray()));
-        logger.info(Long.toString(walletClient.queryAccount(TO_ADDRESS).getBalance()));
-        Assert.assertTrue(ret1);
-
-        logger.info("this is TestNG test case");
     }
 
 
+    //check vote
+    @Test(enabled = true)
+    public void checkTrxCoinVote() {
+
+        //check vote
+        Optional<GrpcAPI.WitnessList> witnessResult = walletClient.listWitnesses();
+
+        HashMap<String, String> witnesshash =  new HashMap();
+
+        HashMap<String, Long>    beforehash =  new HashMap();
+
+
+        if (witnessResult.isPresent()) {
+            GrpcAPI.WitnessList WitnessList = witnessResult.get();
+            WitnessList.getWitnessesList().forEach(witness -> {
+
+                //input
+                witnesshash.put(Base58.encode58Check(witness.getAddress().toByteArray()), "1000000");
+                //votecount
+                beforehash.put(Base58.encode58Check(witness.getAddress().toByteArray()),witness.getVoteCount());
+
+                //
+                logger.info(Base58.encode58Check(witness.getAddress().toByteArray()));
+                logger.info(Long.toString(witness.getVoteCount()));
+            });
+
+            boolean ret = walletClient.voteWitness(witnesshash);
+            Assert.assertTrue(ret);
+
+            //get list again
+            witnessResult = walletClient.listWitnesses();
+
+            if (witnessResult.isPresent()) {
+                WitnessList = witnessResult.get();
+                WitnessList.getWitnessesList().forEach(witness -> {
+                    Assert.assertTrue(beforehash.get(Base58.encode58Check(witness.getAddress().toByteArray())) + 1000000 ==
+                            witness.getVoteCount());
+                    logger.info(Long.toString(witness.getVoteCount()));
+                    //Assert.assertTrue(witness.getVoteCount() > 1000000);
+                });
+            }
+        }
+    }
+
+    //check env: nodelist;witnesslist;accountlist.
+    public boolean checkENV(){
+        //check account
+        Optional<AccountList> accountResult = walletClient.listAccounts();
+
+        if (accountResult.isPresent()) {
+            AccountList accountList = accountResult.get();
+            Assert.assertTrue(accountList.getAccountsCount() >= 4);
+            accountList.getAccountsList().forEach(account -> {
+                logger.info(ByteArray.toStr(account.getAccountName().toByteArray()));
+
+                if(!(account.getAccountName().isEmpty()) && ByteArray.toStr(account.getAccountName().toByteArray()).contentEquals("Zion")){
+                    Assert.assertTrue( account.getBalance() > 10000000000L );
+                }
+                logger.info(Long.toString(account.getTypeValue()));
+                Assert.assertTrue(account.getTypeValue() >= 0);
+            });
+        }
+
+        Optional<NodeList> nodeResult = walletClient.listNodes();
+        if (nodeResult.isPresent()) {
+            NodeList nodeList = nodeResult.get();
+            Assert.assertTrue(nodeList.getNodesCount() >= 5);
+            nodeList.getNodesList().forEach(node -> {
+                Assert.assertTrue(node.isInitialized());
+            });
+        }
+
+        Optional<GrpcAPI.WitnessList> witnessResult1 = walletClient.listWitnesses();
+        if (witnessResult1.isPresent()) {
+            GrpcAPI.WitnessList WitnessList = witnessResult1.get();
+            Assert.assertTrue(WitnessList.getWitnessesCount() >= 5);
+            WitnessList.getWitnessesList().forEach(witness -> {
+                Assert.assertTrue(witness.isInitialized());
+            });
+        }
+
+        return true;
+
+    }
+
+
+
     @Test(enabled = false)
-    public void checkAcc() {
+    public void checkAcc(){
 
         Optional<AccountList> result = walletClient.listAccounts();
 
         if (result.isPresent()) {
             AccountList accountList = result.get();
-            byte[]  fromaddr;
-            byte[]  toaddr;
+
             accountList.getAccountsList().forEach(account -> {
                 logger.info(ByteArray.toStr(walletClient.queryAccount(account.getAddress().toByteArray()).getAccountName().toByteArray()));
                 logger.info(Long.toString(walletClient.queryAccount(account.getAddress().toByteArray()).getBalance()));
