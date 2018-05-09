@@ -57,7 +57,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
 
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
-
+  // 1_000_000L
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
@@ -79,7 +79,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getSingleRepeat();
     } catch (IllegalArgumentException e) {
-      this.saveSingleRepeat(6);
+      this.saveSingleRepeat(1);
     }
 
     try {
@@ -163,7 +163,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
-      this.saveAccountUpgradeCost(100_000_000);
+      this.saveAccountUpgradeCost(100_000_000_000L);
     }
 
     try {
@@ -376,15 +376,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
   }
 
-  public void saveAccountUpgradeCost(int accountUpgradeCost) {
+  public void saveAccountUpgradeCost(long accountUpgradeCost) {
     logger.debug("ACCOUNT_UPGRADE_COST:" + accountUpgradeCost);
     this.put(ACCOUNT_UPGRADE_COST,
-        new BytesCapsule(ByteArray.fromInt(accountUpgradeCost)));
+        new BytesCapsule(ByteArray.fromLong(accountUpgradeCost)));
   }
 
-  public int getAccountUpgradeCost() {
+  public long getAccountUpgradeCost() {
     return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
-        .map(ByteArray::toInt)
+        .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
   }
@@ -441,6 +441,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(MAX_VOTE_NUMBER,
         new BytesCapsule(ByteArray.fromInt(maxVoteNumber)));
   }
+
   public void applyBlock(boolean fillBlock) {
     int[] blockFilledSlots = getBlockFilledSlots();
     int blockFilledSlotsIndex = getBlockFilledSlotsIndex();

@@ -26,10 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -53,14 +55,8 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -207,60 +203,61 @@ public class Wallet {
   /**
    * Broadcast a transaction.
    */
-  public boolean broadcastTransaction(Transaction signaturedTransaction) {
+  public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
       Message message = new TransactionMessage(signaturedTransaction);
       if (message.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
-        throw new TooBigTransactionException("too big transaction, the size is " + message.getData().length + " bytes");
+        throw new TooBigTransactionException(
+            "too big transaction, the size is " + message.getData().length + " bytes");
       }
       dbManager.pushTransactions(trx);
       p2pNode.broadcast(message);
-      return true;
+      return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.error(e.getMessage(), e);
+      return builder.setResult(false).setCode(response_code.SIGERROR)
+          .setMessage(ByteString.copyFromUtf8("validate signature error"))
+          .build();
     } catch (ContractValidateException e) {
       logger.error(e.getMessage(), e);
+      return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8("contract validate error"))
+          .build();
     } catch (ContractExeException e) {
       logger.error(e.getMessage(), e);
+      return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+          .setMessage(ByteString.copyFromUtf8("contract execute error"))
+          .build();
     } catch (ValidateBandwidthException e) {
       logger.error("high freq", e);
+      return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
+          .setMessage(ByteString.copyFromUtf8("high freq error"))
+          .build();
     } catch (DupTransactionException e) {
       logger.error("dup trans", e);
+      return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
+          .setMessage(ByteString.copyFromUtf8("dup transaction"))
+          .build();
     } catch (TaposException e) {
       logger.debug("tapos error", e);
+      return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
+          .setMessage(ByteString.copyFromUtf8("Tapos check error"))
+          .build();
     } catch (TooBigTransactionException e) {
       logger.debug("transaction error", e);
-    } catch (Exception e){
+      return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
+          .setMessage(ByteString.copyFromUtf8("TooBigTransactionException"))
+          .build();
+    } catch (Exception e) {
       logger.error("exception caught", e);
+      return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8("other error"))
+          .build();
     }
-    return false;
   }
 
-  @Deprecated
-  public Transaction createAccount(AccountCreateContract contract) {
-    AccountStore accountStore = dbManager.getAccountStore();
-    return new TransactionCapsule(contract, accountStore).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(VoteWitnessContract voteWitnessContract) {
-    return new TransactionCapsule(voteWitnessContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(AssetIssueContract assetIssueContract) {
-    return new TransactionCapsule(assetIssueContract).getInstance();
-  }
-  @Deprecated
-  public Transaction createTransaction(WitnessCreateContract witnessCreateContract) {
-    return new TransactionCapsule(witnessCreateContract).getInstance();
-  }
-
-  @Deprecated
-  public Transaction createTransaction(WitnessUpdateContract witnessUpdateContract) {
-    return new TransactionCapsule(witnessUpdateContract).getInstance();
-  }
 
   public Block getNowBlock() {
     try {
@@ -294,15 +291,6 @@ public class Wallet {
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
-  }
-  @Deprecated
-  public Transaction createTransaction(TransferAssetContract transferAssetContract) {
-    return new TransactionCapsule(transferAssetContract).getInstance();
-  }
-  @Deprecated
-  public Transaction createTransaction(
-      ParticipateAssetIssueContract participateAssetIssueContract) {
-    return new TransactionCapsule(participateAssetIssueContract).getInstance();
   }
 
   public AssetIssueList getAssetIssueList() {

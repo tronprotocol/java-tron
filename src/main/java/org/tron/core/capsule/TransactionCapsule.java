@@ -257,7 +257,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
           break;
         case AccountUpdateContract:
-          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
           break;
         case FreezeBalanceContract:
           owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
