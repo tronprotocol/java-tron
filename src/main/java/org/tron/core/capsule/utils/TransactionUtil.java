@@ -17,6 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
@@ -50,7 +51,7 @@ public class TransactionUtil {
   }
 
   public static boolean validAccountName(byte[] accountName) {
-    if (accountName == null || accountName.length == 0) {
+    if (ByteUtil.isNullOrZeroArray(accountName)) {
       return false;
     }
     if (accountName.length > 32) {
