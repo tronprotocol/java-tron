@@ -302,12 +302,9 @@ public class WitnessController {
     } else {
       List<ByteString> currentWits = getActiveWitnesses();
       List<ByteString> newWitnessAddressList = new ArrayList<>();
-
-//      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-//        witnessCapsule.setVoteCount(0);
-//        witnessCapsule.setIsJobs(false);
-//        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-//      });
+      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+        newWitnessAddressList.add(witnessCapsule.getAddress());
+      });
 
       countWitness.forEach((address, voteCount) -> {
         final WitnessCapsule witnessCapsule = witnessStore
@@ -326,7 +323,7 @@ public class WitnessController {
         } else {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
-          newWitnessAddressList.add(address);
+//          newWitnessAddressList.add(address);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
