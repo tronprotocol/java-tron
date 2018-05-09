@@ -46,9 +46,9 @@ public class DefaultConfig {
     return "block";
   }
 
-  @Bean(name = "vote")
-  public String vote() {
-    return "vote";
+  @Bean(name = "votes")
+  public String votes() {
+    return "votes";
   }
 
   @Bean(name = "trans")
