@@ -364,4 +364,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public ByteString getName() {
+    return this.account.getAccountName();
+  }
 }
