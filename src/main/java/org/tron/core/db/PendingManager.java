@@ -4,12 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.ValidateBandwidthException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.*;
 
 @Slf4j
 public class PendingManager implements AutoCloseable {
@@ -44,6 +39,10 @@ public class PendingManager implements AutoCloseable {
             logger.error("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.error("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+            logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+            logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().stream()
@@ -64,6 +63,10 @@ public class PendingManager implements AutoCloseable {
             logger.debug("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.debug("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+              logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+              logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().clear();

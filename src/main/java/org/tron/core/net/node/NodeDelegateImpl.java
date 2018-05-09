@@ -15,20 +15,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.StoreException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.TronException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
-import org.tron.core.exception.ValidateScheduleException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.*;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -96,6 +83,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.error("dup trans");
     } catch (TaposException e) {
       logger.error("tapos error");
+    } catch (TooBigTransactionException e) {
+      logger.error("too big transaction");
+    } catch (TransactionExpirationException e) {
+      logger.error("expiration transaction");
     }
   }
 
