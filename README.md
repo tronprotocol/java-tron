@@ -462,7 +462,7 @@ Then observe whether block synchronization success，If synchronization successf
 
 # Quick Start
 
-Read the [Quick Start](http://wiki.tron.network/en/latest/quick_start.html).
+Read the [Quick Start](http://wiki.tron.network/en/latest/Quick_Start.html).
 
 # Community
 
