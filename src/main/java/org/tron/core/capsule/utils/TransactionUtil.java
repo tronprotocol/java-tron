@@ -49,6 +49,24 @@ public class TransactionUtil {
     return totalBalance == totalSpent;
   }
 
+  public static boolean validAccountName(byte[] accountName) {
+    if (accountName == null || accountName.length == 0) {
+      return false;
+    }
+    if (accountName.length > 32) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : accountName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
   /**
    * Get sender.
    */

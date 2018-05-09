@@ -165,6 +165,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getType();
   }
 
+  public ByteString getAccountName() {
+    return this.account.getAccountName();
+  }
+
 
   public long getBalance() {
     return this.account.getBalance();
