@@ -1,13 +1,13 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
+import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
@@ -46,9 +46,12 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
         new BytesCapsule(accountCapsule.getAddress().toByteArray()));
   }
 
-  public byte[] get(String name)
-      throws ItemNotFoundException {
-    return get(ByteArray.fromString(name)).getData();
+  public byte[] get(ByteString name) {
+    BytesCapsule bytesCapsule = get(name.toByteArray());
+    if (Objects.nonNull(bytesCapsule)) {
+      return bytesCapsule.getData();
+    }
+    return null;
   }
 
   @Override
