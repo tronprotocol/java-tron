@@ -11,7 +11,6 @@ import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -28,69 +27,59 @@ public class UpdateAccountActuator extends AbstractActuator {
     super(contract, dbManager);
     try {
       accountUpdateContract = contract.unpack(AccountUpdateContract.class);
-      accountName = accountUpdateContract.getAccountName().toByteArray();
-      ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
-      fee = calcFee();
     } catch (InvalidProtocolBufferException e) {
       logger.error(e.getMessage(), e);
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
     }
+    accountName = accountUpdateContract.getAccountName().toByteArray();
+    ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
+    fee = calcFee();
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    try {
-      AccountStore accountStore = dbManager.getAccountStore();
-      AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
-      AccountCapsule account = accountStore.get(ownerAddress);
+  public boolean execute(TransactionResultCapsule ret) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
+    AccountCapsule account = accountStore.get(ownerAddress);
 
-      account.setAccountName(accountName);
-      accountStore.put(ownerAddress, account);
-      accountIndexStore.put(account);
+    account.setAccountName(accountName);
+    accountStore.put(ownerAddress, account);
+    accountIndexStore.put(account);
 
-      ret.setStatus(fee, code.SUCESS);
-    } catch (Exception e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
+    ret.setStatus(fee, code.SUCESS);
+
     return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
-    try {
-      if (this.dbManager == null) {
-        throw new ContractValidateException("No dbManager!");
-      }
-      if (accountUpdateContract == null) {
-        throw new ContractValidateException(
-            "contract type error,expected type [AccountUpdateContract],real type[" + contract
-                .getClass() + "]");
-      }
 
-      if (!TransactionUtil.validAccountName(accountName)) {
-        throw new ContractValidateException("Invalidate accountName");
-      }
-      if (!Wallet.addressValid(ownerAddress)) {
-        throw new ContractValidateException("Invalidate ownerAddress");
-      }
-
-      AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
-      if (account == null) {
-        throw new ContractValidateException("Account has not existed");
-      }
-      if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
-        throw new ContractValidateException("This account name already exist");
-      }
-      if (dbManager.getAccountIndexStore().has(accountName)) {
-        throw new ContractValidateException("This name has existed");
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
     }
+    if (accountUpdateContract == null) {
+      throw new ContractValidateException(
+          "contract type error,expected type [AccountUpdateContract],real type[" + contract
+              .getClass() + "]");
+    }
+
+    if (!TransactionUtil.validAccountName(accountName)) {
+      throw new ContractValidateException("Invalidate accountName");
+    }
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalidate ownerAddress");
+    }
+
+    AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+    if (account == null) {
+      throw new ContractValidateException("Account has not existed");
+    }
+    if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
+      throw new ContractValidateException("This account name already exist");
+    }
+    if (dbManager.getAccountIndexStore().has(accountName)) {
+      throw new ContractValidateException("This name has existed");
+    }
+
     return true;
   }
 
