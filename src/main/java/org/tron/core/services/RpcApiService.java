@@ -467,6 +467,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateAccount(Contract.AccountUpdateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.AccountUpdateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {

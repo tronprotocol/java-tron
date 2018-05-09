@@ -5,6 +5,8 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -18,6 +20,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -27,6 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Vote;
 
 @Slf4j
 public class UnfreezeBalanceActuatorTest {
@@ -233,6 +237,59 @@ public class UnfreezeBalanceActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  @Test
+  public void testClearVotes() {
+    byte[] ownerAddressBytes = ByteArray.fromHexString(OWNER_ADDRESS);
+    ByteString ownerAddress = ByteString.copyFrom(ownerAddressBytes);
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+    accountCapsule.setFrozen(1_000_000_000L, now);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator(
+        getContract(OWNER_ADDRESS), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    dbManager.getVotesStore().reset();
+    Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      VotesCapsule votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      Assert.assertNotNull(votesCapsule);
+      Assert.assertEquals(0, votesCapsule.getNewVotes().size());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    // if had votes
+    List<Vote> oldVotes = new ArrayList<Vote>();
+    VotesCapsule votesCapsule = new VotesCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        oldVotes);
+    votesCapsule.addNewVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        100);
+    dbManager.getVotesStore().put(ByteArray.fromHexString(OWNER_ADDRESS), votesCapsule);
+    accountCapsule.setFrozen(1_000_000_000L, now);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      Assert.assertNotNull(votesCapsule);
+      Assert.assertEquals(0, votesCapsule.getNewVotes().size());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+
   }
 
 }

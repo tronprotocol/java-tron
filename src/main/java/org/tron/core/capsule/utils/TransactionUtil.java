@@ -50,6 +50,25 @@ public class TransactionUtil {
     return totalBalance == totalSpent;
   }
 
+  public static boolean validAccountName(byte[] accountName) {
+    if (ByteUtil.isNullOrZeroArray(accountName)) {
+      return false;
+    }
+    if (accountName.length > 32) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : accountName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+
   public static boolean validUrl(byte[] url) {
     if (ByteUtil.isNullOrZeroArray(url)) {
       return false;
