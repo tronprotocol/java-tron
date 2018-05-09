@@ -201,7 +201,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void rightAssetIssue() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator =
         new ParticipateAssetIssueActuator(getContract(1000L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -287,7 +288,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void ExchangeDevisibleTest() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator =
         new ParticipateAssetIssueActuator(getContract(999L), dbManager); //no problem
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -377,7 +379,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void noExitOwnerTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContractWithOwner(101, NOT_EXIT_ADDRESS),
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
+        getContractWithOwner(101, NOT_EXIT_ADDRESS),
         dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -408,8 +411,12 @@ public class ParticipateAssetIssueActuatorTest {
    */
   public void noExitToTest() {
     DateTime now = DateTime.now();
-    initAssetIssueWithOwner(now.minusDays(1).getMillis(), now.plusDays(1).getMillis(), NOT_EXIT_ADDRESS);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContractWithTo(101, NOT_EXIT_ADDRESS),
+    initAssetIssueWithOwner(
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        NOT_EXIT_ADDRESS);
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
+        getContractWithTo(101, NOT_EXIT_ADDRESS),
         dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -437,7 +444,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void notEnoughTrxTest() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce the owner trx balance. Else can't complete this test case.
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100);
@@ -470,7 +478,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void notEnoughAssetTest() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce to account asset balance. Else can't complete this test case.
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.reduceAssetAmount(ByteString.copyFromUtf8(ASSET_NAME), TOTAL_SUPPLY - 10000);
@@ -533,7 +542,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void addOverflowTest() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner asset balance. Else can't complete this test case.
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.addAsset(ASSET_NAME, Long.MAX_VALUE);
@@ -569,7 +579,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void mmultiplyOverflowTest() {
     DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner trx balance. Else can't complete this test case.
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
