@@ -44,12 +44,27 @@ public class TransferActuator extends AbstractActuator {
     long fee = calcFee();
     try {
 
-      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
-      ret.setStatus(fee, code.SUCESS);
-      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
-          -amount);
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(transferContract.getToAddress().toByteArray());
+      if (toAccount == null) {
+        toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
+            System.currentTimeMillis());
+        dbManager.getAccountStore().put(toAddress, toAccount);
+
+        long createAccountCost = dbManager.getDynamicPropertiesStore()
+            .getNonExistentAccountTransferMin();
+        dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
+            -(amount + createAccountCost + calcFee()));
+      } else {
+        dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
+            -(amount + calcFee()));
+      }
+
       dbManager.adjustBalance(transferContract.getToAddress().toByteArray(),
           amount);
+
+      ret.setStatus(fee, code.SUCESS);
+
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -108,14 +123,14 @@ public class TransferActuator extends AbstractActuator {
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(transferContract.getToAddress().toByteArray());
       if (toAccount == null) {
-        long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
-        if (amount < min) {
+        long createAccountCost = dbManager.getDynamicPropertiesStore()
+            .getNonExistentAccountTransferMin();
+
+        if (balance < Math.addExact(createAccountCost, Math.addExact(amount, calcFee()))) {
           throw new ContractValidateException(
-              "For a non-existent account transfer, the minimum amount is 1 TRX");
+              "For a non-existent account transfer,this operation will create an account and cost 1 TRX");
         }
-        toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            System.currentTimeMillis());
-        dbManager.getAccountStore().put(toAddress, toAccount);
+
       } else {
         //check to account balance if overflow
         balance = Math.addExact(toAccount.getBalance(), amount);
