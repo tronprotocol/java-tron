@@ -29,6 +29,7 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -36,10 +37,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -53,6 +53,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
+  @Setter
   private boolean isValidated = false;
 
   /**
@@ -255,7 +256,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
           break;
         case AccountUpdateContract:
-          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
           break;
         case FreezeBalanceContract:
           owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();

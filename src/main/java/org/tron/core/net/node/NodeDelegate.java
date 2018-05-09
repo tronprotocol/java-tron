@@ -35,6 +35,8 @@ public interface NodeDelegate {
 
   BlockId getHeadBlockId();
 
+  BlockId getSolidBlockId();
+
   boolean contain(Sha256Hash hash, MessageTypes type);
 
   boolean containBlock(BlockId id);

@@ -268,7 +268,9 @@ public class BroadTest {
 
   @After
   public void destroy() {
+    Args.clearParam();
     FileUtil.deleteDir(new File("output-nodeImplTest"));
+    peerClient.close();
   }
-
+  
 }

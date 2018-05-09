@@ -1,13 +1,12 @@
 package org.tron.core.db.api.index;
 
+import static com.googlecode.cqengine.query.QueryFactory.attribute;
+
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.disk.DiskIndex;
-import com.googlecode.cqengine.index.hash.HashIndex;
-import com.googlecode.cqengine.index.navigable.NavigableIndex;
-import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
-import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.persistence.disk.DiskPersistence;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,17 +17,11 @@ import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Contract.AssetIssueContract;
 
-import javax.annotation.PostConstruct;
-
-import java.io.File;
-
-import static com.googlecode.cqengine.query.QueryFactory.attribute;
-
 @Component
 @Slf4j
 public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssueContract> {
 
-  public static Attribute<WrappedByteArray, String> AssetIssue_OWNER_RADDRESS;
+  public static Attribute<WrappedByteArray, String> AssetIssue_OWNER_ADDRESS;
   public static SimpleAttribute<WrappedByteArray, String> AssetIssue_NAME;
   public static Attribute<WrappedByteArray, Long> AssetIssue_START;
   public static Attribute<WrappedByteArray, Long> AssetIssue_END;
@@ -42,7 +35,7 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
   @PostConstruct
   public void init() {
     initIndex(DiskPersistence.onPrimaryKeyInFile(AssetIssue_NAME, indexPath));
-    index.addIndex(DiskIndex.onAttribute(AssetIssue_OWNER_RADDRESS));
+    index.addIndex(DiskIndex.onAttribute(AssetIssue_OWNER_ADDRESS));
 //    index.addIndex(DiskIndex.onAttribute(AssetIssue_NAME));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_START));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_END));
@@ -51,7 +44,7 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
 
   @Override
   protected void setAttribute() {
-    AssetIssue_OWNER_RADDRESS =
+    AssetIssue_OWNER_ADDRESS =
         attribute(
             "assetIssue owner address",
             bytes -> {

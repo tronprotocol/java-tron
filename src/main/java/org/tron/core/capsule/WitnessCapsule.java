@@ -10,8 +10,6 @@ import org.tron.protos.Protocol.Witness;
 @Slf4j
 public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<WitnessCapsule> {
 
-  public static final long MIN_BALANCE = 100;
-
   private Witness witness;
 
   

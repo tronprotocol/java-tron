@@ -62,11 +62,6 @@ public class WitnessCreateActuator extends AbstractActuator {
       AccountCapsule accountCapsule = this.dbManager.getAccountStore()
           .get(contract.getOwnerAddress().toByteArray());
 
-      Preconditions.checkArgument(accountCapsule.getBalance() >= WitnessCapsule.MIN_BALANCE,
-          "witnessAccount  has balance["
-              + accountCapsule.getBalance() + "] < MIN_BALANCE[" + WitnessCapsule.MIN_BALANCE
-              + "]");
-
       Preconditions.checkArgument(
           !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
           "Witness[" + readableOwnerAddress + "] has existed");
@@ -96,10 +91,16 @@ public class WitnessCreateActuator extends AbstractActuator {
   private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toStringUtf8());
+        witnessCreateContract.getOwnerAddress(),
+        0,
+        witnessCreateContract.getUrl().toStringUtf8());
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(witnessCapsule.createDbKey());
+    accountCapsule.setIsWitness(true);
+    this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     try {
       dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),

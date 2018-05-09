@@ -46,6 +46,11 @@ public class DefaultConfig {
     return "block";
   }
 
+  @Bean(name = "votes")
+  public String votes() {
+    return "votes";
+  }
+
   @Bean(name = "trans")
   public String trans() {
     return "trans";
@@ -69,6 +74,11 @@ public class DefaultConfig {
   @Bean(name = "block-index")
   public String blockIndex() {
     return "block-index";
+  }
+
+  @Bean(name = "account-index")
+  public String accountIndex() {
+    return "account-index";
   }
 
   @Bean(name = "witness_schedule")

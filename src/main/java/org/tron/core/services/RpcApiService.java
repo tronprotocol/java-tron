@@ -367,15 +367,14 @@ public class RpcApiService implements Service {
         act.validate();
       }
       trx.setReference(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-              dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
       return trx;
     }
 
     @Override
     public void broadcastTransaction(Transaction req,
         StreamObserver<GrpcAPI.Return> responseObserver) {
-      boolean ret = wallet.broadcastTransaction(req);
-      GrpcAPI.Return retur = GrpcAPI.Return.newBuilder().setResult(ret).build();
+      GrpcAPI.Return retur = wallet.broadcastTransaction(req);
       responseObserver.onNext(retur);
       responseObserver.onCompleted();
     }
@@ -459,6 +458,20 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateAccount(Contract.AccountUpdateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.AccountUpdateContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
@@ -563,7 +576,8 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver
-            .onNext(createTransactionCapsule(request, ContractType.TransferAssetContract).getInstance());
+            .onNext(createTransactionCapsule(request, ContractType.TransferAssetContract)
+                .getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
@@ -577,7 +591,8 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver
-            .onNext(createTransactionCapsule(request, ContractType.ParticipateAssetIssueContract).getInstance());
+            .onNext(createTransactionCapsule(request, ContractType.ParticipateAssetIssueContract)
+                .getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
