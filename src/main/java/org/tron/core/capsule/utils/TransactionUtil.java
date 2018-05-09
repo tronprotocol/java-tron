@@ -17,6 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
@@ -49,6 +50,16 @@ public class TransactionUtil {
     return totalBalance == totalSpent;
   }
 
+  public static boolean validUrl(byte[] url) {
+    if (ByteUtil.isNullOrZeroArray(url)) {
+      return false;
+    }
+    if (url.length > 256) {
+      return false;
+    }
+    // other rules.
+    return true;
+  }
   /**
    * Get sender.
    */

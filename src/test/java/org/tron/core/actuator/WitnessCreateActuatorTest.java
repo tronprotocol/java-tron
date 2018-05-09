@@ -104,6 +104,14 @@ public class WitnessCreateActuatorTest {
             .build());
   }
 
+  private Any getContract(String address, ByteString url) {
+    return Any.pack(
+        Contract.WitnessCreateContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+            .setUrl(url)
+            .build());
+  }
+
   /**
    * first createWitness,result is success.
    */
@@ -142,11 +150,10 @@ public class WitnessCreateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-
+      Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Witness[" + OWNER_ADDRESS_SECOND + "] has existed", e.getMessage());
-
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -164,16 +171,86 @@ public class WitnessCreateActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("Invalidate address");
-
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-
       Assert.assertEquals("Invalidate address", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
 
+  /**
+   * use Invalidate url createWitness,result is failed,exception is "Invalidate url".
+   */
+  @Test
+  public void invalidateUrlTest() {
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    //Url cannot empty
+    try {
+      WitnessCreateActuator actuator = new WitnessCreateActuator(
+          getContract(OWNER_ADDRESS_FRIST, ByteString.EMPTY), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      fail("Invalidate url");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalidate url", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
+    //256 bytes
+    String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    //Url length can not greater than 256
+    try {
+      WitnessCreateActuator actuator = new WitnessCreateActuator(
+          getContract(OWNER_ADDRESS_FRIST, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      fail("Invalidate url");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalidate url", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    // 1 byte url is ok.
+    try {
+      WitnessCreateActuator actuator = new WitnessCreateActuator(
+          getContract(OWNER_ADDRESS_FRIST, "0"), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      WitnessCapsule witnessCapsule =
+          dbManager.getWitnessStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      Assert.assertNotNull(witnessCapsule);
+      Assert.assertEquals(witnessCapsule.getInstance().getUrl(), "0");
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+    // 256 bytes url is ok.
+    try {
+      WitnessCreateActuator actuator = new WitnessCreateActuator(
+          getContract(OWNER_ADDRESS_FRIST, url256Bytes), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      WitnessCapsule witnessCapsule =
+          dbManager.getWitnessStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      Assert.assertNotNull(witnessCapsule);
+      Assert.assertEquals(witnessCapsule.getInstance().getUrl(), url256Bytes);
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
   /**
@@ -189,7 +266,6 @@ public class WitnessCreateActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
-
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
@@ -202,7 +278,7 @@ public class WitnessCreateActuatorTest {
   /**
    * use Account  ,result is failed,exception is "account not exists".
    */
-//  @Test
+  @Test
   public void balanceNotSufficient() {
     AccountCapsule balanceNotSufficientCapsule =
         new AccountCapsule(
@@ -221,11 +297,9 @@ public class WitnessCreateActuatorTest {
       actuator.execute(ret);
       fail("witnessAccount  has balance[" + balanceNotSufficientCapsule.getBalance()
           + "] < MIN_BALANCE[100]");
-
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witnessAccount  has balance[" + balanceNotSufficientCapsule.getBalance()
-          + "] < MIN_BALANCE[100]", e.getMessage());
+      Assert.assertEquals("balance < AccountUpgradeCost", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
