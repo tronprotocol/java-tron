@@ -154,7 +154,7 @@ public class HandleSyncBlockTest {
                 logger.info("Full node running.");
                 Args.setParam(new String[]{"-d",dbPath}, "config.conf");
                 Args cfgArgs = Args.getInstance();
-                cfgArgs.setNodeListenPort(17889);
+                cfgArgs.setNodeListenPort(17891);
                 cfgArgs.setNodeDiscoveryEnable(false);
                 cfgArgs.getSeedNode().getIpList().clear();
                 cfgArgs.setNeedSyncCheck(false);
@@ -214,7 +214,7 @@ public class HandleSyncBlockTest {
             mainWorker.shutdownNow();
 
             org.tron.common.overlay.discover.Node node = new Node(
-                    "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
+                    "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -253,6 +253,8 @@ public class HandleSyncBlockTest {
 
     @After
     public void destroy() {
+        Args.clearParam();
         FileUtil.deleteDir(new File("output-nodeImplTest"));
+        peerClient.close();
     }
 }
