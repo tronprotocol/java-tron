@@ -12,11 +12,9 @@ import org.tron.core.capsule.BytesCapsule;
 @Component
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
-
   @Autowired
   public AccountIndexStore(@Qualifier("account-index") String dbName) {
     super(dbName);
-
   }
 
   private static AccountIndexStore instance;
@@ -62,7 +60,6 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     }
     return new BytesCapsule(value);
   }
-
 
   @Override
   public boolean has(byte[] key) {

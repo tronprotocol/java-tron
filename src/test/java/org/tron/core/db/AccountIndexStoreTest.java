@@ -40,7 +40,6 @@ public class AccountIndexStoreTest {
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -64,7 +63,6 @@ public class AccountIndexStoreTest {
     accountIndexStore.put(accountCapsule3);
     accountIndexStore.put(accountCapsule4);
   }
-
 
   @Test
   public void putAndGet() {

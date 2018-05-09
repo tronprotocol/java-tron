@@ -52,7 +52,6 @@ public class UpdateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
