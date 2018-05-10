@@ -86,6 +86,8 @@ public class Manager {
   @Autowired
   private BlockIndexStore blockIndexStore;
   @Autowired
+  private AccountIndexStore accountIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -239,6 +241,7 @@ public class Manager {
     DynamicPropertiesStore.destroy();
     WitnessScheduleStore.destroy();
     BlockIndexStore.destroy();
+    AccountIndexStore.destroy();
   }
 
   @PostConstruct
@@ -331,6 +334,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
+              this.accountIndexStore.put(accountCapsule);
             });
   }
 
@@ -781,7 +785,8 @@ public class Manager {
    */
   public boolean containBlock(final Sha256Hash blockHash) {
     try {
-      return this.khaosDb.containBlockInMiniStore(blockHash) || blockStore.get(blockHash.getBytes()) != null;
+      return this.khaosDb.containBlockInMiniStore(blockHash)
+          || blockStore.get(blockHash.getBytes()) != null;
     } catch (ItemNotFoundException e) {
       return false;
     } catch (BadItemException e) {
@@ -1038,10 +1043,10 @@ public class Manager {
   }
 
   public BlockId getSolidBlockId() {
-    try{
+    try {
       long num = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       return getBlockIdByNum(num);
-    }catch (Exception e){
+    } catch (Exception e) {
       return getGenesisBlockId();
     }
   }
@@ -1132,11 +1137,20 @@ public class Manager {
     this.blockIndexStore = indexStore;
   }
 
+  public AccountIndexStore getAccountIndexStore() {
+    return this.accountIndexStore;
+  }
+
+  public void setAccountIndexStore(AccountIndexStore indexStore) {
+    this.accountIndexStore = indexStore;
+  }
+
   public void closeAllStore() {
     System.err.println("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
+    closeOneStore(accountIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
