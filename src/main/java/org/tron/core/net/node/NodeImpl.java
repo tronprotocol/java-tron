@@ -8,6 +8,7 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_O
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.netty.util.internal.ConcurrentSet;
 
 import java.util.*;
@@ -40,24 +41,17 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.db.api.pojo.Transaction;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.InventoryMessage;
-import org.tron.core.net.message.ItemNotFound;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.SyncBlockChainMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
@@ -67,13 +61,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Autowired
   private SyncPool pool;
 
-  Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
+  private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
       .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
       .recordStats().build();
 
-  Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
+  private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
       .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
       .recordStats().build();
+
+  private int maxTrxsSize = 1_000_000;
+
+  private int maxTrxsCnt = 100;
 
   class InvToSend {
 
@@ -117,8 +115,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }));
     }
   }
-
-
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -213,6 +209,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case TRX:
         onHandleTransactionMessage(peer, (TransactionMessage) msg);
+      case TRXS:
+        onHandleTransactionsMessage(peer, (TransactionsMessage) msg);
         break;
       case SYNC_BLOCK_CHAIN:
         onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
@@ -768,6 +766,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
+  private void  onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg){
+    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
+            msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
+    msg.getTransactions().getTransactionsList().forEach(transaction ->
+            onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
+  }
+
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
@@ -818,6 +823,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     BlockCapsule block = null;
 
+    List<Protocol.Transaction> transactions = Lists.newArrayList();
+
+    int size = 0;
+
     for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
 
       Message msg;
@@ -832,19 +841,31 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         msg = del.getData(hash, type);
       }
 
-      if (msg != null) {
-        if (type.equals(MessageTypes.BLOCK)) {
-          block = ((BlockMessage) msg).getBlockCapsule();
-        }
-        peer.sendMessage(msg);
-      } else {
+      if (msg == null){
         logger.error("fetch message {} {} failed.", type, hash);
         peer.sendMessage(new ItemNotFound());
+        return;
+      }
+
+      if (type.equals(MessageTypes.BLOCK)) {
+        block = ((BlockMessage) msg).getBlockCapsule();
+        peer.sendMessage(msg);
+      }else {
+        transactions.add(((TransactionMessage)msg).getTransaction());
+        size += ((TransactionMessage)msg).getTransaction().getSerializedSize();
+        if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
+          peer.sendMessage(new TransactionsMessage(transactions));
+          transactions = Lists.newArrayList();
+          size = 0;
+        }
       }
     }
 
     if (block != null) {
       updateBlockWeBothHave(peer, block);
+    }
+    if (transactions.size() > 0){
+      peer.sendMessage(new TransactionsMessage(transactions));
     }
   }
 

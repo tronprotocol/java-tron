@@ -311,11 +311,10 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
       Assert.assertTrue(null == noExitAccount);
       actuator.validate();
+      actuator.execute(ret);
       noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALIATE));
       Assert.assertFalse(null == noExitAccount);    //Had created.
-      Assert.assertEquals(noExitAccount.getBalance(), 0);
-      actuator.execute(ret);
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()

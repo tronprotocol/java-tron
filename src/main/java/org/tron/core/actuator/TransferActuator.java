@@ -44,6 +44,14 @@ public class TransferActuator extends AbstractActuator {
     long fee = calcFee();
     try {
 
+      // if account with to_address is not existed,  create it.
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(transferContract.getToAddress().toByteArray());
+      if (toAccount == null) {
+        toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
+            dbManager.getHeadBlockTimeStamp());
+        dbManager.getAccountStore().put(toAddress, toAccount);
+      }
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
       ret.setStatus(fee, code.SUCESS);
       dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
@@ -113,9 +121,6 @@ public class TransferActuator extends AbstractActuator {
           throw new ContractValidateException(
               "For a non-existent account transfer, the minimum amount is 1 TRX");
         }
-        toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp());
-        dbManager.getAccountStore().put(toAddress, toAccount);
       } else {
         //check to account balance if overflow
         balance = Math.addExact(toAccount.getBalance(), amount);

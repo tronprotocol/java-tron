@@ -89,6 +89,8 @@ public enum ReasonCode {
 
     TIME_OUT(0x20),
 
+    CONNECT_FAIL(0x21),
+
     /**
      * [0xFF] Reason not specified
      */
