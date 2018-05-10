@@ -621,7 +621,6 @@ public class AssetIssueActuatorTest {
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get("testname0123456789abcdefghijgklm").longValue(),
           TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -660,7 +659,6 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get("0").longValue(), TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -777,13 +775,11 @@ public class AssetIssueActuatorTest {
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
-
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(),
           TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -822,7 +818,6 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -861,7 +856,6 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -947,7 +941,6 @@ public class AssetIssueActuatorTest {
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(),
           TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -986,7 +979,6 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1025,7 +1017,6 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
