@@ -17,7 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteUtil;
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
@@ -51,7 +51,7 @@ public class TransactionUtil {
   }
 
   public static boolean validAccountName(byte[] accountName) {
-    if (ByteUtil.isNullOrZeroArray(accountName)) {
+    if (ArrayUtils.isEmpty(accountName)) {
       return false;
     }
     if (accountName.length > 32) {
@@ -66,6 +66,17 @@ public class TransactionUtil {
         return false; // 0x7E = '~'
       }
     }
+    return true;
+  }
+
+  public static boolean validUrl(byte[] url) {
+    if (ArrayUtils.isEmpty(url)) {
+      return false;
+    }
+    if (url.length > 256) {
+      return false;
+    }
+    // other rules.
     return true;
   }
   /**

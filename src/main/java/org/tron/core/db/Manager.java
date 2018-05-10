@@ -33,6 +33,7 @@ import org.tron.common.utils.Time;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -59,6 +60,7 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -453,7 +455,7 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  private void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -462,20 +464,41 @@ public class Manager {
       if (accountCapsule == null) {
         throw new ValidateBandwidthException("account not exists");
       }
-      long bandwidth = accountCapsule.getBandwidth();
       long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
-      if (now - latestOperationTime >= 10_000L) {
+      if (now - latestOperationTime >= dynamicPropertiesStore.getOperatingTimeInterval()) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
-      if (bandwidth < bandwidthPerTransaction) {
-        throw new ValidateBandwidthException("bandwidth is not enough");
+      long bandwidth;
+      if (contract.getType() == TransferAssetContract) {
+        AccountCapsule issuerAccountCapsule;
+        try {
+          ByteString assetName
+              = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
+          AssetIssueCapsule assetIssueCapsule
+              = this.getAssetIssueStore().get(assetName.toByteArray());
+          issuerAccountCapsule = this.getAccountStore()
+              .get(assetIssueCapsule.getOwnerAddress().toByteArray());
+          bandwidth = issuerAccountCapsule.getBandwidth();
+        } catch (Exception ex) {
+          throw new ValidateBandwidthException(ex.getMessage());
+        }
+        if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+        }
+        issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+        this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
+      } else {
+        bandwidth = accountCapsule.getBandwidth();
+        if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+        }
+        accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       }
-      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       accountCapsule.setLatestOperationTime(now);
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }

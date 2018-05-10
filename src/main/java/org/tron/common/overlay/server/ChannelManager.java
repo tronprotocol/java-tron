@@ -150,6 +150,7 @@ public class ChannelManager {
         || channel.getChannelHandlerContext().channel() == null) {
       return;
     }
+    channel.getNodeStatistics().notifyDisconnect();
     InetSocketAddress socketAddress = (InetSocketAddress) channel.getChannelHandlerContext()
         .channel().remoteAddress();
     recentlyDisconnected.put(socketAddress.getAddress(), new Date());
