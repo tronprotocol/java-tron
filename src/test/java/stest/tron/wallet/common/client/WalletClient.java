@@ -814,6 +814,8 @@ public class WalletClient {
         return builder.build();
     }
 
+    public static Block getBlock(long blockNum){return rpcCli.getBlock(blockNum);}
+
     public static Optional<Block> getBlockById(String blockID) {
         return rpcCli.getBlockById(blockID);
     }

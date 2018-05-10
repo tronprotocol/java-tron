@@ -8,7 +8,6 @@ apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 
-
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 mainClassName = 'org.tron.program.FullNode'
