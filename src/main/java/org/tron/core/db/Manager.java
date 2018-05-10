@@ -12,24 +12,55 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.Time;
 import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
-import org.tron.core.exception.*;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.HighFreqException;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateBandwidthException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
@@ -59,9 +90,13 @@ public class Manager {
   @Autowired
   private BlockIndexStore blockIndexStore;
   @Autowired
+  private AccountIndexStore accountIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
+  @Autowired
+  private VotesStore votesStore;
 
   // for network
   @Autowired
@@ -112,6 +147,10 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+  public VotesStore getVotesStore() {
+    return this.votesStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -206,6 +245,7 @@ public class Manager {
     DynamicPropertiesStore.destroy();
     WitnessScheduleStore.destroy();
     BlockIndexStore.destroy();
+    AccountIndexStore.destroy();
   }
 
   @PostConstruct
@@ -298,6 +338,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
+              this.accountIndexStore.put(accountCapsule);
             });
   }
 
@@ -434,7 +475,7 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  private void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -443,21 +484,42 @@ public class Manager {
       if (accountCapsule == null) {
         throw new ValidateBandwidthException("account not exists");
       }
-      long bandwidth = accountCapsule.getBandwidth();
-      long now = Time.getCurrentMillis();
+      long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
-      if (now - latestOperationTime >= 10_000L) {
+      if (now - latestOperationTime >= dynamicPropertiesStore.getOperatingTimeInterval()) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
-      if (bandwidth < bandwidthPerTransaction) {
-        throw new ValidateBandwidthException("bandwidth is not enough");
+      long bandwidth;
+      if (contract.getType() == TransferAssetContract) {
+        AccountCapsule issuerAccountCapsule;
+        try {
+          ByteString assetName
+              = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
+          AssetIssueCapsule assetIssueCapsule
+              = this.getAssetIssueStore().get(assetName.toByteArray());
+          issuerAccountCapsule = this.getAccountStore()
+              .get(assetIssueCapsule.getOwnerAddress().toByteArray());
+          bandwidth = issuerAccountCapsule.getBandwidth();
+        } catch (Exception ex) {
+          throw new ValidateBandwidthException(ex.getMessage());
+        }
+        if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+        }
+        issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+        this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
+      } else {
+        bandwidth = accountCapsule.getBandwidth();
+        if (bandwidth < bandwidthPerTransaction) {
+          throw new ValidateBandwidthException("bandwidth is not enough");
+        }
+        accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       }
-      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-      accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
+      accountCapsule.setLatestOperationTime(now);
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }
   }
@@ -743,7 +805,8 @@ public class Manager {
    */
   public boolean containBlock(final Sha256Hash blockHash) {
     try {
-      return this.khaosDb.containBlockInMiniStore(blockHash) || blockStore.get(blockHash.getBytes()) != null;
+      return this.khaosDb.containBlockInMiniStore(blockHash)
+          || blockStore.get(blockHash.getBytes()) != null;
     } catch (ItemNotFoundException e) {
       return false;
     } catch (BadItemException e) {
@@ -1000,10 +1063,10 @@ public class Manager {
   }
 
   public BlockId getSolidBlockId() {
-    try{
+    try {
       long num = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       return getBlockIdByNum(num);
-    }catch (Exception e){
+    } catch (Exception e) {
       return getGenesisBlockId();
     }
   }
@@ -1094,11 +1157,20 @@ public class Manager {
     this.blockIndexStore = indexStore;
   }
 
+  public AccountIndexStore getAccountIndexStore() {
+    return this.accountIndexStore;
+  }
+
+  public void setAccountIndexStore(AccountIndexStore indexStore) {
+    this.accountIndexStore = indexStore;
+  }
+
   public void closeAllStore() {
     System.err.println("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
+    closeOneStore(accountIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);

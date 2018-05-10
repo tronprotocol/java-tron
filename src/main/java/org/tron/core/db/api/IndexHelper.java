@@ -1,5 +1,6 @@
 package org.tron.core.db.api;
 
+import javax.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
@@ -13,8 +14,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
-
-import javax.annotation.Resource;
 
 @Slf4j
 public class IndexHelper {
@@ -126,5 +125,4 @@ public class IndexHelper {
   private byte[] getKey(AssetIssueContract a) {
     return new AssetIssueCapsule(a).getName().toByteArray();
   }
-
 }

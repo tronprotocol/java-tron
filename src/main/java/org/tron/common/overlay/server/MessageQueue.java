@@ -26,7 +26,7 @@ public class MessageQueue {
 
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
-  private boolean sendMsgFlag = false;
+  private volatile boolean sendMsgFlag = false;
 
   private Thread sendMsgThread;
 
@@ -70,7 +70,7 @@ public class MessageQueue {
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
        }catch (Exception e) {
-         logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+         logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
      }
     });
@@ -102,6 +102,15 @@ public class MessageQueue {
     sendMsgFlag = false;
     if(sendTask != null && !sendTask.isCancelled()){
       sendTask.cancel(false);
+      sendTask = null;
+    }
+    if (sendMsgThread != null){
+      try{
+        sendMsgThread.join(20);
+        sendMsgThread = null;
+      }catch (Exception e){
+        logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
+      }
     }
   }
 
