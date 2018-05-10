@@ -64,6 +64,7 @@ public class PeerClient {
                     logger.error("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
                         future.cause().getMessage());
                     nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
+                    nodeHandler.getNodeStatistics().notifyDisconnect();
                     future.channel().close();
                 }
             });
