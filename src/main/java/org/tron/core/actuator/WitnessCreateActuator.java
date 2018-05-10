@@ -10,6 +10,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -55,6 +56,11 @@ public class WitnessCreateActuator extends AbstractActuator {
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
+
+      if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
+        throw new ContractValidateException("Invalidate url");
+      }
+
       Preconditions.checkArgument(
           this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray()),
           "account[" + readableOwnerAddress + "] not exists");
@@ -70,7 +76,6 @@ public class WitnessCreateActuator extends AbstractActuator {
           accountCapsule.getBalance() >= dbManager.getDynamicPropertiesStore()
               .getAccountUpgradeCost(),
           "balance < AccountUpgradeCost");
-
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
@@ -112,8 +117,5 @@ public class WitnessCreateActuator extends AbstractActuator {
     } catch (BalanceInsufficientException e) {
       throw new RuntimeException(e);
     }
-
-
   }
-
 }

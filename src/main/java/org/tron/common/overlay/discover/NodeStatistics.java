@@ -117,7 +117,9 @@ public class NodeStatistics {
         }
       }
     }
-    int score = discoverReput + 10 * reput - disconnectTimes * 20;
+    int score =
+        discoverReput + 10 * reput - (int) Math.pow(2, disconnectTimes) * (disconnectTimes > 0 ? 10
+            : 0);
     return score > 0 ? score : 0;
   }
 
@@ -193,13 +195,15 @@ public class NodeStatistics {
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
-    disconnectTimes++;
-    persistedReputation = persistedReputation / 2;
   }
 
   public void nodeDisconnectedLocal(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastLocalDisconnectReason = reason;
+  }
+
+  public void notifyDisconnect() {
+    lastDisconnectedTime = System.currentTimeMillis();
     disconnectTimes++;
     persistedReputation = persistedReputation / 2;
   }
