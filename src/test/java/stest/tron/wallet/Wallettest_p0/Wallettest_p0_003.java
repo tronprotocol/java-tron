@@ -61,6 +61,9 @@ public class Wallettest_p0_003 {
         Long end   = blocknow.getBlockHeader().getRawData().getNumber();
         //block.getBlockHeader().
         Long start = 0L ;
+        if( end > 10L ){
+            end = 10L;
+        }
         Optional<GrpcAPI.BlockList> blockListResult =  walletClient.getBlockByLimitNext(start,end);
         if(blockListResult.isPresent()){
             GrpcAPI.BlockList blockList = blockListResult.get();
