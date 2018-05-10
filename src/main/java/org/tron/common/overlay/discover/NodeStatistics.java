@@ -117,7 +117,9 @@ public class NodeStatistics {
         }
       }
     }
-    int score = discoverReput + 10 * reput - disconnectTimes * 20;
+    int score =
+        discoverReput + 10 * reput - (int) Math.pow(2, disconnectTimes) * (disconnectTimes > 0 ? 10
+            : 0);
     return score > 0 ? score : 0;
   }
 
