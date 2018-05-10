@@ -61,6 +61,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
+  private static final byte[] OPERATING_TIME_INTERVAL = "OPERATING_TIME_INTERVAL".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
     super(dbName);
@@ -171,6 +173,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveNonExistentAccountTransferLimit(1_000_000L);
     }
+
+
+    try {
+      this.getOperatingTimeInterval();
+    } catch (IllegalArgumentException e) {
+      this.saveOperatingTimeInterval(10_000L);
+    }
+
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -401,6 +411,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found NON_EXISTENT_ACCOUNT_TRANSFER_MIN"));
   }
+
+
+  public void saveOperatingTimeInterval(long time) {
+    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + time);
+    this.put(OPERATING_TIME_INTERVAL,
+        new BytesCapsule(ByteArray.fromLong(time)));
+  }
+
+  public long getOperatingTimeInterval() {
+    return Optional.ofNullable(this.dbSource.getData(OPERATING_TIME_INTERVAL))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found OPERATING_TIME_INTERVAL"));
+  }
+
+
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
