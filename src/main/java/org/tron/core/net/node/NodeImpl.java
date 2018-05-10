@@ -118,8 +118,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-
-
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
   //public
