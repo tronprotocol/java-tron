@@ -27,7 +27,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-
 public class WitnessUpdateActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
@@ -52,7 +51,6 @@ public class WitnessUpdateActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-
   }
 
   /**
@@ -173,7 +171,6 @@ public class WitnessUpdateActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
       Assert.assertEquals(witnessCapsule.getUrl(), "0");
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -191,7 +188,6 @@ public class WitnessUpdateActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
       Assert.assertEquals(witnessCapsule.getUrl(), url256Bytes);
-      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -218,7 +214,6 @@ public class WitnessUpdateActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-
   }
 
   /**
