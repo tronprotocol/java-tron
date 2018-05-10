@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuator extends AbstractActuator {
 
-
+  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -31,7 +31,7 @@ public class CreateAccountActuator extends AbstractActuator {
 
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
-          System.currentTimeMillis());
+          dbManager.getHeadBlockTimeStamp());
       dbManager.getAccountStore()
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);

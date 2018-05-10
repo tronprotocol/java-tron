@@ -91,10 +91,16 @@ public class WitnessCreateActuator extends AbstractActuator {
   private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toStringUtf8());
+        witnessCreateContract.getOwnerAddress(),
+        0,
+        witnessCreateContract.getUrl().toStringUtf8());
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(witnessCapsule.createDbKey());
+    accountCapsule.setIsWitness(true);
+    this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     try {
       dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),

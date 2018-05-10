@@ -27,8 +27,8 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
-import org.tron.protos.Protocol.Account.Vote;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Vote;
 
 @Slf4j
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -165,6 +165,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getType();
   }
 
+  public ByteString getAccountName() {
+    return this.account.getAccountName();
+  }
 
   public long getBalance() {
     return this.account.getBalance();
@@ -199,6 +202,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void addVotes(ByteString voteAddress, long voteAdd) {
     this.account = this.account.toBuilder()
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
+        .build();
+  }
+
+  public void clearVotes() {
+    this.account = this.account.toBuilder()
+        .clearVotes()
         .build();
   }
 
@@ -345,6 +354,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   }
 
+  public boolean getIsWitness() {
+    return getInstance().getIsWitness();
+  }
+
+  public void setIsWitness(boolean isWitness) {
+    this.account = this.account.toBuilder().setIsWitness(isWitness).build();
+  }
+
+  public boolean getIsCommittee() {
+    return getInstance().getIsCommittee();
+  }
+
+  public void setIsCommittee(boolean isCommittee) {
+    this.account = this.account.toBuilder().setIsCommittee(isCommittee).build();
+  }
+
   //for test only
   public void setFrozen(long frozenBalance, long expireTime) {
     Frozen newFrozen = Frozen.newBuilder()
@@ -363,5 +388,4 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
   }
-
 }
