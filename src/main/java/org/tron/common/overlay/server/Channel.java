@@ -162,7 +162,7 @@ public class Channel {
         if (throwable instanceof ReadTimeoutException){
             logger.error("Read timeout, {}", address);
         }else if(baseThrowable instanceof P2pException){
-            logger.error("type: {}, info: {}, {}", ((P2pException) throwable).getType(), errMsg, address);
+            logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(), errMsg, address);
         }else if (errMsg != null && errMsg.contains("Connection reset by peer")){
             logger.error("{}, {}", errMsg, address);
         }else {
