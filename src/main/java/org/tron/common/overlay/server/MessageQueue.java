@@ -69,8 +69,11 @@ public class MessageQueue {
          }
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+       }catch (InterruptedException e){
+         logger.info("Close send thread, peer {}", ctx.channel().remoteAddress());
+         break;
        }catch (Exception e) {
-         logger.error("send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+         logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
      }
     });
@@ -102,6 +105,16 @@ public class MessageQueue {
     sendMsgFlag = false;
     if(sendTask != null && !sendTask.isCancelled()){
       sendTask.cancel(false);
+      sendTask = null;
+    }
+    if (sendMsgThread != null){
+      try{
+        sendMsgThread.interrupt();
+        sendMsgThread.join(100);
+        sendMsgThread = null;
+      }catch (Exception e){
+        logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
+      }
     }
   }
 
