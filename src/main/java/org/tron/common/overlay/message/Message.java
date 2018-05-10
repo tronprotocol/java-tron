@@ -11,6 +11,8 @@ import org.tron.core.net.message.MessageTypes;
 
 public abstract class Message {
 
+  protected static final Logger logger = LoggerFactory.getLogger("Message");
+
   protected boolean unpacked;
   protected byte[] data;
   protected byte type;
