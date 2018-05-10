@@ -36,16 +36,19 @@ import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.WalletSolidity;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -366,8 +369,15 @@ public class RpcApiService implements Service {
       for (Actuator act : actList) {
         act.validate();
       }
-      trx.setReference(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+      try {
+        BlockCapsule headBlock = dbManager.getHead();
+        long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+        trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
+        trx.setExpiration(expiration);
+      } catch (HeaderNotFound headerNotFound) {
+        headerNotFound.printStackTrace();
+      }
+
       return trx;
     }
 
