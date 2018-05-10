@@ -195,13 +195,15 @@ public class NodeStatistics {
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
-    disconnectTimes++;
-    persistedReputation = persistedReputation / 2;
   }
 
   public void nodeDisconnectedLocal(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastLocalDisconnectReason = reason;
+  }
+
+  public void notifyDisconnect() {
+    lastDisconnectedTime = System.currentTimeMillis();
     disconnectTimes++;
     persistedReputation = persistedReputation / 2;
   }
