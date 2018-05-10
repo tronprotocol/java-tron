@@ -15,7 +15,6 @@
 
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -25,6 +24,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -93,8 +93,16 @@ public class AssetIssueActuator extends AbstractActuator {
       if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
-      Preconditions.checkNotNull(assetIssueContract.getName(), "name is null");
-
+      if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
+        throw new ContractValidateException("Invalidate assetName");
+      }
+      if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
+        throw new ContractValidateException("Invalidate url");
+      }
+      if (!TransactionUtil
+          .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
+        throw new ContractValidateException("Invalidate description");
+      }
       if (assetIssueContract.getTotalSupply() <= 0) {
         throw new ContractValidateException("TotalSupply must greater than 0!");
       }
@@ -121,7 +129,6 @@ public class AssetIssueActuator extends AbstractActuator {
       if (accountCapsule.getBalance() < calcFee()) {
         throw new ContractValidateException("No enough blance for fee!");
       }
-
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
