@@ -102,8 +102,7 @@ public class SyncPool {
     nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
 
     List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n ->  peerClient.connectAsync(n.getNode().getHost(), n.getNode().getPort(),
-                n.getNode().getHexId(), false));
+    newNodes.forEach(n -> peerClient.connectAsync(n, false));
   }
 
   // for test only
@@ -205,6 +204,10 @@ public class SyncPool {
       }
 
       if (handler.getNodeStatistics().getReputation() < 100) {
+        return false;
+      }
+      
+      if (handler.getNodeStatistics().isPenalized()) {
         return false;
       }
 
