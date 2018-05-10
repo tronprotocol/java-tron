@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -112,7 +112,7 @@ public class Wallet {
   }
 
   public static boolean addressValid(byte[] address) {
-    if (ByteUtil.isNullOrZeroArray(address)) {
+    if (ArrayUtils.isEmpty(address)) {
       logger.warn("Warning: Address is empty !!");
       return false;
     }
