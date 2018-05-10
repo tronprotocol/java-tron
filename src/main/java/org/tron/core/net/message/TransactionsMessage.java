@@ -33,13 +33,8 @@ public class TransactionsMessage extends TronMessage {
   }
 
   @Override
-  public byte[] getData() {
-    return data;
-  }
-
-  @Override
   public String toString() {
-    return null;
+    return "trx_size:" + this.transactions.getTransactionsList().size();
   }
 
   @Override
@@ -47,8 +42,4 @@ public class TransactionsMessage extends TronMessage {
     return null;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
 }
