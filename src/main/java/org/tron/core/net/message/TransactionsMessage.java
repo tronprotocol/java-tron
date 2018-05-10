@@ -19,13 +19,9 @@ public class TransactionsMessage extends TronMessage {
   }
 
   public TransactionsMessage(byte[] data) throws Exception{
-    try {
-      this.type = MessageTypes.TRXS.asByte();
-      this.data = data;
-      this.transactions = Protocol.Transactions.parseFrom(data);
-    }catch (Exception e){
-      throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED);
-    }
+    this.type = MessageTypes.TRXS.asByte();
+    this.data = data;
+    this.transactions = Protocol.Transactions.parseFrom(data);
   }
 
   public Protocol.Transactions getTransactions() {
