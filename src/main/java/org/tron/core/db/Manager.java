@@ -467,7 +467,7 @@ public class Manager {
       long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
-      if (now - latestOperationTime >= 10_000L) {
+      if (now - latestOperationTime >= dynamicPropertiesStore.getOperatingTimeInterval()) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
