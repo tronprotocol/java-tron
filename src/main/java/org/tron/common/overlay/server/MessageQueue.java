@@ -26,7 +26,7 @@ public class MessageQueue {
 
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
-  private boolean sendMsgFlag = false;
+  private volatile boolean sendMsgFlag = false;
 
   private Thread sendMsgThread;
 
@@ -69,9 +69,6 @@ public class MessageQueue {
          }
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-       }catch (InterruptedException e){
-         logger.info("Close send thread, peer {}", ctx.channel().remoteAddress());
-         break;
        }catch (Exception e) {
          logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
@@ -109,8 +106,7 @@ public class MessageQueue {
     }
     if (sendMsgThread != null){
       try{
-        sendMsgThread.interrupt();
-        sendMsgThread.join(100);
+        sendMsgThread.join(20);
         sendMsgThread = null;
       }catch (Exception e){
         logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
