@@ -13,6 +13,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
@@ -370,7 +371,13 @@ public class RpcApiService implements Service {
         act.validate();
       }
       try {
-        BlockCapsule headBlock = dbManager.getHead();
+        BlockCapsule headBlock = null;
+        List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
+        if(CollectionUtils.isEmpty(blockList)){
+          throw new HeaderNotFound("latest block not found");
+        }else{
+          headBlock = blockList.get(0);
+        }
         long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
         trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
         trx.setExpiration(expiration);

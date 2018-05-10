@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
@@ -39,10 +40,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.*;
@@ -249,11 +247,11 @@ public class Wallet {
 
 
   public Block getNowBlock() {
-    try {
-      return dbManager.getHead().getInstance();
-    } catch (StoreException e) {
-      logger.info(e.getMessage());
+    List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
+    if(CollectionUtils.isEmpty(blockList)){
       return null;
+    }else{
+      return blockList.get(0).getInstance();
     }
   }
 
