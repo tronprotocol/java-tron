@@ -8,15 +8,19 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -461,7 +465,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    validateTapos(trx);
+//    validateTapos(trx);
 
     validateCommon(trx);
 
@@ -871,7 +875,7 @@ public class Manager {
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    consumeBandwidth(trxCap);
+//    consumeBandwidth(trxCap);
 
     for (Actuator act : actuatorList) {
       act.validate();
@@ -1200,16 +1204,56 @@ public class Manager {
   }
 
   public boolean isTooManyPending() {
-    if( getPendingTransactions().size() + PendingManager.getTmpTransactions().size() > MAX_TRANSACTION_PENDING) {
+    if (getPendingTransactions().size() + PendingManager.getTmpTransactions().size()
+        > MAX_TRANSACTION_PENDING) {
       return true;
     }
     return false;
   }
 
   public boolean isGeneratingBlock() {
-    if(Args.getInstance().isWitness()) {
+    if (Args.getInstance().isWitness()) {
       return witnessController.isGeneratingBlock();
     }
     return false;
+  }
+
+  private static final int VALIDATE_SIGN_THREAD_NUM = 8;
+  private ExecutorService validateSignPool = Executors
+      .newFixedThreadPool(VALIDATE_SIGN_THREAD_NUM, new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          return new Thread(r, "valid-sign-");
+        }
+      });
+
+  private static class ValidateSignTask implements Runnable {
+
+    private TransactionCapsule trx;
+    private CountDownLatch countDownLatch;
+
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch) {
+      this.trx = trx;
+      this.countDownLatch = countDownLatch;
+    }
+
+    @Override
+    public void run() {
+      try {
+        trx.validateSignature();
+        countDownLatch.countDown();
+      } catch (ValidateSignatureException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public synchronized void preValidateTransSign(BlockCapsule block) throws InterruptedException {
+    logger.info("preValidate Transaction Sign");
+    CountDownLatch countDownLatch = new CountDownLatch(block.getTransactions().size());
+    for (TransactionCapsule transaction : block.getTransactions()) {
+      validateSignPool.submit(new ValidateSignTask(transaction, countDownLatch));
+    }
+    countDownLatch.await();
   }
 }

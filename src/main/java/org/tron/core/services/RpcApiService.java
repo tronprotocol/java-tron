@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -96,7 +98,11 @@ public class RpcApiService implements Service {
     try {
       ServerBuilder serverBuilder = ServerBuilder.forPort(port)
           .addService(new DatabaseApi());
-      if (Args.getInstance().isSolidityNode()) {
+      Args args = Args.getInstance();
+      if (args.getRpcThreadNum() > 0) {
+        serverBuilder = serverBuilder.executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+      }
+      if (args.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(new WalletSolidityApi());
       } else {
         serverBuilder = serverBuilder.addService(new WalletApi());

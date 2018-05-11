@@ -164,6 +164,11 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
+  private int rpcThreadNum;
+
+  @Getter
+  @Setter
   private long maintenanceTimeInterval; // (ms)
 
   @Getter
@@ -321,6 +326,9 @@ public class Args {
 
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
+
+    INSTANCE.rpcThreadNum =
+        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread") : 0;
 
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
