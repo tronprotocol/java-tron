@@ -11,6 +11,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 
@@ -53,6 +55,10 @@ public class PendingManager implements AutoCloseable {
             logger.error("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.error("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+            logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+            logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().stream()
@@ -77,6 +83,10 @@ public class PendingManager implements AutoCloseable {
             logger.debug("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.debug("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+              logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+              logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().clear();

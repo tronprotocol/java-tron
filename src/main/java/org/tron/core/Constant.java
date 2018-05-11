@@ -44,4 +44,6 @@ public class Constant {
 
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1024;
+  public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1000; //one day
+  public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1000; //60 seconds
 }
