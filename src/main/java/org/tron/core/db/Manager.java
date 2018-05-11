@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
+import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
@@ -1169,5 +1170,19 @@ public class Manager {
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }
+  }
+
+  public boolean isTooManyPending() {
+    if( getPendingTransactions().size() + PendingManager.getTmpTransactions().size() > MAX_TRANSACTION_PENDING) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isGeneratingBlock() {
+    if(Args.getInstance().isWitness()) {
+      return witnessController.isGeneratingBlock();
+    }
+    return false;
   }
 }

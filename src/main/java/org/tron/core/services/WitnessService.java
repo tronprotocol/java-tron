@@ -215,6 +215,7 @@ public class WitnessService implements Service {
     }
 
     try {
+      controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
       if (DateTime.now().getMillis() - now > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
@@ -234,6 +235,8 @@ public class WitnessService implements Service {
     } catch (TronException e) {
       logger.error(e.getMessage(), e);
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    } finally {
+      controller.setGeneratingBlock(false);
     }
 
   }
