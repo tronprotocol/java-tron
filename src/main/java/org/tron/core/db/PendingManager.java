@@ -2,14 +2,27 @@ package org.tron.core.db;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
+<<<<<<< HEAD
 import org.tron.core.exception.*;
+=======
+import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.ValidateBandwidthException;
+import org.tron.core.exception.ValidateSignatureException;
+>>>>>>> ace7b02ea9985d9393aba704f41dccb2ed3479c9
 
 @Slf4j
 public class PendingManager implements AutoCloseable {
 
-  List<TransactionCapsule> tmpTransactions = new ArrayList<>();
+  @Getter
+  static List<TransactionCapsule> tmpTransactions = new ArrayList<>();
   Manager dbManager;
 
   public PendingManager(Manager db) {
@@ -21,11 +34,16 @@ public class PendingManager implements AutoCloseable {
 
   @Override
   public void close() {
+    AtomicLong recycledPendingTransactionSize = new AtomicLong(0);
     this.tmpTransactions.stream()
         .filter(
             trx -> dbManager.getTransactionStore().get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
+            if (recycledPendingTransactionSize.get() > NodeConstant.MAX_TRANSACTION_PENDING) {
+              return;
+            }
+            recycledPendingTransactionSize.incrementAndGet();
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
             logger.error(e.getMessage(), e);
@@ -50,6 +68,10 @@ public class PendingManager implements AutoCloseable {
             trx -> dbManager.getTransactionStore().get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
+            if (recycledPendingTransactionSize.get() > NodeConstant.MAX_TRANSACTION_PENDING) {
+              return;
+            }
+            recycledPendingTransactionSize.incrementAndGet();
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
             logger.debug(e.getMessage(), e);
@@ -70,5 +92,6 @@ public class PendingManager implements AutoCloseable {
           }
         });
     dbManager.getPoppedTransactions().clear();
+    tmpTransactions.clear();
   }
 }

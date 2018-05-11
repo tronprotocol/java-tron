@@ -384,7 +384,6 @@ public class RpcApiService implements Service {
       } catch (HeaderNotFound headerNotFound) {
         headerNotFound.printStackTrace();
       }
-
       return trx;
     }
 
@@ -403,11 +402,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
         responseObserver.onNext(null);
-
+        logger.debug("ContractValidateException", e.getMessage());
       }
       responseObserver.onCompleted();
     }

@@ -9,16 +9,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.*;
-
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.ReasonCode;
 
 @Component
 @Scope("prototype")
@@ -68,7 +65,11 @@ public class MessageQueue {
            continue;
          }
          Message msg = msgQueue.take();
-         ctx.writeAndFlush(msg.getSendData()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+         ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+           if (!future.isSuccess()) {
+             logger.error("send {} to {} fail", msg.getType(), ctx.channel().remoteAddress());
+           }
+         });
        }catch (Exception e) {
          logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
@@ -131,7 +132,11 @@ public class MessageQueue {
 
     Message msg = messageRoundtrip.getMsg();
 
-    ctx.writeAndFlush(msg.getSendData());
+    ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+      if (!future.isSuccess()) {
+        logger.error("send {} to {} fail", msg.getType(), ctx.channel().remoteAddress());
+      }
+    });
 
     messageRoundtrip.incRetryTimes();
     messageRoundtrip.saveTime();
