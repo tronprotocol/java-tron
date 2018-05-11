@@ -48,5 +48,4 @@ public interface NodeDelegate {
   BlockCapsule getGenesisBlock();
 
   boolean canChainRevoke(long num);
-
 }

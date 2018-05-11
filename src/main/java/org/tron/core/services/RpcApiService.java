@@ -366,8 +366,7 @@ public class RpcApiService implements Service {
       for (Actuator act : actList) {
         act.validate();
       }
-      trx.setReference(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+      trx.setReference(dbManager.getSolidBlockId().getBlockNum(), dbManager.getSolidBlockId().getBytes());
       return trx;
     }
 
@@ -386,11 +385,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
         responseObserver.onNext(null);
-
+        logger.debug("ContractValidateException", e.getMessage());
       }
       responseObserver.onCompleted();
     }
