@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -64,7 +65,11 @@ public class MessageQueue {
            continue;
          }
          Message msg = msgQueue.take();
-         ctx.writeAndFlush(msg.getSendData());
+         ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+           if (!future.isSuccess()) {
+             logger.error("send {} to {} fail", msg.getType(), ctx.channel().remoteAddress());
+           }
+         });
        }catch (Exception e) {
          logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
@@ -127,7 +132,11 @@ public class MessageQueue {
 
     Message msg = messageRoundtrip.getMsg();
 
-    ctx.writeAndFlush(msg.getSendData());
+    ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+      if (!future.isSuccess()) {
+        logger.error("send {} to {} fail", msg.getType(), ctx.channel().remoteAddress());
+      }
+    });
 
     messageRoundtrip.incRetryTimes();
     messageRoundtrip.saveTime();
