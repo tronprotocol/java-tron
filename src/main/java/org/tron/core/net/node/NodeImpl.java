@@ -92,6 +92,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
+  class PriorItem {
+
+    private long count;
+
+    private Sha256Hash hash;
+
+    private long time;
+
+    public PriorItem(Sha256Hash hash, long count) {
+      this.hash = hash;
+      this.count = count;
+      this.time = Time.getCurrentMillis();
+    }
+  }
+
   class InvToSend {
 
     private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
