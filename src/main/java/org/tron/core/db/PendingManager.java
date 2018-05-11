@@ -6,17 +6,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
-<<<<<<< HEAD
-import org.tron.core.exception.*;
-=======
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
->>>>>>> ace7b02ea9985d9393aba704f41dccb2ed3479c9
 
 @Slf4j
 public class PendingManager implements AutoCloseable {
