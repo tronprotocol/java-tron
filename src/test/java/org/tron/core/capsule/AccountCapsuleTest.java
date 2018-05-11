@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Account.Vote;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.AccountType;
 
 public class AccountCapsuleTest {

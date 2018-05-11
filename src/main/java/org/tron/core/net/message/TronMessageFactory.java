@@ -27,7 +27,7 @@ public class TronMessageFactory extends MessageFactory {
   private TronMessage create(byte type, byte[] packed) throws Exception{
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null){
-      throw new RuntimeException(MessageFactory.ERR_NO_SUCH_MSG +  ", type=" + type);
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);
     }
     switch (receivedTypes) {
       case TRX:
