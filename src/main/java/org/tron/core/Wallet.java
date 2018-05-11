@@ -46,6 +46,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.PendingManager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -213,9 +214,20 @@ public class Wallet {
         throw new TooBigTransactionException(
             "too big transaction, the size is " + message.getData().length + " bytes");
       }
-      dbManager.pushTransactions(trx);
-      p2pNode.broadcast(message);
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      if (dbManager.isTooManyPending()) {
+        logger.debug(
+            "Manager is busy, pending transaction count:{}, discard the new coming transaction",
+            (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
+                .size()));
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+      } else if (dbManager.isGeneratingBlock()) {
+        logger.debug("Manager is generating block, discard the new coming transaction");
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+      } else {
+        dbManager.pushTransactions(trx);
+        p2pNode.broadcast(message);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
     } catch (ValidateSignatureException e) {
       logger.error(e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.SIGERROR)

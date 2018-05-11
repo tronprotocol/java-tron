@@ -33,6 +33,10 @@ public class WitnessController {
   @Getter
   private Manager manager;
 
+  @Setter
+  @Getter
+  private boolean isGeneratingBlock;
+
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
     instance.setManager(manager);

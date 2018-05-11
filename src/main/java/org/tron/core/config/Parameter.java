@@ -25,6 +25,7 @@ public interface Parameter {
     long MAX_BLOCKS_ALREADY_FETCHED = 800;
     long MAX_BLOCKS_SYNC_FROM_ONE_PEER = 1000;
     long SYNC_CHAIN_LIMIT_NUM = 500;
+    int MAX_TRANSACTION_PENDING = 2000;
   }
 
   interface NetConstants {
