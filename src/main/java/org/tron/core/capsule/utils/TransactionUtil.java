@@ -69,6 +69,25 @@ public class TransactionUtil {
     return true;
   }
 
+  public static boolean validAssetName(byte[] assetName) {
+    if (ArrayUtils.isEmpty(assetName)) {
+      return false;
+    }
+    if (assetName.length > 32) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : assetName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+  
   public static boolean validUrl(byte[] url) {
     if (ArrayUtils.isEmpty(url)) {
       return false;
