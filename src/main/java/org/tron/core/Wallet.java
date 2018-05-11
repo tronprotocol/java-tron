@@ -55,6 +55,7 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
@@ -259,8 +260,13 @@ public class Wallet {
     } catch (TooBigTransactionException e) {
       logger.debug("transaction error", e);
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("TooBigTransactionException"))
-          .build();
+              .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+              .build();
+    } catch (TransactionExpirationException e) {
+      logger.debug("transaction expired", e);
+      return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
+              .setMessage(ByteString.copyFromUtf8("transaction expired"))
+              .build();
     } catch (Exception e) {
       logger.error("exception caught", e);
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
