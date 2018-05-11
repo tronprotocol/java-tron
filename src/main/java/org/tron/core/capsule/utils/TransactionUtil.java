@@ -87,7 +87,18 @@ public class TransactionUtil {
     }
     return true;
   }
-  
+
+  public static boolean validAssetDescription(byte[] description) {
+    if (ArrayUtils.isEmpty(description)) {
+      return true;   //description can empty
+    }
+    if (description.length > 200) {
+      return false;
+    }
+    // other rules.
+    return true;
+  }
+
   public static boolean validUrl(byte[] url) {
     if (ArrayUtils.isEmpty(url)) {
       return false;
