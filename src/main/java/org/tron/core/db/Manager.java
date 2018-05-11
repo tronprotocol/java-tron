@@ -21,6 +21,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -411,9 +412,15 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
+        logger.error("Tapos failed, different block hash, {}, {} , recent block {}, head block {}",
+                ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash), Hex.toHexString(blockHash),
+                getSolidBlockId().getString());
         throw new TaposException("tapos failed");
       }
     } catch (ItemNotFoundException e) {
+      logger.error("Tapos failed, block not found, {}, {} head block {}",
+              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+              getSolidBlockId().getString());
       throw new TaposException("tapos failed");
     }
   }
