@@ -260,13 +260,13 @@ public class Wallet {
     } catch (TooBigTransactionException e) {
       logger.debug("transaction error", e);
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-              .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
-              .build();
+          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+          .build();
     } catch (TransactionExpirationException e) {
       logger.debug("transaction expired", e);
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-              .setMessage(ByteString.copyFromUtf8("transaction expired"))
-              .build();
+          .setMessage(ByteString.copyFromUtf8("transaction expired"))
+          .build();
     } catch (Exception e) {
       logger.error("exception caught", e);
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -274,7 +274,6 @@ public class Wallet {
           .build();
     }
   }
-
 
   public Block getNowBlock() {
     List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
