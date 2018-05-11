@@ -16,9 +16,6 @@ package org.tron.common.overlay.message;
 
 public abstract class MessageFactory {
 
-  public static String ERR_NO_SUCH_MSG = "No such message";
-  public static String ERR_PARSE_FAILED = "parse message failed";
-
   protected abstract Message create(byte[] data) throws Exception;
 
 }

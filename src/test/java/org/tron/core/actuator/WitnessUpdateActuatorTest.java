@@ -16,7 +16,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -25,30 +24,21 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-
-public class WitnessCreateActuatorTest {
+public class WitnessUpdateActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
   private static final String dbPath = "output_CreateAccountTest";
-
-  private static final String ACCOUNT_NAME_FRIST = "ownerF";
-  private static final String OWNER_ADDRESS_FRIST =
+  private static final String OWNER_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-  private static final String ACCOUNT_NAME_SECOND = "ownerS";
-  private static final String OWNER_ADDRESS_SECOND =
+  private static final String OWNER_ADDRESS_NOTEXIT =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private static final String URL = "https://tron.network";
+  private static final String NewURL = "https://tron.org";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
-  private static final String OWNER_ADDRESS_NOACCOUNT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-  private static final String OWNER_ADDRESS_NALANCENOTSUFFIENT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -61,7 +51,6 @@ public class WitnessCreateActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-
   }
 
   /**
@@ -69,69 +58,45 @@ public class WitnessCreateActuatorTest {
    */
   @Before
   public void createCapsule() {
-    WitnessCapsule ownerCapsule =
-        new WitnessCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-            10_000_000L,
-            URL);
-    AccountCapsule ownerAccountSecondCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-            AccountType.Normal,
-            300_000_000L);
-    AccountCapsule ownerAccountFirstCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME_FRIST),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FRIST)),
-            AccountType.Normal,
-            200_000_000_000L);
+    WitnessCapsule ownerCapsule = new WitnessCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, URL);
 
-    dbManager.getAccountStore()
-        .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
-    dbManager.getAccountStore()
-        .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
-
-    dbManager.getWitnessStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+    dbManager.getWitnessStore().put(ByteArray.fromHexString(OWNER_ADDRESS), ownerCapsule);
+    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIT));
   }
 
   private Any getContract(String address, String url) {
     return Any.pack(
-        Contract.WitnessCreateContract.newBuilder()
+        Contract.WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
-            .setUrl(ByteString.copyFrom(ByteArray.fromString(url)))
+            .setUpdateUrl(ByteString.copyFrom(ByteArray.fromString(url)))
             .build());
   }
 
   private Any getContract(String address, ByteString url) {
     return Any.pack(
-        Contract.WitnessCreateContract.newBuilder()
+        Contract.WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
-            .setUrl(url)
+            .setUpdateUrl(url)
             .build());
   }
 
   /**
-   * first createWitness,result is success.
+   * Update witness,result is success.
    */
   @Test
-  public void firstCreateWitness() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_FRIST, URL), dbManager);
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+  public void rightUpdateWitness() {
+    WitnessUpdateActuator actuator = new WitnessUpdateActuator(getContract(OWNER_ADDRESS, NewURL),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      WitnessCapsule witnessCapsule =
-          dbManager.getWitnessStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
-      Assert.assertEquals(
-          witnessCapsule.getInstance().getUrl(),
-          URL);
+      Assert.assertEquals(witnessCapsule.getUrl(), NewURL);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -140,32 +105,12 @@ public class WitnessCreateActuatorTest {
   }
 
   /**
-   * second createWitness,result is failed,exception is "Witness has existed".
-   */
-  @Test
-  public void secondCreateAccount() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_SECOND, URL), dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertFalse(true);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Witness[" + OWNER_ADDRESS_SECOND + "] has existed", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  /**
-   * use Invalidate Address createWitness,result is failed,exception is "Invalidate address".
+   * use Invalidate Address update witness,result is failed,exception is "Invalidate address".
    */
   @Test
   public void invalidateAddress() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALIATE, URL), dbManager);
+    WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+        getContract(OWNER_ADDRESS_INVALIATE, NewURL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -187,8 +132,8 @@ public class WitnessCreateActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Url cannot empty
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FRIST, ByteString.EMPTY), dbManager);
+      WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+          getContract(OWNER_ADDRESS, ByteString.EMPTY), dbManager);
       actuator.validate();
       actuator.execute(ret);
       fail("Invalidate url");
@@ -203,8 +148,8 @@ public class WitnessCreateActuatorTest {
     String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     //Url length can not greater than 256
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FRIST, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager);
+      WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+          getContract(OWNER_ADDRESS, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager);
       actuator.validate();
       actuator.execute(ret);
       fail("Invalidate url");
@@ -217,35 +162,32 @@ public class WitnessCreateActuatorTest {
 
     // 1 byte url is ok.
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FRIST, "0"), dbManager);
+      WitnessUpdateActuator actuator = new WitnessUpdateActuator(getContract(OWNER_ADDRESS, "0"),
+          dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      WitnessCapsule witnessCapsule =
-          dbManager.getWitnessStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
-      Assert.assertEquals(witnessCapsule.getInstance().getUrl(), "0");
-      Assert.assertTrue(true);
+      Assert.assertEquals(witnessCapsule.getUrl(), "0");
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
     // 256 bytes url is ok.
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FRIST, url256Bytes), dbManager);
+      WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+          getContract(OWNER_ADDRESS, url256Bytes), dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      WitnessCapsule witnessCapsule =
-          dbManager.getWitnessStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+      WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
-      Assert.assertEquals(witnessCapsule.getInstance().getUrl(), url256Bytes);
-      Assert.assertTrue(true);
+      Assert.assertEquals(witnessCapsule.getUrl(), url256Bytes);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -258,9 +200,9 @@ public class WitnessCreateActuatorTest {
    * exists".
    */
   @Test
-  public void noAccount() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_NOACCOUNT, URL), dbManager);
+  public void notExitWitness() {
+    WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+        getContract(OWNER_ADDRESS_NOTEXIT, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -268,38 +210,7 @@ public class WitnessCreateActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-
-  }
-
-  /**
-   * use Account  ,result is failed,exception is "account not exists".
-   */
-  @Test
-  public void balanceNotSufficient() {
-    AccountCapsule balanceNotSufficientCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("balanceNotSufficient"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NALANCENOTSUFFIENT)),
-            AccountType.Normal,
-            50L);
-
-    dbManager.getAccountStore()
-        .put(balanceNotSufficientCapsule.getAddress().toByteArray(), balanceNotSufficientCapsule);
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_NALANCENOTSUFFIENT, URL), dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("witnessAccount  has balance[" + balanceNotSufficientCapsule.getBalance()
-          + "] < MIN_BALANCE[100]");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("balance < AccountUpgradeCost", e.getMessage());
+      Assert.assertEquals("Witness not existed", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

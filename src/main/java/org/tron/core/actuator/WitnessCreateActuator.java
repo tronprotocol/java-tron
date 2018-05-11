@@ -10,6 +10,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -55,6 +56,11 @@ public class WitnessCreateActuator extends AbstractActuator {
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
+
+      if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
+        throw new ContractValidateException("Invalidate url");
+      }
+
       Preconditions.checkArgument(
           this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray()),
           "account[" + readableOwnerAddress + "] not exists");
@@ -70,7 +76,6 @@ public class WitnessCreateActuator extends AbstractActuator {
           accountCapsule.getBalance() >= dbManager.getDynamicPropertiesStore()
               .getAccountUpgradeCost(),
           "balance < AccountUpgradeCost");
-
     } catch (final Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
@@ -91,10 +96,16 @@ public class WitnessCreateActuator extends AbstractActuator {
   private void createWitness(final WitnessCreateContract witnessCreateContract) {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
-        witnessCreateContract.getOwnerAddress(), 0, witnessCreateContract.getUrl().toStringUtf8());
+        witnessCreateContract.getOwnerAddress(),
+        0,
+        witnessCreateContract.getUrl().toStringUtf8());
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(witnessCapsule.createDbKey());
+    accountCapsule.setIsWitness(true);
+    this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     try {
       dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
@@ -106,8 +117,5 @@ public class WitnessCreateActuator extends AbstractActuator {
     } catch (BalanceInsufficientException e) {
       throw new RuntimeException(e);
     }
-
-
   }
-
 }

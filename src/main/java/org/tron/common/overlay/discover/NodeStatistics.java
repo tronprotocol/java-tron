@@ -21,13 +21,13 @@ package org.tron.common.overlay.discover;
 import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.tron.common.overlay.message.ReasonCode;
 
 public class NodeStatistics {
 
   public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000;
+  private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000;
 
   public class StatHandler {
 
@@ -78,6 +78,7 @@ public class NodeStatistics {
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
+  private long firstDisconnectedTime = 0;
 
 
   public NodeStatistics(Node node) {
@@ -92,7 +93,7 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-            min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
+        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 51 : 1);
     discoverReput += min(discoverInNeighbours.get(), 10) * 10;
     discoverReput += min(discoverInFind.get(), 50);
 
@@ -117,7 +118,13 @@ public class NodeStatistics {
         }
       }
     }
-    return discoverReput + 10 * reput;
+    if (disconnectTimes > 20) {
+      return 0;
+    }
+    int score =
+        discoverReput + 10 * reput - (int) Math.pow(2, disconnectTimes) * (disconnectTimes > 0 ? 10
+            : 0);
+    return score > 0 ? score : 0;
   }
 
   public int getReputation() {
@@ -146,7 +153,16 @@ public class NodeStatistics {
       return true;
     }
 
-    return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
+    if (firstDisconnectedTime > 0
+        && (System.currentTimeMillis() - firstDisconnectedTime) > CLEAR_CYCLE_TIME) {
+      tronLastLocalDisconnectReason = null;
+      tronLastRemoteDisconnectReason = null;
+      disconnectTimes = 0;
+      persistedReputation = 0;
+      firstDisconnectedTime = 0;
+    }
+
+    if (tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
@@ -163,26 +179,41 @@ public class NodeStatistics {
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN;
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
+        tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL) {
+      persistedReputation = 0;
+      return true;
+    }
+    return false;
   }
 
   public boolean isPenalized() {
     return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
-            tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-            tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-            tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL;
+        tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
+        tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
+        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL;
   }
 
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
-    disconnectTimes++;
   }
 
   public void nodeDisconnectedLocal(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastLocalDisconnectReason = reason;
+  }
+
+  public void notifyDisconnect() {
+    lastDisconnectedTime = System.currentTimeMillis();
+    if (firstDisconnectedTime <= 0) {
+      firstDisconnectedTime = lastDisconnectedTime;
+    }
     disconnectTimes++;
+    persistedReputation = persistedReputation / 2;
   }
 
   public boolean wasDisconnected() {

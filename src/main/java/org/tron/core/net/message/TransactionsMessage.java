@@ -1,41 +1,36 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.List;
-import org.tron.protos.Protocol.Items;
+
+import org.tron.core.exception.P2pException;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 
 public class TransactionsMessage extends TronMessage {
 
-  private List<Transaction> trxs = new ArrayList<Transaction>();
+  private Protocol.Transactions transactions;
 
   public TransactionsMessage(List<Transaction> trxs) {
-    this.trxs = trxs;
-    unpacked = true;
+    Protocol.Transactions.Builder builder = Protocol.Transactions.newBuilder();
+    trxs.forEach(trx -> builder.addTransactions(trx));
+    this.transactions = builder.build();
     this.type = MessageTypes.TRXS.asByte();
+    this.data = this.transactions.toByteArray();
   }
 
-  public TransactionsMessage(byte[] packed) {
-    super(packed);
+  public TransactionsMessage(byte[] data) throws Exception{
     this.type = MessageTypes.TRXS.asByte();
+    this.data = data;
+    this.transactions = Protocol.Transactions.parseFrom(data);
   }
 
-  public TransactionsMessage() {
-    this.type = MessageTypes.TRXS.asByte();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (data == null) {
-      pack();
-    }
-    return data;
+  public Protocol.Transactions getTransactions() {
+    return transactions;
   }
 
   @Override
   public String toString() {
-    return null;
+    return "trx_size:" + this.transactions.getTransactionsList().size();
   }
 
   @Override
@@ -43,36 +38,4 @@ public class TransactionsMessage extends TronMessage {
     return null;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
-
-  public List<Transaction> getTransactions() {
-    unPack();
-    return trxs;
-  }
-
-  private void pack() {
-    Items.Builder itemsBuilder = Items.newBuilder();
-    itemsBuilder.setType(Items.ItemType.TRX);
-    itemsBuilder.addAllTransactions(this.trxs);
-    this.data = itemsBuilder.build().toByteArray();
-  }
-
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-    try {
-      Items items = Items.parseFrom(data);
-      if (items.getType() == Items.ItemType.TRX) {
-        trxs = items.getTransactionsList();
-      }
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
-
-    unpacked = true;
-  }
 }
