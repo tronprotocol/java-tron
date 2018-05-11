@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BATCH_FETCH_RESPONSE_SIZE;
+import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.dht.Peer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -112,10 +114,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
 
+    public int getSize(PeerConnection peer) {
+      if (send.containsKey(peer)) {
+        return send.get(peer).values().stream().mapToInt(LinkedList::size).sum();
+      }
+
+      return 0;
+    }
+
     void sendInv() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
-            if (key.equals(InventoryType.BLOCK)){
+            if (key.equals(InventoryType.BLOCK)) {
               value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
             }
             peer.sendMessage(new InventoryMessage(value, key));
@@ -125,7 +135,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     void sendFetch() {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
-            if (key.equals(InventoryType.BLOCK)){
+            if (key.equals(InventoryType.BLOCK)) {
               value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
             }
             peer.sendMessage(new FetchInvDataMessage(value, key));
@@ -410,19 +420,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
     InvToSend sendPackage = new InvToSend();
-    AtomicLong batchFecthResponseSize = new AtomicLong(0);
-    advObjToFetch.entrySet().forEach(idToFetch -> {
-      filterActivePeer.stream().filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey()))
-      .findFirst().ifPresent(peer -> {
-        //TODO: don't fetch too much obj from only one peer
+    //AtomicLong batchFecthResponseSize = new AtomicLong(0);
+
+    advObjToFetch.entrySet().forEach(idToFetch ->
+      filterActivePeer.stream()
+          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())
+              && sendPackage.getSize(peer) < NET_MAX_TRX_PER_PEER)
+          .findFirst().ifPresent(peer -> {
         sendPackage.add(idToFetch, peer);
         peer.getAdvObjWeRequested().put(idToFetch.getKey(), Time.getCurrentMillis());
-        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
-          return;
-        }
-      });
-      advObjToFetch.remove(idToFetch.getKey());
-    });
+//        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
+//          return;
+//        }
+        advObjToFetch.remove(idToFetch.getKey());
+      }));
+
     sendPackage.sendFetch();
   }
 
@@ -444,14 +456,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromUs())
         .forEach(peer ->
-          spread.entrySet().stream()
-              .filter(idToSpread ->
-                  !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
-                      && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
-              .forEach(idToSpread -> {
-                peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
-                sendPackage.add(idToSpread, peer);
-              }));
+            spread.entrySet().stream()
+                .filter(idToSpread ->
+                    !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
+                        && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
+                .forEach(idToSpread -> {
+                  peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
+                  sendPackage.add(idToSpread, peer);
+                }));
     sendPackage.sendInv();
   }
 
@@ -640,7 +652,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       processAdvBlock(peer, blkMsg.getBlockCapsule());
       startFetchItem();
     } else if (syncBlockRequested.containsKey(blockId)) {
-      if (!peer.getSyncFlag()){
+      if (!peer.getSyncFlag()) {
         logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
         return;
       }
@@ -757,9 +769,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     isHandleSyncBlockActive = true;
   }
 
-  private void cleanUpSyncPeer(PeerConnection peer, ReasonCode reasonCode){
+  private void cleanUpSyncPeer(PeerConnection peer, ReasonCode reasonCode) {
     peer.setSyncFlag(false);
-    while (!peer.getSyncBlockToFetch().isEmpty()){
+    while (!peer.getSyncBlockToFetch().isEmpty()) {
       BlockId blockId = peer.getSyncBlockToFetch().pop();
       blockWaitToProc.remove(blockId);
       blockJustReceived.remove(blockId);
@@ -786,11 +798,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void  onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg){
+  private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
     logger.info("onHandleTransactionsMessage, size = {}, peer {}",
-            msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
+        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
     msg.getTransactions().getTransactionsList().forEach(transaction ->
-            onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
+        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
@@ -861,7 +873,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         msg = del.getData(hash, type);
       }
 
-      if (msg == null){
+      if (msg == null) {
         logger.error("fetch message {} {} failed.", type, hash);
         peer.sendMessage(new ItemNotFound());
         return;
@@ -870,9 +882,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (type.equals(MessageTypes.BLOCK)) {
         block = ((BlockMessage) msg).getBlockCapsule();
         peer.sendMessage(msg);
-      }else {
-        transactions.add(((TransactionMessage)msg).getTransaction());
-        size += ((TransactionMessage)msg).getTransaction().getSerializedSize();
+      } else {
+        transactions.add(((TransactionMessage) msg).getTransaction());
+        size += ((TransactionMessage) msg).getTransaction().getSerializedSize();
         if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();
@@ -884,7 +896,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (block != null) {
       updateBlockWeBothHave(peer, block);
     }
-    if (transactions.size() > 0){
+    if (transactions.size() > 0) {
       peer.sendMessage(new TransactionsMessage(transactions));
     }
   }
@@ -924,10 +936,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          if (del.getHeadBlockId().getNum() > 0){
-            long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - del.getBlockTime(del.getSolidBlockId());
-            long maxFutureNum =  maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getSolidBlockId().getNum();
-            if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum){
+          if (del.getHeadBlockId().getNum() > 0) {
+            long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - del
+                .getBlockTime(del.getSolidBlockId());
+            long maxFutureNum =
+                maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getSolidBlockId()
+                    .getNum();
+            if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum) {
               throw new TraitorPeerException(
                   "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
                       + " is gt future max num " + maxFutureNum + " from " + peer);
@@ -1094,13 +1109,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockCapsule block) {
-    logger.info("update peer {} block both we have {}", peer.getNode().getHost(), block.getBlockId().getString());
+    logger.info("update peer {} block both we have {}", peer.getNode().getHost(),
+        block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
-    logger.info("update peer {} block both we have, {}", peer.getNode().getHost(), blockId.getString());
+    logger.info("update peer {} block both we have, {}", peer.getNode().getHost(),
+        blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
@@ -1135,7 +1152,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
     peer.setUnfetchSyncNum(0);
-    updateBlockWeBothHave(peer,del.getGenesisBlock());
+    updateBlockWeBothHave(peer, del.getGenesisBlock());
     peer.setBanned(false);
     syncNextBatchChainIds(peer);
   }
@@ -1161,10 +1178,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onConnectPeer(PeerConnection peer) {
-    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()){
+    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()) {
       peer.setTronState(TronState.SYNCING);
       startSyncWithPeer(peer);
-    }else {
+    } else {
       peer.setTronState(TronState.SYNC_COMPLETED);
     }
   }
