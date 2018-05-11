@@ -33,5 +33,6 @@ public interface Parameter {
     long HEAD_NUM_MAX_DELTA = 1000L;
     long HEAD_NUM_CHECK_TIME = 60000L;
     long MAX_INVENTORY_SIZE_IN_MINUTES = 2L;
+    long NET_MAX_TRX_PER_SECOND = 1000L;
   }
 }
