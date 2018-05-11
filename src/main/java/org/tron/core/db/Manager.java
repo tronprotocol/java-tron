@@ -443,12 +443,13 @@ public class Manager {
                       + ", but headBlockTime is " + headBlockTime);
     }
   }
+
   /**
    * push transaction into db.
    */
   public boolean pushTransactions(final TransactionCapsule trx)
-          throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
