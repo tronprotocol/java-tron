@@ -17,13 +17,13 @@
  */
 package org.tron.common.overlay.server;
 
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +35,11 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
-import org.tron.common.overlay.message.*;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.MessageCodec;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -148,8 +152,10 @@ public class Channel {
     public void disconnect(ReasonCode reason) {
         logger.info("Send disconnect to {}, reason:{}", ctx.channel().remoteAddress(), reason);
         getNodeStatistics().nodeDisconnectedLocal(reason);
-        ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
-        close();
+        ctx.writeAndFlush(new DisconnectMessage(reason).getSendData()).addListener(
+            (ChannelFutureListener) future -> {
+                close();
+            });
     }
 
     public void processException(Throwable throwable){
