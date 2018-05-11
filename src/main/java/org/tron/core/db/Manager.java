@@ -412,15 +412,15 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        logger.error("Tapos failed, different block hash, {}, {} , recent block {}, head block {}",
+        logger.error("Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
                 ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash), Hex.toHexString(blockHash),
-                getSolidBlockId().getString());
+                getSolidBlockId().getString(), getHeadBlockId().getString());
         throw new TaposException("tapos failed");
       }
     } catch (ItemNotFoundException e) {
-      logger.error("Tapos failed, block not found, {}, {} head block {}",
+      logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-              getSolidBlockId().getString());
+              getSolidBlockId().getString(), getHeadBlockId().getString());
       throw new TaposException("tapos failed");
     }
   }
