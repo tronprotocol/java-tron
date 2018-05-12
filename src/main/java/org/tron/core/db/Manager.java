@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -451,11 +452,15 @@ public class Manager {
   /**
    * push transaction into db.
    */
+
+  static AtomicLong cnt = new AtomicLong(0);
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
-
+    logger.info("pending transaction size: " + pendingTransactions.size());
+    cnt.getAndIncrement();
+    logger.info("cnt=" + cnt.get());
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
       logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
