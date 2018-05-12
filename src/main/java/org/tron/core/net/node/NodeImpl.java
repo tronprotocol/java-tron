@@ -1,6 +1,5 @@
 package org.tron.core.net.node;
 
-import static org.tron.core.config.Parameter.ChainConstant.BATCH_FETCH_RESPONSE_SIZE;
 import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
@@ -31,14 +30,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.dht.Peer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -92,18 +90,33 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
-  class PriorItem {
+  class PriorItem implements java.lang.Comparable<PriorItem> {
 
+    @Getter
     private long count;
 
+    @Getter
     private Sha256Hash hash;
 
+    @Getter
     private long time;
 
-    public PriorItem(Sha256Hash hash, long count) {
+    @Getter
+    private InventoryType type;
+
+    public PriorItem(Sha256Hash hash, InventoryType type, long count) {
       this.hash = hash;
       this.count = count;
       this.time = Time.getCurrentMillis();
+      this.type = type;
+    }
+
+    @Override
+    public int compareTo(final PriorItem o) {
+      if (this.type != o.getType()) {
+        return this.type == InventoryType.BLOCK ? 1 : 0;
+      }
+      return Long.compare(this.count, o.getCount());
     }
   }
 
