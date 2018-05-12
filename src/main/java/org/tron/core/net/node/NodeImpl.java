@@ -1,6 +1,8 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_PEER;
+import static org.tron.core.config.Parameter.NetConstants.NET_MEGE_CACHE_DURATION_IN_BLOCKS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
@@ -418,7 +420,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
-    }, 30000, ChainConstant.BLOCK_PRODUCED_INTERVAL / 2, TimeUnit.MILLISECONDS);
+    }, 30000, BLOCK_PRODUCED_INTERVAL / 2, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -472,12 +474,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
               && sendPackage.getSize(peer) < NET_MAX_TRX_PER_PEER)
           .findFirst().ifPresent(peer -> {
-        sendPackage.add(idToFetch, peer);
-        peer.getAdvObjWeRequested().put(idToFetch.getHash(), Time.getCurrentMillis());
+            long now = Time.getCurrentMillis();
+        if (idToFetch.getTime() > now - NET_MEGE_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+          sendPackage.add(idToFetch, peer);
+          peer.getAdvObjWeRequested().put(idToFetch.getHash(), now);
+        } else {
+          logger.info("This obj is too late to fetch: " + idToFetch);
+        }
 //        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
 //          return;
 //        }
-        advObjToFetch.remove(idToFetch.getHash());
+        advObjToFetch.remove(idToFetch);
       }));
 
     sendPackage.sendFetch();
@@ -656,7 +663,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            this.advObjToFetch.put(id, msg.getInventoryType());
+            this.advObjToFetch.add(new PriorItem(id, msg.getInventoryType(), Time.getCurrentMillis()));
           }
         }
       }
@@ -844,10 +851,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
-        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
-    msg.getTransactions().getTransactionsList().forEach(transaction ->
-        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
+//    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
+//        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
+//    msg.getTransactions().getTransactionsList().forEach(transaction ->
+//        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
@@ -985,7 +992,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - del
                 .getBlockTime(del.getSolidBlockId());
             long maxFutureNum =
-                maxRemainTime / ChainConstant.BLOCK_PRODUCED_INTERVAL + del.getSolidBlockId()
+                maxRemainTime / BLOCK_PRODUCED_INTERVAL + del.getSolidBlockId()
                     .getNum();
             if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum) {
               throw new TraitorPeerException(
