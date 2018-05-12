@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
@@ -1224,14 +1223,15 @@ public class Manager {
   }
 
   private static final int VALIDATE_SIGN_THREAD_NUM = 8;
-  private ExecutorService validateSignPool = Executors
-      .newFixedThreadPool(VALIDATE_SIGN_THREAD_NUM, new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-          return new Thread(r, "valid-sign-pool");
-        }
-      });
+//  private ExecutorService validateSignPool = Executors
+//      .newFixedThreadPool(VALIDATE_SIGN_THREAD_NUM, new ThreadFactory() {
+//        @Override
+//        public Thread newThread(Runnable r) {
+//          return new Thread(r, "valid-sign-pool");
+//        }
+//      });
 
+  private ExecutorService validateSignPool = Executors.newCachedThreadPool();
   private static class ValidateSignTask implements Runnable {
 
     private TransactionCapsule trx;
