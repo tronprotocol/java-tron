@@ -467,7 +467,7 @@ public class Manager {
 
 //    validateTapos(trx);
 
-    validateCommon(trx);
+//    validateCommon(trx);
 
     //validateFreq(trx);
     synchronized (this) {
@@ -1011,7 +1011,7 @@ public class Manager {
     this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      transactionCapsule.setValidated(block.generatedByMyself);
+//      transactionCapsule.setValidated(block.generatedByMyself);
       processTransaction(transactionCapsule);
     }
 
@@ -1223,7 +1223,7 @@ public class Manager {
       .newFixedThreadPool(VALIDATE_SIGN_THREAD_NUM, new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
-          return new Thread(r, "valid-sign-");
+          return new Thread(r, "valid-sign-pool");
         }
       });
 
@@ -1242,6 +1242,7 @@ public class Manager {
       try {
         trx.validateSignature();
         countDownLatch.countDown();
+        logger.info("validate sign " + Thread.currentThread().getId());
       } catch (ValidateSignatureException e) {
         e.printStackTrace();
       }
