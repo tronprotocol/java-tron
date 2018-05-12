@@ -226,6 +226,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case TRX:
         onHandleTransactionMessage(peer, (TransactionMessage) msg);
+        break;
       case TRXS:
         onHandleTransactionsMessage(peer, (TransactionsMessage) msg);
         break;
