@@ -100,6 +100,7 @@ public class Wallettest_p0_001 {
         Long transactionCnt =  checkclient.getTotalTransaction().getNum();
         Assert.assertTrue(transactionCnt > 0 );
 
+        /*
 
         //getTransactionsFromThis
         Optional<GrpcAPI.TransactionList> transactionResult = walletClient.getTransactionsFromThis(FROM_ADDRESS);
@@ -137,7 +138,7 @@ public class Wallettest_p0_001 {
             });
         }
 
-        
+        */
         //to do
         //walletClient.getTransactionsByTimestamp()
 
