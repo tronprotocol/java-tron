@@ -1016,6 +1016,9 @@ public class Manager {
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
 //      transactionCapsule.setValidated(block.generatedByMyself);
+      if (block.generatedByMyself) {
+        transactionCapsule.setValidated(true);
+      }
       processTransaction(transactionCapsule);
     }
 
@@ -1255,7 +1258,7 @@ public class Manager {
   }
 
   public synchronized void preValidateTransSign(BlockCapsule block) throws InterruptedException {
-    logger.info("preValidate Transaction Sign");
+    logger.info("preValidate Transaction Sign:" + block.getTransactions().size());
     CountDownLatch countDownLatch = new CountDownLatch(block.getTransactions().size());
     for (TransactionCapsule transaction : block.getTransactions()) {
       validateSignPool.submit(new ValidateSignTask(transaction, countDownLatch));
