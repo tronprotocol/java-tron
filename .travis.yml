@@ -20,5 +20,5 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_e5855cb9e09c_key -iv $encrypted_e5855cb9e09c_iv
   -in tron.enc -out tron -d
 
-script:
+after_script:
   - ./gradlew stest
