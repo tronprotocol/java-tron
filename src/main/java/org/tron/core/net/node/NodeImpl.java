@@ -14,7 +14,6 @@ import com.google.common.collect.Lists;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -118,7 +117,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     @Override
     public int compareTo(final PriorItem o) {
       if (!this.type.equals(o.getType())) {
-        return this.type.equals(InventoryType.BLOCK) ? 1 : 0;
+        return this.type.equals(InventoryType.BLOCK) ? -1 : 1;
       }
       return Long.compare(this.count, o.getCount());
     }
@@ -227,7 +226,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
 
-  private final List<PriorItem> advObjToFetch = Collections.synchronizedList(new ArrayList<PriorItem>());
+  private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
 
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
@@ -468,11 +467,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.debug(e.getMessage(), e);
       }
     }
-    advObjToFetch.sort(PriorItem::compareTo);
     InvToSend sendPackage = new InvToSend();
     //AtomicLong batchFecthResponseSize = new AtomicLong(0);
 
-    advObjToFetch.forEach(idToFetch ->
+    advObjToFetch.stream()
+        .sorted(PriorItem::compareTo)
+        .forEach(idToFetch ->
       filterActivePeer.stream()
           .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
               && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
