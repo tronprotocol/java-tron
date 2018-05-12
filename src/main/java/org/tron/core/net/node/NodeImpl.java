@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
@@ -116,8 +117,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     @Override
     public int compareTo(final PriorItem o) {
-      if (this.type != o.getType()) {
-        return this.type == InventoryType.BLOCK ? 1 : 0;
+      if (!this.type.equals(o.getType())) {
+        return this.type.equals(InventoryType.BLOCK) ? 1 : 0;
       }
       return Long.compare(this.count, o.getCount());
     }
@@ -266,6 +267,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .newSingleThreadScheduledExecutor();
 
   private volatile boolean isHandleSyncBlockActive = false;
+
+  private AtomicLong fetchSequenceCounter = new AtomicLong(0L);
 
   //private volatile boolean isHandleSyncBlockRunning = false;
 
@@ -670,7 +673,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            this.advObjToFetch.add(new PriorItem(id, msg.getInventoryType(), Time.getCurrentMillis()));
+            this.advObjToFetch.add(new PriorItem(id, msg.getInventoryType(), fetchSequenceCounter.incrementAndGet()));
           }
         }
       }
@@ -858,10 +861,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-//    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
-//        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
-//    msg.getTransactions().getTransactionsList().forEach(transaction ->
-//        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
+    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
+        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
+    msg.getTransactions().getTransactionsList().forEach(transaction ->
+        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
