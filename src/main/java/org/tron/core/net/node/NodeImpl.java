@@ -500,6 +500,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       });
 
+      if (!isBlockProc[0] && CollectionUtils.isNotEmpty(blockWaitToProc)) {
+        logger.error("can not find peer to sync,waiting sync size:{}", blockWaitToProc.size());
+//        blockJustReceived.addAll(blockWaitToProc);
+//        isHandleSyncBlockActive = true;
+        blockWaitToProc.clear();
+        isFetchSyncActive = true;
+      }
+
       if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
         logger.info("we're already processing too many blocks");
         if (blockWaitToProc.size() >= MAX_BLOCKS_ALREADY_FETCHED) {
