@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -142,6 +143,19 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
 
+    public void add(PriorItem id, PeerConnection peer) {
+      if (send.containsKey(peer) && send.get(peer).containsKey(id.getHash())) {
+        send.get(peer).get(id.getType()).offer(id.getHash());
+      } else if (send.containsKey(peer)) {
+        send.get(peer).put(id.getType(), new LinkedList<>());
+        send.get(peer).get(id.getType()).offer(id.getHash());
+      } else {
+        send.put(peer, new HashMap<>());
+        send.get(peer).put(id.getType(), new LinkedList<>());
+        send.get(peer).get(id.getType()).offer(id.getHash());
+      }
+    }
+
     public int getSize(PeerConnection peer) {
       if (send.containsKey(peer)) {
         return send.get(peer).values().stream().mapToInt(LinkedList::size).sum();
@@ -208,7 +222,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
 
-  private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
+  //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
+
+  private final List<PriorItem> advObjToFetch = Collections.synchronizedList(new ArrayList<PriorItem>());
 
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
@@ -447,20 +463,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.debug(e.getMessage(), e);
       }
     }
+    advObjToFetch.sort(PriorItem::compareTo);
     InvToSend sendPackage = new InvToSend();
     //AtomicLong batchFecthResponseSize = new AtomicLong(0);
 
-    advObjToFetch.entrySet().forEach(idToFetch ->
+    advObjToFetch.forEach(idToFetch ->
       filterActivePeer.stream()
-          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getKey())
+          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
               && sendPackage.getSize(peer) < NET_MAX_TRX_PER_PEER)
           .findFirst().ifPresent(peer -> {
         sendPackage.add(idToFetch, peer);
-        peer.getAdvObjWeRequested().put(idToFetch.getKey(), Time.getCurrentMillis());
+        peer.getAdvObjWeRequested().put(idToFetch.getHash(), Time.getCurrentMillis());
 //        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
 //          return;
 //        }
-        advObjToFetch.remove(idToFetch.getKey());
+        advObjToFetch.remove(idToFetch.getHash());
       }));
 
     sendPackage.sendFetch();
