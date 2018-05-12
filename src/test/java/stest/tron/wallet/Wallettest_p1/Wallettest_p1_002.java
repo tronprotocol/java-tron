@@ -17,9 +17,13 @@ import org.testng.annotations.*;
 import org.testng.Assert;
 
 @Slf4j
-public class Wallettest_p1_001 {
+public class Wallettest_p1_002 {
 
-    private WalletClient walletClient;
+    private WalletClient walletClient1;
+    private WalletClient walletClient2;
+    private WalletClient walletClient3;
+    private WalletClient walletClient4;
+
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -37,16 +41,36 @@ public class Wallettest_p1_001 {
 
     @BeforeClass
     public void beforeClass(){
-        walletClient = new WalletClient(testKey001);
-        walletClient.init(0);
-        walletClient.freezeBalance(1000000000,3);
+        walletClient1 = new WalletClient(testKey001);
+        walletClient1.init(0);
+        walletClient1.freezeBalance(1000000000,3);
+
+        walletClient2 = new WalletClient(testKey002);
+        walletClient2.init(0);
+        walletClient2.freezeBalance(100000000000L,3);
+
+        walletClient3 = new WalletClient(testKey003);
+        walletClient3.init(0);
+        walletClient3.freezeBalance(1000000000,3);
+
+        walletClient4 = new WalletClient(testKey004);
+        walletClient4.init(0);
+        walletClient4.freezeBalance(1000000000,3);
+    }
+
+    @Test(enabled = false)
+    public void checkSendCoin(){
+        for ( long lb = 0; lb <= walletClient2.queryAccount(FROM_ADDRESS).getBalance(); lb++ ) {
+            walletClient2.sendCoin(BACK_ADDRESS,1);
+            logger.info(Long.toString(lb));
+        }
     }
 
     @Test(enabled = false)
     public void checkvote(){
         //1 vote = 1 trx = 1_000_000 drop
         //check vote
-        Optional<GrpcAPI.WitnessList> witnessResult = walletClient.listWitnesses();
+        Optional<GrpcAPI.WitnessList> witnessResult = walletClient1.listWitnesses();
 
         HashMap<String, String> witnesshash =  new HashMap();
 
@@ -58,31 +82,46 @@ public class Wallettest_p1_001 {
             WitnessList.getWitnessesList().forEach(witness -> {
 
                 //input
-                for(long i = 2000000000L;i < 10000000000L; i++)
+                for(int i = 0;i < 100; i++)
                 {
-                    witnesshash.put(Base58.encode58Check(witness.getAddress().toByteArray()), Long.toString(i));
-                    logger.info("vote witness :" + Base58.encode58Check(witness.getAddress().toByteArray()) + ":" + Long.toString(i));
-                    //boolean ret = walletClient.voteWitness(witnesshash);
+
+                    witnesshash.put(Base58.encode58Check(witness.getAddress().toByteArray()), Integer.toString(i));
+                    logger.info("vote witness :" + Base58.encode58Check(witness.getAddress().toByteArray()) + ":" + Integer.toString(i));
+                    boolean ret;
+
+                    logger.info("walletClient1 vote");
+                    ret = walletClient1.voteWitness(witnesshash);
+                    Assert.assertTrue(ret);
+
+                    logger.info("walletClient2 vote");
+                    ret = walletClient2.voteWitness(witnesshash);
+                    Assert.assertTrue(ret);
+
+                    logger.info("walletClient3 vote");
+                    ret = walletClient3.voteWitness(witnesshash);
+                    Assert.assertTrue(ret);
+
+
+                    //logger.info("walletClient4 vote");
+                    //ret = walletClient4.voteWitness(witnesshash);
                     //Assert.assertTrue(ret);
-                    //witnesshash.clear();
-                    break;
+
+                    witnesshash.clear();
+
                 }
-                //boolean ret = walletClient.voteWitness(witnesshash);
-                //Assert.assertTrue(ret);
                 //witnesshash.put(Base58.encode58Check(witness.getAddress().toByteArray()), "12");
                 //votecount
                 //beforehash.put(Base58.encode58Check(witness.getAddress().toByteArray()),witness.getVoteCount());
-
                 //
                 //logger.info(Base58.encode58Check(witness.getAddress().toByteArray()));
                 //logger.info(Long.toString(witness.getVoteCount()));
             });
 
-            boolean ret = walletClient.voteWitness(witnesshash);
-            Assert.assertTrue(ret);
+            //boolean ret = walletClient.voteWitness(witnesshash);
+            //Assert.assertTrue(ret);
 
             //get list again
-            witnessResult = walletClient.listWitnesses();
+            witnessResult = walletClient1.listWitnesses();
 
             if (witnessResult.isPresent()) {
                 WitnessList = witnessResult.get();

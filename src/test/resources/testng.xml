@@ -4,7 +4,7 @@
 <suite name="demo suite" >
     <test name="demoTests">
         <packages>
-            <package name="stest.tron.wallet.*">
+            <package name="stest.tron.wallet.Wallettest_p0.*">
             </package>
         </packages>
     </test>
