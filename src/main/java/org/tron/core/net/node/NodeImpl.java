@@ -1,8 +1,8 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_PEER;
-import static org.tron.core.config.Parameter.NetConstants.NET_MEGE_CACHE_DURATION_IN_BLOCKS;
+import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
+import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
@@ -472,10 +472,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advObjToFetch.forEach(idToFetch ->
       filterActivePeer.stream()
           .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
-              && sendPackage.getSize(peer) < NET_MAX_TRX_PER_PEER)
+              && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
           .findFirst().ifPresent(peer -> {
             long now = Time.getCurrentMillis();
-        if (idToFetch.getTime() > now - NET_MEGE_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+        if (idToFetch.getTime() > now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
           sendPackage.add(idToFetch, peer);
           peer.getAdvObjWeRequested().put(idToFetch.getHash(), now);
         } else {
@@ -659,7 +659,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (!spreaded[0]
           && !peer.isNeedSyncFromPeer()
           && !peer.isNeedSyncFromUs()) {
-        //TODO: avoid TRX flood attack here.
+
+        //avoid TRX flood attack here.
+        if (msg.getType().equals(InventoryType.TRX)
+            && peer.isAdvInvFull()) {
+          logger.info("A peer is flooding us, stop handle inv, the peer is:" + peer);
+          return;
+        }
+
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {

@@ -1,5 +1,9 @@
 package org.tron.core.net.peer;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
+import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
+
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +25,6 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NetConstants;
 
 @Slf4j
 @Component
@@ -142,7 +145,7 @@ public class PeerConnection extends Channel {
 
   public void cleanInvGarbage() {
     long oldestTimestamp =
-        Time.getCurrentMillis() - NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
+        Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 
     Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
 
@@ -162,6 +165,11 @@ public class PeerConnection extends Channel {
         iterator.remove();
       }
     }
+  }
+
+  public boolean isAdvInvFull() {
+    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND
+        + (MAX_INVENTORY_SIZE_IN_MINUTES + 1) * 60 / BLOCK_PRODUCED_INTERVAL;
   }
 
   public boolean isBanned() {
