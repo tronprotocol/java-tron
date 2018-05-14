@@ -53,6 +53,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block time error");
     }
     try {
+      dbManager.preValidateTransactionSign(block);
       dbManager.pushBlock(block);
       if (!syncMode) {
         List<TransactionCapsule> trx = null;
@@ -74,6 +75,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception");
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
+    } catch (InterruptedException e) {
+      throw new BadBlockException("pre validate signature exception");
     }
   }
 

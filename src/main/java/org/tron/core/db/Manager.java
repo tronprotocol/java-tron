@@ -8,15 +8,22 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -125,6 +132,8 @@ public class Manager {
   @Getter
   @Setter
   private WitnessController witnessController;
+
+  private ExecutorService validateSignService;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -276,6 +285,9 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
+
+    validateSignService = Executors
+        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
   }
 
   public BlockId getGenesisBlockId() {
@@ -447,11 +459,11 @@ public class Manager {
   /**
    * push transaction into db.
    */
+
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
-
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
       logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
@@ -1007,7 +1019,9 @@ public class Manager {
     this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      transactionCapsule.setValidated(block.generatedByMyself);
+      if (block.generatedByMyself) {
+        transactionCapsule.setValidated(true);
+      }
       processTransaction(transactionCapsule);
     }
 
@@ -1200,16 +1214,58 @@ public class Manager {
   }
 
   public boolean isTooManyPending() {
-    if( getPendingTransactions().size() + PendingManager.getTmpTransactions().size() > MAX_TRANSACTION_PENDING) {
+    if (getPendingTransactions().size() + PendingManager.getTmpTransactions().size()
+        > MAX_TRANSACTION_PENDING) {
       return true;
     }
     return false;
   }
 
   public boolean isGeneratingBlock() {
-    if(Args.getInstance().isWitness()) {
+    if (Args.getInstance().isWitness()) {
       return witnessController.isGeneratingBlock();
     }
     return false;
+  }
+
+  private static class ValidateSignTask implements Callable<Boolean> {
+    private TransactionCapsule trx;
+    private CountDownLatch countDownLatch;
+
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch) {
+      this.trx = trx;
+      this.countDownLatch = countDownLatch;
+    }
+
+    @Override
+    public Boolean call() throws ValidateSignatureException {
+      trx.validateSignature();
+      countDownLatch.countDown();
+      return true;
+    }
+  }
+
+  public synchronized void preValidateTransactionSign(BlockCapsule block)
+      throws InterruptedException, ValidateSignatureException {
+    logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
+        + ",num:" + block.getNum());
+    int transSize = block.getTransactions().size();
+    CountDownLatch countDownLatch = new CountDownLatch(transSize);
+    List<Future<Boolean>> futures = new ArrayList<>(transSize);
+
+    for (TransactionCapsule transaction : block.getTransactions()) {
+      Future<Boolean> future = validateSignService
+          .submit(new ValidateSignTask(transaction, countDownLatch));
+      futures.add(future);
+    }
+    countDownLatch.await();
+
+    for (Future<Boolean> future : futures) {
+      try {
+        future.get();
+      } catch (ExecutionException e) {
+        throw new ValidateSignatureException(e.getCause().getMessage());
+      }
+    }
   }
 }
