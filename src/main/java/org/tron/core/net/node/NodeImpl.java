@@ -570,9 +570,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       if (!isBlockProc[0] && CollectionUtils.isNotEmpty(blockWaitToProc)) {
         logger.error("can not find peer to sync,waiting sync size:{}", blockWaitToProc.size());
-//        blockJustReceived.addAll(blockWaitToProc);
-//        isHandleSyncBlockActive = true;
-        blockWaitToProc.clear();
         isFetchSyncActive = true;
       }
 
