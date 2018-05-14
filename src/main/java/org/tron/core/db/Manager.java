@@ -2,11 +2,13 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
+import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,12 +17,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
-import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -30,6 +32,7 @@ import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
+import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -55,6 +58,8 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -411,10 +416,31 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
+        logger.error("Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
+                ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash), Hex.toHexString(blockHash),
+                getSolidBlockId().getString(), getHeadBlockId().getString());
         throw new TaposException("tapos failed");
       }
     } catch (ItemNotFoundException e) {
+      logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
+              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+              getSolidBlockId().getString(), getHeadBlockId().getString());
       throw new TaposException("tapos failed");
+    }
+  }
+
+  void validateCommon(TransactionCapsule transactionCapsule) throws TransactionExpirationException, TooBigTransactionException {
+    if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
+      throw new TooBigTransactionException(
+              "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
+    }
+    long transactionExpiration = transactionCapsule.getExpiration();
+    long headBlockTime = getHeadBlockTimeStamp();
+    if (transactionExpiration <= headBlockTime ||
+            transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
+      throw new TransactionExpirationException(
+              "transaction expiration, transaction expiration time is " + transactionExpiration
+                      + ", but headBlockTime is " + headBlockTime);
     }
   }
 
@@ -423,7 +449,7 @@ public class Manager {
    */
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException {
+      ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
@@ -436,6 +462,8 @@ public class Manager {
     }
 
     validateTapos(trx);
+
+    validateCommon(trx);
 
     //validateFreq(trx);
     synchronized (this) {
@@ -1169,5 +1197,19 @@ public class Manager {
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }
+  }
+
+  public boolean isTooManyPending() {
+    if( getPendingTransactions().size() + PendingManager.getTmpTransactions().size() > MAX_TRANSACTION_PENDING) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isGeneratingBlock() {
+    if(Args.getInstance().isWitness()) {
+      return witnessController.isGeneratingBlock();
+    }
+    return false;
   }
 }

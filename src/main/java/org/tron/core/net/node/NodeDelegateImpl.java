@@ -24,6 +24,8 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
@@ -96,6 +98,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.error("dup trans");
     } catch (TaposException e) {
       logger.error("tapos error");
+    } catch (TooBigTransactionException e) {
+      logger.error("too big transaction");
+    } catch (TransactionExpirationException e) {
+      logger.error("expiration transaction");
     }
   }
 
