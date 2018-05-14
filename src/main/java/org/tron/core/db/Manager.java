@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -461,14 +460,10 @@ public class Manager {
    * push transaction into db.
    */
 
-  static AtomicLong cnt = new AtomicLong(0);
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
-    logger.info("pending transaction size: " + pendingTransactions.size());
-    cnt.getAndIncrement();
-    logger.info("cnt=" + cnt.get());
     if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
       logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
@@ -478,9 +473,9 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-//    validateTapos(trx);
+    validateTapos(trx);
 
-//    validateCommon(trx);
+    validateCommon(trx);
 
     //validateFreq(trx);
     synchronized (this) {
@@ -888,7 +883,7 @@ public class Manager {
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-//    consumeBandwidth(trxCap);
+    consumeBandwidth(trxCap);
 
     for (Actuator act : actuatorList) {
       act.validate();
@@ -1252,7 +1247,8 @@ public class Manager {
 
   public synchronized void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
-    logger.info("preValidate Transaction Sign:" + block.getTransactions().size());
+    logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
+        + ",num:" + block.getNum());
     int transSize = block.getTransactions().size();
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
