@@ -75,6 +75,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception");
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception");
+    } catch (InterruptedException e) {
+      throw new BadBlockException("pre validate signature exception");
     }
   }
 
