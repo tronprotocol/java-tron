@@ -771,6 +771,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //reSync
         logger.info("get a unlink block ,so start sync!");
         startSyncWithPeer(peer);
+      } catch (Exception e) {
+        logger.error("broadcast fail", e);
       }
     }
   }

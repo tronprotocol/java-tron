@@ -1,13 +1,12 @@
 package org.tron.core.net.message;
 
+import java.util.List;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.BlockInventory.Type;
 
-import java.util.List;
-
 public class SyncBlockChainMessage extends BlockInventoryMessage {
 
-  public SyncBlockChainMessage(byte[] packed) {
+  public SyncBlockChainMessage(byte[] packed) throws Exception {
     super(packed);
     this.type = MessageTypes.SYNC_BLOCK_CHAIN.asByte();
   }

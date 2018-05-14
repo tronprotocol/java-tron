@@ -66,17 +66,17 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
 
     } catch (ValidateBandwidthException e) {
-      throw new BadBlockException("Validate Bandwidth exception");
+      throw new BadBlockException("Validate Bandwidth exception," + e.getMessage());
     } catch (ValidateScheduleException e) {
-      throw new BadBlockException("validate schedule exception");
+      throw new BadBlockException("validate schedule exception," + e.getMessage());
     } catch (ValidateSignatureException e) {
-      throw new BadBlockException("validate signature exception");
+      throw new BadBlockException("validate signature exception," + e.getMessage());
     } catch (ContractValidateException e) {
-      throw new BadBlockException("ContractValidate exception");
+      throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
-      throw new BadBlockException("Contract Exectute exception");
+      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
     } catch (InterruptedException e) {
-      throw new BadBlockException("pre validate signature exception");
+      throw new BadBlockException("pre validate signature exception," + e.getMessage());
     }
   }
 
@@ -234,10 +234,16 @@ public class NodeDelegateImpl implements NodeDelegate {
           logger.debug(e.getMessage());
         } catch (ItemNotFoundException e) {
           logger.debug(e.getMessage());
+        } catch (Exception e) {
+          logger.error("new BlockMessage fail", e);
         }
       case TRX:
-        return new TransactionMessage(
-            dbManager.getTransactionStore().get(hash.getBytes()).getData());
+        try {
+          return new TransactionMessage(
+              dbManager.getTransactionStore().get(hash.getBytes()).getData());
+        } catch (Exception e) {
+          logger.error("new TransactionMessage fail", e);
+        }
       default:
         logger.info("message type not block or trx.");
         return null;

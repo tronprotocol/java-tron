@@ -4,7 +4,7 @@ import org.tron.common.overlay.message.Message;
 
 public class MessageRegistry {
 
-  public static Message getMessageByKey(String key, byte[] content) {
+  public static Message getMessageByKey(String key, byte[] content) throws Exception {
 
     switch (MessageTypes.valueOf(key)) {
       case BLOCK:
