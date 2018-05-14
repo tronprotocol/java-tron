@@ -35,8 +35,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       long now = dbManager.getHeadBlockTimeStamp();
       long duration = freezeBalanceContract.getFrozenDuration() * 24 * 3600 * 1000L;
 
-      long newBandwidth = accountCapsule.getBandwidth()
-          + calculateBandwidth(freezeBalanceContract);
+      long newBandwidth = calculateBandwidth(accountCapsule.getBandwidth(), freezeBalanceContract);
       long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
       long nowFrozenBalance = accountCapsule.getFrozenBalance();
@@ -55,7 +54,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .setBalance(newBalance)
             .setBandwidth(newBandwidth)
             .build());
-      }else {
+      } else {
         assert frozenCount == 1;
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .setFrozen(0, newFrozen)
@@ -76,11 +75,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
     return true;
   }
 
-  private long calculateBandwidth(FreezeBalanceContract freezeBalanceContract) {
+  private long calculateBandwidth(long oldValue, FreezeBalanceContract freezeBalanceContract) {
 
-    return freezeBalanceContract.getFrozenBalance()
-        * freezeBalanceContract.getFrozenDuration()
-        * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday();
+    try {
+      return Math.addExact(oldValue, Math.multiplyExact(freezeBalanceContract.getFrozenBalance(),
+          Math.multiplyExact(freezeBalanceContract.getFrozenDuration(),
+              dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday())));
+    }catch (ArithmeticException e){
+      return Long.MAX_VALUE;
+    }
   }
 
   @Override
