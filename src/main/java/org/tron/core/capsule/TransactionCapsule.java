@@ -44,6 +44,7 @@ import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
@@ -271,6 +272,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case UnfreezeBalanceContract:
           owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
+          break;
+        case UnfreezeAssetContract:
+          owner = contractParameter.unpack(UnfreezeAssetContract.class).getOwnerAddress();
           break;
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
