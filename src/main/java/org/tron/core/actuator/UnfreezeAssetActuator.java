@@ -91,14 +91,14 @@ public class UnfreezeAssetActuator extends AbstractActuator {
           .get(ownerAddress.toByteArray());
 
       if (accountCapsule.getFrozenSupplyCount() <= 0) {
-        throw new ContractValidateException("no frozenSupplyBalance");
+        throw new ContractValidateException("no frozen supply balance");
       }
 
       long now = dbManager.getHeadBlockTimeStamp();
       long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
           .filter(frozen -> frozen.getExpireTime() <= now).count();
       if (allowedUnfreezeCount <= 0) {
-        throw new ContractValidateException("It's not time to unfreeze.");
+        throw new ContractValidateException("It's not time to unfreeze asset supply");
       }
 
 
