@@ -213,8 +213,9 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
       Message message = new TransactionMessage(signaturedTransaction);
-      if (dbManager.isTooManyPending()) {
-        logger.info(
+      if (
+          dbManager.isTooManyPending()) {
+        logger.debug(
             "Manager is busy, pending transaction count:{}, discard the new coming transaction",
             (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
                 .size()));
@@ -258,12 +259,12 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error("transaction error", e);
+      logger.debug("transaction error", e);
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error("transaction expired", e);
+      logger.debug("transaction expired", e);
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
