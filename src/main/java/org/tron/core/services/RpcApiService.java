@@ -56,6 +56,7 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
@@ -401,6 +402,19 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void unfreezeAsset(UnfreezeAssetContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
         logger.debug("ContractValidateException", e.getMessage());
