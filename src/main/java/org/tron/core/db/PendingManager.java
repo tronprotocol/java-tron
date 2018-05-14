@@ -2,15 +2,15 @@ package org.tron.core.db;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 
@@ -30,16 +30,11 @@ public class PendingManager implements AutoCloseable {
 
   @Override
   public void close() {
-    AtomicLong recycledPendingTransactionSize = new AtomicLong(0);
     this.tmpTransactions.stream()
         .filter(
             trx -> dbManager.getTransactionStore().get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
-            if (recycledPendingTransactionSize.get() > NodeConstant.MAX_TRANSACTION_PENDING) {
-              return;
-            }
-            recycledPendingTransactionSize.incrementAndGet();
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
             logger.error(e.getMessage(), e);
@@ -53,6 +48,10 @@ public class PendingManager implements AutoCloseable {
             logger.error("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.error("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+            logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+            logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().stream()
@@ -60,10 +59,6 @@ public class PendingManager implements AutoCloseable {
             trx -> dbManager.getTransactionStore().get(trx.getTransactionId().getBytes()) == null)
         .forEach(trx -> {
           try {
-            if (recycledPendingTransactionSize.get() > NodeConstant.MAX_TRANSACTION_PENDING) {
-              return;
-            }
-            recycledPendingTransactionSize.incrementAndGet();
             dbManager.pushTransactions(trx);
           } catch (ValidateSignatureException e) {
             logger.debug(e.getMessage(), e);
@@ -77,6 +72,10 @@ public class PendingManager implements AutoCloseable {
             logger.debug("pending manager: dup trans", e);
           } catch (TaposException e) {
             logger.debug("pending manager: tapos exception", e);
+          } catch (TooBigTransactionException e) {
+              logger.error("too big transaction");
+          } catch (TransactionExpirationException e) {
+              logger.error("expiration transaction");
           }
         });
     dbManager.getPoppedTransactions().clear();
