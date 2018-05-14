@@ -333,7 +333,8 @@ public class Args {
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
     INSTANCE.rpcThreadNum =
-        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread") : 0;
+        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
+            : Runtime.getRuntime().availableProcessors() / 2;
 
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
