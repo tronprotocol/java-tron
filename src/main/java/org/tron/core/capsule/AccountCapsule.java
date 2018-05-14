@@ -353,6 +353,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenSupplyBalance[0];
   }
 
+  public ByteString getAssetIssuedName() {
+    return getInstance().getAssetIssuedName();
+  }
+
+  public void setAssetIssuedName(ByteString assetIssuedName) {
+    this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
+  }
+
   public long getAllowance() {
     return getInstance().getAllowance();
   }
