@@ -18,6 +18,8 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Iterator;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -31,6 +33,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.AssetIssueContract.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -103,6 +106,12 @@ public class AssetIssueActuator extends AbstractActuator {
           .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
         throw new ContractValidateException("Invalidate description");
       }
+
+      if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
+          != null) {
+        throw new ContractValidateException("Token exists");
+      }
+
       if (assetIssueContract.getTotalSupply() <= 0) {
         throw new ContractValidateException("TotalSupply must greater than 0!");
       }
@@ -115,15 +124,39 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Num must greater than 0!");
       }
 
+      if (assetIssueContract.getFrozenSupplyCount()
+          > this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber()) {
+        throw new ContractValidateException("Frozen supply list length is too long");
+      }
+
+      long remainSupply = assetIssueContract.getTotalSupply();
+      long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
+      long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
+      List<Frozen> frozenList = assetIssueContract.getFrozenSupplyList();
+      Iterator<Frozen> iterator = frozenList.iterator();
+
+      while (iterator.hasNext()) {
+        Frozen next = iterator.next();
+        if (next.getFrozenAmount() > remainSupply) {
+          throw new ContractValidateException("Frozen supply cannot exceed total supply");
+        }
+        if (!(next.getFrozenDays() >= minFrozenSupplyTime
+            && next.getFrozenDays() <= maxFrozenSupplyTime)) {
+          throw new ContractValidateException(
+              "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
+                  + "and more than " + minFrozenSupplyTime + " days");
+        }
+        remainSupply -= next.getFrozenAmount();
+      }
+
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
       if (accountCapsule == null) {
         throw new ContractValidateException("Account not exists");
       }
 
-      if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-          != null) {
-        throw new ContractValidateException("Token exists");
+      if (accountCapsule.getFrozenSupplyCount() != 0) {
+        throw new ContractValidateException("An account can only issue one asset at a time");
       }
 
       if (accountCapsule.getBalance() < calcFee()) {
