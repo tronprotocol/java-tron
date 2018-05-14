@@ -213,8 +213,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
       Message message = new TransactionMessage(signaturedTransaction);
-      if (
-          dbManager.isTooManyPending()) {
+      if (dbManager.isTooManyPending()) {
         logger.debug(
             "Manager is busy, pending transaction count:{}, discard the new coming transaction",
             (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
