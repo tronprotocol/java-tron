@@ -213,10 +213,7 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(TransactionIndex.OWNERS, address),
-            queryOptions(
-                orderBy(descending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+            equal(TransactionIndex.OWNERS, address))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -229,10 +226,8 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(TransactionIndex.TOS, address),
-            queryOptions(
-                orderBy(descending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+            equal(TransactionIndex.TOS, address)
+        )) {
       return ImmutableList.copyOf(resultSet);
     }
   }
@@ -247,10 +242,7 @@ public class StoreAPI {
         index.retrieve(
             or(
                 equal(TransactionIndex.OWNERS, accountAddress),
-                equal(TransactionIndex.TOS, accountAddress)),
-            queryOptions(
-                orderBy(descending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+                equal(TransactionIndex.TOS, accountAddress)))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
