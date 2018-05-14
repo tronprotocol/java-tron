@@ -18,6 +18,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,8 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.AssetIssueContract.Frozen;
+import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -66,8 +68,28 @@ public class AssetIssueActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
 
+      List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
+      Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
+      long remainSupply = assetIssueContract.getTotalSupply();
+      List<Frozen> frozenList = new ArrayList<>();
+      long now = dbManager.getHeadBlockTimeStamp();
+
+      while (iterator.hasNext()) {
+        FrozenSupply next = iterator.next();
+        long expireTime = now + next.getFrozenDays() * 86_400_000;
+        Frozen newFrozen = Frozen.newBuilder()
+            .setFrozenBalance(next.getFrozenAmount())
+            .setExpireTime(expireTime)
+            .build();
+        frozenList.add(newFrozen);
+        remainSupply -= next.getFrozenAmount();
+      }
+
+      assert remainSupply > 0;
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
-          assetIssueContract.getTotalSupply());
+          remainSupply);
+      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+          .addAllFrozenSupply(frozenList).build());
 
       dbManager.getAccountStore()
           .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
@@ -132,11 +154,11 @@ public class AssetIssueActuator extends AbstractActuator {
       long remainSupply = assetIssueContract.getTotalSupply();
       long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
       long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
-      List<Frozen> frozenList = assetIssueContract.getFrozenSupplyList();
-      Iterator<Frozen> iterator = frozenList.iterator();
+      List<FrozenSupply> frozenList = assetIssueContract.getFrozenSupplyList();
+      Iterator<FrozenSupply> iterator = frozenList.iterator();
 
       while (iterator.hasNext()) {
-        Frozen next = iterator.next();
+        FrozenSupply next = iterator.next();
         if (next.getFrozenAmount() > remainSupply) {
           throw new ContractValidateException("Frozen supply cannot exceed total supply");
         }

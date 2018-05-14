@@ -329,6 +329,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getFrozenList();
   }
 
+  public long getFrozenBalance() {
+    List<Frozen> frozenList = getFrozenList();
+    final long[] frozenBalance = {0};
+    frozenList.forEach(frozen -> frozenBalance[0] = Long.sum(frozenBalance[0],
+        frozen.getFrozenBalance()));
+    return frozenBalance[0];
+  }
+
   public int getFrozenSupplyCount() {
     return getInstance().getFrozenSupplyCount();
   }
@@ -337,12 +345,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getFrozenSupplyList();
   }
 
-  public long getFrozenBalance() {
-    List<Frozen> frozenList = getFrozenList();
-    final long[] frozenBalance = {0};
-    frozenList.forEach(frozen -> frozenBalance[0] = Long.sum(frozenBalance[0],
+  public long getFrozenSupplyBalance() {
+    List<Frozen> frozenSupplyList = getFrozenSupplyList();
+    final long[] frozenSupplyBalance = {0};
+    frozenSupplyList.forEach(frozen -> frozenSupplyBalance[0] = Long.sum(frozenSupplyBalance[0],
         frozen.getFrozenBalance()));
-    return frozenBalance[0];
+    return frozenSupplyBalance[0];
   }
 
   public long getAllowance() {
