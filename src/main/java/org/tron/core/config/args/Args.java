@@ -169,6 +169,11 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
+  private int validateSignThreadNum;
+
+  @Getter
+  @Setter
   private long maintenanceTimeInterval; // (ms)
 
   @Getter
@@ -343,6 +348,10 @@ public class Args {
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
     }
+
+    INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors();
+
   }
 
 

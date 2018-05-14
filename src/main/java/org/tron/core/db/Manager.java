@@ -8,15 +8,19 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
@@ -129,6 +133,8 @@ public class Manager {
   @Getter
   @Setter
   private WitnessController witnessController;
+
+  private ExecutorService validateSignService;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -280,6 +286,9 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
+
+    validateSignService = Executors
+        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
   }
 
   public BlockId getGenesisBlockId() {
@@ -1015,7 +1024,6 @@ public class Manager {
     this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-//      transactionCapsule.setValidated(block.generatedByMyself);
       if (block.generatedByMyself) {
         transactionCapsule.setValidated(true);
       }
@@ -1225,18 +1233,7 @@ public class Manager {
     return false;
   }
 
-  private static final int VALIDATE_SIGN_THREAD_NUM = 8;
-//  private ExecutorService validateSignPool = Executors
-//      .newFixedThreadPool(VALIDATE_SIGN_THREAD_NUM, new ThreadFactory() {
-//        @Override
-//        public Thread newThread(Runnable r) {
-//          return new Thread(r, "valid-sign-pool");
-//        }
-//      });
-
-  private ExecutorService validateSignPool = Executors.newCachedThreadPool();
-  private static class ValidateSignTask implements Runnable {
-
+  private static class ValidateSignTask implements Callable<Boolean> {
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
 
@@ -1246,23 +1243,33 @@ public class Manager {
     }
 
     @Override
-    public void run() {
-      try {
-        trx.validateSignature();
-        countDownLatch.countDown();
-        logger.info("validate sign " + Thread.currentThread().getId());
-      } catch (ValidateSignatureException e) {
-        e.printStackTrace();
-      }
+    public Boolean call() throws ValidateSignatureException {
+      trx.validateSignature();
+      countDownLatch.countDown();
+      return true;
     }
   }
 
-  public synchronized void preValidateTransSign(BlockCapsule block) throws InterruptedException {
+  public synchronized void preValidateTransactionSign(BlockCapsule block)
+      throws InterruptedException, ValidateSignatureException {
     logger.info("preValidate Transaction Sign:" + block.getTransactions().size());
-    CountDownLatch countDownLatch = new CountDownLatch(block.getTransactions().size());
+    int transSize = block.getTransactions().size();
+    CountDownLatch countDownLatch = new CountDownLatch(transSize);
+    List<Future<Boolean>> futures = new ArrayList<>(transSize);
+
     for (TransactionCapsule transaction : block.getTransactions()) {
-      validateSignPool.submit(new ValidateSignTask(transaction, countDownLatch));
+      Future<Boolean> future = validateSignService
+          .submit(new ValidateSignTask(transaction, countDownLatch));
+      futures.add(future);
     }
     countDownLatch.await();
+
+    for (Future<Boolean> future : futures) {
+      try {
+        future.get();
+      } catch (ExecutionException e) {
+        throw new ValidateSignatureException(e.getCause().getMessage());
+      }
+    }
   }
 }
