@@ -487,6 +487,10 @@ public class Manager {
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
+    if (!trx.validateSignature()) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+
     //validateFreq(trx);
     synchronized (this) {
       if (!dialog.valid()) {
