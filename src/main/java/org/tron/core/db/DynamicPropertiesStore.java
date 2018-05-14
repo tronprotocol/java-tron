@@ -154,7 +154,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaxFrozenSupplyNumber();
     } catch (IllegalArgumentException e) {
-      this.saveMaxFrozenSupplyNumber(1);
+      this.saveMaxFrozenSupplyNumber(10);
     }
 
     try {
