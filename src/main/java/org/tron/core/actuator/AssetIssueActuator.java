@@ -52,22 +52,22 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractExeException();
       }
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
+      byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
-      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
-      ret.setStatus(fee, code.SUCESS);
+      dbManager.adjustBalance(ownerAddress, -calcFee());
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           calcFee());//send to blackhole
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(assetIssueContract.getOwnerAddress().toByteArray());
 
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
           assetIssueContract.getTotalSupply());
+      dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-      dbManager.getAccountStore()
-          .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
+      ret.setStatus(fee, code.SUCESS);
+      return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -78,7 +78,6 @@ public class AssetIssueActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-    return true;
   }
 
   @Override
@@ -133,19 +132,18 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    return false;
+    return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(AssetIssueContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
     return ChainConstant.ASSET_ISSUE_FEE;
   }
-
 
   public long calcUsage() {
     return 0;
