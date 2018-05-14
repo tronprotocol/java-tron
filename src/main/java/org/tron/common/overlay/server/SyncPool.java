@@ -95,7 +95,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = maxActiveNodes - channelManager.getActivePeers().size();
+    int lackSize = (int) (maxActiveNodes * 0.5) - channelManager.getActivePeers().size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();
