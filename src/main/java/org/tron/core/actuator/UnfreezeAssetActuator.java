@@ -11,7 +11,6 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -38,8 +37,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       byte[] ownerAddressBytes = ownerAddress.toByteArray();
 
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
-      long oldBalance = accountCapsule.getBalance();
-      long UnfreezeAsset = 0L;
+      long unfreezeAsset = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
       frozenList.addAll(accountCapsule.getFrozenSupplyList());
       Iterator<Frozen> iterator = frozenList.iterator();
@@ -47,26 +45,16 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Frozen next = iterator.next();
         if (next.getExpireTime() <= now) {
-          UnfreezeAsset += next.getFrozenBalance();
+          unfreezeAsset += next.getFrozenBalance();
           iterator.remove();
         }
       }
 
+      accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .setBalance(oldBalance + UnfreezeAsset)
-          .clearFrozen().addAllFrozen(frozenList).build());
-
-      VotesCapsule votesCapsule;
-      if (!dbManager.getVotesStore().has(ownerAddressBytes)) {
-        votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
-      } else {
-        votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
-      }
-      accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
+          .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
 
       dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
-      dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
