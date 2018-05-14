@@ -329,6 +329,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getFrozenList();
   }
 
+  public int getFrozenSupplyCount() {
+    return getInstance().getFrozenSupplyCount();
+  }
+
+  public List<Frozen> getFrozenSupplyList() {
+    return getInstance().getFrozenSupplyList();
+  }
+
   public long getFrozenBalance() {
     List<Frozen> frozenList = getFrozenList();
     final long[] frozenBalance = {0};
