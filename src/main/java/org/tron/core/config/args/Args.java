@@ -350,7 +350,7 @@ public class Args {
     }
 
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
-        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors();
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
   }
 
