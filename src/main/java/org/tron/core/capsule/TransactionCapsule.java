@@ -54,11 +54,14 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
-
+  @Setter
   private boolean isVerified = false;
   @Getter @Setter
-  private boolean isValidated = false;
-
+  private boolean isValidatedDup = false;
+  @Getter @Setter
+  private boolean isValidatedTapos = false;
+  @Getter @Setter
+  private boolean isValidatedCommon = false;
   /**
    * constructor TransactionCapsule.
    */

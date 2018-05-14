@@ -419,6 +419,9 @@ public class Manager {
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
+    if (transactionCapsule.isValidatedTapos()) {
+      return;
+    }
     byte[] refBlockHash = transactionCapsule.getInstance()
         .getRawData().getRefBlockHash().toByteArray();
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
@@ -426,6 +429,7 @@ public class Manager {
     try {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (Arrays.equals(blockHash, refBlockHash)) {
+        transactionCapsule.setValidatedTapos(true);
         return;
       } else {
         logger.error(
@@ -443,28 +447,16 @@ public class Manager {
     }
   }
 
-  void validateCommon(TransactionCapsule trx)
-      throws TransactionExpirationException, TooBigTransactionException, TaposException, ValidateSignatureException, DupTransactionException {
-    if (trx.isValidated()) {
-      return; //do not validate again.
+  void validateCommon(TransactionCapsule transactionCapsule)
+      throws TransactionExpirationException, TooBigTransactionException {
+    if (transactionCapsule.isValidatedCommon()) {
+      return;
     }
-
-    if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
-      logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
-      throw new DupTransactionException("dup trans");
-    }
-
-    if (!trx.validateSignature()) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
-
-    validateTapos(trx);
-
-    if (trx.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
+    if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(
-          "too big transaction, the size is " + trx.getData().length + " bytes");
+          "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
-    long transactionExpiration = trx.getExpiration();
+    long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||
         transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
@@ -472,8 +464,19 @@ public class Manager {
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
     }
+    transactionCapsule.setValidatedCommon(true);
+  }
 
-    trx.setValidated(true);  //validate success
+  void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
+    if (transactionCapsule.isValidatedDup()) {
+      return;
+    }
+    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+      logger.debug(
+          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
+      throw new DupTransactionException("dup trans");
+    }
+    transactionCapsule.setValidatedDup(true);
   }
 
   /**
@@ -896,11 +899,15 @@ public class Manager {
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
-
     if (trxCap == null) {
       return false;
     }
 
+    validateDup(trxCap);
+    if (!trxCap.validateSignature()) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+    validateTapos(trxCap);
     validateCommon(trxCap);
 
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
@@ -1056,7 +1063,10 @@ public class Manager {
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
-        transactionCapsule.setValidated(true);
+        transactionCapsule.setValidatedCommon(true);
+        transactionCapsule.setValidatedDup(true);
+        transactionCapsule.setValidatedTapos(true);
+        transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule);
     }
