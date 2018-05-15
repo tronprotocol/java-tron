@@ -112,6 +112,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       this.type = type;
     }
 
+    public void refreshTime() {
+      this.time = Time.getCurrentMillis();
+    }
+
     @Override
     public int compareTo(final PriorItem o) {
       if (!this.type.equals(o.getType())) {
@@ -521,7 +525,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private synchronized void handleSyncBlock() {
-
     if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
       logger.info("we're already processing too many blocks");
       return;
@@ -631,7 +634,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         });
       }
 
-      //TODO:optimize here
+//    TODO:optimize here
 //      if (!isDisconnected[0]) {
 //        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
 //            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / ChainConstant.BLOCK_PRODUCED_INTERVAL
@@ -642,7 +645,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 //      }
 
       if (isDisconnected[0]) {
-        //TODO use new reason
         disconnectPeer(peer, ReasonCode.TIME_OUT);
       }
     });
@@ -676,8 +678,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            if (advObjToFetch)
-            this.advObjToFetch.put(id, new PriorItem(id, msg.getInventoryType(), fetchSequenceCounter.incrementAndGet()));
+            if (!advObjToFetch.contains(id)) {
+              this.advObjToFetch.put(id, new PriorItem(id, msg.getInventoryType(),
+                  fetchSequenceCounter.incrementAndGet()));
+            } else {
+              //another peer tell this trx to us, refresh its time.
+              this.advObjToFetch.get(id).refreshTime();
+            }
           }
         }
       }
@@ -687,7 +694,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
     //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
-
     try {
       while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
@@ -698,7 +704,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     logger.info("wait end");
-
     //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
