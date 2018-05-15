@@ -419,9 +419,6 @@ public class Manager {
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
-    if (transactionCapsule.isValidatedTapos()) {
-      return;
-    }
     byte[] refBlockHash = transactionCapsule.getInstance()
         .getRawData().getRefBlockHash().toByteArray();
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
@@ -429,7 +426,6 @@ public class Manager {
     try {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (Arrays.equals(blockHash, refBlockHash)) {
-        transactionCapsule.setValidatedTapos(true);
         return;
       } else {
         logger.error(
@@ -449,9 +445,6 @@ public class Manager {
 
   void validateCommon(TransactionCapsule transactionCapsule)
       throws TransactionExpirationException, TooBigTransactionException {
-    if (transactionCapsule.isValidatedCommon()) {
-      return;
-    }
     if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
@@ -464,19 +457,14 @@ public class Manager {
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
     }
-    transactionCapsule.setValidatedCommon(true);
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (transactionCapsule.isValidatedDup()) {
-      return;
-    }
     if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
       logger.debug(
           getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
     }
-    transactionCapsule.setValidatedDup(true);
   }
 
   /**
@@ -1067,9 +1055,6 @@ public class Manager {
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
-        transactionCapsule.setValidatedCommon(true);
-        transactionCapsule.setValidatedDup(true);
-        transactionCapsule.setValidatedTapos(true);
         transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule);

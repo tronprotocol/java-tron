@@ -29,7 +29,6 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
@@ -56,12 +55,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
-  @Getter @Setter
-  private boolean isValidatedDup = false;
-  @Getter @Setter
-  private boolean isValidatedTapos = false;
-  @Getter @Setter
-  private boolean isValidatedCommon = false;
   /**
    * constructor TransactionCapsule.
    */
