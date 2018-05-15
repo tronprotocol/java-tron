@@ -128,10 +128,6 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (ownerAccount == null) {
         throw new ContractValidateException("Account does not exist!");
       }
-      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
-      if (toAccount == null) {
-        throw new ContractValidateException("To account does not exist!");
-      }
 
       //Whether the balance is enough
       long fee = calcFee();
@@ -162,6 +158,11 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       exchangeAmount = Math.floorDiv(exchangeAmount, trxNum);
       if (exchangeAmount <= 0) {
         throw new ContractValidateException("Can not process the exchange!");
+      }
+
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
+      if (toAccount == null) {
+        throw new ContractValidateException("To account does not exist!");
       }
 
       if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
