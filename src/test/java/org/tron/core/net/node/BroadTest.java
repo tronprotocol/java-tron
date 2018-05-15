@@ -2,7 +2,7 @@ package org.tron.core.net.node;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Queue;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -116,9 +116,10 @@ public class BroadTest {
     Condition condition = testConsumerAdvObjToSpread();
     Thread.sleep(1000);
     //
-    Queue<PriorItem> advObjToFetch = ReflectUtils
+    Map<Sha256Hash, PriorItem> advObjToFetch = ReflectUtils
         .getFieldValue(node, "advObjToFetch");
     logger.info("advObjToFetch:{}", advObjToFetch);
+    logger.info("advObjToFetchSize:{}", advObjToFetch.size());
     //Assert.assertEquals(advObjToFetch.get(condition.getBlockId()), InventoryType.BLOCK);
     //Assert.assertEquals(advObjToFetch.get(condition.getTransactionId()), InventoryType.TRX);
     //To avoid writing the database, manually stop the sending of messages.
@@ -133,10 +134,12 @@ public class BroadTest {
     boolean result = true;
     int count = 0;
     for (PeerConnection peerConnection : activePeers) {
-      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getTransactionId())) {
+      if (peerConnection.getAdvObjWeRequested()
+          .containsKey(new Item(condition.getTransactionId(), InventoryType.TRX))) {
         ++count;
       }
-      if (peerConnection.getAdvObjWeRequested().containsKey(condition.getBlockId())) {
+      if (peerConnection.getAdvObjWeRequested()
+          .containsKey(new Item(condition.getBlockId(), InventoryType.BLOCK))) {
         ++count;
       }
       MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");

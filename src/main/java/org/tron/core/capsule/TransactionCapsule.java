@@ -44,6 +44,7 @@ import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
@@ -54,8 +55,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
   @Setter
-  private boolean isValidated = false;
-
+  private boolean isVerified = false;
   /**
    * constructor TransactionCapsule.
    */
@@ -90,7 +90,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }*/
-
 
   public TransactionCapsule(AccountCreateContract contract, AccountStore accountStore) {
     AccountCapsule account = accountStore.get(contract.getOwnerAddress().toByteArray());
@@ -146,7 +145,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   /**
-   *
    * @param expiration must be in milliseconds format
    */
   public void setExpiration(long expiration) {
@@ -155,7 +153,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
-  public long getExpiration(){
+  public long getExpiration() {
     return transaction.getRawData().getExpiration();
   }
 
@@ -164,7 +162,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
   }
 
-
   public TransactionCapsule(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
@@ -172,7 +169,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
-
 
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
@@ -272,6 +268,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case UnfreezeBalanceContract:
           owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
           break;
+        case UnfreezeAssetContract:
+          owner = contractParameter.unpack(UnfreezeAssetContract.class).getOwnerAddress();
+          break;
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
@@ -329,8 +328,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    * validate signature
    */
   public boolean validateSignature() throws ValidateSignatureException {
-
-    if (isValidated == true) {
+    if (isVerified == true) {
       return true;
     }
 
@@ -347,18 +345,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {
-          isValidated = false;
+          isVerified = false;
           throw new ValidateSignatureException("sig error");
         }
       } catch (SignatureException e) {
-        isValidated = false;
+        isVerified = false;
         throw new ValidateSignatureException(e.getMessage());
       }
     }
-    isValidated = true;
+
+    isVerified = true;
     return true;
   }
-
 
   public Sha256Hash getTransactionId() {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
@@ -379,7 +377,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   private StringBuffer toStringBuff = new StringBuffer();
-
 
   @Override
   public String toString() {

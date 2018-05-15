@@ -42,7 +42,7 @@ public class P2pMessageFactory extends MessageFactory {
   private P2pMessage create(byte type, byte[] rawData) throws  Exception{
     MessageTypes messageType = MessageTypes.fromByte(type);
     if (messageType == null){
-      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type + ", len=" + rawData.length);
     }
     switch (messageType) {
       case P2P_HELLO:
@@ -54,7 +54,7 @@ public class P2pMessageFactory extends MessageFactory {
       case P2P_PONG:
         return new PongMessage(type, rawData);
       default:
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, messageType.toString());
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, messageType.toString()  + ", len=" + rawData.length);
     }
   }
 }
