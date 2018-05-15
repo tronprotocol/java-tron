@@ -116,9 +116,7 @@ public class ChannelManager {
   }
 
   public void add(Channel peer) {
-    if (!peer.isProtocolsInitialized()) {
-      return;
-    } else if (peer.getNodeStatistics().isPenalized()) {
+    if (peer.getNodeStatistics().isPenalized()) {
       disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
     } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
       disconnect(peer, TOO_MANY_PEERS);
@@ -127,6 +125,7 @@ public class ChannelManager {
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
         disconnect(channel, DUPLICATE_PEER);
+        activePeers.put(peer.getNodeIdWrapper(), peer);
       } else {
         disconnect(peer, DUPLICATE_PEER);
       }
