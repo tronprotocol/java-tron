@@ -895,17 +895,17 @@ public class Manager {
       return false;
     }
 
-    validateDup(trxCap);
-    if (!trxCap.validateSignature()) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+    //validateDup(trxCap);
+    //if (!trxCap.validateSignature()) {
+    //  throw new ValidateSignatureException("trans sig validate failed");
+    //}
+    //validateTapos(trxCap);
+    //validateCommon(trxCap);
 
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    consumeBandwidth(trxCap);
+    //consumeBandwidth(trxCap);
 
     for (Actuator act : actuatorList) {
       act.validate();

@@ -151,7 +151,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     public void add(PriorItem id, PeerConnection peer) {
-      if (send.containsKey(peer) && send.get(peer).containsKey(id.getHash())) {
+      if (send.containsKey(peer) && send.get(peer).containsKey(id.getType())) {
         send.get(peer).get(id.getType()).offer(id.getHash());
       } else if (send.containsKey(peer)) {
         send.get(peer).put(id.getType(), new LinkedList<>());
