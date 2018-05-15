@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +71,7 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
@@ -91,25 +93,58 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
+  @Getter
+  class Item {
+
+    Sha256Hash hash;
+
+    InventoryType type;
+
+    public Item(Sha256Hash hash, InventoryType type) {
+      this.hash = hash;
+      this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof Item)) {
+        return false;
+      }
+      Item item = (Item) o;
+      return hash.equals(((Item) o).getHash()) &&
+          type.equals(((Item) o).getType());
+    }
+
+    @Override
+    public int hashCode() {
+      return hash.hashCode();
+    }
+  }
+
+  @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
 
-    @Getter
     private long count;
 
-    @Getter
-    private Sha256Hash hash;
+    private Item item;
 
-    @Getter
     private long time;
 
-    @Getter
-    private InventoryType type;
+    public Sha256Hash getHash() {
+      return item.getHash();
+    }
 
-    public PriorItem(Sha256Hash hash, InventoryType type, long count) {
-      this.hash = hash;
+    public InventoryType getType() {
+      return item.getType();
+    }
+
+    public PriorItem(Item item, long count) {
+      this.item = item;
       this.count = count;
       this.time = Time.getCurrentMillis();
-      this.type = type;
     }
 
     public void refreshTime() {
@@ -118,8 +153,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     @Override
     public int compareTo(final PriorItem o) {
-      if (!this.type.equals(o.getType())) {
-        return this.type.equals(InventoryType.BLOCK) ? -1 : 1;
+      if (!this.item.getType().equals(o.getItem().getType())) {
+        return this.item.getType().equals(InventoryType.BLOCK) ? -1 : 1;
       }
       return Long.compare(this.count, o.getCount());
     }
@@ -461,6 +496,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void consumerAdvObjToFetch() {
     Collection<PeerConnection> filterActivePeer = getActivePeer().stream()
         .filter(peer -> !peer.isBusy()).collect(Collectors.toList());
+
     if (advObjToFetch.isEmpty() || filterActivePeer.isEmpty()) {
       try {
         Thread.sleep(100);
@@ -486,9 +522,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         } else {
           logger.info("This obj is too late to fetch: " + idToFetch);
         }
-//        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
-//          return;
-//        }
         advObjToFetch.remove(idToFetch.getHash());
       }));
 
@@ -679,7 +712,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
             if (!advObjToFetch.contains(id)) {
-              this.advObjToFetch.put(id, new PriorItem(id, msg.getInventoryType(),
+              this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             } else {
               //another peer tell this trx to us, refresh its time.
@@ -753,6 +786,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       try {
         LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
         freshBlockId.offer(block.getBlockId());
+
+        //remove trxs in block from fetch data.
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
         //TODO:save message cache again.
@@ -1233,6 +1268,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
+  bool node_impl::is_item_in_any_peers_inventory(const item_id& item) const
+  {
+    for( const peer_connection_ptr& peer : _active_connections )
+    {
+      if (peer->inventory_peer_advertised_to_us.find(item) != peer->inventory_peer_advertised_to_us.end() )
+        return true;
+    }
+    return false;
+  }
+
+  private boolean inAnyPeersInv(Sha256Hash hash) {
+    return getActivePeer().stream()
+        .filter(peer -> peer.getInvToUs().contains(hash))
+        .findFirst()
+        .isPresent();
+  }
+
   @Override
   public void onConnectPeer(PeerConnection peer) {
     if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()) {
@@ -1255,8 +1307,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (!peer.getAdvObjWeRequested().isEmpty()) {
       peer.getAdvObjWeRequested().keySet()
-          .forEach(blockId -> advObjWeRequested.remove(blockId));
-      //TODO: adv obj fetch trigger.
+          .forEach(id -> {
+            //advObjWeRequested.remove(id);
+            if (getActivePeer().stream()
+                .filter(peerConnection -> !peerConnection.equals(peer))
+                .filter(peerConnection -> peerConnection.getInvToUs().contains(id))
+                .findFirst()
+                .isPresent()) {
+//              advObjToFetch.put(id, new PriorItem(id, msg.getInventoryType(),
+//                  fetchSequenceCounter.incrementAndGet()));
+            }
+          });
     }
   }
 
