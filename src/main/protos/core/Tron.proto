@@ -67,6 +67,7 @@ message Account {
   bytes code = 13;
   bool is_witness = 14;
   bool is_committee = 15;
+  bytes codeHash = 16;
 }
 
 //FIXME authority?
@@ -141,6 +142,9 @@ message Transaction {
       UnfreezeBalanceContract = 12;
       WithdrawBalanceContract = 13;
       CustomContract = 20;
+      ContractCreationContract = 21;
+      ContractCallContract = 22;
+      GetContract = 23;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -156,6 +160,7 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
+    bytes constant_result = 3;
   }
 
   message raw {
@@ -298,3 +303,9 @@ message HelloMessage {
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
 }
+
+message StorageItem {
+  bytes contract_address = 1;
+  map<string, bytes> items = 2;
+}
+

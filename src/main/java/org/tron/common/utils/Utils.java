@@ -21,6 +21,7 @@ package org.tron.common.utils;
 import java.security.SecureRandom;
 import java.nio.*;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public interface Utils {
   SecureRandom random = new SecureRandom();
@@ -64,5 +65,24 @@ public interface Utils {
     if (size < 2 * (1L << 20)) return String.format("%dKb", size / (1L << 10));
     if (size < 2 * (1L << 30)) return String.format("%dMb", size / (1L << 20));
     return String.format("%dGb", size / (1L << 30));
+  }
+
+  public static String align(String s, char fillChar, int targetLen, boolean alignRight) {
+    if (targetLen <= s.length()) return s;
+    String alignString = repeat("" + fillChar, targetLen - s.length());
+    return alignRight ? alignString + s : s + alignString;
+
+  }
+
+  public static String repeat(String s, int n) {
+    if (s.length() == 1) {
+      byte[] bb = new byte[n];
+      Arrays.fill(bb, s.getBytes()[0]);
+      return new String(bb);
+    } else {
+      StringBuilder ret = new StringBuilder();
+      for (int i = 0; i < n; i++) ret.append(s);
+      return ret.toString();
+    }
   }
 }

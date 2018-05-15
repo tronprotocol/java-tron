@@ -388,4 +388,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
   }
+
+  public void setCodeHash(byte[] codeHash) {
+    this.account =  this.account.toBuilder().setCodeHash(ByteString.copyFrom(codeHash)).build();
+  }
+
+  public byte[] getCodeHash() {
+    return this.account.getCodeHash().toByteArray();
+  }
 }
