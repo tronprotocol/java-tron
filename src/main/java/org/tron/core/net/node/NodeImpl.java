@@ -91,31 +91,38 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
+
+  @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
 
-    @Getter
     private long count;
 
-    @Getter
-    private Sha256Hash hash;
+    private Item item;
 
-    @Getter
     private long time;
 
-    @Getter
-    private InventoryType type;
+    public Sha256Hash getHash() {
+      return item.getHash();
+    }
 
-    public PriorItem(Sha256Hash hash, InventoryType type, long count) {
-      this.hash = hash;
+    public InventoryType getType() {
+      return item.getType();
+    }
+
+    public PriorItem(Item item, long count) {
+      this.item = item;
       this.count = count;
       this.time = Time.getCurrentMillis();
-      this.type = type;
+    }
+
+    public void refreshTime() {
+      this.time = Time.getCurrentMillis();
     }
 
     @Override
     public int compareTo(final PriorItem o) {
-      if (!this.type.equals(o.getType())) {
-        return this.type.equals(InventoryType.BLOCK) ? -1 : 1;
+      if (!this.item.getType().equals(o.getItem().getType())) {
+        return this.item.getType().equals(InventoryType.BLOCK) ? -1 : 1;
       }
       return Long.compare(this.count, o.getCount());
     }
@@ -224,7 +231,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
 
-  private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
+  //private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
+
+  private ConcurrentHashMap<Sha256Hash, PriorItem> advObjToFetch =  new ConcurrentHashMap<Sha256Hash, PriorItem>();
 
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
@@ -455,6 +464,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void consumerAdvObjToFetch() {
     Collection<PeerConnection> filterActivePeer = getActivePeer().stream()
         .filter(peer -> !peer.isBusy()).collect(Collectors.toList());
+
     if (advObjToFetch.isEmpty() || filterActivePeer.isEmpty()) {
       try {
         Thread.sleep(100);
@@ -466,24 +476,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     InvToSend sendPackage = new InvToSend();
     //AtomicLong batchFecthResponseSize = new AtomicLong(0);
 
-    advObjToFetch.stream()
+    advObjToFetch.values().stream()
         .sorted(PriorItem::compareTo)
         .forEach(idToFetch ->
       filterActivePeer.stream()
           .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
               && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
+          .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
           .findFirst().ifPresent(peer -> {
             long now = Time.getCurrentMillis();
         if (idToFetch.getTime() > now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
           sendPackage.add(idToFetch, peer);
-          peer.getAdvObjWeRequested().put(idToFetch.getHash(), now);
+          peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
         } else {
           logger.info("This obj is too late to fetch: " + idToFetch);
         }
-//        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
-//          return;
-//        }
-        advObjToFetch.remove(idToFetch);
+        advObjToFetch.remove(idToFetch.getHash());
       }));
 
     sendPackage.sendFetch();
@@ -519,7 +527,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private synchronized void handleSyncBlock() {
-
     if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
       logger.info("we're already processing too many blocks");
       return;
@@ -629,7 +636,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         });
       }
 
-      //TODO:optimize here
+//    TODO:optimize here
 //      if (!isDisconnected[0]) {
 //        if (del.getHeadBlockId().getNum() - peer.getHeadBlockWeBothHave().getNum()
 //            > 2 * NetConstants.HEAD_NUM_CHECK_TIME / ChainConstant.BLOCK_PRODUCED_INTERVAL
@@ -640,7 +647,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 //      }
 
       if (isDisconnected[0]) {
-        //TODO use new reason
         disconnectPeer(peer, ReasonCode.TIME_OUT);
       }
     });
@@ -655,7 +661,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (p.getAdvObjWeSpread().containsKey(id)) {
           spreaded[0] = true;
         }
-        if (p.getAdvObjWeRequested().containsKey(id)) {
+        if (p.getAdvObjWeRequested().containsKey(new Item(id, msg.getInventoryType()))) {
           requested[0] = true;
         }
       });
@@ -665,7 +671,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           && !peer.isNeedSyncFromUs()) {
 
         //avoid TRX flood attack here.
-        if (msg.getType().equals(InventoryType.TRX)
+        if (msg.getInventoryType().equals(InventoryType.TRX)
             && peer.isAdvInvFull()) {
           logger.info("A peer is flooding us, stop handle inv, the peer is:" + peer);
           return;
@@ -674,7 +680,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            this.advObjToFetch.add(new PriorItem(id, msg.getInventoryType(), fetchSequenceCounter.incrementAndGet()));
+            if (!advObjToFetch.contains(id)) {
+              this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
+                  fetchSequenceCounter.incrementAndGet()));
+            } else {
+              //another peer tell this trx to us, refresh its time.
+              this.advObjToFetch.get(id).refreshTime();
+            }
           }
         }
       }
@@ -684,7 +696,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
     //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
-
     try {
       while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
@@ -695,7 +706,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     logger.info("wait end");
-
     //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
@@ -704,9 +714,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //logger.info("on handle block message");
     //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
 
-    Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
+    Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
+    Item item = new Item(blockId, InventoryType.BLOCK);
     boolean syncFlag = false;
     if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
@@ -729,8 +740,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
 
-    if (advObjWeRequested.containsKey(blockId)) {
-      advObjWeRequested.remove(blockId);
+    if (advObjWeRequested.containsKey(item)) {
+      advObjWeRequested.remove(item);
       if (!syncFlag){
         processAdvBlock(peer, blkMsg.getBlockCapsule());
         startFetchItem();
@@ -745,6 +756,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       try {
         LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
         freshBlockId.offer(block.getBlockId());
+
+        //remove trxs in block from fetch data.
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
         //TODO:save message cache again.
@@ -1247,8 +1260,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     if (!peer.getAdvObjWeRequested().isEmpty()) {
       peer.getAdvObjWeRequested().keySet()
-          .forEach(blockId -> advObjWeRequested.remove(blockId));
-      //TODO: adv obj fetch trigger.
+          .forEach(item -> {
+            if (getActivePeer().stream()
+                .filter(peerConnection -> !peerConnection.equals(peer))
+                .filter(peerConnection -> peerConnection.getInvToUs().contains(item.getHash()))
+                .findFirst()
+                .isPresent()) {
+              advObjToFetch.put(item.getHash(), new PriorItem(item,
+                  fetchSequenceCounter.incrementAndGet()));
+            }
+          });
     }
   }
 

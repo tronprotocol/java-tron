@@ -31,6 +31,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 
 @Slf4j
@@ -149,7 +150,7 @@ public class NodeImplTest {
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
     blockCapsule.setMerkleRoot();
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
-    peer.getAdvObjWeRequested().put(blockMessage.getBlockId(), System.currentTimeMillis());
+    peer.getAdvObjWeRequested().put(new Item(blockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
     nodeImpl.onMessage(peer, blockMessage);
     Assert.assertEquals(peer.getAdvObjWeRequested().size(), 0);
   }
@@ -157,22 +158,22 @@ public class NodeImplTest {
   @Test
   public void testDisconnectInactive() {
     // generate test data
-    ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested1 = new ConcurrentHashMap<>();
-    ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested2 = new ConcurrentHashMap<>();
-    ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested3 = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Item, Long> advObjWeRequested1 = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Item, Long> advObjWeRequested2 = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Item, Long> advObjWeRequested3 = new ConcurrentHashMap<>();
     ConcurrentHashMap<BlockId, Long> syncBlockRequested1 = new ConcurrentHashMap<>();
     ConcurrentHashMap<BlockId, Long> syncBlockRequested2 = new ConcurrentHashMap<>();
     ConcurrentHashMap<BlockId, Long> syncBlockRequested3 = new ConcurrentHashMap<>();
 
-    advObjWeRequested1.put(new Sha256Hash(1, Sha256Hash.ZERO_HASH),
+    advObjWeRequested1.put(new Item(new Sha256Hash(1, Sha256Hash.ZERO_HASH), InventoryType.TRX),
         System.currentTimeMillis() - NetConstants.ADV_TIME_OUT);
     syncBlockRequested1.put(new BlockId(),
         System.currentTimeMillis());
-    advObjWeRequested2.put(new Sha256Hash(1, Sha256Hash.ZERO_HASH),
+    advObjWeRequested2.put(new Item(new Sha256Hash(1, Sha256Hash.ZERO_HASH), InventoryType.TRX),
         System.currentTimeMillis());
     syncBlockRequested2.put(new BlockId(),
         System.currentTimeMillis() - NetConstants.SYNC_TIME_OUT);
-    advObjWeRequested3.put(new Sha256Hash(1, Sha256Hash.ZERO_HASH),
+    advObjWeRequested3.put(new Item(new Sha256Hash(1, Sha256Hash.ZERO_HASH), InventoryType.TRX),
         System.currentTimeMillis());
     syncBlockRequested3.put(new BlockId(),
         System.currentTimeMillis());

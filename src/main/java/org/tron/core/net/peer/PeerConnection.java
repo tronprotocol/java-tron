@@ -25,6 +25,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.net.node.Item;
 
 @Slf4j
 @Component
@@ -44,7 +45,7 @@ public class PeerConnection extends Channel {
 
   private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
-  private Map<Sha256Hash, Long> advObjWeRequested = new ConcurrentHashMap<>();
+  private Map<Item, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
   private boolean advInhibit = false;
 
@@ -127,11 +128,11 @@ public class PeerConnection extends Channel {
 
   private Set<BlockId> blockInProc = new HashSet<>();
 
-  public Map<Sha256Hash, Long> getAdvObjWeRequested() {
+  public Map<Item, Long> getAdvObjWeRequested() {
     return advObjWeRequested;
   }
 
-  public void setAdvObjWeRequested(ConcurrentHashMap<Sha256Hash, Long> advObjWeRequested) {
+  public void setAdvObjWeRequested(ConcurrentHashMap<Item, Long> advObjWeRequested) {
     this.advObjWeRequested = advObjWeRequested;
   }
 
