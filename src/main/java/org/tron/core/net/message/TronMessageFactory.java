@@ -27,7 +27,7 @@ public class TronMessageFactory extends MessageFactory {
   private TronMessage create(byte type, byte[] packed) throws Exception{
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null){
-      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type  + ", len=" + packed.length);
     }
     switch (receivedTypes) {
       case TRX:
@@ -57,7 +57,7 @@ public class TronMessageFactory extends MessageFactory {
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, receivedTypes.toString());
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, receivedTypes.toString() + ", len=" + packed.length);
     }
   }
 }

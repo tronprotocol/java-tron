@@ -82,7 +82,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
+      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS)
       .recordStats().build();
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -1073,6 +1073,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //sew it
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         peer.setUnfetchSyncNum(msg.getRemainNum());
+        if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0){
+          peer.setNeedSyncFromPeer(false);
+        }
 
         long newUnSyncNum = getUnSyncNum();
         if (unSyncNum != newUnSyncNum) {
