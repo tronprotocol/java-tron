@@ -31,7 +31,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 @Scope("prototype")
 public class PeerConnection extends Channel {
 
-  private boolean syncFlag = true;
+  private volatile boolean syncFlag = true;
 
   private HelloMessage helloMessage;
 

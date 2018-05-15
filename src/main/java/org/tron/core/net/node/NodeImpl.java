@@ -80,7 +80,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
+      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS)
       .recordStats().build();
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -269,9 +269,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //private volatile boolean isHandleSyncBlockRunning = false;
 
-  private boolean isSuspendFetch = false;
+  private volatile boolean isSuspendFetch = false;
 
-  private boolean isFetchSyncActive = false;
+  private volatile boolean isFetchSyncActive = false;
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
@@ -707,39 +707,36 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
-    logger.info("handle Block number is " + blkMsg.getBlockId().getNum());
-
-    if (advObjWeRequested.containsKey(blockId)) {
-      //broadcast mode
-      advObjWeRequested.remove(blockId);
-      processAdvBlock(peer, blkMsg.getBlockCapsule());
-      startFetchItem();
-    } else if (syncBlockRequested.containsKey(blockId)) {
+    boolean syncFlag = false;
+    if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
         logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
         return;
       }
-      //sync mode
-      syncBlockRequested.remove(blockId);
-      //peer.getSyncBlockToFetch().remove(blockId);
+      peer.getSyncBlockRequested().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
-      //TODO: maybe use consume pipe here better
       synchronized (blockJustReceived) {
         blockJustReceived.add(blkMsg);
       }
       isHandleSyncBlockActive = true;
-      //processSyncBlock(blkMsg.getBlockCapsule());
+      syncFlag = true;
       if (!peer.isBusy()) {
-        if (peer.getUnfetchSyncNum() > 0
-            && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
+        if (peer.getUnfetchSyncNum() > 0 && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
           syncNextBatchChainIds(peer);
         } else {
-          //startFetchSyncBlock();
           isFetchSyncActive = true;
         }
       }
-
     }
+
+    if (advObjWeRequested.containsKey(blockId)) {
+      advObjWeRequested.remove(blockId);
+      if (!syncFlag){
+        processAdvBlock(peer, blkMsg.getBlockCapsule());
+        startFetchItem();
+      }
+    }
+
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
@@ -1075,6 +1072,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //sew it
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         peer.setUnfetchSyncNum(msg.getRemainNum());
+        if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0){
+          peer.setNeedSyncFromPeer(false);
+        }
 
         long newUnSyncNum = getUnSyncNum();
         if (unSyncNum != newUnSyncNum) {
