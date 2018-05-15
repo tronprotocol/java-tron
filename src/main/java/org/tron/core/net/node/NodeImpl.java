@@ -857,10 +857,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     //logger.info("on handle transaction message");
     try {
-      if (!peer.getAdvObjWeRequested().containsKey(trxMsg.getMessageId())) {
+      Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
+      if (!peer.getAdvObjWeRequested().containsKey(item)) {
         throw new TraitorPeerException("We don't send fetch request to" + peer);
       } else {
-        peer.getAdvObjWeRequested().remove(trxMsg.getMessageId());
+        peer.getAdvObjWeRequested().remove(item);
         del.handleTransaction(trxMsg.getTransactionCapsule());
         broadcast(trxMsg);
       }
