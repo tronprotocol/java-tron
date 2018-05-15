@@ -24,8 +24,8 @@ public class BlocksMessage extends TronMessage {
 
   @Override
   public String toString() {
-    return "BlocksMessage size:" + (CollectionUtils.isNotEmpty(blocks) ? blocks.size() : 0)
-        + super.toString();
+    return super.toString() + ", BlocksMessage size:" + (CollectionUtils.isNotEmpty(blocks) ? blocks
+        .size() : 0);
   }
 
   @Override

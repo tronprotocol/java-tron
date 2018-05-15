@@ -62,8 +62,9 @@ public class BlockMessage extends TronMessage {
 
   @Override
   public String toString() {
-    return "BlockMessage{" +
-        "block=" + block +
-        "}," + super.toString();
+    return super.toString() + ",BlockMessage{" +
+        "\n blockHeader : " + block.getBlockHeader() +
+        "\n transaction size : " + block.getTransactionsList().size() +
+        "},";
   }
 }
