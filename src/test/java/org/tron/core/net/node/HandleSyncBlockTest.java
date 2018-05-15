@@ -2,13 +2,22 @@ package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
 import io.netty.util.internal.ConcurrentSet;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -33,13 +42,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol;
-
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 public class HandleSyncBlockTest {
@@ -93,7 +95,7 @@ public class HandleSyncBlockTest {
         return new Condition(blockId);
     }
 
-    private BlockMessage buildBlockMessage(){
+    private BlockMessage buildBlockMessage() throws Exception {
         BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 
         ByteString witnessAddress = ByteString.copyFrom(
@@ -122,7 +124,7 @@ public class HandleSyncBlockTest {
     }
 
     @Test
-    public void testHandleSyncBlock() throws InterruptedException {
+    public void testHandleSyncBlock() throws Exception {
         testConsumerAdvObjToSpread();
         // build block Message
         BlockMessage blockMessage = buildBlockMessage();

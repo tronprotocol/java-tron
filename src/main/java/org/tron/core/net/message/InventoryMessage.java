@@ -1,11 +1,11 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -14,19 +14,16 @@ public class InventoryMessage extends TronMessage {
 
   protected Inventory inv;
 
-  public InventoryMessage(byte[] packed) {
-    super(packed);
+  public InventoryMessage(byte[] data) throws Exception {
     this.type = MessageTypes.INVENTORY.asByte();
-  }
-
-  public InventoryMessage() {
-    this.type = MessageTypes.INVENTORY.asByte();
+    this.data = data;
+    this.inv = Protocol.Inventory.parseFrom(data);
   }
 
   public InventoryMessage(Inventory inv) {
     this.inv = inv;
-    unpacked = true;
     this.type = MessageTypes.INVENTORY.asByte();
+    this.data = inv.toByteArray();
   }
 
   public InventoryMessage(List<Sha256Hash> hashList, InventoryType type) {
@@ -38,16 +35,8 @@ public class InventoryMessage extends TronMessage {
     }
     invBuilder.setType(type);
     inv = invBuilder.build();
-    unpacked = true;
     this.type = MessageTypes.INVENTORY.asByte();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (data == null) {
-      pack();
-    }
-    return data;
+    this.data = inv.toByteArray();
   }
 
   @Override
@@ -55,13 +44,7 @@ public class InventoryMessage extends TronMessage {
     return null;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
-
   public Inventory getInventory() {
-    unPack();
     return inv;
   }
 
@@ -71,7 +54,6 @@ public class InventoryMessage extends TronMessage {
   }
 
   public InventoryType getInventoryType() {
-    unPack();
     return inv.getType();
   }
 
@@ -88,27 +70,10 @@ public class InventoryMessage extends TronMessage {
     return builder.toString();
   }
 
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-
-    try {
-      this.inv = Inventory.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
-
-    unpacked = true;
-  }
-
   public List<Sha256Hash> getHashList() {
     return getInventory().getIdsList().stream()
         .map(hash -> Sha256Hash.wrap(hash.toByteArray()))
         .collect(Collectors.toList());
   }
 
-  private void pack() {
-    this.data = this.inv.toByteArray();
-  }
 }

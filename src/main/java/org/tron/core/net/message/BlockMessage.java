@@ -1,43 +1,31 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 
 public class BlockMessage extends TronMessage {
 
   private Block block;
 
-  public BlockMessage(byte[] packed) {
-    super(packed);
+  public BlockMessage(byte[] data) throws Exception {
     this.type = MessageTypes.BLOCK.asByte();
+    this.data = data;
+    this.block = Protocol.Block.parseFrom(data);
   }
 
   public BlockMessage(Block block) {
     this.block = block;
-    unpacked = true;
     this.type = MessageTypes.BLOCK.asByte();
+    this.data = block.toByteArray();
   }
 
-  public BlockMessage(BlockCapsule block) {
+  public BlockMessage(BlockCapsule block) throws Exception {
     data = block.getData();
-    unpacked = false;
     this.type = MessageTypes.BLOCK.asByte();
-  }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
-
-  @Override
-  public byte[] getData() {
-    if (data == null) {
-      pack();
-    }
-    return data;
+    this.block = block.getInstance();
   }
 
   @Override
@@ -48,7 +36,6 @@ public class BlockMessage extends TronMessage {
   @Override
   public Sha256Hash getMessageId() {
     return getBlockCapsule().getBlockId();
-    //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
   }
 
   @Override
@@ -63,11 +50,9 @@ public class BlockMessage extends TronMessage {
 
   public BlockId getBlockId() {
     return getBlockCapsule().getBlockId();
-    //return Sha256Hash.of(getBlock().getBlockHeader().toByteArray());
   }
 
   public Block getBlock() {
-    unPack();
     return block;
   }
 
@@ -75,23 +60,11 @@ public class BlockMessage extends TronMessage {
     return new BlockCapsule(getBlock());
   }
 
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-
-    try {
-      this.block = Block.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
-
-    unpacked = true;
+  @Override
+  public String toString() {
+    return super.toString() + ",BlockMessage{" +
+        "\n blockHeader : " + block.getBlockHeader() +
+        "\n transaction size : " + block.getTransactionsList().size() +
+        "},";
   }
-
-  private void pack() {
-    this.data = this.block.toByteArray();
-  }
-
-
 }

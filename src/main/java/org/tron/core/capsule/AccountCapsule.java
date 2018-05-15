@@ -337,6 +337,30 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+  public int getFrozenSupplyCount() {
+    return getInstance().getFrozenSupplyCount();
+  }
+
+  public List<Frozen> getFrozenSupplyList() {
+    return getInstance().getFrozenSupplyList();
+  }
+
+  public long getFrozenSupplyBalance() {
+    List<Frozen> frozenSupplyList = getFrozenSupplyList();
+    final long[] frozenSupplyBalance = {0};
+    frozenSupplyList.forEach(frozen -> frozenSupplyBalance[0] = Long.sum(frozenSupplyBalance[0],
+        frozen.getFrozenBalance()));
+    return frozenSupplyBalance[0];
+  }
+
+  public ByteString getAssetIssuedName() {
+    return getInstance().getAssetIssuedName();
+  }
+
+  public void setAssetIssuedName(ByteString assetIssuedName) {
+    this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
+  }
+
   public long getAllowance() {
     return getInstance().getAllowance();
   }

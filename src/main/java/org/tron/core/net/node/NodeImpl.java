@@ -12,7 +12,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
@@ -58,7 +57,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
@@ -82,7 +80,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private SyncPool pool;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(10000).expireAfterWrite(600, TimeUnit.SECONDS)
+      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS)
       .recordStats().build();
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -271,9 +269,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //private volatile boolean isHandleSyncBlockRunning = false;
 
-  private boolean isSuspendFetch = false;
+  private volatile boolean isSuspendFetch = false;
 
-  private boolean isFetchSyncActive = false;
+  private volatile boolean isFetchSyncActive = false;
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
@@ -293,9 +291,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case FETCH_INV_DATA:
         onHandleFetchDataMessage(peer, (FetchInvDataMessage) msg);
-        break;
-      case BLOCK_INVENTORY:
-        onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
         break;
       case BLOCK_CHAIN_INVENTORY:
         onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
@@ -712,39 +707,36 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     Map<Sha256Hash, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
-    logger.info("handle Block number is " + blkMsg.getBlockId().getNum());
-
-    if (advObjWeRequested.containsKey(blockId)) {
-      //broadcast mode
-      advObjWeRequested.remove(blockId);
-      processAdvBlock(peer, blkMsg.getBlockCapsule());
-      startFetchItem();
-    } else if (syncBlockRequested.containsKey(blockId)) {
+    boolean syncFlag = false;
+    if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
         logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
         return;
       }
-      //sync mode
-      syncBlockRequested.remove(blockId);
-      //peer.getSyncBlockToFetch().remove(blockId);
+      peer.getSyncBlockRequested().remove(blockId);
       syncBlockIdWeRequested.remove(blockId);
-      //TODO: maybe use consume pipe here better
       synchronized (blockJustReceived) {
         blockJustReceived.add(blkMsg);
       }
       isHandleSyncBlockActive = true;
-      //processSyncBlock(blkMsg.getBlockCapsule());
+      syncFlag = true;
       if (!peer.isBusy()) {
-        if (peer.getUnfetchSyncNum() > 0
-            && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
+        if (peer.getUnfetchSyncNum() > 0 && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
           syncNextBatchChainIds(peer);
         } else {
-          //startFetchSyncBlock();
           isFetchSyncActive = true;
         }
       }
-
     }
+
+    if (advObjWeRequested.containsKey(blockId)) {
+      advObjWeRequested.remove(blockId);
+      if (!syncFlag){
+        processAdvBlock(peer, blkMsg.getBlockCapsule());
+        startFetchItem();
+      }
+    }
+
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
@@ -771,6 +763,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //reSync
         logger.info("get a unlink block ,so start sync!");
         startSyncWithPeer(peer);
+      } catch (Exception e) {
+        logger.error("broadcast fail", e);
       }
     }
   }
@@ -1078,6 +1072,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //sew it
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         peer.setUnfetchSyncNum(msg.getRemainNum());
+        if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0){
+          peer.setNeedSyncFromPeer(false);
+        }
 
         long newUnSyncNum = getUnSyncNum();
         if (unSyncNum != newUnSyncNum) {
@@ -1190,22 +1187,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
     peer.setHeadBlockTimeWeBothHave(time);
-  }
-
-  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle advertise blocks inventory message");
-
-    //todo: check this peer's advertise history and the history of our request to this peer.
-    //simple implement here first
-    List<Sha256Hash> fetchList = new ArrayList<>();
-    msg.getBlockIds().forEach(hash -> {
-      //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
-      logger.info("We will fetch " + hash + " from " + peer);
-      fetchList.add(hash);
-    });
-    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.getMessageId(), peer);
-    loopFetchBlocks.push(fetchMsg);
   }
 
   private void startSync() {

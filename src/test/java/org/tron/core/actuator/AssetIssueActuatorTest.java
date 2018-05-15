@@ -43,7 +43,6 @@ public class AssetIssueActuatorTest {
   private static final long TOTAL_SUPPLY = 10000L;
   private static final int TRX_NUM = 10000;
   private static final int NUM = 100000;
-  private static final int DECAY_RATIO = 50;
   private static final long VOTE_SCORE = 100;
   private static final String DESCRIPTION = "myCoin";
   private static final String URL = "tron-my.com";
@@ -90,7 +89,6 @@ public class AssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -174,7 +172,6 @@ public class AssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -220,7 +217,6 @@ public class AssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -266,7 +262,6 @@ public class AssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -312,7 +307,6 @@ public class AssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -358,7 +352,6 @@ public class AssetIssueActuatorTest {
             .setNum(-NUM)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -404,7 +397,6 @@ public class AssetIssueActuatorTest {
             .setNum(0)
             .setStartTime(nowTime)
             .setEndTime(nowTime + 24 * 3600 * 1000)
-            .setDecayRatio(DECAY_RATIO)
             .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
@@ -450,7 +442,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -488,7 +479,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -525,7 +515,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -562,7 +551,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -599,7 +587,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -638,7 +625,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -683,7 +669,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.EMPTY)
         .build());
@@ -722,7 +707,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(url256Bytes + "0"))
         .build());
@@ -759,7 +743,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(url256Bytes))
         .build());
@@ -797,7 +780,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8("0"))
         .build());
@@ -835,7 +817,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
         .setUrl(ByteString.copyFromUtf8(" "))
         .build());
@@ -881,7 +862,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(description200Bytes+"0"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -919,7 +899,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(description200Bytes))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -958,7 +937,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.EMPTY)
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
@@ -996,7 +974,6 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDecayRatio(DECAY_RATIO)
         .setDescription(ByteString.copyFromUtf8(" "))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());

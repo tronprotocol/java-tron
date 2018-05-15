@@ -481,6 +481,11 @@ public class Manager {
 
     //validateFreq(trx);
     synchronized (this) {
+      if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
+        logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
+        throw new DupTransactionException("dup trans");
+      }
+
       if (!dialog.valid()) {
         dialog.setValue(revokingStore.buildDialog());
       }
