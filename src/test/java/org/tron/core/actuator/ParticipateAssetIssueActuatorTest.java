@@ -52,7 +52,6 @@ public class ParticipateAssetIssueActuatorTest {
   private static final long TOTAL_SUPPLY = 10000000000000L;
   private static final int TRX_NUM = 2;
   private static final int NUM = 2147483647;
-  private static final int DECAY_RATIO = 2;
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
@@ -165,7 +164,6 @@ public class ParticipateAssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(startTimestmp)
             .setEndTime(endTimestmp)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
@@ -189,7 +187,6 @@ public class ParticipateAssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(startTimestmp)
             .setEndTime(endTimestmp)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
@@ -213,7 +210,6 @@ public class ParticipateAssetIssueActuatorTest {
             .setNum(NUM)
             .setStartTime(startTimestmp)
             .setEndTime(endTimestmp)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))

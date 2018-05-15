@@ -70,7 +70,6 @@ public class TransferAssetActuatorTest {
   private static final int NUM = 1;
   private static final long START_TIME = 1;
   private static final long END_TIME = 2;
-  private static final int DECAY_RATIO = 2;
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
@@ -117,7 +116,6 @@ public class TransferAssetActuatorTest {
             .setNum(NUM)
             .setStartTime(START_TIME)
             .setEndTime(END_TIME)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
@@ -144,7 +142,6 @@ public class TransferAssetActuatorTest {
             .setNum(NUM)
             .setStartTime(START_TIME)
             .setEndTime(END_TIME)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
@@ -524,7 +521,6 @@ public class TransferAssetActuatorTest {
             .setNum(NUM)
             .setStartTime(START_TIME)
             .setEndTime(END_TIME)
-            .setDecayRatio(DECAY_RATIO)
             .setVoteScore(VOTE_SCORE)
             .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
