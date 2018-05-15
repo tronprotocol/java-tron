@@ -1049,9 +1049,6 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
     // todo set revoking db max size.
-    this.updateDynamicProperties(block);
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
@@ -1068,6 +1065,9 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+    this.updateDynamicProperties(block);
+    this.updateSignedWitness(block);
+    this.updateLatestSolidifiedBlock();
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
