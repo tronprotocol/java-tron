@@ -7,7 +7,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class TransactionInventoryMessage extends InventoryMessage {
 
-  public TransactionInventoryMessage(byte[] packed) {
+  public TransactionInventoryMessage(byte[] packed) throws Exception {
     super(packed);
   }
 

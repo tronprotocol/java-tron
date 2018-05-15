@@ -14,11 +14,7 @@ public class ItemNotFound extends TronMessage {
     itemsBuilder.setType(Protocol.Items.ItemType.ERR);
     notFound = itemsBuilder.build();
     this.type = MessageTypes.ITEM_NOT_FOUND.asByte();
-  }
-
-  @Override
-  public byte[] getData() {
-    return notFound.toByteArray();
+    this.data = notFound.toByteArray();
   }
 
   @Override
@@ -31,8 +27,4 @@ public class ItemNotFound extends TronMessage {
     return null;
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
 }

@@ -18,6 +18,9 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -31,6 +34,8 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -52,33 +57,56 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractExeException();
       }
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
+      byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
-      dbManager.adjustBalance(assetIssueContract.getOwnerAddress().toByteArray(), -calcFee());
-      ret.setStatus(fee, code.SUCESS);
+      dbManager.adjustBalance(ownerAddress, -calcFee());
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           calcFee());//send to blackhole
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(assetIssueContract.getOwnerAddress().toByteArray());
 
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
+      Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
+      long remainSupply = assetIssueContract.getTotalSupply();
+      List<Frozen> frozenList = new ArrayList<>();
+      long now = dbManager.getHeadBlockTimeStamp();
+
+      while (iterator.hasNext()) {
+        FrozenSupply next = iterator.next();
+        long expireTime = now + next.getFrozenDays() * 86_400_000;
+        Frozen newFrozen = Frozen.newBuilder()
+            .setFrozenBalance(next.getFrozenAmount())
+            .setExpireTime(expireTime)
+            .build();
+        frozenList.add(newFrozen);
+        remainSupply -= next.getFrozenAmount();
+      }
+
+      assert remainSupply > 0;
+      accountCapsule.setAssetIssuedName(assetIssueContract.getName());
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
-          assetIssueContract.getTotalSupply());
+          remainSupply);
+      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+          .addAllFrozenSupply(frozenList).build());
 
-      dbManager.getAccountStore()
-          .put(assetIssueContract.getOwnerAddress().toByteArray(), accountCapsule);
+      dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+      ret.setStatus(fee, code.SUCESS);
+      return true;
     } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-    return true;
   }
 
   @Override
@@ -103,6 +131,12 @@ public class AssetIssueActuator extends AbstractActuator {
           .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
         throw new ContractValidateException("Invalidate description");
       }
+
+      if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
+          != null) {
+        throw new ContractValidateException("Token exists");
+      }
+
       if (assetIssueContract.getTotalSupply() <= 0) {
         throw new ContractValidateException("TotalSupply must greater than 0!");
       }
@@ -115,15 +149,39 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Num must greater than 0!");
       }
 
+      if (assetIssueContract.getFrozenSupplyCount()
+          > this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber()) {
+        throw new ContractValidateException("Frozen supply list length is too long");
+      }
+
+      long remainSupply = assetIssueContract.getTotalSupply();
+      long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
+      long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
+      List<FrozenSupply> frozenList = assetIssueContract.getFrozenSupplyList();
+      Iterator<FrozenSupply> iterator = frozenList.iterator();
+
+      while (iterator.hasNext()) {
+        FrozenSupply next = iterator.next();
+        if (next.getFrozenAmount() > remainSupply) {
+          throw new ContractValidateException("Frozen supply cannot exceed total supply");
+        }
+        if (!(next.getFrozenDays() >= minFrozenSupplyTime
+            && next.getFrozenDays() <= maxFrozenSupplyTime)) {
+          throw new ContractValidateException(
+              "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
+                  + "and more than " + minFrozenSupplyTime + " days");
+        }
+        remainSupply -= next.getFrozenAmount();
+      }
+
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(assetIssueContract.getOwnerAddress().toByteArray());
       if (accountCapsule == null) {
         throw new ContractValidateException("Account not exists");
       }
 
-      if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-          != null) {
-        throw new ContractValidateException("Token exists");
+      if (accountCapsule.getFrozenSupplyCount() != 0) {
+        throw new ContractValidateException("An account can only issue one asset at a time");
       }
 
       if (accountCapsule.getBalance() < calcFee()) {
@@ -133,19 +191,18 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    return false;
+    return true;
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(AssetIssueContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
     return ChainConstant.ASSET_ISSUE_FEE;
   }
-
 
   public long calcUsage() {
     return 0;
