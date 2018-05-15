@@ -428,31 +428,34 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        logger.error("Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
-                ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash), Hex.toHexString(blockHash),
-                getSolidBlockId().getString(), getHeadBlockId().getString());
+        logger.error(
+            "Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
+            ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+            Hex.toHexString(blockHash),
+            getSolidBlockId().getString(), getHeadBlockId().getString());
         throw new TaposException("tapos failed");
       }
     } catch (ItemNotFoundException e) {
       logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
-              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-              getSolidBlockId().getString(), getHeadBlockId().getString());
+          ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+          getSolidBlockId().getString(), getHeadBlockId().getString());
       throw new TaposException("tapos failed");
     }
   }
 
-  void validateCommon(TransactionCapsule transactionCapsule) throws TransactionExpirationException, TooBigTransactionException {
+  void validateCommon(TransactionCapsule transactionCapsule)
+      throws TransactionExpirationException, TooBigTransactionException {
     if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(
-              "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
+          "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||
-            transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
+        transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
-              "transaction expiration, transaction expiration time is " + transactionExpiration
-                      + ", but headBlockTime is " + headBlockTime);
+          "transaction expiration, transaction expiration time is " + transactionExpiration
+              + ", but headBlockTime is " + headBlockTime);
     }
   }
 
@@ -1015,9 +1018,6 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
     // todo set revoking db max size.
-    this.updateDynamicProperties(block);
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
@@ -1034,6 +1034,9 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+    this.updateDynamicProperties(block);
+    this.updateSignedWitness(block);
+    this.updateLatestSolidifiedBlock();
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
@@ -1230,6 +1233,7 @@ public class Manager {
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
+
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
 
