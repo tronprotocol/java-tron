@@ -23,9 +23,4 @@ public class FetchInvDataMessage extends InventoryMessage {
     this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }
 
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
 }

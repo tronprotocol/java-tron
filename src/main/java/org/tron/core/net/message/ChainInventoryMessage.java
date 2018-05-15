@@ -5,7 +5,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ChainInventory;
@@ -34,12 +33,6 @@ public class ChainInventoryMessage extends TronMessage {
     this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
     this.data = chainInventory.toByteArray();
   }
-
-  @Override
-  public Sha256Hash getMessageId() {
-    return super.getMessageId();
-  }
-
 
   @Override
   public Class<?> getAnswerMessage() {

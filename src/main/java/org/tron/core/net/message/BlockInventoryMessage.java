@@ -3,7 +3,7 @@ package org.tron.core.net.message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.common.utils.Sha256Hash;
+import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockInventory;
@@ -19,13 +19,9 @@ public class BlockInventoryMessage extends TronMessage {
   }
 
   @Override
-  public Sha256Hash getMessageId() {
-    return super.getMessageId();
-  }
-
-  @Override
   public String toString() {
-    return "BlockInventory : " + blockInventory +
+    return "BlockInventory : " + (CollectionUtils.isNotEmpty(blockInventory.getIdsList())
+        ? blockInventory.getIdsList().size() : 0) +
         "\n" + super.toString();
   }
 

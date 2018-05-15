@@ -1,6 +1,7 @@
 package org.tron.core.net.message;
 
 import java.util.List;
+import org.apache.commons.collections4.CollectionUtils;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Items;
 
@@ -23,9 +24,8 @@ public class BlocksMessage extends TronMessage {
 
   @Override
   public String toString() {
-    return "BlocksMessage{" +
-        "blocks=" + blocks +
-        "}," + super.toString();
+    return "BlocksMessage size:" + (CollectionUtils.isNotEmpty(blocks) ? blocks.size() : 0)
+        + super.toString();
   }
 
   @Override
