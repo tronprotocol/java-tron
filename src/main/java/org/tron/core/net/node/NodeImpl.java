@@ -224,7 +224,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
 
-  private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
+  //private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
+
+  private ConcurrentHashMap<Sha256Hash, PriorItem> advObjToFetch =  new ConcurrentHashMap<Sha256Hash, PriorItem>()
 
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
@@ -466,7 +468,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     InvToSend sendPackage = new InvToSend();
     //AtomicLong batchFecthResponseSize = new AtomicLong(0);
 
-    advObjToFetch.stream()
+    advObjToFetch.values().stream()
         .sorted(PriorItem::compareTo)
         .forEach(idToFetch ->
       filterActivePeer.stream()
@@ -483,7 +485,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 //        if (batchFecthResponseSize.incrementAndGet() >= BATCH_FETCH_RESPONSE_SIZE) {
 //          return;
 //        }
-        advObjToFetch.remove(idToFetch);
+        advObjToFetch.remove(idToFetch.getHash());
       }));
 
     sendPackage.sendFetch();
@@ -674,7 +676,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            this.advObjToFetch.add(new PriorItem(id, msg.getInventoryType(), fetchSequenceCounter.incrementAndGet()));
+            if (advObjToFetch)
+            this.advObjToFetch.put(id, new PriorItem(id, msg.getInventoryType(), fetchSequenceCounter.incrementAndGet()));
           }
         }
       }
