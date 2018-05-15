@@ -464,10 +464,6 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
-    if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
-      logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
-      throw new DupTransactionException("dup trans");
-    }
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -479,6 +475,11 @@ public class Manager {
 
     //validateFreq(trx);
     synchronized (this) {
+      if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
+        logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
+        throw new DupTransactionException("dup trans");
+      }
+
       if (!dialog.valid()) {
         dialog.setValue(revokingStore.buildDialog());
       }
