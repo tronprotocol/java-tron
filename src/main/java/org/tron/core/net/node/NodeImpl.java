@@ -12,7 +12,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import io.netty.util.internal.ConcurrentSet;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
@@ -58,7 +57,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.net.message.BlockInventoryMessage;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
@@ -293,9 +291,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       case FETCH_INV_DATA:
         onHandleFetchDataMessage(peer, (FetchInvDataMessage) msg);
-        break;
-      case BLOCK_INVENTORY:
-        onHandleBlockInventoryMessage(peer, (BlockInventoryMessage) msg);
         break;
       case BLOCK_CHAIN_INVENTORY:
         onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
@@ -771,6 +766,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //reSync
         logger.info("get a unlink block ,so start sync!");
         startSyncWithPeer(peer);
+      } catch (Exception e) {
+        logger.error("broadcast fail", e);
       }
     }
   }
@@ -1190,22 +1187,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
     peer.setHeadBlockTimeWeBothHave(time);
-  }
-
-  private void onHandleBlockInventoryMessage(PeerConnection peer, BlockInventoryMessage msg) {
-    logger.info("on handle advertise blocks inventory message");
-
-    //todo: check this peer's advertise history and the history of our request to this peer.
-    //simple implement here first
-    List<Sha256Hash> fetchList = new ArrayList<>();
-    msg.getBlockIds().forEach(hash -> {
-      //TODO: Check this block whether we need it,Use peer.invToUs and peer.invWeAdv.
-      logger.info("We will fetch " + hash + " from " + peer);
-      fetchList.add(hash);
-    });
-    FetchInvDataMessage fetchMsg = new FetchInvDataMessage(fetchList, InventoryType.BLOCK);
-    fetchMap.put(fetchMsg.getMessageId(), peer);
-    loopFetchBlocks.push(fetchMsg);
   }
 
   private void startSync() {

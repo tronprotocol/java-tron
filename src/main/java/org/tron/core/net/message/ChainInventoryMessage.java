@@ -1,23 +1,23 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ChainInventory;
 
 public class ChainInventoryMessage extends TronMessage {
 
-  public ChainInventoryMessage(byte[] packed) {
-    super(packed);
-    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
-  }
-
   protected ChainInventory chainInventory;
+
+  public ChainInventoryMessage(byte[] data) throws Exception {
+    this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
+    this.data = data;
+    chainInventory = Protocol.ChainInventory.parseFrom(data);
+  }
 
   public ChainInventoryMessage(List<BlockId> blockIds, Long remainNum) {
     ChainInventory.Builder invBuilder = ChainInventory.newBuilder();
@@ -30,21 +30,8 @@ public class ChainInventoryMessage extends TronMessage {
 
     invBuilder.setRemainNum(remainNum);
     chainInventory = invBuilder.build();
-    unpacked = true;
     this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
-  }
-
-  @Override
-  public Sha256Hash getMessageId() {
-    return super.getMessageId();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (data == null) {
-      pack();
-    }
-    return data;
+    this.data = chainInventory.toByteArray();
   }
 
   @Override
@@ -52,12 +39,7 @@ public class ChainInventoryMessage extends TronMessage {
     return null;
   }
 
-  private void pack() {
-    this.data = this.chainInventory.toByteArray();
-  }
-
   private ChainInventory getChainInventory() {
-    unPack();
     return chainInventory;
   }
 
@@ -76,20 +58,7 @@ public class ChainInventoryMessage extends TronMessage {
   public Long getRemainNum() {
     return getChainInventory().getRemainNum();
   }
-
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-
-    try {
-      this.chainInventory = ChainInventory.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.info(e.getMessage());
-    }
-    unpacked = true;
-  }
-
+  
   @Override
   public String toString() {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(getBlockIds());
@@ -101,8 +70,4 @@ public class ChainInventoryMessage extends TronMessage {
             .append(" size: ").append(blockIdWeGet.size()).toString();
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
 }

@@ -38,8 +38,6 @@ public class TronMessageFactory extends MessageFactory {
         return new TransactionsMessage(packed);
       case BLOCKS:
         return new BlocksMessage(packed);
-      case BLOCKHEADERS:
-        return new BlockHeadersMessage(packed);
       case INVENTORY:
         return new InventoryMessage(packed);
       case FETCH_INV_DATA:
@@ -52,8 +50,6 @@ public class TronMessageFactory extends MessageFactory {
         return new ItemNotFound();
       case FETCH_BLOCK_HEADERS:
         return new FetchBlockHeadersMessage(packed);
-      case BLOCK_INVENTORY:
-        return new BlockInventoryMessage(packed);
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
