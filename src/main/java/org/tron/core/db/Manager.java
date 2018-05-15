@@ -459,10 +459,17 @@ public class Manager {
     }
   }
 
+  void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
+    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+      logger.debug(
+          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
+      throw new DupTransactionException("dup trans");
+    }
+  }
+
   /**
    * push transaction into db.
    */
-
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
@@ -472,17 +479,8 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    validateTapos(trx);
-
-    validateCommon(trx);
-
     //validateFreq(trx);
     synchronized (this) {
-      if (getTransactionStore().get(trx.getTransactionId().getBytes()) != null) {
-        logger.debug(getTransactionStore().get(trx.getTransactionId().getBytes()).toString());
-        throw new DupTransactionException("dup trans");
-      }
-
       if (!dialog.valid()) {
         dialog.setValue(revokingStore.buildDialog());
       }
@@ -600,7 +598,7 @@ public class Manager {
   }
 
   private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -643,6 +641,14 @@ public class Manager {
             } catch (ContractExeException e) {
               logger.debug(e.getMessage(), e);
             } catch (RevokingStoreIllegalStateException e) {
+              logger.debug(e.getMessage(), e);
+            } catch (TaposException e) {
+              logger.debug(e.getMessage(), e);
+            } catch (DupTransactionException e) {
+              logger.debug(e.getMessage(), e);
+            } catch (TooBigTransactionException e) {
+              logger.debug(e.getMessage(), e);
+            } catch (TransactionExpirationException e) {
               logger.debug(e.getMessage(), e);
             }
           });
@@ -752,6 +758,14 @@ public class Manager {
           applyBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
+          logger.debug(e.getMessage(), e);
+        } catch (TaposException e) {
+          logger.debug(e.getMessage(), e);
+        } catch (DupTransactionException e) {
+          logger.debug(e.getMessage(), e);
+        } catch (TooBigTransactionException e) {
+          logger.debug(e.getMessage(), e);
+        } catch (TransactionExpirationException e) {
           logger.debug(e.getMessage(), e);
         }
       }
@@ -876,14 +890,18 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
-
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
     if (trxCap == null) {
       return false;
     }
+
+    validateDup(trxCap);
     if (!trxCap.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
+    validateTapos(trxCap);
+    validateCommon(trxCap);
+
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -964,6 +982,19 @@ public class Manager {
         logger.info("contract not processed during validate");
         logger.debug(e.getMessage(), e);
       } catch (RevokingStoreIllegalStateException e) {
+        logger.info("contract not processed during RevokingStoreIllegalState");
+        logger.debug(e.getMessage(), e);
+      } catch (TaposException e) {
+        logger.info("contract not processed during TaposException");
+        logger.debug(e.getMessage(), e);
+      } catch (DupTransactionException e) {
+        logger.info("contract not processed during DupTransactionException");
+        logger.debug(e.getMessage(), e);
+      } catch (TooBigTransactionException e) {
+        logger.info("contract not processed during TooBigTransactionException");
+        logger.debug(e.getMessage(), e);
+      } catch (TransactionExpirationException e) {
+        logger.info("contract not processed during TransactionExpirationException");
         logger.debug(e.getMessage(), e);
       }
     }
@@ -1016,12 +1047,12 @@ public class Manager {
    * process block.
    */
   public void processBlock(BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
     // todo set revoking db max size.
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
-        transactionCapsule.setValidated(true);
+        transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule);
     }
