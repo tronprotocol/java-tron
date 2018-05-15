@@ -71,11 +71,11 @@ public class AssetIssueActuator extends AbstractActuator {
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
       long remainSupply = assetIssueContract.getTotalSupply();
       List<Frozen> frozenList = new ArrayList<>();
-      long now = dbManager.getHeadBlockTimeStamp();
+      long startTime = assetIssueContract.getStartTime();
 
       while (iterator.hasNext()) {
         FrozenSupply next = iterator.next();
-        long expireTime = now + next.getFrozenDays() * 86_400_000;
+        long expireTime = startTime + next.getFrozenDays() * 86_400_000;
         Frozen newFrozen = Frozen.newBuilder()
             .setFrozenBalance(next.getFrozenAmount())
             .setExpireTime(expireTime)
