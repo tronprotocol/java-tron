@@ -27,5 +27,7 @@ public class Index {
     long size();
 
     String getName();
+
+    void fill();
   }
 }

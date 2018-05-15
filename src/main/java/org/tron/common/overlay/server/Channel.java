@@ -138,6 +138,7 @@ public class Channel {
         setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
+        channelManager.add(this);
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 

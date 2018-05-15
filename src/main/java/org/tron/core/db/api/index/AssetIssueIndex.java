@@ -39,7 +39,6 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
 //    index.addIndex(DiskIndex.onAttribute(AssetIssue_NAME));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_START));
     index.addIndex(DiskIndex.onAttribute(AssetIssue_END));
-    fill();
   }
 
   @Override

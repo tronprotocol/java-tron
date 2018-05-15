@@ -1,5 +1,6 @@
 package org.tron.core.db.api;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,15 @@ public class IndexHelper {
   @Getter
   @Resource
   private Index.Iface<AssetIssueContract> assetIssueIndex;
+
+  @PostConstruct
+  public void init() {
+    transactionIndex.fill();
+    blockIndex.fill();
+    witnessIndex.fill();
+    accountIndex.fill();
+    assetIssueIndex.fill();
+  }
 
   private <T> void add(Index.Iface<T> index, byte[] bytes) {
     index.add(bytes);
