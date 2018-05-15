@@ -27,7 +27,6 @@ public class FullNode {
       return;
     }
 
-    logger.info("***********************" + cfgArgs.isSolidityNode());
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
