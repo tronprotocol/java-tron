@@ -116,23 +116,32 @@ public class ChannelManager {
   }
 
   public void add(Channel peer) {
+    if (isShouldAddToActivePeers(peer)) {
+      activePeers.put(peer.getNodeIdWrapper(), peer);
+      syncPool.onConnect(peer);
+      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+    }
+  }
+
+  private boolean isShouldAddToActivePeers(Channel peer) {
     if (peer.getNodeStatistics().isPenalized()) {
       disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+      return false;
     } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
       disconnect(peer, TOO_MANY_PEERS);
+      return false;
     } else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
       Channel channel = activePeers.get(peer.getNodeIdWrapper());
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
         disconnect(channel, DUPLICATE_PEER);
-        activePeers.put(peer.getNodeIdWrapper(), peer);
+        return true;
       } else {
         disconnect(peer, DUPLICATE_PEER);
+        return false;
       }
     } else {
-      activePeers.put(peer.getNodeIdWrapper(), peer);
-      syncPool.onConnect(peer);
-      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+      return true;
     }
   }
 
