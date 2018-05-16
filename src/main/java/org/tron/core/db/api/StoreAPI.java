@@ -256,10 +256,7 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds),
-            queryOptions(
-                orderBy(descending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+            between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds))) {
       return ImmutableList.copyOf(resultSet);
     }
   }
