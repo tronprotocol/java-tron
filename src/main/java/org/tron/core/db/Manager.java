@@ -758,15 +758,23 @@ public class Manager {
           applyBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
-          logger.debug(e.getMessage(), e);
+          logger.error(e.getMessage(), e);
         } catch (TaposException e) {
           logger.debug(e.getMessage(), e);
+          khaosDb.removeBlk(block.getBlockId());
         } catch (DupTransactionException e) {
           logger.debug(e.getMessage(), e);
+          khaosDb.removeBlk(block.getBlockId());
         } catch (TooBigTransactionException e) {
           logger.debug(e.getMessage(), e);
+          khaosDb.removeBlk(block.getBlockId());
         } catch (TransactionExpirationException e) {
           logger.debug(e.getMessage(), e);
+          khaosDb.removeBlk(block.getBlockId());
+        } catch (Throwable throwable) {
+          logger.error(throwable.getMessage(), throwable);
+          khaosDb.removeBlk(block.getBlockId());
+          throw throwable;
         }
       }
       logger.info("save block: " + newBlock);
