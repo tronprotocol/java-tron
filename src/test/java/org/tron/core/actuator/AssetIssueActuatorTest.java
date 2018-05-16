@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -76,6 +77,12 @@ public class AssetIssueActuatorTest {
             AccountType.AssetIssue,
             ChainConstant.ASSET_ISSUE_FEE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+  }
+
+  @After
+  public void removeCapsule() {
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    dbManager.getAccountStore().delete(address);
   }
 
   private Any getContract() {
