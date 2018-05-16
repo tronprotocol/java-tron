@@ -49,6 +49,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MIN_FROZEN_TIME = "MIN_FROZEN_TIME".getBytes();
 
+  private static final byte[] MAX_FROZEN_SUPPLY_NUMBER = "MAX_FROZEN_SUPPLY_NUMBER".getBytes();
+
+  private static final byte[] MAX_FROZEN_SUPPLY_TIME = "MAX_FROZEN_SUPPLY_TIME".getBytes();
+
+  private static final byte[] MIN_FROZEN_SUPPLY_TIME = "MIN_FROZEN_SUPPLY_TIME".getBytes();
+
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
@@ -62,6 +68,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
 
   private static final byte[] OPERATING_TIME_INTERVAL = "OPERATING_TIME_INTERVAL".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
@@ -142,6 +149,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getMinFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveMinFrozenTime(3);
+    }
+
+    try {
+      this.getMaxFrozenSupplyNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxFrozenSupplyNumber(10);
+    }
+
+    try {
+      this.getMaxFrozenSupplyTime();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxFrozenSupplyTime(3652);
+    }
+
+    try {
+      this.getMinFrozenSupplyTime();
+    } catch (IllegalArgumentException e) {
+      this.saveMinFrozenSupplyTime(1);
     }
 
     try {
@@ -345,6 +370,45 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
+  }
+
+  public void saveMaxFrozenSupplyNumber(int maxFrozenSupplyNumber) {
+    logger.debug("MAX_FROZEN_SUPPLY_NUMBER:" + maxFrozenSupplyNumber);
+    this.put(MAX_FROZEN_SUPPLY_NUMBER,
+        new BytesCapsule(ByteArray.fromInt(maxFrozenSupplyNumber)));
+  }
+
+  public int getMaxFrozenSupplyNumber() {
+    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_SUPPLY_NUMBER))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_FROZEN_SUPPLY_NUMBER"));
+  }
+
+  public void saveMaxFrozenSupplyTime(int maxFrozenSupplyTime) {
+    logger.debug("MAX_FROZEN_SUPPLY_NUMBER:" + maxFrozenSupplyTime);
+    this.put(MAX_FROZEN_SUPPLY_TIME,
+        new BytesCapsule(ByteArray.fromInt(maxFrozenSupplyTime)));
+  }
+
+  public int getMaxFrozenSupplyTime() {
+    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_SUPPLY_TIME))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_FROZEN_SUPPLY_TIME"));
+  }
+
+  public void saveMinFrozenSupplyTime(int minFrozenSupplyTime) {
+    logger.debug("MIN_FROZEN_SUPPLY_NUMBER:" + minFrozenSupplyTime);
+    this.put(MIN_FROZEN_SUPPLY_TIME,
+        new BytesCapsule(ByteArray.fromInt(minFrozenSupplyTime)));
+  }
+
+  public int getMinFrozenSupplyTime() {
+    return Optional.ofNullable(this.dbSource.getData(MIN_FROZEN_SUPPLY_TIME))
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MIN_FROZEN_SUPPLY_TIME"));
   }
 
   public void saveWitnessAllowanceFrozenTime(int witnessAllowanceFrozenTime) {

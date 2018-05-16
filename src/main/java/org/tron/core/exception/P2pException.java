@@ -4,20 +4,8 @@ public class P2pException extends Exception {
 
     private TypeEnum type;
 
-    public P2pException(TypeEnum type){
-        super(type.getDesc());
-        this.type = type;
-    }
     public P2pException(TypeEnum type, String errMsg){
         super(errMsg);
-        this.type = type;
-    }
-    public P2pException(TypeEnum type, Throwable throwable){
-        super(type.getDesc(), throwable);
-        this.type = type;
-    }
-    public P2pException(TypeEnum type, String errMsg, Throwable throwable){
-        super(errMsg, throwable);
         this.type = type;
     }
 

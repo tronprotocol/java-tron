@@ -30,6 +30,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 
 
@@ -43,9 +44,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-
     try {
-      Contract.ParticipateAssetIssueContract participateAssetIssueContract =
+      ParticipateAssetIssueContract participateAssetIssueContract =
           contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
       long cost = participateAssetIssueContract.getAmount();
@@ -78,8 +78,6 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       dbManager.getAccountStore().put(toAddressBytes, toAccount);
 
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
-
-      return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
       logger.debug(e.getMessage(), e);
@@ -89,15 +87,19 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
+
+    return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(Contract.ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException();
-    }
-
     try {
+      if (!this.contract.is(ParticipateAssetIssueContract.class)) {
+        throw new ContractValidateException();
+      }
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
       //Parameters check
@@ -124,14 +126,14 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       //Whether the account exist
-      AccountCapsule ac = this.dbManager.getAccountStore().get(ownerAddress);
-      if (ac == null) {
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddress);
+      if (ownerAccount == null) {
         throw new ContractValidateException("Account does not exist!");
       }
 
-      long fee = calcFee();
       //Whether the balance is enough
-      if (ac.getBalance() < Math.addExact(amount, fee)) {
+      long fee = calcFee();
+      if (ownerAccount.getBalance() < Math.addExact(amount, fee)) {
         throw new ContractValidateException("No enough balance !");
       }
 
@@ -159,10 +161,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (exchangeAmount <= 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
+
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
+
       if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }
@@ -177,7 +181,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return null;
+    return this.contract.unpack(Contract.ParticipateAssetIssueContract.class).getOwnerAddress();
   }
 
   @Override

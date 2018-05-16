@@ -9,7 +9,7 @@ addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
 skip_build:
-- README.md
+- README.md：
 - LICENSE
 deploy:
   provider: script

@@ -8,6 +8,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 
+
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 mainClassName = 'org.tron.program.FullNode'
@@ -33,6 +34,11 @@ buildscript {
 def versions = [
         checkstyle: '8.7',
 ]
+
+jacoco {
+    toolVersion = "0.8.1"
+}
+
 
 configurations {
     checkstyleConfig
@@ -229,9 +235,9 @@ test {
     testLogging {
         exceptionFormat = 'full'
     }
-    jacoco{
+    jacoco {
         append = false
-        destinationFile = file("$buildDir/jacoco/trade.exec")
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
     }
 }
 

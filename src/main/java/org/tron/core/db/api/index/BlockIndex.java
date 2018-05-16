@@ -56,7 +56,6 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
     index.addIndex(DiskIndex.onAttribute(WITNESS_ADDRESS));
     index.addIndex(DiskIndex.onAttribute(OWNERS));
     index.addIndex(DiskIndex.onAttribute(TOS));
-    fill();
   }
 
   @Override
