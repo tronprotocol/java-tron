@@ -61,9 +61,9 @@ public class InventoryMessage extends TronMessage {
   public String toString() {
     Deque<Sha256Hash> hashes = new LinkedList<>(getHashList());
     StringBuilder builder = new StringBuilder();
-    builder.append(getType()).append(":").append(getInvMessageType())
-            .append(", size=").append(hashes.size())
-            .append(", First hash:").append(hashes.peekFirst());
+    builder.append(super.toString()).append("invType: ").append(getInvMessageType())
+            .append(", size: ").append(hashes.size())
+            .append(", First hash: ").append(hashes.peekFirst());
     if (hashes.size() > 1){
       builder.append(", End hash: ").append(hashes.peekLast());
     }
