@@ -21,10 +21,10 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class TransferActuator extends AbstractActuator {
 
-  TransferContract transferContract;
-  byte[] ownerAddress;
-  byte[] toAddress;
-  long amount;
+  private TransferContract transferContract;
+  private byte[] ownerAddress;
+  private byte[] toAddress;
+  private long amount;
 
   TransferActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -40,11 +40,9 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-
     long fee = calcFee();
     try {
-
-      // if account with to_address is not existed,  create it.
+      // if account with to_address does not exist, create it first.
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(transferContract.getToAddress().toByteArray());
       if (toAccount == null) {
@@ -52,12 +50,10 @@ public class TransferActuator extends AbstractActuator {
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccount);
       }
-      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -calcFee());
+      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -fee);
       ret.setStatus(fee, code.SUCESS);
-      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(),
-          -amount);
-      dbManager.adjustBalance(transferContract.getToAddress().toByteArray(),
-          amount);
+      dbManager.adjustBalance(transferContract.getOwnerAddress().toByteArray(), -amount);
+      dbManager.adjustBalance(transferContract.getToAddress().toByteArray(), amount);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -112,7 +108,7 @@ public class TransferActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not sufficient.");
       }
 
-      // if account with to_address is not existed,  create it.
+      // if account with to_address is not existed, the minimum amount is 1 TRX
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(transferContract.getToAddress().toByteArray());
       if (toAccount == null) {
@@ -123,14 +119,13 @@ public class TransferActuator extends AbstractActuator {
         }
       } else {
         //check to account balance if overflow
-        balance = Math.addExact(toAccount.getBalance(), amount);
+        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (Exception ex) {
       throw new ContractValidateException(ex.getMessage());
     }
     return true;
   }
-
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
