@@ -19,13 +19,6 @@ public class BlockInventoryMessage extends TronMessage {
   }
 
   @Override
-  public String toString() {
-    return "BlockInventory : " + (CollectionUtils.isNotEmpty(blockInventory.getIdsList())
-        ? blockInventory.getIdsList().size() : 0) +
-        "\n" + super.toString();
-  }
-
-  @Override
   public Class<?> getAnswerMessage() {
     return null;
   }

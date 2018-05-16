@@ -284,7 +284,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -875,14 +874,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
-        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
     msg.getTransactions().getTransactionsList().forEach(transaction ->
         onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -895,12 +891,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.isEmpty()) {
-      if (CollectionUtils.isNotEmpty(summaryChainIds)
-          && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
-        logger.info(
-            "Node sync block fail, disconnect peer:{}, sync message:{}",
-            peer, syncMsg);
+      if (CollectionUtils.isNotEmpty(summaryChainIds) && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+        logger.info("Node sync block fail, disconnect peer {}, no block {}", peer, summaryChainIds.get(0).getString());
         peer.disconnect(ReasonCode.SYNC_FAIL);
+        return;
       } else {
         peer.setNeedSyncFromUs(false);
       }
