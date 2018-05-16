@@ -768,6 +768,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
+        // TODO: punish bad peer
         logger.error("We get a bad block, reason is " + e.getMessage()
             + "\n the block is" + block);
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
@@ -794,6 +795,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       freshBlockId.offer(block.getBlockId());
       isAccept = true;
     } catch (BadBlockException e) {
+      // TODO: punish bad peer
       logger.error("We get a bad block, reason is " + e.getMessage()
           + "\n the block is" + block);
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
