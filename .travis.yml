@@ -4,7 +4,7 @@ jdk: oraclejdk8
 script:
 - sh tron.sh
 - ./gradlew lint
-- ./gradlew test
+- ./gradlew test jacoco
 addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
