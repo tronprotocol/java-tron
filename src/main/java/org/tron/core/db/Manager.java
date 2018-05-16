@@ -192,7 +192,7 @@ public class Manager {
 
   public BlockCapsule getHead() throws HeaderNotFound {
     List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
-    if (CollectionUtils.isEmpty(blocks)) {
+    if (CollectionUtils.isNotEmpty(blocks)) {
       return blocks.get(0);
     } else {
       logger.info("Header block Not Found");
