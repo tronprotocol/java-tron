@@ -41,14 +41,6 @@ public class TransferAssetActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-    if (!this.contract.is(TransferAssetContract.class)) {
-      throw new ContractExeException();
-    }
-
-    if (this.dbManager == null) {
-      throw new ContractExeException();
-    }
-
     try {
       TransferAssetContract transferAssetContract = this.contract
           .unpack(TransferAssetContract.class);
@@ -76,12 +68,19 @@ public class TransferAssetActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
     return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
     try {
+      if (!this.contract.is(TransferAssetContract.class)) {
+        throw new ContractValidateException();
+      }
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       TransferAssetContract transferAssetContract = this.contract
           .unpack(TransferAssetContract.class);
 
@@ -129,7 +128,6 @@ public class TransferAssetActuator extends AbstractActuator {
         throw new ContractValidateException("assetBalance is not sufficient.");
       }
 
-      // if account with to_address is not existed,  create it.
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account is not exit!");
