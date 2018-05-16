@@ -85,7 +85,8 @@ public class ChannelManager {
 
   public void disconnect(Channel peer, ReasonCode reason) {
     peer.disconnect(reason);
-    InetSocketAddress socketAddress = (InetSocketAddress)peer.getChannelHandlerContext().channel().remoteAddress();
+    InetSocketAddress socketAddress = (InetSocketAddress) peer.getChannelHandlerContext().channel()
+        .remoteAddress();
     recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
@@ -115,34 +116,30 @@ public class ChannelManager {
     }
   }
 
-  public void add(Channel peer) {
-    if (isShouldAddToActivePeers(peer)) {
-      activePeers.put(peer.getNodeIdWrapper(), peer);
-      syncPool.onConnect(peer);
-      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
-    }
-  }
-
-  private boolean isShouldAddToActivePeers(Channel peer) {
+  public synchronized boolean procPeer(Channel peer) {
     if (peer.getNodeStatistics().isPenalized()) {
       disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
       return false;
-    } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+    }
+
+    if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
       disconnect(peer, TOO_MANY_PEERS);
       return false;
-    } else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
+    }
+
+    if (activePeers.containsKey(peer.getNodeIdWrapper())) {
       Channel channel = activePeers.get(peer.getNodeIdWrapper());
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
         disconnect(channel, DUPLICATE_PEER);
-        return true;
       } else {
         disconnect(peer, DUPLICATE_PEER);
         return false;
       }
-    } else {
-      return true;
     }
+    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+    activePeers.put(peer.getNodeIdWrapper(), peer);
+    return true;
   }
 
   public Collection<Channel> getActivePeers() {
