@@ -138,7 +138,7 @@ public class Channel {
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
-        return channelManager.add(this);
+        return channelManager.addPeer(this);
     }
 
     /**

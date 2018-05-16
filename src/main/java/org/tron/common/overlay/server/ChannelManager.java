@@ -85,7 +85,8 @@ public class ChannelManager {
 
   public void disconnect(Channel peer, ReasonCode reason) {
     peer.disconnect(reason);
-    InetSocketAddress socketAddress = (InetSocketAddress)peer.getChannelHandlerContext().channel().remoteAddress();
+    InetSocketAddress socketAddress = (InetSocketAddress) peer.getChannelHandlerContext().channel()
+        .remoteAddress();
     recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
@@ -115,18 +116,17 @@ public class ChannelManager {
     }
   }
 
-  public boolean add(Channel peer) {
-    if (isShouldAddToActivePeers(peer)) {
+  public boolean addPeer(Channel peer) {
+    boolean result = procPeer(peer);
+    if (result) {
       activePeers.put(peer.getNodeIdWrapper(), peer);
       syncPool.onConnect(peer);
       logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
-      return true;
-    } else {
-      return false;
     }
+    return result;
   }
 
-  private boolean isShouldAddToActivePeers(Channel peer) {
+  private boolean procPeer(Channel peer) {
     if (peer.getNodeStatistics().isPenalized()) {
       disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
       return false;
