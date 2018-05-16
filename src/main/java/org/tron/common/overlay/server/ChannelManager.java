@@ -115,11 +115,14 @@ public class ChannelManager {
     }
   }
 
-  public void add(Channel peer) {
+  public boolean add(Channel peer) {
     if (isShouldAddToActivePeers(peer)) {
       activePeers.put(peer.getNodeIdWrapper(), peer);
       syncPool.onConnect(peer);
       logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+      return true;
+    } else {
+      return false;
     }
   }
 

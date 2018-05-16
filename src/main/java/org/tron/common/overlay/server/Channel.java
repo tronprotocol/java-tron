@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
@@ -129,7 +128,7 @@ public class Channel {
 
     }
 
-    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
+    public boolean publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
         ctx.pipeline().remove(handshakeHandler);
         msgQueue.activate(ctx);
         ctx.pipeline().addLast("messageCodec", messageCodec);
@@ -138,8 +137,8 @@ public class Channel {
         setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
-        channelManager.add(this);
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
+        return channelManager.add(this);
     }
 
     /**
