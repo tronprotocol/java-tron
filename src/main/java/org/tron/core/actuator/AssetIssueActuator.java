@@ -184,7 +184,7 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       if (accountCapsule.getBalance() < calcFee()) {
-        throw new ContractValidateException("No enough blance for fee!");
+        throw new ContractValidateException("No enough balance for fee!");
       }
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
