@@ -116,36 +116,30 @@ public class ChannelManager {
     }
   }
 
-  public boolean addPeer(Channel peer) {
-    boolean result = procPeer(peer);
-    if (result) {
-      activePeers.put(peer.getNodeIdWrapper(), peer);
-      syncPool.onConnect(peer);
-      logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
-    }
-    return result;
-  }
-
-  private boolean procPeer(Channel peer) {
+  public synchronized boolean procPeer(Channel peer) {
     if (peer.getNodeStatistics().isPenalized()) {
       disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
       return false;
-    } else if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+    }
+
+    if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
       disconnect(peer, TOO_MANY_PEERS);
       return false;
-    } else if (activePeers.containsKey(peer.getNodeIdWrapper())) {
+    }
+
+    if (activePeers.containsKey(peer.getNodeIdWrapper())) {
       Channel channel = activePeers.get(peer.getNodeIdWrapper());
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
         disconnect(channel, DUPLICATE_PEER);
-        return true;
       } else {
         disconnect(peer, DUPLICATE_PEER);
         return false;
       }
-    } else {
-      return true;
     }
+    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+    activePeers.put(peer.getNodeIdWrapper(), peer);
+    return true;
   }
 
   public Collection<Channel> getActivePeers() {

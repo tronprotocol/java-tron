@@ -128,7 +128,7 @@ public class Channel {
 
     }
 
-    public boolean publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
+    public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
         ctx.pipeline().remove(handshakeHandler);
         msgQueue.activate(ctx);
         ctx.pipeline().addLast("messageCodec", messageCodec);
@@ -138,7 +138,6 @@ public class Channel {
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
-        return channelManager.addPeer(this);
     }
 
     /**

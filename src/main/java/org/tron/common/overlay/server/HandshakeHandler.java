@@ -52,6 +52,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   private final NodeManager nodeManager;
 
+  private final ChannelManager channelManager;
+
   private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
@@ -60,8 +62,13 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private NodeImpl node;
 
   @Autowired
-  public HandshakeHandler(final NodeManager nodeManager, final Manager manager) {
+  private SyncPool syncPool;
+
+  @Autowired
+  public HandshakeHandler(final NodeManager nodeManager, final ChannelManager channelManager,
+      final Manager manager) {
     this.nodeManager = nodeManager;
+    this.channelManager = channelManager;
     this.manager = manager;
   }
 
@@ -148,11 +155,15 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     channel.getNodeStatistics().p2pInHello.add();
 
-    boolean result = channel.publicHandshakeFinished(ctx, msg);
-
-    if (result && remoteId.length != 64) {
-      sendHelloMsg(ctx, msg.getTimestamp());
-      node.onConnectPeer((PeerConnection) channel);
+    channel.publicHandshakeFinished(ctx, msg);
+    if (!channelManager.procPeer(channel)) {
+      return;
     }
+
+    if (remoteId.length != 64) {
+      sendHelloMsg(ctx, msg.getTimestamp());
+    }
+
+    syncPool.onConnect(channel);
   }
 }
