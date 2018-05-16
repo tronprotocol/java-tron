@@ -77,7 +77,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -106,10 +106,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void sendHelloMsg(ChannelHandlerContext ctx, long time){
+
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
             manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().p2pOutHello.add();
+    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {

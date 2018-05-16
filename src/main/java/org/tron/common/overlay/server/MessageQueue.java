@@ -67,11 +67,11 @@ public class MessageQueue {
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
            if (!future.isSuccess()) {
-             logger.error("send {} to {} fail", msg, ctx.channel().remoteAddress());
+             logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(),  msg);
            }
          });
        }catch (Exception e) {
-         logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+         logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
      }
     });
@@ -84,7 +84,7 @@ public class MessageQueue {
   }
 
   public void sendMessage(Message msg) {
-    logger.info("send {} to {}", msg, ctx.channel().remoteAddress());
+    logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     if (msg.getAnswerMessage() != null)
       requestQueue.add(new MessageRoundtrip(msg));
     else
@@ -92,7 +92,7 @@ public class MessageQueue {
   }
 
   public void receivedMessage(Message msg){
-    logger.info("rcv {} from {}", msg, ctx.channel().remoteAddress());
+    logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg.getClass()){
       requestQueue.remove();
@@ -134,7 +134,7 @@ public class MessageQueue {
 
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess()) {
-        logger.error("send {} to {} fail", msg, ctx.channel().remoteAddress());
+        logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
       }
     });
 
