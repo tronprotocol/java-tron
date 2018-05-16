@@ -155,7 +155,6 @@ public class SyncPool {
     if (!activePeers.contains(peer)) {
       activePeers.add((PeerConnection) peer);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-      peerDel.onConnectPeer((PeerConnection) peer);
     }
   }
 

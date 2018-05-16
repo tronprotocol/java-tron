@@ -37,6 +37,7 @@ import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.core.net.peer.PeerConnection;
 
 @Component
@@ -54,6 +55,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
+
+  @Autowired
+  private NodeImpl node;
 
   @Autowired
   public HandshakeHandler(final NodeManager nodeManager, final Manager manager) {
@@ -148,6 +152,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (result && remoteId.length != 64) {
       sendHelloMsg(ctx, msg.getTimestamp());
+      node.onConnectPeer((PeerConnection) channel);
     }
   }
 }
