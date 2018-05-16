@@ -179,8 +179,8 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Account not exists");
       }
 
-      if (accountCapsule.getFrozenSupplyCount() != 0) {
-        throw new ContractValidateException("An account can only issue one asset at a time");
+      if (!accountCapsule.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("An account can only issue one asset");
       }
 
       if (accountCapsule.getBalance() < calcFee()) {

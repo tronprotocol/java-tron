@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
@@ -138,7 +137,6 @@ public class Channel {
         setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
-        channelManager.add(this);
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 
