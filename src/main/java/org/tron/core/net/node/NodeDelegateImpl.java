@@ -1,5 +1,7 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,8 +50,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
     // TODO timestamp shouble be consistent.
-    long gap = System.currentTimeMillis() - block.getTimeStamp();
-    if (gap / 1000 < -6000) {
+    long gap = block.getTimeStamp() - System.currentTimeMillis();
+    if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
     }
     try {
