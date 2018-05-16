@@ -6,6 +6,8 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "jacoco"
+
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -32,6 +34,11 @@ buildscript {
 def versions = [
         checkstyle: '8.7',
 ]
+
+jacoco {
+    toolVersion = "0.8.1"
+}
+
 
 configurations {
     checkstyleConfig
@@ -214,6 +221,10 @@ shadowJar {
 test {
     testLogging {
         exceptionFormat = 'full'
+    }
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
     }
 }
 
