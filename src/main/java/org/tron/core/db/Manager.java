@@ -709,7 +709,7 @@ public class Manager {
           applyBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
-          logger.debug(e.getMessage(), e);
+          logger.error(e.getMessage(), e);
         } catch (Throwable throwable) {
         logger.error(throwable.getMessage(), throwable);
         khaosDb.removeBlk(block.getBlockId());
