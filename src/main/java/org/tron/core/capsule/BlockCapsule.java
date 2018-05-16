@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
@@ -120,6 +119,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private Block block;
   public boolean generatedByMyself = false;
+  private List<TransactionCapsule> transactions;
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -183,9 +183,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public List<TransactionCapsule> getTransactions() {
-    return this.block.getTransactionsList().stream()
-        .map(trx -> new TransactionCapsule(trx))
-        .collect(Collectors.toList());
+    if (transactions == null) {
+      synchronized (BlockCapsule.class) {
+        if (transactions == null) {
+          transactions = this.block.getTransactionsList().stream()
+              .map(trx -> new TransactionCapsule(trx))
+              .collect(Collectors.toList());
+        }
+      }
+    }
+    return transactions;
   }
 
   public void sign(byte[] privateKey) {

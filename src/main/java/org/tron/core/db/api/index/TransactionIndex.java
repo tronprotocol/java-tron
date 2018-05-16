@@ -49,7 +49,6 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
     index.addIndex(DiskIndex.onAttribute(OWNERS));
     index.addIndex(DiskIndex.onAttribute(TOS));
     index.addIndex(DiskIndex.onAttribute(TIMESTAMP));
-    fill();
   }
 
   @Override

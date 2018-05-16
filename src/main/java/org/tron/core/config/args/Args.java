@@ -164,6 +164,16 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
+  private int rpcThreadNum;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
+  private int validateSignThreadNum;
+
+  @Getter
+  @Setter
   private long maintenanceTimeInterval; // (ms)
 
   @Getter
@@ -322,6 +332,10 @@ public class Args {
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
+    INSTANCE.rpcThreadNum =
+        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
+            : Runtime.getRuntime().availableProcessors() / 2;
+
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
@@ -335,6 +349,10 @@ public class Args {
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
     }
+
+    INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
+
   }
 
 
