@@ -69,6 +69,12 @@ public class TransferActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     try {
+      if (!this.contract.is(TransferContract.class)) {
+        throw new ContractValidateException();
+      }
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       if (transferContract == null) {
         throw new ContractValidateException(
             "contract type error,expected type [TransferContract],real type[" + contract

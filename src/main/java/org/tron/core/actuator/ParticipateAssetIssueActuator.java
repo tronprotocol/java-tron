@@ -30,6 +30,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 
 
@@ -43,9 +44,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-
     try {
-      Contract.ParticipateAssetIssueContract participateAssetIssueContract =
+      ParticipateAssetIssueContract participateAssetIssueContract =
           contract.unpack(Contract.ParticipateAssetIssueContract.class);
 
       long cost = participateAssetIssueContract.getAmount();
@@ -78,8 +78,6 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       dbManager.getAccountStore().put(toAddressBytes, toAccount);
 
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
-
-      return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
       logger.debug(e.getMessage(), e);
@@ -89,15 +87,19 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
+
+    return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(Contract.ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException();
-    }
-
     try {
+      if (!this.contract.is(ParticipateAssetIssueContract.class)) {
+        throw new ContractValidateException();
+      }
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       final Contract.ParticipateAssetIssueContract participateAssetIssueContract =
           this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
       //Parameters check

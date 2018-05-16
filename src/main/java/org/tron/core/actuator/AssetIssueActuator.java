@@ -49,13 +49,6 @@ public class AssetIssueActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      if (!this.contract.is(AssetIssueContract.class)) {
-        throw new ContractExeException();
-      }
-
-      if (dbManager == null) {
-        throw new ContractExeException();
-      }
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
@@ -112,11 +105,13 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(AssetIssueContract.class)) {
-      throw new ContractValidateException();
-    }
-
     try {
+      if (!this.contract.is(AssetIssueContract.class)) {
+        throw new ContractValidateException();
+      }
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       final AssetIssueContract assetIssueContract = this.contract.unpack(AssetIssueContract.class);
 
       if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {

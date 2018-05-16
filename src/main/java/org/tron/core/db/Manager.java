@@ -191,13 +191,12 @@ public class Manager {
   }
 
   public BlockCapsule getHead() throws HeaderNotFound {
-    try {
-      return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
-    } catch (ItemNotFoundException e) {
-      logger.info(e.getMessage());
-      throw new HeaderNotFound(e.getMessage());
-    } catch (BadItemException e) {
-      throw new HeaderNotFound(e.getMessage());
+    List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
+    if (CollectionUtils.isNotEmpty(blocks)) {
+      return blocks.get(0);
+    } else {
+      logger.info("Header block Not Found");
+      throw new HeaderNotFound("Header block Not Found");
     }
   }
 
