@@ -124,14 +124,14 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       //Whether the account exist
-      AccountCapsule ac = this.dbManager.getAccountStore().get(ownerAddress);
-      if (ac == null) {
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddress);
+      if (ownerAccount == null) {
         throw new ContractValidateException("Account does not exist!");
       }
 
-      long fee = calcFee();
       //Whether the balance is enough
-      if (ac.getBalance() < Math.addExact(amount, fee)) {
+      long fee = calcFee();
+      if (ownerAccount.getBalance() < Math.addExact(amount, fee)) {
         throw new ContractValidateException("No enough balance !");
       }
 
@@ -159,10 +159,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (exchangeAmount <= 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
+
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
+
       if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }
@@ -177,7 +179,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return null;
+    return this.contract.unpack(Contract.ParticipateAssetIssueContract.class).getOwnerAddress();
   }
 
   @Override

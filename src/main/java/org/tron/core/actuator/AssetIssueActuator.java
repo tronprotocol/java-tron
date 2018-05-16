@@ -93,7 +93,6 @@ public class AssetIssueActuator extends AbstractActuator {
 
       dbManager.getAccountStore().put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
-      return true;
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -107,6 +106,8 @@ public class AssetIssueActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
+    return true;
   }
 
   @Override
@@ -162,6 +163,9 @@ public class AssetIssueActuator extends AbstractActuator {
 
       while (iterator.hasNext()) {
         FrozenSupply next = iterator.next();
+        if (next.getFrozenAmount() <= 0) {
+          throw new ContractValidateException("Frozen supply must be greater than 0!");
+        }
         if (next.getFrozenAmount() > remainSupply) {
           throw new ContractValidateException("Frozen supply cannot exceed total supply");
         }

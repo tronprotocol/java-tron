@@ -38,8 +38,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
       long newBandwidth = calculateBandwidth(accountCapsule.getBandwidth(), freezeBalanceContract);
       long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
-      long nowFrozenBalance = accountCapsule.getFrozenBalance();
-      long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + nowFrozenBalance;
+      long currentFrozenBalance = accountCapsule.getFrozenBalance();
+      long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
 
       Frozen newFrozen = Frozen.newBuilder()
           .setFrozenBalance(newFrozenBalance)
@@ -76,7 +76,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
   }
 
   private long calculateBandwidth(long oldValue, FreezeBalanceContract freezeBalanceContract) {
-
     try {
       return Math.addExact(oldValue, Math.multiplyExact(freezeBalanceContract.getFrozenBalance(),
           Math.multiplyExact(freezeBalanceContract.getFrozenDuration(),
@@ -137,7 +136,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
                 + "and more than " + minFrozenTime + " days");
       }
 
-    } catch (Exception ex) {
+    } catch (InvalidProtocolBufferException ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
