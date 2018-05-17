@@ -87,8 +87,6 @@ public class TransferActuator extends AbstractActuator {
         throw new ContractValidateException("Invalidate toAddress");
       }
 
-      Preconditions.checkNotNull(transferContract.getAmount(), "Amount is null");
-
       if (Arrays.equals(toAddress, ownerAddress)) {
         throw new ContractValidateException("Cannot transfer trx to yourself.");
       }
