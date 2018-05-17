@@ -1238,7 +1238,7 @@ public class AssetIssueActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
 
-    //frozen_amount = 1 throw exception. frozenDays is OK
+    //frozen_amount = 1 and  frozenDays = 1 is OK
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(1)
         .build();
     contract = Any.pack(
