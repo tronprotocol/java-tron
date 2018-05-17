@@ -646,6 +646,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     msg.getHashList().forEach(id -> {
+      if (TrxCache.getIfPresent(id) != null){
+        logger.info("Trx {} from peer {} Already exist.", id, peer.getNode().getHost());
+        return;
+      }
       final boolean[] spreaded = {false};
       final boolean[] requested = {false};
       getActivePeer().forEach(p -> {
