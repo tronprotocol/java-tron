@@ -43,7 +43,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {
 
-
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -180,6 +179,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
+    transactions.add(pendingTrx);
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -261,7 +261,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public ByteString getWitnessAddress() {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
-
 
   public BlockCapsule(Block block) {
     this.block = block;

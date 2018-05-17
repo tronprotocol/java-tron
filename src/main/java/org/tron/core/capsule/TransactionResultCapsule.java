@@ -38,7 +38,6 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     this.transactionResult = this.transactionResult.toBuilder().setRet(code).build();
   }
 
-
   @Override
   public byte[] getData() {
     return this.transactionResult.toByteArray();
