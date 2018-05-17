@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
@@ -138,7 +137,6 @@ public class Channel {
         setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
-        channelManager.add(this);
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 
@@ -151,12 +149,10 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-        logger.info("Send disconnect to {}, reason:{}", ctx.channel().remoteAddress(), reason);
+        DisconnectMessage msg = new DisconnectMessage(reason);
+        logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
         getNodeStatistics().nodeDisconnectedLocal(reason);
-        ctx.writeAndFlush(new DisconnectMessage(reason).getSendData()).addListener(
-            (ChannelFutureListener) future -> {
-                close();
-            });
+        ctx.writeAndFlush(msg.getSendData()).addListener(future ->  close());
     }
 
     public void processException(Throwable throwable){
@@ -169,8 +165,7 @@ public class Channel {
         if (throwable instanceof ReadTimeoutException){
             logger.error("Read timeout, {}", address);
         }else if(baseThrowable instanceof P2pException){
-            logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(),
-                    ((P2pException) baseThrowable).getMessage(), address);
+            logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(), baseThrowable.getMessage(), address);
         }else if (errMsg != null && errMsg.contains("Connection reset by peer")){
             logger.error("{}, {}", errMsg, address);
         }else {

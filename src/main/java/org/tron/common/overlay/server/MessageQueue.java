@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.ReasonCode;
 
 @Component
@@ -24,6 +25,8 @@ public class MessageQueue {
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private volatile boolean sendMsgFlag = false;
+
+  private long sendTime;
 
   private Thread sendMsgThread;
 
@@ -67,11 +70,11 @@ public class MessageQueue {
          Message msg = msgQueue.take();
          ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
            if (!future.isSuccess()) {
-             logger.error("send {} to {} fail", msg, ctx.channel().remoteAddress());
+             logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(),  msg);
            }
          });
        }catch (Exception e) {
-         logger.error("Send message failed, {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
+         logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
        }
      }
     });
@@ -84,15 +87,24 @@ public class MessageQueue {
   }
 
   public void sendMessage(Message msg) {
-    logger.info("send {} to {}", msg, ctx.channel().remoteAddress());
-    if (msg.getAnswerMessage() != null)
+
+    if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000){
+      return;
+    }
+
+    logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
+
+    sendTime = System.currentTimeMillis();
+
+    if (msg.getAnswerMessage() != null){
       requestQueue.add(new MessageRoundtrip(msg));
-    else
+    }else {
       msgQueue.offer(msg);
+    }
   }
 
   public void receivedMessage(Message msg){
-    logger.info("rcv {} from {}", msg, ctx.channel().remoteAddress());
+    logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg.getClass()){
       requestQueue.remove();
@@ -134,7 +146,7 @@ public class MessageQueue {
 
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess()) {
-        logger.error("send {} to {} fail", msg, ctx.channel().remoteAddress());
+        logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
       }
     });
 

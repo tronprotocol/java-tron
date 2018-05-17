@@ -284,7 +284,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) {
-    logger.info("Handle Message: " + msg + " from \nPeer: " + peer);
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -336,7 +335,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public void broadcast(Message msg) {
     InventoryType type;
     if (msg instanceof BlockMessage) {
-      logger.info("Ready to broadcast a block, Its hash is " + msg.getMessageId());
+      logger.info("Ready to broadcast block {}", ((BlockMessage) msg).getBlockId());
       freshBlockId.offer(((BlockMessage) msg).getBlockId());
       BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
       type = InventoryType.BLOCK;
@@ -474,25 +473,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
     InvToSend sendPackage = new InvToSend();
-    //AtomicLong batchFecthResponseSize = new AtomicLong(0);
-
-    advObjToFetch.values().stream()
-        .sorted(PriorItem::compareTo)
-        .forEach(idToFetch ->
-      filterActivePeer.stream()
-          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash())
-              && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
-          .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
-          .findFirst().ifPresent(peer -> {
-            long now = Time.getCurrentMillis();
-        if (idToFetch.getTime() > now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+    long now = Time.getCurrentMillis();
+    advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
+      if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+        logger.info("This obj is too late to fetch: " + idToFetch);
+        advObjToFetch.remove(idToFetch.getHash());
+      }else {
+        filterActivePeer.stream()
+                .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(idToFetch.getHash()) && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
+                .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
+                .findFirst().ifPresent(peer -> {
           sendPackage.add(idToFetch, peer);
           peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
-        } else {
-          logger.info("This obj is too late to fetch: " + idToFetch);
-        }
-        advObjToFetch.remove(idToFetch.getHash());
-      }));
+          advObjToFetch.remove(idToFetch.getHash());
+        });
+      }
+    });
 
     sendPackage.sendFetch();
   }
@@ -549,31 +545,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       pool.forEach(msg -> {
         final boolean[] isFound = {false};
         getActivePeer().stream()
-            .filter(peer ->
-                !peer.getSyncBlockToFetch().isEmpty()
-                    && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
-            .forEach(peer -> {
-              peer.getSyncBlockToFetch().pop();
-              peer.getBlockInProc().add(msg.getBlockId());
-              isFound[0] = true;
-            });
+                .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
+                .forEach(peer -> {
+                  peer.getSyncBlockToFetch().pop();
+                  peer.getBlockInProc().add(msg.getBlockId());
+                  isFound[0] = true;
+                });
 
         if (isFound[0]) {
           if (!freshBlockId.contains(msg.getBlockId())) {
             blockWaitToProc.remove(msg);
-            //TODO: blockWaitToProc and handle thread.
-            BlockCapsule block = msg.getBlockCapsule();
-            //handleBackLogBlocksPool.execute(() -> processSyncBlock(block));
-            processSyncBlock(block);
+            processSyncBlock(msg.getBlockCapsule());
             isBlockProc[0] = true;
           }
         }
       });
-
-      if (!isBlockProc[0] && CollectionUtils.isNotEmpty(blockWaitToProc)) {
-        logger.error("can not find peer to sync,waiting sync size:{}", blockWaitToProc.size());
-        isFetchSyncActive = true;
-      }
 
       if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
         logger.info("we're already processing too many blocks");
@@ -769,6 +755,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
+        // TODO: punish bad peer
         logger.error("We get a bad block, reason is " + e.getMessage()
             + "\n the block is" + block);
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
@@ -795,6 +782,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       freshBlockId.offer(block.getBlockId());
       isAccept = true;
     } catch (BadBlockException e) {
+      // TODO: punish bad peer
       logger.error("We get a bad block, reason is " + e.getMessage()
           + "\n the block is" + block);
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
@@ -875,14 +863,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    logger.info("onHandleTransactionsMessage, size = {}, peer {}",
-        msg.getTransactions().getTransactionsList().size(), peer.getNode().getHost());
     msg.getTransactions().getTransactionsList().forEach(transaction ->
         onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    //logger.info("on handle sync block chain message");
     peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -895,12 +880,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.isEmpty()) {
-      if (CollectionUtils.isNotEmpty(summaryChainIds)
-          && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
-        logger.info(
-            "Node sync block fail, disconnect peer:{}, sync message:{}",
-            peer, syncMsg);
+      if (CollectionUtils.isNotEmpty(summaryChainIds) && !del.canChainRevoke(summaryChainIds.get(0).getNum())) {
+        logger.info("Node sync block fail, disconnect peer {}, no block {}", peer, summaryChainIds.get(0).getString());
         peer.disconnect(ReasonCode.SYNC_FAIL);
+        return;
       } else {
         peer.setNeedSyncFromUs(false);
       }

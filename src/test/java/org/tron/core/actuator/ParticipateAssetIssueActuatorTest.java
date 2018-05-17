@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -31,22 +32,14 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 public class ParticipateAssetIssueActuatorTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-
   private static Manager dbManager;
-  private static Any contract;
   private static final String dbPath = "output_participateAsset_test";
   private static AnnotationConfigApplicationContext context;
-
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  private static final String TO_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-  private static final String THIRD_ADDRESS =
-      Wallet.getAddressPreFixString() + "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
-  private static final String NOT_EXIT_ADDRESS =
-      Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
+  private static final String OWNER_ADDRESS;
+  private static final String TO_ADDRESS;
+  private static final String THIRD_ADDRESS;
+  private static final String NOT_EXIT_ADDRESS;
   private static final String ASSET_NAME = "myCoin";
-
   private static final long OWNER_BALANCE = 99999;
   private static final long TO_BALANCE = 100001;
   private static final long TOTAL_SUPPLY = 10000000000000L;
@@ -57,8 +50,12 @@ public class ParticipateAssetIssueActuatorTest {
   private static final String URL = "https://tron.network";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-junit.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    THIRD_ADDRESS = Wallet.getAddressPreFixString() + "4948c2e8a756d9437037dcd8c7e0c73d560ca38d";
+    NOT_EXIT_ADDRESS = Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
   }
 
   /**

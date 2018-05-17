@@ -22,7 +22,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
@@ -63,7 +62,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .build()
         );
       }
-
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
@@ -72,6 +70,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
     return true;
   }
 
@@ -93,7 +92,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
             "contract type error,expected type [FreezeBalanceContract],real type[" + contract
                 .getClass() + "]");
       }
-
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       FreezeBalanceContract freezeBalanceContract = this.contract
           .unpack(FreezeBalanceContract.class);
       ByteString ownerAddress = freezeBalanceContract.getOwnerAddress();

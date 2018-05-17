@@ -6,6 +6,7 @@ import org.tron.protos.Protocol.Transaction.Result;
 
 @Slf4j
 public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result> {
+
   private Transaction.Result transactionResult;
 
   /**
@@ -18,7 +19,6 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
   public TransactionResultCapsule() {
     this.transactionResult = Transaction.Result.newBuilder().build();
   }
-
 
   public TransactionResultCapsule(Transaction.Result.code code, long fee) {
     Transaction.Result ret = Transaction.Result.newBuilder().setRet(code).setFee(fee).build();

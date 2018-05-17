@@ -62,12 +62,15 @@ public class ChainInventoryMessage extends TronMessage {
   @Override
   public String toString() {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(getBlockIds());
-    StringBuilder sb = new StringBuilder(getType().toString()).append(" :");
-    return blockIdWeGet.isEmpty()
-        ? sb.append(" empty inv").toString()
-        : sb.append(" first blockId: ").append(blockIdWeGet.peek().getString())
-            .append(" end blockId: ").append(blockIdWeGet.peekLast().getString())
-            .append(" size: ").append(blockIdWeGet.size()).toString();
+    StringBuilder sb = new StringBuilder(super.toString());
+    int size = blockIdWeGet.size();
+    sb.append("size: ").append(size);
+    if (size >= 1){
+      sb.append(", first blockId: ").append(blockIdWeGet.peek().getString());
+      if (size > 1){
+        sb.append(", end blockId: ").append(blockIdWeGet.peekLast().getString());
+      }
+    }
+    return sb.toString();
   }
-
 }

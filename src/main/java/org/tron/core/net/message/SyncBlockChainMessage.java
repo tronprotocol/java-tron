@@ -20,13 +20,14 @@ public class SyncBlockChainMessage extends BlockInventoryMessage {
   @Override
   public String toString() {
     List<BlockId> blockIdList = getBlockIds();
-    StringBuilder sb = new StringBuilder(getType().toString()).append(": ");
-    if (CollectionUtils.isNotEmpty(blockIdList)) {
-      sb.append("\n BlockIds size " + blockIdList.size());
-      sb.append("\n start block " + blockIdList.get(0));
-      sb.append("\n end block " + blockIdList.get(blockIdList.size() - 1));
-    } else {
-      sb.append("BlockIds size 0");
+    StringBuilder sb = new StringBuilder();
+    int size = blockIdList.size();
+    sb.append(super.toString()).append("size: ").append(size);
+    if (size >= 1){
+      sb.append(", start block: " + blockIdList.get(0).getString());
+      if (size > 1){
+        sb.append(", end block " + blockIdList.get(blockIdList.size() - 1).getString());
+      }
     }
     return sb.toString();
   }
