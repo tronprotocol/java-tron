@@ -665,7 +665,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -757,14 +757,6 @@ public class Manager {
           applyBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
-          logger.debug(e.getMessage(), e);
-        } catch (TaposException e) {
-          logger.debug(e.getMessage(), e);
-        } catch (DupTransactionException e) {
-          logger.debug(e.getMessage(), e);
-        } catch (TooBigTransactionException e) {
-          logger.debug(e.getMessage(), e);
-        } catch (TransactionExpirationException e) {
           logger.debug(e.getMessage(), e);
         }
       }
@@ -974,6 +966,21 @@ public class Manager {
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
+
+        dialog.reset();
+
+        if (postponedTrxCount > 0) {
+          logger.info("{} transactions over the block size limit", postponedTrxCount);
+        }
+
+        logger.info(
+            "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
+                + "]");
+        blockCapsule.setMerkleRoot();
+        blockCapsule.sign(privateKey);
+        blockCapsule.generatedByMyself = true;
+        this.pushBlock(blockCapsule);
+        return blockCapsule;
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
@@ -997,21 +1004,7 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       }
     }
-
-    dialog.reset();
-
-    if (postponedTrxCount > 0) {
-      logger.info("{} transactions over the block size limit", postponedTrxCount);
-    }
-
-    logger.info(
-        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size() + "]");
-
-    blockCapsule.setMerkleRoot();
-    blockCapsule.sign(privateKey);
-    blockCapsule.generatedByMyself = true;
-    this.pushBlock(blockCapsule);
-    return blockCapsule;
+    return null;
   }
 
   private void setAccountStore(final AccountStore accountStore) {
