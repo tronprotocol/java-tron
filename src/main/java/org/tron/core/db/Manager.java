@@ -966,21 +966,6 @@ public class Manager {
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
-
-        dialog.reset();
-
-        if (postponedTrxCount > 0) {
-          logger.info("{} transactions over the block size limit", postponedTrxCount);
-        }
-
-        logger.info(
-            "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-                + "]");
-        blockCapsule.setMerkleRoot();
-        blockCapsule.sign(privateKey);
-        blockCapsule.generatedByMyself = true;
-        this.pushBlock(blockCapsule);
-        return blockCapsule;
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
@@ -1003,6 +988,31 @@ public class Manager {
         logger.info("contract not processed during TransactionExpirationException");
         logger.debug(e.getMessage(), e);
       }
+    }
+
+    dialog.reset();
+
+    if (postponedTrxCount > 0) {
+      logger.info("{} transactions over the block size limit", postponedTrxCount);
+    }
+
+    logger.info(
+        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
+            + "]");
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(privateKey);
+    blockCapsule.generatedByMyself = true;
+    try {
+      this.pushBlock(blockCapsule);
+      return blockCapsule;
+    } catch (TaposException e) {
+      logger.info("contract not processed during TaposException");
+    } catch (TooBigTransactionException e) {
+      logger.info("contract not processed during TooBigTransactionException");
+    } catch (DupTransactionException e) {
+      logger.info("contract not processed during DupTransactionException");
+    } catch (TransactionExpirationException e) {
+      logger.info("contract not processed during TransactionExpirationException");
     }
     return null;
   }
