@@ -137,8 +137,8 @@ public class ChannelManager {
         return false;
       }
     }
-    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     activePeers.put(peer.getNodeIdWrapper(), peer);
+    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     return true;
   }
 
