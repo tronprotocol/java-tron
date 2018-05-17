@@ -128,6 +128,19 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Invalidate description");
       }
 
+      if (assetIssueContract.getStartTime() == 0) {
+        throw new ContractValidateException("start time should be not empty");
+      }
+      if (assetIssueContract.getEndTime() == 0) {
+        throw new ContractValidateException("end time should be not empty");
+      }
+      if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
+        throw new ContractValidateException("end time should be greater than start time");
+      }
+      if (assetIssueContract.getStartTime() < dbManager.getHeadBlockTimeStamp()){
+        throw new ContractValidateException("start time should be greater than HeadBlockTime");
+      }
+
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
           != null) {
         throw new ContractValidateException("Token exists");
