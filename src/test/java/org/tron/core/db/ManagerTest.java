@@ -211,7 +211,10 @@ public class ManagerTest {
   public void fork()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
-      ItemNotFoundException, HeaderNotFound, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+      ItemNotFoundException, HeaderNotFound, ValidateBandwidthException,
+      TransactionExpirationException, TooBigTransactionException,
+      DupTransactionException,
+      TaposException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
     System.out.print("block store size:" + size + "\n");
