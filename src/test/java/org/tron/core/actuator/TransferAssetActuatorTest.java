@@ -84,7 +84,7 @@ public class TransferAssetActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-junit.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     dbManager = context.getBean(Manager.class);
     //    dbManager = new Manager();
     //    dbManager.init();
