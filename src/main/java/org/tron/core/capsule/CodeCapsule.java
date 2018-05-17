@@ -21,8 +21,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract.ContractCallContract;
-import org.tron.protos.Contract.ContractCreationContract;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.ContractDeployContract;
+import org.tron.protos.Contract.ContractTriggerContract;
 import org.tron.protos.Protocol.Transaction;
 
 /**
@@ -40,26 +41,6 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   public CodeCapsule(ByteString bs) {
     this.code = bs.toByteArray();
-  }
-
-  public static ContractCreationContract getCreationContractFromTransaction(Transaction trx) {
-    try {
-      Any any = trx.getRawData().getContract(0).getParameter();
-      ContractCreationContract contractCreationContract = any.unpack(ContractCreationContract.class);
-      return contractCreationContract;
-    } catch (InvalidProtocolBufferException e) {
-      return null;
-    }
-  }
-
-  public static ContractCallContract getCallContractFromTransaction(Transaction trx) {
-    try {
-      Any any = trx.getRawData().getContract(0).getParameter();
-      ContractCallContract contractCallContract = any.unpack(ContractCallContract.class);
-      return contractCallContract;
-    } catch (InvalidProtocolBufferException e) {
-      return null;
-    }
   }
 
   public Sha256Hash getHash() {

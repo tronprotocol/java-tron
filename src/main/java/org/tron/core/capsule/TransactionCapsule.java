@@ -16,7 +16,6 @@
 package org.tron.core.capsule;
 
 import static org.tron.protos.Contract.AssetIssueContract;
-import static org.tron.protos.Contract.DeployContract;
 import static org.tron.protos.Contract.VoteAssetContract;
 import static org.tron.protos.Contract.VoteWitnessContract;
 import static org.tron.protos.Contract.WitnessCreateContract;
@@ -38,6 +37,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -254,9 +254,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AssetIssueContract:
           owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
           break;
-        case DeployContract:
-          owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
-          break;
         case WitnessUpdateContract:
           owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
           break;
@@ -274,6 +271,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+          break;
+        case DeployContract:
+          owner = contractParameter.unpack(Contract.ContractDeployContract.class).getOwnerAddress();
+          break;
+        case TriggerContract:
+          owner = contractParameter.unpack(Contract.ContractTriggerContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

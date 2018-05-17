@@ -97,11 +97,6 @@ message ParticipateAssetIssueContract {
   int64 amount = 4; // the amount of drops
 }
 
-message DeployContract {
-  bytes owner_address = 1;
-  bytes script = 2;
-}
-
 message FreezeBalanceContract {
   bytes owner_address = 1;
   int64 frozen_balance = 2;
@@ -116,7 +111,7 @@ message WithdrawBalanceContract {
   bytes owner_address = 1;
 }
 
-message ContractCreationContract {
+message ContractDeployContract {
   message ABI {
     message Entry {
       enum EntryType {
@@ -156,9 +151,11 @@ message ContractCreationContract {
   bytes contract_address = 2;
   ABI abi = 3;
   bytes bytecode = 4;
+  bytes call_value = 5;
+  bytes data = 6;
 }
 
-message ContractCallContract {
+message ContractTriggerContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
   bytes call_value = 3;

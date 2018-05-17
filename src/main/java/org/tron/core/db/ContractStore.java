@@ -72,7 +72,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * @param contractAddress
    * @return
    */
-  public Contract.ContractCreationContract.ABI getABI(byte[] contractAddress) {
+  public Contract.ContractDeployContract.ABI getABI(byte[] contractAddress) {
     byte[] value = dbSource.getData(contractAddress);
     if (ArrayUtils.isEmpty(value)) {
       return null;
@@ -80,12 +80,12 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 
     ContractCapsule contractCapsule = new ContractCapsule(value);
     Protocol.Transaction trx = contractCapsule.getInstance();
-    Contract.ContractCreationContract contractCreationContract = ContractCapsule.getCreationContractFromTransaction(trx);
-    if (contractCreationContract == null) {
+    Contract.ContractDeployContract contractDeployContract = ContractCapsule.getDeployContractFromTransaction(trx);
+    if (contractDeployContract == null) {
       return null;
     }
 
-    return contractCreationContract.getAbi();
+    return contractDeployContract.getAbi();
   }
 
 }

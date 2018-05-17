@@ -705,7 +705,32 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void deployContract(org.tron.protos.Contract.ContractDeployContract request,
+                               io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
+      Transaction trx = wallet.deployContract(request);
+      responseObserver.onNext(trx);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void triggerContract(Contract.ContractTriggerContract request,
+                                StreamObserver<Transaction> responseObserver) {
+      Transaction trx = wallet.triggerContract(request);
+      responseObserver.onNext(trx);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getContract(BytesMessage request,
+                            StreamObserver<Contract.ContractDeployContract> responseObserver) {
+      Contract.ContractDeployContract contract = wallet.getContract(request);
+      responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
   }
+
 
   @Override
   public void stop() {

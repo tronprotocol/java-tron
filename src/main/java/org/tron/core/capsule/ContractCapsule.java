@@ -22,15 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Wallet;
-import org.tron.protos.Contract.ContractCallContract;
-import org.tron.protos.Contract.ContractCreationContract;
+import org.tron.protos.Contract.ContractDeployContract;
+import org.tron.protos.Contract.ContractTriggerContract;
 import org.tron.protos.Protocol.Transaction;
 
-/**
- *
- * Created by Guo Yonggang on 04.14.2018
- */
 @Slf4j
 public class ContractCapsule implements ProtoCapsule<Transaction> {
 
@@ -51,21 +46,21 @@ public class ContractCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  public static ContractCreationContract getCreationContractFromTransaction(Transaction trx) {
+  public static ContractDeployContract getDeployContractFromTransaction(Transaction trx) {
     try {
       Any any = trx.getRawData().getContract(0).getParameter();
-      ContractCreationContract contractCreationContract = any.unpack(ContractCreationContract.class);
-      return contractCreationContract;
+      ContractDeployContract contractDeployContract = any.unpack(ContractDeployContract.class);
+      return contractDeployContract;
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
   }
 
-  public static ContractCallContract getCallContractFromTransaction(Transaction trx) {
+  public static ContractTriggerContract getTriggerContractFromTransaction(Transaction trx) {
     try {
       Any any = trx.getRawData().getContract(0).getParameter();
-      ContractCallContract contractCallContract = any.unpack(ContractCallContract.class);
-      return contractCallContract;
+      ContractTriggerContract contractTriggerContract = any.unpack(ContractTriggerContract.class);
+      return contractTriggerContract;
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
@@ -83,8 +78,8 @@ public class ContractCapsule implements ProtoCapsule<Transaction> {
   public Sha256Hash getCodeHash() {
     try {
       Any any = transaction.getRawData().getContract(0).getParameter();
-      ContractCreationContract contractCreationContract = any.unpack(ContractCreationContract.class);
-      byte[] bytecode = contractCreationContract.getBytecode().toByteArray();
+      ContractDeployContract contractDeployContract = any.unpack(ContractDeployContract.class);
+      byte[] bytecode = contractDeployContract.getBytecode().toByteArray();
       return Sha256Hash.of(bytecode);
     } catch (InvalidProtocolBufferException e) {
       return null;

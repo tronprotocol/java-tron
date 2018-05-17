@@ -11,63 +11,55 @@ option java_outer_classname = "Protocol"; //Specify the class name of the genera
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 enum AccountType {
-  Normal = 0;
-  AssetIssue = 1;
-  Contract = 2;
+  Normal      = 0x00;
+  AssetIssue  = 0x01;
+  Contract    = 0x02;
 }
 
 // AccountId, (name, address) use name, (null, address) use address, (name, null) use name,
 message AccountId {
-  bytes name = 1;
-  bytes address = 2;
+  bytes name    = 0x01;
+  bytes address = 0x02;
 }
 
 // vote message
 message Vote {
   // the super rep address
-  bytes vote_address = 1;
+  bytes vote_address  = 0x01;
   // the vote num to this super rep.
-  int64 vote_count = 2;
+  int64 vote_count    = 0x02;
 }
 
-// Account
+/* Account */
 message Account {
-  // frozen balance
+  /* frozen balance */
   message Frozen {
-    // the frozen trx balance
-    int64 frozen_balance = 1;
-    // the expire time
-    int64 expire_time = 2;
+    int64 frozen_balance    = 0x01; // the frozen trx balance
+    int64 expire_time       = 0x02; // the expire time
   }
-
-  bytes account_name = 1;
-  AccountType type = 2;
-  // the create address
-  bytes address = 3;
-  // the trx balance
-  int64 balance = 4;
-  // the votes
-  repeated Vote votes = 5;
-  // the other asset owned by this account
-  map<string, int64> asset = 6;
-  // the frozen balance
-  repeated Frozen frozen = 7;
+  bytes account_name        = 0x01;
+  AccountType type          = 0x02;
+  bytes address             = 0x03;
+  int64 balance             = 0x04;
+  repeated Vote votes       = 0x05;
+  map<string, int64> asset  = 0x06; /* the other asset owned by this account */
+  repeated Frozen frozen    = 0x07; /*  the frozen balance */
   // bandwidth, get from frozen
-  int64 bandwidth = 8;
+  int64 bandwidth             = 0x08;
   // this account create time
-  int64 create_time = 9;
+  int64 create_time = 0x09;
   // this last operation time, including transfer, voting and so on. //FIXME fix grammar
-  int64 latest_opration_time = 10;
+  int64 latest_opration_time = 0x0A;
 
   // witness block producing allowance
-  int64 allowance = 11;
+  int64 allowance = 0x0B;
   // last withdraw time
-  int64 latest_withdraw_time = 12;
+  int64 latest_withdraw_time = 0x0C;
   // not used so far
-  bytes code = 13;
-  bool is_witness = 14;
-  bool is_committee = 15;
-  bytes codeHash = 16;
+  bool is_witness = 0x20;
+  bool is_committee = 0x21;
+
+  bytes codeHash = 0x30;
 }
 
 //FIXME authority?
@@ -134,7 +126,6 @@ message Transaction {
       VoteWitnessContract = 4;
       WitnessCreateContract = 5;
       AssetIssueContract = 6;
-      DeployContract = 7;
       WitnessUpdateContract = 8;
       ParticipateAssetIssueContract = 9;
       AccountUpdateContract = 10;
@@ -142,9 +133,9 @@ message Transaction {
       UnfreezeBalanceContract = 12;
       WithdrawBalanceContract = 13;
       CustomContract = 20;
-      ContractCreationContract = 21;
-      ContractCallContract = 22;
-      GetContract = 23;
+      DeployContract = 0x30;
+      TriggerContract = 0x31;
+      GetContract = 0x32;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

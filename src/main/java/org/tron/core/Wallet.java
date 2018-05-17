@@ -18,9 +18,14 @@
 
 package org.tron.core;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,15 +43,13 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.ContractStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.ContractExeException;
@@ -60,6 +63,8 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.protos.Contract.ContractDeployContract;
+import org.tron.protos.Contract.ContractTriggerContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
@@ -392,4 +397,115 @@ public class Wallet {
     }
     return transaction;
   }
+
+  public Transaction deployContract(ContractDeployContract contractDeployContract) {
+    return new TransactionCapsule(contractDeployContract, Transaction.Contract.ContractType.DeployContract)
+            .getInstance();
+  }
+
+  public Transaction triggerContract(ContractTriggerContract contractTriggerContract) {
+    ContractStore contractStore = dbManager.getContractStore();
+    byte[] contractAddress = contractTriggerContract.getContractAddress().toByteArray();
+    ContractDeployContract.ABI abi = contractStore.getABI(contractAddress);
+    if (abi == null) {
+      return null;
+    }
+
+    try {
+      byte[] selector = getSelector(contractTriggerContract.getData().toByteArray());
+      if (selector == null) {
+        return null;
+      }
+
+      Transaction trx = null;
+      if (!isConstant(abi, selector)) {
+        trx = new TransactionCapsule(contractTriggerContract, Transaction.Contract.ContractType.TriggerContract)
+                .getInstance();
+      } else {
+        TransactionCapsule trxCap = new TransactionCapsule(contractTriggerContract, Transaction.Contract.ContractType.TriggerContract);
+        /*ProgramResult programResult = DepositController.getInstance().processConstantTransaction(trxCap);
+        Transaction.Result.Builder builder = Transaction.Result.newBuilder();
+        builder.setConstantResult(ByteString.copyFrom(programResult.getHReturn()));
+        trx = trxCap.getInstance();
+        trx = trx.toBuilder().addRet(builder.build()).build();*/
+      }
+
+      return trx;
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return null;
+    }
+  }
+
+  public ContractDeployContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null || ArrayUtils.isEmpty(accountCapsule.getCodeHash())) {
+      logger.error("Get contract failed, the account is not exist or the account does not have code hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore().get(bytesMessage.getValue().toByteArray());
+    Transaction trx = contractCapsule.getInstance();
+    Any contract = trx.getRawData().getContract(0).getParameter();
+    if (contract.is(ContractDeployContract.class)) {
+      try {
+        return contract.unpack(ContractDeployContract.class);
+      } catch (InvalidProtocolBufferException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  private byte[] getSelector(byte[] data) {
+    if (data == null ||
+            data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
+  private boolean isConstant(ContractDeployContract.ABI abi, byte[] selector) throws Exception{
+    if (selector == null || selector.length != 4) {
+      throw new Exception("Selector's length or selector itself is invalid");
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      ContractDeployContract.ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ContractDeployContract.ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuffer sb = new StringBuffer();
+      sb.append(entry.getName().toStringUtf8());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        ContractDeployContract.ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType().toStringUtf8());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      if (Arrays.equals(funcSelector, selector)) {
+        if (entry.getConstant() == true) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    throw new Exception("There is no the selector!");
+  }
+
+
 }

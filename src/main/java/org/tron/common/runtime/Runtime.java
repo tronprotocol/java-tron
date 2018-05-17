@@ -17,7 +17,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.*;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.ContractCreationContract;
+import org.tron.protos.Contract.ContractDeployContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -66,10 +66,10 @@ public class Runtime {
 
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
         switch (contractType.getNumber()) {
-            case Transaction.Contract.ContractType.ContractCallContract_VALUE:
+            case Transaction.Contract.ContractType.TriggerContract_VALUE:
                 trxType = TRX_CONTRACT_CALL_TYPE;
                 break;
-            case Transaction.Contract.ContractType.ContractCreationContract_VALUE:
+            case Transaction.Contract.ContractType.DeployContract_VALUE:
                 trxType = TRX_CONTRACT_CREATION_TYPE;
                 break;
             default:
@@ -92,10 +92,10 @@ public class Runtime {
         this.executerType = ET_PRE_TYPE;
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
         switch (contractType.getNumber()) {
-            case Transaction.Contract.ContractType.ContractCallContract_VALUE:
+            case Transaction.Contract.ContractType.TriggerContract_VALUE:
                 trxType = TRX_CONTRACT_CALL_TYPE;
                 break;
-            case Transaction.Contract.ContractType.ContractCreationContract_VALUE:
+            case Transaction.Contract.ContractType.DeployContract_VALUE:
                 trxType = TRX_CONTRACT_CREATION_TYPE;
                 break;
             default:
@@ -159,7 +159,7 @@ public class Runtime {
     }
 
     private void call() {
-        Contract.ContractCallContract contract = ContractCapsule.getCallContractFromTransaction(trx);
+        Contract.ContractTriggerContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
         if (contract == null) return;
 
         byte[] contractAddress = contract.getContractAddress().toByteArray();
@@ -178,11 +178,11 @@ public class Runtime {
     /*
      **/
     private void create() {
-        ContractCreationContract contract = ContractCapsule.getCreationContractFromTransaction(trx);
+        ContractDeployContract contract = ContractCapsule.getDeployContractFromTransaction(trx);
 
         // Create a Contract Account by ownerAddress or If the address exist, random generate one
         byte[] code = contract.getBytecode().toByteArray();
-        ContractCreationContract.ABI abi = contract.getAbi();
+        ContractDeployContract.ABI abi = contract.getAbi();
         byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
         ByteString newContractAddress = contract.getContractAddress();
 
