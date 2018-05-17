@@ -38,20 +38,18 @@ public class UnfreezeBalanceActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_unfreeze_balance_test";
   private static AnnotationConfigApplicationContext context;
-
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
-  private static final String OWNER_ACCOUNT_INVALIATE =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-
+  private static final String OWNER_ACCOUNT_INVALIATE;
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
-
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ACCOUNT_INVALIATE =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
   }
 
   /**

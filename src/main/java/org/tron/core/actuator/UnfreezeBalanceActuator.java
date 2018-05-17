@@ -26,7 +26,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
@@ -85,7 +84,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
                 .getClass() + "]");
       }
-
+      if (this.dbManager == null) {
+        throw new ContractValidateException();
+      }
       UnfreezeBalanceContract unfreezeBalanceContract = this.contract
           .unpack(UnfreezeBalanceContract.class);
       ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
@@ -112,8 +113,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       if (allowedUnfreezeCount <= 0) {
         throw new ContractValidateException("It's not time to unfreeze.");
       }
-
-
     } catch (Exception ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());

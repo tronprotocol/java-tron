@@ -31,11 +31,9 @@ public class WitnessUpdateActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static final String dbPath = "output_CreateAccountTest";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-  private static final String OWNER_ADDRESS_NOTEXIT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String dbPath = "output_WitnessUpdate_test";
+  private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS_NOTEXIT;
   private static final String URL = "https://tron.network";
   private static final String NewURL = "https://tron.org";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
@@ -43,6 +41,9 @@ public class WitnessUpdateActuatorTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    OWNER_ADDRESS_NOTEXIT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**

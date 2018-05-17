@@ -561,11 +561,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       });
 
-      if (!isBlockProc[0] && CollectionUtils.isNotEmpty(blockWaitToProc)) {
-        logger.error("can not find peer to sync,waiting sync size:{}", blockWaitToProc.size());
-        isFetchSyncActive = true;
-      }
-
       if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
         logger.info("we're already processing too many blocks");
         if (blockWaitToProc.size() >= MAX_BLOCKS_ALREADY_FETCHED) {
@@ -646,6 +641,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     msg.getHashList().forEach(id -> {
+      if ( (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) ||
+              (msg.getInventoryType().equals(InventoryType.BLOCK) && BlockCache.getIfPresent(id) != null) ){
+        logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id, peer.getNode().getHost());
+        return;
+      }
       final boolean[] spreaded = {false};
       final boolean[] requested = {false};
       getActivePeer().forEach(p -> {

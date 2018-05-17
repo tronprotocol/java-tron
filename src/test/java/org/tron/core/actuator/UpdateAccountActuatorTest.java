@@ -29,20 +29,18 @@ public class UpdateAccountActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
-  private static final String dbPath = "output_CreateAccountTest";
-
+  private static final String dbPath = "output_updateaccount_test";
   private static final String ACCOUNT_NAME = "ownerTest";
   private static final String ACCOUNT_NAME_1 = "ownerTest1";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  private static final String OWNER_ADDRESS_1 =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS_1;
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
   /**
