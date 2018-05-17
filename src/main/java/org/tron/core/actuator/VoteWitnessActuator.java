@@ -29,7 +29,6 @@ public class VoteWitnessActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
@@ -53,6 +52,9 @@ public class VoteWitnessActuator extends AbstractActuator {
             "contract type error,expected type [VoteWitnessContract],real type[" + contract
                 .getClass() + "]");
       }
+      if (this.dbManager == null) {
+        throw new ContractValidateException("dbManager is null");
+      }
 
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
@@ -68,13 +70,17 @@ public class VoteWitnessActuator extends AbstractActuator {
       Iterator<Vote> iterator = contract.getVotesList().iterator();
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
-        byte[] bytes = vote.getVoteAddress().toByteArray();
+        byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
+        long voteCount = vote.getVoteCount();
+        if (voteCount <=0) {
+          throw new ContractValidateException("vote count must be greater than 0");
+        }
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if (!accountStore.has(bytes)) {
+        if (!accountStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               "Account[" + readableWitnessAddress + "] not exists");
         }
-        if (!witnessStore.has(bytes)) {
+        if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               "Witness[" + readableWitnessAddress + "] not exists");
         }

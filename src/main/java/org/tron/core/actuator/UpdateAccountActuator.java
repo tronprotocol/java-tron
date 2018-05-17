@@ -18,10 +18,10 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class UpdateAccountActuator extends AbstractActuator {
 
-  AccountUpdateContract accountUpdateContract;
-  byte[] accountName;
-  byte[] ownerAddress;
-  long fee;
+  private AccountUpdateContract accountUpdateContract;
+  private byte[] accountName;
+  private byte[] ownerAddress;
+  private long fee;
 
   UpdateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
