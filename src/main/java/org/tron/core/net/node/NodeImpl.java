@@ -479,6 +479,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if ( (idToFetch.getType().equals(InventoryType.TRX) && TrxCache.getIfPresent(hash) != null) ||
               (idToFetch.getType().equals(InventoryType.BLOCK) && BlockCache.getIfPresent(hash) != null) ){
         logger.info("{} {}  Already exist.", idToFetch.getType(), hash);
+        advObjToFetch.remove(hash);
         return;
       }
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
