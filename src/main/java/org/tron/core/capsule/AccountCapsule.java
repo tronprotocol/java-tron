@@ -222,13 +222,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public long getShare() {
-    long share = 0;
+  //tp:Tron_Power
+  public long getTronPower() {
+    long tp = 0;
     //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
-      share += account.getFrozen(i).getFrozenBalance();
+      tp += account.getFrozen(i).getFrozenBalance();
     }
-    return share;
+    return tp;
   }
 
   /**
