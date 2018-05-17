@@ -35,22 +35,19 @@ public class AssetIssueActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
   private static final String dbPath = "output_assetIssue_test";
-
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+  private static final String OWNER_ADDRESS;
   private static final String NAME = "trx-my";
   private static final long TOTAL_SUPPLY = 10000L;
   private static final int TRX_NUM = 10000;
   private static final int NUM = 100000;
-  private static final long VOTE_SCORE = 100;
   private static final String DESCRIPTION = "myCoin";
   private static final String URL = "tron-my.com";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
 
   /**
@@ -869,7 +866,7 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(description200Bytes+"0"))
+        .setDescription(ByteString.copyFromUtf8(description200Bytes + "0"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
@@ -1009,6 +1006,7 @@ public class AssetIssueActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
   }
+
   /**
    * Release resources.
    */
