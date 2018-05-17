@@ -1,12 +1,16 @@
 package org.tron.core.net.node;
 
+import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -63,9 +67,24 @@ public class StartFetchSyncBlockTest {
     return blockMessage.getMessageId();
   }
 
+  private BlockMessage removeTheBlock(Sha256Hash blockId) {
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    BlockMessage blockMessage = blockCache.getIfPresent(blockId);
+    if (blockMessage != null) {
+      blockCache.invalidate(blockId);
+    }
+    return blockMessage;
+  }
+
+  private void addTheBlock(BlockMessage blockMessag) {
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    blockCache.put(blockMessag.getMessageId(), blockMessag);
+  }
+
   private Condition testConsumerAdvObjToSpread() {
     Sha256Hash blockId = testBlockBroad();
-
+    //remove the block
+    BlockMessage blockMessage = removeTheBlock(blockId);
     ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
 
@@ -83,10 +102,6 @@ public class StartFetchSyncBlockTest {
   }
 
   @Test
-  public void test(){}
-
-  @Ignore
-  @Test
   public void testStartFetchSyncBlock() throws InterruptedException {
     testConsumerAdvObjToSpread();
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
@@ -98,6 +113,7 @@ public class StartFetchSyncBlockTest {
     // push the block to syncBlockToFetch
     activePeers.iterator().next().getSyncBlockToFetch().push(blockMessage.getBlockId());
     // invoke testing method
+    addTheBlock(blockMessage);
     ReflectUtils.invokeMethod(node, "startFetchSyncBlock");
     Map<BlockCapsule.BlockId, Long> syncBlockIdWeRequested = ReflectUtils
         .getFieldValue(node, "syncBlockIdWeRequested");
