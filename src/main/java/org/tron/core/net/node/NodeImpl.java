@@ -476,25 +476,19 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long now = Time.getCurrentMillis();
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
-      if ( (idToFetch.getType().equals(InventoryType.TRX) && TrxCache.getIfPresent(hash) != null) ||
-              (idToFetch.getType().equals(InventoryType.BLOCK) && BlockCache.getIfPresent(hash) != null) ){
-        logger.info("{} {}  Already exist.", idToFetch.getType(), hash);
-        advObjToFetch.remove(hash);
-        return;
-      }
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
         logger.info("This obj is too late to fetch: " + idToFetch);
         advObjToFetch.remove(hash);
-      }else {
-        filterActivePeer.stream()
-                .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(hash) && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
-                .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
-                .findFirst().ifPresent(peer -> {
-          sendPackage.add(idToFetch, peer);
-          peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
-          advObjToFetch.remove(hash);
-        });
+        return;
       }
+      filterActivePeer.stream()
+              .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(hash) && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
+              .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
+              .findFirst().ifPresent(peer -> {
+        sendPackage.add(idToFetch, peer);
+        peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
+        advObjToFetch.remove(hash);
+      });
     });
 
     sendPackage.sendFetch();
@@ -648,8 +642,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     for (Sha256Hash id : msg.getHashList()){
-      if ( (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) ||
-              (msg.getInventoryType().equals(InventoryType.BLOCK) && BlockCache.getIfPresent(id) != null) ){
+      if (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) {
         logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id, peer.getNode().getHost());
         continue;
       }
@@ -854,7 +847,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     disconnectPeer(peer, reasonCode);
   }
 
+  synchronized boolean isExist(TransactionMessage trxMsg){
+    if (TrxCache.getIfPresent(trxMsg.getMessageId()) != null){
+      return true;
+    }
+    TrxCache.put(trxMsg.getMessageId(), trxMsg);
+    return false;
+  }
+
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
+    if (isExist(trxMsg)){
+      return;
+    }
     //logger.info("on handle transaction message");
     try {
       Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
