@@ -247,6 +247,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (Exception e) {
           logger.error("new BlockMessage fail", e);
         }
+        return null;
       case TRX:
         try {
           return new TransactionMessage(
@@ -254,6 +255,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (Exception e) {
           logger.error("new TransactionMessage fail", e);
         }
+        return null;
       default:
         logger.info("message type not block or trx.");
         return null;

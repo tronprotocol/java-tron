@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
@@ -7,7 +8,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -88,6 +92,8 @@ public class BroadTest {
   private Condition testConsumerAdvObjToSpread() {
     Sha256Hash blockId = testBlockBroad();
     Sha256Hash transactionId = testTransactionBroad();
+    //remove the tx and block
+    removeTheTxAndBlock(blockId, transactionId);
 
     ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
@@ -108,10 +114,13 @@ public class BroadTest {
     return new Condition(blockId, transactionId);
   }
 
-  @Test
-  public void test(){}
+  private void removeTheTxAndBlock(Sha256Hash blockId, Sha256Hash transactionId) {
+    Cache<Sha256Hash, TransactionMessage> trxCache = ReflectUtils.getFieldValue(node, "TrxCache");
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    trxCache.invalidate(transactionId);
+    blockCache.invalidate(blockId);
+  }
 
-  @Ignore
   @Test
   public void testConsumerAdvObjToFetch() throws InterruptedException {
     Condition condition = testConsumerAdvObjToSpread();
