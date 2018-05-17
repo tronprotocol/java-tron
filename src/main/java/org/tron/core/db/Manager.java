@@ -712,11 +712,11 @@ public class Manager {
               newBlock.getNum(),
               newBlock.getBlockId());
 
-          logger.error(
+          logger.warn(
               "******** before switchFork ******* push block: "
-                  + block
+                  + block.getShortString()
                   + ", new block:"
-                  + newBlock
+                  + newBlock.getShortString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -733,11 +733,11 @@ public class Manager {
           switchFork(newBlock);
           logger.info("save block: " + newBlock);
 
-          logger.error(
+          logger.warn(
               "******** after switchFork ******* push block: "
-                  + block
+                  + block.getShortString()
                   + ", new block:"
-                  + newBlock
+                  + newBlock.getShortString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
