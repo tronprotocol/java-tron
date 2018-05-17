@@ -140,8 +140,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException ex) {
       ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
-    } catch (Exception e){
-      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

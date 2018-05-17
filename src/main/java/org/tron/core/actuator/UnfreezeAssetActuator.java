@@ -97,7 +97,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       }
 
       if(accountCapsule.getAssetIssuedName().isEmpty()){
-        throw new ContractValidateException("asset name is empty");
+        throw new ContractValidateException("this account did not issue any asset");
       }
 
       long now = dbManager.getHeadBlockTimeStamp();

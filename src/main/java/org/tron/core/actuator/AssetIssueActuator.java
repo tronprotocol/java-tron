@@ -188,8 +188,6 @@ public class AssetIssueActuator extends AbstractActuator {
       }
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
-    } catch (Exception e){
-      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

@@ -174,8 +174,6 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     } catch (ArithmeticException e) {
       throw new ContractValidateException(e.getMessage());
-    } catch (Exception e){
-      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

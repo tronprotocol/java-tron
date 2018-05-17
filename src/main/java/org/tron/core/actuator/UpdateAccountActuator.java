@@ -18,10 +18,10 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class UpdateAccountActuator extends AbstractActuator {
 
-  AccountUpdateContract accountUpdateContract;
-  byte[] accountName;
-  byte[] ownerAddress;
-  long fee;
+  private AccountUpdateContract accountUpdateContract;
+  private byte[] accountName;
+  private byte[] ownerAddress;
+  private long fee;
 
   UpdateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -72,7 +72,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }
-    if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
+    if (!account.getAccountName().isEmpty()) {
       throw new ContractValidateException("This account name already exist");
     }
     if (dbManager.getAccountIndexStore().has(accountName)) {
