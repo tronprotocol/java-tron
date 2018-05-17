@@ -179,7 +179,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
-    transactions.add(pendingTrx);
+    getTransactions().add(pendingTrx);
   }
 
   public List<TransactionCapsule> getTransactions() {
