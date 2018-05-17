@@ -23,7 +23,7 @@ public class PongMessage extends P2pMessage {
 
   @Override
   public String toString() {
-    return "[" + this.getType().name() + "]";
+    return super.toString();
   }
 
   @Override
