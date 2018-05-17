@@ -253,7 +253,7 @@ public class VoteWitnessActuatorTest {
 
   /**
    * witnessAccount not freeze Balance, result is failed ,exception is "The total number of votes
-   * 1000000 is greater than the share 0.
+   * 1000000 is greater than 0.
    */
   @Test
   public void balanceNotSufficient() {
@@ -272,14 +272,15 @@ public class VoteWitnessActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("The total number of votes[" + 1000000 + "] is greater than the share["
-          + balanceNotSufficientCapsule.getShare() + "]");
+      fail("The total number of votes[" + 1000000 + "] is greater than the tronPower["
+          + balanceNotSufficientCapsule.getTronPower() + "]");
     } catch (ContractValidateException e) {
       Assert.assertEquals(0, dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFIENT)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("The total number of votes[" + 1000000 + "] is greater than the share["
-          + balanceNotSufficientCapsule.getShare() + "]", e.getMessage());
+      Assert
+          .assertEquals("The total number of votes[" + 1000000 + "] is greater than the tronPower["
+              + balanceNotSufficientCapsule.getTronPower() + "]", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

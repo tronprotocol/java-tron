@@ -90,7 +90,7 @@ public class VoteWitnessActuator extends AbstractActuator {
             "VoteNumber more than maxVoteNumber[30]");
       }
 
-      long share = accountStore.get(ownerAddressBytes).getShare();
+      long tronPower = accountStore.get(ownerAddressBytes).getTronPower();
 
       Long sum = 0L;
       for (Vote vote : contract.getVotesList()) {
@@ -98,9 +98,10 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
-      if (sum > share) {
+      if (sum > tronPower) {
         throw new ContractValidateException(
-            "The total number of votes[" + sum + "] is greater than the share[" + share + "]");
+            "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
+                + "]");
       }
 
     } catch (Exception ex) {
