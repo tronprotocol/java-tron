@@ -41,7 +41,7 @@ public class VoteWitnessActuatorTest {
   private static final String WITNESS_NAME = "witness";
   private static final String WITNESS_ADDRESS;
   private static final String URL = "https://tron.network";
-  private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
+  private static final String ADDRESS_INVALIATE = "aaaa";
   private static final String WITNESS_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
@@ -108,6 +108,17 @@ public class VoteWitnessActuatorTest {
             .build());
   }
 
+  private Any getRepeateContract(String address, String voteaddress, Long value, int times) {
+    VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)));
+    for (int i = 0; i < times; i++) {
+      builder.addVotes(Vote.newBuilder()
+          .setVoteAddress(ByteString.copyFrom(ByteArray.fromHexString(voteaddress)))
+          .setVoteCount(value).build());
+    }
+    return Any.pack(builder.build());
+  }
+
   private Any getContract(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
         Contract.FreezeBalanceContract.newBuilder()
@@ -154,7 +165,7 @@ public class VoteWitnessActuatorTest {
   @Test
   public void invalidateAddress() {
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS_INVALIATE, WITNESS_ADDRESS, 1L),
+        new VoteWitnessActuator(getContract(ADDRESS_INVALIATE, WITNESS_ADDRESS, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -225,7 +236,144 @@ public class VoteWitnessActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
 
+  /**
+   * invalideVoteAddress
+   */
+  @Test
+  public void invalideVoteAddress() {
+    AccountCapsule accountSecondCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8(WITNESS_NAME),
+            ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS_NOACCOUNT)),
+            AccountType.Normal,
+            300L);
+    dbManager.getAccountStore()
+        .put(accountSecondCapsule.getAddress().toByteArray(), accountSecondCapsule);
+    VoteWitnessActuator actuator =
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALIATE, 1L),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(0, dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalidate vote address!", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * Every vote count must greater than 0.
+   */
+  @Test
+  public void voteCountTest() {
+    long frozenBalance = 1_000_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    //0 votes
+    VoteWitnessActuator actuator =
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 0L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("vote count must be greater than 0", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    //1 votes
+    actuator = new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, -1L), dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("vote count must be greater than 0", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * User can vote to 1 - 30 witnesses.
+   */
+  @Test
+  public void voteCountsTest() {
+    long frozenBalance = 1_000_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    VoteWitnessActuator actuator = new VoteWitnessActuator(
+        getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 0),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("VoteNumber must more than 0", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    actuator = new VoteWitnessActuator(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 31),
+        dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("VoteNumber more than maxVoteNumber 30", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * Vote 1 witness one more times.
+   */
+  @Test
+  public void vote1WitnssOneMoreTiems() {
+    long frozenBalance = 1_000_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    VoteWitnessActuator actuator = new VoteWitnessActuator(
+        getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 30),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
   /**
