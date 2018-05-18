@@ -852,7 +852,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     disconnectPeer(peer, reasonCode);
   }
 
-  synchronized boolean isExist(TransactionMessage trxMsg){
+  synchronized boolean isTrxExist(TransactionMessage trxMsg){
     if (TrxCache.getIfPresent(trxMsg.getMessageId()) != null){
       return true;
     }
@@ -861,19 +861,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    if (isExist(trxMsg)){
-      return;
-    }
-    //logger.info("on handle transaction message");
     try {
       Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       if (!peer.getAdvObjWeRequested().containsKey(item)) {
         throw new TraitorPeerException("We don't send fetch request to" + peer);
-      } else {
-        peer.getAdvObjWeRequested().remove(item);
-        del.handleTransaction(trxMsg.getTransactionCapsule());
-        broadcast(trxMsg);
       }
+      peer.getAdvObjWeRequested().remove(item);
+      if (isTrxExist(trxMsg)){
+        logger.info("Trx {} from Peer {} already processed.", trxMsg.getMessageId(), peer.getNode().getHost());
+        return;
+      }
+      del.handleTransaction(trxMsg.getTransactionCapsule());
+      broadcast(trxMsg);
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
