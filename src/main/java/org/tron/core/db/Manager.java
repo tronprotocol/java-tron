@@ -496,7 +496,7 @@ public class Manager {
   }
 
 
-  private void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -515,6 +515,7 @@ public class Manager {
         return;
       }
 
+
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
       if (contract.getType() == TransferAssetContract) {
         ByteString assetName;
@@ -523,8 +524,10 @@ public class Manager {
         } catch (Exception ex) {
           throw new RuntimeException(ex.getMessage());
         }
+
         Long lastAssetOperationTime = accountCapsule.getLatestAssetOperationTimeMap()
             .get(ByteArray.toStr(assetName.toByteArray()));
+
         if (lastAssetOperationTime == null || (now - lastAssetOperationTime >= interval)) {
           AssetIssueCapsule assetIssueCapsule
               = this.getAssetIssueStore().get(assetName.toByteArray());
@@ -539,6 +542,8 @@ public class Manager {
           issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
           this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
           accountCapsule.setLatestOperationTime(now);
+          accountCapsule
+              .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
           this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
           return;
         }
