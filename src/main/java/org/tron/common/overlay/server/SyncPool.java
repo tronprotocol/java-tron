@@ -27,6 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +39,9 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 
@@ -48,6 +53,9 @@ public class SyncPool {
   private static final long WORKER_TIMEOUT = 16;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
+
+  private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
+          .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
 
   @Autowired
   private NodeManager nodeManager;
@@ -102,7 +110,10 @@ public class SyncPool {
     nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
 
     List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> peerClient.connectAsync(n, false));
+    newNodes.forEach(n -> {
+      peerClient.connectAsync(n, false);
+      nodeHandlerCache.put(n, System.currentTimeMillis());
+    });
   }
 
   // for test only
@@ -112,17 +123,17 @@ public class SyncPool {
 
 
   synchronized void logActivePeers() {
+
     logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
-    nodeManager.dumpActiveNodes().forEach(handler -> {
+      nodeManager.dumpActiveNodes().forEach(handler -> {
       if (handler.getNode().getPort() == 18888) {
         logger.info("address: {}:{}, ID:{} {}",
-            handler.getNode().getHost(), handler.getNode().getPort(),
-            handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString());
+        handler.getNode().getHost(), handler.getNode().getPort(),
+        handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString());
       }
-    });
+     });
 
-    logger.info("-------- active channel {}, node in user size {}", channelManager.getActivePeers().size(),
-            channelManager.nodesInUse().size());
+    logger.info("-------- active channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
     }
@@ -200,6 +211,10 @@ public class SyncPool {
       }
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
+        return false;
+      }
+
+      if (nodeHandlerCache.getIfPresent(handler) != null){
         return false;
       }
 
