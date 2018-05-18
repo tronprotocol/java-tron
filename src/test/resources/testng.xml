@@ -4,8 +4,12 @@
 <suite name="demo suite" >
     <test name="demoTests">
         <packages>
-            <package name="stest.tron.wallet.Wallettest_p0.*">
+            <package name="stest.tron.wallet.*">
             </package>
         </packages>
+<!--        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Witness_002">
+            </class>
+        </classes>-->
     </test>
 </suite>
