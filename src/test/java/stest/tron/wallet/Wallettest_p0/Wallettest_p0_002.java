@@ -54,7 +54,7 @@ public class Wallettest_p0_002 {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestAssetIssue() {
         //long TotalSupply = 100000000L;
         int TrxNum = 1;
@@ -75,7 +75,7 @@ public class Wallettest_p0_002 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            builder.setDecayRatio(DecayRatio);
+            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(Url.getBytes()));
