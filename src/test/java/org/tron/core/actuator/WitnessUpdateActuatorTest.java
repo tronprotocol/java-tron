@@ -16,6 +16,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -24,6 +25,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -33,7 +35,10 @@ public class WitnessUpdateActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_WitnessUpdate_test";
   private static final String OWNER_ADDRESS;
-  private static final String OWNER_ADDRESS_NOTEXIT;
+  private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
+  private static final String OWNER_ADDRESS_NOT_WITNESS;
+  private static final String OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME = "test_account1";
+  private static final String OWNER_ADDRESS_NOTEXIST;
   private static final String URL = "https://tron.network";
   private static final String NewURL = "https://tron.org";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
@@ -42,8 +47,10 @@ public class WitnessUpdateActuatorTest {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    OWNER_ADDRESS_NOTEXIT =
+    OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS_NOT_WITNESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
   }
 
   /**
@@ -59,11 +66,28 @@ public class WitnessUpdateActuatorTest {
    */
   @Before
   public void createCapsule() {
+    // address in accountStore and witnessStore
+    AccountCapsule accountCapsule =
+            new AccountCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+                    Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
     WitnessCapsule ownerCapsule = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, URL);
-
     dbManager.getWitnessStore().put(ByteArray.fromHexString(OWNER_ADDRESS), ownerCapsule);
-    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIT));
+
+    // address exist in accountStore, but is not witness
+    AccountCapsule accountNotWitnessCapsule =
+            new AccountCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS)),
+                    ByteString.copyFromUtf8(OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME),
+                    Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS), accountNotWitnessCapsule);
+    dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS));
+
+    // address does not exist in accountStore
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
   }
 
   private Any getContract(String address, String url) {
@@ -197,21 +221,41 @@ public class WitnessUpdateActuatorTest {
   }
 
   /**
-   * use AccountStore not exists Address createWitness,result is failed,exception is "account not
-   * exists".
+   * use AccountStore not exists Address createWitness,result is failed,exception is
+   * "Witness does not exist"
    */
   @Test
-  public void notExitWitness() {
+  public void notExistWitness() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-        getContract(OWNER_ADDRESS_NOTEXIT, URL), dbManager);
+        getContract(OWNER_ADDRESS_NOT_WITNESS, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
+      fail("witness [+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Witness not existed", e.getMessage());
+      Assert.assertEquals("Witness does not exist", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * if account does not exist in accountStore, the test will throw a Exception
+   */
+  @Test
+  public void notExistAccount() {
+    WitnessUpdateActuator actuator = new WitnessUpdateActuator(
+            getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("account does not exist");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("account does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
