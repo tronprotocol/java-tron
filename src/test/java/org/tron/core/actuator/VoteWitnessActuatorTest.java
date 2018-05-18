@@ -78,19 +78,19 @@ public class VoteWitnessActuatorTest {
   public void createCapsule() {
     WitnessCapsule ownerCapsule =
         new WitnessCapsule(
-            StringUtil.HexString2ByteString(WITNESS_ADDRESS),
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS),
             10L,
             URL);
     AccountCapsule witnessAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(WITNESS_NAME),
-            StringUtil.HexString2ByteString(WITNESS_ADDRESS),
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS),
             AccountType.Normal,
             300L);
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME),
-            StringUtil.HexString2ByteString(OWNER_ADDRESS),
+            StringUtil.hexString2ByteString(OWNER_ADDRESS),
             AccountType.Normal,
             10_000_000_000_000L);
 
@@ -104,19 +104,19 @@ public class VoteWitnessActuatorTest {
   private Any getContract(String address, String voteaddress, Long value) {
     return Any.pack(
         VoteWitnessContract.newBuilder()
-            .setOwnerAddress(StringUtil.HexString2ByteString(address))
+            .setOwnerAddress(StringUtil.hexString2ByteString(address))
             .addVotes(Vote.newBuilder()
-                .setVoteAddress(StringUtil.HexString2ByteString(voteaddress))
+                .setVoteAddress(StringUtil.hexString2ByteString(voteaddress))
                 .setVoteCount(value).build())
             .build());
   }
 
   private Any getRepeateContract(String address, String voteaddress, Long value, int times) {
     VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
-    builder.setOwnerAddress(StringUtil.HexString2ByteString(address));
+    builder.setOwnerAddress(StringUtil.hexString2ByteString(address));
     for (int i = 0; i < times; i++) {
       builder.addVotes(Vote.newBuilder()
-          .setVoteAddress(StringUtil.HexString2ByteString(voteaddress))
+          .setVoteAddress(StringUtil.hexString2ByteString(voteaddress))
           .setVoteCount(value).build());
     }
     return Any.pack(builder.build());
@@ -125,7 +125,7 @@ public class VoteWitnessActuatorTest {
   private Any getContract(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
         Contract.FreezeBalanceContract.newBuilder()
-            .setOwnerAddress(StringUtil.HexString2ByteString(ownerAddress))
+            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
             .build());
@@ -156,7 +156,7 @@ public class VoteWitnessActuatorTest {
               .get(0).getVoteAddress().toByteArray());
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10+1, witnessCapsule.getVoteCount());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -182,7 +182,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate address", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -210,7 +210,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account[" + WITNESS_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -227,7 +227,7 @@ public class VoteWitnessActuatorTest {
     AccountCapsule accountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(WITNESS_NAME),
-            StringUtil.HexString2ByteString(WITNESS_ADDRESS_NOACCOUNT),
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS_NOACCOUNT),
             AccountType.Normal,
             300L);
     dbManager.getAccountStore()
@@ -246,7 +246,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Witness[" + WITNESS_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -261,7 +261,7 @@ public class VoteWitnessActuatorTest {
     AccountCapsule accountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(WITNESS_NAME),
-            StringUtil.HexString2ByteString(WITNESS_ADDRESS_NOACCOUNT),
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS_NOACCOUNT),
             AccountType.Normal,
             300L);
     dbManager.getAccountStore()
@@ -280,7 +280,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate vote address!", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -310,7 +310,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("vote count must be greater than 0", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -328,7 +328,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("vote count must be greater than 0", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -358,7 +358,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("VoteNumber must more than 0", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -374,7 +374,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("VoteNumber more than maxVoteNumber 30", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -401,7 +401,7 @@ public class VoteWitnessActuatorTest {
       actuator.execute(ret);
 
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10+30, witnessCapsule.getVoteCount());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -428,7 +428,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -444,7 +444,7 @@ public class VoteWitnessActuatorTest {
     AccountCapsule balanceNotSufficientCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("balanceNotSufficient"),
-            StringUtil.HexString2ByteString(OWNER_ADDRESS_BALANCENOTSUFFIENT),
+            StringUtil.hexString2ByteString(OWNER_ADDRESS_BALANCENOTSUFFIENT),
             AccountType.Normal,
             500L);
     dbManager.getAccountStore()
@@ -466,7 +466,7 @@ public class VoteWitnessActuatorTest {
           .assertEquals("The total number of votes[" + 1000000 + "] is greater than the tronPower["
               + balanceNotSufficientCapsule.getTronPower() + "]", e.getMessage());
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -503,7 +503,7 @@ public class VoteWitnessActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       witnessController.updateWitness();
-      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.HexString2ByteString(WITNESS_ADDRESS));
+      WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(13, witnessCapsule.getVoteCount());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
