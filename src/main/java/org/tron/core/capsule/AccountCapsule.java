@@ -313,6 +313,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
+
+  public Map<String, Long> getLatestAssetOperationTimeMap() {
+    Map<String, Long> map = this.account.getLatestAssetOperationTimeMap();
+    if (map.isEmpty()) {
+      map = Maps.newHashMap();
+    }
+
+    return map;
+  }
+
+  public void setLatestAssetOperationTimeMap(String key, Long value) {
+    this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
+  }
+
+
   public int getFrozenCount() {
     return getInstance().getFrozenCount();
   }
