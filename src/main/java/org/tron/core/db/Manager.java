@@ -800,9 +800,6 @@ public class Manager {
     logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
 
-    if (this.dynamicPropertiesStore.getLatestBlockHeaderNumber() + 1 != block.getNum()) {
-      throw new RuntimeException("updeLatestBlockHeaderNumber error,");
-    }
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
 
