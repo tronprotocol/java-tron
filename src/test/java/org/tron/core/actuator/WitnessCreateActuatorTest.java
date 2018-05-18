@@ -34,25 +34,27 @@ public class WitnessCreateActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
-  private static final String dbPath = "output_CreateAccountTest";
-
+  private static final String dbPath = "output_WitnessCreate_test";
   private static final String ACCOUNT_NAME_FRIST = "ownerF";
-  private static final String OWNER_ADDRESS_FRIST =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS_FRIST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
-  private static final String OWNER_ADDRESS_SECOND =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS_SECOND;
   private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
-  private static final String OWNER_ADDRESS_NOACCOUNT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-  private static final String OWNER_ADDRESS_NALANCENOTSUFFIENT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
+  private static final String OWNER_ADDRESS_NOACCOUNT;
+  private static final String OWNER_ADDRESS_NALANCENOTSUFFIENT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS_FRIST =
+        Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    OWNER_ADDRESS_SECOND =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS_NOACCOUNT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
+    OWNER_ADDRESS_NALANCENOTSUFFIENT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
   }
 
   /**

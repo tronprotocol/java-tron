@@ -29,7 +29,8 @@ import org.tron.core.witness.WitnessController;
 @Slf4j
 public class WitnessService implements Service {
 
-  private static final int MIN_PARTICIPATION_RATE = Args.getInstance().getMinParticipationRate(); // MIN_PARTICIPATION_RATE * 1%
+  private static final int MIN_PARTICIPATION_RATE = Args.getInstance()
+      .getMinParticipationRate(); // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
   private Application tronApp;
   @Getter
@@ -83,7 +84,7 @@ public class WitnessService implements Service {
             logger.info("ProductionLoop interrupted");
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
-          }catch (Throwable  throwable){
+          } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
           }
         }
@@ -219,6 +220,11 @@ public class WitnessService implements Service {
     try {
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
+
+      if (block == null) {
+        logger.warn("exception when generate block");
+        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+      }
       if (DateTime.now().getMillis() - now > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
             ChainConstant.BLOCK_PRODUCED_INTERVAL,
@@ -228,7 +234,8 @@ public class WitnessService implements Service {
 
       logger.info(
           "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
-          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(), block.getTransactions().size(),
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
+          block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
       broadcastBlock(block);
