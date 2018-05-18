@@ -124,6 +124,15 @@ public class SyncPool {
 
   synchronized void logActivePeers() {
 
+    logger.info("-------- active node {}", nodeManager.dumpActiveNodes().size());
+      nodeManager.dumpActiveNodes().forEach(handler -> {
+      if (handler.getNode().getPort() == 18888) {
+        logger.info("address: {}:{}, ID:{} {}",
+        handler.getNode().getHost(), handler.getNode().getPort(),
+        handler.getNode().getHexIdShort(), handler.getNodeStatistics().toString());
+      }
+     });
+
     logger.info("-------- active channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
