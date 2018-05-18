@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.core.Constant;
 
 @Slf4j
 public class ArgsTest {
@@ -31,7 +32,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{"-w"}, "configFile/config-junit.conf");
+    Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
 
     Args args = Args.getInstance();
     Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
@@ -57,11 +58,11 @@ public class ArgsTest {
     Assert.assertTrue(args.isNodeDiscoveryPersist());
     Assert.assertEquals("127.0.0.1", args.getNodeDiscoveryBindIp());
     Assert.assertEquals("46.168.1.1", args.getNodeExternalIp());
-    Assert.assertEquals(10002, args.getNodeListenPort());
+    Assert.assertEquals(18888, args.getNodeListenPort());
     Assert.assertEquals(2000, args.getNodeConnectionTimeout());
     Assert.assertEquals(0, args.getNodeActive().size());
     Assert.assertEquals(30, args.getNodeMaxActiveNodes());
-    Assert.assertEquals(0, args.getNodeP2pVersion());
+    Assert.assertEquals(43, args.getNodeP2pVersion());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
   }

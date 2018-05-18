@@ -8,6 +8,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 
+
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 mainClassName = 'org.tron.program.FullNode'
@@ -33,6 +34,11 @@ buildscript {
 def versions = [
         checkstyle: '8.7',
 ]
+
+jacoco {
+    toolVersion = "0.8.1"
+}
+
 
 configurations {
     checkstyleConfig
@@ -212,10 +218,6 @@ shadowJar {
     version = null
 }
 
-jacoco {
-    toolVersion = "0.8.1"
-}
-
 test {
     testLogging {
         exceptionFormat = 'full'
@@ -226,16 +228,46 @@ test {
     }
 }
 
-task stest(type: Test) {
-        useTestNG {
-            suites(file('src/test/resources/testng.xml'))
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+task stest(type:Test){
+    useTestNG{
+        suites( file('src/test/resources/testng.xml') )
+    }
+
+    testLogging {
+        exceptionFormat = 'full'
+        showStackTraces = "true"
+    }
+}
+
+def binaryRelease(taskName,jarName,mainClass) {
+    return tasks.create("${taskName}", Jar) {
+        baseName = jarName
+        version = null
+        from(sourceSets.main.output) {
+            include "/**"
         }
-        jacoco {
-            append = true
-            destinationFile = file("$buildDir/jacoco/trade.exec")
+
+        from {
+            configurations.compile.collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
         }
-        testLogging {
-            exceptionFormat = 'full'
-            showStackTraces = "true"
+
+        manifest {
+            attributes "Main-Class": "${mainClass}"
         }
+    }
+}
+
+artifacts {
+    archives(binaryRelease('buildSolidityNodeJar','SolidityNode','org.tron.program.SolidityNode'),
+            binaryRelease('buildFullNodeJar','FullNode','org.tron.program.FullNode'))
 }

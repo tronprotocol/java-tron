@@ -43,7 +43,6 @@ public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 //    index.addIndex(DiskIndex.onAttribute(Witness_ADDRESS));
     index.addIndex(DiskIndex.onAttribute(PUBLIC_KEY));
     index.addIndex(DiskIndex.onAttribute(Witness_URL));
-    fill();
   }
 
   @Override

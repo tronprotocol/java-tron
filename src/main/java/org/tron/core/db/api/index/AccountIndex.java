@@ -40,7 +40,6 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
   public void init() {
     initIndex(DiskPersistence.onPrimaryKeyInFile(Account_ADDRESS, indexPath));
 //    index.addIndex(DiskIndex.onAttribute(Account_ADDRESS));
-    fill();
   }
 
   @Override

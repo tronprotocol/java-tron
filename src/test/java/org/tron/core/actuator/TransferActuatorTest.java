@@ -33,32 +33,29 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 public class TransferActuatorTest {
 
   private static Manager dbManager;
-  private static Any contract;
   private static final String dbPath = "output_transfer_test";
   private static AnnotationConfigApplicationContext context;
-
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  private static final String TO_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS;
+  private static final String TO_ADDRESS;
   private static final long AMOUNT = 100;
   private static final long OWNER_BALANCE = 9999999;
   private static final long TO_BALANCE = 100001;
-
-
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
   private static final String TO_ADDRESS_INVALIATE = "bbb";
-  private static final String OWNER_ACCOUNT_INVALIATE =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-
-  private static final String OWNER_NO_BALANXE =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
-  private static final String To_ACCOUNT_INVALIATE =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
+  private static final String OWNER_ACCOUNT_INVALIATE;
+  private static final String OWNER_NO_BALANXE;
+  private static final String To_ACCOUNT_INVALIATE;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    OWNER_ACCOUNT_INVALIATE =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    OWNER_NO_BALANXE = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
+    To_ACCOUNT_INVALIATE =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
   }
 
   /**
