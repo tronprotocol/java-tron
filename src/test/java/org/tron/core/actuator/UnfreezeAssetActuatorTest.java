@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -78,7 +79,7 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            StringUtil.hexString2ByteString(OWNER_ADDRESS),
             AccountType.Normal,
             initBalance);
     ownerCapsule.setAssetIssuedName(ByteString.copyFromUtf8(assetName));
@@ -88,7 +89,7 @@ public class UnfreezeAssetActuatorTest {
   private Any getContract(String ownerAddress) {
     return Any.pack(
         Contract.UnfreezeAssetContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .build());
   }
 
