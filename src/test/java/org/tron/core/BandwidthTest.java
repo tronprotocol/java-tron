@@ -33,8 +33,6 @@ public class BandwidthTest {
   private static final String OWNER_ADDRESS;
   private static final String ASSET_ADDRESS;
   private static final String TO_ADDRESS;
-  private static final long OWNER_BALANCE = 9999999;
-  private static final long TO_BALANCE = 100001;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -77,7 +75,7 @@ public class BandwidthTest {
             ByteString.copyFromUtf8("owner"),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
-            OWNER_BALANCE);
+            0L);
     ownerCapsule.addAsset(ASSET_NAME, 100L);
 
     AccountCapsule toAccountCapsule =
@@ -85,7 +83,7 @@ public class BandwidthTest {
             ByteString.copyFromUtf8("toAccount"),
             ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
             AccountType.Normal,
-            TO_BALANCE);
+            0L);
 
     AccountCapsule assetCapsule =
         new AccountCapsule(
