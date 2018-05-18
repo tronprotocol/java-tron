@@ -55,6 +55,7 @@ import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -708,9 +709,13 @@ public class Manager {
           applyBlock(newBlock);
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
-          logger.debug(e.getMessage(), e);
-        }
+          logger.error(e.getMessage(), e);
+        } catch (Throwable throwable) {
+        logger.error(throwable.getMessage(), throwable);
+        khaosDb.removeBlk(block.getBlockId());
+        throw throwable;
       }
+    }
       logger.info("save block: " + newBlock);
     }
   }
