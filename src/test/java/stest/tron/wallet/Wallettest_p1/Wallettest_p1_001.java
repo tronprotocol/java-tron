@@ -35,7 +35,7 @@ public class Wallettest_p1_001 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void beforeClass(){
         walletClient = new WalletClient(testKey001);
         walletClient.init(0);

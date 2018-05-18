@@ -213,63 +213,29 @@ shadowJar {
 }
 
 jacoco {
-    toolVersion = "0.7.9"
-    reportsDir = file("$buildDir/reports/jacoco/")
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled false
-        csv.enabled false
-        html.destination file("${buildDir}/jacoco/Html")
-    }
+    toolVersion = "0.8.1"
 }
 
 test {
     testLogging {
         exceptionFormat = 'full'
     }
-    jacoco{
-        append = false
-        destinationFile = file("$buildDir/jacoco/trade.exec")
+    jacoco {
+        append = true
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
     }
 }
 
-task stest(type:Test){
-    useTestNG{
-        suites( file('src/test/resources/testng.xml') )
-    }
-    jacoco{
-        append = false
-        destinationFile = file("$buildDir/jacoco/trade.exec")
-    }
-    testLogging {
-        exceptionFormat = 'full'
-        showStackTraces = "true"
-    }
-}
-
-def binaryRelease(taskName,jarName,mainClass) {
-    return tasks.create("${taskName}", Jar) {
-        baseName = jarName
-        version = null
-        from(sourceSets.main.output) {
-            include "/**"
+task stest(type: Test) {
+        useTestNG {
+            suites(file('src/test/resources/testng.xml'))
         }
-
-        from {
-            configurations.compile.collect {
-                it.isDirectory() ? it : zipTree(it)
-            }
+        jacoco {
+            append = true
+            destinationFile = file("$buildDir/jacoco/trade.exec")
         }
-
-        manifest {
-            attributes "Main-Class": "${mainClass}"
+        testLogging {
+            exceptionFormat = 'full'
+            showStackTraces = "true"
         }
-    }
-}
-
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar','SolidityNode','org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar','FullNode','org.tron.program.FullNode'))
 }

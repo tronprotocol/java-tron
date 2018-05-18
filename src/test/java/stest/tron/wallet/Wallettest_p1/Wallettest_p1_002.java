@@ -39,7 +39,7 @@ public class Wallettest_p1_002 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void beforeClass(){
         walletClient1 = new WalletClient(testKey001);
         walletClient1.init(0);
@@ -61,7 +61,8 @@ public class Wallettest_p1_002 {
     @Test(enabled = false)
     public void checkSendCoin(){
         for ( long lb = 0; lb <= walletClient2.queryAccount(FROM_ADDRESS).getBalance(); lb++ ) {
-            walletClient2.sendCoin(BACK_ADDRESS,1);
+            boolean ret = walletClient2.sendCoin(BACK_ADDRESS,1);
+            //assert(ret);
             logger.info(Long.toString(lb));
         }
     }
