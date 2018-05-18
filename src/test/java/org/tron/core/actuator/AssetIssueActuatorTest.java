@@ -75,6 +75,8 @@ public class AssetIssueActuatorTest {
             AccountType.AssetIssue,
             ChainConstant.ASSET_ISSUE_FEE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(24 * 3600 * 1000);
   }
 
   @After
@@ -1255,6 +1257,198 @@ public class AssetIssueActuatorTest {
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * 1. start time should not be null
+   * 2. end time should not be null
+   * 3. start time >= getHeadBlockTimeStamp
+   * 4. start time < end time
+   *
+   */
+  @Test
+  public void issueTimeTest() {
+    long now = dbManager.getHeadBlockTimeStamp();
+    long startTime = now + 48 * 3600 * 1000;
+    long endTime = now + 72 * 3600 * 1000;
+
+    //empty start time will throw exception
+    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("start time should be not empty", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //empty end time will throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(startTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("end time should be not empty", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //startTime == now, throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(now)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("start time should be greater than HeadBlockTime", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //startTime < now, throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(now - 1)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("start time should be greater than HeadBlockTime", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //endTime == startTime, throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(startTime)
+            .setEndTime(startTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("end time should be greater than start time", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //endTime < startTime, throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(endTime)
+            .setEndTime(startTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("end time should be greater than start time", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //right issue, will not throw exception
+    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(startTime)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    actuator = new AssetIssueActuator(contract, dbManager);
+    ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
