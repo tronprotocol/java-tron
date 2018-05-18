@@ -28,19 +28,19 @@ public class CreateAccountActuator extends AbstractActuator {
       throws ContractExeException {
     long fee = calcFee();
     try {
-
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
           dbManager.getHeadBlockTimeStamp());
       dbManager.getAccountStore()
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
-      return true;
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
+
+    return true;
   }
 
   @Override

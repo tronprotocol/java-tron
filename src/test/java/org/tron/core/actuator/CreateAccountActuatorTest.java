@@ -30,22 +30,24 @@ public class CreateAccountActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
-  private static final String dbPath = "output_CreateAccountTest";
-
+  private static final String dbPath = "output_CreateAccount_test";
   private static final String ACCOUNT_NAME_FRIST = "ownerF";
-  private static final String OWNER_ADDRESS_FRIST =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS_FRIST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
-  private static final String OWNER_ADDRESS_SECOND =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS_SECOND;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS_FRIST =
+        Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    OWNER_ADDRESS_SECOND =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
@@ -55,7 +57,9 @@ public class CreateAccountActuatorTest {
     //    dbManager.init();
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule =
@@ -75,7 +79,9 @@ public class CreateAccountActuatorTest {
             .build());
   }
 
-  /** Unit test. */
+  /**
+   * Unit test.
+   */
   @Test
   public void firstCreateAccount() {
     CreateAccountActuator actuator =
@@ -98,7 +104,9 @@ public class CreateAccountActuatorTest {
     }
   }
 
-  /** Unit test. */
+  /**
+   * Unit test.
+   */
   @Test
   public void secondCreateAccount() {
     CreateAccountActuator actuator =
@@ -121,7 +129,9 @@ public class CreateAccountActuatorTest {
     }
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();

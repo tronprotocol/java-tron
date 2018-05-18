@@ -128,6 +128,19 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Invalidate description");
       }
 
+      if (assetIssueContract.getStartTime() == 0) {
+        throw new ContractValidateException("start time should be not empty");
+      }
+      if (assetIssueContract.getEndTime() == 0) {
+        throw new ContractValidateException("end time should be not empty");
+      }
+      if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
+        throw new ContractValidateException("end time should be greater than start time");
+      }
+      if (assetIssueContract.getStartTime() < dbManager.getHeadBlockTimeStamp()){
+        throw new ContractValidateException("start time should be greater than HeadBlockTime");
+      }
+
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
           != null) {
         throw new ContractValidateException("Token exists");
@@ -179,12 +192,12 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Account not exists");
       }
 
-      if (accountCapsule.getFrozenSupplyCount() != 0) {
-        throw new ContractValidateException("An account can only issue one asset at a time");
+      if (!accountCapsule.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("An account can only issue one asset");
       }
 
       if (accountCapsule.getBalance() < calcFee()) {
-        throw new ContractValidateException("No enough blance for fee!");
+        throw new ContractValidateException("No enough balance for fee!");
       }
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());

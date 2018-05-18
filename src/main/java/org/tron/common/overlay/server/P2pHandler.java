@@ -26,8 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.DisconnectMessage;
@@ -38,8 +36,6 @@ import org.tron.common.overlay.message.ReasonCode;
 @Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
-  private final static Logger logger = LoggerFactory.getLogger("P2pHandler");
-
   private static ScheduledExecutorService pingTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "P2pPingTimer"));
 
@@ -49,9 +45,9 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   private ScheduledFuture<?> pingTask;
 
-  private boolean hasPing = false;
+  private volatile boolean hasPing = false;
 
-  private long sendPingTime;
+  private volatile long sendPingTime;
 
   private ChannelHandlerContext ctx;
 

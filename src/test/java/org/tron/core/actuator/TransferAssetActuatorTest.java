@@ -50,17 +50,13 @@ public class TransferAssetActuatorTest {
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Any contract;
-  private static final String dbPath = "output_contract_test";
+  private static final String dbPath = "output_transferasset_test";
   private static final String ASSET_NAME = "trx";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
-  private static final String TO_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
-  private static final String NOT_EXIT_ADDRESS =
-      Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
+  private static final String OWNER_ADDRESS;
+  private static final String TO_ADDRESS;
+  private static final String NOT_EXIT_ADDRESS;
   private static final long OWNER_ASSET_BALANCE = 99999;
-  private static final String ownerAsset_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
+  private static final String ownerAsset_ADDRESS;
   private static final String ownerASSET_NAME = "trxtest";
   private static final long OWNER_ASSET_Test_BALANCE = 99999;
   private static final String OWNER_ADDRESS_INVALIATE = "cccc";
@@ -77,6 +73,11 @@ public class TransferAssetActuatorTest {
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+    TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
+    NOT_EXIT_ADDRESS = Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
+    ownerAsset_ADDRESS =
+        Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
   }
 
   /**
@@ -84,7 +85,7 @@ public class TransferAssetActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-junit.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     dbManager = context.getBean(Manager.class);
     //    dbManager = new Manager();
     //    dbManager.init();

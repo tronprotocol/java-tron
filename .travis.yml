@@ -18,3 +18,5 @@ deploy:
     branch: develop
 after_deploy:
   - ./gradlew stest
+
+

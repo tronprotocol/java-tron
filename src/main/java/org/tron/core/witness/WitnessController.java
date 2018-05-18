@@ -252,7 +252,7 @@ public class WitnessController {
           .reduce((a, b) -> a + b);
       if (sum.isPresent()) {
         AccountCapsule account = accountStore.get(votes.createDbKey());
-        if (sum.get() <= account.getShare()) {
+        if (sum.get() <= account.getTronPower()) {
           // TODO add vote reward
           // long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
           //    .getVoteRewardRate());
@@ -280,7 +280,7 @@ public class WitnessController {
           });
         } else {
           logger.info(
-              "account" + account.createReadableString() + ",share[" + account.getShare()
+              "account" + account.createReadableString() + ",tronPower[" + account.getTronPower()
                   + "] < voteSum["
                   + sum.get() + "]");
         }

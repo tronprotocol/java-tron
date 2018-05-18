@@ -46,7 +46,7 @@ public class ChannelManager {
 
   private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
-  private static final int inboundConnectionBanTimeout = 60 * 1000;
+  private static final int inboundConnectionBanTimeout = 30 * 1000;
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
@@ -137,8 +137,8 @@ public class ChannelManager {
         return false;
       }
     }
-    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     activePeers.put(peer.getNodeIdWrapper(), peer);
+    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     return true;
   }
 
