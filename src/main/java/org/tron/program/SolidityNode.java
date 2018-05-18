@@ -18,6 +18,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -84,6 +88,14 @@ public class SolidityNode {
           throw new BadBlockException("ContractValidate exception");
         } catch (ContractExeException | UnLinkedBlockException e) {
           throw new BadBlockException("Contract Exectute exception");
+        } catch (TaposException e) {
+          throw new BadBlockException("tapos exception");
+        } catch (DupTransactionException e) {
+          throw new BadBlockException("dup exception");
+        } catch (TooBigTransactionException e) {
+          throw new BadBlockException("too big exception");
+        } catch (TransactionExpirationException e) {
+          throw new BadBlockException("expiration exception");
         }
       } else {
         break;

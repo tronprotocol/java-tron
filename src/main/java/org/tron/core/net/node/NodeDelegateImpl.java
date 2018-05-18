@@ -79,6 +79,14 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("Contract Exectute exception," + e.getMessage());
     } catch (InterruptedException e) {
       throw new BadBlockException("pre validate signature exception," + e.getMessage());
+    } catch (TaposException e) {
+      throw new BadBlockException("tapos exception," + e.getMessage());
+    } catch (DupTransactionException e) {
+      throw new BadBlockException("DupTransation exception," + e.getMessage());
+    } catch (TooBigTransactionException e) {
+      throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
+    } catch (TransactionExpirationException e) {
+      throw new BadBlockException("Expiration exception," + e.getMessage());
     }
   }
 
@@ -239,6 +247,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (Exception e) {
           logger.error("new BlockMessage fail", e);
         }
+        return null;
       case TRX:
         try {
           return new TransactionMessage(
@@ -246,6 +255,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (Exception e) {
           logger.error("new TransactionMessage fail", e);
         }
+        return null;
       default:
         logger.info("message type not block or trx.");
         return null;
@@ -279,7 +289,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public BlockId getSolidBlockId(){
+  public BlockId getSolidBlockId() {
     return dbManager.getSolidBlockId();
   }
 
