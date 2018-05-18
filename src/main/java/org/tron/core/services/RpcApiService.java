@@ -699,6 +699,26 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.totalTransaction());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueList(EmptyMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      responseObserver.onNext(wallet.getAssetIssueList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessList());
+      responseObserver.onCompleted();
+    }
   }
 
   @Override
