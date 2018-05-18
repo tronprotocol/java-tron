@@ -35,27 +35,28 @@ public class VoteWitnessActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
-  private static final String dbPath = "output_VoteWitnessTest";
-
+  private static final String dbPath = "output_VoteWitness_test";
   private static final String ACCOUNT_NAME = "account";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS;
   private static final String WITNESS_NAME = "witness";
-  private static final String WITNESS_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String WITNESS_ADDRESS;
   private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
-  private static final String WITNESS_ADDRESS_NOACCOUNT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-  private static final String OWNER_ADDRESS_NOACCOUNT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aae";
-  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
+  private static final String WITNESS_ADDRESS_NOACCOUNT;
+  private static final String OWNER_ADDRESS_NOACCOUNT;
+  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    WITNESS_ADDRESS_NOACCOUNT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
+    OWNER_ADDRESS_NOACCOUNT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aae";
+    OWNER_ADDRESS_BALANCENOTSUFFIENT =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
   }
 
   /**
@@ -253,7 +254,7 @@ public class VoteWitnessActuatorTest {
 
   /**
    * witnessAccount not freeze Balance, result is failed ,exception is "The total number of votes
-   * 1000000 is greater than the share 0.
+   * 1000000 is greater than 0.
    */
   @Test
   public void balanceNotSufficient() {
@@ -272,14 +273,15 @@ public class VoteWitnessActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("The total number of votes[" + 1000000 + "] is greater than the share["
-          + balanceNotSufficientCapsule.getShare() + "]");
+      fail("The total number of votes[" + 1000000 + "] is greater than the tronPower["
+          + balanceNotSufficientCapsule.getTronPower() + "]");
     } catch (ContractValidateException e) {
       Assert.assertEquals(0, dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFIENT)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("The total number of votes[" + 1000000 + "] is greater than the share["
-          + balanceNotSufficientCapsule.getShare() + "]", e.getMessage());
+      Assert
+          .assertEquals("The total number of votes[" + 1000000 + "] is greater than the tronPower["
+              + balanceNotSufficientCapsule.getTronPower() + "]", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -320,6 +322,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
   /**
    * Release resources.
    */

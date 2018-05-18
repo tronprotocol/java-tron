@@ -78,6 +78,7 @@ public class NodeStatistics {
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
+  private long firstDisconnectedTime = 0;
 
 
   public NodeStatistics(Node node) {
@@ -117,6 +118,9 @@ public class NodeStatistics {
         }
       }
     }
+    if (disconnectTimes > 20) {
+      return 0;
+    }
     int score =
         discoverReput + 10 * reput - (int) Math.pow(2, disconnectTimes) * (disconnectTimes > 0 ? 10
             : 0);
@@ -149,12 +153,13 @@ public class NodeStatistics {
       return true;
     }
 
-    if (lastDisconnectedTime > 0
-        && (System.currentTimeMillis() - lastDisconnectedTime) > CLEAR_CYCLE_TIME) {
+    if (firstDisconnectedTime > 0
+        && (System.currentTimeMillis() - firstDisconnectedTime) > CLEAR_CYCLE_TIME) {
       tronLastLocalDisconnectReason = null;
       tronLastRemoteDisconnectReason = null;
       disconnectTimes = 0;
       persistedReputation = 0;
+      firstDisconnectedTime = 0;
     }
 
     if (tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
@@ -204,6 +209,9 @@ public class NodeStatistics {
 
   public void notifyDisconnect() {
     lastDisconnectedTime = System.currentTimeMillis();
+    if (firstDisconnectedTime <= 0) {
+      firstDisconnectedTime = lastDisconnectedTime;
+    }
     disconnectTimes++;
     persistedReputation = persistedReputation / 2;
   }

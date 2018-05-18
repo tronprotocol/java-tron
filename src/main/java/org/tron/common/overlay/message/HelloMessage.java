@@ -131,7 +131,7 @@ public class HelloMessage extends P2pMessage {
 
   @Override
   public String toString() {
-    return helloMessage.toString();
+    return new StringBuilder().append(super.toString()).append(helloMessage.toString()).toString();
   }
 
 }

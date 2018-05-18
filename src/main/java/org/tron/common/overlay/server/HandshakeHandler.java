@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
@@ -31,13 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.NodeManager;
-import org.tron.common.overlay.message.*;
-import org.tron.common.utils.ByteArray;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.P2pMessage;
+import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
-
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 @Component
 @Scope("prototype")
@@ -51,13 +51,20 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   private final NodeManager nodeManager;
 
+  private final ChannelManager channelManager;
+
   private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
+  
+  @Autowired
+  private SyncPool syncPool;
 
   @Autowired
-  public HandshakeHandler(final NodeManager nodeManager, final Manager manager) {
+  public HandshakeHandler(final NodeManager nodeManager, final ChannelManager channelManager,
+      final Manager manager) {
     this.nodeManager = nodeManager;
+    this.channelManager = channelManager;
     this.manager = manager;
   }
 
@@ -77,7 +84,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -106,10 +113,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void sendHelloMsg(ChannelHandlerContext ctx, long time){
+
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
             manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().p2pOutHello.add();
+    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
@@ -138,14 +147,19 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (remoteId.length != 64) {
-      sendHelloMsg(ctx, msg.getTimestamp());
-    }
-
     ((PeerConnection)channel).setHelloMessage(msg);
 
     channel.getNodeStatistics().p2pInHello.add();
 
     channel.publicHandshakeFinished(ctx, msg);
+    if (!channelManager.procPeer(channel)) {
+      return;
+    }
+
+    if (remoteId.length != 64) {
+      sendHelloMsg(ctx, msg.getTimestamp());
+    }
+
+    syncPool.onConnect(channel);
   }
 }

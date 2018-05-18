@@ -1,38 +1,21 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.common.utils.Sha256Hash;
+import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockInventory;
 
 public class BlockInventoryMessage extends TronMessage {
 
   protected BlockInventory blockInventory;
 
-  public BlockInventoryMessage(byte[] packed) {
-    super(packed);
+  public BlockInventoryMessage(byte[] data) throws Exception {
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
-  }
-
-  @Override
-  public Sha256Hash getMessageId() {
-    return super.getMessageId();
-  }
-
-  @Override
-  public byte[] getData() {
-    if (data == null) {
-      pack();
-    }
-    return data;
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
+    this.data = data;
+    this.blockInventory = Protocol.BlockInventory.parseFrom(data);
   }
 
   @Override
@@ -41,25 +24,7 @@ public class BlockInventoryMessage extends TronMessage {
   }
 
   private BlockInventory getBlockInventory() {
-    unPack();
     return blockInventory;
-  }
-
-  private void pack() {
-    this.data = this.blockInventory.toByteArray();
-  }
-
-  private synchronized void unPack() {
-    if (unpacked) {
-      return;
-    }
-
-    try {
-      this.blockInventory = BlockInventory.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
-    }
-    unpacked = true;
   }
 
   public BlockInventoryMessage(List<BlockId> blockIds, BlockInventory.Type type) {
@@ -74,7 +39,7 @@ public class BlockInventoryMessage extends TronMessage {
     invBuilder.setType(type);
     blockInventory = invBuilder.build();
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
-    unpacked = true;
+    this.data = blockInventory.toByteArray();
   }
 
   public List<BlockId> getBlockIds() {
@@ -83,10 +48,4 @@ public class BlockInventoryMessage extends TronMessage {
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
-  }
-
-  //public List<BlockId> getBlockIds()
 }

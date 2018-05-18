@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -24,7 +25,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
     WitnessCapsule witnessCapsule = this.dbManager.getWitnessStore()
         .get(contract.getOwnerAddress().toByteArray());
-    witnessCapsule.setUrl(contract.getUpdateUrl().toString());
+    witnessCapsule.setUrl(contract.getUpdateUrl().toStringUtf8());
     this.dbManager.getWitnessStore().put(witnessCapsule.createDbKey(), witnessCapsule);
   }
 
@@ -57,8 +58,17 @@ public class WitnessUpdateActuator extends AbstractActuator {
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate address");
       }
+
+      if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException("account does not exist");
+      }
+
+      if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {
+        throw new ContractValidateException("Invalidate url");
+      }
+
       if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
-        throw new ContractValidateException("Witness not existed");
+        throw new ContractValidateException("Witness does not exist");
       }
     } catch (final Exception ex) {
       ex.printStackTrace();

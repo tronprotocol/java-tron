@@ -33,7 +33,11 @@ public class WitnessCreateActuator extends AbstractActuator {
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
       ret.setStatus(fee, code.SUCESS);
-    } catch (final InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -93,7 +97,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     return 0;
   }
 
-  private void createWitness(final WitnessCreateContract witnessCreateContract) {
+  private void createWitness(final WitnessCreateContract witnessCreateContract) throws BalanceInsufficientException {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
         witnessCreateContract.getOwnerAddress(),
@@ -106,16 +110,10 @@ public class WitnessCreateActuator extends AbstractActuator {
         .get(witnessCapsule.createDbKey());
     accountCapsule.setIsWitness(true);
     this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
+            -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
 
-    try {
-      dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
-          -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
-
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(),
-          +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
-
-    } catch (BalanceInsufficientException e) {
-      throw new RuntimeException(e);
-    }
+    dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(),
+            +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
   }
 }

@@ -33,6 +33,10 @@ public class WitnessController {
   @Getter
   private Manager manager;
 
+  @Setter
+  @Getter
+  private boolean isGeneratingBlock;
+
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
     instance.setManager(manager);
@@ -248,7 +252,7 @@ public class WitnessController {
           .reduce((a, b) -> a + b);
       if (sum.isPresent()) {
         AccountCapsule account = accountStore.get(votes.createDbKey());
-        if (sum.get() <= account.getShare()) {
+        if (sum.get() <= account.getTronPower()) {
           // TODO add vote reward
           // long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
           //    .getVoteRewardRate());
@@ -276,7 +280,7 @@ public class WitnessController {
           });
         } else {
           logger.info(
-              "account" + account.createReadableString() + ",share[" + account.getShare()
+              "account" + account.createReadableString() + ",tronPower[" + account.getTronPower()
                   + "] < voteSum["
                   + sum.get() + "]");
         }
