@@ -26,7 +26,7 @@ public class MessageQueue {
 
   private volatile boolean sendMsgFlag = false;
 
-  private long sendTime;
+  private volatile long sendTime;
 
   private Thread sendMsgThread;
 
