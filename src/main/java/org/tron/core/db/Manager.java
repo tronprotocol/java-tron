@@ -471,7 +471,8 @@ public class Manager {
    */
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
+      ValidateBandwidthException, DupTransactionException, TaposException,
+      TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
     if (!trx.validateSignature()) {
@@ -881,7 +882,9 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException,
+      DupTransactionException, TaposException {
     if (trxCap == null) {
       return false;
     }
@@ -1049,7 +1052,9 @@ public class Manager {
    * process block.
    */
   public void processBlock(BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateBandwidthException, TaposException, TooBigTransactionException,
+      DupTransactionException, TransactionExpirationException {
     // todo set revoking db max size.
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
