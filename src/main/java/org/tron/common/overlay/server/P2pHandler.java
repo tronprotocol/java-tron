@@ -49,7 +49,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   private ScheduledFuture<?> pingTask;
 
-  private boolean hasPing = false;
+  private  boolean hasPing = false;
 
   private long sendPingTime;
 
