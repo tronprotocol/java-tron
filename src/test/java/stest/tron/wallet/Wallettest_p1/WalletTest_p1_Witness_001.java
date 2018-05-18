@@ -1,3 +1,4 @@
+/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -325,3 +326,4 @@ public class WalletTest_p1_Witness_001 {
 }
 
 
+*/

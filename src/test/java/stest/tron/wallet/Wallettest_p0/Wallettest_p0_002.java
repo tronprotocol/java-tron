@@ -89,7 +89,7 @@ public class Wallettest_p0_002 {
         logger.info("this is TestAssetIssue test case");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestGetAssetIssueByName() {
         Contract.AssetIssueContract ret = walletClient.getAssetIssueByName(name);
         Assert.assertEquals(ret.getTotalSupply(), TotalSupply);
@@ -106,7 +106,7 @@ public class Wallettest_p0_002 {
     }
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestTransferAsset() {
         //byte assertName[] = name.getBytes();
         //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
@@ -119,7 +119,7 @@ public class Wallettest_p0_002 {
     }
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestGetAssetIssueByAccount() {
         Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueByAccount(FROM_ADDRESS);
 
@@ -150,7 +150,7 @@ public class Wallettest_p0_002 {
 
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestGetAssetIssueList(){
         Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueList();
         GrpcAPI.AssetIssueList getAssetIssueList = result.get();
@@ -186,7 +186,7 @@ public class Wallettest_p0_002 {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestParticipateAssetIssue(){
         Contract.ParticipateAssetIssueContract result = walletClient.participateAssetIssueContract(TO_ADDRESS, name.getBytes(),FROM_ADDRESS, AMOUNT);
         Assert.assertTrue(AMOUNT != 0);
