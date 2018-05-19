@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionList;
@@ -36,12 +35,6 @@ public class WalletSolidity {
       e.printStackTrace();
     }
     return accountByAddress;
-  }
-
-  public AccountList getAccountList() {
-    List<Account> accountAll = storeAPI.getAccountAll();
-    AccountList accountList = AccountList.newBuilder().addAllAccounts(accountAll).build();
-    return accountList;
   }
 
   public WitnessList getWitnessList() {

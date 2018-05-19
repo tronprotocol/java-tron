@@ -6,13 +6,11 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -88,31 +86,6 @@ public class GrpcClient {
     return blockingStub.getBlockByNum(builder.build());
   }
 
-  public Optional<AccountList> listAccounts() {
-    AccountList accountList = blockingStub.listAccounts(EmptyMessage.newBuilder().build());
-    if (accountList != null) {
-      return Optional.of(accountList);
-    }
-    return Optional.empty();
-  }
-
-  public Optional<WitnessList> listWitnesses() {
-    WitnessList witnessList = blockingStub.listWitnesses(EmptyMessage.newBuilder().build());
-    if (witnessList != null) {
-      return Optional.of(witnessList);
-    }
-    return Optional.empty();
-  }
-
-  public Optional<AssetIssueList> getAssetIssueList() {
-    AssetIssueList assetIssueList = blockingStub
-        .getAssetIssueList(EmptyMessage.newBuilder().build());
-    if (assetIssueList != null) {
-      return Optional.of(assetIssueList);
-    }
-    return Optional.empty();
-  }
-
   public Optional<NodeList> listNodes() {
     NodeList nodeList = blockingStub
         .listNodes(EmptyMessage.newBuilder().build());
@@ -139,7 +112,4 @@ public class GrpcClient {
     return blockingStub.getAssetIssueByName(request);
   }
 
-  public NumberMessage getTotalTransaction() {
-    return blockingStub.totalTransaction(EmptyMessage.newBuilder().build());
-  }
 }

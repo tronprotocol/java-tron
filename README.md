@@ -276,6 +276,7 @@ For private test net, the IPs are allocated by yourself.
 ## Running a local node and connecting to the public testnet 
 
 * Ensure that the version number is consistent with the version number of the test network. If it is not consistent, Please modify the node.p2p.version in the config.conf file, and delete the out-directory directory (if it exists)
+* The current p2p.version is **61**
 
 ### Running a Full Node
 

@@ -21,6 +21,12 @@ public class TransactionMessage extends TronMessage {
   }
 
   @Override
+  public String toString(){
+    return  new StringBuilder().append(super.toString())
+            .append("messageId: ").append(super.getMessageId()).toString();
+  }
+
+  @Override
   public Class<?> getAnswerMessage() {
     return null;
   }

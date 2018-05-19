@@ -147,8 +147,8 @@ public class TransferAssetActuator extends AbstractActuator {
   }
 
   @Override
-  public ByteString getOwnerAddress() {
-    return null;
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return contract.unpack(TransferAssetContract.class).getOwnerAddress();
   }
 
   @Override
