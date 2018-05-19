@@ -235,6 +235,43 @@ service Wallet {
       }
     };
   }
+
+  rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
+    option (google.api.http) = {
+      post: "/wallet/listwitnesses"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/listwitnesses"
+      }
+    };
+  };
+  rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
+    option (google.api.http) = {
+        post: "/wallet/getassetissuelist"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getassetissuelist"
+        }
+      };
+  }
+  rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
+    option (google.api.http) = {
+      post: "/wallet/totaltransaction"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/totaltransaction"
+      }
+    };
+  }
+  rpc GetNextMaintenanceTime (EmptyMessage) returns (NumberMessage) {
+    option (google.api.http) = {
+      post: "/wallet/getnextmaintenancetime"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getnextmaintenancetime"
+      }
+    };
+  }
 };
 
 
@@ -249,17 +286,6 @@ service WalletSolidity {
       }
     };
   };
-
-  rpc ListAccounts (EmptyMessage) returns (AccountList) {
-    option (google.api.http) = {
-      post: "/walletsolidity/listaccounts"
-      body: "*"
-      additional_bindings {
-        get: "/walletsolidity/listaccounts"
-      }
-    };
-  };
-
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/walletsolidity/listwitnesses"
