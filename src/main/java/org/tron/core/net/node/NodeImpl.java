@@ -554,11 +554,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                 });
 
         if (isFound[0]) {
+          blockWaitToProc.remove(msg);
           if (!freshBlockId.contains(msg.getBlockId())) {
-            blockWaitToProc.remove(msg);
             processSyncBlock(msg.getBlockCapsule());
-            isBlockProc[0] = true;
           }
+          isBlockProc[0] = true;
         }
       });
 
