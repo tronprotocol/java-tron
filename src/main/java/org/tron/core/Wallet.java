@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -291,14 +290,6 @@ public class Wallet {
       logger.info(e.getMessage());
       return null;
     }
-  }
-
-  public AccountList getAllAccounts() {
-    AccountList.Builder builder = AccountList.newBuilder();
-    List<AccountCapsule> accountCapsuleList =
-        dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
-    return builder.build();
   }
 
   public WitnessList getWitnessList() {
