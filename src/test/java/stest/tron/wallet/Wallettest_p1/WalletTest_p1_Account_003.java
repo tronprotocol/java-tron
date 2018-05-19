@@ -1,4 +1,3 @@
-/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -69,17 +68,17 @@ public class WalletTest_p1_Account_003 {
     }
 
 
-    @Test
+    @Test(enabled = false)
     public void TestNoBalanceCreateAssetIssue(){
         //余额不足创建通证，创建失败，无异常报出
-        Assert.assertFalse(CreateAssetIssue(Low_Bal_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,
-                1,2, Description, Url, lowBalTest));
+        Assert.assertFalse(CreateAssetIssue(Low_Bal_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,2, Description, Url, lowBalTest));
+        logger.info("nobalancecreateassetissue");
     }
 
     @Test
     public void TestNoBalanceTransferTrx(){
         //余额不足转账，转账失败，无异常报出
-        Assert.assertFalse(Sendcoin(TO_ADDRESS, 10000000L, Low_Bal_ADDRESS,lowBalTest));
+        Assert.assertFalse(Sendcoin(TO_ADDRESS, 100000000000000000L, Low_Bal_ADDRESS,lowBalTest));
     }
 
     @Test
@@ -165,7 +164,7 @@ public class WalletTest_p1_Account_003 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                    Integer DecayRatio, Integer VoteScore, String Description, String URL, String priKey){
+                                    Integer VoteScore, String Description, String URL, String priKey){
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -191,11 +190,13 @@ public class WalletTest_p1_Account_003 {
 
             Protocol.Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
             if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+                logger.info("Please check!!! transaction == null");
                 return false;
             }
             transaction = signTransaction(ecKey,transaction);
             GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
             if (response.getResult() == false){
+                logger.info("Please check!!! response.getresult==false");
                 return false;
             }
             else{
@@ -273,4 +274,3 @@ public class WalletTest_p1_Account_003 {
 }
 
 
-*/

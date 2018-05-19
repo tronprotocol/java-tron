@@ -57,7 +57,7 @@ public class WalletTest_p1_Account_002 {
     }
 
 
-    @Test
+    @Test(enabled = false)
     public void TestGetAllAccount(){
         GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
         Optional<GrpcAPI.AccountList> result = Optional.ofNullable(accountlist);

@@ -77,7 +77,7 @@ public class WalletTest_p1_Witness_002 {
     }
 
 
-    @Test
+    @Test(enabled = true)
     public void TestQueryAllWitness(){
         GrpcAPI.WitnessList witnesslist = blockingStubFull.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
         Optional<GrpcAPI.WitnessList> result = Optional.ofNullable(witnesslist);

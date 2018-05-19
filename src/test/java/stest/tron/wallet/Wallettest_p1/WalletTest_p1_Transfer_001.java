@@ -78,17 +78,17 @@ public class WalletTest_p1_Transfer_001 {
             e.printStackTrace();
         }
         logger.info("First time");
-        Assert.assertTrue(Sendcoin(TO_ADDRESS, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
+        Assert.assertTrue(Sendcoin(TO_ADDRESS, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
         logger.info("Within 10 seconds");
         //Assert.assertFalse(Sendcoin(TO_ADDRESS, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        Assert.assertFalse(Sendcoin(TO_ADDRESS, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
+        Assert.assertFalse(Sendcoin(TO_ADDRESS, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
         //Assert.assertFalse(Sendcoin(TO_ADDRESS, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
         try {
             Thread.sleep(16000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Assert.assertTrue(Sendcoin(TO_ADDRESS, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
+        Assert.assertTrue(Sendcoin(TO_ADDRESS, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
         logger.info("Out 10 seconds");
     }
 

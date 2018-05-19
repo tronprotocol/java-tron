@@ -73,7 +73,7 @@ public class WalletTest_p1_Account_004 {
     }
 
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void TestFreezeBalance(){
         //冻结金额大于目前余额，冻结失败
         Assert.assertFalse(FreezeBalance(FROM_ADDRESS, 9000000000000000000L, 3L,testKey002));
@@ -84,7 +84,7 @@ public class WalletTest_p1_Account_004 {
         //如果冻结时间未到，则解锁失败
         Assert.assertFalse(UnFreezeBalance(FROM_ADDRESS, testKey002));
         try {
-            Thread.sleep(12000);
+            Thread.sleep(16000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

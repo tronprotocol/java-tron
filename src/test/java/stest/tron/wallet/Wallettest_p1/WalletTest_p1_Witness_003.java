@@ -1,4 +1,3 @@
-/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -48,7 +47,7 @@ public class WalletTest_p1_Witness_003 {
     private static final byte[] Low_Bal_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
 
 
-    private static final Long costForCreateWitness = 10000000000L;
+    private static final Long costForCreateWitness = 9999000000L;
     String  createWitnessUrl = "http://www.createwitnessurl.com";
     String  updateWitnessUrl = "http://www.updatewitnessurl.com";
     byte[]  createUrl = createWitnessUrl.getBytes();
@@ -70,6 +69,7 @@ public class WalletTest_p1_Witness_003 {
     @Test
     public void TestCreateWitness(){
         //如果已经是候选人，则申请失败（暂时先默认FROM_ADDRESS账户在服务器初始化后就是witness）
+        CreateWitness(FROM_ADDRESS,createUrl, testKey002);
         Assert.assertFalse(CreateWitness(FROM_ADDRESS,createUrl, testKey002));
 
         //从一个账户转入足额到资产到Low_Bal_ADDRESS账户，使该账户可以申请成为witness
@@ -85,9 +85,16 @@ public class WalletTest_p1_Witness_003 {
             Assert.assertTrue(Sendcoin(FROM_ADDRESS,costForCreateWitness,Low_Bal_ADDRESS,lowBalTest));
         }
         else{
+            try {
+                Thread.sleep(15000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             logger.info("Low balance acctount Create Witness succesfully");
             Account search2 = queryAccount(lowBalTest, blockingStubFull);
             Long afterCreateWitnessBalance = search2.getBalance();
+            logger.info("beforecreatewitnessbalance + " + Long.toString(beforeCreateWitnessBalance));
+            logger.info("aftercreatewitnessbalance + " + Long.toString(afterCreateWitnessBalance));
             Assert.assertTrue(beforeCreateWitnessBalance - afterCreateWitnessBalance == costForCreateWitness);
         }
     }
@@ -97,7 +104,7 @@ public class WalletTest_p1_Witness_003 {
         //更新Witness到URL
         //Assert.assertTrue(UpdatWitness(Low_Bal_ADDRESS,updateUrl,lowBalTest));
         try {
-            Thread.sleep(15000);
+            Thread.sleep(18000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -272,4 +279,3 @@ public class WalletTest_p1_Witness_003 {
 }
 
 
-*/

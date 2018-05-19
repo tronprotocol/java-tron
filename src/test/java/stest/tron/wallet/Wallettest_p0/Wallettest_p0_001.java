@@ -3,10 +3,13 @@ package stest.tron.wallet.Wallettest_p0;
 
 import java.util.HashMap;
 import java.util.Optional;
-
+import stest.tron.wallet.common.client.Configuration;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,9 @@ public class Wallettest_p0_001 {
     private static final Long F_DURATION     = 3L;
     private static final Long ZUIDIXIAOFEI   = 100000L;
 
+    private ManagedChannel channelFull = null;
+    private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     public static void main(String[] args){
         logger.info("test man.");
@@ -51,8 +57,13 @@ public class Wallettest_p0_001 {
         walletClient = new WalletClient(testKey002);
         walletClient.init(0);
 
+        channelFull = ManagedChannelBuilder.forTarget(fullnode)
+                .usePlaintext(true)
+                .build();
+        blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
         //check config-beta env
-        Assert.assertTrue(checkENV());
+        //Assert.assertTrue(checkENV());
 
         boolean ret = walletClient.freezeBalance(10000000000L,F_DURATION);
         Assert.assertTrue(ret);
@@ -97,8 +108,11 @@ public class Wallettest_p0_001 {
         Assert.assertTrue(ret);
 
         //check transaction count
-        Long transactionCnt =  checkclient.getTotalTransaction().getNum();
-        Assert.assertTrue(transactionCnt > 0 );
+        //GrpcAPI.NumberMessage GetTotalTransaction = blockingStubFull.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
+        //logger.info(Long.toString(GetTotalTransaction.getNum()));
+
+        //Long transactionCnt =  GetTotalTransaction.getNum();
+        //Assert.assertTrue(transactionCnt > 0 );
 
         /*
 
@@ -151,6 +165,8 @@ public class Wallettest_p0_001 {
 
         //1 vote = 1 trx = 1000000 drop
         //check vote
+        //GrpcAPI.WitnessList witnesslist = blockingStubFull.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
+        //Optional<GrpcAPI.WitnessList> witnessResult = Optional.ofNullable(witnesslist);
         Optional<GrpcAPI.WitnessList> witnessResult = walletClient.listWitnesses();
 
         HashMap<String, String> witnesshash =  new HashMap();
@@ -178,6 +194,7 @@ public class Wallettest_p0_001 {
             //get list again
             witnessResult = walletClient.listWitnesses();
 
+
             if (witnessResult.isPresent()) {
                 WitnessList = witnessResult.get();
                 WitnessList.getWitnessesList().forEach(witness -> {
@@ -194,7 +211,10 @@ public class Wallettest_p0_001 {
     //check env: nodelist;witnesslist;accountlist.
     public boolean checkENV(){
         //check account
-        Optional<AccountList> accountResult = walletClient.listAccounts();
+        //Optional<AccountList> accountResult = walletClient.listAccounts();
+
+        GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
+        Optional<GrpcAPI.AccountList> accountResult = Optional.ofNullable(accountlist);
 
         if (accountResult.isPresent()) {
             AccountList accountList = accountResult.get();
@@ -257,7 +277,7 @@ public class Wallettest_p0_001 {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void checkNode() {
 
         Optional<GrpcAPI.NodeList> result = walletClient.listNodes();

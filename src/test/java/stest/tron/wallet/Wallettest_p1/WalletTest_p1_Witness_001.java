@@ -1,4 +1,3 @@
-/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -78,15 +77,15 @@ public class WalletTest_p1_Witness_001 {
     @Test
     public void TestVoteWitness(){
         HashMap<String,String> small_vote_map=new HashMap<String,String>();
-        small_vote_map.put("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM", "1");
+        small_vote_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "1");
         HashMap<String,String>  very_large_map = new HashMap<String,String>();
-        very_large_map.put("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM","1000000000");
+        very_large_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv","1000000000");
 
         //如果没有冻结资产，则投票失败
         Assert.assertFalse(VoteWitness(small_vote_map, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
         //冻结一部分资产
-        Assert.assertTrue(FreezeBalance(FROM_ADDRESS,1000000L, 3L, testKey002));
+        Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L, testKey002));
 
         //如果有冻结资产，且投票数大于冻结资产，则投票失败
         Assert.assertFalse(VoteWitness(very_large_map, FROM_ADDRESS, testKey002));
@@ -145,12 +144,14 @@ public class WalletTest_p1_Witness_001 {
 
         Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info("transaction == null");
             return false;
         }
         transaction = signTransaction(ecKey,transaction);
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 
         if (response.getResult() == false){
+            logger.info("response.getresult() == false");
             return false;
         }
         Account afterVote = queryAccount(ecKey, search_blockingStubFull);
@@ -214,7 +215,7 @@ public class WalletTest_p1_Witness_001 {
         }
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(20000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -225,11 +226,11 @@ public class WalletTest_p1_Witness_001 {
         //logger.info(Long.toString(afterFronzen.getBandwidth()));
         //logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
         //logger.info(Integer.toString(search.getFrozenCount()));
-        //logger.info("afterfrozenbalance =" + Long.toString(afterFrozenBalance) + "beforefrozenbalance =  " + beforeFrozenBalance +
-        //"freezebalance = " + Long.toString(freezeBalance));
+        logger.info("afterfrozenbalance =" + Long.toString(afterFrozenBalance) + "beforefrozenbalance =  " + beforeFrozenBalance +
+        "freezebalance = " + Long.toString(freezeBalance));
         if ((afterFrozenBalance - beforeFrozenBalance != freezeBalance) ||
                 (afterBandwidth - beforeBandwidth != freezeBalance * frozen_duration)){
-            logger.info("After 10 second, two node still not synchronous");
+            logger.info("After 20 second, two node still not synchronous");
         }
         Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
         Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
@@ -326,4 +327,3 @@ public class WalletTest_p1_Witness_001 {
 }
 
 
-*/

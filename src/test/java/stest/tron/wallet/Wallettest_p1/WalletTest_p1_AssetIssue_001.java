@@ -60,7 +60,7 @@ public class WalletTest_p1_AssetIssue_001 {
     //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
 
-    @BeforeClass(enabled = false)
+    @BeforeClass(enabled = true)
     public void beforeClass(){
         channelFull = ManagedChannelBuilder.forTarget(fullnode)
                 .usePlaintext(true)
@@ -78,9 +78,18 @@ public class WalletTest_p1_AssetIssue_001 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            //新建一笔通证,开始时间小于当前时间，创建失败
+            Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,
+                    1, Description, Url, no_bandwitch));
+
+            //新建一笔通证,总供应量大于当前账户余额，创建失败
+            Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,9000000000000000000L, 1,1,now,now+10000000000L,
+                    1, Description, Url, no_bandwitch));
+
+
             //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,
-                    1,2, Description, Url, no_bandwitch));
+            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now+900000,now+10000000000L,
+                    1, Description, Url, no_bandwitch));
         }
         else{
             logger.info("This account already create an assetisue");
@@ -95,7 +104,7 @@ public class WalletTest_p1_AssetIssue_001 {
 
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void TestTransferAssetBandwitchDecreaseWithin10Second(){
         try {
             Thread.sleep(15000);
@@ -103,20 +112,20 @@ public class WalletTest_p1_AssetIssue_001 {
             e.printStackTrace();
         }
         logger.info("First time to transfer assetissue");
-        Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 1000000L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         logger.info("Within 10 seconds to transfer assetissue");
-        Assert.assertFalse(TransferAsset(TO_ADDRESS, name.getBytes(), 1000000L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        Assert.assertFalse(TransferAsset(TO_ADDRESS, name.getBytes(), 10L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         try {
             Thread.sleep(15000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         logger.info("Out 10 seconds to transfer asset");
-        Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 1000000L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, NO_BANDWITCH_ADDRESS, no_bandwitch));
 
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass(enabled = true)
     public void shutdown() throws InterruptedException {
         if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
@@ -124,7 +133,7 @@ public class WalletTest_p1_AssetIssue_001 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                    Integer DecayRatio, Integer VoteScore, String Description, String URL, String priKey){
+                                     Integer VoteScore, String Description, String URL, String priKey){
             //long TotalSupply = 100000000L;
             //int TrxNum = 1;
             //int IcoNum = 100;
@@ -160,11 +169,13 @@ public class WalletTest_p1_AssetIssue_001 {
 
                 Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
                 if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+                    logger.info("transaction == null");
                     return false;
                 }
                 transaction = signTransaction(ecKey,transaction);
                 GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
                 if (response.getResult() == false){
+                    logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
                     return false;
                 }
                 else{
@@ -246,11 +257,13 @@ public class WalletTest_p1_AssetIssue_001 {
         Contract.TransferAssetContract contract = builder.build();
         Transaction transaction =  blockingStubFull.transferAsset(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info("transaction == null || transaction.getRawData().getContractCount() == 0");
             return false;
         }
         transaction = signTransaction(ecKey,transaction);
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
         if (response.getResult() == false){
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
             return false;
         }
         else{

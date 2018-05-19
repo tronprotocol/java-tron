@@ -56,7 +56,7 @@ public class WalletTest_p1_AssetIssue_003 {
     //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
 
-    @BeforeClass(enabled = false)
+    @BeforeClass(enabled = true)
     public void beforeClass(){
         channelFull = ManagedChannelBuilder.forTarget(fullnode)
                 .usePlaintext(true)
@@ -74,15 +74,15 @@ public class WalletTest_p1_AssetIssue_003 {
                 e.printStackTrace();
             }
             //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,now,now+10000000000L,
-                    2,3, Description, Url, testKey002));
+            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,now + 900000,now+10000000000L,
+                    2, Description, Url, testKey002));
         }
         else{
             logger.info("This account already create an assetisue");
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void TestGetAllAssetIssue(){
         GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
                 .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -97,7 +97,7 @@ public class WalletTest_p1_AssetIssue_003 {
 
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass(enabled = true)
     public void shutdown() throws InterruptedException {
         if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
@@ -105,7 +105,7 @@ public class WalletTest_p1_AssetIssue_003 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                    Integer DecayRatio, Integer VoteScore, String Description, String URL, String priKey){
+                                     Integer VoteScore, String Description, String URL, String priKey){
             //long TotalSupply = 100000000L;
             //int TrxNum = 1;
             //int IcoNum = 100;

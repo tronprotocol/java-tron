@@ -55,7 +55,7 @@ public class WalletTest_p1_Transfer_002 {
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     }
 
-    @Test
+    @Test(enabled = true)
     public void TestGetTotalTransaction(){
         GrpcAPI.NumberMessage beforeGetTotalTransaction = blockingStubFull.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
         logger.info(Long.toString(beforeGetTotalTransaction.getNum()));

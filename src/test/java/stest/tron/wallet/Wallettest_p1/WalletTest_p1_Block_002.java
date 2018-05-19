@@ -56,7 +56,7 @@ public class WalletTest_p1_Block_002 {
     }
 
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void TestGetBlockByNum(){
         //获取当前区块number，如果当前区块number为0，则打印日志，转告测试手动测试该用例或等待有新区块后再测试
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -101,7 +101,7 @@ public class WalletTest_p1_Block_002 {
         //logger.info("Last second test succesfully");
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void TestGetBlockById(){
 
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
