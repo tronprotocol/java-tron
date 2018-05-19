@@ -57,8 +57,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       if (!hasPing){
         sendPingTime = System.currentTimeMillis();
-        msgQueue.sendMessage(PING_MESSAGE);
-        hasPing = true;
+        hasPing = msgQueue.sendMessage(PING_MESSAGE);
       }
     }, 10, 10, TimeUnit.SECONDS);
   }
