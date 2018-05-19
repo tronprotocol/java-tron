@@ -263,6 +263,15 @@ service Wallet {
       }
     };
   }
+  rpc GetNextMaintenanceTime (EmptyMessage) returns (NumberMessage) {
+    option (google.api.http) = {
+      post: "/wallet/getnextmaintenancetime"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getnextmaintenancetime"
+      }
+    };
+  }
 };
 
 
