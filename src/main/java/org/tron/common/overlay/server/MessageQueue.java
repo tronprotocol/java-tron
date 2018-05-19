@@ -86,21 +86,18 @@ public class MessageQueue {
     this.channel = channel;
   }
 
-  public void sendMessage(Message msg) {
-
+  public boolean sendMessage(Message msg) {
     if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000){
-      return;
+      return false;
     }
-
     logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
-
     sendTime = System.currentTimeMillis();
-
     if (msg.getAnswerMessage() != null){
       requestQueue.add(new MessageRoundtrip(msg));
     }else {
       msgQueue.offer(msg);
     }
+    return true;
   }
 
   public void receivedMessage(Message msg){
