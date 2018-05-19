@@ -351,6 +351,12 @@ public class Wallet {
     return builder.build();
   }
 
+  public NumberMessage getNextMaintenanceTime() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
+        .setNum(dbManager.getDynamicPropertiesStore().getNextMaintenanceTime());
+    return builder.build();
+  }
+
   public Block getBlockById(ByteString BlockId) {
     if (Objects.isNull(BlockId)) {
       return null;

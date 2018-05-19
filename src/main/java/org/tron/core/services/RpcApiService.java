@@ -708,6 +708,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getNextMaintenanceTime(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.getNextMaintenanceTime());
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getAssetIssueList(EmptyMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(wallet.getAssetIssueList());
