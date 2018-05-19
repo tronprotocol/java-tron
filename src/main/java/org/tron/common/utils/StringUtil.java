@@ -57,4 +57,8 @@ public class StringUtil {
         .map(bytes -> createReadableString(bytes))
         .collect(Collectors.toList());
   }
+
+  public static ByteString hexString2ByteString(String hexString) {
+    return ByteString.copyFrom(ByteArray.fromHexString(hexString));
+  }
 }

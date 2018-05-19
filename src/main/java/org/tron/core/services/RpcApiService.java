@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -100,7 +99,8 @@ public class RpcApiService implements Service {
           .addService(new DatabaseApi());
       Args args = Args.getInstance();
       if (args.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder.executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+        serverBuilder = serverBuilder
+            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
       }
       if (args.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(new WalletSolidityApi());
@@ -192,13 +192,6 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
-
-      responseObserver.onNext(walletSolidity.getAccountList());
       responseObserver.onCompleted();
     }
 
@@ -379,9 +372,9 @@ public class RpcApiService implements Service {
       try {
         BlockCapsule headBlock = null;
         List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
-        if(CollectionUtils.isEmpty(blockList)){
+        if (CollectionUtils.isEmpty(blockList)) {
           throw new HeaderNotFound("latest block not found");
-        }else{
+        } else {
           headBlock = blockList.get(0);
         }
         trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
@@ -567,18 +560,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
-      responseObserver.onNext(wallet.getAllAccounts());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
-      responseObserver.onNext(wallet.getWitnessList());
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
       List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
@@ -634,13 +615,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getAssetIssueList(EmptyMessage request,
-        StreamObserver<AssetIssueList> responseObserver) {
-      responseObserver.onNext(wallet.getAssetIssueList());
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void getAssetIssueByAccount(Account request,
         StreamObserver<AssetIssueList> responseObserver) {
       ByteString fromBs = request.getAddress();
@@ -663,13 +637,6 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void totalTransaction(EmptyMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      responseObserver.onNext(wallet.totalTransaction());
       responseObserver.onCompleted();
     }
 
@@ -722,6 +689,33 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void totalTransaction(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.totalTransaction());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNextMaintenanceTime(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.getNextMaintenanceTime());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueList(EmptyMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      responseObserver.onNext(wallet.getAssetIssueList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
     }
   }
