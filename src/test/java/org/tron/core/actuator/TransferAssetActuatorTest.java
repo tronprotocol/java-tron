@@ -71,7 +71,7 @@ public class TransferAssetActuatorTest {
   private static final String URL = "https://tron.network";
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
@@ -85,10 +85,7 @@ public class TransferAssetActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     dbManager = context.getBean(Manager.class);
-    //    dbManager = new Manager();
-    //    dbManager.init();
   }
 
   /**
@@ -124,8 +121,7 @@ public class TransferAssetActuatorTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
-    dbManager
-        .getAssetIssueStore()
+    dbManager.getAssetIssueStore()
         .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
   }
 
@@ -239,6 +235,34 @@ public class TransferAssetActuatorTest {
           toAccount.getInstance().getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * Unit test.
+   */
+  @Test
+  public void ownerNoAssetTest() {
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setInstance(owner.getInstance().toBuilder().clearAsset().build());
+    dbManager.getAccountStore().put(owner.createDbKey(), owner);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Owner no asset!", e.getMessage());
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertTrue(isNullOrZero(toAccount.getAssetMap().get(ASSET_NAME)));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
