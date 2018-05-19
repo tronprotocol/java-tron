@@ -7,7 +7,7 @@ import stest.tron.wallet.common.client.Configuration;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
+//import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.Hash;
@@ -213,7 +213,7 @@ public class Wallettest_p0_001 {
         //check account
         //Optional<AccountList> accountResult = walletClient.listAccounts();
 
-        GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
+/*        GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
         Optional<GrpcAPI.AccountList> accountResult = Optional.ofNullable(accountlist);
 
         if (accountResult.isPresent()) {
@@ -228,7 +228,7 @@ public class Wallettest_p0_001 {
                 logger.info(Long.toString(account.getTypeValue()));
                 Assert.assertTrue(account.getTypeValue() >= 0);
             });
-        }
+        }*/
 
         Optional<NodeList> nodeResult = walletClient.listNodes();
         if (nodeResult.isPresent()) {
@@ -254,7 +254,7 @@ public class Wallettest_p0_001 {
 
 
 
-    @Test(enabled = false)
+/*    @Test(enabled = false)
     public void checkAcc(){
 
         Optional<AccountList> result = walletClient.listAccounts();
@@ -275,7 +275,7 @@ public class Wallettest_p0_001 {
 
             });
         }
-    }
+    }*/
 
     @Test(enabled = true)
     public void checkNode() {

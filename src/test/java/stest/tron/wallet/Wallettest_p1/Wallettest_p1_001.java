@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
+//import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;

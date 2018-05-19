@@ -667,7 +667,7 @@ public class WalletClient {
         return true;
     }
 
-    public static Optional<AccountList> listAccounts() {
+/*    public static Optional<AccountList> listAccounts() {
         Optional<AccountList> result = rpcCli.listAccounts();
         if (result.isPresent()) {
             AccountList accountList = result.get();
@@ -680,7 +680,7 @@ public class WalletClient {
             result = Optional.of(builder.build());
         }
         return result;
-    }
+    }*/
 
     public static Optional<WitnessList> listWitnesses() {
         Optional<WitnessList> result = rpcCli.listWitnesses();

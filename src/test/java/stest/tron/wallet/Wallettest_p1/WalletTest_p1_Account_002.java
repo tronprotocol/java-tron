@@ -57,7 +57,7 @@ public class WalletTest_p1_Account_002 {
     }
 
 
-    @Test(enabled = false)
+/*    @Test(enabled = false)
     public void TestGetAllAccount(){
         GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
         Optional<GrpcAPI.AccountList> result = Optional.ofNullable(accountlist);
@@ -78,7 +78,7 @@ public class WalletTest_p1_Account_002 {
         }
 
 
-    }
+    }*/
 
     @AfterClass
     public void shutdown() throws InterruptedException {
