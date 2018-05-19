@@ -496,7 +496,7 @@ public class Manager {
   }
 
 
-  private void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
     for (Transaction.Contract contract : contracts) {
@@ -508,38 +508,54 @@ public class Manager {
       long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
-      if (now - latestOperationTime >= dynamicPropertiesStore.getOperatingTimeInterval()) {
+      long interval = dynamicPropertiesStore.getOperatingTimeInterval();
+      if (now - latestOperationTime >= interval) {
         accountCapsule.setLatestOperationTime(now);
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
+
+
       long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
-      long bandwidth;
       if (contract.getType() == TransferAssetContract) {
-        AccountCapsule issuerAccountCapsule;
+        ByteString assetName;
         try {
-          ByteString assetName
-              = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
+          assetName = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
+        } catch (Exception ex) {
+          throw new RuntimeException(ex.getMessage());
+        }
+
+        Long lastAssetOperationTime = accountCapsule.getLatestAssetOperationTimeMap()
+            .get(ByteArray.toStr(assetName.toByteArray()));
+
+        if (lastAssetOperationTime == null || (now - lastAssetOperationTime >= interval)) {
           AssetIssueCapsule assetIssueCapsule
               = this.getAssetIssueStore().get(assetName.toByteArray());
-          issuerAccountCapsule = this.getAccountStore()
+
+          AccountCapsule issuerAccountCapsule = this.getAccountStore()
               .get(assetIssueCapsule.getOwnerAddress().toByteArray());
-          bandwidth = issuerAccountCapsule.getBandwidth();
-        } catch (Exception ex) {
-          throw new ValidateBandwidthException(ex.getMessage());
+          long bandwidth = issuerAccountCapsule.getBandwidth();
+
+          if (bandwidth < bandwidthPerTransaction) {
+            throw new ValidateBandwidthException("bandwidth is not enough");
+          }
+          issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+          this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
+          accountCapsule.setLatestOperationTime(now);
+          accountCapsule
+              .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
+          this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+          return;
         }
-        if (bandwidth < bandwidthPerTransaction) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
-        }
-        issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-        this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
-      } else {
-        bandwidth = accountCapsule.getBandwidth();
-        if (bandwidth < bandwidthPerTransaction) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
-        }
-        accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
+        accountCapsule
+            .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
       }
+
+      long bandwidth = accountCapsule.getBandwidth();
+      if (bandwidth < bandwidthPerTransaction) {
+        throw new ValidateBandwidthException("bandwidth is not enough");
+      }
+      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
       accountCapsule.setLatestOperationTime(now);
       this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }
@@ -792,6 +808,7 @@ public class Manager {
 
     logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
 
