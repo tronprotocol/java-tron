@@ -39,11 +39,11 @@ public class PendingManager implements AutoCloseable {
           } catch (ValidateSignatureException e) {
             logger.error(e.getMessage(), e);
           } catch (ContractValidateException e) {
-            logger.error(e.getMessage(), e);
+            logger.warn(e.getMessage(), e);
           } catch (ContractExeException e) {
             logger.error(e.getMessage(), e);
           } catch (ValidateBandwidthException e) {
-            logger.error(e.getMessage(), e);
+            logger.warn(e.getMessage(), e);
           } catch (DupTransactionException e) {
             logger.error("pending manager: dup trans", e);
           } catch (TaposException e) {

@@ -54,6 +54,11 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(accountName)) {
       return false;
     }
+
+    if (accountName.length < 8){
+      return false;
+    }
+
     if (accountName.length > 32) {
       return false;
     }
