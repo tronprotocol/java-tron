@@ -137,7 +137,7 @@ public class AssetIssueActuator extends AbstractActuator {
       if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
         throw new ContractValidateException("end time should be greater than start time");
       }
-      if (assetIssueContract.getStartTime() < dbManager.getHeadBlockTimeStamp()){
+      if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()){
         throw new ContractValidateException("start time should be greater than HeadBlockTime");
       }
 

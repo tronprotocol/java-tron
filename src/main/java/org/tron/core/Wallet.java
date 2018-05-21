@@ -232,7 +232,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("validate signature error"))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error"))
           .build();
@@ -242,7 +242,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
     } catch (ValidateBandwidthException e) {
-      logger.error("high freq", e);
+      logger.warn("high freq", e);
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("high freq error"))
           .build();
