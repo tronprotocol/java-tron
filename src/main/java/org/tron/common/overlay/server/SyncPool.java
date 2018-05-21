@@ -52,8 +52,8 @@ public class SyncPool {
   private static final double fator = 0.4;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
-  private final AtomicInteger passivePeersCount = new AtomicInteger();
-  private final AtomicInteger activePeersCount = new AtomicInteger();
+  private final AtomicInteger passivePeersCount = new AtomicInteger(0);
+  private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
           .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
@@ -134,8 +134,8 @@ public class SyncPool {
       }
      });
 
-    logger.info("-------- active channel {}", passivePeersCount.get());
-    logger.info("-------- passive channel {}", passivePeersCount.get());
+    logger.info("-------- active connect channel {}", activePeersCount.get());
+    logger.info("-------- passive connect channel {}", passivePeersCount.get());
     logger.info("-------- all connect channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
@@ -165,7 +165,7 @@ public class SyncPool {
     return new ArrayList<>(activePeers);
   }
 
-  public void onConnect(Channel peer) {
+  public synchronized void onConnect(Channel peer) {
     if (!activePeers.contains(peer)) {
       if (!peer.isActive()) {
         passivePeersCount.incrementAndGet();
@@ -178,13 +178,13 @@ public class SyncPool {
     }
   }
 
-  public void onDisconnect(Channel peer) {
-    if (!peer.isActive()) {
-      passivePeersCount.decrementAndGet();
-    } else {
-      activePeersCount.decrementAndGet();
-    }
+  public synchronized void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
+      if (!peer.isActive()) {
+        passivePeersCount.decrementAndGet();
+      } else {
+        activePeersCount.decrementAndGet();
+      }
       activePeers.remove(peer);
       peerDel.onDisconnectPeer((PeerConnection)peer);
     }
