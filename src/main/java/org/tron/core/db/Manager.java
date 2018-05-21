@@ -633,6 +633,7 @@ public class Manager {
     logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
+    unCacheTransactionOfBlock(oldHeadBlock);
   }
 
   private void applyBlock(BlockCapsule block)
@@ -1384,6 +1385,12 @@ public class Manager {
         }
       }
       num--;
+    }
+  }
+
+  private void unCacheTransactionOfBlock(BlockCapsule blockCapsule) {
+    for (TransactionCapsule transactionCapsule : blockCapsule.getTransactions()) {
+      transHashCache.invalidate(transactionCapsule.getTransactionId());
     }
   }
 }
