@@ -842,14 +842,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setSyncFlag(false);
     while (!peer.getSyncBlockToFetch().isEmpty()) {
       BlockId blockId = peer.getSyncBlockToFetch().pop();
-      blockWaitToProc.remove(blockId);
-      for (Iterator<BlockMessage> iterator = blockJustReceived.iterator(); iterator.hasNext(); ) {
-        if (iterator.next().getBlockId().equals(blockId)) {
-          iterator.remove();
-        }
-      }
+      removeTheBlockMessage(blockWaitToProc, blockId);
+      removeTheBlockMessage(blockJustReceived, blockId);
     }
     disconnectPeer(peer, reasonCode);
+  }
+
+  private void removeTheBlockMessage(Set<BlockMessage> blockMessages, BlockId targetBlockId) {
+    for (Iterator<BlockMessage> iterator = blockMessages.iterator(); iterator.hasNext(); ) {
+      if (iterator.next().getBlockId().equals(targetBlockId)) {
+        iterator.remove();
+      }
+    }
   }
 
   synchronized boolean isTrxExist(TransactionMessage trxMsg){
