@@ -225,9 +225,10 @@ public class WitnessService implements Service {
         logger.warn("exception when generate block");
         return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
       }
-      if (DateTime.now().getMillis() - now > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
+      if (DateTime.now().getMillis() - now
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL,
+            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT,
             new DateTime(now), DateTime.now());
         return BlockProductionCondition.TIME_OUT;
       }
