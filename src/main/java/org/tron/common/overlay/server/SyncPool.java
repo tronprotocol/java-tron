@@ -133,6 +133,7 @@ public class SyncPool {
       }
      });
 
+    logger.info("-------- passive active channel {}", passiveActivePeers.size());
     logger.info("-------- active channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
