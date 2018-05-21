@@ -1,7 +1,6 @@
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
-import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_Transfer_005 {
+public class WalletTest_p1_Transfer_004 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -51,6 +50,7 @@ public class WalletTest_p1_Transfer_005 {
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
+    private static final long now = System.currentTimeMillis();
 
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
@@ -69,30 +69,64 @@ public class WalletTest_p1_Transfer_005 {
     }
 
     @Test(enabled = true)
-    public void TestgetTransactionsFromThis(){
-        //查询soliditynode上 该地址的转账记录
-        ByteString addressBS = ByteString.copyFrom(ONLINE_ADDRESS);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
-        Optional<GrpcAPI.TransactionList>  gettransactionsfromthis= Optional.ofNullable(transactionList);
+    public void TestGetTransactionsByTimestamp(){
+        long start = now - 7200000;
+        long end   = now;
+        GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
 
-        //如果查询该账户还没有交易，则转账一笔交易
-        if (gettransactionsfromthis.get().getTransactionCount() == 0){
-            logger.info("This account didn't transfation any coin to other");
-
+        if (gettransactionbytimestamp.get().getTransactionCount() == 0){
+            logger.info("Last one day there is no transfaction,please test for manual!!!");
         }
 
-        Assert.assertTrue(gettransactionsfromthis.isPresent());
-        Integer beforecount = gettransactionsfromthis.get().getTransactionCount();
-        logger.info(Integer.toString(beforecount));
-        for (Integer j =0; j<beforecount; j++){
-            //logger.info("print every transation");
-            Assert.assertFalse(gettransactionsfromthis.get().getTransaction(j).getRawData().getContractList().isEmpty());
+        Assert.assertTrue(gettransactionbytimestamp.isPresent());
+        logger.info(Integer.toString(gettransactionbytimestamp.get().getTransactionCount()));
+        for(Integer j =0; j< gettransactionbytimestamp.get().getTransactionCount(); j++){
+            Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(j).hasRawData());
+            Assert.assertFalse(gettransactionbytimestamp.get().getTransaction(j).getRawData().getContractList().isEmpty());
         }
 
+    }
 
 
+    @Test(enabled = true)
+    public void TestExceptionTimeToGetGetTransactionsByTimestamp(){
+        //开始时间戳为负数,无异常
+        long start = -10000;
+        long end   = -1;
+        GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
+        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
+        Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
 
+
+        //开始时间戳为未来时间,无异常
+        start = now + 1000000;
+        end   = start + 1000000;
+        timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        gettransactionbytimestamp = Optional.ofNullable(transactionList);
+        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
+        Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+        //开始时间戳晚于结束时间戳
+        start = now;
+        end   = now - 10000000;
+        timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        gettransactionbytimestamp = Optional.ofNullable(transactionList);
+        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
+        Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
 
     }
 

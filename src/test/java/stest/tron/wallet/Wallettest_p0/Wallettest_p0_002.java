@@ -94,6 +94,7 @@ public class Wallettest_p0_002 {
         }
         else{
             logger.info("This account already create an assetisue");
+            logger.info(Integer.toString(queryAssetByAccount.get().getAssetIssueCount()));
             Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
             name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
 
@@ -145,6 +146,9 @@ public class Wallettest_p0_002 {
     @Test(enabled = true)
     public void TestGetAssetIssueByAccount() {
         Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueByAccount(FROM_ADDRESS);
+
+        logger.info("client  " + Integer.toString(result.get().getAssetIssueCount()));
+        //logger.info(Integer.toString(result.get().getAssetIssue(0).getNum()));
         Assert.assertTrue(result.get().getAssetIssueCount() == 1);
 
         //GrpcAPI.AssetIssueList assetissuelist = result.get();

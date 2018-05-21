@@ -52,10 +52,10 @@ public class WalletTest_p1_Account_004 {
     private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-    private String fullnode = "39.105.111.178:50051";
-    private String search_fullnode = "39.105.104.137:50051";
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
+    //private String fullnode = "39.105.111.178:50051";
+    //private String search_fullnode = "39.105.104.137:50051";
 
     @BeforeClass
     public void beforeClass(){
@@ -83,6 +83,10 @@ public class WalletTest_p1_Account_004 {
         Assert.assertFalse(FreezeBalance(FROM_ADDRESS,1000000L,2L,testKey002));
         //如果冻结时间未到，则解锁失败
         Assert.assertFalse(UnFreezeBalance(FROM_ADDRESS, testKey002));
+        //冻结金额为0，冻结失败
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,0L, 3L,testKey002));
+        //冻结金额为-1，冻结失败
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,-1L, 3L,testKey002));
         try {
             Thread.sleep(16000);
         } catch (InterruptedException e) {

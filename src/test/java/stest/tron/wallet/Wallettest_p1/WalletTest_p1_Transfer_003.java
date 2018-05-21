@@ -1,7 +1,6 @@
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
-import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +16,8 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -30,7 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_Transfer_005 {
+public class WalletTest_p1_Transfer_003 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -51,6 +52,7 @@ public class WalletTest_p1_Transfer_005 {
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
+    private static final long now = System.currentTimeMillis();
 
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
@@ -69,27 +71,45 @@ public class WalletTest_p1_Transfer_005 {
     }
 
     @Test(enabled = true)
-    public void TestgetTransactionsFromThis(){
-        //查询soliditynode上 该地址的转账记录
-        ByteString addressBS = ByteString.copyFrom(ONLINE_ADDRESS);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
-        Optional<GrpcAPI.TransactionList>  gettransactionsfromthis= Optional.ofNullable(transactionList);
+    public void TestGetTransactionById(){
+        long start = now - 16400000;
+        long end   = now;
+        GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
 
-        //如果查询该账户还没有交易，则转账一笔交易
-        if (gettransactionsfromthis.get().getTransactionCount() == 0){
-            logger.info("This account didn't transfation any coin to other");
-
+        if (gettransactionbytimestamp.get().getTransactionCount() == 0){
+            logger.info("Last one day there is no transfaction,please test for manual!!!");
+            Assert.assertTrue(gettransactionbytimestamp.isPresent());
         }
 
-        Assert.assertTrue(gettransactionsfromthis.isPresent());
-        Integer beforecount = gettransactionsfromthis.get().getTransactionCount();
-        logger.info(Integer.toString(beforecount));
-        for (Integer j =0; j<beforecount; j++){
-            //logger.info("print every transation");
-            Assert.assertFalse(gettransactionsfromthis.get().getTransaction(j).getRawData().getContractList().isEmpty());
-        }
+        else{
 
+
+            logger.info(Integer.toString(gettransactionbytimestamp.get().getTransactionCount()));
+            Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(0).hasRawData());
+            logger.info(ByteArray.toHexString(Hash.sha256(gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray())));
+
+            //使用存在的ID查找一笔交易，查找成功
+            ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(
+                    ByteArray.toHexString(Hash.sha256(gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray()))
+            ));
+            GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(bsTxid).build();
+            Transaction transaction = blockingStubSolidity.getTransactionById(request);
+            Optional<Transaction> getTransactionById = Optional.ofNullable(transaction);
+            Assert.assertTrue(getTransactionById.get().hasRawData());
+
+            //使用错误ID查看交易，查询失败，设备无异常
+            bsTxid = ByteString.copyFrom(FROM_ADDRESS);
+            request = GrpcAPI.BytesMessage.newBuilder().setValue(bsTxid).build();
+            transaction = blockingStubSolidity.getTransactionById(request);
+            getTransactionById = Optional.ofNullable(transaction);
+            Assert.assertFalse(getTransactionById.get().hasRawData());
+
+
+        }
 
 
 

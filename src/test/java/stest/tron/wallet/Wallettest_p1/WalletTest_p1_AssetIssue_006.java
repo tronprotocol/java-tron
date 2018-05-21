@@ -1,7 +1,6 @@
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
-import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_Transfer_005 {
+public class WalletTest_p1_AssetIssue_006 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -51,6 +50,7 @@ public class WalletTest_p1_Transfer_005 {
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
+    private static final long now = System.currentTimeMillis();
 
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
@@ -69,32 +69,38 @@ public class WalletTest_p1_Transfer_005 {
     }
 
     @Test(enabled = true)
-    public void TestgetTransactionsFromThis(){
-        //查询soliditynode上 该地址的转账记录
-        ByteString addressBS = ByteString.copyFrom(ONLINE_ADDRESS);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
-        Optional<GrpcAPI.TransactionList>  gettransactionsfromthis= Optional.ofNullable(transactionList);
+    public void TestGetAssetIssueListByTimestamp(){
+        long time  = now;
+        NumberMessage.Builder timeStamp = NumberMessage.newBuilder();
+        timeStamp.setNum(time);
+        GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByTimestamp(timeStamp.build());
+        Optional<GrpcAPI.AssetIssueList> getAssetIssueListByTimestamp = Optional.ofNullable(assetIssueList);
 
-        //如果查询该账户还没有交易，则转账一笔交易
-        if (gettransactionsfromthis.get().getTransactionCount() == 0){
-            logger.info("This account didn't transfation any coin to other");
-
+        Assert.assertTrue(getAssetIssueListByTimestamp.isPresent());
+        Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssueCount() > 0);
+        logger.info(Integer.toString(getAssetIssueListByTimestamp.get().getAssetIssueCount()));
+        for (Integer j = 0; j <getAssetIssueListByTimestamp.get().getAssetIssueCount(); j++){
+            Assert.assertFalse(getAssetIssueListByTimestamp.get().getAssetIssue(j).getName().isEmpty());
+            Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssue(j).getTotalSupply() > 0);
+            Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssue(j).getNum() > 0);
         }
 
-        Assert.assertTrue(gettransactionsfromthis.isPresent());
-        Integer beforecount = gettransactionsfromthis.get().getTransactionCount();
-        logger.info(Integer.toString(beforecount));
-        for (Integer j =0; j<beforecount; j++){
-            //logger.info("print every transation");
-            Assert.assertFalse(gettransactionsfromthis.get().getTransaction(j).getRawData().getContractList().isEmpty());
-        }
+    }
 
-
+    @Test(enabled = true)
+    public void TestExceptionGetAssetIssueListByTimestamp(){
+        //时间戳为负数
+        long time  = -1000000000;
+        NumberMessage.Builder timeStamp = NumberMessage.newBuilder();
+        timeStamp.setNum(time);
+        GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByTimestamp(timeStamp.build());
+        Optional<GrpcAPI.AssetIssueList> getAssetIssueListByTimestamp = Optional.ofNullable(assetIssueList);
+        Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssueCount()==0);
 
 
 
     }
+
 
     @AfterClass
     public void shutdown() throws InterruptedException {

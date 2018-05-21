@@ -78,6 +78,8 @@ public class WalletTest_p1_AssetIssue_001 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+
             //新建一笔通证,开始时间小于当前时间，创建失败
             Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,
                     1, Description, Url, no_bandwitch));
@@ -86,9 +88,11 @@ public class WalletTest_p1_AssetIssue_001 {
             Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,9000000000000000000L, 1,1,now,now+10000000000L,
                     1, Description, Url, no_bandwitch));
 
+            Long start = System.currentTimeMillis() + 2000;
+            Long end   = System.currentTimeMillis() + 1000000000;
 
             //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now+900000,now+10000000000L,
+            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,start,end,
                     1, Description, Url, no_bandwitch));
         }
         else{
@@ -122,6 +126,24 @@ public class WalletTest_p1_AssetIssue_001 {
         }
         logger.info("Out 10 seconds to transfer asset");
         Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+
+        //转移通证给自己，转移失败
+        Assert.assertFalse(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, TO_ADDRESS, testKey003));
+        //转移通证的额度大于持有量，转移失败
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), 9100000000000000000L, TO_ADDRESS, testKey003));
+        //转移通证的额度为0，转移失败
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), 0L, TO_ADDRESS, testKey003));
+        //转移通证的额度为-1，转移失败
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), -1L, TO_ADDRESS, testKey003));
+        //转移通证给非法地址，转移失败
+        Assert.assertFalse(TransferAsset(INVAILD_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+        //转移的通证名字不正确，转移失败
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, (name+"wrong").getBytes(), 1L, TO_ADDRESS, testKey003));
+
+        Assert.assertTrue(TransferAsset(FROM_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+
+
+
 
     }
 

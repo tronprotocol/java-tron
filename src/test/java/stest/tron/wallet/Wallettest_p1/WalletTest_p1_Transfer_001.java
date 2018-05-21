@@ -49,10 +49,14 @@ public class WalletTest_p1_Transfer_001 {
     private static final byte[] NO_BANDWITCH_ADDRESS = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
 
     private ManagedChannel channelFull = null;
+    private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
     //private String fullnode = "39.105.111.178:50051";
-    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    //private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
 
     @BeforeClass
@@ -61,6 +65,11 @@ public class WalletTest_p1_Transfer_001 {
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+        search_channelFull = ManagedChannelBuilder.forTarget(search_fullnode)
+                .usePlaintext(true)
+                .build();
+        search_blockingStubFull = WalletGrpc.newBlockingStub(search_channelFull);
     }
 
 /*    //该用例测试如果向一个不存在的地址转账，且转账金额小于1TRX，则转账失败。但是测试账户不存在会pass,第一遍之后账户存在，转账成功。所以暂时自动化结果不正确。
@@ -90,6 +99,23 @@ public class WalletTest_p1_Transfer_001 {
         }
         Assert.assertTrue(Sendcoin(TO_ADDRESS, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
         logger.info("Out 10 seconds");
+
+        //冻结金额，获得带宽
+        Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L, testKey002));
+
+        //转账金额过大，冻结失败
+        Assert.assertFalse(Sendcoin(TO_ADDRESS, 9199999999999999999L, FROM_ADDRESS,testKey002));
+        //转账金额为0，冻结失败
+        Assert.assertFalse(Sendcoin(TO_ADDRESS, 0L, FROM_ADDRESS,testKey002));
+        //转账金额为-1，冻结失败
+        Assert.assertFalse(Sendcoin(TO_ADDRESS, -1000000L, FROM_ADDRESS,testKey002));
+
+
+
+
+
+
+
     }
 
     @AfterClass
@@ -97,6 +123,84 @@ public class WalletTest_p1_Transfer_001 {
         if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
+        if (search_channelFull != null) {
+            search_channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
+    public Boolean FreezeBalance(byte[] Address, long freezeBalance, long freezeDuration, String priKey){
+        byte[] address = Address;
+        long frozen_balance = freezeBalance;
+        long frozen_duration = freezeDuration;
+
+        //String priKey = testKey002;
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+        Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
+        Long beforeFrozenBalance = 0L;
+        Long beforeBandwidth     = beforeFronzen.getBandwidth();
+        if(beforeFronzen.getFrozenCount()!= 0){
+            beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
+            //beforeBandwidth     = beforeFronzen.getBandwidth();
+            logger.info(Long.toString(beforeFronzen.getBandwidth()));
+            logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
+        }
+
+        Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+        ByteString byteAddreess = ByteString.copyFrom(address);
+
+        builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
+                .setFrozenDuration(frozen_duration);
+
+
+        Contract.FreezeBalanceContract contract = builder.build();
+        Transaction transaction = blockingStubFull.freezeBalance(contract);
+
+        if (transaction == null || transaction.getRawData().getContractCount() == 0){
+            return false;
+        }
+
+        transaction = TransactionUtils.setTimestamp(transaction);
+        transaction = TransactionUtils.sign(transaction, ecKey);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+        if (response.getResult() == false){
+            return false;
+        }
+
+        Long afterBlockNum = 0L;
+
+        while(afterBlockNum < beforeBlockNum) {
+            Block currentBlock1 = search_blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+            afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
+            try {
+                Thread.sleep(2000);
+                logger.info("wait 2 second");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Account afterFronzen = queryAccount(ecKey, search_blockingStubFull);
+        Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
+        Long afterBandwidth     = afterFronzen.getBandwidth();
+        logger.info(Long.toString(afterFronzen.getBandwidth()));
+        logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
+        //logger.info(Integer.toString(search.getFrozenCount()));
+        logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen" + afterFrozenBalance.toString());
+        Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
+        Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
+        return true;
+
+
     }
 
     public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){

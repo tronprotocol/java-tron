@@ -14,6 +14,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
@@ -43,9 +44,11 @@ public class WalletTest_p1_Transfer_002 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private ManagedChannel channelFull = null;
+    private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
+    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
     @BeforeClass
     public void beforeClass(){
@@ -53,10 +56,16 @@ public class WalletTest_p1_Transfer_002 {
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+                .usePlaintext(true)
+                .build();
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
 
     @Test(enabled = true)
     public void TestGetTotalTransaction(){
+        //fullnode查询交易总数
         GrpcAPI.NumberMessage beforeGetTotalTransaction = blockingStubFull.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
         logger.info(Long.toString(beforeGetTotalTransaction.getNum()));
         Long beforeTotalTransaction = beforeGetTotalTransaction.getNum();
@@ -65,12 +74,25 @@ public class WalletTest_p1_Transfer_002 {
         logger.info(Long.toString(afterGetTotalTransaction.getNum()));
         Long afterTotalTransaction = afterGetTotalTransaction.getNum();
         Assert.assertTrue(afterTotalTransaction - beforeTotalTransaction == 1);
+
+
+        //soliditynode查询交易总数
+        GrpcAPI.NumberMessage solidityGetTotalTransaction = blockingStubSolidity.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
+
+        logger.info(Long.toString(solidityGetTotalTransaction.getNum()));
+        if (solidityGetTotalTransaction.getNum() == 0){
+            logger.info("On soliditynode, there is no transactions,please test by manual");
+        }
+        Assert.assertTrue(solidityGetTotalTransaction.getNum() > 0);
     }
 
     @AfterClass
     public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+        if(channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
+        if(channelSolidity != null) {
+            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 

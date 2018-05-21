@@ -73,8 +73,11 @@ public class WalletTest_p1_AssetIssue_003 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            Long start = System.currentTimeMillis() + 2000;
+            Long end   = System.currentTimeMillis() + 1000000000;
             //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,now + 900000,now+10000000000L,
+            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,start,end,
                     2, Description, Url, testKey002));
         }
         else{

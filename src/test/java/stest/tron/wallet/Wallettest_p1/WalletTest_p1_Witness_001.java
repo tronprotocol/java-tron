@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -78,8 +79,16 @@ public class WalletTest_p1_Witness_001 {
     public void TestVoteWitness(){
         HashMap<String,String> small_vote_map=new HashMap<String,String>();
         small_vote_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "1");
+        HashMap<String,String> wrong_vote_map=new HashMap<String,String>();
+        wrong_vote_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "-1");
+        HashMap<String,String> zero_vote_map=new HashMap<String,String>();
+        zero_vote_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "0");
+
         HashMap<String,String>  very_large_map = new HashMap<String,String>();
         very_large_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv","1000000000");
+        HashMap<String,String>  wrong_drop_map = new HashMap<String,String>();
+        wrong_drop_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv","10000000000000000");
+
 
         //如果没有冻结资产，则投票失败
         Assert.assertFalse(VoteWitness(small_vote_map, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
@@ -89,6 +98,12 @@ public class WalletTest_p1_Witness_001 {
 
         //如果有冻结资产，且投票数大于冻结资产，则投票失败
         Assert.assertFalse(VoteWitness(very_large_map, FROM_ADDRESS, testKey002));
+        //如果投票数为0，则投票失败
+        Assert.assertFalse(VoteWitness(zero_vote_map,FROM_ADDRESS,testKey002));
+        //如果投票数为负数，则投票失败
+        Assert.assertFalse(VoteWitness(wrong_vote_map,FROM_ADDRESS,testKey002));
+        //如果投票数过大，服务器会误认为错误单位drop,投票失败
+        Assert.assertFalse(VoteWitness(wrong_drop_map,FROM_ADDRESS,testKey002));
 
         //如果有冻结资产，且投票数小于冻结资产，则投票成功，此时投票情况覆盖该账户之前的投票情况
         Assert.assertTrue(VoteWitness(small_vote_map, FROM_ADDRESS, testKey002));
@@ -144,6 +159,7 @@ public class WalletTest_p1_Witness_001 {
 
         Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info(Integer.toString(transaction.getRawData().getAuthsCount()));
             logger.info("transaction == null");
             return false;
         }
@@ -158,11 +174,13 @@ public class WalletTest_p1_Witness_001 {
         //Long afterVoteNum = afterVote.getVotes(0).getVoteCount();
         for (String key : witness.keySet()) {
             for (int j = 0; j < afterVote.getVotesCount(); j++) {
-                if (key.equals(afterVote.getVotes(j).getVoteAddress())) {
-                    Long afterVoteNum = Long.parseLong(witness.get(key));
-                    Assert.assertTrue(afterVoteNum == afterVote.getVotes(j).getVoteCount());
-                    logger.info("test equal vote");
+                logger.info(Long.toString(Long.parseLong(witness.get(key))));
+                logger.info(key);
+                if (key.equals("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv")){
+                    logger.info("catch it");
+                    Assert.assertTrue(afterVote.getVotes(j).getVoteCount() == Long.parseLong(witness.get(key)));
                 }
+
             }
         }
          return true;
