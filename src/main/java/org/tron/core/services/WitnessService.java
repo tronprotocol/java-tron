@@ -228,7 +228,7 @@ public class WitnessService implements Service {
       if (DateTime.now().getMillis() - now
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL* ChainConstant.BLOCK_PRODUCED_TIME_OUT,
+            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT,
             new DateTime(now), DateTime.now());
         return BlockProductionCondition.TIME_OUT;
       }
