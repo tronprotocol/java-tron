@@ -81,7 +81,6 @@ public class WitnessCreateActuator extends AbstractActuator {
               .getAccountUpgradeCost(),
           "balance < AccountUpgradeCost");
     } catch (final Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
     return true;

@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -428,20 +429,22 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        logger.error(
-            "Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
+        String str = new Formatter().format(
+            "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(), getHeadBlockId().getString());
-        throw new TaposException("tapos failed");
+            getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+        throw new TaposException(str);
       }
     } catch (ItemNotFoundException e) {
-      logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
+      String str = new Formatter()
+          .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
           ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-          getSolidBlockId().getString(), getHeadBlockId().getString());
-      throw new TaposException("tapos failed");
+              getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+      throw new TaposException(str);
     }
   }
+
 
   void validateCommon(TransactionCapsule transactionCapsule)
       throws TransactionExpirationException, TooBigTransactionException {
@@ -650,7 +653,7 @@ public class Manager {
               applyBlock(item);
               tmpDialog.commit();
             } catch (ValidateBandwidthException e) {
-              logger.error("high freq", e);
+              logger.debug("high freq", e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -777,7 +780,6 @@ public class Manager {
         } catch (RevokingStoreIllegalStateException e) {
           logger.error(e.getMessage(), e);
         } catch (Throwable throwable) {
-        logger.error(throwable.getMessage(), throwable);
         khaosDb.removeBlk(block.getBlockId());
         throw throwable;
       }

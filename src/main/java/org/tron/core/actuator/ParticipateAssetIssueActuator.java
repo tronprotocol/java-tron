@@ -80,11 +80,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
-      logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
-      logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
 

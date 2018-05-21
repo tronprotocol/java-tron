@@ -71,7 +71,6 @@ public class WitnessUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("Witness does not exist");
       }
     } catch (final Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

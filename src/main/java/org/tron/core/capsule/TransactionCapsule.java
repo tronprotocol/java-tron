@@ -35,7 +35,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -188,32 +187,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
-  /**
-   * cheack balance of the address.
-   */
-  public boolean checkBalance(byte[] address, byte[] to, long amount, long balance) {
-    if (!Wallet.addressValid(address)) {
-      logger.error("address invalid");
-      return false;
-    }
-
-    if (!Wallet.addressValid(to)) {
-      logger.error("address invalid");
-      return false;
-    }
-
-    if (amount <= 0) {
-      logger.error("amount required a positive number");
-      return false;
-    }
-
-    if (amount > balance) {
-      logger.error("don't have enough money");
-      return false;
-    }
-
-    return true;
-  }
 
   @Deprecated
   public void sign(byte[] privateKey) {
