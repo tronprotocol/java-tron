@@ -134,8 +134,9 @@ public class SyncPool {
       }
      });
 
-    logger.info("-------- passive active channel {}", passivePeersCount.get());
-    logger.info("-------- active channel {}", channelManager.getActivePeers().size());
+    logger.info("-------- active channel {}", passivePeersCount.get());
+    logger.info("-------- passive channel {}", passivePeersCount.get());
+    logger.info("-------- all connect channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
     }
