@@ -6,6 +6,8 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -133,7 +136,17 @@ public class Manager {
   @Setter
   private WitnessController witnessController;
 
+
   private ExecutorService validateSignService;
+
+  //  private C
+  private Cache<Sha256Hash, Boolean> transHashCache = CacheBuilder
+      .newBuilder().expireAfterWrite(1, TimeUnit.DAYS).recordStats().build();
+
+//
+//  private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
+//      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000)
+//      .recordStats().build();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -287,6 +300,8 @@ public class Manager {
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+
+    loadTransHashCache();
   }
 
   public BlockId getGenesisBlockId() {
@@ -460,11 +475,17 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+    Sha256Hash hash = transactionCapsule.getTransactionId();
+    if (transHashCache.getIfPresent(hash) != null) {
       logger.debug(
           getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
     }
+//    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+//      logger.debug(
+//          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
+//      throw new DupTransactionException("dup trans");
+//    }
   }
 
   /**
@@ -1097,9 +1118,16 @@ public class Manager {
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+    this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
+  }
+
+  private void updateTransHashCache(BlockCapsule block) {
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      this.transHashCache.put(transactionCapsule.getHash(), true);
+    }
   }
 
   public void updateRecentBlock(BlockCapsule block) {
@@ -1331,6 +1359,31 @@ public class Manager {
       } catch (ExecutionException e) {
         throw new ValidateSignatureException(e.getCause().getMessage());
       }
+    }
+  }
+
+  private void loadTransHashCache() {
+    long num = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long currTime = getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    long earliestTime = currTime - getDynamicPropertiesStore().getMaintenanceTimeInterval();
+    while (num > 0) {
+      BlockCapsule block = null;
+      try {
+        block = this.getBlockByNum(num);
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      }
+      if (block.getTimeStamp() < earliestTime) {
+        break;
+      }
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        if (transactionCapsule.getExpiration() < earliestTime) {
+          transHashCache.put(transactionCapsule.getTransactionId(), true);
+        }
+      }
+      num--;
     }
   }
 }
