@@ -212,9 +212,12 @@ public class UpdateAccountActuatorTest {
   }
 
   @Test
+  /*
+   * Account name need 8 - 32 bytes.
+   */
   public void invalidName() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    //Just OK
+    //Just OK 32 bytes is OK
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
           getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS), dbManager);
@@ -224,6 +227,25 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals("testname0123456789abcdefghijgklm",
+          accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    }
+    //8 bytes is OK
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountName(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      UpdateAccountActuator actuator = new UpdateAccountActuator(
+          getContract("testname", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals("testname",
           accountCapsule.getAccountName().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
@@ -240,7 +262,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
     }
-    //Too long name
+    //Too long name 33 bytes
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
           getContract("testname0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager);
@@ -251,6 +273,18 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
     }
+    //Too short name 7 bytes
+    try {
+      UpdateAccountActuator actuator = new UpdateAccountActuator(
+          getContract("testnam", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalidate accountName", e.getMessage());
+    }
+
     //Can't contain space
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
