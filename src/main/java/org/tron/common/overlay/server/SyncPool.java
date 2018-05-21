@@ -19,7 +19,6 @@ package org.tron.common.overlay.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.netty.util.internal.ConcurrentSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,8 @@ public class SyncPool {
   private static final double fator = 0.4;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
-  private final Set<PeerConnection> passiveActivePeers = new ConcurrentSet<>();
+  private final AtomicInteger passivePeersCount = new AtomicInteger();
+  private final AtomicInteger activePeersCount = new AtomicInteger();
 
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
           .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
@@ -103,7 +104,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * fator) - channelManager.getActivePeers().size();
+    int lackSize = (int) (maxActiveNodes * fator) - activePeersCount.get();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();
@@ -133,7 +134,7 @@ public class SyncPool {
       }
      });
 
-    logger.info("-------- passive active channel {}", passiveActivePeers.size());
+    logger.info("-------- passive active channel {}", passivePeersCount.get());
     logger.info("-------- active channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
@@ -165,25 +166,31 @@ public class SyncPool {
 
   public void onConnect(Channel peer) {
     if (!activePeers.contains(peer)) {
+      if (!peer.isActive()) {
+        passivePeersCount.incrementAndGet();
+      } else {
+        activePeersCount.incrementAndGet();
+      }
       activePeers.add((PeerConnection) peer);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
       peerDel.onConnectPeer((PeerConnection) peer);
     }
-    if (!peer.isActive()) {
-      passiveActivePeers.add((PeerConnection) peer);
-    }
   }
 
   public void onDisconnect(Channel peer) {
+    if (!peer.isActive()) {
+      passivePeersCount.decrementAndGet();
+    } else {
+      activePeersCount.decrementAndGet();
+    }
     if (activePeers.contains(peer)) {
       activePeers.remove(peer);
-      passiveActivePeers.remove(peer);
       peerDel.onDisconnectPeer((PeerConnection)peer);
     }
   }
 
   public boolean isCanConnect() {
-    if (passiveActivePeers.size() >= maxActiveNodes * (1 - fator)) {
+    if (passivePeersCount.get() >= maxActiveNodes * (1 - fator)) {
       return false;
     }
     return true;
