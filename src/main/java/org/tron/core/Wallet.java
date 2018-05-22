@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -233,7 +232,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("validate signature error"))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error"))
           .build();
@@ -243,7 +242,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
     } catch (ValidateBandwidthException e) {
-      logger.error("high freq", e);
+      logger.warn("high freq", e);
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("high freq error"))
           .build();
@@ -293,14 +292,6 @@ public class Wallet {
     }
   }
 
-  public AccountList getAllAccounts() {
-    AccountList.Builder builder = AccountList.newBuilder();
-    List<AccountCapsule> accountCapsuleList =
-        dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
-    return builder.build();
-  }
-
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
@@ -348,6 +339,12 @@ public class Wallet {
   public NumberMessage totalTransaction() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
         .setNum(dbManager.getTransactionStore().getTotalTransactions());
+    return builder.build();
+  }
+
+  public NumberMessage getNextMaintenanceTime() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
+        .setNum(dbManager.getDynamicPropertiesStore().getNextMaintenanceTime());
     return builder.build();
   }
 
