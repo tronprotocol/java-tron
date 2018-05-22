@@ -222,6 +222,11 @@ public class Wallet {
         logger.debug("Manager is generating block, discard the new coming transaction");
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       } else {
+        if (dbManager.getTransHashCache().getIfPresent(trx.getTransactionId()) != null) {
+          throw new DupTransactionException("has processed");
+        } else {
+          dbManager.getTransHashCache().put(trx.getTransactionId(), true);
+        }
         dbManager.pushTransactions(trx);
         p2pNode.broadcast(message);
         return builder.setResult(true).setCode(response_code.SUCCESS).build();

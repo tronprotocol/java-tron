@@ -139,14 +139,9 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
-  //  private C
+  @Getter
   private Cache<Sha256Hash, Boolean> transHashCache = CacheBuilder
       .newBuilder().expireAfterWrite(1, TimeUnit.DAYS).recordStats().build();
-
-//
-//  private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-//      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000)
-//      .recordStats().build();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -475,17 +470,11 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    Sha256Hash hash = transactionCapsule.getTransactionId();
-    if (transHashCache.getIfPresent(hash) != null) {
+    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
       logger.debug(
           getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
       throw new DupTransactionException("dup trans");
     }
-//    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
-//      logger.debug(
-//          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
-//      throw new DupTransactionException("dup trans");
-//    }
   }
 
   /**
@@ -932,13 +921,13 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
+    validateTapos(trxCap);
+    validateCommon(trxCap);
 
     validateDup(trxCap);
     if (!trxCap.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    validateTapos(trxCap);
-    validateCommon(trxCap);
 
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -1365,8 +1354,7 @@ public class Manager {
 
   private void loadTransHashCache() {
     long num = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    long currTime = getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    long earliestTime = currTime - getDynamicPropertiesStore().getMaintenanceTimeInterval();
+    long earliestTime = this.getHeadBlockTimeStamp() - Constant.MAXIMUM_TIME_UNTIL_EXPIRATION;
     while (num > 0) {
       BlockCapsule block = null;
       try {
@@ -1380,9 +1368,7 @@ public class Manager {
         break;
       }
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-        if (transactionCapsule.getExpiration() < earliestTime) {
           transHashCache.put(transactionCapsule.getTransactionId(), true);
-        }
       }
       num--;
     }
