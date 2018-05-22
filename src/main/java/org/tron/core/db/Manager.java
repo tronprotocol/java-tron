@@ -75,6 +75,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
 @Component
@@ -499,14 +500,14 @@ public class Manager {
 
 
   public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
+    List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
 
     long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
     long freeOperatingLimit = getDynamicPropertiesStore().getFreeOperatingLimit();
-    long interval = getDynamicPropertiesStore().getOperatingTimeInterval();
+    long interval = getDynamicPropertiesStore().getFreeOperatingTimeInterval();
 
-    for (Transaction.Contract contract : contracts) {
+    for (Contract contract : contracts) {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = this.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -529,7 +530,6 @@ public class Manager {
         return;
       }
 
-
       if (contract.getType() == TransferAssetContract) {
         ByteString assetName;
         try {
@@ -538,12 +538,22 @@ public class Manager {
           throw new RuntimeException(ex.getMessage());
         }
 
-        Long lastAssetOperationTime = accountCapsule.getLatestAssetOperationTimeMap()
+        Long valueTmp = accountCapsule.getLatestAssetOperationTimeMap()
             .get(ByteArray.toStr(assetName.toByteArray()));
+        long lastAssetOperationTime = valueTmp == null ? 0 : (long) valueTmp;
 
-        if (lastAssetOperationTime == null || (now - lastAssetOperationTime >= interval)) {
-          AssetIssueCapsule assetIssueCapsule
-              = this.getAssetIssueStore().get(assetName.toByteArray());
+        valueTmp = accountCapsule.getLatestAssetFreeOperationCountMap()
+            .get(ByteArray.toStr(assetName.toByteArray()));
+        long latestAssetFreeOperationCount = valueTmp == null ? 0 : (long) valueTmp;
+
+        AssetIssueCapsule assetIssueCapsule
+            = this.getAssetIssueStore().get(assetName.toByteArray());
+        long assetInterval = assetIssueCapsule.getFreeOperatingTimeInterval();
+        long freeOperationLimit = assetIssueCapsule.getFreeOperationLimit();
+
+        boolean assetHasFreeOperationLeft = latestAssetFreeOperationCount < freeOperationLimit;
+
+        if (assetHasFreeOperationLeft && (now - lastAssetOperationTime >= assetInterval)) {
 
           AccountCapsule issuerAccountCapsule = this.getAccountStore()
               .get(assetIssueCapsule.getOwnerAddress().toByteArray());
@@ -556,12 +566,15 @@ public class Manager {
           this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
           accountCapsule.setLatestOperationTime(now);
           accountCapsule
-              .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
+              .putLatestAssetFreeOperationCountMap(ByteArray.toStr(assetName.toByteArray()),
+                  latestAssetFreeOperationCount);
+          accountCapsule
+              .putLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
           this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
           return;
         }
         accountCapsule
-            .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
+            .putLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
       }
 
       long bandwidth = accountCapsule.getBandwidth();
@@ -788,11 +801,11 @@ public class Manager {
         } catch (RevokingStoreIllegalStateException e) {
           logger.error(e.getMessage(), e);
         } catch (Throwable throwable) {
-        logger.error(throwable.getMessage(), throwable);
-        khaosDb.removeBlk(block.getBlockId());
-        throw throwable;
+          logger.error(throwable.getMessage(), throwable);
+          khaosDb.removeBlk(block.getBlockId());
+          throw throwable;
+        }
       }
-    }
       logger.info("save block: " + newBlock);
     }
   }

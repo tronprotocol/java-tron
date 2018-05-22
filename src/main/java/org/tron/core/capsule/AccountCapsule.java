@@ -315,15 +315,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
-    Map<String, Long> map = this.account.getLatestAssetOperationTimeMap();
-    if (map.isEmpty()) {
-      map = Maps.newHashMap();
-    }
-
-    return map;
+    return this.account.getLatestAssetOperationTimeMap();
   }
 
-  public void setLatestAssetOperationTimeMap(String key, Long value) {
+  public void putLatestAssetOperationTimeMap(String key, Long value) {
     this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
@@ -439,5 +434,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void increaseFreeOperationCount() {
     this.account = this.account.toBuilder()
         .setFreeOperationCount(this.account.getFreeOperationCount() + 1).build();
+  }
+
+  public Map<String, Long> getLatestAssetFreeOperationCountMap() {
+    return this.account.getLatestAssetFreeOperationCountMap();
+  }
+
+  public void putLatestAssetFreeOperationCountMap(String s, long latestAssetFreeOperationCount) {
+    this.account = this.account.toBuilder()
+        .putLatestAssetFreeOperationCount(s, latestAssetFreeOperationCount).build();
   }
 }

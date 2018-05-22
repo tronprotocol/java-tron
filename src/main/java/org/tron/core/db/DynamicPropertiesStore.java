@@ -67,7 +67,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
-  private static final byte[] OPERATING_TIME_INTERVAL = "OPERATING_TIME_INTERVAL".getBytes();
+  private static final byte[] FREE_OPERATING_TIME_INTERVAL = "FREE_OPERATING_TIME_INTERVAL".getBytes();
 
   private static final byte[] FREE_OPERATING_LIMIT_IN_A_CYCLE = "FREE_OPERATING_LIMIT_IN_A_CYCLE"
       .getBytes();
@@ -204,7 +204,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
     try {
-      this.getOperatingTimeInterval();
+      this.getFreeOperatingTimeInterval();
     } catch (IllegalArgumentException e) {
       this.saveOperatingTimeInterval(8_000L);
     }
@@ -489,15 +489,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveOperatingTimeInterval(long time) {
     logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + time);
-    this.put(OPERATING_TIME_INTERVAL,
+    this.put(FREE_OPERATING_TIME_INTERVAL,
         new BytesCapsule(ByteArray.fromLong(time)));
   }
 
-  public long getOperatingTimeInterval() {
-    return Optional.ofNullable(this.dbSource.getData(OPERATING_TIME_INTERVAL))
+  public long getFreeOperatingTimeInterval() {
+    return Optional.ofNullable(this.dbSource.getData(FREE_OPERATING_TIME_INTERVAL))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found OPERATING_TIME_INTERVAL"));
+            () -> new IllegalArgumentException("not found FREE_OPERATING_TIME_INTERVAL"));
   }
 
   public void saveFreeOperatingLimit(long time) {

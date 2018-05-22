@@ -95,4 +95,12 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
         frozen.getFrozenAmount()));
     return frozenBalance[0];
   }
+
+  public long getFreeOperatingTimeInterval() {
+    return this.assetIssueContract.getFreeOperationInterval();
+  }
+
+  public long getFreeOperationLimit() {
+    return this.assetIssueContract.getFreeOperationLimit();
+  }
 }

@@ -155,7 +155,7 @@ public class BandwidthTest {
     AccountCapsule ownerCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.setLatestOperationTime(1526647830000L);
-    ownerCapsule.setLatestAssetOperationTimeMap(ASSET_NAME, 1526647820000L);
+    ownerCapsule.putLatestAssetOperationTimeMap(ASSET_NAME, 1526647820000L);
 
     AccountCapsule assetCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(ASSET_ADDRESS));
@@ -188,7 +188,7 @@ public class BandwidthTest {
     AccountCapsule ownerCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.setLatestOperationTime(1526647830000L);
-    ownerCapsule.setLatestAssetOperationTimeMap(ASSET_NAME, 1526647838000L);
+    ownerCapsule.putLatestAssetOperationTimeMap(ASSET_NAME, 1526647838000L);
     ownerCapsule.setBandwidth(200000L);
 
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
