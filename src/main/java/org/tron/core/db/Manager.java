@@ -515,9 +515,7 @@ public class Manager {
       }
       long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
-      //10 * 1000
       long nextRefreshCountTime = accountCapsule.getNextRefreshCountTime();
-
       if (nextRefreshCountTime <= now) {
         accountCapsule.refreshCountTime(now);
       }
@@ -536,6 +534,13 @@ public class Manager {
           assetName = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
         } catch (Exception ex) {
           throw new RuntimeException(ex.getMessage());
+        }
+        String assetNameString = ByteArray.toStr(assetName.toByteArray());
+
+        long assetNextRefreshCountTime = accountCapsule.getAssetNextRefreshCountTimeMap()
+            .get(assetNameString);
+        if (assetNextRefreshCountTime <= now) {
+          accountCapsule.refreshAssetCountTime(assetNameString, now);
         }
 
         Long valueTmp = accountCapsule.getLatestAssetOperationTimeMap()
@@ -567,7 +572,7 @@ public class Manager {
           accountCapsule.setLatestOperationTime(now);
           accountCapsule
               .putLatestAssetFreeOperationCountMap(ByteArray.toStr(assetName.toByteArray()),
-                  latestAssetFreeOperationCount);
+                  latestAssetFreeOperationCount + 1);
           accountCapsule
               .putLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
           this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);

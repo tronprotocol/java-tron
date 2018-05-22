@@ -437,11 +437,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public Map<String, Long> getLatestAssetFreeOperationCountMap() {
-    return this.account.getLatestAssetFreeOperationCountMap();
+    return this.account.getAssetFreeOperationCountMap();
   }
 
   public void putLatestAssetFreeOperationCountMap(String s, long latestAssetFreeOperationCount) {
     this.account = this.account.toBuilder()
-        .putLatestAssetFreeOperationCount(s, latestAssetFreeOperationCount).build();
+        .putAssetFreeOperationCount(s, latestAssetFreeOperationCount).build();
   }
+
+  public Map<String, Long> getAssetNextRefreshCountTimeMap() {
+    return this.account.getAssetNextRefreshCountTimeMap();
+  }
+
+  public void refreshAssetCountTime(String s, long now) {
+    long nextRefreshTime = (now / 86400000L + 1) * 86400000L;
+
+    this.account = this.account.toBuilder()
+        .putAssetNextRefreshCountTime(s, nextRefreshTime).build();
+  }
+
 }
