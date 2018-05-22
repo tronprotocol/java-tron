@@ -1154,13 +1154,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     HashSet<BlockId> request = new HashSet<>();
 
-    getActivePeer().stream().forEach(peerConnection -> {
-      if (peerConnection.isNeedSyncFromPeer() && peerConnection.isBusy()) {
-        isFetchSyncActive = true;
-        return;
-      }
-    });
-
     getActivePeer().stream()
         .filter(peer -> peer.isNeedSyncFromPeer() && !peer.isBusy())
         .forEach(peer -> {
