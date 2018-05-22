@@ -448,13 +448,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     fetchSyncBlocksExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (isFetchSyncActive) {
+          isFetchSyncActive = false;
           if (!isSuspendFetch) {
             startFetchSyncBlock();
           } else {
             logger.debug("suspend");
           }
         }
-        isFetchSyncActive = false;
       } catch (Throwable t) {
         logger.error("Unhandled exception", t);
       }
@@ -542,11 +542,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       isBlockProc[0] = false;
+      Collection<PeerConnection> peerConnections = getActivePeer();
       Set<BlockMessage> pool = new HashSet<>();
       pool.addAll(blockWaitToProc);
       pool.forEach(msg -> {
         final boolean[] isFound = {false};
-        getActivePeer().stream()
+        peerConnections.stream()
                 .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
                 .forEach(peer -> {
                   peer.getSyncBlockToFetch().pop();
@@ -555,10 +556,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                 });
 
         if (isFound[0]) {
+          blockWaitToProc.remove(msg);
+          isBlockProc[0] = true;
           if (!freshBlockId.contains(msg.getBlockId())) {
-            blockWaitToProc.remove(msg);
-            processSyncBlock(msg.getBlockCapsule());
-            isBlockProc[0] = true;
+            processSyncBlock(msg.getBlockCapsule(), peerConnections);
           }
         }
       });
@@ -775,7 +776,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private void processSyncBlock(BlockCapsule block) {
+  private void processSyncBlock(BlockCapsule block, Collection<PeerConnection> peerConnections) {
     //TODO: add processing backlog cache here, use multi thread
 
     boolean isAccept = false;
@@ -830,7 +831,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       needFetchAgain.forEach(peer -> syncNextBatchChainIds(peer));
     } else {
       ReasonCode finalReason = reason;
-      getActivePeer().stream()
+      peerConnections.stream()
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
           .forEach(peer -> cleanUpSyncPeer(peer, finalReason));
     }

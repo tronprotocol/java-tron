@@ -347,11 +347,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     if (!getTransactions().isEmpty()) {
       toStringBuff.append("merkle root=").append(getMerkleRoot()).append("\n");
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
-      toStringBuff.append("tx: {");
-      getTransactions().forEach(tx -> toStringBuff
-          .append(index.getAndIncrement()).append(":")
-          .append(tx).append("\n"));
-      toStringBuff.append("}");
     } else {
       toStringBuff.append("txs are empty\n");
     }
