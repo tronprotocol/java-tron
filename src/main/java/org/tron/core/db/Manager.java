@@ -537,13 +537,14 @@ public class Manager {
         }
         String assetNameString = ByteArray.toStr(assetName.toByteArray());
 
-        long assetNextRefreshCountTime = accountCapsule.getAssetNextRefreshCountTimeMap()
+        Long valueTmp = accountCapsule.getAssetNextRefreshCountTimeMap()
             .get(assetNameString);
+        long assetNextRefreshCountTime = valueTmp == null ? 0 : (long) valueTmp;
         if (assetNextRefreshCountTime <= now) {
           accountCapsule.refreshAssetCountTime(assetNameString, now);
         }
 
-        Long valueTmp = accountCapsule.getLatestAssetOperationTimeMap()
+        valueTmp = accountCapsule.getLatestAssetOperationTimeMap()
             .get(ByteArray.toStr(assetName.toByteArray()));
         long lastAssetOperationTime = valueTmp == null ? 0 : (long) valueTmp;
 
@@ -553,8 +554,8 @@ public class Manager {
 
         AssetIssueCapsule assetIssueCapsule
             = this.getAssetIssueStore().get(assetName.toByteArray());
-        long assetInterval = assetIssueCapsule.getFreeOperatingTimeInterval();
-        long freeOperationLimit = assetIssueCapsule.getFreeOperationLimit();
+        long assetInterval = assetIssueCapsule.getFreeOperatingTimeInterval(interval);
+        long freeOperationLimit = assetIssueCapsule.getFreeOperationLimit(freeOperatingLimit);
 
         boolean assetHasFreeOperationLeft = latestAssetFreeOperationCount < freeOperationLimit;
 
