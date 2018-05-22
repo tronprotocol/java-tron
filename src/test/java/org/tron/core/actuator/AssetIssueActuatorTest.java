@@ -1527,7 +1527,7 @@ public class AssetIssueActuatorTest {
   }
 
   @Test
-  public void testFrozenListSize() {
+  public void frozenListSizeTest() {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
     for (int i = 0; i < this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber() + 2; i++) {
