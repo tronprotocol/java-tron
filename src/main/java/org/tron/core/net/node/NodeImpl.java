@@ -716,6 +716,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean syncFlag = false;
     if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
+        logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
         return;
       }
       peer.getSyncBlockRequested().remove(blockId);
@@ -734,7 +735,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (advObjWeRequested.containsKey(item)) {
-      logger.info("adv {} {} ", peer.getNode().getHost(), blockId.getString());
       advObjWeRequested.remove(item);
       if (!syncFlag){
         processAdvBlock(peer, blkMsg.getBlockCapsule());
@@ -787,7 +787,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       del.handleBlock(block, true);
       freshBlockId.offer(block.getBlockId());
-      logger.info ("freshBlockId add {}", block.getBlockId().getString());
       isAccept = true;
     } catch (BadBlockException e) {
       // TODO: punish bad peer
