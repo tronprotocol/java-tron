@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -193,13 +192,6 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void listAccounts(EmptyMessage request, StreamObserver<AccountList> responseObserver) {
-
-      responseObserver.onNext(walletSolidity.getAccountList());
       responseObserver.onCompleted();
     }
 
@@ -704,6 +696,13 @@ public class RpcApiService implements Service {
     public void totalTransaction(EmptyMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(wallet.totalTransaction());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNextMaintenanceTime(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.getNextMaintenanceTime());
       responseObserver.onCompleted();
     }
 
