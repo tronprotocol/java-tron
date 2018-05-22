@@ -501,6 +501,11 @@ public class Manager {
   public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
         trx.getInstance().getRawData().getContractList();
+
+    long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
+    long freeOperatingLimit = getDynamicPropertiesStore().getFreeOperatingLimit();
+    long interval = getDynamicPropertiesStore().getOperatingTimeInterval();
+
     for (Transaction.Contract contract : contracts) {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = this.getAccountStore().get(address);
@@ -510,15 +515,21 @@ public class Manager {
       long now = getHeadBlockTimeStamp();
       long latestOperationTime = accountCapsule.getLatestOperationTime();
       //10 * 1000
-      long interval = dynamicPropertiesStore.getOperatingTimeInterval();
-      if (now - latestOperationTime >= interval) {
+      long nextRefreshCountTime = accountCapsule.getNextRefreshCountTime();
+
+      if (nextRefreshCountTime <= now) {
+        accountCapsule.refreshCountTime(now);
+      }
+
+      boolean hasFreeOperationLeft = accountCapsule.getFreeOperationCount() < freeOperatingLimit;
+      if (hasFreeOperationLeft && (now - latestOperationTime >= interval)) {
         accountCapsule.setLatestOperationTime(now);
+        accountCapsule.increaseFreeOperationCount();
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return;
       }
 
 
-      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
       if (contract.getType() == TransferAssetContract) {
         ByteString assetName;
         try {

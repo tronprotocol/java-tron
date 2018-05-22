@@ -419,4 +419,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
   }
+
+  public long getNextRefreshCountTime() {
+    return this.account.getNextRefreshCountTime();
+  }
+
+  public void refreshCountTime(long now) {
+    long nextRefreshTime = (now / 86400000L + 1) * 86400000L;
+
+    this.account = this.account.toBuilder().setNextRefreshCountTime(nextRefreshTime)
+        .setFreeOperationCount(0).build();
+  }
+
+
+  public long getFreeOperationCount() {
+    return this.account.getFreeOperationCount();
+  }
+
+  public void increaseFreeOperationCount() {
+    this.account = this.account.toBuilder()
+        .setFreeOperationCount(this.account.getFreeOperationCount() + 1).build();
+  }
 }

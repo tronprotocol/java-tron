@@ -69,6 +69,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] OPERATING_TIME_INTERVAL = "OPERATING_TIME_INTERVAL".getBytes();
 
+  private static final byte[] FREE_OPERATING_LIMIT_IN_A_CYCLE = "FREE_OPERATING_LIMIT_IN_A_CYCLE"
+      .getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
@@ -203,9 +206,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getOperatingTimeInterval();
     } catch (IllegalArgumentException e) {
-      this.saveOperatingTimeInterval(10_000L);
+      this.saveOperatingTimeInterval(8_000L);
     }
 
+    try {
+      this.getFreeOperatingLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveFreeOperatingLimit(20L);
+    }
+
+    
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -489,6 +499,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found OPERATING_TIME_INTERVAL"));
   }
+
+  public void saveFreeOperatingLimit(long time) {
+    logger.debug("FREE_OPERATING_LIMIT_IN_A_CYCLE:" + time);
+    this.put(FREE_OPERATING_LIMIT_IN_A_CYCLE,
+        new BytesCapsule(ByteArray.fromLong(time)));
+  }
+
+  public long getFreeOperatingLimit() {
+    return Optional.ofNullable(this.dbSource.getData(FREE_OPERATING_LIMIT_IN_A_CYCLE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found FREE_OPERATING_LIMIT_IN_A_CYCLE"));
+  }
+  
 
 
 
