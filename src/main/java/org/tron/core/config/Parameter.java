@@ -15,10 +15,12 @@ public interface Parameter {
     int TRXS_SIZE = 2_000_000; // < 2MiB
     int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     long CLOCK_MAX_DELAY = 3600 * 1000; //ms
+    double BLOCK_PRODUCED_TIME_OUT = 0.75;
     long BATCH_FETCH_RESPONSE_SIZE = 1000; //for each inventory message from peer, the max count of fetch inv message
   }
 
   interface NodeConstant {
+
     long SYNC_RETURN_BATCH_NUM = 1000;
     long SYNC_FETCH_BATCH_NUM = 2000;
     long MAX_BLOCKS_IN_PROCESS = 400;
@@ -29,6 +31,7 @@ public interface Parameter {
   }
 
   interface NetConstants {
+
     long ADV_TIME_OUT = 20000L;
     long SYNC_TIME_OUT = 5000L;
     long HEAD_NUM_MAX_DELTA = 1000L;

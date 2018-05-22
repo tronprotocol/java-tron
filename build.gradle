@@ -223,8 +223,16 @@ test {
         exceptionFormat = 'full'
     }
     jacoco {
-        append = false
+        append = true
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
     }
 }
 
