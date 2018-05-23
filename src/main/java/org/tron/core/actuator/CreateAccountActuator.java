@@ -65,7 +65,6 @@ public class CreateAccountActuator extends AbstractActuator {
         throw new ContractValidateException("Account has existed");
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
     return true;

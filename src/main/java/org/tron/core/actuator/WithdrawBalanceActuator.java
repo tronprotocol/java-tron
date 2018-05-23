@@ -100,7 +100,6 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
 
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

@@ -108,7 +108,6 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       }
 
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

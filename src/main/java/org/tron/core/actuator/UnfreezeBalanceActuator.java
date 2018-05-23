@@ -114,7 +114,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("It's not time to unfreeze.");
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       throw new ContractValidateException(ex.getMessage());
     }
 

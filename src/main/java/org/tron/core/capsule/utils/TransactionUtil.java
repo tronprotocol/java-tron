@@ -43,13 +43,6 @@ public class TransactionUtil {
         Contract.ContractType.TransferContract).getInstance();
   }
 
-  /**
-   * checkBalance.
-   */
-  private static boolean checkBalance(long totalBalance, long totalSpent) {
-    return totalBalance == totalSpent;
-  }
-
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
       return false;
