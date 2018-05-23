@@ -198,10 +198,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
-  private ExecutorService trxsValidateSignExecutor = Executors
+  private ExecutorService trxsHandlePool = Executors
       .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum(),
           new ThreadFactoryBuilder()
-              .setNameFormat("TrxsValidateSign-%d").build());
+              .setNameFormat("TrxsHandlePool-%d").build());
 
   //public
   //TODO:need auto erase oldest block
@@ -895,8 +895,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    for (Transaction trans: msg.getTransactions().getTransactionsList()) {
-      trxsValidateSignExecutor
+    for (Transaction trans : msg.getTransactions().getTransactionsList()) {
+      trxsHandlePool
           .submit(() -> onHandleTransactionMessage(peer, new TransactionMessage(trans)));
     }
   }
