@@ -96,20 +96,7 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return frozenBalance[0];
   }
 
-  public long getFreeOperatingTimeInterval(long defaultValue) {
-
-    if (this.assetIssueContract.getFreeOperationInterval() == 0) {
-      return defaultValue;
-    } else {
-      return this.assetIssueContract.getFreeOperationInterval();
-    }
-  }
-
-  public long getFreeOperationLimit(long defaultValue) {
-    if (this.assetIssueContract.getFreeOperationLimit() == 0) {
-      return defaultValue;
-    } else {
-      return this.assetIssueContract.getFreeOperationLimit();
-    }
+  public long getFreeAssetNetLimit() {
+    return this.assetIssueContract.getFreeAssetNetLimit();
   }
 }
