@@ -95,6 +95,11 @@ public class NodeDelegateImpl implements NodeDelegate {
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
     try {
+      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+        throw new DupTransactionException("has processed");
+      } else {
+        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      }
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
       logger.warn("Contract validate failed", e);

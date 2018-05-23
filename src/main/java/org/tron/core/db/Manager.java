@@ -6,6 +6,8 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -133,7 +135,12 @@ public class Manager {
   @Setter
   private WitnessController witnessController;
 
+
   private ExecutorService validateSignService;
+
+  @Getter
+  private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
+      .newBuilder().maximumSize(100_000).recordStats().build();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -287,6 +294,7 @@ public class Manager {
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+
   }
 
   public BlockId getGenesisBlockId() {
@@ -611,6 +619,7 @@ public class Manager {
     logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
+    unCacheTransactionOfBlock(oldHeadBlock);
   }
 
   private void applyBlock(BlockCapsule block)
@@ -916,6 +925,8 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
+    validateTapos(trxCap);
+    validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() > 1) {
       throw new ContractValidateException("act size greater than 1, this is extend feature");
@@ -1108,9 +1119,16 @@ public class Manager {
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+    this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
+  }
+
+  private void updateTransHashCache(BlockCapsule block) {
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      this.transactionIdCache.put(transactionCapsule.getHash(), true);
+    }
   }
 
   public void updateRecentBlock(BlockCapsule block) {
@@ -1342,6 +1360,12 @@ public class Manager {
       } catch (ExecutionException e) {
         throw new ValidateSignatureException(e.getCause().getMessage());
       }
+    }
+  }
+
+  private void unCacheTransactionOfBlock(BlockCapsule blockCapsule) {
+    for (TransactionCapsule transactionCapsule : blockCapsule.getTransactions()) {
+      transactionIdCache.invalidate(transactionCapsule.getTransactionId());
     }
   }
 }
