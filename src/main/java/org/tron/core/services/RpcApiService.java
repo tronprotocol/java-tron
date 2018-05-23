@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -103,7 +104,7 @@ public class RpcApiService implements Service {
             .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
       }
       if (args.isSolidityNode()) {
-        serverBuilder = serverBuilder.addService(new WalletSolidityApi());
+        serverBuilder = serverBuilder.addService(new WalletSolidityApi(args));
       } else {
         serverBuilder = serverBuilder.addService(new WalletApi());
       }
@@ -182,6 +183,18 @@ public class RpcApiService implements Service {
    * WalletSolidityApi.
    */
   private class WalletSolidityApi extends WalletSolidityImplBase {
+
+    private boolean getTransactionsFromThisFeature;
+    private boolean getTransactionsToThisFeature;
+    private boolean getTransactionsFromThisCountFeature;
+    private boolean getTransactionsToThisCountFeature;
+
+    WalletSolidityApi(Args args) {
+      this.getTransactionsFromThisFeature = args.isGetTransactionsFromThisFeature();
+      this.getTransactionsToThisFeature = args.isGetTransactionsToThisFeature();
+      this.getTransactionsFromThisCountFeature = args.isGetTransactionFromThisCountFeature();
+      this.getTransactionsToThisCountFeature = args.isGetTransactionsToThisFeature();
+    }
 
     @Override
     public void getAccount(Account request, StreamObserver<Account> responseObserver) {
@@ -303,13 +316,17 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-
     @Override
-    public void getTransactionsFromThis(Account request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString thisAddress = request.getAddress();
+    public void getTransactionsFromThis(AccountPaginated request,
+                                        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+      if (!this.getTransactionsFromThisFeature) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString thisAddress = request.getAccount().getAddress();
       if (null != thisAddress) {
-        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress);
+        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress,request.getOffset(),request.getLimit());
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -318,12 +335,49 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionsToThis(Account request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString toAddress = request.getAddress();
+    public void getTransactionsToThis(AccountPaginated request,
+                                      StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+      if(!this.getTransactionsToThisFeature ) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = request.getAccount().getAddress();
       if (null != toAddress) {
-        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress);
+        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress,request.getOffset(),request.getLimit());
         responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionsFromThisCount(Account account, StreamObserver<NumberMessage> responseObserver) {
+      if (!this.getTransactionsFromThisCountFeature) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = account.getAddress();
+      if (null != toAddress) {
+        responseObserver.onNext(walletSolidity.getTransactionFromThisCount(toAddress));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionsToThisCount(Account account, StreamObserver<NumberMessage> responseObserver) {
+      if(!this.getTransactionsToThisCountFeature ) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = account.getAddress();
+      if (null != toAddress) {
+        responseObserver.onNext(walletSolidity.getTransactionToThisCount(toAddress));
       } else {
         responseObserver.onNext(null);
       }

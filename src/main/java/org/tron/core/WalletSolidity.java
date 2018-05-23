@@ -117,19 +117,26 @@ public class WalletSolidity {
     return transactionList;
   }
 
-  public TransactionList getTransactionsFromThis(ByteString thisAddress) {
+  public TransactionList getTransactionsFromThis(ByteString thisAddress, int offset , int limit) {
     List<Transaction> transactionsFromThis = storeAPI
-        .getTransactionsFromThis(ByteArray.toHexString(thisAddress.toByteArray()));
+        .getTransactionsFromThis(ByteArray.toHexString(thisAddress.toByteArray()),offset , limit);
     TransactionList transactionList = TransactionList.newBuilder()
         .addAllTransaction(transactionsFromThis).build();
     return transactionList;
   }
 
-  public TransactionList getTransactionsToThis(ByteString toAddress) {
+  public TransactionList getTransactionsToThis(ByteString toAddress, int offset, int limit) {
     List<Transaction> transactionsToThis = storeAPI
-        .getTransactionsToThis(ByteArray.toHexString(toAddress.toByteArray()));
+        .getTransactionsToThis(ByteArray.toHexString(toAddress.toByteArray()), offset, limit);
     TransactionList transactionList = TransactionList.newBuilder()
         .addAllTransaction(transactionsToThis).build();
     return transactionList;
+  }
+  public NumberMessage getTransactionFromThisCount(ByteString toAddress){
+    return NumberMessage.newBuilder().setNum(storeAPI.getTransactionsFromThisCount(ByteArray.toHexString(toAddress.toByteArray()))).build();
+  }
+
+  public NumberMessage getTransactionToThisCount(ByteString toAddress){
+    return NumberMessage.newBuilder().setNum(storeAPI.getTransactionsToThisCount(ByteArray.toHexString(toAddress.toByteArray()))).build();
   }
 }

@@ -1,5 +1,6 @@
 package org.tron.core.db.api;
 
+import static com.googlecode.cqengine.query.QueryFactory.ascending;
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.and;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
@@ -44,6 +45,7 @@ public class StoreAPI {
 
   @Autowired(required = false)
   private IndexHelper indexHelper;
+  private final int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
 
   /********************************************************************************
    *                            account api                                       *
@@ -205,7 +207,7 @@ public class StoreAPI {
     }
   }
 
-  public List<Transaction> getTransactionsFromThis(String address) {
+  public List<Transaction> getTransactionsFromThis(String address,int offset,int limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");
       return Lists.newArrayList();
@@ -213,12 +215,31 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(TransactionIndex.OWNERS, address))) {
-      return ImmutableList.copyOf(resultSet);
+                all(WrappedByteArray.class),
+                queryOptions(
+                        equal(TransactionIndex.OWNERS, address),
+                        orderBy(ascending(TransactionIndex.TIMESTAMP)),
+                        applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
+      if(limit > TRANSACTIONS_COUNT_LIMIT_MAX){
+        limit = TRANSACTIONS_COUNT_LIMIT_MAX;
+      }
+      return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
     }
   }
 
-  public List<Transaction> getTransactionsToThis(String address) {
+  public long getTransactionsFromThisCount(String address) {
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet =
+                 index.retrieve(
+                         all(WrappedByteArray.class),
+                         queryOptions(
+                                 equal(TransactionIndex.OWNERS, address),
+                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
+      return resultSet.size();
+    }
+  }
+
+  public List<Transaction> getTransactionsToThis(String address,int offset, int limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");
       return Lists.newArrayList();
@@ -226,9 +247,27 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(TransactionIndex.TOS, address)
-        )) {
-      return ImmutableList.copyOf(resultSet);
+                all(WrappedByteArray.class),
+                queryOptions(
+                        equal(TransactionIndex.TOS, address),
+                        orderBy(ascending(TransactionIndex.TIMESTAMP)),
+                        applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+      if(limit > TRANSACTIONS_COUNT_LIMIT_MAX){
+        limit = TRANSACTIONS_COUNT_LIMIT_MAX;
+      }
+      return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
+    }
+  }
+
+  public long getTransactionsToThisCount(String address) {
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet =
+                 index.retrieve(
+                         all(WrappedByteArray.class),
+                         queryOptions(
+                                 equal(TransactionIndex.TOS, address),
+                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
+      return resultSet.size();
     }
   }
 
