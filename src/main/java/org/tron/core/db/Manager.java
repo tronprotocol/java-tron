@@ -525,7 +525,7 @@ public class Manager {
         accountCapsule.setLatestOperationTime(now);
         accountCapsule.increaseFreeOperationCount();
         this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-        return;
+        continue;
       }
 
       if (contract.getType() == TransferAssetContract) {
@@ -577,7 +577,7 @@ public class Manager {
           accountCapsule
               .putLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
           this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-          return;
+          continue;
         }
         accountCapsule
             .putLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
