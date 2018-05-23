@@ -67,6 +67,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
       dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
 
+      long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      totalNetWeight -= unfreezeBalance / 1000_000L;
+      dbManager.getDynamicPropertiesStore().saveTotalNetWeight(totalNetWeight);
+
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);

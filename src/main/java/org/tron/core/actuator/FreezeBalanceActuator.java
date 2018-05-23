@@ -34,7 +34,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
       long now = dbManager.getHeadBlockTimeStamp();
       long duration = freezeBalanceContract.getFrozenDuration() * 86_400_000;
 
-      long newBandwidth = calculateBandwidth(accountCapsule.getBandwidth(), freezeBalanceContract);
       long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
       long currentFrozenBalance = accountCapsule.getFrozenBalance();
@@ -51,18 +50,20 @@ public class FreezeBalanceActuator extends AbstractActuator {
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .addFrozen(newFrozen)
             .setBalance(newBalance)
-            .setBandwidth(newBandwidth)
             .build());
       } else {
         assert frozenCount == 1;
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .setFrozen(0, newFrozen)
             .setBalance(newBalance)
-            .setBandwidth(newBandwidth)
             .build()
         );
       }
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+      long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      totalNetWeight += freezeBalanceContract.getFrozenBalance() / 1000_000L;
+      dbManager.getDynamicPropertiesStore().saveTotalNetWeight(totalNetWeight);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
