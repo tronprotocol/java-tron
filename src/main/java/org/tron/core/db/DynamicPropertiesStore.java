@@ -58,10 +58,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
-  private static final byte[] BANDWIDTH_PER_TRANSACTION = "BANDWIDTH_PER_TRANSACTION".getBytes();
-
-  private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
-
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
   // 1_000_000L
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
@@ -184,18 +180,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getWitnessAllowanceFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveWitnessAllowanceFrozenTime(1);
-    }
-
-    try {
-      this.getBandwidthPerTransaction();
-    } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerTransaction(100_000);
-    }
-
-    try {
-      this.getBandwidthPerCoinday();
-    } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerCoinday(1);
     }
 
     try {
@@ -467,32 +451,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found WITNESS_ALLOWANCE_FROZEN_TIME"));
-  }
-
-  public void saveBandwidthPerTransaction(int bandwidthPerTransaction) {
-    logger.debug("BANDWIDTH_PER_TRANSACTION:" + bandwidthPerTransaction);
-    this.put(BANDWIDTH_PER_TRANSACTION,
-        new BytesCapsule(ByteArray.fromInt(bandwidthPerTransaction)));
-  }
-
-  public int getBandwidthPerTransaction() {
-    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_TRANSACTION))
-        .map(ByteArray::toInt)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found BANDWIDTH_PER_TRANSACTION"));
-  }
-
-  public void saveBandwidthPerCoinday(long bandwidthPerCoinday) {
-    logger.debug("BANDWIDTH_PER_COINDAY:" + bandwidthPerCoinday);
-    this.put(BANDWIDTH_PER_COINDAY,
-        new BytesCapsule(ByteArray.fromLong(bandwidthPerCoinday)));
-  }
-
-  public long getBandwidthPerCoinday() {
-    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_COINDAY))
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
   }
 
   public void saveAccountUpgradeCost(long accountUpgradeCost) {
