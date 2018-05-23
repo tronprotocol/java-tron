@@ -92,7 +92,7 @@ public class ManagerTest {
         new BlockCapsule(
             1,
             dbManager.getGenesisBlockId().getByteString(),
-            0,
+            1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
                     ByteArray.fromHexString(

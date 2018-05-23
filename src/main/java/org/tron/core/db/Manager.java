@@ -720,6 +720,12 @@ public class Manager {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
+
+        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
+          return;
+        }
+
         // switch fork
         if (!newBlock
             .getParentHash()
