@@ -240,7 +240,6 @@ public class FreezeBalanceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("cannot run here.");
-
     } catch (ContractValidateException e) {
       long minFrozenTime = dbManager.getDynamicPropertiesStore().getMinFrozenTime();
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
@@ -248,6 +247,25 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
               + "and more than " + minFrozenTime + " days"
           , e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void lessThan1TrxTest() {
+    long frozenBalance = 1;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator(
+            getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("frozenBalance must be more than 1TRX", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
