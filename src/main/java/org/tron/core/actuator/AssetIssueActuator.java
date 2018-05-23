@@ -120,6 +120,7 @@ public class AssetIssueActuator extends AbstractActuator {
       if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
         throw new ContractValidateException("Invalidate assetName");
       }
+
       if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
         throw new ContractValidateException("Invalidate url");
       }
@@ -137,7 +138,7 @@ public class AssetIssueActuator extends AbstractActuator {
       if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
         throw new ContractValidateException("end time should be greater than start time");
       }
-      if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()){
+      if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()) {
         throw new ContractValidateException("start time should be greater than HeadBlockTime");
       }
 
