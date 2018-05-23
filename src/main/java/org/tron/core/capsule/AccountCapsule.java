@@ -330,7 +330,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  public long getLatestAssetOperationTimeMap(String assetName) {
+  public long getLatestAssetOperationTime(String assetName) {
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
   }
 

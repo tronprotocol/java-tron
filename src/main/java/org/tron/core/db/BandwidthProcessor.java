@@ -86,7 +86,7 @@ public class BandwidthProcessor {
         long freeAssetNetUsage = accountCapsule
             .getFreeAssetNetUsage(assetNameString);
         long latestAssetOperationTime = accountCapsule
-            .getLatestAssetOperationTimeMap(assetNameString);
+            .getLatestAssetOperationTime(assetNameString);
 
         long newFreeAssetNetUsage = increase(freeAssetNetUsage, 0,
             latestAssetOperationTime, now);
