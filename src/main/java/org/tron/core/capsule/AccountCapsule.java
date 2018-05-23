@@ -189,6 +189,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setLatestConsumeTime(latest_time).build();
   }
 
+  public long getLatestConsumeFreeTime() {
+    return this.account.getLatestConsumeFreeTime();
+  }
+
+  public void setLatestConsumeFreeTime(long latest_time) {
+    this.account = this.account.toBuilder().setLatestConsumeFreeTime(latest_time).build();
+  }
+
   public void setBalance(long balance) {
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
