@@ -5,7 +5,9 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -14,6 +16,7 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
+@Slf4j
 public class BandwidthProcessor {
 
   private Manager dbManager;
@@ -120,7 +123,11 @@ public class BandwidthProcessor {
                 issuerAccountCapsule);
             continue;
           }
+          logger.info("The " + assetNameString + "issuer does not have enough bandwidth"
+              + "Asset Issuer address: "
+              + StringUtil.createReadableString(assetIssueCapsule.getOwnerAddress().toByteArray()));
         }
+        logger.info("The " + assetNameString + " free bandwidth is not enough");
       }
       long weight = accountCapsule.getFrozenBalance();
       long netUsage = accountCapsule.getNetUsage();
@@ -140,6 +147,7 @@ public class BandwidthProcessor {
         dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         continue;
       }
+      logger.info("Bandwidth is running out. Now use free bandwidth");
       long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
       long freeNetUsage = accountCapsule.getFreeNetUsage();
       long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
@@ -168,8 +176,9 @@ public class BandwidthProcessor {
           dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
           continue;
         }
+        logger.info("Public bandwidth is not enough");
       }
-      throw new ValidateBandwidthException("bandwidth is not enough");
+      throw new ValidateBandwidthException("Free bandwidth is running out");
     }
   }
 }
