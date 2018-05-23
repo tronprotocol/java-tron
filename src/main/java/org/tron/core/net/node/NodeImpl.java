@@ -689,7 +689,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
-    //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
     try {
       while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
@@ -698,16 +697,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (InterruptedException e) {
       logger.debug(e.getMessage(), e);
     }
-
     logger.info("wait end");
-    //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    //logger.info("on handle block message");
-    //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
-
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
@@ -715,7 +709,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean syncFlag = false;
     if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
-        logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
+        logger.info("Received a block {} from no need sync peer {}", blockId.getNum(), peer.getNode().getHost());
         return;
       }
       peer.getSyncBlockRequested().remove(blockId);
@@ -748,26 +742,28 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
+
         freshBlockId.offer(block.getBlockId());
-        //remove trxs in block from fetch data.
+
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
-        //TODO:save message cache again.
         getActivePeer().stream()
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
             .forEach(p -> updateBlockWeBothHave(peer, block));
 
-        //rebroadcast
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
-        logger.error("We get a bad block {}, reason is {} ", block.getBlockId().getString(), e.getMessage());
+        logger.error("We get a bad block {}, from {}, reason is {} ",
+                block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+        disconnectPeer(peer, ReasonCode.BAD_BLOCK);
       } catch (UnLinkedBlockException e) {
-        logger.error("We get a unlinked block {}, head is {}", block.getBlockId().getString(), del.getHeadBlockId().getString());
+        logger.error("We get a unlinked block {}, from {}, head is {}",
+                block.getBlockId().getString(), peer.getNode().getHost(), del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
       } catch (Exception e) {
-        logger.error("Fail to process adv block {}", block.getBlockId().getString(), e);
+        logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(), peer.getNode().getHost(), e);
       }
     }
   }
@@ -1238,7 +1234,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
-    //TODO:when use new p2p framework, remove this
 
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet()
