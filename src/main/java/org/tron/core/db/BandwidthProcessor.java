@@ -4,7 +4,6 @@ package org.tron.core.db;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
-import com.google.common.math.LongMath;
 import java.util.List;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
