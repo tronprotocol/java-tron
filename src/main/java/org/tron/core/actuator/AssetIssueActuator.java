@@ -163,6 +163,11 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Frozen supply list length is too long");
       }
 
+      if (assetIssueContract.getFreeAssetNetLimit() < 0
+          || assetIssueContract.getFreeAssetNetLimit() >= ChainConstant.ONE_DAY_NET_LIMIT) {
+        throw new ContractValidateException("Invalid FreeAssetNetLimit");
+      }
+
       long remainSupply = assetIssueContract.getTotalSupply();
       long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
       long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();

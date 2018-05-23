@@ -18,17 +18,19 @@ public class BandwidthProcessor {
 
   private Manager dbManager;
   private long precision;
+  private long windowSize;
 
   public BandwidthProcessor(Manager manager){
     this.dbManager = manager;
     this.precision = ChainConstant.PRECISION;
+    this.windowSize = ChainConstant.WINDOW_SIZE_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
   }
 
   private long divideCeil(long numerator, long denominator) {
     return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
   }
 
-  private long increase(long lastUsage, long usage, long lastTime, long now, long windowSize)
+  private long increase(long lastUsage, long usage, long lastTime, long now)
       throws ValidateBandwidthException {
     long averageUsage = divideCeil(usage * precision, windowSize);
 

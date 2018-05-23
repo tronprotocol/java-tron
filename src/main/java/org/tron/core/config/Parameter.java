@@ -18,6 +18,8 @@ public interface Parameter {
     double BLOCK_PRODUCED_TIME_OUT = 0.75;
     long BATCH_FETCH_RESPONSE_SIZE = 1000; //for each inventory message from peer, the max count of fetch inv message
     long PRECISION = 1000_000;
+    long ONE_DAY_NET_LIMIT = 57_600_000_000L;
+    long WINDOW_SIZE_MS = 24 * 3600 * 1000;
   }
 
   interface NodeConstant {
