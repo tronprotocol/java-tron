@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -52,14 +53,11 @@ public class WalletTest_p1_Witness_002 {
     private static final byte[] NO_FROZEN_ADDRESS = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
 
     private ManagedChannel channelFull = null;
-    private ManagedChannel search_channelFull = null;
+    private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
+    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-
+    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
     @BeforeClass
     public void beforeClass(){
@@ -68,12 +66,10 @@ public class WalletTest_p1_Witness_002 {
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-        search_channelFull = ManagedChannelBuilder.forTarget(search_fullnode)
+        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
                 .usePlaintext(true)
                 .build();
-        search_blockingStubFull = WalletGrpc.newBlockingStub(search_channelFull);
-
-
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
 
 
@@ -101,14 +97,39 @@ public class WalletTest_p1_Witness_002 {
         }
     }
 
+    @Test(enabled = true)
+    public void TestSolidityQueryAllWitness(){
+        GrpcAPI.WitnessList solidityWitnessList = blockingStubSolidity.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
+        //GrpcAPI.WitnessList witnesslist = blockingStubFull.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
+        Optional<GrpcAPI.WitnessList> result = Optional.ofNullable(solidityWitnessList);
+        if (result.isPresent()) {
+            GrpcAPI.WitnessList witnessList = result.get();
+            List<Protocol.Witness> list = witnessList.getWitnessesList();
+            List<Protocol.Witness> newList = new ArrayList();
+            newList.addAll(list);
+            newList.sort(new WitnessComparator());
+            GrpcAPI.WitnessList.Builder builder = GrpcAPI.WitnessList.newBuilder();
+            newList.forEach(witness -> builder.addWitnesses(witness));
+            result = Optional.of(builder.build());
+        }
+        logger.info(Integer.toString(result.get().getWitnessesCount()));
+        Assert.assertTrue(result.get().getWitnessesCount() > 0);
+        //测试是否正确获取到每一个Witness的地址，url，latestslotnum等
+        for (int j =0; j < result.get().getWitnessesCount(); j++){
+            Assert.assertFalse(result.get().getWitnesses(j).getAddress().isEmpty());
+            Assert.assertFalse(result.get().getWitnesses(j).getUrl().isEmpty());
+            //Assert.assertTrue(result.get().getWitnesses(j).getLatestSlotNum() > 0);
+        }
+    }
+
 
     @AfterClass
     public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+        if(channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
-        if (search_channelFull != null) {
-            search_channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        if(channelSolidity != null) {
+            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 

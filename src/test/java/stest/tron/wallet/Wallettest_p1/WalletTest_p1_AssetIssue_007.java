@@ -25,12 +25,11 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
-import java.security.Key;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_AssetIssue_002 {
+public class WalletTest_p1_AssetIssue_007 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -84,9 +83,9 @@ public class WalletTest_p1_AssetIssue_002 {
             Long end   = System.currentTimeMillis() + 1000000000;
             //新建一笔通证
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,1,start,end,
-                    1, Description, Url,1L,1L, testKey002));
+                    1, Description, Url, 1L,1L,testKey002));
             try {
-                Thread.sleep(25000);
+                Thread.sleep(2500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -95,53 +94,38 @@ public class WalletTest_p1_AssetIssue_002 {
             logger.info("This account already create an assetisue");
             Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
             name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
-
         }
     }
 
     @Test(enabled = true)
-    public void TestParticipateAssetissue(){
-/*        Account fromBeforeQueryResult = queryAccount(testKey002, blockingStubFull);
-        for(String key : fromBeforeQueryResult.getAssetMap().keySet()) {
-            Long beforeFromAssetIssue = fromBeforeQueryResult.getAssetMap().get(key);
-            logger.info(Long.toString(fromBeforeQueryResult.getAssetMap().get(key)));
-        }
-
-        Account toQueryResult = queryAccount(testKey002, blockingStubFull);*/
-
-
-
-/*        logger.info(Integer.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getNum()));
-        logger.info(Integer.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getTrxNum()));
-        logger.info(Long.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getTotalSupply()));
-        logger.info(Long.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).));*/
-
+    public void TestUseBandwitchParticipateAssetissue(){
         //参与一笔通证
+        try {
+            Thread.sleep(18000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         logger.info(name);
-        Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),100L, TO_ADDRESS, testKey003));
+        Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        Account beforeAsset = queryAccount(no_bandwitch,blockingStubFull);
+        //logger.info(Long.toString(beforeAssetBalance.getAssetMap().get(name)));
+        Long beforeAssetBalance = beforeAsset.getAssetMap().get(name);
 
-        //参与金额过大，参与失败
-        Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),9100000000000000000L, TO_ADDRESS, testKey003));
+        //十秒内再参与一次，因为没有带宽，参与失败
+        Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        try {
+            Thread.sleep(18000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //十秒后再参与一笔，带宽恢复，参与成功
+        Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+        Account afterAsset = queryAccount(no_bandwitch,blockingStubFull);
+        logger.info(Long.toString(afterAsset.getAssetMap().get(name)));
+        Long afterAssetBalance = afterAsset.getAssetMap().get(name);
 
-        //参与通证的名字不正确，参与失败
-        Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, (name+"wrong").getBytes(),100L, TO_ADDRESS, testKey003));
-
-        //参与通证的金额为0，参与失败
-        Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),0L, TO_ADDRESS, testKey003));
-
-        //参与通证的金额为-1，参与失败
-        Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),-1L, TO_ADDRESS, testKey003));
-
-        //参与通证的账户没有该通证，参与失败
-        Assert.assertFalse(participateAssetIssue(BACK_ADDRESS, name.getBytes(),100L, TO_ADDRESS, testKey003));
-
-
-
-
-
-
-
-
+        //比较前后参与资产的差值是否正确
+        Assert.assertTrue(afterAssetBalance - beforeAssetBalance > 0);
     }
 
     @AfterClass(enabled = true)

@@ -94,6 +94,11 @@ public class WalletTest_p1_Witness_001 {
         Assert.assertFalse(VoteWitness(small_vote_map, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
         //冻结一部分资产
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L, testKey002));
 
         //如果有冻结资产，且投票数大于冻结资产，则投票失败
@@ -170,6 +175,11 @@ public class WalletTest_p1_Witness_001 {
             logger.info("response.getresult() == false");
             return false;
         }
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Account afterVote = queryAccount(ecKey, search_blockingStubFull);
         //Long afterVoteNum = afterVote.getVotes(0).getVoteCount();
         for (String key : witness.keySet()) {
@@ -178,6 +188,8 @@ public class WalletTest_p1_Witness_001 {
                 logger.info(key);
                 if (key.equals("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv")){
                     logger.info("catch it");
+                    logger.info(Long.toString(afterVote.getVotes(j).getVoteCount()));
+                    logger.info(Long.toString(Long.parseLong(witness.get(key))));
                     Assert.assertTrue(afterVote.getVotes(j).getVoteCount() == Long.parseLong(witness.get(key)));
                 }
 
@@ -246,12 +258,13 @@ public class WalletTest_p1_Witness_001 {
         //logger.info(Integer.toString(search.getFrozenCount()));
         logger.info("afterfrozenbalance =" + Long.toString(afterFrozenBalance) + "beforefrozenbalance =  " + beforeFrozenBalance +
         "freezebalance = " + Long.toString(freezeBalance));
+        logger.info("afterbandwidth = " + Long.toString(afterBandwidth) + " beforebandwidth = " + Long.toString(beforeBandwidth));
         if ((afterFrozenBalance - beforeFrozenBalance != freezeBalance) ||
-                (afterBandwidth - beforeBandwidth != freezeBalance * frozen_duration)){
+                (freezeBalance * frozen_duration -(afterBandwidth - beforeBandwidth) <= 1000000)){
             logger.info("After 20 second, two node still not synchronous");
         }
         Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
-        Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
+        Assert.assertTrue(freezeBalance * frozen_duration - (afterBandwidth - beforeBandwidth) <= 1000000);
         return true;
 
 

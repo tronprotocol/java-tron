@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.db.api.pojo.AssetIssue;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
@@ -76,9 +77,43 @@ public class WalletTest_p1_AssetIssue_003 {
 
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
+            //新建一笔通证，冻结金额大于总供应量，新建失败
+            Assert.assertFalse(CreateAssetIssue(TO_ADDRESS,name,TotalSupply,1,10,start,end,
+                    2,Description,Url,9000000000000000000L,1L,testKey003));
+            //新建一笔通证，冻结时间为0，新建失败
+            Assert.assertFalse(CreateAssetIssue(TO_ADDRESS,name,TotalSupply,1,10,start,end,
+                    2,Description,Url,100L,0L,testKey003));
+            //新建一笔通证，冻结金额为0
+            Assert.assertFalse(CreateAssetIssue(TO_ADDRESS,name,TotalSupply,1,10,start,end,
+                    2,Description,Url,0L,1L,testKey003));
+            //新建一笔通证，冻结时间为负数
+            Assert.assertFalse(CreateAssetIssue(TO_ADDRESS,name,TotalSupply,1,10,start,end,
+                    2,Description,Url,100L,-1L,testKey003));
+            //新建一笔通证，冻结金额为负数
+            Assert.assertFalse(CreateAssetIssue(TO_ADDRESS,name,TotalSupply,1,10,start,end,
+                    2,Description,Url,-1L,1L,testKey003));
             //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,start,end,
-                    2, Description, Url, testKey002));
+            start = System.currentTimeMillis() + 2000;
+            end   = System.currentTimeMillis() + 1000000000;
+            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
+                    2, Description, Url, 1L,1L,testKey002));
+            try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
+                    .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
+            logger.info(Integer.toString(assetIssueList.getAssetIssue(0).getFrozenSupplyCount()));
+            Assert.assertTrue(assetIssueList.getAssetIssue(0).getFrozenSupplyCount() == 1);
+            //Assert.assertTrue(assetIssueList.getAssetIssue(j).getFrozenSupplyCount() > 0);
+            Assert.assertTrue(assetIssueList.getAssetIssue(0).getFrozenSupply(0).getFrozenAmount()>0);
+            Assert.assertTrue(assetIssueList.getAssetIssue(0).getFrozenSupply(0).getFrozenDays() > 0);
+            Assert.assertFalse(UnFreezeAsset(FROM_ADDRESS,testKey002));
+            logger.info("unfreezeasset test");
+
+
+
         }
         else{
             logger.info("This account already create an assetisue");
@@ -108,7 +143,7 @@ public class WalletTest_p1_AssetIssue_003 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                     Integer VoteScore, String Description, String URL, String priKey){
+                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
             //long TotalSupply = 100000000L;
             //int TrxNum = 1;
             //int IcoNum = 100;
@@ -141,14 +176,23 @@ public class WalletTest_p1_AssetIssue_003 {
                 builder.setVoteScore(VoteScore);
                 builder.setDescription(ByteString.copyFrom(Description.getBytes()));
                 builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+                //builder.setFrozenSupply();
+                Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
+                frozenBuilder.setFrozenAmount(fronzenAmount);
+                frozenBuilder.setFrozenDays(frozenDay);
+                builder.addFrozenSupply(0,frozenBuilder);
+
+
 
                 Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
                 if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+                    logger.info("transaction == null");
                     return false;
                 }
                 transaction = signTransaction(ecKey,transaction);
                 Return response = blockingStubFull.broadcastTransaction(transaction);
                 if (response.getResult() == false){
+                    logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
                     return false;
                 }
                 else{
@@ -242,6 +286,46 @@ public class WalletTest_p1_AssetIssue_003 {
             return true;
         }
 
+    }
+
+    public boolean UnFreezeAsset(byte[] Address, String priKey) {
+        byte[] address = Address;
+
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+        //Account search = queryAccount(ecKey, blockingStubFull);
+
+        Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+                .newBuilder();
+        ByteString byteAddreess = ByteString.copyFrom(address);
+
+        builder.setOwnerAddress(byteAddreess);
+
+        Contract.UnfreezeAssetContract contract = builder.build();
+
+
+        Transaction transaction = blockingStubFull.unfreezeAsset(contract);
+
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            return false;
+        }
+
+        transaction = TransactionUtils.setTimestamp(transaction);
+        transaction = TransactionUtils.sign(transaction, ecKey);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+        if (response.getResult() == false){
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+            return false;
+        }
+        else{
+            return true;
+        }
     }
 }
 

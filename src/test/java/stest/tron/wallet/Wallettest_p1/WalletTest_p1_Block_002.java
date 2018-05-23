@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Account;
@@ -43,9 +44,11 @@ public class WalletTest_p1_Block_002 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private ManagedChannel channelFull = null;
+    private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
+    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
     @BeforeClass
     public void beforeClass(){
@@ -53,6 +56,11 @@ public class WalletTest_p1_Block_002 {
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+                .usePlaintext(true)
+                .build();
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
 
 
@@ -102,6 +110,52 @@ public class WalletTest_p1_Block_002 {
     }
 
     @Test(enabled = true)
+    public void TestGetBlockByNumFromSolidity(){
+        //获取当前区块number，如果当前区块number为0，则打印日志，转告测试手动测试该用例或等待有新区块后再测试
+        Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        Assert.assertFalse(currentBlockNum < 0);
+        if (currentBlockNum == 1){
+            logger.info("Now has very little block, Please test this case by manual");
+            Assert.assertTrue(currentBlockNum == 1);
+        }
+
+        //定义一个远远大于当前区块数量都值，使用该值查询区块信息，设备无异常，查询不到区块头信息
+        Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+        NumberMessage.Builder builder1 = NumberMessage.newBuilder();
+        builder1.setNum(outOfCurrentBlockNum);
+        Block outOfCurrentBlock = blockingStubSolidity.getBlockByNum(builder1.build());
+        Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
+
+        //查询第一个区块信息
+        NumberMessage.Builder builder2 = NumberMessage.newBuilder();
+        builder2.setNum(1);
+        Block firstBlock = blockingStubSolidity.getBlockByNum(builder2.build());
+        Assert.assertTrue(firstBlock.hasBlockHeader());
+        Assert.assertFalse(firstBlock.getBlockHeader().getWitnessSignature().isEmpty());
+        Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+        Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+        Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getNumber() == 1);
+        Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+        Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+        logger.info("firstblock test from solidity succesfully");
+
+        //查询当前区块前一个区块信息
+        NumberMessage.Builder builder3 = NumberMessage.newBuilder();
+        builder3.setNum(currentBlockNum -1);
+        Block lastSecondBlock = blockingStubSolidity.getBlockByNum(builder3.build());
+        Assert.assertTrue(lastSecondBlock.hasBlockHeader());
+        Assert.assertFalse(lastSecondBlock.getBlockHeader().getWitnessSignature().isEmpty());
+        Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+        Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+        Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
+        Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+        Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+        logger.info("Last second test from solidity succesfully");
+    }
+
+
+    @Test(enabled = true)
     public void TestGetBlockById(){
 
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -117,19 +171,18 @@ public class WalletTest_p1_Block_002 {
         Assert.assertTrue(setIdOfBlock.getBlockHeader().getRawData().getNumber() + 1  == currentBlock.getBlockHeader().getRawData().getNumber());
         Assert.assertFalse(setIdOfBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
         Assert.assertTrue(setIdOfBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-        //logger.info("By ID test succesfully");
-
-
-
-
-
-
+        logger.info("By ID test succesfully");
     }
+
+
 
     @AfterClass
     public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+        if(channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
+        if(channelSolidity != null) {
+            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 

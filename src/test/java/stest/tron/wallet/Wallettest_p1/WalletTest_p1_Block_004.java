@@ -14,22 +14,21 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-//import stest.tron.wallet.common.client.AccountComparator;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+//import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
+
+//import stest.tron.wallet.common.client.AccountComparator;
+
 @Slf4j
-public class WalletTest_p1_Account_002 {
+public class WalletTest_p1_Block_004 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -44,13 +43,9 @@ public class WalletTest_p1_Account_002 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private ManagedChannel channelFull = null;
-    private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
     //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
     @BeforeClass
     public void beforeClass(){
@@ -58,51 +53,43 @@ public class WalletTest_p1_Account_002 {
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-        search_channelFull = ManagedChannelBuilder.forTarget(search_fullnode)
-                .usePlaintext(true)
-                .build();
-        search_blockingStubFull = WalletGrpc.newBlockingStub(search_channelFull);
     }
 
 
-/*    @Test(enabled = true)
-    public void TestGetAllAccount(){
-        GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
-        Optional<GrpcAPI.AccountList> result = Optional.ofNullable(accountlist);
-        if (result.isPresent()) {
-            GrpcAPI.AccountList accountList = result.get();
-            List<Account> list = accountList.getAccountsList();
-            List<Account> newList = new ArrayList();
-            newList.addAll(list);
-            newList.sort(new AccountComparator());
-            GrpcAPI.AccountList.Builder builder = GrpcAPI.AccountList.newBuilder();
-            newList.forEach(account -> builder.addAccounts(account));
-            result = Optional.of(builder.build());
-        }
-        Assert.assertTrue(result.get().getAccountsCount() > 0);
-        logger.info(Integer.toString(result.get().getAccountsCount()));
-        for (int j = 0; j < result.get().getAccountsCount(); j++){
-            Assert.assertFalse(result.get().getAccounts(j).getAddress().isEmpty());
+    @Test(enabled = true)
+    public void TestGetBlockByLimitNext(){
+        //
+        Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        Assert.assertFalse(currentBlockNum < 0);
+        while (currentBlockNum <= 5){
+            logger.info("Now has very little block, Please wait");
+            currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+            currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
         }
 
+        GrpcAPI.BlockLimit.Builder builder = GrpcAPI.BlockLimit.newBuilder();
+        builder.setStartNum(2);
+        builder.setEndNum(4);
+        GrpcAPI.BlockList blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+        Optional<GrpcAPI.BlockList> getBlockByLimitNext = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLimitNext.isPresent());
+        Assert.assertTrue(getBlockByLimitNext.get().getBlockCount() == 2);
+        logger.info(Long.toString(getBlockByLimitNext.get().getBlock(0).getBlockHeader().getRawData().getNumber()));
+        logger.info(Long.toString(getBlockByLimitNext.get().getBlock(1).getBlockHeader().getRawData().getNumber()));
+        Assert.assertTrue(getBlockByLimitNext.get().getBlock(0).getBlockHeader().getRawData().getNumber() < 4);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlock(1).getBlockHeader().getRawData().getNumber() < 4);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlock(0).hasBlockHeader());
+        Assert.assertTrue(getBlockByLimitNext.get().getBlock(1).hasBlockHeader());
+        Assert.assertFalse(getBlockByLimitNext.get().getBlock(0).getBlockHeader().getRawData().getParentHash().isEmpty());
+        Assert.assertFalse(getBlockByLimitNext.get().getBlock(1).getBlockHeader().getRawData().getParentHash().isEmpty());
+    }
 
-    }*/
 
     @AfterClass
     public void shutdown() throws InterruptedException {
         if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-        if (search_channelFull != null) {
-            search_channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    class AccountComparator implements Comparator {
-
-        public int compare(Object o1, Object o2) {
-            return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
         }
     }
 

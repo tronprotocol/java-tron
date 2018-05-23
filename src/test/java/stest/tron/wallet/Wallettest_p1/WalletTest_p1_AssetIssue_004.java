@@ -81,7 +81,7 @@ public class WalletTest_p1_AssetIssue_004 {
             Long end   = System.currentTimeMillis() + 1000000000;
             //新建一笔通证
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,start,end,
-                    2, Description, Url, testKey002));
+                    2, Description, Url, 1L,1L,testKey002));
         }
         else{
             logger.info("This account already create an assetisue");
@@ -128,16 +128,16 @@ public class WalletTest_p1_AssetIssue_004 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                    Integer VoteScore, String Description, String URL, String priKey){
-            //long TotalSupply = 100000000L;
-            //int TrxNum = 1;
-            //int IcoNum = 100;
-            //long StartTime = 1522583680000L;
-            //long EndTime = 1525089280000L;
-            //int DecayRatio = 1;
-            //int VoteScore = 2;
-            //String Description = "just-test";
-            //String Url = "https://github.com/tronprotocol/wallet-cli/";
+                                    Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
+        //long TotalSupply = 100000000L;
+        //int TrxNum = 1;
+        //int IcoNum = 100;
+        //long StartTime = 1522583680000L;
+        //long EndTime = 1525089280000L;
+        //int DecayRatio = 1;
+        //int VoteScore = 2;
+        //String Description = "just-test";
+        //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -148,41 +148,44 @@ public class WalletTest_p1_AssetIssue_004 {
         ECKey ecKey= temKey;
         Account search = queryAccount(ecKey, blockingStubFull);
 
-            try {
-                Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
-                builder.setOwnerAddress(ByteString.copyFrom(address));
-                builder.setName(ByteString.copyFrom(name.getBytes()));
-                builder.setTotalSupply(TotalSupply);
-                builder.setTrxNum(TrxNum);
-                builder.setNum(IcoNum);
-                builder.setStartTime(StartTime);
-                builder.setEndTime(EndTime);
-                //builder.setDecayRatio(DecayRatio);
-                builder.setVoteScore(VoteScore);
-                builder.setDescription(ByteString.copyFrom(Description.getBytes()));
-                builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+        try {
+            Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+            builder.setOwnerAddress(ByteString.copyFrom(address));
+            builder.setName(ByteString.copyFrom(name.getBytes()));
+            builder.setTotalSupply(TotalSupply);
+            builder.setTrxNum(TrxNum);
+            builder.setNum(IcoNum);
+            builder.setStartTime(StartTime);
+            builder.setEndTime(EndTime);
+            //builder.setDecayRatio(DecayRatio);
+            builder.setVoteScore(VoteScore);
+            builder.setDescription(ByteString.copyFrom(Description.getBytes()));
+            builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+            //builder.setFrozenSupply();
+            Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
+            frozenBuilder.setFrozenAmount(fronzenAmount);
+            frozenBuilder.setFrozenDays(frozenDay);
+            builder.addFrozenSupply(0,frozenBuilder);
 
-                Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
-                if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-                    logger.info("transaction");
 
-                    return false;
-                }
-                transaction = signTransaction(ecKey,transaction);
-                Return response = blockingStubFull.broadcastTransaction(transaction);
-                if (response.getResult() == false){
-                    logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-                    logger.info("getresult == false");
-                    return false;
-                }
-                else{
-                    logger.info(name);
-                    return true;
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+
+            Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
+            if (transaction == null || transaction.getRawData().getContractCount() == 0) {
                 return false;
             }
+            transaction = signTransaction(ecKey,transaction);
+            Return response = blockingStubFull.broadcastTransaction(transaction);
+            if (response.getResult() == false){
+                return false;
+            }
+            else{
+                logger.info(name);
+                return true;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
     }
 
     public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {

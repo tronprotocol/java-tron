@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -44,9 +45,11 @@ public class WalletTest_p1_Block_001 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private ManagedChannel channelFull = null;
+    private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
+    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
     @BeforeClass
     public void beforeClass(){
@@ -54,9 +57,12 @@ public class WalletTest_p1_Block_001 {
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+                .usePlaintext(true)
+                .build();
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
-
-
     @Test
     public void TestCurrentBlock(){
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -71,12 +77,30 @@ public class WalletTest_p1_Block_001 {
         logger.info("test getcurrentblock");
     }
 
+    @Test
+    public void TestCurrentBlockFromSolidity(){
+        Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        //测试是否获取到了当前区块，包括witness签名，区块时间戳，number,witness地址等都进行有效性校验
+        Assert.assertTrue(currentBlock.hasBlockHeader());
+        Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
+        Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+        Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+        Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
+        Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+        Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+        logger.info("test getcurrentblock from solidity ok!!!");
+    }
+
     @AfterClass
     public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+        if(channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
+        if(channelSolidity != null) {
+            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
     }
+
 
     public Account queryAccount(String priKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
         byte[] address;

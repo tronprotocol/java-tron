@@ -12,30 +12,30 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.protos.Protocol;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-//import stest.tron.wallet.common.client.AccountComparator;
+import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_Account_002 {
+public class WalletTest_p1_Block_003 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
     private final static  String testKey002     = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
     private final static  String testKey003     = "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
     private final static  String testKey004     = "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
+    private final static  String notexist01     = "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
 
     //testng001、testng002、testng003、testng004
     private static final byte[] BACK_ADDRESS    = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
@@ -44,13 +44,11 @@ public class WalletTest_p1_Account_002 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private ManagedChannel channelFull = null;
-    private ManagedChannel search_channelFull = null;
+    private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
+    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
+    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
     @BeforeClass
     public void beforeClass(){
@@ -59,55 +57,35 @@ public class WalletTest_p1_Account_002 {
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-        search_channelFull = ManagedChannelBuilder.forTarget(search_fullnode)
+        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
                 .usePlaintext(true)
                 .build();
-        search_blockingStubFull = WalletGrpc.newBlockingStub(search_channelFull);
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
 
+    @Test(enabled = true)
+    public void TestGetNextMaintenanceTime(){
+        //fullnode查询交易总数
+        long now = System.currentTimeMillis();
+        NumberMessage getNextMaintenanceTime = blockingStubFull.getNextMaintenanceTime(GrpcAPI.EmptyMessage.newBuilder().build());
+        logger.info(Long.toString(getNextMaintenanceTime.getNum()));
+        Assert.assertTrue(getNextMaintenanceTime.getNum() > now);
 
-/*    @Test(enabled = true)
-    public void TestGetAllAccount(){
-        GrpcAPI.AccountList accountlist = blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
-        Optional<GrpcAPI.AccountList> result = Optional.ofNullable(accountlist);
-        if (result.isPresent()) {
-            GrpcAPI.AccountList accountList = result.get();
-            List<Account> list = accountList.getAccountsList();
-            List<Account> newList = new ArrayList();
-            newList.addAll(list);
-            newList.sort(new AccountComparator());
-            GrpcAPI.AccountList.Builder builder = GrpcAPI.AccountList.newBuilder();
-            newList.forEach(account -> builder.addAccounts(account));
-            result = Optional.of(builder.build());
-        }
-        Assert.assertTrue(result.get().getAccountsCount() > 0);
-        logger.info(Integer.toString(result.get().getAccountsCount()));
-        for (int j = 0; j < result.get().getAccountsCount(); j++){
-            Assert.assertFalse(result.get().getAccounts(j).getAddress().isEmpty());
-        }
-
-
-    }*/
+    }
 
     @AfterClass
     public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+        if(channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
-        if (search_channelFull != null) {
-            search_channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        if(channelSolidity != null) {
+            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 
-    class AccountComparator implements Comparator {
+    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
 
-        public int compare(Object o1, Object o2) {
-            return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
-        }
-    }
-
-    public Account queryAccount(String priKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
-        byte[] address;
+        //String priKey = testKey002;
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -116,6 +94,32 @@ public class WalletTest_p1_Account_002 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
+        Account search = queryAccount(ecKey, blockingStubFull);
+
+        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+        ByteString bsTo = ByteString.copyFrom(to);
+        ByteString bsOwner = ByteString.copyFrom(owner);
+        builder.setToAddress(bsTo);
+        builder.setOwnerAddress(bsOwner);
+        builder.setAmount(amount);
+
+        Contract.TransferContract contract =  builder.build();
+        Transaction transaction = blockingStubFull.createTransaction(contract);
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            return false;
+        }
+        transaction = signTransaction(ecKey,transaction);
+        Return response = blockingStubFull.broadcastTransaction(transaction);
+        if (response.getResult() == false){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
+    public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
+        byte[] address;
         if (ecKey == null) {
             String pubKey = loadPubKey(); //04 PubKey[128]
             if (StringUtils.isEmpty(pubKey)) {
@@ -128,8 +132,6 @@ public class WalletTest_p1_Account_002 {
         }
         return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
     }
-
-
 
     public static String loadPubKey() {
         char[] buf = new char[0x100];
@@ -151,6 +153,15 @@ public class WalletTest_p1_Account_002 {
         builder.setNum(blockNum);
         return blockingStubFull.getBlockByNum(builder.build());
 
+    }
+
+    private Transaction signTransaction(ECKey ecKey, Transaction transaction) {
+        if (ecKey == null || ecKey.getPrivKey() == null) {
+            logger.warn("Warning: Can't sign,there is no private key !!");
+            return null;
+        }
+        transaction = TransactionUtils.setTimestamp(transaction);
+        return TransactionUtils.sign(transaction, ecKey);
     }
 }
 

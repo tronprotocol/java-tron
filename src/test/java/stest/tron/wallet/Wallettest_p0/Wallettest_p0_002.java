@@ -90,7 +90,7 @@ public class Wallettest_p0_002 {
             }
             //新建一笔通证
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,100,now +900000,now+10000000000L,
-                    1, Description, Url, testKey002));
+                    1, Description, Url, 1L,1L,testKey002));
         }
         else{
             logger.info("This account already create an assetisue");
@@ -232,7 +232,7 @@ public class Wallettest_p0_002 {
     }
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                    Integer VoteScore, String Description, String URL, String priKey){
+                                    Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
         //long TotalSupply = 100000000L;
         //int TrxNum = 1;
         //int IcoNum = 100;
@@ -265,16 +265,21 @@ public class Wallettest_p0_002 {
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+            //builder.setFrozenSupply();
+            Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
+            frozenBuilder.setFrozenAmount(fronzenAmount);
+            frozenBuilder.setFrozenDays(frozenDay);
+            builder.addFrozenSupply(0,frozenBuilder);
+
+
 
             Protocol.Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
             if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-                logger.info("transaction == null, create assetissue failed");
                 return false;
             }
             transaction = signTransaction(ecKey,transaction);
             GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
             if (response.getResult() == false){
-                logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
                 return false;
             }
             else{

@@ -73,8 +73,12 @@ public class WalletTest_p1_Witness_003 {
         Assert.assertFalse(CreateWitness(FROM_ADDRESS,createUrl, testKey002));
 
         //从一个账户转入足额到资产到Low_Bal_ADDRESS账户，使该账户可以申请成为witness
+        Account lowAccount = queryAccount(lowBalTest,blockingStubFull);
+        if (lowAccount.getBalance()<costForCreateWitness)
+        {
+            Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, costForCreateWitness,FROM_ADDRESS, testKey002));
+        }
 
-        Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, costForCreateWitness,FROM_ADDRESS, testKey002));
         Account search1 = queryAccount(lowBalTest, blockingStubFull);
         Long beforeCreateWitnessBalance = search1.getBalance();
 

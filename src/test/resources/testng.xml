@@ -2,13 +2,13 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
 <suite name="demo suite" >
-    <test name="demoTests">
+    <test name="demoTests" preserve-order="true">
         <packages>
-            <package name="stest.tron.wallet.*">
-            </package>
-        </packages>
+        <package name="stest.tron.wallet.*">
+        </package>
+    </packages>
 <!--        <classes>
-            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_002">
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_003">
             </class>
         </classes>-->
     </test>
