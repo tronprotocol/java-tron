@@ -721,7 +721,8 @@ public class Manager {
           return;
         }
 
-        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()) {
+        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
           return;
         }
 
