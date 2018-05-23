@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -140,8 +139,8 @@ public class Manager {
   private ExecutorService validateSignService;
 
   @Getter
-  private Cache<Sha256Hash, Boolean> transHashCache = CacheBuilder
-      .newBuilder().expireAfterWrite(1, TimeUnit.DAYS).recordStats().build();
+  private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
+      .newBuilder().maximumSize(100_000).recordStats().build();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -296,7 +295,6 @@ public class Manager {
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
 
-    loadTransHashCache();
   }
 
   public BlockId getGenesisBlockId() {
@@ -1116,7 +1114,7 @@ public class Manager {
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      this.transHashCache.put(transactionCapsule.getHash(), true);
+      this.transactionIdCache.put(transactionCapsule.getHash(), true);
     }
   }
 
@@ -1352,31 +1350,9 @@ public class Manager {
     }
   }
 
-  private void loadTransHashCache() {
-    long num = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    long earliestTime = this.getHeadBlockTimeStamp() - Constant.MAXIMUM_TIME_UNTIL_EXPIRATION;
-    while (num > 0) {
-      BlockCapsule block = null;
-      try {
-        block = this.getBlockByNum(num);
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      }
-      if (block.getTimeStamp() < earliestTime) {
-        break;
-      }
-      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-          transHashCache.put(transactionCapsule.getTransactionId(), true);
-      }
-      num--;
-    }
-  }
-
   private void unCacheTransactionOfBlock(BlockCapsule blockCapsule) {
     for (TransactionCapsule transactionCapsule : blockCapsule.getTransactions()) {
-      transHashCache.invalidate(transactionCapsule.getTransactionId());
+      transactionIdCache.invalidate(transactionCapsule.getTransactionId());
     }
   }
 }
