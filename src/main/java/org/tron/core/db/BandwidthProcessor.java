@@ -1,24 +1,53 @@
 package org.tron.core.db;
 
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
+
 import com.google.protobuf.ByteString;
+import com.google.common.math.LongMath;
 import java.util.List;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-
 public class BandwidthProcessor {
 
   private Manager dbManager;
+  private long precision;
 
   public BandwidthProcessor(Manager manager){
     this.dbManager = manager;
+    this.precision = ChainConstant.PRECISION;
+  }
+
+  private long divideCeil(long numerator, long denominator) {
+    return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
+  }
+
+  private long increase(long lastUsage, long usage, long lastTime, long now, long windowSize)
+      throws ValidateBandwidthException {
+    long averageUsage = divideCeil(usage * precision, windowSize);
+
+    if (lastTime != now) {
+      if (now < lastTime) {
+        throw new ValidateBandwidthException("new operation time must more than last time");
+      }
+      ;
+      if (lastTime + windowSize > now) {
+        long delta = now - lastTime;
+        double decay = (windowSize - delta) / windowSize;
+        lastUsage = Math.round(lastUsage * decay);
+      } else {
+        lastUsage = 0;
+      }
+    }
+    lastUsage += averageUsage; // 更新新的平均使用量
+    return lastUsage;
   }
 
   public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {

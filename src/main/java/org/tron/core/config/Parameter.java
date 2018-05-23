@@ -17,6 +17,7 @@ public interface Parameter {
     long CLOCK_MAX_DELAY = 3600 * 1000; //ms
     double BLOCK_PRODUCED_TIME_OUT = 0.75;
     long BATCH_FETCH_RESPONSE_SIZE = 1000; //for each inventory message from peer, the max count of fetch inv message
+    long PRECISION = 1000_000;
   }
 
   interface NodeConstant {
