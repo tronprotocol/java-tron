@@ -314,8 +314,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  public Map<String, Long> getLatestAssetOperationTimeMap() {
-    return this.account.getLatestAssetOperationTimeMap();
+  public long getLatestAssetOperationTimeMap(String assetName) {
+    return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
   }
 
   public void putLatestAssetOperationTimeMap(String key, Long value) {
@@ -406,6 +406,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public long getNetUsage() {
+    return this.account.getNetUsage();
+  }
+
+  public void setNetUsage(long netUsage) {
+    this.account = this.account.toBuilder()
+        .setNetUsage(netUsage).build();
+  }
 
   public long getFreeNetUsage() {
     return this.account.getFreeNetUsage();
@@ -417,7 +425,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getFreeAssetNetUsage(String assetName) {
-    return this.account.getFreeAssetNetUsageMap().get(assetName);
+    return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
   }
 
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
