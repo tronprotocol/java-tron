@@ -75,6 +75,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
 
+  private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
     super(dbName);
@@ -204,7 +206,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveNonExistentAccountTransferLimit(1_000_000L);
     }
 
-
     try {
       this.getPublicNetUsage();
     } catch (IllegalArgumentException e) {
@@ -227,6 +228,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalNetLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalNetLimit(43_200_000_000L);
+    }
+
+    try {
+      this.getBlockNetUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockNetUsage(0L);
     }
 
     try {
@@ -545,6 +552,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
+  }
+
+  public void saveBlockNetUsage(long blockNetUsage) {
+    this.put(BLOCK_NET_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getBlockNetUsage() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_NET_USAGE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
   }
 
 
