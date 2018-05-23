@@ -11,6 +11,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.util.internal.ConcurrentSet;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,6 +53,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.StoreException;
@@ -72,6 +74,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 @Component
@@ -194,6 +197,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
+
+  private ExecutorService trxsHandlePool = Executors
+      .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum(),
+          new ThreadFactoryBuilder()
+              .setNameFormat("TrxsHandlePool-%d").build());
 
   //public
   //TODO:need auto erase oldest block
@@ -887,8 +895,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    msg.getTransactions().getTransactionsList().forEach(transaction ->
-        onHandleTransactionMessage(peer, new TransactionMessage(transaction)));
+    for (Transaction trans : msg.getTransactions().getTransactionsList()) {
+      trxsHandlePool
+          .submit(() -> onHandleTransactionMessage(peer, new TransactionMessage(trans)));
+    }
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
