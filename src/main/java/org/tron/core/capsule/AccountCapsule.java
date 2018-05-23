@@ -371,15 +371,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getLatestWithdrawTime();
   }
 
-  public long getBandwidth() {
-    return getInstance().getBandwidth();
-  }
-
-  public void setBandwidth(long bandwidth) {
-    this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
-
-  }
-
   public boolean getIsWitness() {
     return getInstance().getIsWitness();
   }
@@ -425,24 +416,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setFreeNetUsage(freeNetUsage).build();
   }
 
-  public Map<String, Long> getLatestAssetFreeOperationCountMap() {
-    return this.account.getAssetFreeOperationCountMap();
+  public long getFreeAssetNetUsage(String assetName) {
+    return this.account.getFreeAssetNetUsageMap().get(assetName);
   }
 
-  public void putLatestAssetFreeOperationCountMap(String s, long latestAssetFreeOperationCount) {
+  public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
     this.account = this.account.toBuilder()
-        .putAssetFreeOperationCount(s, latestAssetFreeOperationCount).build();
-  }
-
-  public Map<String, Long> getAssetNextRefreshCountTimeMap() {
-    return this.account.getAssetNextRefreshCountTimeMap();
-  }
-
-  public void refreshAssetCountTime(String s, long now) {
-    long nextRefreshTime = (now / 86400000L + 1) * 86400000L;
-
-    this.account = this.account.toBuilder()
-        .putAssetNextRefreshCountTime(s, nextRefreshTime).build();
+        .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
   }
 
 }
