@@ -69,8 +69,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
+  private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
+
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
 
+  private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
@@ -209,12 +212,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getPublicNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.savePublicNetLimit(14_400_000_000L);
+    }
+
+    try {
       this.getTotalNetWeight();
     } catch (IllegalArgumentException e) {
       this.saveTotalNetWeight(0L);
     }
 
-    
+    try {
+      this.getTotalNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalNetLimit(43_200_000_000L);
+    }
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -498,6 +511,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found PUBLIC_NET_USAGE"));
   }
 
+  public void savePublicNetLimit(long publicNetLimit) {
+    this.put(PUBLIC_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(publicNetLimit)));
+  }
+
+  public long getPublicNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found PUBLIC_NET_LIMIT"));
+  }
+
   public void saveTotalNetWeight(long totalNetWeight) {
     this.put(TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
@@ -509,8 +534,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
-  
 
+  public void saveTotalNetLimit(long totalNetLimit) {
+    this.put(TOTAL_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalNetLimit)));
+  }
+
+  public long getTotalNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
+  }
 
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
