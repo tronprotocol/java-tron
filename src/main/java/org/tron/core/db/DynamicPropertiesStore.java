@@ -73,6 +73,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] PUBLIC_NET_TIME = "PUBLIC_NET_TIME".getBytes();
 
+  private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
+
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
 
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
@@ -224,6 +226,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getPublicNetTime();
     } catch (IllegalArgumentException e) {
       this.savePublicNetTime(0L);
+    }
+
+    try {
+      this.getFreeNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveFreeNetLimit(1000L);
     }
 
     try {
@@ -548,6 +556,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found PUBLIC_NET_TIME"));
+  }
+
+  public void saveFreeNetLimit(long freeNetLimit) {
+    this.put(FREE_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(freeNetLimit)));
+  }
+
+  public long getFreeNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(FREE_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found FREE_NET_LIMIT"));
   }
 
   public void saveTotalNetWeight(long totalNetWeight) {
