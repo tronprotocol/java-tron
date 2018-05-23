@@ -225,6 +225,7 @@ public class Wallet {
         if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
           throw new DupTransactionException("has processed");
         } else {
+          logger.info("put trans id");
           dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
         }
         dbManager.pushTransactions(trx);
