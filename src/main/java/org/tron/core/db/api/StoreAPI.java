@@ -214,13 +214,12 @@ public class StoreAPI {
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-        index.retrieve(
-                all(WrappedByteArray.class),
-                queryOptions(
-                        equal(TransactionIndex.OWNERS, address),
-                        orderBy(ascending(TransactionIndex.TIMESTAMP)),
-                        applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
-      if(limit > TRANSACTIONS_COUNT_LIMIT_MAX){
+                 index.retrieve(
+                         equal(TransactionIndex.OWNERS, address),
+                         queryOptions(
+                                 orderBy(ascending(TransactionIndex.TIMESTAMP)),
+                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+      if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
         limit = TRANSACTIONS_COUNT_LIMIT_MAX;
       }
       return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
@@ -230,11 +229,7 @@ public class StoreAPI {
   public long getTransactionsFromThisCount(String address) {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-                 index.retrieve(
-                         all(WrappedByteArray.class),
-                         queryOptions(
-                                 equal(TransactionIndex.OWNERS, address),
-                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
+                 index.retrieve(equal(TransactionIndex.OWNERS, address))) {
       return resultSet.size();
     }
   }
@@ -247,12 +242,11 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-                all(WrappedByteArray.class),
+                equal(TransactionIndex.TOS, address),
                 queryOptions(
-                        equal(TransactionIndex.TOS, address),
                         orderBy(ascending(TransactionIndex.TIMESTAMP)),
                         applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
-      if(limit > TRANSACTIONS_COUNT_LIMIT_MAX){
+      if(limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
         limit = TRANSACTIONS_COUNT_LIMIT_MAX;
       }
       return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
@@ -262,11 +256,7 @@ public class StoreAPI {
   public long getTransactionsToThisCount(String address) {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-                 index.retrieve(
-                         all(WrappedByteArray.class),
-                         queryOptions(
-                                 equal(TransactionIndex.TOS, address),
-                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))){
+                 index.retrieve(equal(TransactionIndex.TOS, address))) {
       return resultSet.size();
     }
   }

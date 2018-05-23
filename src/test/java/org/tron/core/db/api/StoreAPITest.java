@@ -443,26 +443,26 @@ public class StoreAPITest {
 
   @Test
   public void getTransactionsFromThis() {
-    List<Transaction> transactionList = storeAPI.getTransactionsFromThis(ACCOUNT_ADDRESS_ONE);
+    List<Transaction> transactionList = storeAPI.getTransactionsFromThis(ACCOUNT_ADDRESS_ONE,0,1000);
     Assert.assertEquals("TransactionsFromThis1", transaction1, transactionList.get(0));
-    transactionList = storeAPI.getTransactionsFromThis(ACCOUNT_ADDRESS_TWO);
+    transactionList = storeAPI.getTransactionsFromThis(ACCOUNT_ADDRESS_TWO,0,1000);
     Assert.assertEquals("TransactionsFromThis2", transaction2, transactionList.get(0));
-    transactionList = storeAPI.getTransactionsFromThis(null);
+    transactionList = storeAPI.getTransactionsFromThis(null,0,1000);
     Assert.assertEquals("TransactionsFromThis3", 0, transactionList.size());
-    transactionList = storeAPI.getTransactionsFromThis("");
+    transactionList = storeAPI.getTransactionsFromThis("",0,1000);
     Assert.assertEquals("TransactionsFromThis4", 0, transactionList.size());
   }
 
   @Test
   public void getTransactionsToThis() {
 
-    List<Transaction> transactionList = storeAPI.getTransactionsToThis(ACCOUNT_ADDRESS_TWO);
+    List<Transaction> transactionList = storeAPI.getTransactionsToThis(ACCOUNT_ADDRESS_TWO,0,1000);
     Assert.assertEquals("TransactionsToThis1", transaction1, transactionList.get(0));
-    transactionList = storeAPI.getTransactionsToThis(ACCOUNT_ADDRESS_THREE);
+    transactionList = storeAPI.getTransactionsToThis(ACCOUNT_ADDRESS_THREE,0,1000);
     Assert.assertEquals("TransactionsToThis2", transaction2, transactionList.get(0));
-    transactionList = storeAPI.getTransactionsToThis(null);
+    transactionList = storeAPI.getTransactionsToThis(null,0,1000);
     Assert.assertEquals("TransactionsToThis3", 0, transactionList.size());
-    transactionList = storeAPI.getTransactionsToThis("");
+    transactionList = storeAPI.getTransactionsToThis("",0,1000);
     Assert.assertEquals("TransactionsToThis4", 0, transactionList.size());
   }
 

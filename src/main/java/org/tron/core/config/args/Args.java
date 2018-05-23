@@ -374,7 +374,7 @@ public class Args {
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
 
-    INSTANCE.getTransactionsFromThisFeature = config.hasPath("apiFeatures.getTransactionsFromThis") && config.getBoolean("apiFeatures.getTransactionsFromThis");
+    INSTANCE.getTransactionsFromThisFeature = config.hasPath("apiFeatures.getTransactionsFromThisFeature") && config.getBoolean("apiFeatures.getTransactionsFromThisFeature");
 
     INSTANCE.getTransactionsToThisFeature = config.hasPath("apiFeatures.getTransactionsToThisFeature") && config.getBoolean("apiFeatures.getTransactionsToThisFeature");
 
