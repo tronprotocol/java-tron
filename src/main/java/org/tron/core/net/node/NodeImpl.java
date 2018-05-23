@@ -548,16 +548,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       Set<BlockMessage> pool = new HashSet<>();
       pool.addAll(blockWaitToProc);
       pool.forEach(msg -> {
+        final boolean[] isFound = {false};
         getActivePeer().stream()
                 .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
                 .forEach(peer -> {
                   peer.getSyncBlockToFetch().pop();
                   peer.getBlockInProc().add(msg.getBlockId());
-                  isBlockProc[0] = true;
+                  isFound[0] = true;
                 });
-
-        if (isBlockProc[0]) {
+        if (isFound[0]) {
           blockWaitToProc.remove(msg);
+          isBlockProc[0] = true;
           if (freshBlockId.contains(msg.getBlockId()) || processSyncBlock(msg.getBlockCapsule())) {
             finishProcessSyncBlock(msg.getBlockId());
           }
@@ -781,6 +782,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       del.handleBlock(block, true);
       freshBlockId.offer(block.getBlockId());
+      logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;
     } catch (BadBlockException e) {
       logger.error("We get a bad block {}, reason is {} ", block.getBlockId().getString(), e.getMessage());
