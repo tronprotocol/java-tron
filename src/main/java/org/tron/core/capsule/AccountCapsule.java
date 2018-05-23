@@ -432,7 +432,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void increaseFreeOperationCount() {
-    this.account = this.account.toBuilder()
+    this.account = this.account.toBuilder().
         .setFreeOperationCount(this.account.getFreeOperationCount() + 1).build();
   }
 

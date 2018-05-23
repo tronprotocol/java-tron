@@ -67,10 +67,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
-  private static final byte[] FREE_OPERATING_TIME_INTERVAL = "FREE_OPERATING_TIME_INTERVAL".getBytes();
+  private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
-  private static final byte[] FREE_OPERATING_LIMIT_IN_A_CYCLE = "FREE_OPERATING_LIMIT_IN_A_CYCLE"
-      .getBytes();
+  private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
 
 
   @Autowired
@@ -204,15 +203,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
     try {
-      this.getFreeOperatingTimeInterval();
+      this.getPublicNetUsage();
     } catch (IllegalArgumentException e) {
-      this.saveOperatingTimeInterval(8_000L);
+      this.savePublicNetUsage(0L);
     }
 
     try {
-      this.getFreeOperatingLimit();
+      this.getTotalNetWeight();
     } catch (IllegalArgumentException e) {
-      this.saveFreeOperatingLimit(20L);
+      this.saveTotalNetWeight(0L);
     }
 
     
@@ -487,30 +486,28 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void saveOperatingTimeInterval(long time) {
-    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + time);
-    this.put(FREE_OPERATING_TIME_INTERVAL,
-        new BytesCapsule(ByteArray.fromLong(time)));
+  public void savePublicNetUsage(long publicNetUsage) {
+    this.put(PUBLIC_NET_USAGE,
+        new BytesCapsule(ByteArray.fromLong(publicNetUsage)));
   }
 
-  public long getFreeOperatingTimeInterval() {
-    return Optional.ofNullable(this.dbSource.getData(FREE_OPERATING_TIME_INTERVAL))
+  public long getPublicNetUsage() {
+    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_USAGE))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found FREE_OPERATING_TIME_INTERVAL"));
+            () -> new IllegalArgumentException("not found PUBLIC_NET_USAGE"));
   }
 
-  public void saveFreeOperatingLimit(long time) {
-    logger.debug("FREE_OPERATING_LIMIT_IN_A_CYCLE:" + time);
-    this.put(FREE_OPERATING_LIMIT_IN_A_CYCLE,
-        new BytesCapsule(ByteArray.fromLong(time)));
+  public void saveTotalNetWeight(long totalNetWeight) {
+    this.put(TOTAL_NET_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
-  public long getFreeOperatingLimit() {
-    return Optional.ofNullable(this.dbSource.getData(FREE_OPERATING_LIMIT_IN_A_CYCLE))
+  public long getTotalNetWeight() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_WEIGHT))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found FREE_OPERATING_LIMIT_IN_A_CYCLE"));
+            () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
   
 
