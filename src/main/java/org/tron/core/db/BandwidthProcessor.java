@@ -14,6 +14,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
@@ -87,6 +88,10 @@ public class BandwidthProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
+      if (contractCreateNewAccount(contract)) {
+        consumeForCreateNewAccount(accountCapsule, now);
+      }
+
       if (contract.getType() == TransferAssetContract) {
         if (useAssetAccountNet(contract, accountCapsule, now, bytes)) {
           continue;
@@ -102,6 +107,60 @@ public class BandwidthProcessor {
       }
 
       throw new ValidateBandwidthException("bandwidth is not enough");
+    }
+  }
+
+  private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
+      throws ValidateBandwidthException {
+    long cost = getCreateNewAccountCost();
+
+    long weight = accountCapsule.getFrozenBalance();
+    long netUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long netLimit = weight * totalNetLimit / totalNetWeight;
+
+    long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+
+    if (cost <= (netLimit - newNetUsage)) {
+      newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
+      accountCapsule.setNetUsage(newNetUsage);
+    } else {
+      throw new ValidateBandwidthException("bandwidth is not enough to create new account");
+    }
+
+  }
+
+  private long getCreateNewAccountCost() {
+    //to be determined
+    return 10000;//100*100
+  }
+
+  private boolean contractCreateNewAccount(Contract contract) {
+    AccountCapsule toAccount;
+    switch (contract.getType()) {
+      case TransferContract:
+        TransferContract transferContract;
+        try {
+          transferContract = contract.getParameter().unpack(TransferContract.class);
+        } catch (Exception ex) {
+          throw new RuntimeException(ex.getMessage());
+        }
+        toAccount = dbManager.getAccountStore().get(transferContract.getToAddress().toByteArray());
+        return toAccount == null;
+      case TransferAssetContract:
+        TransferAssetContract transferAssetContract;
+        try {
+          transferAssetContract = contract.getParameter().unpack(TransferAssetContract.class);
+        } catch (Exception ex) {
+          throw new RuntimeException(ex.getMessage());
+        }
+        toAccount = dbManager.getAccountStore()
+            .get(transferAssetContract.getToAddress().toByteArray());
+        return toAccount == null;
+      default:
+        return false;
     }
   }
 
@@ -175,8 +234,7 @@ public class BandwidthProcessor {
     return false;
   }
 
-  private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now)
-      throws ValidateBandwidthException {
+  private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
 
     long weight = accountCapsule.getFrozenBalance();
     long netUsage = accountCapsule.getNetUsage();
@@ -205,8 +263,7 @@ public class BandwidthProcessor {
     return false;
   }
 
-  private boolean useFreeNet(AccountCapsule accountCapsule, long bytes, long now)
-      throws ValidateBandwidthException {
+  private boolean useFreeNet(AccountCapsule accountCapsule, long bytes, long now) {
 
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long freeNetUsage = accountCapsule.getFreeNetUsage();
