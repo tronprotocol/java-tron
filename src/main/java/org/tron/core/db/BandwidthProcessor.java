@@ -110,7 +110,7 @@ public class BandwidthProcessor {
     }
   }
 
-  private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
+  public void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
       throws ValidateBandwidthException {
     long cost = ChainConstant.CREATE_NEW_ACCOUNT_COST;
 
@@ -135,7 +135,7 @@ public class BandwidthProcessor {
 
   }
 
-  private boolean contractCreateNewAccount(Contract contract) {
+  public boolean contractCreateNewAccount(Contract contract) {
     AccountCapsule toAccount;
     switch (contract.getType()) {
       case TransferContract:
