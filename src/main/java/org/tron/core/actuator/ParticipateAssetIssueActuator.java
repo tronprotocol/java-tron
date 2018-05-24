@@ -32,6 +32,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 
 @Slf4j
@@ -44,50 +45,53 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-    final ParticipateAssetIssueContract participateAssetIssueContract;
     try {
-      participateAssetIssueContract = contract.unpack(Contract.ParticipateAssetIssueContract.class);
+      final ParticipateAssetIssueContract participateAssetIssueContract =
+          contract.unpack(Contract.ParticipateAssetIssueContract.class);
+      long cost = participateAssetIssueContract.getAmount();
+
+      //subtract from owner address
+      byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
+      long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
+      balance = Math.subtractExact(balance, fee);
+      ownerAccount.setBalance(balance);
+
+      //calculate the exchange amount
+      AssetIssueCapsule assetIssueCapsule =
+          this.dbManager.getAssetIssueStore()
+              .get(participateAssetIssueContract.getAssetName().toByteArray());
+      long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
+      exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
+      ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
+
+      //add to to_address
+      byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
+      try {
+        toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
+      } catch (ArithmeticException e) {
+        logger.debug(e.getMessage(), e);
+        ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
+        throw new ContractExeException(e.getMessage());
+      }
+      if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
+        throw new ContractExeException("reduceAssetAmount failed !");
+      }
+
+      //write to db
+      dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
+      dbManager.getAccountStore().put(toAddressBytes, toAccount);
+      ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
-    }
-
-    long cost = participateAssetIssueContract.getAmount();
-
-    //subtract from owner address
-    byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
-    AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
-    long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
-    balance = Math.subtractExact(balance, fee);
-    ownerAccount.setBalance(balance);
-
-    //calculate the exchange amount
-    AssetIssueCapsule assetIssueCapsule =
-        this.dbManager.getAssetIssueStore()
-            .get(participateAssetIssueContract.getAssetName().toByteArray());
-    long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
-    exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
-    ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
-
-    //add to to_address
-    byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
-    AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
-    try {
-      toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-    if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
-      throw new ContractExeException("reduceAssetAmount failed !");
-    }
-
-    //write to db
-    dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
-    dbManager.getAccountStore().put(toAddressBytes, toAccount);
-    ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
 
     return true;
   }
