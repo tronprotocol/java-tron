@@ -325,6 +325,18 @@ public class Wallet {
     return builder.build();
   }
 
+  public NumberMessage getAccountNetLimit(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.size() == 0) {
+      return null;
+    }
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long netLimit = accountCapsule.getFrozenBalance() * totalNetLimit / totalNetWeight;
+    return builder.setNum(netLimit).build();
+  }
+
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
     if (assetName == null || assetName.size() == 0) {
       return null;

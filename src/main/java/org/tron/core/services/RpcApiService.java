@@ -632,6 +632,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getAccountNetLimit(Account request,
+        StreamObserver<NumberMessage> responseObserver) {
+      ByteString fromBs = request.getAddress();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAccountNetLimit(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
       ByteString asertName = request.getValue();
