@@ -64,7 +64,7 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
         attribute("block id",
             bytes -> {
               Block block = getObject(bytes);
-              return Sha256Hash.of(block.getBlockHeader().toByteArray()).toString();
+              return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()).toString();
             });
     Block_NUMBER =
         attribute("block number",
