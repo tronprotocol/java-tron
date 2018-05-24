@@ -135,13 +135,11 @@ public class TransferAssetActuator extends AbstractActuator {
       }
 
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
-      if (toAccount == null) {
-        throw new ContractValidateException("To account is not exit!");
-      }
-
-      assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
-      if (assetBalance != null) {
-        assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+      if (toAccount != null) {
+        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
+        if (assetBalance != null) {
+          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+        }
       }
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());

@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -112,7 +111,6 @@ public class TransferActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not sufficient.");
       }
 
-      // if account with to_address is not existed, the minimum amount is 1 TRX
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(transferContract.getToAddress().toByteArray());
       if (toAccount != null) {
