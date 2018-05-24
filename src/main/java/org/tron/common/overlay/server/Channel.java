@@ -92,6 +92,8 @@ public class Channel {
 
     private boolean isActive;
 
+    private volatile boolean isDisconnect;
+
     private String remoteId;
 
     private PeerStatistics peerStats = new PeerStatistics();
@@ -149,6 +151,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
+        this.isDisconnect = true;
         DisconnectMessage msg = new DisconnectMessage(reason);
         logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
         getNodeStatistics().nodeDisconnectedLocal(reason);
@@ -240,6 +243,10 @@ public class Channel {
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public boolean isDisconnect(){
+        return isDisconnect;
     }
 
     public boolean isProtocolsInitialized() {
