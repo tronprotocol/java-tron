@@ -9,6 +9,8 @@ public interface Parameter {
     long VOTE_WITNESS_FEE = 10000; // 10000 drop
     long CREATE_ACCOUNT_FEE = 10000; // 10000 drop
     long WITNESS_PAY_PER_BLOCK = 32000000;  // 32trx
+    long WITNESS_STANDBY_PAY = 230_400_000_000L;// 6 * 1200 * 32000000
+    int WITNESS_STANDBY_LENGTH = 127;
     double SOLIDIFIED_THRESHOLD = 0.7;
     int PRIVATE_KEY_LENGTH = 64;
     int MAX_ACTIVE_WITNESS_NUM = 27;
