@@ -1,24 +1,24 @@
 package stest.tron.wallet.Wallettest_p0;
 
 
-import java.util.HashMap;
-import java.util.Optional;
-import stest.tron.wallet.common.client.Configuration;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-//import org.tron.api.GrpcAPI.AccountList;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.WalletGrpc;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import lombok.extern.slf4j.Slf4j;
-import org.testng.annotations.*;
-import org.tron.protos.Protocol;
+import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
-import org.testng.annotations.*;
-import org.testng.Assert;
+
+//import org.tron.api.GrpcAPI.AccountList;
 
 @Slf4j
 public class Wallettest_p0_001 {
@@ -86,19 +86,8 @@ public class Wallettest_p0_001 {
 
         //check freezeBalance
         //walletClient.freezeBalance(AMOUNT, F_DURATION);
-        long frozenbefore = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
         boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
-        long frozenafter = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
         Assert.assertTrue(ret);
-        logger.info(Long.toString(frozenbefore));
-        logger.info(Long.toString(frozenafter));
-
-
-        //fraeeze trans
-        boolean test = ((frozenafter - frozenbefore) == AMOUNT * F_DURATION ) || ((frozenafter - frozenbefore) == AMOUNT * F_DURATION -ZUIDIXIAOFEI );
-
-        //Assert.assertTrue(test); ;
-        Assert.assertEquals(checkclient.queryAccount(FROM_ADDRESS).getBandwidth(), walletClient.queryAccount(FROM_ADDRESS).getBandwidth());
 
         //check sendcoin
         long balancebefore = walletClient.queryAccount(FROM_ADDRESS).getBalance();
