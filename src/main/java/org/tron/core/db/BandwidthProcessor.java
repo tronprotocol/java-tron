@@ -80,7 +80,7 @@ public class BandwidthProcessor {
         trx.getInstance().getRawData().getContractList();
 
     for (Contract contract : contracts) {
-      long bytes = contract.toByteArray().length;
+      long bytes = trx.getSerializedSize();
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -112,7 +112,7 @@ public class BandwidthProcessor {
 
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
       throws ValidateBandwidthException {
-    long cost = getCreateNewAccountCost();
+    long cost = ChainConstant.CREATE_NEW_ACCOUNT_COST;
 
     long weight = accountCapsule.getFrozenBalance();
     long netUsage = accountCapsule.getNetUsage();
@@ -124,17 +124,14 @@ public class BandwidthProcessor {
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
     if (cost <= (netLimit - newNetUsage)) {
+      latestConsumeTime = now;
       newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
+      accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setNetUsage(newNetUsage);
     } else {
       throw new ValidateBandwidthException("bandwidth is not enough to create new account");
     }
 
-  }
-
-  private long getCreateNewAccountCost() {
-    //to be determined
-    return 10000;//100*100
   }
 
   private boolean contractCreateNewAccount(Contract contract) {
