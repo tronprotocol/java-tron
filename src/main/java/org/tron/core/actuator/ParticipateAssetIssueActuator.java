@@ -68,13 +68,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //add to to_address
       byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
-      try {
-        toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
-      } catch (ArithmeticException e) {
-        logger.debug(e.getMessage(), e);
-        ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
-        throw new ContractExeException(e.getMessage());
-      }
+      toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
       if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
