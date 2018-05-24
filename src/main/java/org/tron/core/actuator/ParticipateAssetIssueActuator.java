@@ -140,51 +140,52 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
-
-    //Whether the balance is enough
-    long fee = calcFee();
-    if (ownerAccount.getBalance() < Math.addExact(amount, fee)) {
-      throw new ContractValidateException("No enough balance !");
-    }
-
-    //Whether have the mapping
-    AssetIssueCapsule assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
-    if (assetIssueCapsule == null) {
-      throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
-    }
-
-    if (!Arrays.equals(toAddress, assetIssueCapsule.getOwnerAddress().toByteArray())) {
-      throw new ContractValidateException(
-          "The asset is not issued by " + ByteArray.toHexString(toAddress));
-    }
-    //Whether the exchange can be processed: to see if the exchange can be the exact int
-    long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    if (now >= assetIssueCapsule.getEndTime() || now < assetIssueCapsule
-        .getStartTime()) {
-      throw new ContractValidateException("No longer valid period!");
-    }
-
-    int trxNum = assetIssueCapsule.getTrxNum();
-    int num = assetIssueCapsule.getNum();
-    long exchangeAmount;
     try {
+      //Whether the balance is enough
+      long fee = calcFee();
+      if (ownerAccount.getBalance() < Math.addExact(amount, fee)) {
+        throw new ContractValidateException("No enough balance !");
+      }
+
+      //Whether have the mapping
+      AssetIssueCapsule assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
+      if (assetIssueCapsule == null) {
+        throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
+      }
+
+      if (!Arrays.equals(toAddress, assetIssueCapsule.getOwnerAddress().toByteArray())) {
+        throw new ContractValidateException(
+            "The asset is not issued by " + ByteArray.toHexString(toAddress));
+      }
+      //Whether the exchange can be processed: to see if the exchange can be the exact int
+      long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+      if (now >= assetIssueCapsule.getEndTime() || now < assetIssueCapsule
+          .getStartTime()) {
+        throw new ContractValidateException("No longer valid period!");
+      }
+
+      int trxNum = assetIssueCapsule.getTrxNum();
+      int num = assetIssueCapsule.getNum();
+      long exchangeAmount;
+
       exchangeAmount = Math.multiplyExact(amount, num);
       exchangeAmount = Math.floorDiv(exchangeAmount, trxNum);
+
+      if (exchangeAmount <= 0) {
+        throw new ContractValidateException("Can not process the exchange!");
+      }
+
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
+      if (toAccount == null) {
+        throw new ContractValidateException("To account does not exist!");
+      }
+
+      if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
+        throw new ContractValidateException("Asset balance is not enough !");
+      }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
-    }
-    if (exchangeAmount <= 0) {
-      throw new ContractValidateException("Can not process the exchange!");
-    }
-
-    AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
-    if (toAccount == null) {
-      throw new ContractValidateException("To account does not exist!");
-    }
-
-    if (!toAccount.assetBalanceEnough(assetIssueCapsule.getName(), exchangeAmount)) {
-      throw new ContractValidateException("Asset balance is not enough !");
     }
 
     return true;

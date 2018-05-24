@@ -80,47 +80,48 @@ public class VoteWitnessActuator extends AbstractActuator {
           "VoteNumber more than maxVoteNumber " + dbManager.getDynamicPropertiesStore()
               .getMaxVoteNumber());
     }
-
-    Iterator<Vote> iterator = contract.getVotesList().iterator();
-    Long sum = 0L;
-    while (iterator.hasNext()) {
-      Vote vote = iterator.next();
-      byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-      if (!Wallet.addressValid(witnessCandidate)) {
-        throw new ContractValidateException("Invalidate vote address!");
-      }
-      long voteCount = vote.getVoteCount();
-      if (voteCount <= 0) {
-        throw new ContractValidateException("vote count must be greater than 0");
-      }
-      String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-      if (!accountStore.has(witnessCandidate)) {
-        throw new ContractValidateException(
-            "Account[" + readableWitnessAddress + "] not exists");
-      }
-      if (!witnessStore.has(witnessCandidate)) {
-        throw new ContractValidateException(
-            "Witness[" + readableWitnessAddress + "] not exists");
-      }
-      sum = LongMath.checkedAdd(sum, vote.getVoteCount());
-    }
-
-    if (!accountStore.has(ownerAddressBytes)) {
-      throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
-    }
-
-    long tronPower = accountStore.get(ownerAddressBytes).getTronPower();
     try {
+      Iterator<Vote> iterator = contract.getVotesList().iterator();
+      Long sum = 0L;
+      while (iterator.hasNext()) {
+        Vote vote = iterator.next();
+        byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
+        if (!Wallet.addressValid(witnessCandidate)) {
+          throw new ContractValidateException("Invalidate vote address!");
+        }
+        long voteCount = vote.getVoteCount();
+        if (voteCount <= 0) {
+          throw new ContractValidateException("vote count must be greater than 0");
+        }
+        String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
+        if (!accountStore.has(witnessCandidate)) {
+          throw new ContractValidateException(
+              "Account[" + readableWitnessAddress + "] not exists");
+        }
+        if (!witnessStore.has(witnessCandidate)) {
+          throw new ContractValidateException(
+              "Witness[" + readableWitnessAddress + "] not exists");
+        }
+        sum = LongMath.checkedAdd(sum, vote.getVoteCount());
+      }
+
+      if (!accountStore.has(ownerAddressBytes)) {
+        throw new ContractValidateException(
+            "Account[" + readableOwnerAddress + "] not exists");
+      }
+
+      long tronPower = accountStore.get(ownerAddressBytes).getTronPower();
+
       sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
+
+      if (sum > tronPower) {
+        throw new ContractValidateException(
+            "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
+                + "]");
+      }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
-    }
-    if (sum > tronPower) {
-      throw new ContractValidateException(
-          "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
-              + "]");
     }
 
     return true;

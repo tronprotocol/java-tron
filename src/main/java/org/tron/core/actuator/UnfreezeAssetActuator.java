@@ -28,37 +28,40 @@ public class UnfreezeAssetActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-    final UnfreezeAssetContract unfreezeAssetContract;
     try {
-      unfreezeAssetContract = contract.unpack(UnfreezeAssetContract.class);
+      final UnfreezeAssetContract unfreezeAssetContract = contract
+          .unpack(UnfreezeAssetContract.class);
+      ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
+      byte[] ownerAddressBytes = ownerAddress.toByteArray();
+
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+      long unfreezeAsset = 0L;
+      List<Frozen> frozenList = Lists.newArrayList();
+      frozenList.addAll(accountCapsule.getFrozenSupplyList());
+      Iterator<Frozen> iterator = frozenList.iterator();
+      long now = dbManager.getHeadBlockTimeStamp();
+      while (iterator.hasNext()) {
+        Frozen next = iterator.next();
+        if (next.getExpireTime() <= now) {
+          unfreezeAsset += next.getFrozenBalance();
+          iterator.remove();
+        }
+      }
+
+      accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
+      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+          .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
+      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
-
-    ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-    byte[] ownerAddressBytes = ownerAddress.toByteArray();
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
-    long unfreezeAsset = 0L;
-    List<Frozen> frozenList = Lists.newArrayList();
-    frozenList.addAll(accountCapsule.getFrozenSupplyList());
-    Iterator<Frozen> iterator = frozenList.iterator();
-    long now = dbManager.getHeadBlockTimeStamp();
-    while (iterator.hasNext()) {
-      Frozen next = iterator.next();
-      if (next.getExpireTime() <= now) {
-        unfreezeAsset += next.getFrozenBalance();
-        iterator.remove();
-      }
-    }
-
-    accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
-    dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
-    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }
