@@ -47,6 +47,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
@@ -188,7 +189,10 @@ public class RpcApiService implements Service {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = walletSolidity.getAccount(addressBs);
-        responseObserver.onNext(reply);
+        AccountCapsule accountCapsule = new AccountCapsule(reply);
+        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+        processor.updateUsage(accountCapsule);
+        responseObserver.onNext(accountCapsule.getInstance());
       } else {
         responseObserver.onNext(null);
       }
@@ -341,7 +345,10 @@ public class RpcApiService implements Service {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         Account reply = wallet.getBalance(req);
-        responseObserver.onNext(reply);
+        AccountCapsule accountCapsule = new AccountCapsule(reply);
+        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+        processor.updateUsage(accountCapsule);
+        responseObserver.onNext(accountCapsule.getInstance());
       } else {
         responseObserver.onNext(null);
       }

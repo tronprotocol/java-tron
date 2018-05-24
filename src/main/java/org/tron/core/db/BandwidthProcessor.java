@@ -5,6 +5,7 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
@@ -32,15 +33,12 @@ public class BandwidthProcessor {
     return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
   }
 
-  private long increase(long lastUsage, long usage, long lastTime, long now)
-      throws ValidateBandwidthException {
+  private long increase(long lastUsage, long usage, long lastTime, long now) {
     long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
     long averageUsage = divideCeil(usage * precision, windowSize);
 
     if (lastTime != now) {
-      if (now < lastTime) {
-        throw new ValidateBandwidthException("new operation time must more than last time");
-      }
+      assert now > lastTime;
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
@@ -57,6 +55,23 @@ public class BandwidthProcessor {
 
   private long getUsage(long usage) {
     return usage * windowSize / precision;
+  }
+
+  public void updateUsage(AccountCapsule accountCapsule) {
+    long now = dbManager.getWitnessController().getHeadSlot();
+    long oldNetUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+    accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
+    long oldFreeNetUsage = accountCapsule.getFreeNetUsage();
+    long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
+    accountCapsule.setFreeNetUsage(increase(oldFreeNetUsage, 0, latestConsumeFreeTime, now));
+    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    assetMap.forEach((assetName, balance) -> {
+      long oldFreeAssetNetUsage = accountCapsule.getFreeAssetNetUsage(assetName);
+      long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTime(assetName);
+      accountCapsule.putFreeAssetNetUsage(assetName,
+          increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
+    });
   }
 
   public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
