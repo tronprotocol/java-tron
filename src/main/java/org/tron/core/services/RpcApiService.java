@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -632,12 +633,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getAccountNetLimit(Account request,
-        StreamObserver<NumberMessage> responseObserver) {
+    public void getAccountNet(Account request,
+        StreamObserver<AccountNetMessage> responseObserver) {
       ByteString fromBs = request.getAddress();
 
       if (fromBs != null) {
-        responseObserver.onNext(wallet.getAccountNetLimit(fromBs));
+        responseObserver.onNext(wallet.getAccountNet(fromBs));
       } else {
         responseObserver.onNext(null);
       }

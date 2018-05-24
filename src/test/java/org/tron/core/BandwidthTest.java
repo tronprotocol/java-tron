@@ -248,7 +248,6 @@ public class BandwidthTest {
     Assert.assertEquals(1526691038000L, ownerCapsuleNew.getLatestOperationTime());
     Assert.assertEquals(508897012L, ownerCapsuleNew.getLatestConsumeTime());
 
-
   }
 
 }

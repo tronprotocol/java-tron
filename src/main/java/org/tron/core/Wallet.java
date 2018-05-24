@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -279,9 +280,9 @@ public class Wallet {
 
   public Block getNowBlock() {
     List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
-    if(CollectionUtils.isEmpty(blockList)){
+    if (CollectionUtils.isEmpty(blockList)) {
       return null;
-    }else{
+    } else {
       return blockList.get(0).getInstance();
     }
   }
@@ -325,16 +326,26 @@ public class Wallet {
     return builder.build();
   }
 
-  public NumberMessage getAccountNetLimit(ByteString accountAddress) {
+  public AccountNetMessage getAccountNet(ByteString accountAddress) {
     if (accountAddress == null || accountAddress.size() == 0) {
       return null;
     }
-    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     long netLimit = accountCapsule.getFrozenBalance() * totalNetLimit / totalNetWeight;
-    return builder.setNum(netLimit).build();
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage());
+    return builder.build();
   }
 
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
@@ -404,4 +415,5 @@ public class Wallet {
     }
     return transaction;
   }
+
 }

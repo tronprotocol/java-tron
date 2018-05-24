@@ -444,6 +444,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
   }
 
+  public Map<String, Long> getAllFreeAssetNetUsage() {
+    return this.account.getFreeAssetNetUsageMap();
+  }
+
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
