@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -77,8 +76,8 @@ public class TransferActuator extends AbstractActuator {
       long amount = transferContract.getAmount();
       if (transferContract == null) {
         throw new ContractValidateException(
-                "contract type error,expected type [TransferContract],real type[" + contract
-                        .getClass() + "]");
+            "contract type error,expected type [TransferContract],real type[" + contract
+               .getClass() + "]");
       }
       if (!Wallet.addressValid(ownerAddress)) {
         throw new ContractValidateException("Invalidate ownerAddress");
@@ -92,7 +91,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       AccountCapsule ownerAccount = dbManager.getAccountStore()
-              .get(transferContract.getOwnerAddress().toByteArray());
+          .get(transferContract.getOwnerAddress().toByteArray());
 
       if (ownerAccount == null) {
         throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
@@ -114,12 +113,12 @@ public class TransferActuator extends AbstractActuator {
 
       // if account with to_address is not existed, the minimum amount is 1 TRX
       AccountCapsule toAccount = dbManager.getAccountStore()
-              .get(transferContract.getToAddress().toByteArray());
+          .get(transferContract.getToAddress().toByteArray());
       if (toAccount == null) {
         long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
         if (amount < min) {
           throw new ContractValidateException(
-                  "For a non-existent account transfer, the minimum amount is 1 TRX");
+              "For a non-existent account transfer, the minimum amount is 1 TRX");
         }
       } else {
         //check to account balance if overflow
