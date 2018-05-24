@@ -30,6 +30,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransferAssetActuator extends AbstractActuator {
@@ -47,6 +48,12 @@ public class TransferAssetActuator extends AbstractActuator {
       AccountStore accountStore = this.dbManager.getAccountStore();
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toKey = transferAssetContract.getToAddress().toByteArray();
+      AccountCapsule toAccountCapsule = accountStore.get(toKey);
+      if (toAccountCapsule == null) {
+        toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toKey), AccountType.Normal,
+            dbManager.getHeadBlockTimeStamp());
+        dbManager.getAccountStore().put(toKey, toAccountCapsule);
+      }
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
@@ -56,7 +63,6 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       accountStore.put(ownerKey, ownerAccountCapsule);
 
-      AccountCapsule toAccountCapsule = accountStore.get(toKey);
       toAccountCapsule.addAssetAmount(assetName, amount);
       accountStore.put(toKey, toAccountCapsule);
 
