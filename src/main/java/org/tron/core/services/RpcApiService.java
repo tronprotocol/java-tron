@@ -345,10 +345,7 @@ public class RpcApiService implements Service {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         Account reply = wallet.getBalance(req);
-        AccountCapsule accountCapsule = new AccountCapsule(reply);
-        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-        processor.updateUsage(accountCapsule);
-        responseObserver.onNext(accountCapsule.getInstance());
+        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }
