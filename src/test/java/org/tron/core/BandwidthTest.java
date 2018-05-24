@@ -1,5 +1,6 @@
 package org.tron.core;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +18,12 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -123,9 +126,38 @@ public class BandwidthTest {
   }
 
 
-  /**
-   * Last trading time exceeded 10s
-   */
+  @Test
+  public void testCreateNewAccount() throws Exception {
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    TransferAssetContract transferAssetContract = getTransferAssetContract();
+    String NOT_EXISTS_ADDRESS =
+        Wallet.getAddressPreFixString() + "008794500882809695a8a687866e76d4271a1abc";
+    transferAssetContract = transferAssetContract.toBuilder()
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(NOT_EXISTS_ADDRESS))).build();
+
+    org.tron.protos.Protocol.Transaction.Contract contract = org.tron.protos.Protocol.Transaction.Contract
+        .newBuilder()
+        .setType(Protocol.Transaction.Contract.ContractType.TransferAssetContract).setParameter(
+            Any.pack(transferAssetContract)).build();
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
+    dbManager.getDynamicPropertiesStore()
+        .saveTotalNetWeight(10000L);//only owner has frozen balance
+
+    AccountCapsule ownerCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.setFrozen(10000L, 0L);
+
+    Assert.assertEquals(true, processor.contractCreateNewAccount(contract));
+    processor.consumeForCreateNewAccount(ownerCapsule, 1526647838000L);
+
+    AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    Assert.assertEquals(processor.getCreateNewAccountCost(), ownerCapsuleNew.getNetUsage());
+
+  }
+
+
   @Test
   public void testFree() throws Exception {
 

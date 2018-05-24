@@ -110,7 +110,8 @@ public class BandwidthProcessor {
     }
   }
 
-  private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
+
+  public void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
       throws ValidateBandwidthException {
     long cost = getCreateNewAccountCost();
 
@@ -126,18 +127,19 @@ public class BandwidthProcessor {
     if (cost <= (netLimit - newNetUsage)) {
       newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
       accountCapsule.setNetUsage(newNetUsage);
+      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     } else {
       throw new ValidateBandwidthException("bandwidth is not enough to create new account");
     }
 
   }
 
-  private long getCreateNewAccountCost() {
+  public long getCreateNewAccountCost() {
     //to be determined
     return 10000;//100*100
   }
 
-  private boolean contractCreateNewAccount(Contract contract) {
+  public boolean contractCreateNewAccount(Contract contract) {
     AccountCapsule toAccount;
     switch (contract.getType()) {
       case TransferContract:
