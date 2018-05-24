@@ -42,4 +42,8 @@ public interface Parameter {
     int NET_MAX_INV_SIZE_IN_MINUTES = 2;
     int MSG_CACHE_DURATION_IN_BLOCKS = 5;
   }
+
+  interface DataBaseConstants {
+    int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
+  }
 }
