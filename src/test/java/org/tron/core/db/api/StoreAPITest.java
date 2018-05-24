@@ -488,21 +488,21 @@ public class StoreAPITest {
     long time2 = DateTime.now().minusDays(2).getMillis();
     long time3 = DateTime.now().minusDays(1).getMillis();
     long time4 = DateTime.now().getMillis();
-    List<Transaction> transactionList = storeAPI.getTransactionsByTimestamp(time1, time2);
+    List<Transaction> transactionList = storeAPI.getTransactionsByTimestamp(time1, time2, 0, 1000);
     Assert.assertEquals("TransactionsByTimestamp1", 1, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(time1, time3);
+    transactionList = storeAPI.getTransactionsByTimestamp(time1, time3, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp2", 2, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(time1, time4);
+    transactionList = storeAPI.getTransactionsByTimestamp(time1, time4, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp3", 2, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(time2, time4);
+    transactionList = storeAPI.getTransactionsByTimestamp(time2, time4, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp4", 1, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(time3, time4);
+    transactionList = storeAPI.getTransactionsByTimestamp(time3, time4, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp5", 0, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(time4, time3);
+    transactionList = storeAPI.getTransactionsByTimestamp(time4, time3, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp5", 0, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(0, 0);
+    transactionList = storeAPI.getTransactionsByTimestamp(0, 0, 0 ,1000);
     Assert.assertEquals("TransactionsByTimestamp6", 0, transactionList.size());
-    transactionList = storeAPI.getTransactionsByTimestamp(-1, 0);
+    transactionList = storeAPI.getTransactionsByTimestamp(-1, 0,0 , 1000);
     Assert.assertEquals("TransactionsByTimestamp7", 0, transactionList.size());
   }
 
