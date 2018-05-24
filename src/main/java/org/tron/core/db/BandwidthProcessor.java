@@ -48,7 +48,7 @@ public class BandwidthProcessor {
         lastUsage = 0;
       }
     }
-    lastUsage += averageUsage; // 更新新的平均使用量
+    lastUsage += averageUsage;
     return lastUsage;
   }
 
@@ -73,7 +73,6 @@ public class BandwidthProcessor {
         if (useAssetAccountNet(contract, accountCapsule, now, bytes)) {
           continue;
         }
-        logger.info("The asset free bandwidth is not enough");
       }
 
       if (useFreeNet(accountCapsule, bytes, now)) {
@@ -145,7 +144,7 @@ public class BandwidthProcessor {
         return true;
       }
     }
-
+    logger.info("The " + assetNameString + " free bandwidth is not enough");
     return false;
   }
 
@@ -172,6 +171,8 @@ public class BandwidthProcessor {
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       return true;
     }
+
+    logger.info("net usage is running out. now use free net usage");
     return false;
   }
 
@@ -208,6 +209,7 @@ public class BandwidthProcessor {
       }
     }
 
+    logger.info("free net usage is running out");
     return false;
   }
 }
