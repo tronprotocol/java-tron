@@ -4,7 +4,6 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -373,7 +372,7 @@ public class WitnessController {
 
   private void payStandbyWitness(List<ByteString> list) {
     long voteSum = 0;
-    long totalPay = ChainConstant.WITNESS_STANDBY_PAY;
+    long totalPay = ChainConstant.WITNESS_STANDBY_ALLOWANCE;
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }
