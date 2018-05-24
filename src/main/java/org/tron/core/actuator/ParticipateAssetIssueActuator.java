@@ -166,11 +166,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       int trxNum = assetIssueCapsule.getTrxNum();
       int num = assetIssueCapsule.getNum();
-      long exchangeAmount;
-
-      exchangeAmount = Math.multiplyExact(amount, num);
+      long exchangeAmount = Math.multiplyExact(amount, num);
       exchangeAmount = Math.floorDiv(exchangeAmount, trxNum);
-
       if (exchangeAmount <= 0) {
         throw new ContractValidateException("Can not process the exchange!");
       }
