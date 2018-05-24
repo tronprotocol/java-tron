@@ -43,7 +43,9 @@ public class BandwidthProcessor {
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / windowSize;
+        logger.info("old lastUsage: " + lastUsage);
         lastUsage = Math.round(lastUsage * decay);
+        logger.info("new lastUsage: " + lastUsage);
       } else {
         lastUsage = 0;
       }
@@ -67,7 +69,7 @@ public class BandwidthProcessor {
       if (accountCapsule == null) {
         throw new ValidateBandwidthException("account not exists");
       }
-      long now = dbManager.getHeadBlockTimeStamp();
+      long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contract.getType() == TransferAssetContract) {
         if (useAssetAccountNet(contract, accountCapsule, now, bytes)) {
@@ -127,7 +129,7 @@ public class BandwidthProcessor {
       if (bytes <= (issuerNetLimit - getUsage(newIssuerNetUsage))) {
         latestConsumeTime = now;
         latestAssetOperationTime = now;
-        long latestOperationTime = now;
+        long latestOperationTime = dbManager.getHeadBlockTimeStamp();
         logger.info("old issuerNetUsage: " + getUsage(newIssuerNetUsage));
         newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
         logger.info("new issuerNetUsage: " + getUsage(newIssuerNetUsage));
@@ -167,7 +169,7 @@ public class BandwidthProcessor {
 
     if (bytes <= (netLimit - getUsage(newNetUsage))) {
       latestConsumeTime = now;
-      long latestOperationTime = now;
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       logger.info("old netUsage: " + getUsage(newNetUsage));
       newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
       logger.info("new netUsage: " + getUsage(newNetUsage));
@@ -200,7 +202,7 @@ public class BandwidthProcessor {
 
       if (bytes <= (publicNetLimit - getUsage(newPublicNetUsage))) {
         latestConsumeFreeTime = now;
-        long latestOperationTime = now;
+        long latestOperationTime = dbManager.getHeadBlockTimeStamp();
         publicNetTime = now;
         logger.info("old freeNetUsage: " + getUsage(newFreeNetUsage));
         newFreeNetUsage = increase(newFreeNetUsage, bytes, latestConsumeFreeTime, now);
