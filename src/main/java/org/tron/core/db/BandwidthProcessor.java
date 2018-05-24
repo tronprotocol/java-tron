@@ -42,8 +42,8 @@ public class BandwidthProcessor {
       }
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
-        double decay = (windowSize - delta) / windowSize;
-        logger.info("old lastUsage: " + lastUsage);
+        double decay = (windowSize - delta) / (double)windowSize;
+        logger.info("old lastUsage: " + lastUsage + ". decay: " + decay);
         lastUsage = Math.round(lastUsage * decay);
         logger.info("new lastUsage: " + lastUsage);
       } else {
@@ -77,11 +77,11 @@ public class BandwidthProcessor {
         }
       }
 
-      if (useFreeNet(accountCapsule, bytes, now)) {
+      if (useAccountNet(accountCapsule, bytes, now)) {
         continue;
       }
 
-      if (useAccountNet(accountCapsule, bytes, now)) {
+      if (useFreeNet(accountCapsule, bytes, now)) {
         continue;
       }
 
@@ -173,7 +173,7 @@ public class BandwidthProcessor {
       logger.info("old netUsage: " + getUsage(newNetUsage));
       newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
       logger.info("new netUsage: " + getUsage(newNetUsage));
-      accountCapsule.setNetUsage(getUsage(newNetUsage));
+      accountCapsule.setNetUsage(newNetUsage);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
 
@@ -210,11 +210,11 @@ public class BandwidthProcessor {
         logger.info("old publicNetUsage: " + getUsage(newPublicNetUsage));
         newPublicNetUsage = increase(newPublicNetUsage, bytes, publicNetTime, now);
         logger.info("new publicNetUsage: " + getUsage(newPublicNetUsage));
-        accountCapsule.setFreeNetUsage(getUsage(newFreeNetUsage));
+        accountCapsule.setFreeNetUsage(newFreeNetUsage);
         accountCapsule.setLatestConsumeFreeTime(latestConsumeFreeTime);
         accountCapsule.setLatestOperationTime(latestOperationTime);
 
-        dbManager.getDynamicPropertiesStore().savePublicNetUsage(getUsage(newPublicNetUsage));
+        dbManager.getDynamicPropertiesStore().savePublicNetUsage(newPublicNetUsage);
         dbManager.getDynamicPropertiesStore().savePublicNetTime(publicNetTime);
         dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return true;
