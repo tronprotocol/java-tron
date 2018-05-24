@@ -39,6 +39,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -113,11 +114,13 @@ public class VoteWitnessActuator extends AbstractActuator {
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
                 + "]");
       }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
+    } catch (ArithmeticException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
     }
-
     return true;
   }
 

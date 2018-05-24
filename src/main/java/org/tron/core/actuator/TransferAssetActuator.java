@@ -63,9 +63,11 @@ public class TransferAssetActuator extends AbstractActuator {
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -138,8 +140,10 @@ public class TransferAssetActuator extends AbstractActuator {
         assetBalance = Math.addExact(assetBalance, amount); //check if overflow
       }
     } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
       throw new ContractValidateException(e.getMessage());
     } catch (ArithmeticException e) {
+      e.printStackTrace();
       throw new ContractValidateException(e.getMessage());
     }
 

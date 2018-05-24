@@ -81,10 +81,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
       logger.debug(e.getMessage(), e);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
       logger.debug(e.getMessage(), e);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -171,8 +173,10 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Asset balance is not enough !");
       }
     } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
       throw new ContractValidateException(e.getMessage());
     } catch (ArithmeticException e) {
+      e.printStackTrace();
       throw new ContractValidateException(e.getMessage());
     }
 

@@ -89,14 +89,17 @@ public class AssetIssueActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -130,16 +133,16 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       if (assetIssueContract.getStartTime() == 0) {
-        throw new ContractValidateException("start time should be not empty");
+        throw new ContractValidateException("Start time should be not empty");
       }
       if (assetIssueContract.getEndTime() == 0) {
-        throw new ContractValidateException("end time should be not empty");
+        throw new ContractValidateException("End time should be not empty");
       }
       if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
-        throw new ContractValidateException("end time should be greater than start time");
+        throw new ContractValidateException("End time should be greater than start time");
       }
       if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()) {
-        throw new ContractValidateException("start time should be greater than HeadBlockTime");
+        throw new ContractValidateException("Start time should be greater than HeadBlockTime");
       }
 
       if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
@@ -201,6 +204,7 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("No enough balance for fee!");
       }
     } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
       throw new ContractValidateException(e.getMessage());
     }
 

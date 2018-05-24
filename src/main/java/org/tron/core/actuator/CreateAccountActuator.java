@@ -37,6 +37,7 @@ public class CreateAccountActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
       logger.debug(e.getMessage(), e);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -52,22 +53,26 @@ public class CreateAccountActuator extends AbstractActuator {
             "contract type error,expected type [AccountCreateContract],real type[" + contract
                 .getClass() + "]");
       }
-
       AccountCreateContract contract = this.contract.unpack(AccountCreateContract.class);
-
-      Preconditions.checkNotNull(contract.getAccountName(), "AccountName is null");
+      if (contract.getAccountName().isEmpty()) {
+        throw new ContractValidateException("AccountName is null");
+      }
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Invalidate ownerAddress");
       }
-      Preconditions.checkNotNull(contract.getType(), "Type is null");
+
+      if (contract.getType() == null) {
+        throw new ContractValidateException("Type is null");
+      }
 
       if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException("Account has existed");
       }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
     }
+
     return true;
   }
 

@@ -40,6 +40,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     } catch (final InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -70,9 +71,9 @@ public class WitnessUpdateActuator extends AbstractActuator {
       if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
         throw new ContractValidateException("Witness does not exist");
       }
-    } catch (final Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

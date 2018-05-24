@@ -68,6 +68,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -137,9 +138,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
                 + "and more than " + minFrozenTime + " days");
       }
 
-    } catch (InvalidProtocolBufferException ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

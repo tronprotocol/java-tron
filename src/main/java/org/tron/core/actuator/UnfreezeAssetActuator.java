@@ -59,6 +59,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
 
@@ -107,9 +108,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
         throw new ContractValidateException("It's not time to unfreeze asset supply");
       }
 
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      e.printStackTrace();
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;
