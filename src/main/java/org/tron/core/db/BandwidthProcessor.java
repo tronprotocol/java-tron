@@ -119,6 +119,10 @@ public class BandwidthProcessor {
     String assetNameString = ByteArray.toStr(assetName.toByteArray());
     AssetIssueCapsule assetIssueCapsule
         = dbManager.getAssetIssueStore().get(assetName.toByteArray());
+    if (assetIssueCapsule == null) {
+      throw new ValidateBandwidthException("asset not exists");
+    }
+
     long freeAssetNetLimit = assetIssueCapsule.getFreeAssetNetLimit();
 
     long freeAssetNetUsage = accountCapsule
