@@ -209,28 +209,31 @@ public class Wallet {
    */
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    Message message = new TransactionMessage(signaturedTransaction);
-
-    if (dbManager.isTooManyPending()) {
-      logger.debug(
-          "Manager is busy, pending transaction count:{}, discard the new coming transaction",
-          (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
-              .size()));
-      return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-    } else if (dbManager.isGeneratingBlock()) {
-      logger.debug("Manager is generating block, discard the new coming transaction");
-      return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-    }
-
-    if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-      logger.debug("This transaction has been processed, discard the transaction");
-      return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-    } else {
-      dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
-    }
 
     try {
+      TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+      Message message = new TransactionMessage(signaturedTransaction);
+
+      if (dbManager.isTooManyPending()) {
+        logger.debug(
+            "Manager is busy, pending transaction count:{}, discard the new coming transaction",
+            (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
+                .size()));
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+      }
+
+      if (dbManager.isGeneratingBlock()) {
+        logger.debug("Manager is generating block, discard the new coming transaction");
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+      }
+
+      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+        logger.debug("This transaction has been processed, discard the transaction");
+        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+      } else {
+        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      }
+
       dbManager.pushTransactions(trx);
       p2pNode.broadcast(message);
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
