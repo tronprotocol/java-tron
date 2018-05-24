@@ -53,6 +53,9 @@ public class UpdateAccountActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (!contract.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountUpdateContract],real type[" + contract
               .getClass() + "]");
