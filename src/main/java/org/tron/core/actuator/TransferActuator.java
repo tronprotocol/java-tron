@@ -62,11 +62,16 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(TransferContract.class)) {
+    if (this.contract == null) {
       throw new ContractValidateException();
     }
     if (this.dbManager == null) {
       throw new ContractValidateException();
+    }
+    if (!this.contract.is(TransferContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [TransferContract],real type[" + contract
+              .getClass() + "]");
     }
     final TransferContract transferContract;
     try {
@@ -75,14 +80,11 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
+
     byte[] toAddress = transferContract.getToAddress().toByteArray();
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
-    if (transferContract == null) {
-      throw new ContractValidateException(
-          "contract type error,expected type [TransferContract],real type[" + contract
-              .getClass() + "]");
-    }
+
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate ownerAddress");
     }
@@ -94,9 +96,7 @@ public class TransferActuator extends AbstractActuator {
       throw new ContractValidateException("Cannot transfer trx to yourself.");
     }
 
-    AccountCapsule ownerAccount = dbManager.getAccountStore()
-        .get(transferContract.getOwnerAddress().toByteArray());
-
+    AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
     }
