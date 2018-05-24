@@ -4,7 +4,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -76,10 +75,10 @@ public class WitnessCreateActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
-
+    /* todo later
     if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
       throw new ContractValidateException("account name not set");
-    }
+    } */
 
     if (this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
