@@ -164,7 +164,7 @@ public class BandwidthProcessor {
       latestConsumeTime = now;
       long latestOperationTime = now;
       newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
-      accountCapsule.setNetUsage(newNetUsage);
+      accountCapsule.setNetUsage(getUsage(newNetUsage));
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
 
@@ -198,11 +198,11 @@ public class BandwidthProcessor {
         publicNetTime = now;
         newFreeNetUsage = increase(newFreeNetUsage, bytes, latestConsumeTime, now);
         newPublicNetUsage = increase(newPublicNetUsage, bytes, publicNetTime, now);
-        accountCapsule.setFreeNetUsage(newFreeNetUsage);
+        accountCapsule.setFreeNetUsage(getUsage(newFreeNetUsage));
         accountCapsule.setLatestConsumeFreeTime(latestConsumeFreeTime);
         accountCapsule.setLatestOperationTime(latestOperationTime);
 
-        dbManager.getDynamicPropertiesStore().savePublicNetUsage(newPublicNetUsage);
+        dbManager.getDynamicPropertiesStore().savePublicNetUsage(getUsage(newPublicNetUsage));
         dbManager.getDynamicPropertiesStore().savePublicNetTime(publicNetTime);
         dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         return true;
