@@ -75,15 +75,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
     return true;
   }
 
-  private long calculateBandwidth(long oldValue, FreezeBalanceContract freezeBalanceContract) {
-    try {
-      return Math.addExact(oldValue, Math.multiplyExact(freezeBalanceContract.getFrozenBalance(),
-          Math.multiplyExact(freezeBalanceContract.getFrozenDuration(),
-              dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday())));
-    }catch (ArithmeticException e){
-      return Long.MAX_VALUE;
-    }
-  }
+//  private long calculateBandwidth(long oldValue, FreezeBalanceContract freezeBalanceContract) {
+//    try {
+//      return Math.addExact(oldValue, Math.multiplyExact(freezeBalanceContract.getFrozenBalance(),
+//          Math.multiplyExact(freezeBalanceContract.getFrozenDuration(),
+//              dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday())));
+//    }catch (ArithmeticException e){
+//      return Long.MAX_VALUE;
+//    }
+//  }
 
   @Override
   public boolean validate() throws ContractValidateException {
