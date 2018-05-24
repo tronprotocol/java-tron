@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.TRXS_SIZE;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
@@ -711,6 +712,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     BlockId blockId = blkMsg.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
     boolean syncFlag = false;
+
+    if (blkMsg.getBlock().getSerializedSize() > TRXS_SIZE) {
+      logger.info("rev a too big block {} from peer {}", blockId.getNum(), peer.getNode());
+      return;
+    }
+
     if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
         logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
