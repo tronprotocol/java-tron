@@ -42,7 +42,7 @@ public class BandwidthProcessor {
       }
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
-        double decay = (windowSize - delta) / (double)windowSize;
+        double decay = (windowSize - delta) / (double) windowSize;
         logger.info("old lastUsage: " + lastUsage + ". decay: " + decay);
         lastUsage = Math.round(lastUsage * decay);
         logger.info("new lastUsage: " + lastUsage);
