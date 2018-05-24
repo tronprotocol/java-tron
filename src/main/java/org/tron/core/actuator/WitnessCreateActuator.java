@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -47,41 +46,47 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (!this.contract.is(WitnessCreateContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [AccountCreateContract],real type[" + this.contract
+              .getClass() + "]");
+    }
+
+    final WitnessCreateContract contract;
     try {
-      if (!this.contract.is(WitnessCreateContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [AccountCreateContract],real type[" + this.contract
-                .getClass() + "]");
-      }
-
-      final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
-      byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-      String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
-
-      if (!Wallet.addressValid(ownerAddress)) {
-        throw new ContractValidateException("Invalidate address");
-      }
-
-      if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-        throw new ContractValidateException("Invalidate url");
-      }
-
-      if (!dbManager.getAccountStore().has(ownerAddress)) {
-        throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
-      }
-      AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
-
-      if (dbManager.getWitnessStore().has(ownerAddress)) {
-        throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
-      }
-
-      if (accountCapsule.getBalance() < dbManager.getDynamicPropertiesStore()
-          .getAccountUpgradeCost()) {
-        throw new ContractValidateException("balance < AccountUpgradeCost");
-      }
+      contract = this.contract.unpack(WitnessCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+
+    String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
+
+    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Invalidate address");
+    }
+
+    if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
+      throw new ContractValidateException("Invalidate url");
+    }
+
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(contract.getOwnerAddress().toByteArray());
+
+    if (accountCapsule == null) {
+      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+    }
+    /* todo later
+    if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
+      throw new ContractValidateException("account name not set");
+    } */
+
+    if (this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+    }
+
+    if (accountCapsule.getBalance() < dbManager.getDynamicPropertiesStore()
+        .getAccountUpgradeCost()) {
+      throw new ContractValidateException("balance < AccountUpgradeCost");
     }
 
     return true;
