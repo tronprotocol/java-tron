@@ -221,7 +221,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalNetWeight();
     } catch (IllegalArgumentException e) {
-      this.saveTotalNetWeight(0L);
+      this.saveTotalNetWeight(1L);
     }
 
     try {
