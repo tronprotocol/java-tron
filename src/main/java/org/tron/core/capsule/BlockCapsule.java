@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
@@ -225,7 +226,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
     }
     return blockId;
   }
