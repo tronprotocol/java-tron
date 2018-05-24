@@ -620,7 +620,6 @@ public class Manager {
     logger.info("erase block:" + oldHeadBlock);
     khaosDb.pop();
     popedTransactions.addAll(oldHeadBlock.getTransactions());
-    unCacheTransactionOfBlock(oldHeadBlock);
   }
 
   private void applyBlock(BlockCapsule block)
@@ -1114,7 +1113,7 @@ public class Manager {
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      this.transactionIdCache.put(transactionCapsule.getHash(), true);
+      this.transactionIdCache.put(transactionCapsule.getTransactionId(), true);
     }
   }
 
@@ -1329,7 +1328,7 @@ public class Manager {
   public synchronized void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
-        + ",num:" + block.getNum());
+        + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
@@ -1347,12 +1346,6 @@ public class Manager {
       } catch (ExecutionException e) {
         throw new ValidateSignatureException(e.getCause().getMessage());
       }
-    }
-  }
-
-  private void unCacheTransactionOfBlock(BlockCapsule blockCapsule) {
-    for (TransactionCapsule transactionCapsule : blockCapsule.getTransactions()) {
-      transactionIdCache.invalidate(transactionCapsule.getTransactionId());
     }
   }
 }
