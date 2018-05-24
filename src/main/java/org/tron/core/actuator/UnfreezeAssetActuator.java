@@ -28,88 +28,85 @@ public class UnfreezeAssetActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    final UnfreezeAssetContract unfreezeAssetContract;
     try {
-      UnfreezeAssetContract unfreezeAssetContract = contract
-          .unpack(UnfreezeAssetContract.class);
-
-      ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
-
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
-      long unfreezeAsset = 0L;
-      List<Frozen> frozenList = Lists.newArrayList();
-      frozenList.addAll(accountCapsule.getFrozenSupplyList());
-      Iterator<Frozen> iterator = frozenList.iterator();
-      long now = dbManager.getHeadBlockTimeStamp();
-      while (iterator.hasNext()) {
-        Frozen next = iterator.next();
-        if (next.getExpireTime() <= now) {
-          unfreezeAsset += next.getFrozenBalance();
-          iterator.remove();
-        }
-      }
-
-      accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
-
-      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
-
-      ret.setStatus(fee, code.SUCESS);
+      unfreezeAssetContract = contract.unpack(UnfreezeAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
+    ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
+    byte[] ownerAddressBytes = ownerAddress.toByteArray();
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+    long unfreezeAsset = 0L;
+    List<Frozen> frozenList = Lists.newArrayList();
+    frozenList.addAll(accountCapsule.getFrozenSupplyList());
+    Iterator<Frozen> iterator = frozenList.iterator();
+    long now = dbManager.getHeadBlockTimeStamp();
+    while (iterator.hasNext()) {
+      Frozen next = iterator.next();
+      if (next.getExpireTime() <= now) {
+        unfreezeAsset += next.getFrozenBalance();
+        iterator.remove();
+      }
+    }
+
+    accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
+    dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+    ret.setStatus(fee, code.SUCESS);
+
     return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (!contract.is(UnfreezeAssetContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
+              .getClass() + "]");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException();
+    }
+    final UnfreezeAssetContract unfreezeAssetContract;
     try {
-      if (!contract.is(UnfreezeAssetContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
-                .getClass() + "]");
-      }
-      if (this.dbManager == null) {
-        throw new ContractValidateException();
-      }
-      UnfreezeAssetContract unfreezeAssetContract = this.contract
-          .unpack(UnfreezeAssetContract.class);
-      ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-      if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
-      }
-
-      if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
-        String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-        throw new ContractValidateException(
-            "Account[" + readableOwnerAddress + "] not exists");
-      }
-
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ownerAddress.toByteArray());
-
-      if (accountCapsule.getFrozenSupplyCount() <= 0) {
-        throw new ContractValidateException("no frozen supply balance");
-      }
-
-      if(accountCapsule.getAssetIssuedName().isEmpty()){
-        throw new ContractValidateException("this account did not issue any asset");
-      }
-
-      long now = dbManager.getHeadBlockTimeStamp();
-      long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
-          .filter(frozen -> frozen.getExpireTime() <= now).count();
-      if (allowedUnfreezeCount <= 0) {
-        throw new ContractValidateException("It's not time to unfreeze asset supply");
-      }
-
+      unfreezeAssetContract = this.contract.unpack(UnfreezeAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+    ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
+    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
+      throw new ContractValidateException("Invalidate address");
+    }
+
+    if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ownerAddress.toByteArray());
+
+    if (accountCapsule.getFrozenSupplyCount() <= 0) {
+      throw new ContractValidateException("no frozen supply balance");
+    }
+
+    if (accountCapsule.getAssetIssuedName().isEmpty()) {
+      throw new ContractValidateException("this account did not issue any asset");
+    }
+
+    long now = dbManager.getHeadBlockTimeStamp();
+    long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
+        .filter(frozen -> frozen.getExpireTime() <= now).count();
+    if (allowedUnfreezeCount <= 0) {
+      throw new ContractValidateException("It's not time to unfreeze asset supply");
     }
 
     return true;

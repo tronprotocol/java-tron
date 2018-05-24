@@ -16,13 +16,15 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuator extends AbstractActuator {
 
-  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
+  @Deprecated
+    //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
-  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
+  @Deprecated
+  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
     long fee = calcFee();
@@ -43,45 +45,49 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
+  @Deprecated
+  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean validate() throws ContractValidateException {
+    if (!contract.is(AccountCreateContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [AccountCreateContract],real type[" + contract
+              .getClass() + "]");
+    }
+    final AccountCreateContract contract;
     try {
-      if (!contract.is(AccountCreateContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [AccountCreateContract],real type[" + contract
-                .getClass() + "]");
-      }
-      AccountCreateContract contract = this.contract.unpack(AccountCreateContract.class);
-      if (contract.getAccountName().isEmpty()) {
-        throw new ContractValidateException("AccountName is null");
-      }
-      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate ownerAddress");
-      }
-
-      if (contract.getType() == null) {
-        throw new ContractValidateException("Type is null");
-      }
-
-      if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Account has existed");
-      }
+      contract = this.contract.unpack(AccountCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+    if (contract.getAccountName().isEmpty()) {
+      throw new ContractValidateException("AccountName is null");
+    }
+    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Invalidate ownerAddress");
+    }
+
+    if (contract.getType() == null) {
+      throw new ContractValidateException("Type is null");
+    }
+
+    if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Account has existed");
     }
 
     return true;
   }
 
   @Override
-  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
+  @Deprecated
+  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(AccountCreateContract.class).getOwnerAddress();
   }
 
   @Override
-  @Deprecated //Can not create account by api. Need send more than 1 trx , will create account if not exit.
+  @Deprecated
+  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public long calcFee() {
     return 0;
   }
