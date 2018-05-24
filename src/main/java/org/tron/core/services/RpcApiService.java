@@ -260,7 +260,7 @@ public class RpcApiService implements Service {
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       long num = request.getNum();
-      if (num > 0) {
+      if (num >= 0) {
         Block reply = walletSolidity.getBlockByNum(num);
         responseObserver.onNext(reply);
       } else {
@@ -294,7 +294,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionsByTimestamp(TimePaginatedMessage request,
         StreamObserver<TransactionList> responseObserver) {
-      if (! Args.getInstance().isGetTransactionsByTimestampFeature()) {
+      if (!Args.getInstance().isGetTransactionsByTimestampFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
         return;
@@ -305,13 +305,16 @@ public class RpcApiService implements Service {
       if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
         responseObserver.onNext(null);
       } else {
-        TransactionList reply = walletSolidity.getTransactionsByTimestamp(beginTime, endTime, request.getOffset(), request.getLimit() );
+        TransactionList reply = walletSolidity
+            .getTransactionsByTimestamp(beginTime, endTime, request.getOffset(),
+                request.getLimit());
         responseObserver.onNext(reply);
       }
       responseObserver.onCompleted();
     }
 
-    public void getTransactionsByTimestampCount(TimeMessage request, StreamObserver<NumberMessage> responseObserver) {
+    public void getTransactionsByTimestampCount(TimeMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
       if (!Args.getInstance().isGetTransactionsByTimestampCountFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
@@ -330,7 +333,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getTransactionsFromThis(AccountPaginated request,
-                                        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
       if (!Args.getInstance().isGetTransactionsFromThisFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
@@ -338,7 +341,8 @@ public class RpcApiService implements Service {
       }
       ByteString thisAddress = request.getAccount().getAddress();
       if (null != thisAddress) {
-        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress,request.getOffset(),request.getLimit());
+        TransactionList reply = walletSolidity
+            .getTransactionsFromThis(thisAddress, request.getOffset(), request.getLimit());
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -348,15 +352,16 @@ public class RpcApiService implements Service {
 
     @Override
     public void getTransactionsToThis(AccountPaginated request,
-                                      StreamObserver<GrpcAPI.TransactionList> responseObserver) {
-      if(!Args.getInstance().isGetTransactionsToThisFeature() ) {
+        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsToThisFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
         return;
       }
       ByteString toAddress = request.getAccount().getAddress();
       if (null != toAddress) {
-        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress,request.getOffset(),request.getLimit());
+        TransactionList reply = walletSolidity
+            .getTransactionsToThis(toAddress, request.getOffset(), request.getLimit());
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -365,7 +370,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionsFromThisCount(Account account, StreamObserver<NumberMessage> responseObserver) {
+    public void getTransactionsFromThisCount(Account account,
+        StreamObserver<NumberMessage> responseObserver) {
       if (!Args.getInstance().isGetTransactionsFromThisCountFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
@@ -381,8 +387,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionsToThisCount(Account account, StreamObserver<NumberMessage> responseObserver) {
-      if(!Args.getInstance().isGetTransactionsToThisCountFeature() ) {
+    public void getTransactionsToThisCount(Account account,
+        StreamObserver<NumberMessage> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsToThisCountFeature()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
         return;
