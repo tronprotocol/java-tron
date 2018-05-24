@@ -47,15 +47,14 @@ public class TransferActuator extends AbstractActuator {
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -125,9 +124,10 @@ public class TransferActuator extends AbstractActuator {
         long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 

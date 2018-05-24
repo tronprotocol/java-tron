@@ -47,7 +47,6 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -101,10 +100,10 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
 
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     } catch (ArithmeticException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 

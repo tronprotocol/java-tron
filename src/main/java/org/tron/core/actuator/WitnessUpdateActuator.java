@@ -40,7 +40,6 @@ public class WitnessUpdateActuator extends AbstractActuator {
     } catch (final InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -72,7 +71,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("Witness does not exist");
       }
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 

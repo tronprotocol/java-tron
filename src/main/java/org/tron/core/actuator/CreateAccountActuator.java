@@ -34,9 +34,8 @@ public class CreateAccountActuator extends AbstractActuator {
           .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      ret.setStatus(fee, code.FAILED);
       logger.debug(e.getMessage(), e);
-      e.printStackTrace();
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
@@ -68,7 +67,7 @@ public class CreateAccountActuator extends AbstractActuator {
         throw new ContractValidateException("Account has existed");
       }
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 

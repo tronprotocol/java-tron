@@ -38,7 +38,8 @@ public class UpdateAccountActuator extends AbstractActuator {
 
       ret.setStatus(calcFee(), code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
@@ -78,7 +79,7 @@ public class UpdateAccountActuator extends AbstractActuator {
         throw new ContractValidateException("This name has existed");
       }
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 

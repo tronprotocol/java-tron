@@ -71,7 +71,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
-      e.printStackTrace();
       throw new ContractExeException(e.getMessage());
     }
     return true;
@@ -115,7 +114,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("It's not time to unfreeze.");
       }
     } catch (InvalidProtocolBufferException e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
