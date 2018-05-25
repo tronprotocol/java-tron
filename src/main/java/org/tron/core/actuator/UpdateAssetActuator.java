@@ -27,6 +27,7 @@ public class UpdateAssetActuator extends AbstractActuator {
   private byte[] newUrl;
   private byte[] newDescription;
   private long newLimit;
+  private long newPublicLimit;
 
   private long fee;
 
@@ -39,6 +40,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     newLimit = updateAssetContract.getNewLimit();
+    newPublicLimit = updateAssetContract.getNewPublicLimit();
     ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
     newUrl = updateAssetContract.getUrl().toByteArray();
     newDescription = updateAssetContract.getDescription().toByteArray();
@@ -54,6 +56,7 @@ public class UpdateAssetActuator extends AbstractActuator {
           assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
 
       assetIssueCapsule.setFreeAssetNetLimit(newLimit);
+      assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
       assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
@@ -102,6 +105,10 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     if (newLimit < 0 || newLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
+    }
+
+    if (newPublicLimit < 0 || newPublicLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
+      throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
     }
 
     return true;
