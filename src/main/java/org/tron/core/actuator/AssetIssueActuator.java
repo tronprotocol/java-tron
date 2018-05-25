@@ -77,7 +77,6 @@ public class AssetIssueActuator extends AbstractActuator {
         remainSupply -= next.getFrozenAmount();
       }
 
-      assert remainSupply > 0;
       accountCapsule.setAssetIssuedName(assetIssueContract.getName());
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
           remainSupply);

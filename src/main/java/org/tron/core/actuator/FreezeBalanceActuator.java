@@ -51,7 +51,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
         .build();
 
     long frozenCount = accountCapsule.getFrozenCount();
-    assert (frozenCount >= 0);
     if (frozenCount == 0) {
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addFrozen(newFrozen)
@@ -59,7 +58,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
           .setBandwidth(newBandwidth)
           .build());
     } else {
-      assert frozenCount == 1;
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .setFrozen(0, newFrozen)
           .setBalance(newBalance)
@@ -121,6 +119,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ownerAddress.toByteArray());
+    int frozenCount = accountCapsule.getFrozenCount();
+    if (!(frozenCount == 0 || frozenCount ==1)) {
+      throw new ContractValidateException("frozenCount must be 0 or 1");
+    }
     if (frozenBalance > accountCapsule.getBalance()) {
       throw new ContractValidateException("frozenBalance must be less than accountBalance");
     }
