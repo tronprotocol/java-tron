@@ -118,12 +118,9 @@ public class BandwidthProcessor {
       throws ValidateBandwidthException {
     long cost = ChainConstant.CREATE_NEW_ACCOUNT_COST;
 
-    long weight = accountCapsule.getFrozenBalance();
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long netLimit = weight * totalNetLimit / totalNetWeight;
+    long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
@@ -197,13 +194,9 @@ public class BandwidthProcessor {
     if (bytes <= (freeAssetNetLimit - newFreeAssetNetUsage)) {
       AccountCapsule issuerAccountCapsule = dbManager.getAccountStore()
           .get(assetIssueCapsule.getOwnerAddress().toByteArray());
-      long issuerWeight = issuerAccountCapsule.getFrozenBalance();
       long issuerNetUsage = issuerAccountCapsule.getNetUsage();
       long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
-
-      long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-      long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      long issuerNetLimit = issuerWeight * totalNetLimit / totalNetWeight;
+      long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule.getFrozenBalance());
 
       long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
 
@@ -236,14 +229,17 @@ public class BandwidthProcessor {
     return false;
   }
 
-  private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
-
-    long weight = accountCapsule.getFrozenBalance();
-    long netUsage = accountCapsule.getNetUsage();
-    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+  public long calculateGlobalNetLimit(long amount) {
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long netLimit = weight * totalNetLimit / totalNetWeight;
+    return amount * totalNetLimit / totalNetWeight;
+  }
+
+  private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
+
+    long netUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+    long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
