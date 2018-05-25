@@ -576,7 +576,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (isFound[0]) {
             blockWaitToProc.remove(msg);
             isBlockProc[0] = true;
-            if (freshBlockId.contains(msg) || processSyncBlock(msg.getBlockCapsule())){
+            if (freshBlockId.contains(msg.getBlockId()) || processSyncBlock(msg.getBlockCapsule())){
               finishProcessSyncBlock(msg.getBlockCapsule());
             }
           }
