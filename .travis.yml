@@ -1,13 +1,6 @@
 sudo: required
 language: java
 jdk: oraclejdk8
-script:
-- sh tron.sh
-- ./gradlew lint
-- ./gradlew test
-# other script steps might be done before running the actual analysis
-- sonar-scanner
-
 
 addons:
   ssh_known_hosts:
@@ -16,6 +9,16 @@ addons:
       organization: "tron" # the key of the org you chose at step #3
       token:
         secure: "DXtn8yjb2rs1dLgiSOT2w5DhskYriC252vOkeS5ydFNkfrwVFpZyGGzqJlBMhuD2MJvOb30bxUZmZC0EA3cw6BjZb4kkDrsga1HjaF2uPDFKyItTehz/BpTW4kurY4qREuxnhjw32GTdt/6n2t+93HabCIvyhNc7IZJpqCldND0VH3VNWAwRPNVnfz5uPxk0tGCHxYYk1+jKplhqiygiMSQyYqkrLiCUCxtZPoke7r2zi/WSvVhoGByF2u4rGPs6/vLWok4uxb2jd+ITOjppdKdXeqMUeJJgT/6QR4lTHuytwodTINfEQWG3D+W5oo3BVqzEBAQQDZPAxErWsX64xrAdfkX0oihw5DoU7MQFbRIamMAfO/1i7dId1aR4WrgyM7V/Qxp+JlqV6J2b0MVDq5L6jqjVBHzHgzZWs3ww+fx+4HqQYEyT2D/Ld492qX4HjkZw7HpJFY+xS4wWpN3BoGjnPNVW8d0CT/P9/WIgocCR8Sz2hCkBvSXvfp23K2Z1fhTBYNKrK+2wQ3+cCdn2AYbGCqP1vWpl3Cys4LmorVusjNM0QxUauIs55iG5+cPRLy69JYJZ6wEAfZTLSOtx5bhe3aQkBfzX9h0HX+UOe3DX4LQt5Y3mnolTrJNGCSBE+Q1v5GynJk3a3d9RA9PY2k0jLxHum9OfH2A3RZi0NgA="
+
+script:
+- sh tron.sh
+- ./gradlew lint
+- ./gradlew test
+# other script steps might be done before running the actual analysis
+- sonar-scanner -X
+
+
+
 skip_build:
 - README.md：
 - LICENSE
