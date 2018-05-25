@@ -50,13 +50,13 @@ public class UpdateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (dbManager == null) {
-      throw new ContractValidateException("No dbManager!");
-    }
-    if (contract == null) {
+    if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (!contract.is(AccountUpdateContract.class)) {
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountUpdateContract],real type[" + contract
               .getClass() + "]");
