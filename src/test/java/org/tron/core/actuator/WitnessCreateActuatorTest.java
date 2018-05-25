@@ -162,30 +162,30 @@ public class WitnessCreateActuatorTest {
   }
 
   /**
-   * use Invalidate Address createWitness,result is failed,exception is "Invalidate address".
+   * use Invalid Address createWitness,result is failed,exception is "Invalid address".
    */
   @Test
-  public void invalidateAddress() {
+  public void InvalidAddress() {
     WitnessCreateActuator actuator =
         new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALIATE, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate address");
+      fail("Invalid address");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate address", e.getMessage());
+      Assert.assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
   /**
-   * use Invalidate url createWitness,result is failed,exception is "Invalidate url".
+   * use Invalid url createWitness,result is failed,exception is "Invalid url".
    */
   @Test
-  public void invalidateUrlTest() {
+  public void InvalidUrlTest() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Url cannot empty
     try {
@@ -193,10 +193,10 @@ public class WitnessCreateActuatorTest {
           getContract(OWNER_ADDRESS_FRIST, ByteString.EMPTY), dbManager);
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate url");
+      fail("Invalid url");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate url", e.getMessage());
+      Assert.assertEquals("Invalid url", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -209,10 +209,10 @@ public class WitnessCreateActuatorTest {
           getContract(OWNER_ADDRESS_FRIST, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager);
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate url");
+      fail("Invalid url");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate url", e.getMessage());
+      Assert.assertEquals("Invalid url", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

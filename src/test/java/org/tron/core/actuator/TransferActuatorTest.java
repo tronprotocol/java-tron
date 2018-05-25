@@ -203,11 +203,11 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate ownerAddress");
+      fail("Invalid ownerAddress");
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -229,11 +229,11 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate toAddress");
+      fail("Invalid toAddress");
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate toAddress", e.getMessage());
+      Assert.assertEquals("Invalid toAddress", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()

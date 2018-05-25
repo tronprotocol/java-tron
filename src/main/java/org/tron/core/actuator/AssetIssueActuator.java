@@ -115,17 +115,17 @@ public class AssetIssueActuator extends AbstractActuator {
       final AssetIssueContract assetIssueContract = this.contract.unpack(AssetIssueContract.class);
 
       if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate ownerAddress");
+        throw new ContractValidateException("Invalid ownerAddress");
       }
       if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
-        throw new ContractValidateException("Invalidate assetName");
+        throw new ContractValidateException("Invalid assetName");
       }
       if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
-        throw new ContractValidateException("Invalidate url");
+        throw new ContractValidateException("Invalid url");
       }
       if (!TransactionUtil
           .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
-        throw new ContractValidateException("Invalidate description");
+        throw new ContractValidateException("Invalid description");
       }
 
       if (assetIssueContract.getStartTime() == 0) {

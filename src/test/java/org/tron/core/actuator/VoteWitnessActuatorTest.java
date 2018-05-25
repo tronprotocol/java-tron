@@ -166,10 +166,10 @@ public class VoteWitnessActuatorTest {
   }
 
   /**
-   * use Invalidate ownerAddress voteWitness,result is failed,exception is "Invalidate address".
+   * use Invalid ownerAddress voteWitness,result is failed,exception is "Invalid address".
    */
   @Test
-  public void invalidateAddress() {
+  public void InvalidAddress() {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(ADDRESS_INVALIATE, WITNESS_ADDRESS, 1L),
             dbManager);
@@ -177,10 +177,10 @@ public class VoteWitnessActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate address");
+      fail("Invalid address");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate address", e.getMessage());
+      Assert.assertEquals("Invalid address", e.getMessage());
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());
@@ -278,7 +278,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertEquals(0, dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate vote address!", e.getMessage());
+      Assert.assertEquals("Invalid vote address!", e.getMessage());
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController.getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
       Assert.assertEquals(10, witnessCapsule.getVoteCount());

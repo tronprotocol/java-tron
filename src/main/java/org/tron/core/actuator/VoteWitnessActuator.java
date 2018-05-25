@@ -58,7 +58,7 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
+        throw new ContractValidateException("Invalid address");
       }
       ByteString ownerAddress = contract.getOwnerAddress();
       byte[] ownerAddressBytes = ownerAddress.toByteArray();
@@ -83,7 +83,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
         if (!Wallet.addressValid(witnessCandidate)){
-          throw new ContractValidateException("Invalidate vote address!");
+          throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();
         if (voteCount <= 0) {

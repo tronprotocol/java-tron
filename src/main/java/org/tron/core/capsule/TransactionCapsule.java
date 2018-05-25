@@ -77,7 +77,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /*lll
   public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
     if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalidate address");
+      throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)

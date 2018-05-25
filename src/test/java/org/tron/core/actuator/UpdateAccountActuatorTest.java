@@ -118,7 +118,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
     }
   }
 
@@ -260,7 +260,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     }
     //Too long name 33 bytes
     try {
@@ -271,7 +271,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     }
     //Too short name 7 bytes
     try {
@@ -282,7 +282,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     }
 
     //Can't contain space
@@ -294,7 +294,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     }
     //Can't contain chinese characters
     try {
@@ -305,7 +305,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     }
   }
 

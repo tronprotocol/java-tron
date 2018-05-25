@@ -80,10 +80,10 @@ public class TransferActuator extends AbstractActuator {
                 .getClass() + "]");
       }
       if (!Wallet.addressValid(ownerAddress)) {
-        throw new ContractValidateException("Invalidate ownerAddress");
+        throw new ContractValidateException("Invalid ownerAddress");
       }
       if (!Wallet.addressValid(toAddress)) {
-        throw new ContractValidateException("Invalidate toAddress");
+        throw new ContractValidateException("Invalid toAddress");
       }
 
       if (Arrays.equals(toAddress, ownerAddress)) {

@@ -78,7 +78,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
 
     AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);

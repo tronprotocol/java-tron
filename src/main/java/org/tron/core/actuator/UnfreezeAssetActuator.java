@@ -80,7 +80,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
           .unpack(UnfreezeAssetContract.class);
       ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
       if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
+        throw new ContractValidateException("Invalid address");
       }
 
       if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {

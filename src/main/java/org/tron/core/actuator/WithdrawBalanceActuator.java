@@ -65,7 +65,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           .unpack(WithdrawBalanceContract.class);
       ByteString ownerAddress = withdrawBalanceContract.getOwnerAddress();
       if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
+        throw new ContractValidateException("Invalid address");
       }
 
       if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {

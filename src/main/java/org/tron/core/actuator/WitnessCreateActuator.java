@@ -58,11 +58,11 @@ public class WitnessCreateActuator extends AbstractActuator {
       String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
 
       if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
+        throw new ContractValidateException("Invalid address");
       }
 
       if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-        throw new ContractValidateException("Invalidate url");
+        throw new ContractValidateException("Invalid url");
       }
 
       Preconditions.checkArgument(

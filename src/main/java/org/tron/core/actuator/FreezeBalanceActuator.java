@@ -100,7 +100,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
           .unpack(FreezeBalanceContract.class);
       ByteString ownerAddress = freezeBalanceContract.getOwnerAddress();
       if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
+        throw new ContractValidateException("Invalid address");
       }
 
       if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
