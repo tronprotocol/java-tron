@@ -276,12 +276,12 @@ public class FreezeBalanceActuatorTest {
   public void frozenNumTest() {
     AccountCapsule account = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    account.setFrozen(1_000, 1_000_000_000);
-    account.setFrozen(1_000_000, 1_000_000_000);
+    account.setFrozen(1_000, 1_000_000_000L);
+    account.setFrozen(1_000_000L, 1_000_000_000L);
     dbManager.getAccountStore().put(account.getAddress().toByteArray(), account);
 
-    long frozenBalance = 20_000_000;
-    long duration = 3;
+    long frozenBalance = 20_000_000L;
+    long duration = 3L;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
