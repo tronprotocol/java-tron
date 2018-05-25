@@ -31,10 +31,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     try {
       final UnfreezeAssetContract unfreezeAssetContract = contract
           .unpack(UnfreezeAssetContract.class);
-      ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
+      byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       long unfreezeAsset = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
       frozenList.addAll(accountCapsule.getFrozenSupplyList());
@@ -51,7 +50,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
-      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+      dbManager.getAccountStore().put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
