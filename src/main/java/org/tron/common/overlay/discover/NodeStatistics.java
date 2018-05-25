@@ -26,8 +26,8 @@ import org.tron.common.overlay.message.ReasonCode;
 public class NodeStatistics {
 
   public final static int REPUTATION_PREDEFINED = 100000;
-  public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000;
-  private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000;
+  public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
+  private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
 
   public class StatHandler {
 
@@ -82,7 +82,7 @@ public class NodeStatistics {
 
 
   public NodeStatistics(Node node) {
-    discoverMessageLatency = new SimpleStatter(node.getId().toString());
+    discoverMessageLatency = new SimpleStatter(node.getIdString());
   }
 
   private int getSessionReputation() {

@@ -56,8 +56,8 @@ public class NodeManager {
 
   private Manager dbManager;
 
-  private static final long LISTENER_REFRESH_RATE = 1000;
-  private static final long DB_COMMIT_RATE = 1 * 60 * 1000;
+  private static final long LISTENER_REFRESH_RATE = 1000L;
+  private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
   static final int MAX_NODES = 2000;
   static final int NODES_TRIM_THRESHOLD = 3000;
 
@@ -104,7 +104,7 @@ public class NodeManager {
       public void run() {
         logger.trace("Statistics:\n {}", dumpAllStatistics());
       }
-    }, 1 * 1000, 60 * 1000);
+    }, 1 * 1000L, 60 * 1000L);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
   }
