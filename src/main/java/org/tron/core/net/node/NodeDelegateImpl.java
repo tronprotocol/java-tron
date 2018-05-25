@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -141,9 +142,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-      return new LinkedList<BlockId>() {{
-        add(dbManager.getGenesisBlockId());
-      }};
+      return new LinkedList<BlockId>(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);

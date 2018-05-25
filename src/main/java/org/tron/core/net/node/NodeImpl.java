@@ -12,19 +12,16 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.util.internal.ConcurrentSet;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -237,10 +234,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
-
-  //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
-
-  //private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
 
   private ConcurrentHashMap<Sha256Hash, PriorItem> advObjToFetch =  new ConcurrentHashMap<Sha256Hash, PriorItem>();
 
@@ -692,7 +685,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            if (!advObjToFetch.contains(id)) {
+            if (!advObjToFetch.containsKey(id)) {
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             } else {
