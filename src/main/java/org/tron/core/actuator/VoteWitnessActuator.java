@@ -131,19 +131,18 @@ public class VoteWitnessActuator extends AbstractActuator {
   }
 
   private void countVoteAccount(VoteWitnessContract voteContract) {
-    ByteString ownerAddress = voteContract.getOwnerAddress();
-    byte[] ownerAddressBytes = ownerAddress.toByteArray();
+    byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
     VotesStore votesStore = dbManager.getVotesStore();
     AccountStore accountStore = dbManager.getAccountStore();
 
-    AccountCapsule accountCapsule = accountStore.get(ownerAddressBytes);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-    if (!votesStore.has(ownerAddressBytes)) {
-      votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
+    if (!votesStore.has(ownerAddress)) {
+      votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(), accountCapsule.getVotesList());
     } else {
-      votesCapsule = votesStore.get(ownerAddressBytes);
+      votesCapsule = votesStore.get(ownerAddress);
     }
 
     accountCapsule.clearVotes();
@@ -158,7 +157,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     });
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-    votesStore.put(ownerAddressBytes, votesCapsule);
+    votesStore.put(ownerAddress, votesCapsule);
   }
 
   @Override
