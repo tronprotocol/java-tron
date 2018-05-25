@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;

@@ -986,25 +986,22 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-
+    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
-
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += trx.getSerializedSize();
-      // judge block size
-      if (currentTrxSize > ChainConstant.TRXS_SIZE) {
-        postponedTrxCount++;
-        continue;
-      }
-
       if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-
+      currentTrxSize += trx.getSerializedSize();
+      // check the block size
+      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
