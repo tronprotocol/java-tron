@@ -124,6 +124,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     if (remoteId.length != 64) {
       channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+      if (!syncPool.isCanConnect()) {
+        channel.disconnect(ReasonCode.TOO_MANY_PEERS);
+        return;
+      }
     }
 
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {

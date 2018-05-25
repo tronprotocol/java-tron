@@ -4,7 +4,10 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -28,6 +31,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -1304,7 +1308,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("start time should be not empty", e.getMessage());
+      Assert.assertEquals("Start time should be not empty", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1329,7 +1333,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("end time should be not empty", e.getMessage());
+      Assert.assertEquals("End time should be not empty", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1355,7 +1359,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1381,7 +1385,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1407,7 +1411,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("end time should be greater than start time", e.getMessage());
+      Assert.assertEquals("End time should be greater than start time", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1433,7 +1437,7 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("end time should be greater than start time", e.getMessage());
+      Assert.assertEquals("End time should be greater than start time", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1519,6 +1523,79 @@ public class AssetIssueActuatorTest {
     } finally {
         dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
         dbManager.getAssetIssueStore().delete(ByteArray.fromString(ASSET_NAME_SECOND));
+    }
+  }
+
+  @Test
+  public void frozenListSizeTest() {
+    this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
+    List<FrozenSupply> frozenList = new ArrayList();
+    for (int i = 0; i < this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber() + 2; i++) {
+      frozenList.add(FrozenSupply.newBuilder()
+              .setFrozenAmount(10)
+              .setFrozenDays(3)
+              .build());
+    }
+
+    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(startTime)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addAllFrozenSupply(frozenList)
+            .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Frozen supply list length is too long", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  @Test
+  public void frozenSupplyMoreThanTotalSupplyTest() {
+    this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
+    List<FrozenSupply> frozenList = new ArrayList();
+    frozenList.add(FrozenSupply.newBuilder()
+            .setFrozenAmount(TOTAL_SUPPLY + 1)
+            .setFrozenDays(3)
+            .build());
+    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(startTime)
+            .setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addAllFrozenSupply(frozenList)
+            .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Frozen supply cannot exceed total supply", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
   }
 

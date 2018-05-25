@@ -22,7 +22,6 @@ public class WitnessUpdateActuator extends AbstractActuator {
   }
 
   private void updateWitness(final WitnessUpdateContract contract) {
-
     WitnessCapsule witnessCapsule = this.dbManager.getWitnessStore()
         .get(contract.getOwnerAddress().toByteArray());
     witnessCapsule.setUrl(contract.getUpdateUrl().toStringUtf8());
@@ -47,32 +46,39 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(WitnessUpdateContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [WitnessUpdateContract],real type[" + contract
+          .getClass() + "]");
+    }
+    final WitnessUpdateContract contract;
     try {
-      if (!this.contract.is(WitnessUpdateContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [WitnessUpdateContract],real type[" + this.contract
-                .getClass() + "]");
-      }
+      contract = this.contract.unpack(WitnessUpdateContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
 
-      final WitnessUpdateContract contract = this.contract.unpack(WitnessUpdateContract.class);
-      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalid address");
-      }
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid address");
+    }
 
-      if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("account does not exist");
-      }
+    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
+      throw new ContractValidateException("account does not exist");
+    }
 
-      if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {
-        throw new ContractValidateException("Invalid url");
-      }
+    if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {
+      throw new ContractValidateException("Invalid url");
+    }
 
-      if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
-        throw new ContractValidateException("Witness does not exist");
-      }
-    } catch (final Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException("Witness does not exist");
     }
 
     return true;

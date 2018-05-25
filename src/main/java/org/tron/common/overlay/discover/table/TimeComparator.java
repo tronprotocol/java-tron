@@ -31,7 +31,7 @@ public class TimeComparator implements Comparator<NodeEntry>  {
 
         if (t1 < t2) {
             return 1;
-        } else if (t1 >= t2) {
+        } else if (t1 > t2) {
             return -1;
         } else {
             return 0;

@@ -37,7 +37,7 @@ public interface Parameter {
   }
 
   interface NetConstants {
-
+    long GRPC_IDLE_TIME_OUT = 60000L;
     long ADV_TIME_OUT = 20000L;
     long SYNC_TIME_OUT = 5000L;
     long HEAD_NUM_MAX_DELTA = 1000L;
@@ -47,5 +47,9 @@ public interface Parameter {
     long MAX_TRX_PER_PEER = 200L;
     int NET_MAX_INV_SIZE_IN_MINUTES = 2;
     int MSG_CACHE_DURATION_IN_BLOCKS = 5;
+  }
+
+  interface DatabaseConstants {
+    int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
   }
 }

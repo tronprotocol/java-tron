@@ -784,7 +784,7 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   @Test
-  public void mmultiplyOverflowTest() {
+  public void multiplyOverflowTest() {
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner trx balance. Else can't complete this test case.
@@ -818,6 +818,54 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       Assert.assertTrue(isNullOrZero(owner.getAssetMap().get(ASSET_NAME)));
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   *  exchangeAmount <= 0 trx, throw exception
+   */
+  @Test
+  public void exchangeAmountTest() {
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(100)
+                    .setNum(1)
+                    .setStartTime(dbManager.getHeadBlockTimeStamp() - 10000)
+                    .setEndTime(dbManager.getHeadBlockTimeStamp() + 11000000)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+
+    AccountCapsule toAccountCapsule = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(TO_ADDRESS));
+    toAccountCapsule.addAsset(ASSET_NAME, TOTAL_SUPPLY);
+    dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setBalance(100000000000000L);
+    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(1),
+            dbManager);
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(("Can not process the exchange!").equals(e.getMessage()));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

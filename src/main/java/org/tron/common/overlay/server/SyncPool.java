@@ -17,6 +17,8 @@
  */
 package org.tron.common.overlay.server;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,10 +28,10 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +41,7 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeHandler;
 import org.tron.common.overlay.discover.NodeManager;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 
@@ -51,8 +51,11 @@ public class SyncPool {
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private static final long WORKER_TIMEOUT = 16;
+  private static final double fator = 0.4;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
+  private final AtomicInteger passivePeersCount = new AtomicInteger(0);
+  private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
           .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
@@ -103,7 +106,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * 0.4) - channelManager.getActivePeers().size();
+    int lackSize = (int) (maxActiveNodes * fator) - activePeersCount.get();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();
@@ -133,7 +136,9 @@ public class SyncPool {
       }
      });
 
-    logger.info("-------- active channel {}", channelManager.getActivePeers().size());
+    logger.info("-------- active connect channel {}", activePeersCount.get());
+    logger.info("-------- passive connect channel {}", passivePeersCount.get());
+    logger.info("-------- all connect channel {}", channelManager.getActivePeers().size());
     for (Channel channel: channelManager.getActivePeers()){
       logger.info(channel.toString());
     }
@@ -159,22 +164,45 @@ public class SyncPool {
   }
 
   public synchronized List<PeerConnection> getActivePeers() {
-    return new ArrayList<>(activePeers);
+    List<PeerConnection> peers = Lists.newArrayList();
+    activePeers.forEach(peer -> {
+      if (!peer.isDisconnect()){
+        peers.add(peer);
+      }
+    });
+    return peers;
   }
 
-  public void onConnect(Channel peer) {
+  public synchronized void onConnect(Channel peer) {
     if (!activePeers.contains(peer)) {
+      if (!peer.isActive()) {
+        passivePeersCount.incrementAndGet();
+      } else {
+        activePeersCount.incrementAndGet();
+      }
       activePeers.add((PeerConnection) peer);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
       peerDel.onConnectPeer((PeerConnection) peer);
     }
   }
 
-  public void onDisconnect(Channel peer) {
+  public synchronized void onDisconnect(Channel peer) {
     if (activePeers.contains(peer)) {
+      if (!peer.isActive()) {
+        passivePeersCount.decrementAndGet();
+      } else {
+        activePeersCount.decrementAndGet();
+      }
       activePeers.remove(peer);
       peerDel.onDisconnectPeer((PeerConnection)peer);
     }
+  }
+
+  public boolean isCanConnect() {
+    if (passivePeersCount.get() >= maxActiveNodes * (1 - fator)) {
+      return false;
+    }
+    return true;
   }
 
   public void close() {

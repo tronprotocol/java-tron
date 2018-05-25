@@ -46,43 +46,49 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(VoteWitnessContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [VoteWitnessContract],real type[" + contract
+              .getClass() + "]");
+    }
+    final VoteWitnessContract contract;
     try {
-      if (!contract.is(VoteWitnessContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [VoteWitnessContract],real type[" + contract
-                .getClass() + "]");
-      }
-      if (this.dbManager == null) {
-        throw new ContractValidateException("dbManager is null");
-      }
+      contract = this.contract.unpack(VoteWitnessContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Invalid address");
+    }
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-      VoteWitnessContract contract = this.contract.unpack(VoteWitnessContract.class);
-      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalid address");
-      }
-      ByteString ownerAddress = contract.getOwnerAddress();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
-      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+    AccountStore accountStore = dbManager.getAccountStore();
+    WitnessStore witnessStore = dbManager.getWitnessStore();
 
-      AccountStore accountStore = dbManager.getAccountStore();
-      WitnessStore witnessStore = dbManager.getWitnessStore();
-
-      if (contract.getVotesCount() == 0) {
-        throw new ContractValidateException(
-            "VoteNumber must more than 0");
-      }
-      if (contract.getVotesCount() > dbManager.getDynamicPropertiesStore().getMaxVoteNumber()) {
-        throw new ContractValidateException(
-            "VoteNumber more than maxVoteNumber " + dbManager.getDynamicPropertiesStore()
-                .getMaxVoteNumber());
-      }
-
+    if (contract.getVotesCount() == 0) {
+      throw new ContractValidateException(
+          "VoteNumber must more than 0");
+    }
+    if (contract.getVotesCount() > dbManager.getDynamicPropertiesStore().getMaxVoteNumber()) {
+      throw new ContractValidateException(
+          "VoteNumber more than maxVoteNumber " + dbManager.getDynamicPropertiesStore()
+              .getMaxVoteNumber());
+    }
+    try {
       Iterator<Vote> iterator = contract.getVotesList().iterator();
       Long sum = 0L;
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-        if (!Wallet.addressValid(witnessCandidate)){
+        if (!Wallet.addressValid(witnessCandidate)) {
           throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();
@@ -101,21 +107,23 @@ public class VoteWitnessActuator extends AbstractActuator {
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      if (!accountStore.has(ownerAddressBytes)) {
+      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      if (accountCapsule == null) {
         throw new ContractValidateException(
             "Account[" + readableOwnerAddress + "] not exists");
       }
 
-      long tronPower = accountStore.get(ownerAddressBytes).getTronPower();
+      long tronPower = accountCapsule.getTronPower();
+
       sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
       if (sum > tronPower) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
                 + "]");
       }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

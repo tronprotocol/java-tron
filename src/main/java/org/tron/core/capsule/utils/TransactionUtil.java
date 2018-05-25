@@ -55,7 +55,7 @@ public class TransactionUtil {
       return false;
     }
 
-    if (accountName.length < 8){
+    if (accountName.length < 8) {
       return false;
     }
 
@@ -92,6 +92,26 @@ public class TransactionUtil {
     }
     return true;
   }
+
+  public static boolean validTokenAbbrName(byte[] abbrName) {
+    if (ArrayUtils.isEmpty(abbrName)) {
+      return false;
+    }
+    if (abbrName.length > 5) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : abbrName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+
 
   public static boolean validAssetDescription(byte[] description) {
     if (ArrayUtils.isEmpty(description)) {

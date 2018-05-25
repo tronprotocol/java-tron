@@ -3,7 +3,7 @@ package org.tron.core.services;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.HashMap;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TimeMessage;
+import org.tron.api.GrpcAPI.TimePaginatedMessage;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc.WalletImplBase;
@@ -47,6 +49,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
@@ -97,7 +100,7 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      ServerBuilder serverBuilder = ServerBuilder.forPort(port)
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
       Args args = Args.getInstance();
       if (args.getRpcThreadNum() > 0) {
@@ -109,6 +112,7 @@ public class RpcApiService implements Service {
       } else {
         serverBuilder = serverBuilder.addService(new WalletApi());
       }
+      serverBuilder.maxConnectionIdle(NetConstants.GRPC_IDLE_TIME_OUT, TimeUnit.MILLISECONDS);
       apiServer = serverBuilder.build().start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
@@ -263,7 +267,7 @@ public class RpcApiService implements Service {
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       long num = request.getNum();
-      if (num > 0) {
+      if (num >= 0) {
         Block reply = walletSolidity.getBlockByNum(num);
         responseObserver.onNext(reply);
       } else {
@@ -295,26 +299,57 @@ public class RpcApiService implements Service {
 
 
     @Override
-    public void getTransactionsByTimestamp(TimeMessage request,
+    public void getTransactionsByTimestamp(TimePaginatedMessage request,
         StreamObserver<TransactionList> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsByTimestampFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      TimeMessage timeMessage = request.getTimeMessage();
+      long beginTime = timeMessage.getBeginInMilliseconds();
+      long endTime = timeMessage.getEndInMilliseconds();
+      if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
+        responseObserver.onNext(null);
+      } else {
+        TransactionList reply = walletSolidity
+            .getTransactionsByTimestamp(beginTime, endTime, request.getOffset(),
+                request.getLimit());
+        responseObserver.onNext(reply);
+      }
+      responseObserver.onCompleted();
+    }
+
+    public void getTransactionsByTimestampCount(TimeMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsByTimestampCountFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
       long beginTime = request.getBeginInMilliseconds();
       long endTime = request.getEndInMilliseconds();
       if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
         responseObserver.onNext(null);
       } else {
-        TransactionList reply = walletSolidity.getTransactionsByTimestamp(beginTime, endTime);
+        NumberMessage reply = walletSolidity.getTransactionsByTimestampCount(beginTime, endTime);
         responseObserver.onNext(reply);
       }
       responseObserver.onCompleted();
     }
 
-
     @Override
-    public void getTransactionsFromThis(Account request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString thisAddress = request.getAddress();
+    public void getTransactionsFromThis(AccountPaginated request,
+        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsFromThisFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString thisAddress = request.getAccount().getAddress();
       if (null != thisAddress) {
-        TransactionList reply = walletSolidity.getTransactionsFromThis(thisAddress);
+        TransactionList reply = walletSolidity
+            .getTransactionsFromThis(thisAddress, request.getOffset(), request.getLimit());
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -323,12 +358,52 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionsToThis(Account request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString toAddress = request.getAddress();
+    public void getTransactionsToThis(AccountPaginated request,
+        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsToThisFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = request.getAccount().getAddress();
       if (null != toAddress) {
-        TransactionList reply = walletSolidity.getTransactionsToThis(toAddress);
+        TransactionList reply = walletSolidity
+            .getTransactionsToThis(toAddress, request.getOffset(), request.getLimit());
         responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionsFromThisCount(Account account,
+        StreamObserver<NumberMessage> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsFromThisCountFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = account.getAddress();
+      if (null != toAddress) {
+        responseObserver.onNext(walletSolidity.getTransactionFromThisCount(toAddress));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionsToThisCount(Account account,
+        StreamObserver<NumberMessage> responseObserver) {
+      if (!Args.getInstance().isGetTransactionsToThisCountFeature()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      ByteString toAddress = account.getAddress();
+      if (null != toAddress) {
+        responseObserver.onNext(walletSolidity.getTransactionToThisCount(toAddress));
       } else {
         responseObserver.onNext(null);
       }
@@ -362,7 +437,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -407,7 +482,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -420,7 +495,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -462,7 +537,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -476,7 +551,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -491,7 +566,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -505,7 +580,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -534,7 +609,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -548,7 +623,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -562,7 +637,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -614,7 +689,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -629,7 +704,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException", e.getMessage());
+        logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
