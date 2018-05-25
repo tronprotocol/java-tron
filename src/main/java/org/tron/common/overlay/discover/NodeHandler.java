@@ -184,7 +184,8 @@ public class NodeHandler {
     if (waitForPong) {
       waitForPong = false;
       getNodeStatistics().discoverInPong.add();
-      getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
+      getNodeStatistics().discoverMessageLatency
+          .add((double) System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
       node.setId(msg.getNodeId());
       if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
