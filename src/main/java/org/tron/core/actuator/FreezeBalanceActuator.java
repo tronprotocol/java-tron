@@ -61,9 +61,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
       }
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-      long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      totalNetWeight += freezeBalanceContract.getFrozenBalance() / 1000_000L;
-      dbManager.getDynamicPropertiesStore().saveTotalNetWeight(totalNetWeight);
+      dbManager.getDynamicPropertiesStore()
+          .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
