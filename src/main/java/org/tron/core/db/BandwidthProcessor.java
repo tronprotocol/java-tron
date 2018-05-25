@@ -192,8 +192,13 @@ public class BandwidthProcessor {
         latestAssetOperationTime, now);
 
     if (bytes <= (freeAssetNetLimit - newFreeAssetNetUsage)) {
-      AccountCapsule issuerAccountCapsule = dbManager.getAccountStore()
-          .get(assetIssueCapsule.getOwnerAddress().toByteArray());
+      AccountCapsule issuerAccountCapsule;
+      if (assetIssueCapsule.getOwnerAddress() != accountCapsule.getAddress()) {
+        issuerAccountCapsule = dbManager.getAccountStore()
+            .get(assetIssueCapsule.getOwnerAddress().toByteArray());
+      } else {
+        issuerAccountCapsule = accountCapsule;
+      }
       long issuerNetUsage = issuerAccountCapsule.getNetUsage();
       long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
       long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule.getFrozenBalance());
