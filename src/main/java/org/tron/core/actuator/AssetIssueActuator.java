@@ -121,8 +121,8 @@ public class AssetIssueActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-
-    if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
+    byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate ownerAddress");
     }
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
@@ -195,8 +195,7 @@ public class AssetIssueActuator extends AbstractActuator {
       remainSupply -= next.getFrozenAmount();
     }
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(assetIssueContract.getOwnerAddress().toByteArray());
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException("Account not exists");
     }

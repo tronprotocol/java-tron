@@ -48,7 +48,7 @@ public class TransferAssetActuator extends AbstractActuator {
           .unpack(TransferAssetContract.class);
       AccountStore accountStore = this.dbManager.getAccountStore();
       byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
-      byte[] toKey = transferAssetContract.getToAddress().toByteArray();
+      byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
@@ -58,9 +58,9 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       accountStore.put(ownerKey, ownerAccountCapsule);
 
-      AccountCapsule toAccountCapsule = accountStore.get(toKey);
+      AccountCapsule toAccountCapsule = accountStore.get(toAddress);
       toAccountCapsule.addAssetAmount(assetName, amount);
-      accountStore.put(toKey, toAccountCapsule);
+      accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
