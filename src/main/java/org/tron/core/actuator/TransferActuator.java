@@ -117,8 +117,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       // if account with to_address is not existed, the minimum amount is 1 TRX
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(transferContract.getToAddress().toByteArray());
+      AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
         if (amount < min) {
