@@ -50,7 +50,7 @@ public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
 
       ret.setStatus(fee, code.SUCESS);
     } catch (Exception e) {
-      logger.debug(e.getMessage(),e);
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
@@ -84,7 +84,7 @@ public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
 
     assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
 
-    if (newLimit < 0 || newLimit>= ChainConstant.ONE_DAY_NET_LIMIT) {
+    if (newLimit < 0 || newLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }
 

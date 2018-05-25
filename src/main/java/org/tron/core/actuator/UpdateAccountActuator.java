@@ -37,7 +37,7 @@ public class UpdateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException{
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     try {
       AccountStore accountStore = dbManager.getAccountStore();
       AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
@@ -49,7 +49,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
       ret.setStatus(fee, code.SUCESS);
     } catch (Exception e) {
-      logger.debug(e.getMessage(),e);
+      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
