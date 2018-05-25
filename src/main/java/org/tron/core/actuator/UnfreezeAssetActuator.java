@@ -89,13 +89,12 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Invalidate address");
     }
 
-    if (!dbManager.getAccountStore().has(ownerAddress)) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {
       throw new ContractValidateException("no frozen supply balance");
