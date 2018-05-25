@@ -25,6 +25,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -257,7 +258,7 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-            getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -266,6 +267,31 @@ public class FreezeBalanceActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenBalance must be more than 1TRX", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void frozenNumTest() {
+    AccountCapsule account = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    account.setFrozen(1_000L, 1_000_000_000L);
+    account.setFrozen(1_000_000L, 1_000_000_000L);
+    dbManager.getAccountStore().put(account.getAddress().toByteArray(), account);
+
+    long frozenBalance = 20_000_000L;
+    long duration = 3L;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator(
+        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("frozenCount must be 0 or 1", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
