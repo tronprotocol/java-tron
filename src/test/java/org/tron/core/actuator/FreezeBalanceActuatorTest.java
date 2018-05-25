@@ -276,7 +276,7 @@ public class FreezeBalanceActuatorTest {
   public void frozenNumTest() {
     AccountCapsule account = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    account.setFrozen(1_000, 1_000_000_000L);
+    account.setFrozen(1_000L, 1_000_000_000L);
     account.setFrozen(1_000_000L, 1_000_000_000L);
     dbManager.getAccountStore().put(account.getAddress().toByteArray(), account);
 
