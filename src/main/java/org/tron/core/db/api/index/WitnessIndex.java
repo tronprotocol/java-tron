@@ -34,7 +34,7 @@ public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
   @Autowired
   public WitnessIndex(
       @Qualifier("witnessStore") final TronDatabase<WitnessCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct

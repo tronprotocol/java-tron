@@ -25,21 +25,21 @@ public class StorageTest {
 
   @Before
   public void setStorage() {
-    storage.setDirectory("java-tron");
+    storage.setDbDirectory("java-tron");
   }
 
   @Test
   public void whenSetNullDirectory() {
-    storage.setDirectory(null);
+    storage.setDbDirectory(null);
   }
 
   @Test
   public void whenSetEmptyDirectory() {
-    storage.setDirectory("");
+    storage.setDbDirectory("");
   }
 
   @Test
   public void getStorage() {
-    Assert.assertEquals("java-tron", storage.getDirectory());
+    Assert.assertEquals("java-tron", storage.getDbDirectory());
   }
 }

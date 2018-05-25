@@ -43,7 +43,7 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
   @Autowired
   public BlockIndex(
       @Qualifier("blockStore") final TronDatabase<BlockCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct
