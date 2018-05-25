@@ -63,11 +63,13 @@ public class WitnessUpdateActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate address");
     }
 
-    if (!dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException("account does not exist");
     }
 
@@ -75,7 +77,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalidate url");
     }
 
-    if (this.dbManager.getWitnessStore().get(contract.getOwnerAddress().toByteArray()) == null) {
+    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException("Witness does not exist");
     }
 
