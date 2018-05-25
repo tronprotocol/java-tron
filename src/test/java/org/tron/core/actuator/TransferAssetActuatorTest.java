@@ -401,6 +401,7 @@ public class TransferAssetActuatorTest {
           .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
       Assert.assertTrue(null == noExitAccount);
       actuator.validate();
+      actuator.execute(ret);
       noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(NOT_EXIT_ADDRESS));
       Assert.assertFalse(null == noExitAccount);    //Had created.

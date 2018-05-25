@@ -185,12 +185,15 @@ public class Wallet {
   }
 
 
-  public Account getBalance(Account account) {
+  public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
-    return accountCapsule == null ? null : accountCapsule.getInstance();
+    return accountCapsule.getInstance();
   }
 
   /**
@@ -334,13 +337,15 @@ public class Wallet {
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long netLimit = accountCapsule.getFrozenBalance() * totalNetLimit / totalNetWeight;
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    if (accountCapsule == null) {
+      return null;
+    }
 
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
+
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {

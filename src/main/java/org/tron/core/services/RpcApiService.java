@@ -345,7 +345,7 @@ public class RpcApiService implements Service {
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
-        Account reply = wallet.getBalance(req);
+        Account reply = wallet.getAccount(req);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
