@@ -180,6 +180,9 @@ public class BandwidthProcessor {
     if (assetIssueCapsule == null) {
       throw new ValidateBandwidthException("asset not exists");
     }
+    if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
+      return useAccountNet(accountCapsule, bytes, now);
+    }
 
     long freeAssetNetLimit = assetIssueCapsule.getFreeAssetNetLimit();
 
@@ -192,9 +195,6 @@ public class BandwidthProcessor {
         latestAssetOperationTime, now);
 
     if (bytes <= (freeAssetNetLimit - newFreeAssetNetUsage)) {
-      if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
-        return useAccountNet(accountCapsule, bytes, now);
-      }
       AccountCapsule issuerAccountCapsule = dbManager.getAccountStore()
           .get(assetIssueCapsule.getOwnerAddress().toByteArray());
       long issuerNetUsage = issuerAccountCapsule.getNetUsage();
