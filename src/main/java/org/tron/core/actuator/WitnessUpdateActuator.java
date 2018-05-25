@@ -46,10 +46,15 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
     if (!this.contract.is(WitnessUpdateContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [WitnessUpdateContract],real type[" + this.contract
-              .getClass() + "]");
+      throw new ContractValidateException("contract type error,expected type [WitnessUpdateContract],real type[" + contract
+          .getClass() + "]");
     }
     final WitnessUpdateContract contract;
     try {

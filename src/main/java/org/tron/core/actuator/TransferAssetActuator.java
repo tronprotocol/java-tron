@@ -78,11 +78,15 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(TransferAssetContract.class)) {
-      throw new ContractValidateException();
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
-      throw new ContractValidateException();
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(TransferAssetContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [TransferAssetContract],real type[" + contract
+          .getClass() + "]");
     }
     final TransferAssetContract transferAssetContract;
     try {

@@ -48,6 +48,12 @@ public class CreateAccountActuator extends AbstractActuator {
   @Deprecated
   //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
     if (!contract.is(AccountCreateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountCreateContract],real type[" + contract

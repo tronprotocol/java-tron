@@ -104,11 +104,15 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(AssetIssueContract.class)) {
-      throw new ContractValidateException();
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
-      throw new ContractValidateException();
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(AssetIssueContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [AssetIssueContract],real type[" + contract
+          .getClass() + "]");
     }
     final AssetIssueContract assetIssueContract;
     try {

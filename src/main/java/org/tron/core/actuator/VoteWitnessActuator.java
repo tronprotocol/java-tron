@@ -46,13 +46,15 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!contract.is(VoteWitnessContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [VoteWitnessContract],real type[" + contract
-              .getClass() + "]");
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
-      throw new ContractValidateException("dbManager is null");
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(VoteWitnessContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [VoteWitnessContract],real type[" + contract
+          .getClass() + "]");
     }
     final VoteWitnessContract contract;
     try {
