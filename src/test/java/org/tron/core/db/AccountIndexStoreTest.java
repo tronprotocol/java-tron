@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -97,7 +98,7 @@ public class AccountIndexStoreTest {
     // generate the random number
     byte[] result = new byte[length];
     new Random().nextBytes(result);
-    result[0] = Constant.ADD_PRE_FIX_BYTE_TESTNET;
+    result[0] = Wallet.getAddressPreFixByte();
     return result;
   }
 }

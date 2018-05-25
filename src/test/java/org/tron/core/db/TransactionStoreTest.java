@@ -222,7 +222,7 @@ public class TransactionStoreTest {
     // generate the random number
     byte[] result = new byte[length];
     new Random().nextBytes(result);
-    result[0] = Constant.ADD_PRE_FIX_BYTE_TESTNET;
+    result[0] = Wallet.getAddressPreFixByte();
     return result;
   }
 }
