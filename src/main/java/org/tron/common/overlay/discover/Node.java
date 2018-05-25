@@ -22,6 +22,7 @@ import static org.tron.common.crypto.Hash.sha3;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -150,7 +151,7 @@ public class Node implements Serializable {
     }
 
     if (o instanceof Node) {
-      return getId().equals(((Node) o).getId());
+      return Arrays.equals(((Node) o).getId(), this.getId());
     }
 
     return false;

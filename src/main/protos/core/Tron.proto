@@ -50,6 +50,8 @@ message Account {
   repeated Vote votes = 5;
   // the other asset owned by this account
   map<string, int64> asset = 6;
+  // latest asset operation time
+  map<string, int64> latest_asset_operation_time = 18;
   // the frozen balance
   repeated Frozen frozen = 7;
   // bandwidth, get from frozen
@@ -67,6 +69,10 @@ message Account {
   bytes code = 13;
   bool is_witness = 14;
   bool is_committee = 15;
+  // frozen asset(for asset issuer)
+  repeated Frozen frozen_supply = 16;
+  // asset_issued_name
+  bytes asset_issued_name = 17;
 }
 
 //FIXME authority?
@@ -140,6 +146,7 @@ message Transaction {
       FreezeBalanceContract = 11;
       UnfreezeBalanceContract = 12;
       WithdrawBalanceContract = 13;
+      UnfreezeAssetContract = 14;
       CustomContract = 20;
     }
     ContractType type = 1;
@@ -166,6 +173,7 @@ message Transaction {
     repeated acuthrity auths = 9; //FIXME authority
     // data not used
     bytes data = 10;
+    //only support size = 1,  repeated list here for extenstion
     repeated Contract contract = 11;
     // scripts not used
     bytes scripts = 12;
@@ -173,6 +181,7 @@ message Transaction {
   }
 
   raw raw_data = 1;
+  // only support size = 1,  repeated list here for muti-sig extenstion
   repeated bytes signature = 2;
   repeated Result ret = 5;
 }

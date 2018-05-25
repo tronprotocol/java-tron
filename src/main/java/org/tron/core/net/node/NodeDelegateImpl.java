@@ -1,7 +1,10 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -24,6 +27,8 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateBandwidthException;
@@ -46,11 +51,12 @@ public class NodeDelegateImpl implements NodeDelegate {
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException {
     // TODO timestamp shouble be consistent.
-    long gap = System.currentTimeMillis() - block.getTimeStamp();
-    if (gap / 1000 < -6000) {
+    long gap = block.getTimeStamp() - System.currentTimeMillis();
+    if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
     }
     try {
+      dbManager.preValidateTransactionSign(block);
       dbManager.pushBlock(block);
       if (!syncMode) {
         List<TransactionCapsule> trx = null;
@@ -63,15 +69,25 @@ public class NodeDelegateImpl implements NodeDelegate {
       }
 
     } catch (ValidateBandwidthException e) {
-      throw new BadBlockException("Validate Bandwidth exception");
+      throw new BadBlockException("Validate Bandwidth exception," + e.getMessage());
     } catch (ValidateScheduleException e) {
-      throw new BadBlockException("validate schedule exception");
+      throw new BadBlockException("validate schedule exception," + e.getMessage());
     } catch (ValidateSignatureException e) {
-      throw new BadBlockException("validate signature exception");
+      throw new BadBlockException("validate signature exception," + e.getMessage());
     } catch (ContractValidateException e) {
-      throw new BadBlockException("ContractValidate exception");
+      throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
-      throw new BadBlockException("Contract Exectute exception");
+      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
+    } catch (InterruptedException e) {
+      throw new BadBlockException("pre validate signature exception," + e.getMessage());
+    } catch (TaposException e) {
+      throw new BadBlockException("tapos exception," + e.getMessage());
+    } catch (DupTransactionException e) {
+      throw new BadBlockException("DupTransation exception," + e.getMessage());
+    } catch (TooBigTransactionException e) {
+      throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
+    } catch (TransactionExpirationException e) {
+      throw new BadBlockException("Expiration exception," + e.getMessage());
     }
   }
 
@@ -79,10 +95,16 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
+    if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+      logger.warn("This transaction has been processed");
+      return;
+    } else {
+      dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+    }
     try {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
-      logger.error("Contract validate failed", e);
+      logger.warn("Contract validate failed", e);
       throw new BadTransactionException();
     } catch (ContractExeException e) {
       logger.error("Contract execute failed", e);
@@ -91,11 +113,15 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.error("ValidateSignatureException");
       throw new BadTransactionException();
     } catch (ValidateBandwidthException e) {
-      logger.error("ValidateBandwidthException");
+      logger.warn("ValidateBandwidthException");
     } catch (DupTransactionException e) {
       logger.error("dup trans");
     } catch (TaposException e) {
       logger.error("tapos error");
+    } catch (TooBigTransactionException e) {
+      logger.error("too big transaction");
+    } catch (TransactionExpirationException e) {
+      logger.error("expiration transaction");
     }
   }
 
@@ -116,9 +142,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-      return new LinkedList<BlockId>() {{
-        add(dbManager.getGenesisBlockId());
-      }};
+      return new LinkedList<BlockId>(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
@@ -225,10 +249,18 @@ public class NodeDelegateImpl implements NodeDelegate {
           logger.debug(e.getMessage());
         } catch (ItemNotFoundException e) {
           logger.debug(e.getMessage());
+        } catch (Exception e) {
+          logger.error("new BlockMessage fail", e);
         }
+        return null;
       case TRX:
-        return new TransactionMessage(
-            dbManager.getTransactionStore().get(hash.getBytes()).getData());
+        try {
+          return new TransactionMessage(
+              dbManager.getTransactionStore().get(hash.getBytes()).getData());
+        } catch (Exception e) {
+          logger.error("new TransactionMessage fail", e);
+        }
+        return null;
       default:
         logger.info("message type not block or trx.");
         return null;
@@ -262,7 +294,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public BlockId getSolidBlockId(){
+  public BlockId getSolidBlockId() {
     return dbManager.getSolidBlockId();
   }
 

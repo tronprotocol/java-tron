@@ -30,7 +30,8 @@ public class TransactionsMessage extends TronMessage {
 
   @Override
   public String toString() {
-    return "trx_size:" + this.transactions.getTransactionsList().size();
+    return new StringBuilder().append(super.toString()).append(", trx_size: ")
+            .append(this.transactions.getTransactionsList().size()).toString();
   }
 
   @Override

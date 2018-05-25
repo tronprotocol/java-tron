@@ -23,7 +23,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +34,11 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.discover.NodeManager;
 import org.tron.common.overlay.discover.NodeStatistics;
-import org.tron.common.overlay.message.*;
+import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.MessageCodec;
+import org.tron.common.overlay.message.ReasonCode;
+import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -88,6 +91,8 @@ public class Channel {
     protected NodeStatistics nodeStatistics;
 
     private boolean isActive;
+
+    private volatile boolean isDisconnect;
 
     private String remoteId;
 
@@ -146,10 +151,11 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
-        logger.info("Send disconnect to {}, reason:{}", ctx.channel().remoteAddress(), reason);
+        this.isDisconnect = true;
+        DisconnectMessage msg = new DisconnectMessage(reason);
+        logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
         getNodeStatistics().nodeDisconnectedLocal(reason);
-        ctx.writeAndFlush(new DisconnectMessage(reason).getSendData());
-        close();
+        ctx.writeAndFlush(msg.getSendData()).addListener(future ->  close());
     }
 
     public void processException(Throwable throwable){
@@ -162,7 +168,7 @@ public class Channel {
         if (throwable instanceof ReadTimeoutException){
             logger.error("Read timeout, {}", address);
         }else if(baseThrowable instanceof P2pException){
-            logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(), errMsg, address);
+            logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(), baseThrowable.getMessage(), address);
         }else if (errMsg != null && errMsg.contains("Connection reset by peer")){
             logger.error("{}, {}", errMsg, address);
         }else {
@@ -172,6 +178,7 @@ public class Channel {
     }
 
     public void close(){
+        this.isDisconnect = true;
         p2pHandler.close();
         msgQueue.close();
         ctx.close();
@@ -237,6 +244,10 @@ public class Channel {
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public boolean isDisconnect(){
+        return isDisconnect;
     }
 
     public boolean isProtocolsInitialized() {

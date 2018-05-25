@@ -54,6 +54,11 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(accountName)) {
       return false;
     }
+
+    if (accountName.length < 8) {
+      return false;
+    }
+
     if (accountName.length > 32) {
       return false;
     }
@@ -66,6 +71,56 @@ public class TransactionUtil {
         return false; // 0x7E = '~'
       }
     }
+    return true;
+  }
+
+  public static boolean validAssetName(byte[] assetName) {
+    if (ArrayUtils.isEmpty(assetName)) {
+      return false;
+    }
+    if (assetName.length > 32) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : assetName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+
+  public static boolean validTokenAbbrName(byte[] abbrName) {
+    if (ArrayUtils.isEmpty(abbrName)) {
+      return false;
+    }
+    if (abbrName.length > 5) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : abbrName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+
+
+  public static boolean validAssetDescription(byte[] description) {
+    if (ArrayUtils.isEmpty(description)) {
+      return true;   //description can empty
+    }
+    if (description.length > 200) {
+      return false;
+    }
+    // other rules.
     return true;
   }
 

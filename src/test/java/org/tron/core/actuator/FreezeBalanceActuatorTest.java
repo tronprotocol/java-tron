@@ -34,18 +34,17 @@ public class FreezeBalanceActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_freeze_balance_test";
   private static AnnotationConfigApplicationContext context;
-
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
-  private static final String OWNER_ACCOUNT_INVALIATE =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-
+  private static final String OWNER_ACCOUNT_INVALIATE;
   private static final long initBalance = 10_000_000_000L;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ACCOUNT_INVALIATE =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
   }
 
   /**
@@ -241,7 +240,6 @@ public class FreezeBalanceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       fail("cannot run here.");
-
     } catch (ContractValidateException e) {
       long minFrozenTime = dbManager.getDynamicPropertiesStore().getMinFrozenTime();
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
@@ -249,6 +247,25 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
               + "and more than " + minFrozenTime + " days"
           , e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void lessThan1TrxTest() {
+    long frozenBalance = 1;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator(
+            getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("frozenBalance must be more than 1TRX", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

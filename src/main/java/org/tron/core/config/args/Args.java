@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.sun.org.apache.bcel.internal.generic.FADD;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.BufferedReader;
@@ -164,6 +165,16 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
+  private int rpcThreadNum;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
+  private int validateSignThreadNum;
+
+  @Getter
+  @Setter
   private long maintenanceTimeInterval; // (ms)
 
   @Getter
@@ -178,6 +189,30 @@ public class Args {
   @Setter
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsFromThisFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsToThisFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsFromThisCountFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsToThisCountFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsByTimestampFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsByTimestampCountFeature;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -214,6 +249,12 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
+    INSTANCE.getTransactionsFromThisFeature = false;
+    INSTANCE.getTransactionsToThisFeature = false;
+    INSTANCE.getTransactionsFromThisCountFeature = false;
+    INSTANCE.getTransactionsToThisCountFeature = false;
+    INSTANCE.getTransactionsByTimestampFeature = false;
+    INSTANCE.getTransactionsByTimestampCountFeature = false;
   }
 
   /**
@@ -322,6 +363,10 @@ public class Args {
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
+    INSTANCE.rpcThreadNum =
+        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
+            : Runtime.getRuntime().availableProcessors() / 2;
+
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
@@ -335,6 +380,22 @@ public class Args {
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
     }
+
+    INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
+
+
+    INSTANCE.getTransactionsFromThisFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
+
+    INSTANCE.getTransactionsToThisFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
+
+    INSTANCE.getTransactionsFromThisCountFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
+
+    INSTANCE.getTransactionsToThisCountFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
+
+    INSTANCE.getTransactionsByTimestampFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
+
+    INSTANCE.getTransactionsByTimestampCountFeature = config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config.getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
   }
 
 

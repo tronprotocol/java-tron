@@ -13,7 +13,6 @@ public abstract class Message {
 
   protected static final Logger logger = LoggerFactory.getLogger("Message");
 
-  protected boolean unpacked;
   protected byte[] data;
   protected byte type;
 
@@ -22,13 +21,11 @@ public abstract class Message {
 
   public Message(byte[] packed) {
     this.data = packed;
-    unpacked = false;
   }
 
   public Message(byte type, byte[] packed) {
     this.type = type;
     this.data = packed;
-    unpacked = false;
   }
 
   public ByteBuf getSendData(){
@@ -51,7 +48,7 @@ public abstract class Message {
 
   @Override
   public String toString() {
-    return "[Message Type: " + getType() + ", Message Hash: " + getMessageId() + "]";
+    return "type: " + getType() + "\n";
   }
 
   @Override

@@ -70,11 +70,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
             final Channel channel = ctx.getBean(PeerConnection.class);
 
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
-
-            if(!peerDiscoveryMode) {
-                channelManager.add(channel);
-            }
-
+            
             // limit the size of receiving buffer to 1024
             ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
             ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);

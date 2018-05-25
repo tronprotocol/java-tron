@@ -17,8 +17,10 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 
 @Slf4j
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
@@ -76,5 +78,21 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   public ByteString getOwnerAddress() {
     return this.assetIssueContract.getOwnerAddress();
+  }
+
+  public int getFrozenSupplyCount() {
+    return getInstance().getFrozenSupplyCount();
+  }
+
+  public List<FrozenSupply> getFrozenSupplyList() {
+    return getInstance().getFrozenSupplyList();
+  }
+
+  public long getFrozenSupply() {
+    List<FrozenSupply> frozenList = getFrozenSupplyList();
+    final long[] frozenBalance = {0};
+    frozenList.forEach(frozen -> frozenBalance[0] = Long.sum(frozenBalance[0],
+        frozen.getFrozenAmount()));
+    return frozenBalance[0];
   }
 }

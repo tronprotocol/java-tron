@@ -19,6 +19,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
@@ -29,20 +30,18 @@ public class UpdateAccountActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static Any contract;
-  private static final String dbPath = "output_CreateAccountTest";
-
+  private static final String dbPath = "output_updateaccount_test";
   private static final String ACCOUNT_NAME = "ownerTest";
   private static final String ACCOUNT_NAME_1 = "ownerTest1";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  private static final String OWNER_ADDRESS_1 =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS_1;
   private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
   /**
@@ -106,6 +105,8 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -121,6 +122,8 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -136,6 +139,8 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account has not existed", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -159,6 +164,8 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
     try {
@@ -171,6 +178,8 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -191,6 +200,8 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
     AccountCapsule ownerCapsule =
@@ -210,13 +221,18 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
   @Test
+  /*
+   * Account name need 8 - 32 bytes.
+   */
   public void invalidName() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    //Just OK
+    //Just OK 32 bytes is OK
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
           getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS), dbManager);
@@ -230,6 +246,29 @@ public class UpdateAccountActuatorTest {
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    //8 bytes is OK
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountName(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      UpdateAccountActuator actuator = new UpdateAccountActuator(
+          getContract("testname", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals("testname",
+          accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
     //Empty name
     try {
@@ -241,8 +280,10 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
-    //Too long name
+    //Too long name 33 bytes
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
           getContract("testname0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager);
@@ -252,7 +293,23 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
+    //Too short name 7 bytes
+    try {
+      UpdateAccountActuator actuator = new UpdateAccountActuator(
+          getContract("testnam", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalidate accountName", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
     //Can't contain space
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
@@ -263,6 +320,8 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
     //Can't contain chinese characters
     try {
@@ -274,6 +333,8 @@ public class UpdateAccountActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalidate accountName", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 

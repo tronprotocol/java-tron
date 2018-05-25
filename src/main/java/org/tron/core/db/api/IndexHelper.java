@@ -43,6 +43,7 @@ public class IndexHelper {
     accountIndex.fill();
     assetIssueIndex.fill();
   }
+
   private <T> void add(Index.Iface<T> index, byte[] bytes) {
     index.add(bytes);
   }
