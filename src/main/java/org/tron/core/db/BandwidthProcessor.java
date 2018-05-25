@@ -60,6 +60,10 @@ public class BandwidthProcessor {
 
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = dbManager.getWitnessController().getHeadSlot();
+    updateUsage(accountCapsule, now);
+  }
+
+  public void updateUsage(AccountCapsule accountCapsule, long now) {
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
