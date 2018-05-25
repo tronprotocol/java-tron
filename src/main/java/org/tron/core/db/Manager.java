@@ -931,8 +931,6 @@ public class Manager {
       throw new ContractValidateException("act size greater than 1, this is extend feature");
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
     validateDup(trxCap);
 
     if (!trxCap.validateSignature()) {
