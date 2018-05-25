@@ -77,13 +77,15 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!contract.is(UnfreezeBalanceContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
-              .getClass() + "]");
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
-      throw new ContractValidateException();
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(UnfreezeBalanceContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
+          .getClass() + "]");
     }
     final UnfreezeBalanceContract unfreezeBalanceContract;
     try {

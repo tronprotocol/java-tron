@@ -92,16 +92,21 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException();
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
-      throw new ContractValidateException();
+      throw new ContractValidateException("No dbManager!");
     }
-    final Contract.ParticipateAssetIssueContract participateAssetIssueContract;
+    if (!this.contract.is(ParticipateAssetIssueContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
+          .getClass() + "]");
+    }
+
+    final ParticipateAssetIssueContract participateAssetIssueContract;
     try {
       participateAssetIssueContract =
-          this.contract.unpack(Contract.ParticipateAssetIssueContract.class);
+          this.contract.unpack(ParticipateAssetIssueContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());

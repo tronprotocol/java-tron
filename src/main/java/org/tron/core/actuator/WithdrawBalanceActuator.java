@@ -54,10 +54,15 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!contract.is(WithdrawBalanceContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [WithdrawBalanceContract],real type[" + contract
-              .getClass() + "]");
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(WithdrawBalanceContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [WithdrawBalanceContract],real type[" + contract
+          .getClass() + "]");
     }
     final WithdrawBalanceContract withdrawBalanceContract;
     try {
