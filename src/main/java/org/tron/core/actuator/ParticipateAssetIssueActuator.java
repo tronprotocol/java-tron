@@ -51,8 +51,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       long cost = participateAssetIssueContract.getAmount();
 
       //subtract from owner address
-      byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
-      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
+      byte[] ownerAddress = participateAssetIssueContract.getOwnerAddress().toByteArray();
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddress);
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
@@ -66,16 +66,16 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
 
       //add to to_address
-      byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
-      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
+      byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
       if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
 
       //write to db
-      dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
-      dbManager.getAccountStore().put(toAddressBytes, toAccount);
+      dbManager.getAccountStore().put(ownerAddress, ownerAccount);
+      dbManager.getAccountStore().put(toAddress, toAccount);
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
