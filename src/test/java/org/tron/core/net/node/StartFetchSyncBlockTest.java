@@ -71,7 +71,7 @@ public class StartFetchSyncBlockTest {
     Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
     BlockMessage blockMessage = blockCache.getIfPresent(blockId);
     if (blockMessage != null) {
-      blockCache.Invalid(blockId);
+      blockCache.invalidate(blockId);
     }
     return blockMessage;
   }

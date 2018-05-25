@@ -117,8 +117,8 @@ public class BroadTest {
   private void removeTheTxAndBlock(Sha256Hash blockId, Sha256Hash transactionId) {
     Cache<Sha256Hash, TransactionMessage> trxCache = ReflectUtils.getFieldValue(node, "TrxCache");
     Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
-    trxCache.Invalid(transactionId);
-    blockCache.Invalid(blockId);
+    trxCache.invalidate(transactionId);
+    blockCache.invalidate(blockId);
   }
 
   @Test
