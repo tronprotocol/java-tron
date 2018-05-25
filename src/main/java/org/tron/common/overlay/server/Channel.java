@@ -178,6 +178,7 @@ public class Channel {
     }
 
     public void close(){
+        this.isDisconnect = true;
         p2pHandler.close();
         msgQueue.close();
         ctx.close();
