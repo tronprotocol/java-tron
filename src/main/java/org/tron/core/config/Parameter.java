@@ -12,7 +12,8 @@ public interface Parameter {
     double SOLIDIFIED_THRESHOLD = 0.7;
     int PRIVATE_KEY_LENGTH = 64;
     int MAX_ACTIVE_WITNESS_NUM = 27;
-    int TRXS_SIZE = 2_000_000; // < 2MiB
+    //int TRXS_SIZE = 2_000_000; // < 2MiB
+    int BLOCK_SIZE = 2_000_000;
     int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     long CLOCK_MAX_DELAY = 3600 * 1000; //ms
     double BLOCK_PRODUCED_TIME_OUT = 0.75;
@@ -44,6 +45,7 @@ public interface Parameter {
   }
 
   interface DataBaseConstants {
+
     int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
   }
 }
