@@ -47,16 +47,16 @@ public class TransferAssetActuator extends AbstractActuator {
       TransferAssetContract transferAssetContract = this.contract
           .unpack(TransferAssetContract.class);
       AccountStore accountStore = this.dbManager.getAccountStore();
-      byte[] ownerKey = transferAssetContract.getOwnerAddress().toByteArray();
+      byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
-      AccountCapsule ownerAccountCapsule = accountStore.get(ownerKey);
+      AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule.reduceAssetAmount(assetName, amount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
-      accountStore.put(ownerKey, ownerAccountCapsule);
+      accountStore.put(ownerAddress, ownerAccountCapsule);
 
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
       toAccountCapsule.addAssetAmount(assetName, amount);
