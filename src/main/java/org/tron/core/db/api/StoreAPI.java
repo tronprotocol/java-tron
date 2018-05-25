@@ -14,7 +14,7 @@ import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
 import static com.googlecode.cqengine.query.QueryFactory.threshold;
 import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
-import static org.tron.core.config.Parameter.DataBaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;

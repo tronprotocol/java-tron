@@ -3,7 +3,7 @@ package org.tron.core.services;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.HashMap;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -48,6 +49,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
@@ -97,7 +99,7 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      ServerBuilder serverBuilder = ServerBuilder.forPort(port)
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
       Args args = Args.getInstance();
       if (args.getRpcThreadNum() > 0) {
@@ -109,6 +111,7 @@ public class RpcApiService implements Service {
       } else {
         serverBuilder = serverBuilder.addService(new WalletApi());
       }
+      serverBuilder.maxConnectionIdle(NetConstants.GRPC_IDLE_TIME_OUT, TimeUnit.MILLISECONDS);
       apiServer = serverBuilder.build().start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
