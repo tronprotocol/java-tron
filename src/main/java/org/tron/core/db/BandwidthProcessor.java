@@ -181,6 +181,19 @@ public class BandwidthProcessor {
       throw new ValidateBandwidthException("asset not exists");
     }
 
+    long publicFreeAssetNetLimit = assetIssueCapsule.getPublicFreeAssetNetLimit();
+    long publicFreeAssetNetUsage = assetIssueCapsule.getPublicFreeAssetNetUsage();
+    long publicLatestFreeNetTime = assetIssueCapsule.getPublicLatestFreeNetTime();
+
+    long newPublicFreeAssetNetUsage = increase(publicFreeAssetNetUsage, 0,
+        publicLatestFreeNetTime, now);
+
+    if (bytes > (publicFreeAssetNetLimit - newPublicFreeAssetNetUsage)) {
+      logger.info("The " + assetNameString + " public free bandwidth is not enough");
+      return false;
+    }
+
+
     long freeAssetNetLimit = assetIssueCapsule.getFreeAssetNetLimit();
 
     long freeAssetNetUsage = accountCapsule
@@ -191,42 +204,58 @@ public class BandwidthProcessor {
     long newFreeAssetNetUsage = increase(freeAssetNetUsage, 0,
         latestAssetOperationTime, now);
 
-    if (bytes <= (freeAssetNetLimit - newFreeAssetNetUsage)) {
-      AccountCapsule issuerAccountCapsule = dbManager.getAccountStore()
-          .get(assetIssueCapsule.getOwnerAddress().toByteArray());
-      long issuerNetUsage = issuerAccountCapsule.getNetUsage();
-      long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
-      long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule.getFrozenBalance());
-
-      long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
-
-      if (bytes <= (issuerNetLimit - newIssuerNetUsage)) {
-        latestConsumeTime = now;
-        latestAssetOperationTime = now;
-        long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-        logger.info("old issuerNetUsage: " + newIssuerNetUsage);
-        newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
-        logger.info("new issuerNetUsage: " + newIssuerNetUsage);
-        logger.info("old freeAssetNetUsage: " + newFreeAssetNetUsage);
-        newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
-            bytes, latestAssetOperationTime, now);
-        logger.info("new freeAssetNetUsage: " + newFreeAssetNetUsage);
-        issuerAccountCapsule.setNetUsage(newIssuerNetUsage);
-        issuerAccountCapsule.setLatestConsumeTime(latestConsumeTime);
-        accountCapsule.setLatestOperationTime(latestOperationTime);
-        accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
-            latestAssetOperationTime);
-        accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
-
-        dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-        dbManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
-            issuerAccountCapsule);
-        logger.info("");
-        return true;
-      }
+    if (bytes > (freeAssetNetLimit - newFreeAssetNetUsage)) {
+      logger.info("The " + assetNameString + " free bandwidth is not enough");
+      return false;
     }
-    logger.info("The " + assetNameString + " free bandwidth is not enough");
-    return false;
+
+    AccountCapsule issuerAccountCapsule = dbManager.getAccountStore()
+        .get(assetIssueCapsule.getOwnerAddress().toByteArray());
+    long issuerNetUsage = issuerAccountCapsule.getNetUsage();
+    long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
+    long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule.getFrozenBalance());
+
+    long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
+
+    if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
+      logger.info("The " + assetNameString + " issuer'bandwidth is not enough");
+      return false;
+    }
+
+    latestConsumeTime = now;
+    latestAssetOperationTime = now;
+    publicLatestFreeNetTime = now;
+    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+    logger.info("old issuerNetUsage: " + newIssuerNetUsage);
+    newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
+    logger.info("new issuerNetUsage: " + newIssuerNetUsage);
+    logger.info("old freeAssetNetUsage: " + newFreeAssetNetUsage);
+    newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
+        bytes, latestAssetOperationTime, now);
+    logger.info("new freeAssetNetUsage: " + newFreeAssetNetUsage);
+    newPublicFreeAssetNetUsage = increase(newPublicFreeAssetNetUsage, bytes,
+        publicLatestFreeNetTime, now);
+    logger.info("new newPublicFreeAssetNetUsage: " + newPublicFreeAssetNetUsage);
+
+    issuerAccountCapsule.setNetUsage(newIssuerNetUsage);
+    issuerAccountCapsule.setLatestConsumeTime(latestConsumeTime);
+
+    accountCapsule.setLatestOperationTime(latestOperationTime);
+    accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
+        latestAssetOperationTime);
+    accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
+
+    assetIssueCapsule.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
+    assetIssueCapsule.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
+
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
+        issuerAccountCapsule);
+    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+    logger.info("");
+    return true;
+
   }
 
   public long calculateGlobalNetLimit(long frozeBalance) {

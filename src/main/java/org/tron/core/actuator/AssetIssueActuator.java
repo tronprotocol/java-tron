@@ -168,6 +168,11 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Invalid FreeAssetNetLimit");
       }
 
+      if (assetIssueContract.getPublicFreeAssetNetLimit() < 0
+          || assetIssueContract.getPublicFreeAssetNetLimit() >= ChainConstant.ONE_DAY_NET_LIMIT) {
+        throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
+      }
+
       long remainSupply = assetIssueContract.getTotalSupply();
       long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
       long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
