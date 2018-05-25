@@ -701,8 +701,8 @@ public class WalletClient {
         return rpcCli.getAssetIssueListByTimestamp(timestamp);
     }
 
-    public static Optional<TransactionList> getTransactionsByTimestamp(long start, long end) {
-        return rpcCli.getTransactionsByTimestamp(start, end);
+    public static Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset, int limit) {
+        return rpcCli.getTransactionsByTimestamp(start, end, offset, limit);
     }
 
     public static Optional<AssetIssueList> getAssetIssueList() {

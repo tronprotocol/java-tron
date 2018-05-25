@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -47,43 +46,49 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    try {
-      if (!this.contract.is(WitnessCreateContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [AccountCreateContract],real type[" + this.contract
-                .getClass() + "]");
-      }
-
-      final WitnessCreateContract contract = this.contract.unpack(WitnessCreateContract.class);
-      String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
-
-      if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
-      }
-
-      if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-        throw new ContractValidateException("Invalidate url");
-      }
-
-      Preconditions.checkArgument(
-          this.dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray()),
-          "account[" + readableOwnerAddress + "] not exists");
-
-      AccountCapsule accountCapsule = this.dbManager.getAccountStore()
-          .get(contract.getOwnerAddress().toByteArray());
-
-      Preconditions.checkArgument(
-          !this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray()),
-          "Witness[" + readableOwnerAddress + "] has existed");
-
-      Preconditions.checkArgument(
-          accountCapsule.getBalance() >= dbManager.getDynamicPropertiesStore()
-              .getAccountUpgradeCost(),
-          "balance < AccountUpgradeCost");
-    } catch (final Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    if (!this.contract.is(WitnessCreateContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [AccountCreateContract],real type[" + this.contract
+              .getClass() + "]");
     }
+
+    final WitnessCreateContract contract;
+    try {
+      contract = this.contract.unpack(WitnessCreateContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      throw new ContractValidateException(e.getMessage());
+    }
+
+    String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
+
+    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Invalidate address");
+    }
+
+    if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
+      throw new ContractValidateException("Invalidate url");
+    }
+
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
+        .get(contract.getOwnerAddress().toByteArray());
+
+    if (accountCapsule == null) {
+      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+    }
+    /* todo later
+    if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
+      throw new ContractValidateException("account name not set");
+    } */
+
+    if (this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+    }
+
+    if (accountCapsule.getBalance() < dbManager.getDynamicPropertiesStore()
+        .getAccountUpgradeCost()) {
+      throw new ContractValidateException("balance < AccountUpgradeCost");
+    }
+
     return true;
   }
 
@@ -97,7 +102,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     return 0;
   }
 
-  private void createWitness(final WitnessCreateContract witnessCreateContract) throws BalanceInsufficientException {
+  private void createWitness(final WitnessCreateContract witnessCreateContract)
+      throws BalanceInsufficientException {
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
         witnessCreateContract.getOwnerAddress(),
@@ -111,9 +117,9 @@ public class WitnessCreateActuator extends AbstractActuator {
     accountCapsule.setIsWitness(true);
     this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(),
-            -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+        -dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
 
     dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(),
-            +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
+        +dbManager.getDynamicPropertiesStore().getAccountUpgradeCost());
   }
 }
