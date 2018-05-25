@@ -511,6 +511,21 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateFreeAssetNetLimit(Contract.UpdateFreeAssetNetLimitContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request,
+                ContractType.UpdateFreeAssetNetLimitContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
