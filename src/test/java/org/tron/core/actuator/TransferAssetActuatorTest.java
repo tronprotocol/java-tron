@@ -366,29 +366,6 @@ public class TransferAssetActuatorTest {
   }
 
   @Test
-  public void noExitOwnerAccount() {
-    TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, NOT_EXIT_ADDRESS, TO_ADDRESS), dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("Validate TransferContract error, no OwnerAccount.");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("No owner account!", e.getMessage());
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
-      Assert.assertTrue(isNullOrZero(toAccount.getAssetMap().get(ASSET_NAME)));
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  @Test
   /**
    * If to account not exit, creat it.
    */
