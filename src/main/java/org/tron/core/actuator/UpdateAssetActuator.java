@@ -8,32 +8,40 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.UpdateFreeAssetNetLimitContract;
+import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
+public class UpdateAssetActuator extends AbstractActuator {
 
-  private UpdateFreeAssetNetLimitContract updateFreeAssetNetLimitContract;
-  private long newLimit;
+  private UpdateAssetContract updateAssetContract;
+
   private byte[] ownerAddress;
+  private byte[] newUrl;
+  private byte[] newDescription;
+  private long newLimit;
+
   private long fee;
 
-  UpdateFreeAssetNetLimitActuator(Any contract, Manager dbManager) {
+  UpdateAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
     try {
-      updateFreeAssetNetLimitContract = contract.unpack(UpdateFreeAssetNetLimitContract.class);
+      updateAssetContract = contract.unpack(UpdateAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.error(e.getMessage(), e);
     }
-    newLimit = updateFreeAssetNetLimitContract.getNewLimit();
-    ownerAddress = updateFreeAssetNetLimitContract.getOwnerAddress().toByteArray();
+
+    newLimit = updateAssetContract.getNewLimit();
+    ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
+    newUrl = updateAssetContract.getUrl().toByteArray();
+    newDescription = updateAssetContract.getDescription().toByteArray();
     fee = calcFee();
   }
 
@@ -63,9 +71,9 @@ public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (updateFreeAssetNetLimitContract == null) {
+    if (updateAssetContract == null) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateFreeAssetNetLimitContract],real type["
+          "contract type error,expected type [UpdateAssetContract],real type["
               + contract.getClass() + "]");
     }
 
@@ -83,6 +91,14 @@ public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
     }
 
     assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
+
+    if ((newUrl != null) && (!TransactionUtil.validUrl(newUrl))) {
+      throw new ContractValidateException("Invalid url");
+    }
+
+    if ((newDescription != null) && (!TransactionUtil.validAssetDescription(newDescription))) {
+      throw new ContractValidateException("Invalid description");
+    }
 
     if (newLimit < 0 || newLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
