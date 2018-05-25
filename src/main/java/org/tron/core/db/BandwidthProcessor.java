@@ -229,10 +229,11 @@ public class BandwidthProcessor {
     return false;
   }
 
-  public long calculateGlobalNetLimit(long amount) {
+  public long calculateGlobalNetLimit(long frozeBalance) {
+    long netWeight = frozeBalance / 1000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    return amount * totalNetLimit / totalNetWeight;
+    return netWeight * totalNetLimit / totalNetWeight;
   }
 
   private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
