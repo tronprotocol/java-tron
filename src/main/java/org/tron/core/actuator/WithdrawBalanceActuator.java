@@ -71,25 +71,24 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    ByteString ownerAddress = withdrawBalanceContract.getOwnerAddress();
-    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
+    byte[] ownerAddress = withdrawBalanceContract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate address");
     }
 
-    if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
+    if (!dbManager.getAccountStore().has(ownerAddress)) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
-    if (!dbManager.getWitnessStore().has(ownerAddress.toByteArray())) {
+    if (!dbManager.getWitnessStore().has(ownerAddress)) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] is not a witnessAccount");
     }
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ownerAddress.toByteArray());
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dbManager.getHeadBlockTimeStamp();
