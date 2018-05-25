@@ -105,6 +105,7 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setFreeAssetNetLimit(long newLimit) {
-    this.assetIssueContract.toBuilder().setFreeAssetNetLimit(newLimit).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setFreeAssetNetLimit(newLimit).build();
   }
 }
