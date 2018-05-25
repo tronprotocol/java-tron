@@ -43,9 +43,7 @@ public class BandwidthProcessor {
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
-        logger.info("old averageLastUsage: " + averageLastUsage + ". decay: " + decay);
         averageLastUsage = Math.round(averageLastUsage * decay);
-        logger.info("new averageLastUsage: " + averageLastUsage);
       } else {
         averageLastUsage = 0;
       }
@@ -207,13 +205,9 @@ public class BandwidthProcessor {
         latestConsumeTime = now;
         latestAssetOperationTime = now;
         long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-        logger.info("old issuerNetUsage: " + newIssuerNetUsage);
         newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
-        logger.info("new issuerNetUsage: " + newIssuerNetUsage);
-        logger.info("old freeAssetNetUsage: " + newFreeAssetNetUsage);
         newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
             bytes, latestAssetOperationTime, now);
-        logger.info("new freeAssetNetUsage: " + newFreeAssetNetUsage);
         issuerAccountCapsule.setNetUsage(newIssuerNetUsage);
         issuerAccountCapsule.setLatestConsumeTime(latestConsumeTime);
         accountCapsule.setLatestOperationTime(latestOperationTime);
@@ -224,11 +218,10 @@ public class BandwidthProcessor {
         dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
         dbManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
             issuerAccountCapsule);
-        logger.info("");
         return true;
       }
     }
-    logger.info("The " + assetNameString + " free bandwidth is not enough");
+    logger.debug("The " + assetNameString + " free bandwidth is not enough");
     return false;
   }
 
@@ -250,9 +243,7 @@ public class BandwidthProcessor {
     if (bytes <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      logger.info("old netUsage: " + newNetUsage);
       newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
-      logger.info("new netUsage: " + newNetUsage);
       accountCapsule.setNetUsage(newNetUsage);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
@@ -261,7 +252,7 @@ public class BandwidthProcessor {
       return true;
     }
 
-    logger.info("net usage is running out. now use free net usage");
+    logger.debug("net usage is running out. now use free net usage");
     return false;
   }
 
@@ -283,12 +274,8 @@ public class BandwidthProcessor {
         latestConsumeFreeTime = now;
         long latestOperationTime = dbManager.getHeadBlockTimeStamp();
         publicNetTime = now;
-        logger.info("old freeNetUsage: " + newFreeNetUsage);
         newFreeNetUsage = increase(newFreeNetUsage, bytes, latestConsumeFreeTime, now);
-        logger.info("new freeNetUsage: " + newFreeNetUsage);
-        logger.info("old publicNetUsage: " + newPublicNetUsage);
         newPublicNetUsage = increase(newPublicNetUsage, bytes, publicNetTime, now);
-        logger.info("new publicNetUsage: " + newPublicNetUsage);
         accountCapsule.setFreeNetUsage(newFreeNetUsage);
         accountCapsule.setLatestConsumeFreeTime(latestConsumeFreeTime);
         accountCapsule.setLatestOperationTime(latestOperationTime);
@@ -300,7 +287,7 @@ public class BandwidthProcessor {
       }
     }
 
-    logger.info("free net usage is running out");
+    logger.debug("free net usage is running out");
     return false;
   }
 }
