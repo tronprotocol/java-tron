@@ -26,11 +26,12 @@ public class UpdateAccountActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     final AccountUpdateContract accountUpdateContract;
+    final long fee = calcFee();
     try {
       accountUpdateContract = contract.unpack(AccountUpdateContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
-      ret.setStatus(calcFee(), code.FAILED);
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
@@ -42,7 +43,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
     accountIndexStore.put(account);
-    ret.setStatus(calcFee(), code.SUCESS);
+    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }

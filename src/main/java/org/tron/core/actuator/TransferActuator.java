@@ -62,6 +62,7 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    final long fee = calcFee();
     if (this.contract == null) {
       throw new ContractValidateException();
     }
@@ -103,7 +104,7 @@ public class TransferActuator extends AbstractActuator {
 
     long balance = ownerAccount.getBalance();
 
-    if (ownerAccount.getBalance() < calcFee()) {
+    if (ownerAccount.getBalance() < fee) {
       throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
     }
 
@@ -112,7 +113,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     try {
-      if (balance < Math.addExact(amount, calcFee())) {
+      if (balance < Math.addExact(amount, fee)) {
         throw new ContractValidateException("balance is not sufficient.");
       }
 
