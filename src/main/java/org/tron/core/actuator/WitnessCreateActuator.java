@@ -46,12 +46,16 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!this.contract.is(WitnessCreateContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [AccountCreateContract],real type[" + this.contract
-              .getClass() + "]");
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
     }
-
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(WitnessCreateContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [WitnessCreateContract],real type[" + contract
+          .getClass() + "]");
+    }
     final WitnessCreateContract contract;
     try {
       contract = this.contract.unpack(WitnessCreateContract.class);
@@ -59,9 +63,10 @@ public class WitnessCreateActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    String readableOwnerAddress = StringUtil.createReadableString(contract.getOwnerAddress());
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate address");
     }
 
@@ -69,8 +74,7 @@ public class WitnessCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalidate url");
     }
 
-    AccountCapsule accountCapsule = this.dbManager.getAccountStore()
-        .get(contract.getOwnerAddress().toByteArray());
+    AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
 
     if (accountCapsule == null) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
@@ -80,7 +84,7 @@ public class WitnessCreateActuator extends AbstractActuator {
       throw new ContractValidateException("account name not set");
     } */
 
-    if (this.dbManager.getWitnessStore().has(contract.getOwnerAddress().toByteArray())) {
+    if (this.dbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
     }
 

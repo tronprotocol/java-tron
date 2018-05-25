@@ -26,82 +26,88 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    final WithdrawBalanceContract withdrawBalanceContract;
     try {
-      WithdrawBalanceContract withdrawBalanceContract = contract
-          .unpack(WithdrawBalanceContract.class);
-
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(withdrawBalanceContract.getOwnerAddress().toByteArray());
-      long oldBalance = accountCapsule.getBalance();
-      long allowance = accountCapsule.getAllowance();
-
-      long now = dbManager.getHeadBlockTimeStamp();
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .setBalance(oldBalance + allowance)
-          .setAllowance(0L)
-          .setLatestWithdrawTime(now)
-          .build());
-      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-
-      ret.setStatus(fee, code.SUCESS);
+      withdrawBalanceContract = contract.unpack(WithdrawBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(withdrawBalanceContract.getOwnerAddress().toByteArray());
+    long oldBalance = accountCapsule.getBalance();
+    long allowance = accountCapsule.getAllowance();
+
+    long now = dbManager.getHeadBlockTimeStamp();
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .setBalance(oldBalance + allowance)
+        .setAllowance(0L)
+        .setLatestWithdrawTime(now)
+        .build());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    ret.setStatus(fee, code.SUCESS);
+
     return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(WithdrawBalanceContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [WithdrawBalanceContract],real type[" + contract
+          .getClass() + "]");
+    }
+    final WithdrawBalanceContract withdrawBalanceContract;
     try {
-      if (!contract.is(WithdrawBalanceContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [WithdrawBalanceContract],real type[" + contract
-                .getClass() + "]");
-      }
+      withdrawBalanceContract = this.contract.unpack(WithdrawBalanceContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+    byte[] ownerAddress = withdrawBalanceContract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalidate address");
+    }
 
-      WithdrawBalanceContract withdrawBalanceContract = this.contract
-          .unpack(WithdrawBalanceContract.class);
-      ByteString ownerAddress = withdrawBalanceContract.getOwnerAddress();
-      if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
-      }
+    if (!dbManager.getAccountStore().has(ownerAddress)) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
+    }
 
-      if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
-        String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-        throw new ContractValidateException(
-            "Account[" + readableOwnerAddress + "] not exists");
-      }
+    if (!dbManager.getWitnessStore().has(ownerAddress)) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] is not a witnessAccount");
+    }
 
-      if (!dbManager.getWitnessStore().has(ownerAddress.toByteArray())) {
-        String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-        throw new ContractValidateException(
-            "Account[" + readableOwnerAddress + "] is not a witnessAccount");
-      }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ownerAddress.toByteArray());
+    long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
+    long now = dbManager.getHeadBlockTimeStamp();
+    long witnessAllowanceFrozenTime =
+        dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L;
 
-      long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-      long now = dbManager.getHeadBlockTimeStamp();
-      long witnessAllowanceFrozenTime =
-          dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L;
+    if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
+      throw new ContractValidateException("The last withdraw time is "
+          + latestWithdrawTime + ",less than 24 hours");
+    }
 
-      if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
-        throw new ContractValidateException("The last withdraw time is "
-            + latestWithdrawTime + ",less than 24 hours");
-      }
-
-      if (accountCapsule.getAllowance() <= 0) {
-        throw new ContractValidateException("witnessAccount does not have any allowance");
-      }
-
+    if (accountCapsule.getAllowance() <= 0) {
+      throw new ContractValidateException("witnessAccount does not have any allowance");
+    }
+    try {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
-
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
     }
 
     return true;

@@ -29,93 +29,94 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    final UnfreezeBalanceContract unfreezeBalanceContract;
     try {
-      UnfreezeBalanceContract unfreezeBalanceContract = contract
-          .unpack(UnfreezeBalanceContract.class);
-
-      ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
-
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
-      long oldBalance = accountCapsule.getBalance();
-      long unfreezeBalance = 0L;
-      List<Frozen> frozenList = Lists.newArrayList();
-      frozenList.addAll(accountCapsule.getFrozenList());
-      Iterator<Frozen> iterator = frozenList.iterator();
-      long now = dbManager.getHeadBlockTimeStamp();
-      while (iterator.hasNext()) {
-        Frozen next = iterator.next();
-        if (next.getExpireTime() <= now) {
-          unfreezeBalance += next.getFrozenBalance();
-          iterator.remove();
-        }
-      }
-
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .setBalance(oldBalance + unfreezeBalance)
-          .clearFrozen().addAllFrozen(frozenList).build());
-
-      VotesCapsule votesCapsule;
-      if (!dbManager.getVotesStore().has(ownerAddressBytes)) {
-        votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
-      } else {
-        votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
-      }
-      accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
-
-      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
-      dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
-
-      ret.setStatus(fee, code.SUCESS);
+      unfreezeBalanceContract = contract.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+    ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
+    byte[] ownerAddressBytes = ownerAddress.toByteArray();
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+    long oldBalance = accountCapsule.getBalance();
+    long unfreezeBalance = 0L;
+    List<Frozen> frozenList = Lists.newArrayList();
+    frozenList.addAll(accountCapsule.getFrozenList());
+    Iterator<Frozen> iterator = frozenList.iterator();
+    long now = dbManager.getHeadBlockTimeStamp();
+    while (iterator.hasNext()) {
+      Frozen next = iterator.next();
+      if (next.getExpireTime() <= now) {
+        unfreezeBalance += next.getFrozenBalance();
+        iterator.remove();
+      }
+    }
+
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .setBalance(oldBalance + unfreezeBalance)
+        .clearFrozen().addAllFrozen(frozenList).build());
+
+    VotesCapsule votesCapsule;
+    if (!dbManager.getVotesStore().has(ownerAddressBytes)) {
+      votesCapsule = new VotesCapsule(ownerAddress, accountCapsule.getVotesList());
+    } else {
+      votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+    }
+    accountCapsule.clearVotes();
+    votesCapsule.clearNewVotes();
+
+    dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+    dbManager.getVotesStore().put(ownerAddressBytes, votesCapsule);
+    ret.setStatus(fee, code.SUCESS);
+
     return true;
   }
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(UnfreezeBalanceContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
+          .getClass() + "]");
+    }
+    final UnfreezeBalanceContract unfreezeBalanceContract;
     try {
-      if (!contract.is(UnfreezeBalanceContract.class)) {
-        throw new ContractValidateException(
-            "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
-                .getClass() + "]");
-      }
-      if (this.dbManager == null) {
-        throw new ContractValidateException();
-      }
-      UnfreezeBalanceContract unfreezeBalanceContract = this.contract
-          .unpack(UnfreezeBalanceContract.class);
-      ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
-      if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-        throw new ContractValidateException("Invalidate address");
-      }
+      unfreezeBalanceContract = this.contract.unpack(UnfreezeBalanceContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+    ByteString ownerAddress = unfreezeBalanceContract.getOwnerAddress();
+    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
+      throw new ContractValidateException("Invalidate address");
+    }
 
-      if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
-        String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-        throw new ContractValidateException(
-            "Account[" + readableOwnerAddress + "] not exists");
-      }
+    if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
+    }
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ownerAddress.toByteArray());
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ownerAddress.toByteArray());
 
-      if (accountCapsule.getFrozenCount() <= 0) {
-        throw new ContractValidateException("no frozenBalance");
-      }
+    if (accountCapsule.getFrozenCount() <= 0) {
+      throw new ContractValidateException("no frozenBalance");
+    }
 
-      long now = dbManager.getHeadBlockTimeStamp();
-      long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
-          .filter(frozen -> frozen.getExpireTime() <= now).count();
-      if (allowedUnfreezeCount <= 0) {
-        throw new ContractValidateException("It's not time to unfreeze.");
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new ContractValidateException(ex.getMessage());
+    long now = dbManager.getHeadBlockTimeStamp();
+    long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
+        .filter(frozen -> frozen.getExpireTime() <= now).count();
+    if (allowedUnfreezeCount <= 0) {
+      throw new ContractValidateException("It's not time to unfreeze.");
     }
 
     return true;
