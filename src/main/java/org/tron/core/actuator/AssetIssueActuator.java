@@ -53,7 +53,7 @@ public class AssetIssueActuator extends AbstractActuator {
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       dbManager.getAssetIssueStore()
-          .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+          .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       dbManager.adjustBalance(ownerAddress, -calcFee());
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),

@@ -60,6 +60,10 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
+  public byte[] createDbKey() {
+    return getName().toByteArray();
+  }
+
   public int getNum() {
     return this.assetIssueContract.getNum();
   }
@@ -98,5 +102,9 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   public long getFreeAssetNetLimit() {
     return this.assetIssueContract.getFreeAssetNetLimit();
+  }
+
+  public void setFreeAssetNetLimit(long newLimit) {
+    this.assetIssueContract.toBuilder().setFreeAssetNetLimit(newLimit).build();
   }
 }

@@ -6,46 +6,47 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.db.AccountIndexStore;
-import org.tron.core.db.AccountStore;
+import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.UpdateFreeAssetNetLimitContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class UpdateAccountActuator extends AbstractActuator {
+public class UpdateFreeAssetNetLimitActuator extends AbstractActuator {
 
-  private AccountUpdateContract accountUpdateContract;
-  private byte[] accountName;
+  private UpdateFreeAssetNetLimitContract updateFreeAssetNetLimitContract;
+  private long newLimit;
   private byte[] ownerAddress;
   private long fee;
 
-  UpdateAccountActuator(Any contract, Manager dbManager) {
+  UpdateFreeAssetNetLimitActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
     try {
-      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
+      updateFreeAssetNetLimitContract = contract.unpack(UpdateFreeAssetNetLimitContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.error(e.getMessage(), e);
     }
-    accountName = accountUpdateContract.getAccountName().toByteArray();
-    ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
+    newLimit = updateFreeAssetNetLimitContract.getNewLimit();
+    ownerAddress = updateFreeAssetNetLimitContract.getOwnerAddress().toByteArray();
     fee = calcFee();
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException{
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     try {
-      AccountStore accountStore = dbManager.getAccountStore();
-      AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
-      AccountCapsule account = accountStore.get(ownerAddress);
+      AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      AssetIssueCapsule assetIssueCapsule =
+          assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
 
-      account.setAccountName(accountName);
-      accountStore.put(ownerAddress, account);
-      accountIndexStore.put(account);
+      assetIssueCapsule.setFreeAssetNetLimit(newLimit);
+      assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (Exception e) {
@@ -62,15 +63,12 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (accountUpdateContract == null) {
+    if (updateFreeAssetNetLimitContract == null) {
       throw new ContractValidateException(
-          "contract type error,expected type [AccountUpdateContract],real type[" + contract
-              .getClass() + "]");
+          "contract type error,expected type [UpdateFreeAssetNetLimitContract],real type["
+              + contract.getClass() + "]");
     }
 
-    if (!TransactionUtil.validAccountName(accountName)) {
-      throw new ContractValidateException("Invalidate accountName");
-    }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalidate ownerAddress");
     }
@@ -79,11 +77,15 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }
-    if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
-      throw new ContractValidateException("This account name already exist");
+
+    if (account.getAssetIssuedName().isEmpty()) {
+      throw new ContractValidateException("Account has not issue any asset");
     }
-    if (dbManager.getAccountIndexStore().has(accountName)) {
-      throw new ContractValidateException("This name has existed");
+
+    assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
+
+    if (newLimit < 0 || newLimit>= ChainConstant.ONE_DAY_NET_LIMIT) {
+      throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }
 
     return true;
