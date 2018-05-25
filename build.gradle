@@ -12,6 +12,7 @@ buildscript {
 plugins {
     id "org.sonarqube" version "2.6"
 }
+
 group 'org.tron'
 version '1.0.0'
 
@@ -21,7 +22,7 @@ apply plugin: 'application'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
-apply plugin: "org.sonarqube"
+
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 mainClassName = 'org.tron.program.FullNode'
