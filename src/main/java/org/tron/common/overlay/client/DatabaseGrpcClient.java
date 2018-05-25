@@ -37,6 +37,10 @@ public class DatabaseGrpcClient {
     return databaseBlockingStub.getBlockByNum(builder.build());
   }
 
+  public void shutdown() {
+    channel.shutdown();
+  }
+
   public DynamicProperties getDynamicProperties() {
     return databaseBlockingStub.getDynamicProperties(EmptyMessage.newBuilder().build());
   }

@@ -44,8 +44,6 @@ public class NodeBucket {
             } else {
                 nodes.add(e);
             }
-        }else {
-            e.touch();
         }
 
         return null;

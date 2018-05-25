@@ -254,15 +254,18 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
 
   //blocks we requested but not received
-  private Map<BlockId, Long> syncBlockIdWeRequested = new ConcurrentHashMap<>();
+
+  private Cache<BlockId, Long> syncBlockIdWeRequested = CacheBuilder.newBuilder()
+          .maximumSize(10000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10000)
+          .recordStats().build();
 
   private Long unSyncNum = 0L;
 
   private Thread handleSyncBlockLoop;
 
-  private Set<BlockMessage> blockWaitToProc = new ConcurrentSet<>();
+  private Map<BlockMessage, PeerConnection> blockWaitToProc = new ConcurrentHashMap<>();
 
-  private Set<BlockMessage> blockJustReceived = new ConcurrentSet<>();
+  private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
   private ExecutorLoop<SyncBlockChainMessage> loopSyncBlockChain;
 
@@ -540,33 +543,42 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       isSuspendFetch = false;
     }
 
-    final boolean[] isBlockProc = {false};
+    final boolean[] isBlockProc = {true};
 
-    do {
+    while (isBlockProc[0]) {
+
+      isBlockProc[0] = false;
+
       synchronized (blockJustReceived) {
-        blockWaitToProc.addAll(blockJustReceived);
-        //need lock here
+        blockWaitToProc.putAll(blockJustReceived);
         blockJustReceived.clear();
       }
 
-      isBlockProc[0] = false;
-      Set<BlockMessage> pool = new HashSet<>();
-      pool.addAll(blockWaitToProc);
-      pool.forEach(msg -> {
-        final boolean[] isFound = {false};
-        getActivePeer().stream()
-                .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
-                .forEach(peer -> {
-                  peer.getSyncBlockToFetch().pop();
-                  peer.getBlockInProc().add(msg.getBlockId());
-                  isFound[0] = true;
-                });
+      blockWaitToProc.forEach((msg, peerConnection) -> {
 
-        if (isFound[0]) {
-          if (!freshBlockId.contains(msg.getBlockId())) {
+        if (peerConnection.isDisconnect()){
+          logger.error("Peer {} is disconnect, drop block {}", peerConnection.getNode().getHost(), msg.getBlockId().getString());
+          blockWaitToProc.remove(msg);
+          syncBlockIdWeRequested.invalidate(msg.getBlockId());
+          isFetchSyncActive = true;
+          return;
+        }
+
+        synchronized (freshBlockId){
+          final boolean[] isFound = {false};
+          getActivePeer().stream()
+                  .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
+                  .forEach(peer -> {
+                    peer.getSyncBlockToFetch().pop();
+                    peer.getBlockInProc().add(msg.getBlockId());
+                    isFound[0] = true;
+                  });
+          if (isFound[0]) {
             blockWaitToProc.remove(msg);
-            processSyncBlock(msg.getBlockCapsule());
             isBlockProc[0] = true;
+            if (freshBlockId.contains(msg) || processSyncBlock(msg.getBlockCapsule())){
+              finishProcessSyncBlock(msg.getBlockCapsule());
+            }
           }
         }
       });
@@ -579,7 +591,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         break;
       }
 
-    } while (isBlockProc[0]);
+    }
   }
 
   private synchronized void logNodeStatus() {
@@ -695,7 +707,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
-    //List<Sha256Hash> hashList = del.getBlockChainSummary(myHeadBlockHash, 100);
     try {
       while (getActivePeer().isEmpty()) {
         logger.info("other peer is nil, please wait ... ");
@@ -704,16 +715,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (InterruptedException e) {
       logger.debug(e.getMessage(), e);
     }
-
     logger.info("wait end");
-    //loopSyncBlockChain.push(new SyncBlockChainMessage(hashList));
   }
 
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    //logger.info("on handle block message");
-    //peer.setLastBlockPeerKnow((BlockId) blkMsg.getMessageId());
-
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
@@ -721,13 +727,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean syncFlag = false;
     if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
-        logger.info("rcv a block {} from no need sync peer {}", blockId.getNum(), peer.getNode());
+        logger.info("Received a block {} from no need sync peer {}", blockId.getNum(), peer.getNode().getHost());
         return;
       }
       peer.getSyncBlockRequested().remove(blockId);
-      syncBlockIdWeRequested.remove(blockId);
       synchronized (blockJustReceived) {
-        blockJustReceived.add(blkMsg);
+        blockJustReceived.put(blkMsg, peer);
       }
       isHandleSyncBlockActive = true;
       syncFlag = true;
@@ -755,113 +760,73 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
+
         freshBlockId.offer(block.getBlockId());
 
-        //remove trxs in block from fetch data.
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
-        //TODO:save message cache again.
         getActivePeer().stream()
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
             .forEach(p -> updateBlockWeBothHave(peer, block));
 
-        //rebroadcast
         broadcast(new BlockMessage(block));
 
       } catch (BadBlockException e) {
-        // TODO: punish bad peer
-        logger.error("We get a bad block, reason is " + e.getMessage()
-            + "\n the block is" + block);
+        logger.error("We get a bad block {}, from {}, reason is {} ",
+                block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+        disconnectPeer(peer, ReasonCode.BAD_BLOCK);
       } catch (UnLinkedBlockException e) {
-        //reSync
-        logger.info("get a unlink block ,so start sync!");
+        logger.error("We get a unlinked block {}, from {}, head is {}",
+                block.getBlockId().getString(), peer.getNode().getHost(), del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
       } catch (Exception e) {
-        logger.error("broadcast fail", e);
+        logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(), peer.getNode().getHost(), e);
       }
     }
   }
 
-  private void processSyncBlock(BlockCapsule block) {
-    //TODO: add processing backlog cache here, use multi thread
-
+  private boolean processSyncBlock(BlockCapsule block) {
     boolean isAccept = false;
-
-    //TODO: reason need to organize.
     ReasonCode reason = null;
-
     try {
       del.handleBlock(block, true);
       freshBlockId.offer(block.getBlockId());
+      logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;
     } catch (BadBlockException e) {
-      // TODO: punish bad peer
-      logger.error("We get a bad block, reason is " + e.getMessage()
-          + "\n the block is" + block);
+      logger.error("We get a bad block {}, reason is {} ", block.getBlockId().getString(), e.getMessage());
       badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       reason = ReasonCode.BAD_BLOCK;
     } catch (UnLinkedBlockException e) {
-      //should not go here.
-      logger.debug(e.getMessage(), e);
-      logger.error("We get a unlinked block, we can't find this block's parent in our db\n"
-          + "this block is " + block);
+      logger.error("We get a unlinked block {}, head is {}", block.getBlockId().getString(), del.getHeadBlockId().getString());
       reason = ReasonCode.UNLINKABLE;
-      //logger.error(e.getMessage());
     }
 
-    if (isAccept) {
-      Deque<PeerConnection> needSync = new LinkedList<>();
-      Deque<PeerConnection> needFetchAgain = new LinkedList<>();
-      logger.info("save block num:" + block.getNum());
-      getActivePeer()
-          .forEach(peer -> {
-            if (peer.getSyncBlockToFetch().isEmpty()
-                && peer.getBlockInProc().isEmpty()
-                && !peer.isNeedSyncFromPeer()
-                && !peer.isNeedSyncFromUs()) {
-              needSync.offer(peer);
-            } else {
-              //TODO: erase process here
-              if (peer.getBlockInProc().remove(block.getBlockId())) {
-                updateBlockWeBothHave(peer, block);
-                if (peer.getSyncBlockToFetch().isEmpty()
-                    && peer.getUnfetchSyncNum() == 0
-                    && peer.getBlockInProc().isEmpty()) { //send sync to let peer know we are sync.
-                  needFetchAgain.offer(peer);
-                }
-              }
-            }
-          });
-
-      needSync.forEach(peer -> startSyncWithPeer(peer));
-      needFetchAgain.forEach(peer -> syncNextBatchChainIds(peer));
-    } else {
+    if (!isAccept) {
       ReasonCode finalReason = reason;
       getActivePeer().stream()
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
-          .forEach(peer -> cleanUpSyncPeer(peer, finalReason));
+          .forEach(peer -> disconnectPeer(peer, finalReason));
     }
-
     isHandleSyncBlockActive = true;
+    return isAccept;
   }
 
-  private void cleanUpSyncPeer(PeerConnection peer, ReasonCode reasonCode) {
-    peer.setSyncFlag(false);
-    while (!peer.getSyncBlockToFetch().isEmpty()) {
-      BlockId blockId = peer.getSyncBlockToFetch().pop();
-      removeTheBlockMessage(blockWaitToProc, blockId);
-      removeTheBlockMessage(blockJustReceived, blockId);
-    }
-    disconnectPeer(peer, reasonCode);
-  }
-
-  private void removeTheBlockMessage(Set<BlockMessage> blockMessages, BlockId targetBlockId) {
-    for (Iterator<BlockMessage> iterator = blockMessages.iterator(); iterator.hasNext(); ) {
-      if (iterator.next().getBlockId().equals(targetBlockId)) {
-        iterator.remove();
+  private void finishProcessSyncBlock(BlockCapsule block){
+    getActivePeer().forEach(peer -> {
+      if (peer.getSyncBlockToFetch().isEmpty()
+          && peer.getBlockInProc().isEmpty()
+          && !peer.isNeedSyncFromPeer()
+          && !peer.isNeedSyncFromUs()) {
+        startSyncWithPeer(peer);
+      } else if (peer.getBlockInProc().remove(block.getBlockId())) {
+        updateBlockWeBothHave(peer, block);
+        if (peer.getSyncBlockToFetch().isEmpty()) { //send sync to let peer know we are sync.
+          syncNextBatchChainIds(peer);
+        }
       }
-    }
+    });
   }
 
   synchronized boolean isTrxExist(TransactionMessage trxMsg){
@@ -1047,9 +1012,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
         if (msg.getRemainNum() == 0
-            && (blockIdWeGet.isEmpty()
-            || (blockIdWeGet.size() == 1
-            && del.containBlock(blockIdWeGet.peek())))
+            && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del.containBlock(blockIdWeGet.peek())))
             && peer.getSyncBlockToFetch().isEmpty()
             && peer.getUnfetchSyncNum() == 0) {
           peer.setNeedSyncFromPeer(false);
@@ -1077,8 +1040,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
 
           if (!isFound) {
-            while (!blockIdWeGet.isEmpty()
-                && del.containBlock(blockIdWeGet.peek())) {
+            while (!blockIdWeGet.isEmpty() && del.containBlock(blockIdWeGet.peek())) {
               updateBlockWeBothHave(peer, blockIdWeGet.peek());
               blockIdWeGet.poll();
             }
@@ -1101,8 +1063,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
 
         //sew it
-        peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         peer.setUnfetchSyncNum(msg.getRemainNum());
+        peer.getSyncBlockToFetch().addAll(blockIdWeGet);
+        synchronized (freshBlockId){
+          while (!peer.getSyncBlockToFetch().isEmpty() && freshBlockId.contains(peer.getSyncBlockToFetch().peek())){
+            BlockId blockId = peer.getSyncBlockToFetch().pop();
+            updateBlockWeBothHave(peer, blockId);
+            logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
+          }
+        }
+
         if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0){
           peer.setNeedSyncFromPeer(false);
         }
@@ -1172,11 +1142,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           for (BlockId blockId :
               peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
-                && !syncBlockIdWeRequested.containsKey(blockId)
-                && blockWaitToProc.stream()
-                .noneMatch(blockMessage -> blockMessage.getBlockId().equals(blockId))
-                && blockJustReceived.stream()
-                .noneMatch(blockMessage -> blockMessage.getBlockId().equals(blockId))) {
+                && (syncBlockIdWeRequested.getIfPresent(blockId) == null)) {
               send.get(peer).add(blockId);
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
@@ -1220,10 +1186,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setHeadBlockTimeWeBothHave(time);
   }
 
-  private void startSync() {
-    getActivePeer().forEach(this::startSyncWithPeer);
-  }
-
   private Collection<PeerConnection> getActivePeer() {
     return pool.getActivePeers();
   }
@@ -1239,7 +1201,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void syncNextBatchChainIds(PeerConnection peer) {
     if (peer.getSyncChainRequested() != null) {
-      logger.info("peer {}:{} is in sync.", peer.getNode().getHost(), peer.getNode().getPort());
+      logger.info("Peer {} is in sync.", peer.getNode().getHost());
       return;
     }
     try {
@@ -1249,10 +1211,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setSyncChainRequested(
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (TronException e) { //TODO: use tron excpetion here
-      logger.info(e.getMessage());
-      logger.debug(e.getMessage(), e);
-      disconnectPeer(peer, ReasonCode.FORKED);//TODO: unlink?
+    } catch (TronException e) {
+      logger.error("Peer {} sync next batch chainIds failed, error: {}", peer.getNode().getHost(), e.getMessage());
+      disconnectPeer(peer, ReasonCode.FORKED);
     }
   }
 
@@ -1268,11 +1229,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
-    //TODO:when use new p2p framework, remove this
 
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet()
-          .forEach(blockId -> syncBlockIdWeRequested.remove(blockId));
+          .forEach(blockId -> syncBlockIdWeRequested.invalidate(blockId));
       isFetchSyncActive = true;
     }
 
@@ -1292,9 +1252,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
-    logger.info("disconnect with " + peer.getNode().getHost() + "|| reason:" + reason);
-    // if we had requested any sync or regular items from this peer that we haven't
-    // received yet, reschedule them to be fetched from another peer
+    peer.setSyncFlag(false);
     peer.disconnect(reason);
   }
 

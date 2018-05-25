@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.netty.util.internal.ConcurrentSet;
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -122,8 +123,8 @@ public class HandleSyncBlockTest {
         // build block Message
         BlockMessage blockMessage = buildBlockMessage();
         // build blockJustReceived
-        Set<BlockMessage> blockJustReceived = new ConcurrentSet<>();
-        blockJustReceived.add(blockMessage);
+        Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
+        blockJustReceived.put(blockMessage, new PeerConnection());
         ReflectUtils.setFieldValue(node,"blockJustReceived", blockJustReceived);
         Thread.sleep(1000);
         // retrieve the first active peer
