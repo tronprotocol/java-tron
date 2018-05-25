@@ -55,9 +55,9 @@ public class AssetIssueActuator extends AbstractActuator {
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
-      dbManager.adjustBalance(ownerAddress, -calcFee());
+      dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
-          calcFee());//send to blackhole
+          fee);//send to blackhole
 
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
@@ -77,7 +77,6 @@ public class AssetIssueActuator extends AbstractActuator {
         remainSupply -= next.getFrozenAmount();
       }
 
-      assert remainSupply > 0;
       accountCapsule.setAssetIssuedName(assetIssueContract.getName());
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
           remainSupply);
@@ -105,103 +104,109 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
+    if (!this.contract.is(AssetIssueContract.class)) {
+      throw new ContractValidateException("contract type error,expected type [AssetIssueContract],real type[" + contract
+          .getClass() + "]");
+    }
+    final AssetIssueContract assetIssueContract;
     try {
-      if (!this.contract.is(AssetIssueContract.class)) {
-        throw new ContractValidateException();
-      }
-      if (this.dbManager == null) {
-        throw new ContractValidateException();
-      }
-      final AssetIssueContract assetIssueContract = this.contract.unpack(AssetIssueContract.class);
-
-      if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
-        throw new ContractValidateException("Invalidate ownerAddress");
-      }
-      if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
-        throw new ContractValidateException("Invalidate assetName");
-      }
-
-      if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
-        throw new ContractValidateException("Invalidate url");
-      }
-      if (!TransactionUtil
-          .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
-        throw new ContractValidateException("Invalidate description");
-      }
-
-      if (assetIssueContract.getStartTime() == 0) {
-        throw new ContractValidateException("start time should be not empty");
-      }
-      if (assetIssueContract.getEndTime() == 0) {
-        throw new ContractValidateException("end time should be not empty");
-      }
-      if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
-        throw new ContractValidateException("end time should be greater than start time");
-      }
-      if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()) {
-        throw new ContractValidateException("start time should be greater than HeadBlockTime");
-      }
-
-      if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-          != null) {
-        throw new ContractValidateException("Token exists");
-      }
-
-      if (assetIssueContract.getTotalSupply() <= 0) {
-        throw new ContractValidateException("TotalSupply must greater than 0!");
-      }
-
-      if (assetIssueContract.getTrxNum() <= 0) {
-        throw new ContractValidateException("TrxNum must greater than 0!");
-      }
-
-      if (assetIssueContract.getNum() <= 0) {
-        throw new ContractValidateException("Num must greater than 0!");
-      }
-
-      if (assetIssueContract.getFrozenSupplyCount()
-          > this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber()) {
-        throw new ContractValidateException("Frozen supply list length is too long");
-      }
-
-      long remainSupply = assetIssueContract.getTotalSupply();
-      long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
-      long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
-      List<FrozenSupply> frozenList = assetIssueContract.getFrozenSupplyList();
-      Iterator<FrozenSupply> iterator = frozenList.iterator();
-
-      while (iterator.hasNext()) {
-        FrozenSupply next = iterator.next();
-        if (next.getFrozenAmount() <= 0) {
-          throw new ContractValidateException("Frozen supply must be greater than 0!");
-        }
-        if (next.getFrozenAmount() > remainSupply) {
-          throw new ContractValidateException("Frozen supply cannot exceed total supply");
-        }
-        if (!(next.getFrozenDays() >= minFrozenSupplyTime
-            && next.getFrozenDays() <= maxFrozenSupplyTime)) {
-          throw new ContractValidateException(
-              "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
-                  + "and more than " + minFrozenSupplyTime + " days");
-        }
-        remainSupply -= next.getFrozenAmount();
-      }
-
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(assetIssueContract.getOwnerAddress().toByteArray());
-      if (accountCapsule == null) {
-        throw new ContractValidateException("Account not exists");
-      }
-
-      if (!accountCapsule.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("An account can only issue one asset");
-      }
-
-      if (accountCapsule.getBalance() < calcFee()) {
-        throw new ContractValidateException("No enough balance for fee!");
-      }
+      assetIssueContract = this.contract.unpack(AssetIssueContract.class);
     } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+
+    if (!Wallet.addressValid(assetIssueContract.getOwnerAddress().toByteArray())) {
+      throw new ContractValidateException("Invalidate ownerAddress");
+    }
+    if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
+      throw new ContractValidateException("Invalidate assetName");
+    }
+
+    if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
+      throw new ContractValidateException("Invalidate url");
+    }
+    if (!TransactionUtil
+        .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
+      throw new ContractValidateException("Invalidate description");
+    }
+
+    if (assetIssueContract.getStartTime() == 0) {
+      throw new ContractValidateException("Start time should be not empty");
+    }
+    if (assetIssueContract.getEndTime() == 0) {
+      throw new ContractValidateException("End time should be not empty");
+    }
+    if (assetIssueContract.getEndTime() <= assetIssueContract.getStartTime()) {
+      throw new ContractValidateException("End time should be greater than start time");
+    }
+    if (assetIssueContract.getStartTime() <= dbManager.getHeadBlockTimeStamp()) {
+      throw new ContractValidateException("Start time should be greater than HeadBlockTime");
+    }
+
+    if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
+        != null) {
+      throw new ContractValidateException("Token exists");
+    }
+
+    if (assetIssueContract.getTotalSupply() <= 0) {
+      throw new ContractValidateException("TotalSupply must greater than 0!");
+    }
+
+    if (assetIssueContract.getTrxNum() <= 0) {
+      throw new ContractValidateException("TrxNum must greater than 0!");
+    }
+
+    if (assetIssueContract.getNum() <= 0) {
+      throw new ContractValidateException("Num must greater than 0!");
+    }
+
+    if (assetIssueContract.getFrozenSupplyCount()
+        > this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber()) {
+      throw new ContractValidateException("Frozen supply list length is too long");
+    }
+
+    long remainSupply = assetIssueContract.getTotalSupply();
+    long minFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMinFrozenSupplyTime();
+    long maxFrozenSupplyTime = dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyTime();
+    List<FrozenSupply> frozenList = assetIssueContract.getFrozenSupplyList();
+    Iterator<FrozenSupply> iterator = frozenList.iterator();
+
+    while (iterator.hasNext()) {
+      FrozenSupply next = iterator.next();
+      if (next.getFrozenAmount() <= 0) {
+        throw new ContractValidateException("Frozen supply must be greater than 0!");
+      }
+      if (next.getFrozenAmount() > remainSupply) {
+        throw new ContractValidateException("Frozen supply cannot exceed total supply");
+      }
+      if (!(next.getFrozenDays() >= minFrozenSupplyTime
+          && next.getFrozenDays() <= maxFrozenSupplyTime)) {
+        throw new ContractValidateException(
+            "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
+                + "and more than " + minFrozenSupplyTime + " days");
+      }
+      remainSupply -= next.getFrozenAmount();
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(assetIssueContract.getOwnerAddress().toByteArray());
+    if (accountCapsule == null) {
+      throw new ContractValidateException("Account not exists");
+    }
+
+    if (!accountCapsule.getAssetIssuedName().isEmpty()) {
+      throw new ContractValidateException("An account can only issue one asset");
+    }
+
+    if (accountCapsule.getBalance() < calcFee()) {
+      throw new ContractValidateException("No enough balance for fee!");
     }
 
     return true;

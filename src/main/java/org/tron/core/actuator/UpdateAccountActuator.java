@@ -11,6 +11,7 @@ import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -18,33 +19,30 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class UpdateAccountActuator extends AbstractActuator {
 
-  private AccountUpdateContract accountUpdateContract;
-  private byte[] accountName;
-  private byte[] ownerAddress;
-  private long fee;
-
   UpdateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
-    try {
-      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.error(e.getMessage(), e);
-    }
-    accountName = accountUpdateContract.getAccountName().toByteArray();
-    ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
-    fee = calcFee();
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) {
+  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    final AccountUpdateContract accountUpdateContract;
+    final long fee = calcFee();
+    try {
+      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+
+    byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
     AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
     AccountCapsule account = accountStore.get(ownerAddress);
 
-    account.setAccountName(accountName);
+    account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
     accountIndexStore.put(account);
-
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -52,15 +50,26 @@ public class UpdateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (accountUpdateContract == null) {
+    if (!this.contract.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountUpdateContract],real type[" + contract
               .getClass() + "]");
     }
-
+    final AccountUpdateContract accountUpdateContract;
+    try {
+      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+    byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
+    byte[] accountName = accountUpdateContract.getAccountName().toByteArray();
     if (!TransactionUtil.validAccountName(accountName)) {
       throw new ContractValidateException("Invalidate accountName");
     }
