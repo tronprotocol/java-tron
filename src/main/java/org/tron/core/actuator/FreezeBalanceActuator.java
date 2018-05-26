@@ -39,7 +39,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long now = dbManager.getHeadBlockTimeStamp();
     long duration = freezeBalanceContract.getFrozenDuration() * 86_400_000;
 
-    long newBandwidth = calculateBandwidth(accountCapsule.getBandwidth(), freezeBalanceContract);
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
     long currentFrozenBalance = accountCapsule.getFrozenBalance();
@@ -55,31 +54,23 @@ public class FreezeBalanceActuator extends AbstractActuator {
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addFrozen(newFrozen)
           .setBalance(newBalance)
-          .setBandwidth(newBandwidth)
           .build());
     } else {
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .setFrozen(0, newFrozen)
           .setBalance(newBalance)
-          .setBandwidth(newBandwidth)
           .build()
       );
     }
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.getDynamicPropertiesStore()
+        .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+
     ret.setStatus(fee, code.SUCESS);
 
     return true;
   }
 
-  private long calculateBandwidth(long oldValue, FreezeBalanceContract freezeBalanceContract) {
-    try {
-      return Math.addExact(oldValue, Math.multiplyExact(freezeBalanceContract.getFrozenBalance(),
-          Math.multiplyExact(freezeBalanceContract.getFrozenDuration(),
-              dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday())));
-    } catch (ArithmeticException e) {
-      return Long.MAX_VALUE;
-    }
-  }
 
   @Override
   public boolean validate() throws ContractValidateException {
@@ -104,7 +95,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     }
     byte[] ownerAddress = freezeBalanceContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -123,7 +114,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     }
 
     int frozenCount = accountCapsule.getFrozenCount();
-    if (!(frozenCount == 0 || frozenCount ==1)) {
+    if (!(frozenCount == 0 || frozenCount == 1)) {
       throw new ContractValidateException("frozenCount must be 0 or 1");
     }
     if (frozenBalance > accountCapsule.getBalance()) {

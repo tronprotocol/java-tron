@@ -60,7 +60,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     VotesCapsule votesCapsule;
     if (!dbManager.getVotesStore().has(ownerAddress)) {
-      votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(), accountCapsule.getVotesList());
+      votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
+          accountCapsule.getVotesList());
     } else {
       votesCapsule = dbManager.getVotesStore().get(ownerAddress);
     }
@@ -69,6 +70,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance);
+
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -83,8 +86,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(UnfreezeBalanceContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
+              .getClass() + "]");
     }
     final UnfreezeBalanceContract unfreezeBalanceContract;
     try {
@@ -95,7 +99,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);

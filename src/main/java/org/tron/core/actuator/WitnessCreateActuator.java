@@ -53,8 +53,9 @@ public class WitnessCreateActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WitnessCreateContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [WitnessCreateContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [WitnessCreateContract],real type[" + contract
+              .getClass() + "]");
     }
     final WitnessCreateContract contract;
     try {
@@ -67,11 +68,11 @@ public class WitnessCreateActuator extends AbstractActuator {
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
 
     if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-      throw new ContractValidateException("Invalidate url");
+      throw new ContractValidateException("Invalid url");
     }
 
     AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);

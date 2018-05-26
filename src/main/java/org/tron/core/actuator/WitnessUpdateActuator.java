@@ -53,8 +53,9 @@ public class WitnessUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WitnessUpdateContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [WitnessUpdateContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [WitnessUpdateContract],real type[" + contract
+              .getClass() + "]");
     }
     final WitnessUpdateContract contract;
     try {
@@ -66,7 +67,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
 
     if (!this.dbManager.getAccountStore().has(ownerAddress)) {
@@ -74,7 +75,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     }
 
     if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {
-      throw new ContractValidateException("Invalidate url");
+      throw new ContractValidateException("Invalid url");
     }
 
     if (!this.dbManager.getWitnessStore().has(ownerAddress)) {

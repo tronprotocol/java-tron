@@ -3,6 +3,9 @@ package stest.tron.wallet.Wallettest_p0;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -14,7 +17,6 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -25,10 +27,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
-
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class Wallettest_p0_003 {
@@ -183,11 +181,9 @@ public class Wallettest_p0_003 {
         ECKey ecKey= temKey;
         Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
         Long beforeFrozenBalance = 0L;
-        Long beforeBandwidth     = beforeFronzen.getBandwidth();
         if(beforeFronzen.getFrozenCount()!= 0){
             beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
             //beforeBandwidth     = beforeFronzen.getBandwidth();
-            logger.info(Long.toString(beforeFronzen.getBandwidth()));
             logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
         }
 

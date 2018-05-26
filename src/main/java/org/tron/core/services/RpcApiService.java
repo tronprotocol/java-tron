@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
@@ -51,6 +52,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
@@ -193,7 +195,10 @@ public class RpcApiService implements Service {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = walletSolidity.getAccount(addressBs);
-        responseObserver.onNext(reply);
+        AccountCapsule accountCapsule = new AccountCapsule(reply);
+        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+        processor.updateUsage(accountCapsule);
+        responseObserver.onNext(accountCapsule.getInstance());
       } else {
         responseObserver.onNext(null);
       }
@@ -416,7 +421,7 @@ public class RpcApiService implements Service {
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
-        Account reply = wallet.getBalance(req);
+        Account reply = wallet.getAccount(req);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -582,6 +587,21 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateAsset(Contract.UpdateAssetContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request,
+                ContractType.UpdateAssetContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -697,6 +717,19 @@ public class RpcApiService implements Service {
 
       if (fromBs != null) {
         responseObserver.onNext(wallet.getAssetIssueByAccount(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAccountNet(Account request,
+        StreamObserver<AccountNetMessage> responseObserver) {
+      ByteString fromBs = request.getAddress();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAccountNet(fromBs));
       } else {
         responseObserver.onNext(null);
       }

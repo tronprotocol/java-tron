@@ -114,9 +114,6 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
           - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
-      Assert.assertEquals(owner.getBandwidth(), frozenBalance
-          * duration
-          * dbManager.getDynamicPropertiesStore().getBandwidthPerCoinday());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -178,7 +175,7 @@ public class FreezeBalanceActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
 
-      Assert.assertEquals("Invalidate address", e.getMessage());
+      Assert.assertEquals("Invalid address", e.getMessage());
 
     } catch (ContractExeException e) {
       Assert.assertTrue(e instanceof ContractExeException);

@@ -541,7 +541,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate assetName", e.getMessage());
+      Assert.assertEquals("Invalid assetName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -556,7 +556,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate assetName", e.getMessage());
+      Assert.assertEquals("Invalid assetName", e.getMessage());
       AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertTrue(isNullOrZero(ownerAccount.getAssetMap().get(assetName)));
@@ -574,7 +574,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate assetName", e.getMessage());
+      Assert.assertEquals("Invalid assetName", e.getMessage());
       AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertTrue(isNullOrZero(ownerAccount.getAssetMap().get(assetName)));
@@ -592,7 +592,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate assetName", e.getMessage());
+      Assert.assertEquals("Invalid assetName", e.getMessage());
       AccountCapsule ownerAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertTrue(isNullOrZero(ownerAccount.getAssetMap().get(assetName)));

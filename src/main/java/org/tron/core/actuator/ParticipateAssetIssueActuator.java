@@ -99,8 +99,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
+              .getClass() + "]");
     }
 
     final ParticipateAssetIssueContract participateAssetIssueContract;
@@ -118,13 +119,13 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     long amount = participateAssetIssueContract.getAmount();
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
     if (!Wallet.addressValid(toAddress)) {
-      throw new ContractValidateException("Invalidate toAddress");
+      throw new ContractValidateException("Invalid toAddress");
     }
     if (!TransactionUtil.validAssetName(assetName)) {
-      throw new ContractValidateException("Invalidate assetName");
+      throw new ContractValidateException("Invalid assetName");
     }
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0!");

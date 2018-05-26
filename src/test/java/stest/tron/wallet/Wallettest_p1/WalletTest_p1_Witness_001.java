@@ -3,6 +3,9 @@ package stest.tron.wallet.Wallettest_p1;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -25,10 +28,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
-
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTest_p1_Witness_001 {
@@ -184,11 +183,8 @@ public class WalletTest_p1_Witness_001 {
         ECKey ecKey= temKey;
         Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
         Long beforeFrozenBalance = 0L;
-        Long beforeBandwidth     = beforeFronzen.getBandwidth();
         if(beforeFronzen.getFrozenCount()!= 0){
             beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
-            //beforeBandwidth     = beforeFronzen.getBandwidth();
-            logger.info(Long.toString(beforeFronzen.getBandwidth()));
             logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
         }
 
@@ -222,18 +218,15 @@ public class WalletTest_p1_Witness_001 {
 
         Account afterFronzen = queryAccount(ecKey, search_blockingStubFull);
         Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
-        Long afterBandwidth     = afterFronzen.getBandwidth();
         //logger.info(Long.toString(afterFronzen.getBandwidth()));
         //logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
         //logger.info(Integer.toString(search.getFrozenCount()));
         logger.info("afterfrozenbalance =" + Long.toString(afterFrozenBalance) + "beforefrozenbalance =  " + beforeFrozenBalance +
         "freezebalance = " + Long.toString(freezeBalance));
-        if ((afterFrozenBalance - beforeFrozenBalance != freezeBalance) ||
-                (afterBandwidth - beforeBandwidth != freezeBalance * frozen_duration)){
+        if ((afterFrozenBalance - beforeFrozenBalance != freezeBalance)) {
             logger.info("After 20 second, two node still not synchronous");
         }
         Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
-        Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
         return true;
 
 
