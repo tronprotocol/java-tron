@@ -305,12 +305,13 @@ public class RpcApiService implements Service {
       TimeMessage timeMessage = request.getTimeMessage();
       long beginTime = timeMessage.getBeginInMilliseconds();
       long endTime = timeMessage.getEndInMilliseconds();
-      if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (beginTime < 0 || endTime < 0 || endTime < beginTime || offset < 0 || limit < 0) {
         responseObserver.onNext(null);
       } else {
         TransactionList reply = walletSolidity
-            .getTransactionsByTimestamp(beginTime, endTime, request.getOffset(),
-                request.getLimit());
+            .getTransactionsByTimestamp(beginTime, endTime, offset, limit);
         responseObserver.onNext(reply);
       }
       responseObserver.onCompleted();
@@ -343,9 +344,11 @@ public class RpcApiService implements Service {
         return;
       }
       ByteString thisAddress = request.getAccount().getAddress();
-      if (null != thisAddress) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != thisAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, request.getOffset(), request.getLimit());
+            .getTransactionsFromThis(thisAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -362,9 +365,11 @@ public class RpcApiService implements Service {
         return;
       }
       ByteString toAddress = request.getAccount().getAddress();
-      if (null != toAddress) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != toAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, request.getOffset(), request.getLimit());
+            .getTransactionsToThis(toAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
