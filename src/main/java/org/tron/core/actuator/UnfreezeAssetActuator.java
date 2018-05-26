@@ -75,8 +75,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(UnfreezeAssetContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [UnfreezeAssetContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
+              .getClass() + "]");
     }
     final UnfreezeAssetContract unfreezeAssetContract;
     try {

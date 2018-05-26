@@ -2,7 +2,6 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.sun.org.apache.bcel.internal.generic.FADD;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.BufferedReader;

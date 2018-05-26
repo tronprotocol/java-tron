@@ -69,8 +69,9 @@ public class TransferActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(TransferContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [TransferContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [TransferContract],real type[" + contract
+              .getClass() + "]");
     }
     final long fee = calcFee();
     final TransferContract transferContract;

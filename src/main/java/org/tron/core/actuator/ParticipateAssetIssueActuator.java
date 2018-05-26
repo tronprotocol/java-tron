@@ -99,8 +99,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
+              .getClass() + "]");
     }
 
     final ParticipateAssetIssueContract participateAssetIssueContract;

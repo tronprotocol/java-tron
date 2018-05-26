@@ -53,8 +53,9 @@ public class WitnessCreateActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WitnessCreateContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [WitnessCreateContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [WitnessCreateContract],real type[" + contract
+              .getClass() + "]");
     }
     final WitnessCreateContract contract;
     try {
