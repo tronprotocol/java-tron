@@ -263,7 +263,7 @@ public class BandwidthProcessor {
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     assert totalNetWeight > 0;
-    return netWeight * totalNetLimit / totalNetWeight;
+    return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 
   private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
