@@ -13,7 +13,7 @@ script:
 - "./gradlew lint"
 - "./gradlew test"
 - "./gradlew build"
-- sonar-scanner -X
+- sonar-scanner
 skip_build:
 - README.md：
 - LICENSE
