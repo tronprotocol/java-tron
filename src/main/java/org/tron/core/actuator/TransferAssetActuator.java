@@ -149,7 +149,12 @@ public class TransferAssetActuator extends AbstractActuator {
     if (toAccount != null) {
       assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
       if (assetBalance != null) {
-        Math.addExact(assetBalance, amount); //check if overflow
+        try {
+          Math.addExact(assetBalance, amount); //check if overflow
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
+        }
+
       }
     }
 
