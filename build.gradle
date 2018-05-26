@@ -144,9 +144,7 @@ checkstyle {
 }
 
 checkstyleMain {
-    source 'src'
-    include '**/*.java'
-    exclude '**/gen/**'
+    source = 'src/main/java'
 }
 
 task lint(type: Checkstyle) {
@@ -154,7 +152,7 @@ task lint(type: Checkstyle) {
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
     source 'src'
     include '**/*.java'
-    exclude '**/gen/**'
+    exclude 'main/gen/**'
     // empty classpath
     classpath = files()
     //Failing the build
