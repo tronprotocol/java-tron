@@ -26,53 +26,53 @@ import java.util.List;
  */
 public class NodeBucket {
 
-    private final int depth;
-    private List<NodeEntry> nodes = new ArrayList<>();
+  private final int depth;
+  private List<NodeEntry> nodes = new ArrayList<>();
 
-    NodeBucket(int depth) {
-        this.depth = depth;
+  NodeBucket(int depth) {
+    this.depth = depth;
+  }
+
+  public int getDepth() {
+    return depth;
+  }
+
+  public synchronized NodeEntry addNode(NodeEntry e) {
+    if (!nodes.contains(e)) {
+      if (nodes.size() >= KademliaOptions.BUCKET_SIZE) {
+        return getLastSeen();
+      } else {
+        nodes.add(e);
+      }
     }
 
-    public int getDepth() {
-        return depth;
+    return null;
+  }
+
+  private NodeEntry getLastSeen() {
+    List<NodeEntry> sorted = nodes;
+    Collections.sort(sorted, new TimeComparator());
+    return sorted.get(0);
+  }
+
+  public synchronized void dropNode(NodeEntry entry) {
+    for (NodeEntry e : nodes) {
+      if (e.getId().equals(entry.getId())) {
+        nodes.remove(e);
+        break;
+      }
     }
+  }
 
-    public synchronized NodeEntry addNode(NodeEntry e) {
-        if (!nodes.contains(e)) {
-            if (nodes.size() >= KademliaOptions.BUCKET_SIZE) {
-                return getLastSeen();
-            } else {
-                nodes.add(e);
-            }
-        }
+  public int getNodesCount() {
+    return nodes.size();
+  }
 
-        return null;
-    }
-
-    private NodeEntry getLastSeen() {
-        List<NodeEntry> sorted = nodes;
-        Collections.sort(sorted, new TimeComparator());
-        return sorted.get(0);
-    }
-
-    public synchronized void dropNode(NodeEntry entry) {
-        for (NodeEntry e : nodes) {
-            if (e.getId().equals(entry.getId())) {
-                nodes.remove(e);
-                break;
-            }
-        }
-    }
-
-    public int getNodesCount() {
-        return nodes.size();
-    }
-
-    public List<NodeEntry> getNodes() {
+  public List<NodeEntry> getNodes() {
 //        List<NodeEntry> nodes = new ArrayList<>();
 //        for (NodeEntry e : this.nodes) {
 //            nodes.add(e);
 //        }
-        return nodes;
-    }
+    return nodes;
+  }
 }
