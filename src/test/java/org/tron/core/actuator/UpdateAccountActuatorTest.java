@@ -3,7 +3,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.nio.charset.Charset;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -327,7 +326,7 @@ public class UpdateAccountActuatorTest {
     //Can't contain chinese characters
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract(new String(ByteArray.fromHexString("E6B58BE8AF95"), Charset.forName("UTF-8"))
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
               , OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
