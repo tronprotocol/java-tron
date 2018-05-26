@@ -456,7 +456,7 @@ public class TransferAssetActuatorTest {
   /**
    * Invalid ownerAddress,result is error
    */
-  public void iniviateOwnerAddress() {
+  public void invalidOwnerAddress() {
     TransferAssetActuator actuator = new TransferAssetActuator(
         getContract(100L, OWNER_ADDRESS_INVALIATE, TO_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -482,7 +482,7 @@ public class TransferAssetActuatorTest {
   /**
    * Invalid ToAddress,result is error
    */
-  public void iniviateToAddress() {
+  public void invalidToAddress() {
     TransferAssetActuator actuator = new TransferAssetActuator(
         getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALIATE), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
