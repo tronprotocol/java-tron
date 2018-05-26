@@ -247,6 +247,7 @@ public class Wallet {
       p2pNode.broadcast(message);
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
+      logger.info(e.getMessage());
       logger.error(e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error"))
