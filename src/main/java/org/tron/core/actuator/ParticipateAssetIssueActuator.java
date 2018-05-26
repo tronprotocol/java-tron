@@ -131,9 +131,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Amount must greater than 0!");
     }
 
-      if (Arrays.equals(ownerAddress, toAddress)) {
-        throw new ContractValidateException("Cannot participate asset Issue yourself !");
-      }
+    if (Arrays.equals(ownerAddress, toAddress)) {
+      throw new ContractValidateException("Cannot participate asset Issue yourself !");
+    }
 
     //Whether the account exist
     AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddress);
