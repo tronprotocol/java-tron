@@ -288,7 +288,8 @@ public class NodeManager {
         filtered.size());
 
     //TODO: here can use head num sort.
-    filtered.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation()).reversed());
+    filtered.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation())
+        .reversed());
 
     return CollectionUtils.truncate(filtered, limit);
   }
@@ -322,7 +323,8 @@ public class NodeManager {
 
   public synchronized String dumpAllStatistics() {
     List<NodeHandler> l = new ArrayList<>(nodeHandlerMap.values());
-    l.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation()).reversed());
+    l.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation())
+        .reversed());
 
     StringBuilder sb = new StringBuilder();
     int zeroReputCount = 0;

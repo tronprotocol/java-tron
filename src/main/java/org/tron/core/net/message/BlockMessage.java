@@ -63,6 +63,6 @@ public class BlockMessage extends TronMessage {
   @Override
   public String toString() {
     return new StringBuilder().append(super.toString()).append(block.getBlockHeader().getRawData())
-            .append("trx size: ").append(block.getTransactionsList().size()).append("\n").toString();
+        .append("trx size: ").append(block.getTransactionsList().size()).append("\n").toString();
   }
 }

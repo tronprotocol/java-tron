@@ -54,12 +54,12 @@ public class NeighborsMessage extends Message {
     this.data = this.neighbours.toByteArray();
   }
 
-  public List<Node> getNodes(){
+  public List<Node> getNodes() {
     List<Node> nodes = new ArrayList<>();
     neighbours.getNeighboursList().forEach(neighbour -> nodes.add(
-            new Node(neighbour.getNodeId().toByteArray(),
-                ByteArray.toStr(neighbour.getAddress().toByteArray()),
-                neighbour.getPort())));
+        new Node(neighbour.getNodeId().toByteArray(),
+            ByteArray.toStr(neighbour.getAddress().toByteArray()),
+            neighbour.getPort())));
     return nodes;
   }
 

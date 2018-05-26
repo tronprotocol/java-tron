@@ -22,126 +22,140 @@ import java.util.List;
 
 public class Bucket {
 
-    public static int MAX_KADEMLIA_K = 5;
+  public static int MAX_KADEMLIA_K = 5;
 
-    // if bit = 1 go left
-    Bucket left;
+  // if bit = 1 go left
+  Bucket left;
 
-    // if bit = 0 go right
-    Bucket right;
+  // if bit = 0 go right
+  Bucket right;
 
-    String name;
+  String name;
 
-    List<Peer> peers = new ArrayList<>();
+  List<Peer> peers = new ArrayList<>();
 
 
-    public Bucket(String name) {
-        this.name = name;
+  public Bucket(String name) {
+    this.name = name;
+  }
+
+
+  public void add(Peer peer) {
+
+    if (peer == null) {
+      throw new Error("Not a leaf");
     }
 
+    if (peers == null) {
 
-    public void add(Peer peer) {
+      if (peer.nextBit(name) == 1) {
+        left.add(peer);
+      } else {
+        right.add(peer);
+      }
 
-        if (peer == null) throw new Error("Not a leaf");
-
-        if ( peers == null){
-
-            if (peer.nextBit(name) == 1)
-                left.add(peer);
-            else
-                right.add(peer);
-
-            return;
-        }
-
-        peers.add(peer);
-
-        if (peers.size() > MAX_KADEMLIA_K)
-            splitBucket();
+      return;
     }
 
-    public void splitBucket() {
-        left = new Bucket(name + "1");
-        right = new Bucket(name + "0");
+    peers.add(peer);
 
-        for (Peer id : peers) {
-            if (id.nextBit(name) == 1)
-                left.add(id);
-            else
-                right.add(id);
-        }
+    if (peers.size() > MAX_KADEMLIA_K) {
+      splitBucket();
+    }
+  }
 
-        this.peers = null;
+  public void splitBucket() {
+    left = new Bucket(name + "1");
+    right = new Bucket(name + "0");
+
+    for (Peer id : peers) {
+      if (id.nextBit(name) == 1) {
+        left.add(id);
+      } else {
+        right.add(id);
+      }
     }
 
+    this.peers = null;
+  }
 
-    public Bucket left() {
-        return left;
+
+  public Bucket left() {
+    return left;
+  }
+
+  public Bucket right() {
+    return right;
+  }
+
+
+  @Override
+  public String toString() {
+
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(name).append("\n");
+
+    if (peers == null) {
+      return sb.toString();
     }
 
-    public Bucket right() {
-        return right;
+    for (Peer id : peers) {
+      sb.append(id.toBinaryString()).append("\n");
     }
 
+    return sb.toString();
+  }
+
+
+  public void traverseTree(DoOnTree doOnTree) {
+
+    if (left != null) {
+      left.traverseTree(doOnTree);
+    }
+    if (right != null) {
+      right.traverseTree(doOnTree);
+    }
+
+    doOnTree.call(this);
+  }
+
+  /********************/
+  // tree operations //
+
+  /********************/
+
+  public interface DoOnTree {
+
+    void call(Bucket bucket);
+  }
+
+
+  public static class SaveLeaf implements DoOnTree {
+
+    List<Bucket> leafs = new ArrayList<>();
 
     @Override
-    public String toString() {
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(name).append("\n");
-
-        if (peers == null) return sb.toString();
-
-        for (Peer id : peers)
-            sb.append(id.toBinaryString()).append("\n");
-
-        return sb.toString();
+    public void call(Bucket bucket) {
+      if (bucket.peers != null) {
+        leafs.add(bucket);
+      }
     }
 
-
-    public void traverseTree(DoOnTree doOnTree) {
-
-        if (left  != null) left.traverseTree(doOnTree);
-        if (right != null) right.traverseTree(doOnTree);
-
-        doOnTree.call(this);
+    public List<Bucket> getLeafs() {
+      return leafs;
     }
 
-
-    /********************/
-     // tree operations //
-    /********************/
-
-    public interface DoOnTree {
-
-        void call(Bucket bucket);
+    public void setLeafs(List<Bucket> leafs) {
+      this.leafs = leafs;
     }
+  }
 
+  public String getName() {
+    return name;
+  }
 
-    public static class SaveLeaf implements DoOnTree {
-
-        List<Bucket> leafs = new ArrayList<>();
-
-        @Override
-        public void call(Bucket bucket) {
-            if (bucket.peers != null) leafs.add(bucket);
-        }
-
-        public List<Bucket> getLeafs() {
-            return leafs;
-        }
-
-        public void setLeafs(List<Bucket> leafs) {
-            this.leafs = leafs;
-        }
-    }
-
-    public String getName(){
-        return name;
-    }
-
-    public List<Peer> getPeers() {
-        return peers;
-    }
+  public List<Peer> getPeers() {
+    return peers;
+  }
 }
