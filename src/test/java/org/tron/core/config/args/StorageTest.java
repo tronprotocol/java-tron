@@ -17,6 +17,7 @@ package org.tron.core.config.args;
 
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,6 +30,11 @@ public class StorageTest {
   static {
     Args.setParam(new String[]{}, Constant.TEST_CONF);
     storage = Args.getInstance().getStorage();
+  }
+
+  @AfterClass
+  public static void cleanup() {
+    Args.clearParam();
   }
 
   @Test
