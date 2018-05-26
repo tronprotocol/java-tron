@@ -248,47 +248,46 @@ public class Wallet {
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.info(e.getMessage());
-      logger.error(e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error"))
           .build();
     } catch (ContractValidateException e) {
-      logger.warn(e.getMessage(), e);
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error"))
           .build();
     } catch (ContractExeException e) {
-      logger.error(e.getMessage(), e);
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
     } catch (ValidateBandwidthException e) {
-      logger.warn("high freq", e);
+      logger.info("high freq" + e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("high freq error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("dup trans", e);
+      logger.info("dup trans" + e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.debug("tapos error", e);
+      logger.info("tapos error" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.debug("transaction error", e);
+      logger.info("transaction error" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.debug("transaction expired", e);
+      logger.info("transaction expired" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("exception caught", e);
+      logger.info("exception caught" + e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error"))
           .build();
