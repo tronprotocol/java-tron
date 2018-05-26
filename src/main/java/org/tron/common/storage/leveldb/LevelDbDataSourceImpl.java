@@ -111,6 +111,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  @Deprecated
   private Options createDbOptions() {
     Options dbOptions = new Options();
     dbOptions.createIfMissing(true);
