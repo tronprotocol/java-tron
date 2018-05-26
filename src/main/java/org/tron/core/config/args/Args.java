@@ -225,9 +225,12 @@ public class Args {
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
 
-    // WARNING: WILL DELETE DB STORAGE PATHS
-    INSTANCE.storage.deleteAllStoragePaths();
-    INSTANCE.storage = null;
+    // FIXME: INSTANCE.storage maybe null ?
+    if (INSTANCE.storage != null) {
+      // WARNING: WILL DELETE DB STORAGE PATHS
+      INSTANCE.storage.deleteAllStoragePaths();
+      INSTANCE.storage = null;
+    }
 
     INSTANCE.overlay = null;
     INSTANCE.seedNode = null;

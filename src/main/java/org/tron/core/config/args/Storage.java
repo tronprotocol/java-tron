@@ -141,15 +141,11 @@ public class Storage {
     }
 
     for (Property property : propertyMap.values()) {
-      // TODO: NullPointerException in CI, but normal in local
-      if (property != null) {
-        String path = property.getPath();
-        if (path != null) {
-          FileUtil.recursiveDelete(path);
-        }
+      String path = property.getPath();
+      if (path != null) {
+        FileUtil.recursiveDelete(path);
       }
     }
-
   }
 
   private boolean hasProperty(String dbName) {
