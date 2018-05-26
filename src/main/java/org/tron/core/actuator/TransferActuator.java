@@ -69,8 +69,9 @@ public class TransferActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(TransferContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [TransferContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [TransferContract],real type[" + contract
+              .getClass() + "]");
     }
     final long fee = calcFee();
     final TransferContract transferContract;
@@ -86,10 +87,10 @@ public class TransferActuator extends AbstractActuator {
     long amount = transferContract.getAmount();
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
     if (!Wallet.addressValid(toAddress)) {
-      throw new ContractValidateException("Invalidate toAddress");
+      throw new ContractValidateException("Invalid toAddress");
     }
 
     if (Arrays.equals(toAddress, ownerAddress)) {
@@ -116,23 +117,15 @@ public class TransferActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not sufficient.");
       }
 
-      // if account with to_address is not existed, the minimum amount is 1 TRX
-      AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
-      if (toAccount == null) {
-        long min = dbManager.getDynamicPropertiesStore().getNonExistentAccountTransferMin();
-        if (amount < min) {
-          throw new ContractValidateException(
-              "For a non-existent account transfer, the minimum amount is 1 TRX");
-        }
-      } else {
-        //check to account balance if overflow
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(transferContract.getToAddress().toByteArray());
+      if (toAccount != null) {
         long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-
     return true;
   }
 

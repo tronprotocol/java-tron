@@ -74,8 +74,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(UnfreezeAssetContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [UnfreezeAssetContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
+              .getClass() + "]");
     }
     final UnfreezeAssetContract unfreezeAssetContract;
     try {
@@ -86,7 +87,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     }
     byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);

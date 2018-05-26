@@ -71,10 +71,10 @@ public class UpdateAccountActuator extends AbstractActuator {
     byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
     byte[] accountName = accountUpdateContract.getAccountName().toByteArray();
     if (!TransactionUtil.validAccountName(accountName)) {
-      throw new ContractValidateException("Invalidate accountName");
+      throw new ContractValidateException("Invalid accountName");
     }
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
 
     AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);

@@ -31,6 +31,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -49,6 +50,12 @@ public class TransferAssetActuator extends AbstractActuator {
       AccountStore accountStore = this.dbManager.getAccountStore();
       byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
+      AccountCapsule toAccountCapsule = accountStore.get(toAddress);
+      if (toAccountCapsule == null) {
+        toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
+            dbManager.getHeadBlockTimeStamp());
+        dbManager.getAccountStore().put(toAddress, toAccountCapsule);
+      }
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
@@ -58,17 +65,14 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
 
-      AccountCapsule toAccountCapsule = accountStore.get(toAddress);
       toAccountCapsule.addAssetAmount(assetName, amount);
       accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     } catch (ArithmeticException e) {
-      logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
@@ -85,8 +89,9 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(TransferAssetContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [TransferAssetContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [TransferAssetContract],real type[" + contract
+              .getClass() + "]");
     }
     final TransferAssetContract transferAssetContract;
     try {
@@ -102,13 +107,13 @@ public class TransferAssetActuator extends AbstractActuator {
     long amount = transferAssetContract.getAmount();
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
     if (!Wallet.addressValid(toAddress)) {
-      throw new ContractValidateException("Invalidate toAddress");
+      throw new ContractValidateException("Invalid toAddress");
     }
     if (!TransactionUtil.validAssetName(assetName)) {
-      throw new ContractValidateException("Invalidate assetName");
+      throw new ContractValidateException("Invalid assetName");
     }
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
@@ -141,17 +146,15 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
-    if (toAccount == null) {
-      throw new ContractValidateException("To account is not exit!");
-    }
-
-    assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
-    if (assetBalance != null) {
-      try {
-        assetBalance = Math.addExact(assetBalance, amount); //check if overflow
-      } catch (ArithmeticException e) {
-        logger.debug(e.getMessage(), e);
-        throw new ContractValidateException(e.getMessage());
+    if (toAccount != null) {
+      assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
+      if (assetBalance != null) {
+        try {
+          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+        } catch (Exception e) {
+          logger.debug(e.getMessage(), e);
+          throw new ContractValidateException(e.getMessage());
+        }
       }
     }
 

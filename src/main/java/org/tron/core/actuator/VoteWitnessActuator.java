@@ -65,7 +65,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-      throw new ContractValidateException("Invalidate address");
+      throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
@@ -89,7 +89,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
         if (!Wallet.addressValid(witnessCandidate)) {
-          throw new ContractValidateException("Invalidate vote address!");
+          throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();
         if (voteCount <= 0) {
@@ -116,7 +116,6 @@ public class VoteWitnessActuator extends AbstractActuator {
       long tronPower = accountCapsule.getTronPower();
 
       sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
-
       if (sum > tronPower) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower

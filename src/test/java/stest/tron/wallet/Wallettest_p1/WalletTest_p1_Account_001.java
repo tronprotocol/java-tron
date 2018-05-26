@@ -1,9 +1,10 @@
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
-import com.typesafe.config.Config;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -12,22 +13,12 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
-
-import javax.print.DocFlavor;
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTest_p1_Account_001 {
@@ -64,7 +55,6 @@ public class WalletTest_p1_Account_001 {
         //查询成功，能够获取到账户类型，账户余额，最近一次操作时间等信息
         Account queryResult = queryAccount(testKey002, blockingStubFull);
         Assert.assertTrue(queryResult.getBalance() > 0);
-        Assert.assertTrue(queryResult.getBandwidth() >= 0);
         Assert.assertTrue(queryResult.getAccountName().toByteArray().length > 0);
         Assert.assertFalse(queryResult.getAddress().isEmpty());
 

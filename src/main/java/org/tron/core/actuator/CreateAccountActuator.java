@@ -70,7 +70,7 @@ public class CreateAccountActuator extends AbstractActuator {
       throw new ContractValidateException("AccountName is null");
     }
     if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
 
     if (contract.getType() == null) {
