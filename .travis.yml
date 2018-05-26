@@ -12,6 +12,7 @@ script:
 - sh tron.sh
 - "./gradlew lint"
 - "./gradlew test"
+- "./gradlew build"
 - sonar-scanner -X
 skip_build:
 - README.md：
