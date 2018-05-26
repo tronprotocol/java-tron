@@ -22,6 +22,7 @@ public class TrxProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
     int length = readRawVarint32(in);
     if (length >= maxMsgLength) {
       logger.error("recv a big msg, msg length is : {}", length);
+      in.clear();
       ctx.close();
       return;
     }
