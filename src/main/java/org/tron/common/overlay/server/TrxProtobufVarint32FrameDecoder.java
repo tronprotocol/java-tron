@@ -15,15 +15,22 @@ public class TrxProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
 
   private final static int maxMsgLength = 10 * 1024 * 1024;//10M
 
+  private Channel channel;
+
+  public TrxProtobufVarint32FrameDecoder(Channel channel) {
+    this.channel = channel;
+  }
+
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
     in.markReaderIndex();
     int preIndex = in.readerIndex();
     int length = readRawVarint32(in);
     if (length >= maxMsgLength) {
-      logger.error("recv a big msg, msg length is : {}", length);
+      logger.error("recv a big msg, host : {}, msg length is : {}", ctx.channel().remoteAddress(),
+          length);
       in.clear();
-      ctx.close();
+      channel.close();
       return;
     }
     if (preIndex == in.readerIndex()) {
