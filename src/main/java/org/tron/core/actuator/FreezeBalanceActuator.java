@@ -98,7 +98,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!dbManager.getAccountStore().has(ownerAddress)) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
@@ -112,7 +113,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("frozenBalance must be more than 1TRX");
     }
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     int frozenCount = accountCapsule.getFrozenCount();
     if (!(frozenCount == 0 || frozenCount == 1)) {
       throw new ContractValidateException("frozenCount must be 0 or 1");
