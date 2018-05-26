@@ -7,7 +7,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -31,7 +30,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -565,7 +563,7 @@ public class AssetIssueActuatorTest {
     //Contain chinese character, throw exception.
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFrom("测试".getBytes()))
+        .setName(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")))
         .setTotalSupply(TOTAL_SUPPLY)
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)

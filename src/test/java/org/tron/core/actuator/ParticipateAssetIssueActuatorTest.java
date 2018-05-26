@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.nio.charset.Charset;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -583,7 +584,7 @@ public class ParticipateAssetIssueActuatorTest {
     }
 
     //Contain chinese character, throw exception.
-    assetName = "测试";
+    assetName = new String(ByteArray.fromHexString("E6B58BE8AF95"), Charset.forName("UTF-8"));
     actuator = new ParticipateAssetIssueActuator(getContract(1000L, assetName), dbManager);
     ret = new TransactionResultCapsule();
     try {

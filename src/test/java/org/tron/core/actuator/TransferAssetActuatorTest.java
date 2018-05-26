@@ -20,6 +20,7 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.nio.charset.Charset;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -618,7 +619,7 @@ public class TransferAssetActuatorTest {
     }
 
     //Contain chinese character, throw exception.
-    assetName = "测试";
+    assetName = new String(ByteArray.fromHexString("E6B58BE8AF95"), Charset.forName("UTF-8")); //Chinese characters test
     actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
     try {
       actuator.validate();
