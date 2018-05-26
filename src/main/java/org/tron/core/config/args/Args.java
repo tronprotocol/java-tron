@@ -224,7 +224,11 @@ public class Args {
     INSTANCE.privateKey = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
+
+    // WARNING: WILL DELETE DB STORAGE PATHS
+    INSTANCE.storage.deleteAllStoragePaths();
     INSTANCE.storage = null;
+
     INSTANCE.overlay = null;
     INSTANCE.seedNode = null;
     INSTANCE.genesisBlock = null;
@@ -258,6 +262,7 @@ public class Args {
     INSTANCE.getTransactionsToThisCountFeature = false;
     INSTANCE.getTransactionsByTimestampFeature = false;
     INSTANCE.getTransactionsByTimestampCountFeature = false;
+
   }
 
   /**

@@ -60,9 +60,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
    * constructor.
    */
   public LevelDbDataSourceImpl(String parentName, String name) {
-    parentName += Args.getInstance().getStorage().getDbDirectory();
-    this.parentName = parentName;
     this.dataBaseName = name;
+    this.parentName = Paths.get(
+            parentName,
+            Args.getInstance().getStorage().getDbDirectory()
+    ).toString();
   }
 
   @Override
