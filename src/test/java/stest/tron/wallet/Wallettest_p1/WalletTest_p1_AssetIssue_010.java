@@ -14,9 +14,9 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -24,13 +24,13 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
-
+import java.util.*;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class WalletTest_p1_AssetIssue_008 {
+public class WalletTest_p1_AssetIssue_010 {
 
     //testng001、testng002、testng003、testng004
     private final static  String testKey001     = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -44,30 +44,44 @@ public class WalletTest_p1_AssetIssue_008 {
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
-    private ManagedChannel channelFull = null;
-    private ManagedChannel channelSolidity = null;
-    private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
+    private static final long now = System.currentTimeMillis();
+    private static final String name = "testAssetIssue_" + Long.toString(now);
+    private static final long TotalSupply = now;
+    String Description = "just-test";
+    String Url = "https://github.com/tronprotocol/wallet-cli/";
 
-    @BeforeClass
+    private ManagedChannel channelFull = null;
+    private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+
+    @BeforeClass(enabled = true)
     public void beforeClass(){
+/*        new ECKey(Utils.getRandom())     
+        ECKey ecKey  =  new ECKey(Utils.getRandom());     */
+
         channelFull = ManagedChannelBuilder.forTarget(fullnode)
                 .usePlaintext(true)
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-        channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-                .usePlaintext(true)
-                .build();
-        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+        ByteString addressBS1 = ByteString.copyFrom(FROM_ADDRESS);
+        Account request1 = Account.newBuilder().setAddress(addressBS1).build();
+        GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
+                .getAssetIssueByAccount(request1);
+        Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
+        if (queryAssetByAccount.get().getAssetIssueCount() == 0){
+            Long start = System.currentTimeMillis() + 1000;
+            Long end   = System.currentTimeMillis() + 1000000000;
+            Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
+                    2, Description, Url, 1L,3652L,testKey002));
+        }
+        else{
+            logger.info("This account already create an assetisue");
+        }
     }
 
-
     @Test(enabled = true)
-    public void TestGetAllAssetIssueFromSolidity(){
-        GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
+    public void TestGetAllAssetIssue(){
+        GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
                 .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
         Assert.assertTrue(assetIssueList.getAssetIssueCount() >= 1);
         for(Integer j =0; j<assetIssueList.getAssetIssueCount(); j++){
@@ -75,19 +89,65 @@ public class WalletTest_p1_AssetIssue_008 {
             Assert.assertFalse(assetIssueList.getAssetIssue(j).getName().isEmpty());
             Assert.assertFalse(assetIssueList.getAssetIssue(j).getUrl().isEmpty());
             Assert.assertTrue(assetIssueList.getAssetIssue(j).getTotalSupply() > 0);
-            logger.info("test get all assetissue from solidity");
+            logger.info("test get all assetissue");
         }
-
     }
 
     @AfterClass(enabled = true)
     public void shutdown() throws InterruptedException {
-        if(channelFull != null) {
+        if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
-        if(channelSolidity != null) {
-            channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+
+    public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
+                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+        ECKey ecKey= temKey;
+        Account search = queryAccount(ecKey, blockingStubFull);
+
+            try {
+                Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+                builder.setOwnerAddress(ByteString.copyFrom(address));
+                builder.setName(ByteString.copyFrom(name.getBytes()));
+                builder.setTotalSupply(TotalSupply);
+                builder.setTrxNum(TrxNum);
+                builder.setNum(IcoNum);
+                builder.setStartTime(StartTime);
+                builder.setEndTime(EndTime);
+                builder.setVoteScore(VoteScore);
+                builder.setDescription(ByteString.copyFrom(Description.getBytes()));
+                builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+                Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
+                frozenBuilder.setFrozenAmount(fronzenAmount);
+                frozenBuilder.setFrozenDays(frozenDay);
+                builder.addFrozenSupply(0,frozenBuilder);
+
+                Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
+                if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+                    logger.info("transaction == null");
+                    return false;
+                }
+                transaction = signTransaction(ecKey,transaction);
+                Return response = blockingStubFull.broadcastTransaction(transaction);
+                if (response.getResult() == false){
+                    logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+                    return false;
+                }
+                else{
+                    logger.info(name);
+                    return true;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return false;
+            }
     }
 
     public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -184,7 +244,6 @@ public class WalletTest_p1_AssetIssue_008 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
 
         Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
                 .newBuilder();
@@ -212,6 +271,42 @@ public class WalletTest_p1_AssetIssue_008 {
             return true;
         }
     }
+
+
+    public boolean participateAssetIssue(byte[] to, byte[] assertName, long amount,byte[] from, String priKey) {
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+
+        Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+                .newBuilder();
+        ByteString bsTo = ByteString.copyFrom(to);
+        ByteString bsName = ByteString.copyFrom(assertName);
+        ByteString bsOwner = ByteString.copyFrom(from);
+        builder.setToAddress(bsTo);
+        builder.setAssetName(bsName);
+        builder.setOwnerAddress(bsOwner);
+        builder.setAmount(amount);
+        Contract.ParticipateAssetIssueContract contract = builder.build();
+
+        Transaction transaction = blockingStubFull.participateAssetIssue(contract);
+        transaction = signTransaction(ecKey,transaction);
+        Return response = blockingStubFull.broadcastTransaction(transaction);
+        if (response.getResult() == false){
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+            return false;
+        }
+        else{
+            logger.info(name);
+            return true;
+        }
+    }
+
 }
 
 

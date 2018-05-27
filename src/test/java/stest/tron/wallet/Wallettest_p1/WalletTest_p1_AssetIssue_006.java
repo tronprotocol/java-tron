@@ -83,13 +83,14 @@ public class WalletTest_p1_AssetIssue_006 {
             Assert.assertFalse(getAssetIssueListByTimestamp.get().getAssetIssue(j).getName().isEmpty());
             Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssue(j).getTotalSupply() > 0);
             Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssue(j).getNum() > 0);
+            logger.info(Long.toString(getAssetIssueListByTimestamp.get().getAssetIssue(j).getTotalSupply()));
         }
 
     }
 
     @Test(enabled = true)
     public void TestExceptionGetAssetIssueListByTimestamp(){
-        //时间戳为负数
+        //Time stamp is below zero.
         long time  = -1000000000;
         NumberMessage.Builder timeStamp = NumberMessage.newBuilder();
         timeStamp.setNum(time);
@@ -97,10 +98,15 @@ public class WalletTest_p1_AssetIssue_006 {
         Optional<GrpcAPI.AssetIssueList> getAssetIssueListByTimestamp = Optional.ofNullable(assetIssueList);
         Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssueCount()==0);
 
-
+        //No asset issue was create
+        time  = 1000000000;
+        timeStamp = NumberMessage.newBuilder();
+        timeStamp.setNum(time);
+        assetIssueList = blockingStubSolidity.getAssetIssueListByTimestamp(timeStamp.build());
+        getAssetIssueListByTimestamp = Optional.ofNullable(assetIssueList);
+        Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssueCount()==0);
 
     }
-
 
     @AfterClass
     public void shutdown() throws InterruptedException {
@@ -109,41 +115,6 @@ public class WalletTest_p1_AssetIssue_006 {
         }
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
-
-        //String priKey = testKey002;
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsOwner = ByteString.copyFrom(owner);
-        builder.setToAddress(bsTo);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferContract contract =  builder.build();
-        Transaction transaction = blockingStubFull.createTransaction(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
         }
     }
 
@@ -182,15 +153,6 @@ public class WalletTest_p1_AssetIssue_006 {
         builder.setNum(blockNum);
         return blockingStubFull.getBlockByNum(builder.build());
 
-    }
-
-    private Transaction signTransaction(ECKey ecKey, Transaction transaction) {
-        if (ecKey == null || ecKey.getPrivKey() == null) {
-            logger.warn("Warning: Can't sign,there is no private key !!");
-            return null;
-        }
-        transaction = TransactionUtils.setTimestamp(transaction);
-        return TransactionUtils.sign(transaction, ecKey);
     }
 }
 

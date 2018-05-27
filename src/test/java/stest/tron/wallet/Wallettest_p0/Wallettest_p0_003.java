@@ -3,9 +3,6 @@ package stest.tron.wallet.Wallettest_p0;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -17,6 +14,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -27,6 +25,10 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
+
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class Wallettest_p0_003 {
@@ -50,8 +52,6 @@ public class Wallettest_p0_003 {
     private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
@@ -67,10 +67,7 @@ public class Wallettest_p0_003 {
                 .usePlaintext(true)
                 .build();
         search_blockingStubFull = WalletGrpc.newBlockingStub(search_channelFull);
-
-
     }
-
 
     @Test
     public void TestVoteWitness(){
@@ -82,16 +79,11 @@ public class Wallettest_p0_003 {
         HashMap<String,String>  very_large_map = new HashMap<String,String>();
         very_large_map.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv","1000000000");
 
-        //如果没有冻结资产，则投票失败
-        //Assert.assertFalse(VoteWitness(small_vote_map, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
-        //冻结一部分资产
+        //Freeze 10Trx
         Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L, testKey002));
 
-        //如果有冻结资产，且投票数大于冻结资产，则投票失败
-        //Assert.assertFalse(VoteWitness(very_large_map, FROM_ADDRESS, testKey002));
-
-        //如果有冻结资产，且投票数小于冻结资产，则投票成功，此时投票情况覆盖该账户之前的投票情况
+        //Vote success, the latest vote cover before vote
         Assert.assertTrue(VoteWitness(small_vote_map, FROM_ADDRESS, testKey002));
         Assert.assertTrue(VoteWitness(small_vote_map, FROM_ADDRESS, testKey002));
         Assert.assertTrue(VoteWitness(small_vote_map, FROM_ADDRESS, testKey002));
@@ -156,12 +148,6 @@ public class Wallettest_p0_003 {
             return false;
         }
         Account afterVote = queryAccount(ecKey, blockingStubFull);
-
-/*        for(Integer j =0; j< afterVote.getVotesCount(); j++){
-            Assert.assertTrue(beforeVote.getVotes(j).getVoteCount() == afterVote.getVotes(j).getVoteCount() ||
-                    beforeVote.getVotes(j).getVoteCount() == 0);
-            logger.info("Overwrite");
-        }*/
          return true;
         }
 
@@ -181,9 +167,11 @@ public class Wallettest_p0_003 {
         ECKey ecKey= temKey;
         Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
         Long beforeFrozenBalance = 0L;
+        //Long beforeBandwidth     = beforeFronzen.getBandwidth();
         if(beforeFronzen.getFrozenCount()!= 0){
             beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
             //beforeBandwidth     = beforeFronzen.getBandwidth();
+            //logger.info(Long.toString(beforeFronzen.getBandwidth()));
             logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
         }
 
@@ -208,70 +196,10 @@ public class Wallettest_p0_003 {
         if (response.getResult() == false){
             return false;
         }
-
-/*        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        Account afterFronzen = queryAccount(ecKey, search_blockingStubFull);
-        Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
-        Long afterBandwidth     = afterFronzen.getBandwidth();
-        //logger.info(Long.toString(afterFronzen.getBandwidth()));
-        //logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
-        //logger.info(Integer.toString(search.getFrozenCount()));
-        logger.info("afterfrozenbalance =" + Long.toString(afterFrozenBalance) + "beforefrozenbalance =  " + beforeFrozenBalance +
-        "freezebalance = " + Long.toString(freezeBalance));
-        if ((afterFrozenBalance - beforeFrozenBalance != freezeBalance) ||
-                (afterBandwidth - beforeBandwidth != freezeBalance * frozen_duration)){
-            logger.info("After 20 second, two node still not synchronous");
-        }
-        Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
-        Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);*/
         return true;
 
 
     }
-
-    public boolean UnFreezeBalance(byte[] Address, String priKey) {
-        byte[] address = Address;
-
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
-                .newBuilder();
-        ByteString byteAddreess = ByteString.copyFrom(address);
-
-        builder.setOwnerAddress(byteAddreess);
-
-        UnfreezeBalanceContract contract = builder.build();
-
-
-        Transaction transaction = blockingStubFull.unfreezeBalance(contract);
-
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-
-        transaction = TransactionUtils.setTimestamp(transaction);
-        transaction = TransactionUtils.sign(transaction, ecKey);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
-        }
-    }
-
 
     public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
         byte[] address;

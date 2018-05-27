@@ -1,3 +1,4 @@
+/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -5,6 +6,7 @@ import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.iterators.FilterIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
@@ -16,6 +18,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.common.crypto.ECKey;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
@@ -45,6 +48,7 @@ public class WalletTest_p1_Transfer_005 {
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
     private static final byte[] ONLINE_ADDRESS  = Base58.decodeFromBase58Check("27Vmxj4BZPCTyHnpJ1cd5Un9aehqK82dbFT");
+    private static final byte[] INVAILD_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
     private ManagedChannel channelFull = null;
     private ManagedChannel channelSolidity = null;
@@ -70,31 +74,49 @@ public class WalletTest_p1_Transfer_005 {
 
     @Test(enabled = true)
     public void TestgetTransactionsFromThis(){
-        //查询soliditynode上 该地址的转账记录
-        ByteString addressBS = ByteString.copyFrom(ONLINE_ADDRESS);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
+*/
+/*        public Optional<GrpcAPI.TransactionList> getTransactionsFromThis(byte[] address, int offset, int limit) {
+            //ByteString addressBS = ByteString.copyFrom(address);
+            //Account account = Account.newBuilder().setAddress(addressBS).build();
+            AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder();
+            accountPaginated.setAccount(account);
+            accountPaginated.setOffset(offset);
+            accountPaginated.setLimit(limit);
+            GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(accountPaginated.build());
+            return Optional.ofNullable(transactionList);
+        }*//*
+
+        ByteString addressBS = ByteString.copyFrom(FROM_ADDRESS);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder();
+        accountPaginated.setAccount(account);
+        accountPaginated.setOffset(0);
+        accountPaginated.setLimit(1);
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(accountPaginated.build());
         Optional<GrpcAPI.TransactionList>  gettransactionsfromthis= Optional.ofNullable(transactionList);
 
-        //如果查询该账户还没有交易，则转账一笔交易
         if (gettransactionsfromthis.get().getTransactionCount() == 0){
             logger.info("This account didn't transfation any coin to other");
-
         }
 
         Assert.assertTrue(gettransactionsfromthis.isPresent());
         Integer beforecount = gettransactionsfromthis.get().getTransactionCount();
         logger.info(Integer.toString(beforecount));
         for (Integer j =0; j<beforecount; j++){
-            //logger.info("print every transation");
             Assert.assertFalse(gettransactionsfromthis.get().getTransaction(j).getRawData().getContractList().isEmpty());
         }
-
-
-
-
-
     }
+
+    @Test(enabled = true)
+    public void TestgetTransactionsFromThisByInvaildAddress(){
+        ByteString addressBS = ByteString.copyFrom(INVAILD_ADDRESS);
+        Account request = Account.newBuilder().setAddress(addressBS).build();
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
+        Optional<GrpcAPI.TransactionList>  gettransactionsfromthisByInvaildAddress= Optional.ofNullable(transactionList);
+
+        Assert.assertTrue(gettransactionsfromthisByInvaildAddress.get().getTransactionCount() == 0);
+    }
+
 
     @AfterClass
     public void shutdown() throws InterruptedException {
@@ -103,41 +125,6 @@ public class WalletTest_p1_Transfer_005 {
         }
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
-
-        //String priKey = testKey002;
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsOwner = ByteString.copyFrom(owner);
-        builder.setToAddress(bsTo);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferContract contract =  builder.build();
-        Transaction transaction = blockingStubFull.createTransaction(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
         }
     }
 
@@ -189,3 +176,4 @@ public class WalletTest_p1_Transfer_005 {
 }
 
 
+*/

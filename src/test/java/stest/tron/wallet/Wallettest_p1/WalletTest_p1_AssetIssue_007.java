@@ -55,10 +55,7 @@ public class WalletTest_p1_AssetIssue_007 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-
 
     @BeforeClass(enabled = true)
     public void beforeClass(){
@@ -81,7 +78,7 @@ public class WalletTest_p1_AssetIssue_007 {
 
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
-            //新建一笔通证
+            //Create a new asset issue.
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,1,start,end,
                     1, Description, Url, 1L,1L,testKey002));
             try {
@@ -97,9 +94,9 @@ public class WalletTest_p1_AssetIssue_007 {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void TestUseBandwitchParticipateAssetissue(){
-        //参与一笔通证
+        //Participate a asset issue
         try {
             Thread.sleep(18000);
         } catch (InterruptedException e) {
@@ -108,23 +105,22 @@ public class WalletTest_p1_AssetIssue_007 {
         logger.info(name);
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         Account beforeAsset = queryAccount(no_bandwitch,blockingStubFull);
-        //logger.info(Long.toString(beforeAssetBalance.getAssetMap().get(name)));
         Long beforeAssetBalance = beforeAsset.getAssetMap().get(name);
 
-        //十秒内再参与一次，因为没有带宽，参与失败
+        //Participate failed due to no bandwidth within 10 seconds.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         try {
             Thread.sleep(18000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        //十秒后再参与一笔，带宽恢复，参与成功
+        //Participate success due to out of 10 seconds, the bandwidth is recover.
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         Account afterAsset = queryAccount(no_bandwitch,blockingStubFull);
         logger.info(Long.toString(afterAsset.getAssetMap().get(name)));
         Long afterAssetBalance = afterAsset.getAssetMap().get(name);
 
-        //比较前后参与资产的差值是否正确
+        //The amount of participate asset is increase.
         Assert.assertTrue(afterAssetBalance - beforeAssetBalance > 0);
     }
 
@@ -144,7 +140,6 @@ public class WalletTest_p1_AssetIssue_007 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-
 
         Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
                 .newBuilder();
@@ -172,15 +167,6 @@ public class WalletTest_p1_AssetIssue_007 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-        //long TotalSupply = 100000000L;
-        //int TrxNum = 1;
-        //int IcoNum = 100;
-        //long StartTime = 1522583680000L;
-        //long EndTime = 1525089280000L;
-        //int DecayRatio = 1;
-        //int VoteScore = 2;
-        //String Description = "just-test";
-        //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -189,7 +175,6 @@ public class WalletTest_p1_AssetIssue_007 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
 
         try {
             Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
@@ -200,17 +185,13 @@ public class WalletTest_p1_AssetIssue_007 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-            //builder.setFrozenSupply();
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);
             builder.addFrozenSupply(0,frozenBuilder);
-
-
 
             Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
             if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -295,7 +276,6 @@ public class WalletTest_p1_AssetIssue_007 {
         }
         ECKey ecKey= temKey;
 
-
         Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
         ByteString bsTo = ByteString.copyFrom(to);
         ByteString bsName = ByteString.copyFrom(assertName);
@@ -318,7 +298,6 @@ public class WalletTest_p1_AssetIssue_007 {
             return false;
         }
         else{
-            //Account search = queryAccount(ecKey, blockingStubFull);
             return true;
         }
 

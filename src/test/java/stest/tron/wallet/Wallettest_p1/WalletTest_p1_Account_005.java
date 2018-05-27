@@ -51,8 +51,6 @@ public class WalletTest_p1_Account_005 {
     private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
@@ -72,16 +70,20 @@ public class WalletTest_p1_Account_005 {
 
     }
 
-
     @Test
     public void TestWithdrawBalance(){
-        //如果不是witness账户，提示错误
+        //Withdraw failed when you are not witness
         Assert.assertFalse(WithdrawBalance(NOT_WITNESS, not_witness_testKey));
-        //如果上次赎回时间在1天以前，witness可以赎回资产，balance增加赎回的资产。由于再次赎回要等待1天，所以该用例暂时不判断结果
+        //Due to it's hard to automation, withdraw balance success case is not automation, please test by manual
         //Assert.assertTrue(WithdrawBalance(FROM_ADDRESS,testKey002));
-        WithdrawBalance(FROM_ADDRESS,testKey002);
-        //如果上次赎回时间在1天之内，不可赎回
-        Assert.assertFalse(WithdrawBalance(FROM_ADDRESS,testKey002));
+        //Withdraw failed when the latest time to withdraw within 1 day.
+
+        if (WithdrawBalance(FROM_ADDRESS,testKey002)){
+            Assert.assertFalse(WithdrawBalance(FROM_ADDRESS,testKey002));
+        }
+        else{
+            logger.info("This account has withdraw within 1 day, please confirm");
+        }
 
 
     }
@@ -127,23 +129,6 @@ public class WalletTest_p1_Account_005 {
         return true;
 
     }
-
-
-
-
-/*    public boolean withdrawBalance() {
-        Contract.WithdrawBalanceContract contract = createWithdrawBalanceContract();
-
-        Transaction transaction = rpcCli.createTransaction(contract);
-
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-
-        transaction = signTransaction(transaction);
-        return rpcCli.broadcastTransaction(transaction);
-    }*/
-
 
     public Boolean VoteWitness(HashMap<String, String> witness, byte[] Address, String priKey){
 

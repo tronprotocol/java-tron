@@ -65,7 +65,6 @@ public class WalletTest_p1_Transfer_002 {
 
     @Test(enabled = true)
     public void TestGetTotalTransaction(){
-        //fullnode查询交易总数
         GrpcAPI.NumberMessage beforeGetTotalTransaction = blockingStubFull.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
         logger.info(Long.toString(beforeGetTotalTransaction.getNum()));
         Long beforeTotalTransaction = beforeGetTotalTransaction.getNum();
@@ -76,9 +75,7 @@ public class WalletTest_p1_Transfer_002 {
         Assert.assertTrue(afterTotalTransaction - beforeTotalTransaction == 1);
 
 
-        //soliditynode查询交易总数
         GrpcAPI.NumberMessage solidityGetTotalTransaction = blockingStubSolidity.totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
-
         logger.info(Long.toString(solidityGetTotalTransaction.getNum()));
         if (solidityGetTotalTransaction.getNum() == 0){
             logger.info("On soliditynode, there is no transactions,please test by manual");

@@ -20,14 +20,12 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 //import stest.tron.wallet.common.client.AccountComparator;
@@ -48,6 +46,7 @@ public class WalletTest_p1_Account_003 {
     private static final byte[] TO_ADDRESS = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
     private static final byte[] Low_Bal_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
+    private static final byte[] INVAILD_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
     private static final long now = System.currentTimeMillis();
     private static final String name = "testAssetIssue_" + Long.toString(now);
@@ -57,7 +56,6 @@ public class WalletTest_p1_Account_003 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     @BeforeClass
@@ -71,10 +69,23 @@ public class WalletTest_p1_Account_003 {
     @Test
     public void TestCreateAccount() {
         Account noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
-        if (noCreateAccount.getBalance() == 0) {
-            Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1000000L, FROM_ADDRESS, testKey002));
+        if (noCreateAccount.getAccountName().isEmpty()) {
+            Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1L, FROM_ADDRESS, testKey002));
+            //Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1000000L, FROM_ADDRESS, testKey002));
             noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
-            Assert.assertTrue(noCreateAccount.getBalance() == 1000000);
+            logger.info(Long.toString(noCreateAccount.getBalance()));
+            Assert.assertTrue(noCreateAccount.getBalance() == 1);
+
+            //TestVoteToNonWitnessAccount
+            HashMap<String,String> vote_to_non_witness_account=new HashMap<String,String>();
+            vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
+            HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
+            vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
+            Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L,testKey002));
+            Assert.assertFalse(VoteWitness(vote_to_non_witness_account,FROM_ADDRESS,testKey002));
+            Assert.assertFalse(VoteWitness(vote_to_invaild_address,FROM_ADDRESS,testKey002));
+
+            logger.info("vote to non witness account ok!!!");
 
         } else {
             logger.info("Please confirm wither the create account test is pass, or you will do it by manual");
@@ -87,11 +98,14 @@ public class WalletTest_p1_Account_003 {
         if (tryToUpdateAccount.getAccountName().isEmpty()) {
             Assert.assertFalse(updateAccount(Low_Bal_ADDRESS,"1short1".getBytes(),lowBalTest));
             Assert.assertFalse(updateAccount(Low_Bal_ADDRESS,"verylongnamehas33char111111111111".getBytes(),lowBalTest));
-            try {
+            Assert.assertFalse(updateAccount(Low_Bal_ADDRESS,"test Name".getBytes(),lowBalTest));
+            Assert.assertFalse(updateAccount(Low_Bal_ADDRESS,"中文非法名字".getBytes(),lowBalTest));
+            Assert.assertFalse(updateAccount(Low_Bal_ADDRESS,"".getBytes(),lowBalTest));
+/*            try {
                 Thread.sleep(15000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
             Assert.assertTrue(updateAccount(Low_Bal_ADDRESS, "testName".getBytes(), lowBalTest));
             tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
             Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
@@ -105,28 +119,62 @@ public class WalletTest_p1_Account_003 {
     public void TestNoBalanceCreateAssetIssue() {
         Account lowaccount = queryAccount(lowBalTest,blockingStubFull);
         if (lowaccount.getBalance() > 0){
-            try {
+/*            try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
             Assert.assertTrue(Sendcoin(TO_ADDRESS,lowaccount.getBalance(),Low_Bal_ADDRESS,lowBalTest));
         }
-        //余额不足创建通证，创建失败，无异常报出
+        //Create AssetIssue failed when there is no enough balance.
         Assert.assertFalse(CreateAssetIssue(Low_Bal_ADDRESS, name, TotalSupply, 1, 1, now+ 100000000L, now + 10000000000L, 2, Description, Url, lowBalTest));
         logger.info("nobalancecreateassetissue");
     }
 
     @Test
     public void TestNoBalanceTransferTrx() {
-        //余额不足转账，转账失败，无异常报出
+        //Send Coin failed when there is no enough balance.
         Assert.assertFalse(Sendcoin(TO_ADDRESS, 100000000000000000L, Low_Bal_ADDRESS, lowBalTest));
     }
 
     @Test
     public void TestNoBalanceCreateWitness() {
-        //余额不足转账，申请成为超级候选人失败
+        //Apply to be super witness failed when no enough balance.
         Assert.assertFalse(CreateWitness(Low_Bal_ADDRESS, FROM_ADDRESS, lowBalTest));
+    }
+
+    @Test
+    public void TestNoFreezeBalanceToUnfreezeBalance(){
+        //Unfreeze account failed when no freeze balance
+        Account noFreezeAccount = queryAccount(lowBalTest,blockingStubFull);
+        if (noFreezeAccount.getFrozenCount() == 0){
+            Assert.assertFalse(UnFreezeBalance(Low_Bal_ADDRESS,lowBalTest));
+        }
+        else{
+            logger.info("This account has freeze balance, please test this case for manual");
+        }
+    }
+
+
+/*    @Test
+    public void TestVoteToNonWitnessAccount(){
+        HashMap<String,String> vote_to_non_witness_account=new HashMap<String,String>();
+        vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
+        HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
+        vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
+        Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L,testKey002));
+        Assert.assertFalse(VoteWitness(vote_to_non_witness_account,FROM_ADDRESS,testKey002));
+        Assert.assertFalse(VoteWitness(vote_to_invaild_address,FROM_ADDRESS,testKey002));
+
+        logger.info("vote to non witness account ok!!!");
+
+    }*/
+
+    @AfterClass
+    public void shutdown() throws InterruptedException {
+        if (channelFull != null) {
+            channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
     }
 
     public Boolean CreateWitness(byte[] owner, byte[] url, String priKey) {
@@ -154,20 +202,10 @@ public class WalletTest_p1_Account_003 {
         } else {
             return true;
         }
-
-
-    }
-
-    @AfterClass
-    public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
-            channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
     }
 
 
     public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey) {
-
         //String priKey = testKey002;
         ECKey temKey = null;
         try {
@@ -177,7 +215,6 @@ public class WalletTest_p1_Account_003 {
             ex.printStackTrace();
         }
         ECKey ecKey = temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
 
         Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
         ByteString bsTo = ByteString.copyFrom(to);
@@ -189,11 +226,13 @@ public class WalletTest_p1_Account_003 {
         Contract.TransferContract contract = builder.build();
         Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info("transaction == null");
             return false;
         }
         transaction = signTransaction(ecKey, transaction);
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
         if (response.getResult() == false) {
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
             return false;
         } else {
             return true;
@@ -220,7 +259,6 @@ public class WalletTest_p1_Account_003 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
@@ -346,12 +384,131 @@ public class WalletTest_p1_Account_003 {
     }
 
 
-/*        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+    public boolean UnFreezeBalance(byte[] Address, String priKey) {
+        byte[] address = Address;
+
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+        Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+                .newBuilder();
+        ByteString byteAddreess = ByteString.copyFrom(address);
+
+        builder.setOwnerAddress(byteAddreess);
+
+        Contract.UnfreezeBalanceContract contract = builder.build();
+
+
+        Protocol.Transaction transaction = blockingStubFull.unfreezeBalance(contract);
+
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
             return false;
         }
 
-        transaction = signTransaction(transaction);
-        return rpcCli.broadcastTransaction(transaction);*/
+        transaction = TransactionUtils.setTimestamp(transaction);
+        transaction = TransactionUtils.sign(transaction, ecKey);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+        if (response.getResult() == false){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
+    public Boolean VoteWitness(HashMap<String, String> witness, byte[] Address, String priKey){
+
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+
+
+        Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(Address));
+        for (String addressBase58 : witness.keySet()) {
+            String value = witness.get(addressBase58);
+            long count = Long.parseLong(value);
+            Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+                    .newBuilder();
+            byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
+            if (address == null) {
+                continue;
+            }
+            voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+            voteBuilder.setVoteCount(count);
+            builder.addVotes(voteBuilder.build());
+        }
+
+        Contract.VoteWitnessContract contract = builder.build();
+
+        Protocol.Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            logger.info(Integer.toString(transaction.getRawData().getAuthsCount()));
+            logger.info("transaction == null");
+            return false;
+        }
+        transaction = signTransaction(ecKey,transaction);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+        if (response.getResult() == false){
+            logger.info("response.getresult() == false");
+            return false;
+        }
+        return true;
+    }
+
+    public Boolean FreezeBalance(byte[] Address, long freezeBalance, long freezeDuration, String priKey){
+        byte[] address = Address;
+        long frozen_balance = freezeBalance;
+        long frozen_duration = freezeDuration;
+
+        //String priKey = testKey002;
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+
+
+        Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+        ByteString byteAddreess = ByteString.copyFrom(address);
+
+        builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
+                .setFrozenDuration(frozen_duration);
+
+
+        Contract.FreezeBalanceContract contract = builder.build();
+        Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
+
+        if (transaction == null || transaction.getRawData().getContractCount() == 0){
+            return false;
+        }
+
+        transaction = TransactionUtils.setTimestamp(transaction);
+        transaction = TransactionUtils.sign(transaction, ecKey);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+        if (response.getResult() == false){
+            return false;
+        }
+        return true;
+
+
+    }
+
     }
 
 

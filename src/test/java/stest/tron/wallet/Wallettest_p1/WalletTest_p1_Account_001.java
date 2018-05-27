@@ -1,10 +1,9 @@
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
+import com.typesafe.config.Config;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -13,13 +12,23 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.TransactionUtils;
+
+import javax.print.DocFlavor;
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTest_p1_Account_001 {
@@ -37,7 +46,6 @@ public class WalletTest_p1_Account_001 {
     private static final byte[] FROM_ADDRESS    = Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-
 
     private ManagedChannel channelFull = null;
     private ManagedChannel channelSolidity = null;
@@ -65,34 +73,31 @@ public class WalletTest_p1_Account_001 {
 
     @Test
     public void TestQueryAccountFromFullnode(){
-        //查询成功，能够获取到账户类型，账户余额，最近一次操作时间等信息
+        //Query success, get the right balance,bandwidth and the account name.
         Account queryResult = queryAccount(testKey002, blockingStubFull);
         Assert.assertTrue(queryResult.getBalance() > 0);
+        //Assert.assertTrue(queryResult.getBandwidth() >= 0);
         Assert.assertTrue(queryResult.getAccountName().toByteArray().length > 0);
         Assert.assertFalse(queryResult.getAddress().isEmpty());
 
-        //查询失败，无异常报出
+        //Query failed
         Account invalidQueryResult = queryAccount(invalidTestKey, blockingStubFull);
-        //logger.info(invalidQueryResult.getAddress().toString());
         Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
-        //logger.info(ByteArray.toStr(invalidQueryResult.getAddress().toByteArray()));
         Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
     }
 
     @Test
     public void TestQueryAccountFromSoliditynode(){
-        //查询成功，能够获取到账户类型，账户余额，最近一次操作时间等信息
-        Account queryResult = SolidityqueryAccount(solidityKey,blockingStubSolidity);
+        //Query success, get the right balance,bandwidth and the account name.
+        Account queryResult = SolidityqueryAccount(testKey002,blockingStubSolidity);
         Assert.assertTrue(queryResult.getBalance() > 0);
-        Assert.assertTrue(queryResult.getBandwidth() >= 0);
+        //Assert.assertTrue(queryResult.getBandwidth() >= 0);
         Assert.assertTrue(queryResult.getAccountName().toByteArray().length > 0);
         Assert.assertFalse(queryResult.getAddress().isEmpty());
 
-        //查询失败，无异常报出
+        //Query failed
         Account invalidQueryResult = SolidityqueryAccount(invalidTestKey,blockingStubSolidity);
-        //logger.info(invalidQueryResult.getAddress().toString());
         Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
-        //logger.info(ByteArray.toStr(invalidQueryResult.getAddress().toByteArray()));
         Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
     }
 

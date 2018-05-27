@@ -62,8 +62,6 @@ public class WalletTest_p1_AssetIssue_005 {
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String soliditynode = Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
 
-
-
     @BeforeClass(enabled = true)
     public void beforeClass(){
         channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -90,7 +88,7 @@ public class WalletTest_p1_AssetIssue_005 {
 
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
-            //新建一笔通证
+            //Create a new asset issue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,100,start,end,
                     1, Description, Url, 1L,1L,testKey002));
         }
@@ -98,19 +96,12 @@ public class WalletTest_p1_AssetIssue_005 {
             logger.info("This account already create an assetisue");
             Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
             name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
-
-
         }
-
-
-
-
-
     }
 
     @Test(enabled = true)
     public void TestGetAssetIssueByName(){
-        //按当前账户的通证名称查询通证
+        //Get asset issue by name success.
         ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
         GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
         Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
@@ -120,7 +111,7 @@ public class WalletTest_p1_AssetIssue_005 {
         Assert.assertTrue(assetIssueByName.getTotalSupply() > 0);
         Assert.assertTrue(assetIssueByName.getTrxNum() > 0);
 
-        //在当前账户查询不存在的通证
+        //Get asset issue by name failed when the name is not correct.There is no exception.
         String wrongName = name + "_wrong";
         assetNameBs = ByteString.copyFrom(wrongName.getBytes());
         request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
@@ -131,8 +122,16 @@ public class WalletTest_p1_AssetIssue_005 {
         Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
         Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
 
+        //Get asset issue by name failed when the name is null, There is no exception.
+        wrongName = "";
+        assetNameBs = ByteString.copyFrom(wrongName.getBytes());
+        request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
+        assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
-
+        Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
+        Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
+        Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
+        Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
 
     }
 
@@ -148,15 +147,6 @@ public class WalletTest_p1_AssetIssue_005 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-        //long TotalSupply = 100000000L;
-        //int TrxNum = 1;
-        //int IcoNum = 100;
-        //long StartTime = 1522583680000L;
-        //long EndTime = 1525089280000L;
-        //int DecayRatio = 1;
-        //int VoteScore = 2;
-        //String Description = "just-test";
-        //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -165,7 +155,6 @@ public class WalletTest_p1_AssetIssue_005 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
 
         try {
             Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
@@ -176,17 +165,13 @@ public class WalletTest_p1_AssetIssue_005 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-            //builder.setFrozenSupply();
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);
             builder.addFrozenSupply(0,frozenBuilder);
-
-
 
             Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
             if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -262,7 +247,6 @@ public class WalletTest_p1_AssetIssue_005 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-
 
         Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
         ByteString bsTo = ByteString.copyFrom(to);

@@ -68,7 +68,7 @@ public class WalletTest_p1_AssetIssue_009 {
 
     @Test(enabled = true)
     public void TestGetAssetIssueByAccountOrNameFromSolidity(){
-        //测试是否可以按账户查询到
+        //By name
         ByteString addressBS = ByteString.copyFrom(SOLIDITY_ASSET_ADDRESS);
         Account request = Account.newBuilder().setAddress(addressBS).build();
         GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
@@ -83,9 +83,8 @@ public class WalletTest_p1_AssetIssue_009 {
 
             }
 
-        //按当前账户的通证名称查询通证
+        //By ID
         ByteString assetName = queryAssetIssueByAccount.get().getAssetIssue(0).getName();
-        //ByteString assetNameBs = ByteString.copyFrom(name);
         GrpcAPI.BytesMessage requestAsset = GrpcAPI.BytesMessage.newBuilder().setValue(assetName).build();
         Contract.AssetIssueContract assetIssueByName = blockingStubSolidity.getAssetIssueByName(requestAsset);
 
@@ -95,8 +94,6 @@ public class WalletTest_p1_AssetIssue_009 {
         Assert.assertTrue(assetIssueByName.getTrxNum() > 0);
 
         logger.info("TestGetAssetIssueByNameFromSolidity");
-
-
     }
 
     @AfterClass(enabled = true)
@@ -107,67 +104,6 @@ public class WalletTest_p1_AssetIssue_009 {
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
-    }
-
-    public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
-                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-            //long TotalSupply = 100000000L;
-            //int TrxNum = 1;
-            //int IcoNum = 100;
-            //long StartTime = 1522583680000L;
-            //long EndTime = 1525089280000L;
-            //int DecayRatio = 1;
-            //int VoteScore = 2;
-            //String Description = "just-test";
-            //String Url = "https://github.com/tronprotocol/wallet-cli/";
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-            try {
-                Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
-                builder.setOwnerAddress(ByteString.copyFrom(address));
-                builder.setName(ByteString.copyFrom(name.getBytes()));
-                builder.setTotalSupply(TotalSupply);
-                builder.setTrxNum(TrxNum);
-                builder.setNum(IcoNum);
-                builder.setStartTime(StartTime);
-                builder.setEndTime(EndTime);
-                //builder.setDecayRatio(DecayRatio);
-                builder.setVoteScore(VoteScore);
-                builder.setDescription(ByteString.copyFrom(Description.getBytes()));
-                builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-                //builder.setFrozenSupply();
-                Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
-                frozenBuilder.setFrozenAmount(fronzenAmount);
-                frozenBuilder.setFrozenDays(frozenDay);
-                builder.addFrozenSupply(0,frozenBuilder);
-
-
-
-                Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
-                if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-                    return false;
-                }
-                transaction = signTransaction(ecKey,transaction);
-                Return response = blockingStubFull.broadcastTransaction(transaction);
-                if (response.getResult() == false){
-                    return false;
-                }
-                else{
-                    logger.info(name);
-                    return true;
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                return false;
-            }
     }
 
     public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -214,83 +150,6 @@ public class WalletTest_p1_AssetIssue_009 {
         }
         transaction = TransactionUtils.setTimestamp(transaction);
         return TransactionUtils.sign(transaction, ecKey);
-    }
-
-    public boolean TransferAsset(byte[] to, byte[] assertName, long amount, byte[] address, String priKey) {
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-
-
-        Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsName = ByteString.copyFrom(assertName);
-        ByteString bsOwner = ByteString.copyFrom(address);
-        builder.setToAddress(bsTo);
-        builder.setAssetName(bsName);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferAssetContract contract = builder.build();
-        Transaction transaction =  blockingStubFull.transferAsset(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            Account search = queryAccount(ecKey, blockingStubFull);
-            return true;
-        }
-
-    }
-
-    public boolean UnFreezeAsset(byte[] Address, String priKey) {
-        byte[] address = Address;
-
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
-                .newBuilder();
-        ByteString byteAddreess = ByteString.copyFrom(address);
-
-        builder.setOwnerAddress(byteAddreess);
-
-        Contract.UnfreezeAssetContract contract = builder.build();
-
-
-        Transaction transaction = blockingStubFull.unfreezeAsset(contract);
-
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-
-        transaction = TransactionUtils.setTimestamp(transaction);
-        transaction = TransactionUtils.sign(transaction, ecKey);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-            return false;
-        }
-        else{
-            return true;
-        }
     }
 }
 

@@ -72,13 +72,17 @@ public class WalletTest_p1_Transfer_003 {
 
     @Test(enabled = true)
     public void TestGetTransactionById(){
-        long start = now - 16400000;
-        long end   = now;
-        GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
-        timeMessage.setBeginInMilliseconds(start);
-        timeMessage.setEndInMilliseconds(end);
-        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
-        Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
+            long start = now - 16400000;
+            long end   = now;
+            GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
+            timeMessage.setBeginInMilliseconds(start);
+            timeMessage.setEndInMilliseconds(end);
+            GrpcAPI.TimePaginatedMessage.Builder timePageMessage = GrpcAPI.TimePaginatedMessage.newBuilder();
+            timePageMessage.setTimeMessage(timeMessage);
+            timePageMessage.setOffset(0);
+            timePageMessage.setLimit(999);
+            GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timePageMessage.build());
+            Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
 
         if (gettransactionbytimestamp.get().getTransactionCount() == 0){
             logger.info("Last one day there is no transfaction,please test for manual!!!");
@@ -86,13 +90,11 @@ public class WalletTest_p1_Transfer_003 {
         }
 
         else{
-
-
             logger.info(Integer.toString(gettransactionbytimestamp.get().getTransactionCount()));
             Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(0).hasRawData());
             logger.info(ByteArray.toHexString(Hash.sha256(gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray())));
 
-            //使用存在的ID查找一笔交易，查找成功
+            //Right ID, query success.
             ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(
                     ByteArray.toHexString(Hash.sha256(gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray()))
             ));
@@ -101,19 +103,13 @@ public class WalletTest_p1_Transfer_003 {
             Optional<Transaction> getTransactionById = Optional.ofNullable(transaction);
             Assert.assertTrue(getTransactionById.get().hasRawData());
 
-            //使用错误ID查看交易，查询失败，设备无异常
+            //Wrong ID,query failed, no exception.
             bsTxid = ByteString.copyFrom(FROM_ADDRESS);
             request = GrpcAPI.BytesMessage.newBuilder().setValue(bsTxid).build();
             transaction = blockingStubSolidity.getTransactionById(request);
             getTransactionById = Optional.ofNullable(transaction);
             Assert.assertFalse(getTransactionById.get().hasRawData());
-
-
         }
-
-
-
-
     }
 
     @AfterClass
@@ -123,41 +119,6 @@ public class WalletTest_p1_Transfer_003 {
         }
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
-
-        //String priKey = testKey002;
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsOwner = ByteString.copyFrom(owner);
-        builder.setToAddress(bsTo);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferContract contract =  builder.build();
-        Transaction transaction = blockingStubFull.createTransaction(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
         }
     }
 

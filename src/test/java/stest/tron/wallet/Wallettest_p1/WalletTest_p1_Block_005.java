@@ -44,7 +44,6 @@ public class WalletTest_p1_Block_005 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     @BeforeClass
@@ -54,7 +53,6 @@ public class WalletTest_p1_Block_005 {
                 .build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     }
-
 
     @Test(enabled = true)
     public void TestGetBlockByLatestNum(){
@@ -80,6 +78,37 @@ public class WalletTest_p1_Block_005 {
 
     }
 
+    @Test(enabled = true)
+    public void TestGetBlockByExceptionNum(){
+        Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        Assert.assertFalse(currentBlockNum < 0);
+        while (currentBlockNum <= 5){
+            logger.info("Now has very little block, Please wait");
+            currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+            currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        }
+        NumberMessage numberMessage = NumberMessage.newBuilder().setNum(-1).build();
+        GrpcAPI.BlockList blockList = blockingStubFull.getBlockByLatestNum(numberMessage);
+        Optional<GrpcAPI.BlockList> getBlockByLatestNum = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLatestNum.get().getBlockCount() == 0);
+
+        numberMessage = NumberMessage.newBuilder().setNum(0).build();
+        blockList = blockingStubFull.getBlockByLatestNum(numberMessage);
+        getBlockByLatestNum = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLatestNum.get().getBlockCount() == 0);
+
+        numberMessage = NumberMessage.newBuilder().setNum(100).build();
+        blockList = blockingStubFull.getBlockByLatestNum(numberMessage);
+        getBlockByLatestNum = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLatestNum.get().getBlockCount() == 0);
+
+
+
+
+
+
+    }
 
     @AfterClass
     public void shutdown() throws InterruptedException {

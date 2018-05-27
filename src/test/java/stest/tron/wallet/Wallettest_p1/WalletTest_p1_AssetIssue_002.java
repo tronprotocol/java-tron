@@ -56,10 +56,7 @@ public class WalletTest_p1_AssetIssue_002 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-
 
     @BeforeClass(enabled = true)
     public void beforeClass(){
@@ -74,22 +71,22 @@ public class WalletTest_p1_AssetIssue_002 {
                 .getAssetIssueByAccount(request1);
         Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
         if (queryAssetByAccount.get().getAssetIssueCount() == 0){
-            try {
+/*            try {
                 Thread.sleep(16000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
-            //新建一笔通证
+            //Create a new Asset Issue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,1,start,end,
                     1, Description, Url,1L,1L, testKey002));
-            try {
+/*            try {
                 Thread.sleep(25000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
         else{
             logger.info("This account already create an assetisue");
@@ -101,47 +98,29 @@ public class WalletTest_p1_AssetIssue_002 {
 
     @Test(enabled = true)
     public void TestParticipateAssetissue(){
-/*        Account fromBeforeQueryResult = queryAccount(testKey002, blockingStubFull);
-        for(String key : fromBeforeQueryResult.getAssetMap().keySet()) {
-            Long beforeFromAssetIssue = fromBeforeQueryResult.getAssetMap().get(key);
-            logger.info(Long.toString(fromBeforeQueryResult.getAssetMap().get(key)));
-        }
-
-        Account toQueryResult = queryAccount(testKey002, blockingStubFull);*/
-
-
-
-/*        logger.info(Integer.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getNum()));
-        logger.info(Integer.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getTrxNum()));
-        logger.info(Long.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).getTotalSupply()));
-        logger.info(Long.toString(beforeFromQueryAssetByAccount.get().getAssetIssue(0).));*/
-
-        //参与一笔通证
+        //Participate AssetIssue success
         logger.info(name);
+/*        try {
+            Thread.sleep(15000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),100L, TO_ADDRESS, testKey003));
 
-        //参与金额过大，参与失败
+        //The amount is large than the total supply, participate failed.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),9100000000000000000L, TO_ADDRESS, testKey003));
 
-        //参与通证的名字不正确，参与失败
+        //The asset issue name is not correct, participate failed.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, (name+"wrong").getBytes(),100L, TO_ADDRESS, testKey003));
 
-        //参与通证的金额为0，参与失败
+        //The amount is 0, participate asset issue failed.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),0L, TO_ADDRESS, testKey003));
 
-        //参与通证的金额为-1，参与失败
+        //The amount is -1, participate asset issue failed.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),-1L, TO_ADDRESS, testKey003));
 
-        //参与通证的账户没有该通证，参与失败
+        //The asset issue owner address is not correct, participate asset issue failed.
         Assert.assertFalse(participateAssetIssue(BACK_ADDRESS, name.getBytes(),100L, TO_ADDRESS, testKey003));
-
-
-
-
-
-
-
-
     }
 
     @AfterClass(enabled = true)
@@ -160,7 +139,6 @@ public class WalletTest_p1_AssetIssue_002 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-
 
         Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
                 .newBuilder();
@@ -188,15 +166,6 @@ public class WalletTest_p1_AssetIssue_002 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-        //long TotalSupply = 100000000L;
-        //int TrxNum = 1;
-        //int IcoNum = 100;
-        //long StartTime = 1522583680000L;
-        //long EndTime = 1525089280000L;
-        //int DecayRatio = 1;
-        //int VoteScore = 2;
-        //String Description = "just-test";
-        //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -205,7 +174,6 @@ public class WalletTest_p1_AssetIssue_002 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
 
         try {
             Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
@@ -216,17 +184,13 @@ public class WalletTest_p1_AssetIssue_002 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-            //builder.setFrozenSupply();
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);
             builder.addFrozenSupply(0,frozenBuilder);
-
-
 
             Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
             if (transaction == null || transaction.getRawData().getContractCount() == 0) {

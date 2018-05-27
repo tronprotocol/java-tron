@@ -44,7 +44,6 @@ public class WalletTest_p1_Witness_002 {
     private final static  String testKey004     = "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
     private final static  String no_frozen_balance_testKey = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
 
-
     //testng001、testng002、testng003、testng004
     private static final byte[] BACK_ADDRESS    = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
     private static final byte[] FROM_ADDRESS    = Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
@@ -72,7 +71,6 @@ public class WalletTest_p1_Witness_002 {
         blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     }
 
-
     @Test(enabled = true)
     public void TestQueryAllWitness(){
         GrpcAPI.WitnessList witnesslist = blockingStubFull.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -89,7 +87,6 @@ public class WalletTest_p1_Witness_002 {
         }
         logger.info(Integer.toString(result.get().getWitnessesCount()));
         Assert.assertTrue(result.get().getWitnessesCount() > 0);
-        //测试是否正确获取到每一个Witness的地址，url，latestslotnum等
         for (int j =0; j < result.get().getWitnessesCount(); j++){
             Assert.assertFalse(result.get().getWitnesses(j).getAddress().isEmpty());
             Assert.assertFalse(result.get().getWitnesses(j).getUrl().isEmpty());
@@ -100,7 +97,6 @@ public class WalletTest_p1_Witness_002 {
     @Test(enabled = true)
     public void TestSolidityQueryAllWitness(){
         GrpcAPI.WitnessList solidityWitnessList = blockingStubSolidity.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
-        //GrpcAPI.WitnessList witnesslist = blockingStubFull.listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
         Optional<GrpcAPI.WitnessList> result = Optional.ofNullable(solidityWitnessList);
         if (result.isPresent()) {
             GrpcAPI.WitnessList witnessList = result.get();
@@ -114,14 +110,11 @@ public class WalletTest_p1_Witness_002 {
         }
         logger.info(Integer.toString(result.get().getWitnessesCount()));
         Assert.assertTrue(result.get().getWitnessesCount() > 0);
-        //测试是否正确获取到每一个Witness的地址，url，latestslotnum等
         for (int j =0; j < result.get().getWitnessesCount(); j++){
             Assert.assertFalse(result.get().getWitnesses(j).getAddress().isEmpty());
             Assert.assertFalse(result.get().getWitnesses(j).getUrl().isEmpty());
-            //Assert.assertTrue(result.get().getWitnesses(j).getLatestSlotNum() > 0);
         }
     }
-
 
     @AfterClass
     public void shutdown() throws InterruptedException {

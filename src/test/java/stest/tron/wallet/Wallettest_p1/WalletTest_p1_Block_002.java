@@ -66,7 +66,6 @@ public class WalletTest_p1_Block_002 {
 
     @Test(enabled = true)
     public void TestGetBlockByNum(){
-        //获取当前区块number，如果当前区块number为0，则打印日志，转告测试手动测试该用例或等待有新区块后再测试
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
         Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
         Assert.assertFalse(currentBlockNum < 0);
@@ -75,14 +74,14 @@ public class WalletTest_p1_Block_002 {
             Assert.assertTrue(currentBlockNum == 1);
         }
 
-        //定义一个远远大于当前区块数量都值，使用该值查询区块信息，设备无异常，查询不到区块头信息
+        //The number is large than the currently number, there is no exception when query this number.
         Long outOfCurrentBlockNum = currentBlockNum + 10000L;
         NumberMessage.Builder builder1 = NumberMessage.newBuilder();
         builder1.setNum(outOfCurrentBlockNum);
         Block outOfCurrentBlock = blockingStubFull.getBlockByNum(builder1.build());
         Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
 
-        //查询第一个区块信息
+        //Query the first block.
         NumberMessage.Builder builder2 = NumberMessage.newBuilder();
         builder2.setNum(1);
         Block firstBlock = blockingStubFull.getBlockByNum(builder2.build());
@@ -93,9 +92,8 @@ public class WalletTest_p1_Block_002 {
         Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getNumber() == 1);
         Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
         Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-        //logger.info("firstblock test succesfully");
 
-        //查询当前区块前一个区块信息
+        //Query the second latest block.
         NumberMessage.Builder builder3 = NumberMessage.newBuilder();
         builder3.setNum(currentBlockNum -1);
         Block lastSecondBlock = blockingStubFull.getBlockByNum(builder3.build());
@@ -106,12 +104,10 @@ public class WalletTest_p1_Block_002 {
         Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
         Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
         Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-        //logger.info("Last second test succesfully");
     }
 
     @Test(enabled = true)
     public void TestGetBlockByNumFromSolidity(){
-        //获取当前区块number，如果当前区块number为0，则打印日志，转告测试手动测试该用例或等待有新区块后再测试
         Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
         Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
         Assert.assertFalse(currentBlockNum < 0);
@@ -120,14 +116,14 @@ public class WalletTest_p1_Block_002 {
             Assert.assertTrue(currentBlockNum == 1);
         }
 
-        //定义一个远远大于当前区块数量都值，使用该值查询区块信息，设备无异常，查询不到区块头信息
+        //The number is large than the currently number, there is no exception when query this number.
         Long outOfCurrentBlockNum = currentBlockNum + 10000L;
         NumberMessage.Builder builder1 = NumberMessage.newBuilder();
         builder1.setNum(outOfCurrentBlockNum);
         Block outOfCurrentBlock = blockingStubSolidity.getBlockByNum(builder1.build());
         Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
 
-        //查询第一个区块信息
+        //Query the first block.
         NumberMessage.Builder builder2 = NumberMessage.newBuilder();
         builder2.setNum(1);
         Block firstBlock = blockingStubSolidity.getBlockByNum(builder2.build());
@@ -140,7 +136,7 @@ public class WalletTest_p1_Block_002 {
         Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
         logger.info("firstblock test from solidity succesfully");
 
-        //查询当前区块前一个区块信息
+        //Query the second latest block.
         NumberMessage.Builder builder3 = NumberMessage.newBuilder();
         builder3.setNum(currentBlockNum -1);
         Block lastSecondBlock = blockingStubSolidity.getBlockByNum(builder3.build());
@@ -154,6 +150,39 @@ public class WalletTest_p1_Block_002 {
         logger.info("Last second test from solidity succesfully");
     }
 
+    @Test(enabled = true)
+    public void TestGetExceptionBlockByNum(){
+        //The number is -1, there is no exception when query this number.
+        NumberMessage.Builder builder1 = NumberMessage.newBuilder();
+        builder1.setNum(-1);
+        Block ExceptionBlock = blockingStubFull.getBlockByNum(builder1.build());
+        Assert.assertFalse(ExceptionBlock.hasBlockHeader());
+
+        //The number is 0, there is no exception when query this number.
+        builder1 = NumberMessage.newBuilder();
+        builder1.setNum(0);
+        ExceptionBlock = blockingStubFull.getBlockByNum(builder1.build());
+        logger.info(Long.toString(ExceptionBlock.getBlockHeader().getRawData().getNumber()));
+        Assert.assertTrue(ExceptionBlock.hasBlockHeader());
+        //Assert.assertFalse(ExceptionBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+        Assert.assertFalse(ExceptionBlock.getBlockHeader().getRawData().getTxTrieRoot().isEmpty());
+
+        //On soliditynode, the number is 0, there is no exception when query this number.
+        builder1 = NumberMessage.newBuilder();
+        builder1.setNum(0);
+        ExceptionBlock = blockingStubSolidity.getBlockByNum(builder1.build());
+        Assert.assertTrue(ExceptionBlock.hasBlockHeader());
+        Assert.assertFalse(ExceptionBlock.getBlockHeader().getRawData().getTxTrieRoot().isEmpty());
+
+        //On soliditynode, the number is -1, there is no exception when query this number.
+        builder1 = NumberMessage.newBuilder();
+        builder1.setNum(-1);
+        ExceptionBlock = blockingStubSolidity.getBlockByNum(builder1.build());
+        Assert.assertFalse(ExceptionBlock.hasBlockHeader());
+
+
+
+    }
 
     @Test(enabled = true)
     public void TestGetBlockById(){

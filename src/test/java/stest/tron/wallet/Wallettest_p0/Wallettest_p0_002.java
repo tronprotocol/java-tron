@@ -88,7 +88,7 @@ public class Wallettest_p0_002 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //新建一笔通证
+            //Create a new AssetIssue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,100,now +900000,now+10000000000L,
                     1, Description, Url, 1L,1L,testKey002));
         }
@@ -233,15 +233,7 @@ public class Wallettest_p0_002 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-        //long TotalSupply = 100000000L;
-        //int TrxNum = 1;
-        //int IcoNum = 100;
-        //long StartTime = 1522583680000L;
-        //long EndTime = 1525089280000L;
-        //int DecayRatio = 1;
-        //int VoteScore = 2;
-        //String Description = "just-test";
-        //String Url = "https://github.com/tronprotocol/wallet-cli/";
+
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -250,8 +242,6 @@ public class Wallettest_p0_002 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
-
         try {
             Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
             builder.setOwnerAddress(ByteString.copyFrom(address));
@@ -261,11 +251,9 @@ public class Wallettest_p0_002 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-            //builder.setFrozenSupply();
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);

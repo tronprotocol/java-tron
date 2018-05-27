@@ -66,7 +66,6 @@ public class WalletTest_p1_Block_001 {
     @Test
     public void TestCurrentBlock(){
         Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-        //测试是否获取到了当前区块，包括witness签名，区块时间戳，number,witness地址等都进行有效性校验
         Assert.assertTrue(currentBlock.hasBlockHeader());
         Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
         Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -80,7 +79,6 @@ public class WalletTest_p1_Block_001 {
     @Test
     public void TestCurrentBlockFromSolidity(){
         Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-        //测试是否获取到了当前区块，包括witness签名，区块时间戳，number,witness地址等都进行有效性校验
         Assert.assertTrue(currentBlock.hasBlockHeader());
         Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
         Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);

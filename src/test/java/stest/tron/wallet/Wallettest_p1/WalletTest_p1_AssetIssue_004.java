@@ -44,7 +44,7 @@ public class WalletTest_p1_AssetIssue_004 {
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
     private static final byte[] NO_ASSET_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
-
+    private static final byte[] INVALID_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
     private static final long now = System.currentTimeMillis();
     private static final String name = "testAssetIssue_" + Long.toString(now);
     private static final long TotalSupply = now;
@@ -53,10 +53,7 @@ public class WalletTest_p1_AssetIssue_004 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-
 
     @BeforeClass(enabled = true)
     public void beforeClass(){
@@ -79,7 +76,7 @@ public class WalletTest_p1_AssetIssue_004 {
 
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
-            //新建一笔通证
+            //Create a new asset issue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 6,1000,start,end,
                     2, Description, Url, 1L,1L,testKey002));
         }
@@ -91,7 +88,6 @@ public class WalletTest_p1_AssetIssue_004 {
 
     @Test(enabled = true)
     public void TestGetAssetIssueByAccount(){
-        //测试是否可以按账户查询到
         ByteString addressBS = ByteString.copyFrom(FROM_ADDRESS);
         Account request = Account.newBuilder().setAddress(addressBS).build();
         GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
@@ -110,7 +106,7 @@ public class WalletTest_p1_AssetIssue_004 {
             }
         }
 
-        //测试未发行过通证到账户查询无异常
+        //No exception when the address didn't create asset issue.
         ByteString addressBS1 = ByteString.copyFrom(NO_ASSET_ADDRESS);
         Account request1 = Account.newBuilder().setAddress(addressBS1).build();
         GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
@@ -118,6 +114,16 @@ public class WalletTest_p1_AssetIssue_004 {
         Optional<GrpcAPI.AssetIssueList> queryNoAssetByAccount = Optional.ofNullable(assetIssueList1);
         Assert.assertTrue(queryNoAssetByAccount.get().getAssetIssueCount() == 0);
         logger.info("No asset account queryed nothing");
+
+        //No exception when the address is invalid.
+        addressBS1 = ByteString.copyFrom(INVALID_ADDRESS);
+        request1 = Account.newBuilder().setAddress(addressBS1).build();
+        assetIssueList1 = blockingStubFull
+                .getAssetIssueByAccount(request1);
+        queryNoAssetByAccount = Optional.ofNullable(assetIssueList1);
+        Assert.assertTrue(queryNoAssetByAccount.get().getAssetIssueCount() == 0);
+        logger.info("No asset account queryed nothing");
+
         }
 
     @AfterClass(enabled = true)
@@ -129,15 +135,6 @@ public class WalletTest_p1_AssetIssue_004 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                     Integer VoteScore, String Description, String URL, Long fronzenAmount, Long frozenDay,String priKey){
-        //long TotalSupply = 100000000L;
-        //int TrxNum = 1;
-        //int IcoNum = 100;
-        //long StartTime = 1522583680000L;
-        //long EndTime = 1525089280000L;
-        //int DecayRatio = 1;
-        //int VoteScore = 2;
-        //String Description = "just-test";
-        //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -146,7 +143,6 @@ public class WalletTest_p1_AssetIssue_004 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
 
         try {
             Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
@@ -157,11 +153,9 @@ public class WalletTest_p1_AssetIssue_004 {
             builder.setNum(IcoNum);
             builder.setStartTime(StartTime);
             builder.setEndTime(EndTime);
-            //builder.setDecayRatio(DecayRatio);
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
-            //builder.setFrozenSupply();
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);
@@ -243,7 +237,6 @@ public class WalletTest_p1_AssetIssue_004 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-
 
         Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
         ByteString bsTo = ByteString.copyFrom(to);

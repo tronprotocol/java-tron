@@ -1,3 +1,4 @@
+/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -88,13 +89,11 @@ public class WalletTest_p1_Transfer_004 {
             Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(j).hasRawData());
             Assert.assertFalse(gettransactionbytimestamp.get().getTransaction(j).getRawData().getContractList().isEmpty());
         }
-
     }
-
 
     @Test(enabled = true)
     public void TestExceptionTimeToGetGetTransactionsByTimestamp(){
-        //开始时间戳为负数,无异常
+        //Start time is below zero.
         long start = -10000;
         long end   = -1;
         GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
@@ -102,11 +101,32 @@ public class WalletTest_p1_Transfer_004 {
         timeMessage.setEndInMilliseconds(end);
         GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
         Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional.ofNullable(transactionList);
-        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
+        Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+        //Start time is equal with end time.
+        long now = System.currentTimeMillis();
+        start = now;
+        end   = now;
+        timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        gettransactionbytimestamp = Optional.ofNullable(transactionList);
+        Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+        //No transeration occured.
+        now = System.currentTimeMillis();
+        start = now;
+        end   = now+1;
+        timeMessage = GrpcAPI.TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        gettransactionbytimestamp = Optional.ofNullable(transactionList);
         Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
 
 
-        //开始时间戳为未来时间,无异常
+        //Start time is late than currently time,no exception.
         start = now + 1000000;
         end   = start + 1000000;
         timeMessage = GrpcAPI.TimeMessage.newBuilder();
@@ -114,10 +134,9 @@ public class WalletTest_p1_Transfer_004 {
         timeMessage.setEndInMilliseconds(end);
         transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
         gettransactionbytimestamp = Optional.ofNullable(transactionList);
-        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
         Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
 
-        //开始时间戳晚于结束时间戳
+        //Start time is late than the end time, no exception.
         start = now;
         end   = now - 10000000;
         timeMessage = GrpcAPI.TimeMessage.newBuilder();
@@ -125,9 +144,7 @@ public class WalletTest_p1_Transfer_004 {
         timeMessage.setEndInMilliseconds(end);
         transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
         gettransactionbytimestamp = Optional.ofNullable(transactionList);
-        //Assert.assertFalse(gettransactionbytimestamp.isPresent());
         Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
-
     }
 
     @AfterClass
@@ -137,41 +154,6 @@ public class WalletTest_p1_Transfer_004 {
         }
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
-
-        //String priKey = testKey002;
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsOwner = ByteString.copyFrom(owner);
-        builder.setToAddress(bsTo);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferContract contract =  builder.build();
-        Transaction transaction = blockingStubFull.createTransaction(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
         }
     }
 
@@ -223,3 +205,4 @@ public class WalletTest_p1_Transfer_004 {
 }
 
 
+*/

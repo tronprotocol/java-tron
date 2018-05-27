@@ -1,3 +1,4 @@
+/*
 package stest.tron.wallet.Wallettest_p1;
 
 import com.google.protobuf.ByteString;
@@ -44,6 +45,7 @@ public class WalletTest_p1_Transfer_006 {
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
     private static final byte[] ONLINE_ADDRESS  = Base58.decodeFromBase58Check("27Vmxj4BZPCTyHnpJ1cd5Un9aehqK82dbFT");
+    private static final byte[] INVAILD_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
     private ManagedChannel channelFull = null;
     private ManagedChannel channelSolidity = null;
@@ -69,31 +71,33 @@ public class WalletTest_p1_Transfer_006 {
 
     @Test(enabled = true)
     public void TestgetTransactionstoThis(){
-        //查询soliditynode上 该地址的转账记录
         ByteString addressBS = ByteString.copyFrom(ONLINE_ADDRESS);
         Account request = Account.newBuilder().setAddress(addressBS).build();
         GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(request);
         Optional<GrpcAPI.TransactionList>  gettransactionstothis= Optional.ofNullable(transactionList);
 
-        //如果查询该账户还没有交易，则转账一笔交易
         if (gettransactionstothis.get().getTransactionCount() == 0){
             logger.info("This account didn't receipt any coin from others. Please test this case for manual");
-
         }
 
         Assert.assertTrue(gettransactionstothis.isPresent());
         Integer beforecount = gettransactionstothis.get().getTransactionCount();
         logger.info(Integer.toString(beforecount));
         for (Integer j =0; j<beforecount; j++){
-            //logger.info("print every transation");
             Assert.assertFalse(gettransactionstothis.get().getTransaction(j).getRawData().getContractList().isEmpty());
         }
-
-
-
-
-
     }
+
+    @Test(enabled = true)
+    public void TestgetTransactionstoThisByInvaildAddress(){
+        ByteString addressBS = ByteString.copyFrom(INVAILD_ADDRESS);
+        Account request = Account.newBuilder().setAddress(addressBS).build();
+        GrpcAPI.TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(request);
+        Optional<GrpcAPI.TransactionList>  gettransactionstothis= Optional.ofNullable(transactionList);
+
+        Assert.assertTrue(gettransactionstothis.get().getTransactionCount() == 0);
+    }
+
 
     @AfterClass
     public void shutdown() throws InterruptedException {
@@ -102,41 +106,6 @@ public class WalletTest_p1_Transfer_006 {
         }
         if(channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public Boolean Sendcoin(byte[] to, long amount, byte[] owner, String priKey){
-
-        //String priKey = testKey002;
-        ECKey temKey = null;
-        try {
-            BigInteger priK = new BigInteger(priKey, 16);
-            temKey = ECKey.fromPrivate(priK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
-
-        Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-        ByteString bsTo = ByteString.copyFrom(to);
-        ByteString bsOwner = ByteString.copyFrom(owner);
-        builder.setToAddress(bsTo);
-        builder.setOwnerAddress(bsOwner);
-        builder.setAmount(amount);
-
-        Contract.TransferContract contract =  builder.build();
-        Transaction transaction = blockingStubFull.createTransaction(contract);
-        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-            return false;
-        }
-        transaction = signTransaction(ecKey,transaction);
-        Return response = blockingStubFull.broadcastTransaction(transaction);
-        if (response.getResult() == false){
-            return false;
-        }
-        else{
-            return true;
         }
     }
 
@@ -188,3 +157,4 @@ public class WalletTest_p1_Transfer_006 {
 }
 
 
+*/

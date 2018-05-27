@@ -44,7 +44,6 @@ public class WalletTest_p1_Block_004 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     @BeforeClass
@@ -85,6 +84,50 @@ public class WalletTest_p1_Block_004 {
         Assert.assertFalse(getBlockByLimitNext.get().getBlock(1).getBlockHeader().getRawData().getParentHash().isEmpty());
     }
 
+    @Test(enabled = true)
+    public void TestGetBlockByExceptionLimitNext(){
+        Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+        Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        Assert.assertFalse(currentBlockNum < 0);
+        while (currentBlockNum <= 5){
+            logger.info("Now has very little block, Please wait");
+            currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+            currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+        }
+
+        //From -1 to 1
+        GrpcAPI.BlockLimit.Builder builder = GrpcAPI.BlockLimit.newBuilder();
+        builder.setStartNum(-1);
+        builder.setEndNum(1);
+        GrpcAPI.BlockList blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+        Optional<GrpcAPI.BlockList> getBlockByLimitNext = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlockCount() == 0);
+
+        //From 3 to 3
+        builder = GrpcAPI.BlockLimit.newBuilder();
+        builder.setStartNum(3);
+        builder.setEndNum(3);
+        blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+        getBlockByLimitNext = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlockCount() == 0);
+
+
+        //From 4 to 2
+        builder = GrpcAPI.BlockLimit.newBuilder();
+        builder.setStartNum(4);
+        builder.setEndNum(2);
+        blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+        getBlockByLimitNext = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlockCount() == 0);
+
+        //From 999999990 to 999999999
+        builder = GrpcAPI.BlockLimit.newBuilder();
+        builder.setStartNum(999999990);
+        builder.setEndNum(999999999);
+        blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+        getBlockByLimitNext = Optional.ofNullable(blockList);
+        Assert.assertTrue(getBlockByLimitNext.get().getBlockCount() == 0);
+    }
 
     @AfterClass
     public void shutdown() throws InterruptedException {

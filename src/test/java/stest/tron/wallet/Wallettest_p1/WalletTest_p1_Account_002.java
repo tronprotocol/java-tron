@@ -47,8 +47,6 @@ public class WalletTest_p1_Account_002 {
     private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    //private String search_fullnode = "39.105.104.137:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
     private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 

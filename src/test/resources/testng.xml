@@ -1,15 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="demo suite" >
-    <test name="demoTests" preserve-order="true">
-        <packages>
+<!--<suite name="Wallet case" >
+    <test name="Debug case" preserve-order="true">
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>
+        </classes>
+    </test>
+</suite>-->
+
+<suite name="Wallet case" >
+    <test name="AssetIssue" preserve-order="true">
+        <!--        <packages>
         <package name="stest.tron.wallet.*">
         </package>
-    </packages>
-<!--        <classes>
-            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_003">
-            </class>
-        </classes>-->
+    </packages>-->
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_003"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_002"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_004"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_005"/>
+            <!--<class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>-->
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_007"/>
+<!--            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_008"/>-->
+            <class name="stest.tron.wallet.Wallettest_p0.Wallettest_p0_002"/>
+        </classes>
+    </test>
+    <test name="Account" >
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_004"/>
+<!--            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_001"/>-->
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_002"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_003"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_005"/>
+        </classes>
+    </test>
+    <test name="Transfer" >
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p0.Wallettest_p0_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_002"/>
+<!--            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_003"/>-->
+<!--            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_004"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_005"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_006"/>-->
+        </classes>
+    </test>
+    <test name="Witness" >
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Witness_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Witness_002"/>
+            <class name="stest.tron.wallet.Wallettest_p0.Wallettest_p0_003"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Witness_003"/>
+        </classes>
+    </test>
+    <test name="Block" >
+        <classes>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_002"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_003"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_004"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_005"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Node_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_001"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_008"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_003"/>
+        </classes>
     </test>
 </suite>
