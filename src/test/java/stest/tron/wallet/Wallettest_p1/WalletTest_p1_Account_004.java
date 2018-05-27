@@ -3,25 +3,32 @@ package stest.tron.wallet.Wallettest_p1;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.*;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
+import org.testng.Assert;
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTest_p1_Account_004 {
@@ -32,7 +39,6 @@ public class WalletTest_p1_Account_004 {
     private final static  String testKey003     = "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
     private final static  String testKey004     = "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
     private final static  String no_frozen_balance_testKey = "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
-
 
     //testng001、testng002、testng003、testng004
     private static final byte[] BACK_ADDRESS    = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
@@ -45,10 +51,8 @@ public class WalletTest_p1_Account_004 {
     private ManagedChannel search_channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletGrpc.WalletBlockingStub search_blockingStubFull = null;
-    //private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
-    private String fullnode = "39.105.111.178:50051";
-    private String search_fullnode = "39.105.104.137:50051";
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
+    private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
     @BeforeClass
     public void beforeClass(){
@@ -68,26 +72,35 @@ public class WalletTest_p1_Account_004 {
 
     @Test(enabled = true)
     public void TestFreezeBalance(){
-        //冻结金额大于目前余额，冻结失败
+        //Freeze failed when freeze amount is large than currently balance.
         Assert.assertFalse(FreezeBalance(FROM_ADDRESS, 9000000000000000000L, 3L,testKey002));
-        //冻结金额小于1Trx,冻结失败
+        //Freeze failed when freeze amount less than 1Trx
         Assert.assertFalse(FreezeBalance(FROM_ADDRESS,999999L, 3L,testKey002));
-        //冻结时间不为3天，冻结失败
+        //Freeze failed when freeze duration isn't 3 days.
         Assert.assertFalse(FreezeBalance(FROM_ADDRESS,1000000L,2L,testKey002));
-        //如果冻结时间未到，则解锁失败
+        //Unfreeze balance failed when 3 days hasn't come.
         Assert.assertFalse(UnFreezeBalance(FROM_ADDRESS, testKey002));
+        //Freeze failed when freeze amount is 0.
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,0L, 3L,testKey002));
+        //Freeze failed when freeze amount is -1.
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,-1L, 3L,testKey002));
+        //Freeze failed when freeze duration is -1.
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,1000000L,-1L,testKey002));
+        //Freeze failed when freeze duration is 0.
+        Assert.assertFalse(FreezeBalance(FROM_ADDRESS,1000000L,0L,testKey002));
+
         try {
             Thread.sleep(16000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        //冻结资产功能正常
+        //Freeze balance success.
         Assert.assertTrue(FreezeBalance(FROM_ADDRESS,1000000L, 3L, testKey002));
     }
 
     @Test(enabled = false)
     public void TestUnFreezeBalance(){
-        //如果没有冻结资产，则解锁失败
+        //Unfreeze failed when there is no freeze balance.
         Assert.assertFalse(UnFreezeBalance(NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
         logger.info("Test unfreezebalance");
 
@@ -121,8 +134,11 @@ public class WalletTest_p1_Account_004 {
         Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
         Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
         Long beforeFrozenBalance = 0L;
+        //Long beforeBandwidth     = beforeFronzen.getBandwidth();
         if(beforeFronzen.getFrozenCount()!= 0){
             beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
+            //beforeBandwidth     = beforeFronzen.getBandwidth();
+            //logger.info(Long.toString(beforeFronzen.getBandwidth()));
             logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
         }
 
@@ -163,10 +179,13 @@ public class WalletTest_p1_Account_004 {
 
         Account afterFronzen = queryAccount(ecKey, search_blockingStubFull);
         Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
+        //Long afterBandwidth     = afterFronzen.getBandwidth();
+        //logger.info(Long.toString(afterFronzen.getBandwidth()));
         logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
         //logger.info(Integer.toString(search.getFrozenCount()));
         logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen" + afterFrozenBalance.toString());
         Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
+        //Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
         return true;
 
 

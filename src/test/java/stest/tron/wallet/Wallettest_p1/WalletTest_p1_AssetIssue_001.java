@@ -55,10 +55,8 @@ public class WalletTest_p1_AssetIssue_001 {
 
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
-    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
-    //private String search_fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
 
+    private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     @BeforeClass(enabled = true)
     public void beforeClass(){
@@ -78,17 +76,22 @@ public class WalletTest_p1_AssetIssue_001 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //新建一笔通证,开始时间小于当前时间，创建失败
-            Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now,now+10000000000L,
+
+
+            Long now = System.currentTimeMillis();
+            //Create AssetIssue failed when start time is before the currently time.
+            Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now-10000,now+10000000000L,
                     1, Description, Url, no_bandwitch));
 
-            //新建一笔通证,总供应量大于当前账户余额，创建失败
-            Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,9000000000000000000L, 1,1,now,now+10000000000L,
-                    1, Description, Url, no_bandwitch));
+            //Create AssetIssue failed when TotalSupply is large than currently balance
+            //Assert.assertFalse(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,9000000000000000000L, 1,1,now+10000,now+10000000000L,
+              //      1, Description, Url, no_bandwitch));
 
+            Long start = System.currentTimeMillis() + 2000;
+            Long end   = System.currentTimeMillis() + 1000000000;
 
-            //新建一笔通证
-            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,now+900000,now+10000000000L,
+            //Create a new AssetIssue success.
+            Assert.assertTrue(CreateAssetIssue(NO_BANDWITCH_ADDRESS,name,TotalSupply, 1,100,start,end,
                     1, Description, Url, no_bandwitch));
         }
         else{
@@ -97,16 +100,11 @@ public class WalletTest_p1_AssetIssue_001 {
             name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
 
         }
-
-
-
-
-
     }
 
     @Test(enabled = true)
     public void TestTransferAssetBandwitchDecreaseWithin10Second(){
-        try {
+/*        try {
             Thread.sleep(15000);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -120,8 +118,34 @@ public class WalletTest_p1_AssetIssue_001 {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        logger.info("Out 10 seconds to transfer asset");
+        logger.info("Out 10 seconds to transfer asset");*/
         Assert.assertTrue(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, NO_BANDWITCH_ADDRESS, no_bandwitch));
+
+        //Transfer Asset failed when transfer to yourself
+        Assert.assertFalse(TransferAsset(TO_ADDRESS, name.getBytes(), 100L, TO_ADDRESS, testKey003));
+        //Transfer Asset failed when the transfer amount is large than the asset balance you have.
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), 9100000000000000000L, TO_ADDRESS, testKey003));
+        //Transfer Asset failed when the transfer amount is 0
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), 0L, TO_ADDRESS, testKey003));
+        //Transfer Asset failed when the transfer amount is -1
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, name.getBytes(), -1L, TO_ADDRESS, testKey003));
+        //Transfer failed when you want to transfer to an invalid address
+        Assert.assertFalse(TransferAsset(INVAILD_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+        //Transfer failed when the asset issue name is not correct.
+        Assert.assertFalse(TransferAsset(FROM_ADDRESS, (name+"wrong").getBytes(), 1L, TO_ADDRESS, testKey003));
+        //Transfer success.
+        Assert.assertTrue(TransferAsset(FROM_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+
+        //No freeze asset, try to unfreeze asset failed.
+        Assert.assertFalse(UnFreezeAsset(NO_BANDWITCH_ADDRESS,no_bandwitch));
+        logger.info("Test no asset frozen balance, try to unfreeze asset, no exception. Test OK!!!");
+
+        //Not create asset, try to unfreeze asset failed.No exception.
+        Assert.assertFalse(UnFreezeAsset(TO_ADDRESS,testKey003));
+        logger.info("Test not create asset issue, try to unfreeze asset, no exception. Test OK!!!");
+
+
+
 
     }
 
@@ -134,15 +158,6 @@ public class WalletTest_p1_AssetIssue_001 {
 
     public Boolean CreateAssetIssue(byte[] address, String name, Long TotalSupply, Integer TrxNum, Integer IcoNum, Long StartTime, Long EndTime,
                                      Integer VoteScore, String Description, String URL, String priKey){
-            //long TotalSupply = 100000000L;
-            //int TrxNum = 1;
-            //int IcoNum = 100;
-            //long StartTime = 1522583680000L;
-            //long EndTime = 1525089280000L;
-            //int DecayRatio = 1;
-            //int VoteScore = 2;
-            //String Description = "just-test";
-            //String Url = "https://github.com/tronprotocol/wallet-cli/";
         ECKey temKey = null;
         try {
             BigInteger priK = new BigInteger(priKey, 16);
@@ -151,7 +166,6 @@ public class WalletTest_p1_AssetIssue_001 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        Account search = queryAccount(ecKey, blockingStubFull);
 
             try {
                 Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
@@ -162,7 +176,6 @@ public class WalletTest_p1_AssetIssue_001 {
                 builder.setNum(IcoNum);
                 builder.setStartTime(StartTime);
                 builder.setEndTime(EndTime);
-                //builder.setDecayRatio(DecayRatio);
                 builder.setVoteScore(VoteScore);
                 builder.setDescription(ByteString.copyFrom(Description.getBytes()));
                 builder.setUrl(ByteString.copyFrom(URL.getBytes()));
@@ -271,6 +284,44 @@ public class WalletTest_p1_AssetIssue_001 {
             return true;
         }
 
+    }
+    public boolean UnFreezeAsset(byte[] Address, String priKey) {
+        byte[] address = Address;
+
+        ECKey temKey = null;
+        try {
+            BigInteger priK = new BigInteger(priKey, 16);
+            temKey = ECKey.fromPrivate(priK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        ECKey ecKey= temKey;
+
+        Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+                .newBuilder();
+        ByteString byteAddreess = ByteString.copyFrom(address);
+
+        builder.setOwnerAddress(byteAddreess);
+
+        Contract.UnfreezeAssetContract contract = builder.build();
+
+
+        Transaction transaction = blockingStubFull.unfreezeAsset(contract);
+
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            return false;
+        }
+
+        transaction = TransactionUtils.setTimestamp(transaction);
+        transaction = TransactionUtils.sign(transaction, ecKey);
+        GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+        if (response.getResult() == false){
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+            return false;
+        }
+        else{
+            return true;
+        }
     }
 }
 

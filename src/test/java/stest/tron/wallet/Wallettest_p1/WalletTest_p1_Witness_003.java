@@ -20,11 +20,13 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 //import stest.tron.wallet.common.client.AccountComparator;
@@ -45,16 +47,20 @@ public class WalletTest_p1_Witness_003 {
     private static final byte[] TO_ADDRESS      = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
     private static final byte[] Low_Bal_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
+    private static final byte[] INVAILD_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
 
     private static final Long costForCreateWitness = 9999000000L;
     String  createWitnessUrl = "http://www.createwitnessurl.com";
     String  updateWitnessUrl = "http://www.updatewitnessurl.com";
+    String  nullUrl          = "";
+    String  spaceUrl         = "          ##################~!@#$%^&*()_+}{|:'/.,<>?|]=-";
     byte[]  createUrl = createWitnessUrl.getBytes();
     byte[]  updateUrl = updateWitnessUrl.getBytes();
+    byte[]  wrongUrl  = nullUrl.getBytes();
+    byte[]  updateSpaceUrl = spaceUrl.getBytes();
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    //private String fullnode = "39.105.111.178:50051";
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
     @BeforeClass
@@ -65,24 +71,48 @@ public class WalletTest_p1_Witness_003 {
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     }
 
+    @Test
+    public void TestInvaildToApplyBecomeWitness(){
+        Assert.assertFalse(CreateWitness(INVAILD_ADDRESS,createUrl,testKey002));
+    }
 
     @Test
     public void TestCreateWitness(){
-        //如果已经是候选人，则申请失败（暂时先默认FROM_ADDRESS账户在服务器初始化后就是witness）
+        //If you are already is witness, apply failed
         CreateWitness(FROM_ADDRESS,createUrl, testKey002);
         Assert.assertFalse(CreateWitness(FROM_ADDRESS,createUrl, testKey002));
 
-        //从一个账户转入足额到资产到Low_Bal_ADDRESS账户，使该账户可以申请成为witness
+        //No balance,try to create witness.
+        Assert.assertFalse(CreateWitness(Low_Bal_ADDRESS,createUrl, lowBalTest));
 
+
+        //Send enough coin to the apply account to make that account has ability to apply become witness.
         Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, costForCreateWitness,FROM_ADDRESS, testKey002));
-        Account search1 = queryAccount(lowBalTest, blockingStubFull);
+/*        try {
+            Thread.sleep(15000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+        if (CreateWitness(Low_Bal_ADDRESS,createUrl, lowBalTest) == false){
+            Account lowAccount = queryAccount(lowBalTest,blockingStubFull);
+            logger.info(Long.toString(lowAccount.getBalance()));
+            Assert.assertTrue(Sendcoin(FROM_ADDRESS, costForCreateWitness,Low_Bal_ADDRESS, lowBalTest));
+        }
+
+        //Account lowAccount = queryAccount(lowBalTest,blockingStubFull);
+        //if (lowAccount.getBalance()<costForCreateWitness)
+        //{
+            //Assert.assertFalse(CreateWitness(Low_Bal_ADDRESS,createUrl,lowBalTest));
+            //Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, costForCreateWitness,FROM_ADDRESS, testKey002));
+        //}
+
+/*        Account search1 = queryAccount(lowBalTest, blockingStubFull);
         Long beforeCreateWitnessBalance = search1.getBalance();
 
-        //Assert.assertTrue(CreateWitness(Low_Bal_ADDRESS,Low_Bal_ADDRESS, lowBalTest));
         if(CreateWitness(Low_Bal_ADDRESS,createUrl, lowBalTest) == false){
             logger.info("Maybe the LowBalanceAccount had become witness yet, please test this case for manual");
             Sendcoin(Low_Bal_ADDRESS, costForCreateWitness,FROM_ADDRESS, testKey002);
-            Assert.assertTrue(Sendcoin(FROM_ADDRESS,costForCreateWitness,Low_Bal_ADDRESS,lowBalTest));
+            Sendcoin(FROM_ADDRESS,costForCreateWitness,Low_Bal_ADDRESS,lowBalTest);
         }
         else{
             try {
@@ -96,18 +126,26 @@ public class WalletTest_p1_Witness_003 {
             logger.info("beforecreatewitnessbalance + " + Long.toString(beforeCreateWitnessBalance));
             logger.info("aftercreatewitnessbalance + " + Long.toString(afterCreateWitnessBalance));
             Assert.assertTrue(beforeCreateWitnessBalance - afterCreateWitnessBalance == costForCreateWitness);
-        }
+        }*/
     }
 
     @Test
     public void TestUpdateWitness(){
-        //更新Witness到URL
-        //Assert.assertTrue(UpdatWitness(Low_Bal_ADDRESS,updateUrl,lowBalTest));
         try {
             Thread.sleep(18000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        //null url, update failed
+        Assert.assertFalse(UpdateWitness(FROM_ADDRESS,wrongUrl,testKey002));
+        //Content space and special char, update success
+        Assert.assertTrue(UpdateWitness(FROM_ADDRESS,updateSpaceUrl,testKey002));
+        try {
+            Thread.sleep(15000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //update success
         Assert.assertTrue(UpdateWitness(Low_Bal_ADDRESS,updateUrl,lowBalTest));
 
     }
@@ -159,15 +197,10 @@ public class WalletTest_p1_Witness_003 {
         }
         ECKey ecKey= temKey;
 
-        //Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
         Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
-        //builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setOwnerAddress(ByteString.copyFrom(owner));
-        //builder.setUrl(ByteString.copyFrom(url));
         builder.setUpdateUrl(ByteString.copyFrom(url));
-        //Contract.WitnessCreateContract contract = builder.build();
         Contract.WitnessUpdateContract contract = builder.build();
-        //Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
         Protocol.Transaction transaction = blockingStubFull.updateWitness(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
             logger.info("transaction == null");
@@ -198,7 +231,6 @@ public class WalletTest_p1_Witness_003 {
             ex.printStackTrace();
         }
         ECKey ecKey= temKey;
-        //Account search = queryAccount(ecKey, blockingStubFull);
 
         Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
         ByteString bsTo = ByteString.copyFrom(to);
@@ -215,6 +247,7 @@ public class WalletTest_p1_Witness_003 {
         transaction = signTransaction(ecKey,transaction);
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
         if (response.getResult() == false){
+            logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
             return false;
         }
         else{
