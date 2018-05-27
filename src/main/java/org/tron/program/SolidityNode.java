@@ -1,5 +1,8 @@
 package org.tron.program;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -36,6 +39,8 @@ public class SolidityNode {
   private DatabaseGrpcClient databaseGrpcClient;
   private Manager dbManager;
 
+  private ScheduledExecutorService syncExecutor = Executors.newSingleThreadScheduledExecutor();
+
   public void setDbManager(Manager dbManager) {
     this.dbManager = dbManager;
   }
@@ -56,21 +61,21 @@ public class SolidityNode {
   }
 
   private void syncLoop(Args args) {
-    while (true) {
-      try {
-        initGrpcClient(args.getTrustNodeAddr());
-        syncSolidityBlock();
-        shutdownGrpcClient();
-      } catch (Exception e) {
-        logger.error("Error in sync solidity block " + e.getMessage(), e);
-      }
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        e.printStackTrace();
-      }
-    }
+//    while (true) {
+//      try {
+//        initGrpcClient(args.getTrustNodeAddr());
+//        syncSolidityBlock();
+//        shutdownGrpcClient();
+//      } catch (Exception e) {
+//        logger.error("Error in sync solidity block " + e.getMessage(), e);
+//      }
+//      try {
+//        Thread.sleep(5000);
+//      } catch (InterruptedException e) {
+//        Thread.currentThread().interrupt();
+//        e.printStackTrace();
+//      }
+//    }
   }
 
   private void syncSolidityBlock() throws BadBlockException {
@@ -113,7 +118,16 @@ public class SolidityNode {
   }
 
   private void start(Args cfgArgs) {
-    new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
+    syncExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        initGrpcClient(cfgArgs.getTrustNodeAddr());
+        syncSolidityBlock();
+        shutdownGrpcClient();
+      } catch (Throwable t) {
+        logger.error("Error in sync solidity block " + t.getMessage(), t);
+      }
+    }, 5000, 5000, TimeUnit.MILLISECONDS);
+    //new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
   }
 
   /**

@@ -178,9 +178,15 @@ public class Wallet {
       return null;
     }
     byte[] address = decode58Check(addressBase58);
+
+    if (address == null) {
+      return null;
+    }
+
     if (!addressValid(address)) {
       return null;
     }
+
     return address;
   }
 
