@@ -315,7 +315,7 @@ public class WitnessController {
             .get(StringUtil.createDbKey(address));
         if (null == witnessCapsule) {
           logger.warn("witnessCapsule is null.address is {}",
-                  StringUtil.createReadableString(address));
+              StringUtil.createReadableString(address));
           return;
         }
 
@@ -376,12 +376,13 @@ public class WitnessController {
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }
-    for (ByteString b : list) {
-      long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
-      AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
-      accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
-      manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    if (voteSum > 0) {
+      for (ByteString b : list) {
+        long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
+        AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
+        accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
+        manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+      }
     }
   }
-
 }
