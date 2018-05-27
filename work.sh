@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Function: to stat, stop and restart java-tron.
+# Function: to start, stop and restart java-tron.
 # Usage: bash work.sh start|stop|restart.
 # Note: modify the paths and private key to your own.
 
