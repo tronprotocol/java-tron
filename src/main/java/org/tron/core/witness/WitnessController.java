@@ -315,7 +315,7 @@ public class WitnessController {
             .get(StringUtil.createDbKey(address));
         if (null == witnessCapsule) {
           logger.warn("witnessCapsule is null.address is {}",
-                  StringUtil.createReadableString(address));
+              StringUtil.createReadableString(address));
           return;
         }
 

@@ -123,7 +123,8 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setPublicFreeAssetNetUsage(long value) {
-    this.assetIssueContract.toBuilder().setPublicFreeAssetNetUsage(value).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPublicFreeAssetNetUsage(value).build();
   }
 
   public long getPublicLatestFreeNetTime() {
@@ -131,6 +132,7 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setPublicLatestFreeNetTime(long time) {
-    this.assetIssueContract.toBuilder().setPublicLatestFreeNetTime(time).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPublicLatestFreeNetTime(time).build();
   }
 }
