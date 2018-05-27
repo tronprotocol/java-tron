@@ -19,7 +19,7 @@ public abstract class Message {
     this.data = data;
   }
 
-  public byte getType(){
+  public byte getType() {
     return this.type;
   }
 
@@ -28,7 +28,7 @@ public abstract class Message {
   }
 
   public byte[] getSendData() {
-    return ArrayUtils.add(this.data, 0 ,type);
+    return ArrayUtils.add(this.data, 0, type);
   }
 
   public Sha256Hash getMessageId() {
@@ -39,7 +39,7 @@ public abstract class Message {
 
   @Override
   public String toString() {
-    return "[Message Type: " + getType() + ", len: " + (data == null? 0:data.length) + "]";
+    return "[Message Type: " + getType() + ", len: " + (data == null ? 0 : data.length) + "]";
   }
 
   @Override
@@ -52,7 +52,7 @@ public abstract class Message {
     return getMessageId().hashCode();
   }
 
-  public static Message parse(byte[] encode) throws  Exception{
+  public static Message parse(byte[] encode) throws Exception {
     byte type = encode[0];
     byte[] data = ArrayUtils.subarray(encode, 1, encode.length);
     switch (type) {

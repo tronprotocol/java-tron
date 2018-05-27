@@ -333,6 +333,7 @@ public class Manager {
         this.initWitness();
         this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
+        this.updateRecentBlock(genesisBlock);
       }
     }
   }
@@ -372,12 +373,15 @@ public class Manager {
               byte[] keyAddress = key.getAddress();
               ByteString address = ByteString.copyFrom(keyAddress);
 
+              final AccountCapsule accountCapsule;
               if (!this.accountStore.has(keyAddress)) {
-                final AccountCapsule accountCapsule =
-                    new AccountCapsule(ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
-                accountCapsule.setIsWitness(true);
-                this.accountStore.put(keyAddress, accountCapsule);
+                accountCapsule = new AccountCapsule(ByteString.EMPTY,
+                    address, AccountType.AssetIssue, 0L);
+              } else {
+                accountCapsule = this.accountStore.get(keyAddress);
               }
+              accountCapsule.setIsWitness(true);
+              this.accountStore.put(keyAddress, accountCapsule);
 
               final WitnessCapsule witnessCapsule =
                   new WitnessCapsule(address, key.getVoteCount(), key.getUrl());
