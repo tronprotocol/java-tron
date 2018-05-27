@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -42,7 +43,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   private BlockCapsule head;
 
   @Autowired
-  private BlockStore(@Qualifier("block") String dbName) {
+  private BlockStore(@Value("block") String dbName) {
     super(dbName);
   }
 

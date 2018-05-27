@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
@@ -21,7 +22,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final int ADDRESS_BYTE_ARRAY_LENGTH = 21;
 
   @Autowired
-  private WitnessScheduleStore(@Qualifier("witness_schedule") String dbName) {
+  private WitnessScheduleStore(@Value("witness_schedule") String dbName) {
     super(dbName);
   }
 

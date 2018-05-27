@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.common.iterator.TransactionIterator;
@@ -16,7 +17,7 @@ import org.tron.core.db.common.iterator.TransactionIterator;
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   @Autowired
-  private TransactionStore(@Qualifier("trans") String dbName) {
+  private TransactionStore(@Value("trans") String dbName) {
     super(dbName);
   }
 

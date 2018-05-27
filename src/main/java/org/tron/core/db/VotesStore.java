@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.VotesCapsule;
 
@@ -12,7 +13,7 @@ import org.tron.core.capsule.VotesCapsule;
 public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
 
   @Autowired
-  public VotesStore(@Qualifier("votes") String dbName) {
+  public VotesStore(@Value("votes") String dbName) {
     super(dbName);
   }
 
