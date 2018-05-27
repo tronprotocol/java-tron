@@ -57,6 +57,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       assetIssueCapsule.setFreeAssetNetLimit(newLimit);
       assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
+      assetIssueCapsule.setUrl(ByteString.copyFrom(newUrl));
+      assetIssueCapsule.setDescription(ByteString.copyFrom(newDescription));
       assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
