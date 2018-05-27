@@ -21,35 +21,23 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class UpdateAssetActuator extends AbstractActuator {
 
-  private UpdateAssetContract updateAssetContract;
-
-  private byte[] ownerAddress;
-  private byte[] newUrl;
-  private byte[] newDescription;
-  private long newLimit;
-  private long newPublicLimit;
-
-  private long fee;
-
   UpdateAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
-    try {
-      updateAssetContract = contract.unpack(UpdateAssetContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.error(e.getMessage(), e);
-    }
-
-    newLimit = updateAssetContract.getNewLimit();
-    newPublicLimit = updateAssetContract.getNewPublicLimit();
-    ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
-    newUrl = updateAssetContract.getUrl().toByteArray();
-    newDescription = updateAssetContract.getDescription().toByteArray();
-    fee = calcFee();
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    long fee = calcFee();
     try {
+      final UpdateAssetContract updateAssetContract = this.contract
+          .unpack(UpdateAssetContract.class);
+
+      long newLimit = updateAssetContract.getNewLimit();
+      long newPublicLimit = updateAssetContract.getNewPublicLimit();
+      byte[] ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
+      ByteString newUrl = updateAssetContract.getUrl();
+      ByteString newDescription = updateAssetContract.getDescription();
+
       AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       AssetIssueCapsule assetIssueCapsule =
@@ -57,8 +45,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       assetIssueCapsule.setFreeAssetNetLimit(newLimit);
       assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
-      assetIssueCapsule.setUrl(ByteString.copyFrom(newUrl));
-      assetIssueCapsule.setDescription(ByteString.copyFrom(newDescription));
+      assetIssueCapsule.setUrl(newUrl);
+      assetIssueCapsule.setDescription(newDescription);
       assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
@@ -73,14 +61,31 @@ public class UpdateAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (updateAssetContract == null) {
+    if (!this.contract.is(UpdateAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateAssetContract],real type["
-              + contract.getClass() + "]");
+          "contract type error,expected type [UpdateAssetContract],real type[" + contract
+              .getClass() + "]");
     }
+    final UpdateAssetContract updateAssetContract;
+    try {
+      updateAssetContract = this.contract.unpack(UpdateAssetContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+
+    long newLimit = updateAssetContract.getNewLimit();
+    long newPublicLimit = updateAssetContract.getNewPublicLimit();
+    byte[] ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
+    ByteString newUrl = updateAssetContract.getUrl();
+    ByteString newDescription = updateAssetContract.getDescription();
 
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -97,11 +102,11 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
 
-    if ((newUrl != null) && (!TransactionUtil.validUrl(newUrl))) {
+    if ((newUrl != null) && (!TransactionUtil.validUrl(newUrl.toByteArray()))) {
       throw new ContractValidateException("Invalid url");
     }
 
-    if ((newDescription != null) && (!TransactionUtil.validAssetDescription(newDescription))) {
+    if ((newDescription != null) && (!TransactionUtil.validAssetDescription(newDescription.toByteArray()))) {
       throw new ContractValidateException("Invalid description");
     }
 
