@@ -31,7 +31,7 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
   @Autowired
   public AssetIssueIndex(
       @Qualifier("assetIssueStore") final TronDatabase<AssetIssueCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct

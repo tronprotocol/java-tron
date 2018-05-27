@@ -25,7 +25,7 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
   @Autowired
   public AccountIndex(@Qualifier("accountStore") final TronDatabase<AccountCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct

@@ -33,7 +33,7 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
   @Autowired
   public TransactionIndex(
       @Qualifier("transactionStore") final TronDatabase<TransactionCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct

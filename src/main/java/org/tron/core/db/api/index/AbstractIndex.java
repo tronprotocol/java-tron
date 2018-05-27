@@ -6,6 +6,10 @@ import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.query.Query;
 import com.googlecode.cqengine.query.option.QueryOptions;
 import com.googlecode.cqengine.resultset.ResultSet;
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.Objects;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TronDatabase;
@@ -29,6 +33,20 @@ public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Ifa
       parent.mkdirs();
     }
     indexPath = new File(parent, getName() + ".index");
+    setAttribute();
+  }
+
+  public AbstractIndex(TronDatabase<E> database) {
+    this.database = database;
+    String dbName = database.getDbSource().getDBName();
+    File parentDir = Paths.get(
+            Args.getInstance().getOutputDirectoryByDbName(dbName),
+            Args.getInstance().getStorage().getIndexDirectory()
+    ).toFile();
+    if (!parentDir.exists()) {
+      parentDir.mkdirs();
+    }
+    indexPath = new File(parentDir, getName() + ".index");
     setAttribute();
   }
 
