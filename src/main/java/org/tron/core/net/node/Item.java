@@ -21,7 +21,7 @@ public class Item {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof Item)) {
+    if (this.getClass() != o.getClass()) {
       return false;
     }
     Item item = (Item) o;

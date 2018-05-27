@@ -70,7 +70,7 @@ public class NodeEntry {
   public boolean equals(Object o) {
     boolean ret = false;
 
-    if (o instanceof NodeEntry) {
+    if (this.getClass() == o.getClass()) {
       NodeEntry e = (NodeEntry) o;
       ret = this.getId().equals(e.getId());
     }
