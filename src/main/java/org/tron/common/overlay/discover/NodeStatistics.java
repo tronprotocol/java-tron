@@ -21,7 +21,7 @@ package org.tron.common.overlay.discover;
 import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.protos.Protocol.ReasonCode;
 
 public class NodeStatistics {
 
