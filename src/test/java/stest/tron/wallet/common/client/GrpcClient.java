@@ -3,6 +3,7 @@ package stest.tron.wallet.common.client;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.*;
 import org.tron.api.WalletGrpc;
@@ -20,6 +21,7 @@ import org.tron.protos.Protocol.Transaction;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class GrpcClient {
 
     private ManagedChannel channelFull = null;
@@ -50,10 +52,10 @@ public class GrpcClient {
     }
 
     public void shutdown() throws InterruptedException {
-        if(channelFull != null) {
+        if (channelFull != null) {
             channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
-        if(channelSolidity != null) {
+        if (channelSolidity != null) {
             channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
@@ -61,9 +63,9 @@ public class GrpcClient {
     public Account queryAccount(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);
         Account request = Account.newBuilder().setAddress(addressBS).build();
-        if(blockingStubSolidity != null){
+        if (blockingStubSolidity != null) {
             return blockingStubSolidity.getAccount(request);
-        }else{
+        } else {
             return blockingStubFull.getAccount(request);
         }
     }
@@ -72,20 +74,28 @@ public class GrpcClient {
         return blockingStubFull.updateAccount(contract);
     }
 
+    public Transaction createTransaction(Contract.UpdateAssetContract contract) {
+        return blockingStubFull.updateAsset(contract);
+    }
+
     public Transaction createTransaction(Contract.TransferContract contract) {
         return blockingStubFull.createTransaction(contract);
     }
 
-    public Transaction createTransaction(FreezeBalanceContract contract) {
+    public Transaction createTransaction(Contract.FreezeBalanceContract contract) {
         return blockingStubFull.freezeBalance(contract);
     }
 
-    public Transaction createTransaction(WithdrawBalanceContract contract) {
+    public Transaction createTransaction(Contract.WithdrawBalanceContract contract) {
         return blockingStubFull.withdrawBalance(contract);
     }
 
-    public Transaction createTransaction(UnfreezeBalanceContract contract) {
+    public Transaction createTransaction(Contract.UnfreezeBalanceContract contract) {
         return blockingStubFull.unfreezeBalance(contract);
+    }
+
+    public Transaction createTransaction(Contract.UnfreezeAssetContract contract) {
+        return blockingStubFull.unfreezeAsset(contract);
     }
 
     public Transaction createTransferAssetTransaction(Contract.TransferAssetContract contract) {
@@ -109,14 +119,32 @@ public class GrpcClient {
         return blockingStubFull.createWitness(contract);
     }
 
+    public Transaction updateWitness(Contract.WitnessUpdateContract contract) {
+        return blockingStubFull.updateWitness(contract);
+    }
+
     public boolean broadcastTransaction(Transaction signaturedTransaction) {
+        int i = 10;
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(signaturedTransaction);
+        while (response.getResult() == false && response.getCode() == Return.response_code.SERVER_BUSY
+                && i > 0) {
+            i--;
+            response = blockingStubFull.broadcastTransaction(signaturedTransaction);
+            logger.info("Code = " + response.getCode());
+            logger.info("Message = " + response.getMessage().toStringUtf8());
+            logger.info("i = " + i);
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         return response.getResult();
     }
 
     public Block getBlock(long blockNum) {
         if (blockNum < 0) {
-            if(blockingStubSolidity != null) {
+            if (blockingStubSolidity != null) {
                 return blockingStubSolidity.getNowBlock(EmptyMessage.newBuilder().build());
             } else {
                 return blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
@@ -124,26 +152,24 @@ public class GrpcClient {
         }
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
-        if(blockingStubSolidity != null) {
+        if (blockingStubSolidity != null) {
             return blockingStubSolidity.getBlockByNum(builder.build());
         } else {
             return blockingStubFull.getBlockByNum(builder.build());
         }
     }
 
-/*    public Optional<AccountList> listAccounts() {
-        if(blockingStubSolidity != null) {
-            AccountList accountList = blockingStubSolidity.listAccounts(EmptyMessage.newBuilder().build());
-            return Optional.ofNullable(accountList);
-        }else{
-            AccountList accountList = blockingStubFull.listAccounts(EmptyMessage.newBuilder().build());
-            return Optional.ofNullable(accountList);
-        }
-    }*/
+//  public Optional<AccountList> listAccounts() {
+//    AccountList accountList = blockingStubSolidity
+//        .listAccounts(EmptyMessage.newBuilder().build());
+//    return Optional.ofNullable(accountList);
+//
+//  }
 
     public Optional<WitnessList> listWitnesses() {
-        if(blockingStubSolidity != null) {
-            WitnessList witnessList = blockingStubSolidity.listWitnesses(EmptyMessage.newBuilder().build());
+        if (blockingStubSolidity != null) {
+            WitnessList witnessList = blockingStubSolidity
+                    .listWitnesses(EmptyMessage.newBuilder().build());
             return Optional.ofNullable(witnessList);
         } else {
             WitnessList witnessList = blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
@@ -152,7 +178,7 @@ public class GrpcClient {
     }
 
     public Optional<AssetIssueList> getAssetIssueList() {
-        if(blockingStubSolidity != null) {
+        if (blockingStubSolidity != null) {
             AssetIssueList assetIssueList = blockingStubSolidity
                     .getAssetIssueList(EmptyMessage.newBuilder().build());
             return Optional.ofNullable(assetIssueList);
@@ -164,29 +190,32 @@ public class GrpcClient {
     }
 
     public Optional<NodeList> listNodes() {
-        NodeList nodeList = blockingStubFull
-                .listNodes(EmptyMessage.newBuilder().build());
+        NodeList nodeList = blockingStubFull.listNodes(EmptyMessage.newBuilder().build());
         return Optional.ofNullable(nodeList);
     }
 
     public Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);
         Account request = Account.newBuilder().setAddress(addressBS).build();
-        if(blockingStubSolidity != null) {
-            AssetIssueList assetIssueList = blockingStubSolidity
-                    .getAssetIssueByAccount(request);
+        if (blockingStubSolidity != null) {
+            AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueByAccount(request);
             return Optional.ofNullable(assetIssueList);
         } else {
-            AssetIssueList assetIssueList = blockingStubFull
-                    .getAssetIssueByAccount(request);
+            AssetIssueList assetIssueList = blockingStubFull.getAssetIssueByAccount(request);
             return Optional.ofNullable(assetIssueList);
         }
     }
 
-    public AssetIssueContract getAssetIssueByName(String assetName) {
+    public AccountNetMessage getAccountNet(byte[] address) {
+        ByteString addressBS = ByteString.copyFrom(address);
+        Account request = Account.newBuilder().setAddress(addressBS).build();
+        return blockingStubFull.getAccountNet(request);
+    }
+
+    public Contract.AssetIssueContract getAssetIssueByName(String assetName) {
         ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
         BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
-        if(blockingStubSolidity != null) {
+        if (blockingStubSolidity != null) {
             return blockingStubSolidity.getAssetIssueByName(request);
         } else {
             return blockingStubFull.getAssetIssueByName(request);
@@ -194,46 +223,83 @@ public class GrpcClient {
     }
 
     public NumberMessage getTotalTransaction() {
-        if(blockingStubSolidity != null) {
+        if (blockingStubSolidity != null) {
             return blockingStubSolidity.totalTransaction(EmptyMessage.newBuilder().build());
         } else {
             return blockingStubFull.totalTransaction(EmptyMessage.newBuilder().build());
         }
     }
 
+    public NumberMessage getNextMaintenanceTime() {
+        return blockingStubFull.getNextMaintenanceTime(EmptyMessage.newBuilder().build());
+    }
+
     public Optional<AssetIssueList> getAssetIssueListByTimestamp(long time) {
         NumberMessage.Builder timeStamp = NumberMessage.newBuilder();
         timeStamp.setNum(time);
-        AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByTimestamp(timeStamp.build());
+        AssetIssueList assetIssueList = blockingStubSolidity
+                .getAssetIssueListByTimestamp(timeStamp.build());
         return Optional.ofNullable(assetIssueList);
     }
 
-    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end) {
+    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset ,int limit) {
         TimeMessage.Builder timeMessage = TimeMessage.newBuilder();
         timeMessage.setBeginInMilliseconds(start);
         timeMessage.setEndInMilliseconds(end);
-        TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        TimePaginatedMessage.Builder timePaginatedMessage = TimePaginatedMessage.newBuilder();
+        timePaginatedMessage.setTimeMessage(timeMessage);
+        timePaginatedMessage.setOffset(offset);
+        timePaginatedMessage.setLimit(limit);
+        TransactionList transactionList = blockingStubSolidity
+                .getTransactionsByTimestamp(timePaginatedMessage.build());
         return Optional.ofNullable(transactionList);
     }
 
-    public Optional<TransactionList> getTransactionsFromThis(byte[] address) {
+    public NumberMessage getTransactionsByTimestampCount(long start, long end) {
+        TimeMessage.Builder timeMessage = TimeMessage.newBuilder();
+        timeMessage.setBeginInMilliseconds(start);
+        timeMessage.setEndInMilliseconds(end);
+        return blockingStubSolidity.getTransactionsByTimestampCount(timeMessage.build());
+    }
+
+    public Optional<TransactionList> getTransactionsFromThis(byte[] address, int offset, int limit) {
         ByteString addressBS = ByteString.copyFrom(address);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder();
+        accountPaginated.setAccount(account);
+        accountPaginated.setOffset(offset);
+        accountPaginated.setLimit(limit);
+        TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(accountPaginated.build());
         return Optional.ofNullable(transactionList);
     }
 
-    public Optional<TransactionList> getTransactionsToThis(byte[] address) {
+    public NumberMessage getTransactionsFromThisCount(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(request);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        return blockingStubSolidity.getTransactionsFromThisCount(account);
+    }
+
+    public Optional<TransactionList> getTransactionsToThis(byte[] address, int offset, int limit) {
+        ByteString addressBS = ByteString.copyFrom(address);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder();
+        accountPaginated.setAccount(account);
+        accountPaginated.setOffset(offset);
+        accountPaginated.setLimit(limit);
+        TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(accountPaginated.build());
         return Optional.ofNullable(transactionList);
     }
 
-    public Optional<Transaction> getTransactionById(String txID){
+    public NumberMessage getTransactionsToThisCount(byte[] address) {
+        ByteString addressBS = ByteString.copyFrom(address);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        return blockingStubSolidity.getTransactionsToThisCount(account);
+    }
+
+    public Optional<Transaction> getTransactionById(String txID) {
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-        if(blockingStubSolidity != null) {
+        if (blockingStubSolidity != null) {
             Transaction transaction = blockingStubSolidity.getTransactionById(request);
             return Optional.ofNullable(transaction);
         } else {
@@ -242,14 +308,14 @@ public class GrpcClient {
         }
     }
 
-    public Optional<Block> getBlockById(String blockID){
+    public Optional<Block> getBlockById(String blockID) {
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(blockID));
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
         Block block = blockingStubFull.getBlockById(request);
         return Optional.ofNullable(block);
     }
 
-    public Optional<BlockList> getBlockByLimitNext(long start, long end){
+    public Optional<BlockList> getBlockByLimitNext(long start, long end) {
         BlockLimit.Builder builder = BlockLimit.newBuilder();
         builder.setStartNum(start);
         builder.setEndNum(end);
@@ -257,7 +323,7 @@ public class GrpcClient {
         return Optional.ofNullable(blockList);
     }
 
-    public Optional<BlockList> getBlockByLatestNum(long num){
+    public Optional<BlockList> getBlockByLatestNum(long num) {
         NumberMessage numberMessage = NumberMessage.newBuilder().setNum(num).build();
         BlockList blockList = blockingStubFull.getBlockByLatestNum(numberMessage);
         return Optional.ofNullable(blockList);
