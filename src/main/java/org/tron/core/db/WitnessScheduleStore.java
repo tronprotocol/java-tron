@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
@@ -21,7 +22,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final int ADDRESS_BYTE_ARRAY_LENGTH = 21;
 
   @Autowired
-  private WitnessScheduleStore(@Qualifier("witness_schedule") String dbName) {
+  private WitnessScheduleStore(@Value("witness_schedule") String dbName) {
     super(dbName);
   }
 
@@ -34,30 +35,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
   public boolean has(byte[] key) {
     return false;
   }
-
-  private static WitnessScheduleStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static WitnessScheduleStore create(String dbName) {
-    if (instance == null) {
-      synchronized (WitnessScheduleStore.class) {
-        if (instance == null) {
-          instance = new WitnessScheduleStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
-
 
   private void saveData(byte[] species, List<ByteString> witnessesAddressList) {
     byte[] ba = new byte[witnessesAddressList.size() * ADDRESS_BYTE_ARRAY_LENGTH];

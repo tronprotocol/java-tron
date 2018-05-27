@@ -3,14 +3,11 @@ package org.tron.core.db.api.index;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.disk.DiskIndex;
-import com.googlecode.cqengine.index.hash.HashIndex;
-import com.googlecode.cqengine.index.navigable.NavigableIndex;
-import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
-import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -21,7 +18,6 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Block;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -43,7 +39,7 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
   @Autowired
   public BlockIndex(
       @Qualifier("blockStore") final TronDatabase<BlockCapsule> database) {
-    this.database = database;
+    super(database);
   }
 
   @PostConstruct
