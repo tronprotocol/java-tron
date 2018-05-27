@@ -1,6 +1,5 @@
 package org.tron.common.overlay.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol;
 
@@ -16,14 +15,14 @@ public class DisconnectMessage extends P2pMessage {
   public DisconnectMessage(ReasonCode reasonCode) {
     this.disconnectMessage = Protocol.DisconnectMessage
         .newBuilder()
-        .setReason(Protocol.ReasonCode.forNumber(reasonCode.getReason()))
+        .setReason(reasonCode.getReason())
         .build();
     this.type = MessageTypes.P2P_DISCONNECT.asByte();
     this.data = this.disconnectMessage.toByteArray();
   }
 
   public int getReason() {
-    return this.disconnectMessage.getReason().getNumber();
+    return this.disconnectMessage.getReason();
   }
 
   @Override

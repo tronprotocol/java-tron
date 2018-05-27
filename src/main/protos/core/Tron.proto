@@ -268,34 +268,8 @@ message DynamicProperties {
   int64 last_solidity_block_num = 1;
 }
 
-enum ReasonCode {
-  REQUESTED = 0x00;
-  BAD_PROTOCOL = 0x02;
-  TOO_MANY_PEERS = 0x04;
-  DUPLICATE_PEER = 0x05;
-  INCOMPATIBLE_PROTOCOL = 0x06;
-  NULL_IDENTITY = 0x07;
-  PEER_QUITING = 0x08;
-  UNEXPECTED_IDENTITY = 0x09;
-  LOCAL_IDENTITY = 0x0A;
-  PING_TIMEOUT = 0x0B;
-  USER_REASON = 0x10;
-  RESET = 0x11;
-  SYNC_FAIL = 0x12;
-  FETCH_FAIL = 0x13;
-  BAD_TX = 0x14;
-  BAD_BLOCK = 0x15;
-  FORKED = 0x16;
-  UNLINKABLE = 0x17;
-  INCOMPATIBLE_VERSION = 0x18;
-  INCOMPATIBLE_CHAIN = 0x19;
-  TIME_OUT = 0x20;
-  CONNECT_FAIL = 0x21;
-  UNKNOWN = 0xFF;
-}
-
 message DisconnectMessage {
-  ReasonCode reason = 1;
+  int32 reason = 1;
 }
 
 message HelloMessage {

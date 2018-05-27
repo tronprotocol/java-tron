@@ -22,7 +22,7 @@ public class BlockMessage extends TronMessage {
     this.data = block.toByteArray();
   }
 
-  public BlockMessage(BlockCapsule block) throws Exception {
+  public BlockMessage(BlockCapsule block) {
     data = block.getData();
     this.type = MessageTypes.BLOCK.asByte();
     this.block = block.getInstance();
