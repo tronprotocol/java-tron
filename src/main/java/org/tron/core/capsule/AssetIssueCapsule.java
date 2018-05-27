@@ -137,10 +137,12 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setUrl(ByteString newUrl) {
-    this.assetIssueContract.toBuilder().setUrl(newUrl).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setUrl(newUrl).build();
   }
 
-  public void setDescription(ByteString string) {
-    this.assetIssueContract.toBuilder().setDescription(string).build();
+  public void setDescription(ByteString description) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setDescription(description).build();
   }
 }
