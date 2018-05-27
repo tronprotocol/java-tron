@@ -618,8 +618,7 @@ public class TransferAssetActuatorTest {
     }
 
     //Contain chinese character, throw exception.
-    assetName = "测试";
-    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
+    actuator = new TransferAssetActuator(getContract(100L, ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);

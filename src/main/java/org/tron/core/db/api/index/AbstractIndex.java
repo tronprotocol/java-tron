@@ -17,6 +17,10 @@ import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
 
+import java.io.File;
+import java.util.Iterator;
+import java.util.Objects;
+
 public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Iface<T> {
 
   protected TronDatabase<E> database;

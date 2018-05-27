@@ -1,24 +1,3 @@
-group 'org.tron'
-version '1.0.0'
-
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'application'
-apply plugin: 'checkstyle'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: "jacoco"
-
-
-sourceCompatibility = 1.8
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
-mainClassName = 'org.tron.program.FullNode'
-
-repositories {
-    maven { url 'http://mvnrepository.com' }
-    mavenLocal()
-    mavenCentral()
-}
-
 buildscript {
     repositories {
         maven { url 'http://mvnrepository.com' }
@@ -30,7 +9,29 @@ buildscript {
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
     }
 }
+plugins {
+    id "org.sonarqube" version "2.6"
+}
 
+group 'org.tron'
+version '1.0.0'
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'application'
+apply plugin: 'checkstyle'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "jacoco"
+
+sourceCompatibility = 1.8
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+mainClassName = 'org.tron.program.FullNode'
+
+repositories {
+    maven { url 'http://mvnrepository.com' }
+    mavenLocal()
+    mavenCentral()
+}
 def versions = [
         checkstyle: '8.7',
 ]
@@ -143,9 +144,7 @@ checkstyle {
 }
 
 checkstyleMain {
-    source 'src'
-    include '**/*.java'
-    exclude '**/gen/**'
+    source = 'src/main/java'
 }
 
 task lint(type: Checkstyle) {
@@ -153,7 +152,7 @@ task lint(type: Checkstyle) {
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
     source 'src'
     include '**/*.java'
-    exclude '**/gen/**'
+    exclude 'main/gen/**'
     // empty classpath
     classpath = files()
     //Failing the build
@@ -186,6 +185,7 @@ protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.5.1-1"
     }
+
     plugins {
         grpc {
             artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
@@ -236,9 +236,9 @@ jacocoTestReport {
     }
 }
 
-task stest(type:Test){
-    useTestNG{
-        suites( file('src/test/resources/testng.xml') )
+task stest(type: Test) {
+    useTestNG {
+        suites(file('src/test/resources/testng.xml'))
     }
 
     testLogging {
@@ -247,7 +247,7 @@ task stest(type:Test){
     }
 }
 
-def binaryRelease(taskName,jarName,mainClass) {
+def binaryRelease(taskName, jarName, mainClass) {
     return tasks.create("${taskName}", Jar) {
         baseName = jarName
         version = null
@@ -267,7 +267,8 @@ def binaryRelease(taskName,jarName,mainClass) {
     }
 }
 
+
 artifacts {
-    archives(binaryRelease('buildSolidityNodeJar','SolidityNode','org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar','FullNode','org.tron.program.FullNode'))
+    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'))
 }

@@ -326,7 +326,8 @@ public class UpdateAccountActuatorTest {
     //Can't contain chinese characters
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract("测试", OWNER_ADDRESS), dbManager);
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
+              , OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);

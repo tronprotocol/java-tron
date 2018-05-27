@@ -38,14 +38,14 @@ public class PongMessage extends Message {
     this.data = this.pongMessage.toByteArray();
   }
 
-  public Node getFrom(){
+  public Node getFrom() {
     Endpoint from = this.pongMessage.getFrom();
     Node node = new Node(from.getNodeId().toByteArray(),
         ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
     return node;
   }
 
-  public int getVersion(){
+  public int getVersion() {
     return this.pongMessage.getEcho();
   }
 

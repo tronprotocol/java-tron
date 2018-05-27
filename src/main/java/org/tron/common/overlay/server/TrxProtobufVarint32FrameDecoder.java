@@ -13,7 +13,7 @@ public class TrxProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
   private final static Logger logger = LoggerFactory
       .getLogger(TrxProtobufVarint32FrameDecoder.class);
 
-  private final static int maxMsgLength = 10 * 1024 * 1024;//10M
+  private final static int maxMsgLength = 5 * 1024 * 1024;//5M
 
   private Channel channel;
 
