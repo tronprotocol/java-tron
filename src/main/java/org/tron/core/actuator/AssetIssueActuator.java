@@ -167,6 +167,10 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Num must greater than 0!");
     }
 
+    if (assetIssueContract.getPublicFreeAssetNetUsage() != 0) {
+      throw new ContractValidateException("PublicFreeAssetNetUsage must be 0!");
+    }
+
     if (assetIssueContract.getFrozenSupplyCount()
         > this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber()) {
       throw new ContractValidateException("Frozen supply list length is too long");

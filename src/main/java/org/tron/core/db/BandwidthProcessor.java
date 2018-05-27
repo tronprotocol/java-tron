@@ -83,6 +83,7 @@ public class BandwidthProcessor {
 
     for (Contract contract : contracts) {
       long bytes = trx.getSerializedSize();
+      logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -255,10 +256,14 @@ public class BandwidthProcessor {
   }
 
   public long calculateGlobalNetLimit(long frozeBalance) {
+    if (frozeBalance < 1000_000L) {
+      return 0;
+    }
     long netWeight = frozeBalance / 1000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    return netWeight * totalNetLimit / totalNetWeight;
+    assert totalNetWeight > 0;
+    return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 
   private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {

@@ -70,7 +70,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
-    dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
 
     ret.setStatus(fee, code.SUCESS);
 
