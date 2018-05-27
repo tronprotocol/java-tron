@@ -23,7 +23,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SymmEncoder;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
+import stest.tron.wallet.common.client.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
@@ -223,6 +223,7 @@ public class WalletClient {
     }
 
     public void store(String password) {
+        /*
         if (ecKey == null || ecKey.getPrivKey() == null) {
             logger.warn("Warning: Store wallet failed, PrivKey is null !!");
             return;
@@ -249,7 +250,8 @@ public class WalletClient {
         System.arraycopy(salt1, 0, walletData,
                 pwd.length + pubKey.length + privKeyEnced.length + salt0.length, salt1.length);
 
-        FileUtil.saveData(FilePath, walletData);
+        FileUtil.saveData(FilePath, walletData,true);
+        */
     }
 
     public Account queryAccount() {
