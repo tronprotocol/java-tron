@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.ReasonCode;
 
 @Component
@@ -24,6 +25,8 @@ public class MessageQueue {
   private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private volatile boolean sendMsgFlag = false;
+
+  private volatile long sendTime;
 
   private Thread sendMsgThread;
 
@@ -83,12 +86,18 @@ public class MessageQueue {
     this.channel = channel;
   }
 
-  public void sendMessage(Message msg) {
+  public boolean sendMessage(Message msg) {
+    if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000){
+      return false;
+    }
     logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
-    if (msg.getAnswerMessage() != null)
+    sendTime = System.currentTimeMillis();
+    if (msg.getAnswerMessage() != null){
       requestQueue.add(new MessageRoundtrip(msg));
-    else
+    }else {
       msgQueue.offer(msg);
+    }
+    return true;
   }
 
   public void receivedMessage(Message msg){

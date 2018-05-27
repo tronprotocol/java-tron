@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
@@ -40,6 +41,8 @@ public class StartFetchSyncBlockTest {
   ChannelManager channelManager;
   SyncPool pool;
   private static final String dbPath = "output-nodeImplTest/startFetchSyncBlockTest";
+  private static final String dbDirectory = "db_StartFetchSyncBlock_test";
+  private static final String indexDirectory = "index_StartFetchSyncBlock_test";
 
   private class Condition {
 
@@ -66,9 +69,24 @@ public class StartFetchSyncBlockTest {
     return blockMessage.getMessageId();
   }
 
+  private BlockMessage removeTheBlock(Sha256Hash blockId) {
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    BlockMessage blockMessage = blockCache.getIfPresent(blockId);
+    if (blockMessage != null) {
+      blockCache.invalidate(blockId);
+    }
+    return blockMessage;
+  }
+
+  private void addTheBlock(BlockMessage blockMessag) {
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    blockCache.put(blockMessag.getMessageId(), blockMessag);
+  }
+
   private Condition testConsumerAdvObjToSpread() {
     Sha256Hash blockId = testBlockBroad();
-
+    //remove the block
+    BlockMessage blockMessage = removeTheBlock(blockId);
     ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
 
@@ -97,8 +115,9 @@ public class StartFetchSyncBlockTest {
     // push the block to syncBlockToFetch
     activePeers.iterator().next().getSyncBlockToFetch().push(blockMessage.getBlockId());
     // invoke testing method
+    addTheBlock(blockMessage);
     ReflectUtils.invokeMethod(node, "startFetchSyncBlock");
-    Map<BlockCapsule.BlockId, Long> syncBlockIdWeRequested = ReflectUtils
+    Cache syncBlockIdWeRequested = ReflectUtils
         .getFieldValue(node, "syncBlockIdWeRequested");
     Assert.assertTrue(syncBlockIdWeRequested.size() == 1);
   }
@@ -112,7 +131,14 @@ public class StartFetchSyncBlockTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[]{"-d", dbPath}, "config.conf");
+        Args.setParam(
+            new String[]{
+                "--output-directory", dbPath,
+                "--storage-db-directory", dbDirectory,
+                "--storage-index-directory", indexDirectory
+            },
+            "config.conf"
+        );
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17890);
         cfgArgs.setNodeDiscoveryEnable(false);

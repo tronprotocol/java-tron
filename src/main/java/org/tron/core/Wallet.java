@@ -19,7 +19,9 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountList;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -47,6 +49,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.ContractExeException;
@@ -77,8 +80,8 @@ public class Wallet {
   private NodeImpl p2pNode;
   @Autowired
   private Manager dbManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
-  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -182,10 +185,15 @@ public class Wallet {
   }
 
 
-  public Account getBalance(Account account) {
+  public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
-    return accountCapsule == null ? null : accountCapsule.getInstance();
+    if (accountCapsule == null) {
+      return null;
+    }
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+    return accountCapsule.getInstance();
   }
 
   /**
@@ -210,65 +218,76 @@ public class Wallet {
    */
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+
     try {
+      TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
       Message message = new TransactionMessage(signaturedTransaction);
+
       if (dbManager.isTooManyPending()) {
         logger.debug(
             "Manager is busy, pending transaction count:{}, discard the new coming transaction",
             (dbManager.getPendingTransactions().size() + PendingManager.getTmpTransactions()
                 .size()));
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-      } else if (dbManager.isGeneratingBlock()) {
+      }
+
+      if (dbManager.isGeneratingBlock()) {
         logger.debug("Manager is generating block, discard the new coming transaction");
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-      } else {
-        dbManager.pushTransactions(trx);
-        p2pNode.broadcast(message);
-        return builder.setResult(true).setCode(response_code.SUCCESS).build();
       }
+
+      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+        logger.debug("This transaction has been processed, discard the transaction");
+        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+      } else {
+        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      }
+
+      dbManager.pushTransactions(trx);
+      p2pNode.broadcast(message);
+      return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
-      logger.error(e.getMessage(), e);
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error"))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(e.getMessage(), e);
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error"))
           .build();
     } catch (ContractExeException e) {
-      logger.error(e.getMessage(), e);
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
     } catch (ValidateBandwidthException e) {
-      logger.error("high freq", e);
+      logger.info("high freq" + e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("high freq error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("dup trans", e);
+      logger.info("dup trans" + e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.debug("tapos error", e);
+      logger.info("tapos error" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.debug("transaction error", e);
+      logger.info("transaction error" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.debug("transaction expired", e);
+      logger.info("transaction expired" + e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("exception caught", e);
+      logger.info("exception caught" + e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error"))
           .build();
@@ -277,9 +296,9 @@ public class Wallet {
 
   public Block getNowBlock() {
     List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
-    if(CollectionUtils.isEmpty(blockList)){
+    if (CollectionUtils.isEmpty(blockList)) {
       return null;
-    }else{
+    } else {
       return blockList.get(0).getInstance();
     }
   }
@@ -291,14 +310,6 @@ public class Wallet {
       logger.info(e.getMessage());
       return null;
     }
-  }
-
-  public AccountList getAllAccounts() {
-    AccountList.Builder builder = AccountList.newBuilder();
-    List<AccountCapsule> accountCapsuleList =
-        dbManager.getAccountStore().getAllAccounts();
-    accountCapsuleList.forEach(accountCapsule -> builder.addAccounts(accountCapsule.getInstance()));
-    return builder.build();
   }
 
   public WitnessList getWitnessList() {
@@ -331,6 +342,37 @@ public class Wallet {
     return builder.build();
   }
 
+  public AccountNetMessage getAccountNet(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.size() == 0) {
+      return null;
+    }
+    AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
+      byte[] key = ByteArray.fromString(asset);
+      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+    });
+
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
+  }
+
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
     if (assetName == null || assetName.size() == 0) {
       return null;
@@ -348,6 +390,12 @@ public class Wallet {
   public NumberMessage totalTransaction() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
         .setNum(dbManager.getTransactionStore().getTotalTransactions());
+    return builder.build();
+  }
+
+  public NumberMessage getNextMaintenanceTime() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
+        .setNum(dbManager.getDynamicPropertiesStore().getNextMaintenanceTime());
     return builder.build();
   }
 
@@ -392,4 +440,5 @@ public class Wallet {
     }
     return transaction;
   }
+
 }

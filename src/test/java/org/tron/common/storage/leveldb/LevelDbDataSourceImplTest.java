@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -58,10 +59,8 @@ public class LevelDbDataSourceImplTest {
 
   @Before
   public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        "config-junit.conf");
-    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator,
-        "test_levelDb");
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
   }
 
   /**

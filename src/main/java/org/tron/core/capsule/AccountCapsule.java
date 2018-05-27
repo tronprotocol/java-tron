@@ -181,6 +181,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setLatestOprationTime(latest_time).build();
   }
 
+  public long getLatestConsumeTime() {
+    return this.account.getLatestConsumeTime();
+  }
+
+  public void setLatestConsumeTime(long latest_time) {
+    this.account = this.account.toBuilder().setLatestConsumeTime(latest_time).build();
+  }
+
+  public long getLatestConsumeFreeTime() {
+    return this.account.getLatestConsumeFreeTime();
+  }
+
+  public void setLatestConsumeFreeTime(long latest_time) {
+    this.account = this.account.toBuilder().setLatestConsumeFreeTime(latest_time).build();
+  }
+
   public void setBalance(long balance) {
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
@@ -222,13 +238,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public long getShare() {
-    long share = 0;
+  //tp:Tron_Power
+  public long getTronPower() {
+    long tp = 0;
     //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
-      share += account.getFrozen(i).getFrozenBalance();
+      tp += account.getFrozen(i).getFrozenBalance();
     }
-    return share;
+    return tp;
   }
 
   /**
@@ -312,6 +329,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
+
+  public long getLatestAssetOperationTime(String assetName) {
+    return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
+  }
+
+  public void putLatestAssetOperationTimeMap(String key, Long value) {
+    this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
+  }
+
+
   public int getFrozenCount() {
     return getInstance().getFrozenCount();
   }
@@ -360,15 +387,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getLatestWithdrawTime();
   }
 
-  public long getBandwidth() {
-    return getInstance().getBandwidth();
-  }
-
-  public void setBandwidth(long bandwidth) {
-    this.account = this.account.toBuilder().setBandwidth(bandwidth).build();
-
-  }
-
   public boolean getIsWitness() {
     return getInstance().getIsWitness();
   }
@@ -403,4 +421,36 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
   }
+
+  public long getNetUsage() {
+    return this.account.getNetUsage();
+  }
+
+  public void setNetUsage(long netUsage) {
+    this.account = this.account.toBuilder()
+        .setNetUsage(netUsage).build();
+  }
+
+  public long getFreeNetUsage() {
+    return this.account.getFreeNetUsage();
+  }
+
+  public void setFreeNetUsage(long freeNetUsage) {
+    this.account = this.account.toBuilder()
+        .setFreeNetUsage(freeNetUsage).build();
+  }
+
+  public long getFreeAssetNetUsage(String assetName) {
+    return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
+  }
+
+  public Map<String, Long> getAllFreeAssetNetUsage() {
+    return this.account.getFreeAssetNetUsageMap();
+  }
+
+  public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
+    this.account = this.account.toBuilder()
+        .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
+  }
+
 }

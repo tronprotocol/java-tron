@@ -6,6 +6,8 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -43,7 +45,6 @@ import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -72,7 +73,6 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -135,6 +135,10 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
+  @Getter
+  private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
+      .newBuilder().maximumSize(100_000).recordStats().build();
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -191,13 +195,12 @@ public class Manager {
   }
 
   public BlockCapsule getHead() throws HeaderNotFound {
-    try {
-      return getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
-    } catch (ItemNotFoundException e) {
-      logger.info(e.getMessage());
-      throw new HeaderNotFound(e.getMessage());
-    } catch (BadItemException e) {
-      throw new HeaderNotFound(e.getMessage());
+    List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
+    if (CollectionUtils.isNotEmpty(blocks)) {
+      return blocks.get(0);
+    } else {
+      logger.info("Header block Not Found");
+      throw new HeaderNotFound("Header block Not Found");
     }
   }
 
@@ -243,19 +246,6 @@ public class Manager {
 
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
-  }
-
-  // fot test only
-  public void destory() {
-    AccountStore.destroy();
-    TransactionStore.destroy();
-    BlockStore.destroy();
-    WitnessStore.destory();
-    AssetIssueStore.destroy();
-    DynamicPropertiesStore.destroy();
-    WitnessScheduleStore.destroy();
-    BlockIndexStore.destroy();
-    AccountIndexStore.destroy();
   }
 
   @PostConstruct
@@ -329,6 +319,7 @@ public class Manager {
         this.initWitness();
         this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
+        this.updateRecentBlock(genesisBlock);
       }
     }
   }
@@ -371,6 +362,7 @@ public class Manager {
               if (!this.accountStore.has(keyAddress)) {
                 final AccountCapsule accountCapsule =
                     new AccountCapsule(ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
+                accountCapsule.setIsWitness(true);
                 this.accountStore.put(keyAddress, accountCapsule);
               }
 
@@ -428,18 +420,22 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        logger.error(
-            "Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
+        String str = String.format(
+            "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(), getHeadBlockId().getString());
-        throw new TaposException("tapos failed");
+            getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+        logger.info(str);
+        throw new TaposException(str);
+
       }
     } catch (ItemNotFoundException e) {
-      logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
-          ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-          getSolidBlockId().getString(), getHeadBlockId().getString());
-      throw new TaposException("tapos failed");
+      String str = String.
+          format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
+              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+              getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+      logger.info(str);
+      throw new TaposException(str);
     }
   }
 
@@ -472,7 +468,8 @@ public class Manager {
    */
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException, TooBigTransactionException, TransactionExpirationException {
+      ValidateBandwidthException, DupTransactionException, TaposException,
+      TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
     if (!trx.validateSignature()) {
@@ -497,53 +494,9 @@ public class Manager {
   }
 
 
-  private void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-    for (Transaction.Contract contract : contracts) {
-      byte[] address = TransactionCapsule.getOwner(contract);
-      AccountCapsule accountCapsule = this.getAccountStore().get(address);
-      if (accountCapsule == null) {
-        throw new ValidateBandwidthException("account not exists");
-      }
-      long now = getHeadBlockTimeStamp();
-      long latestOperationTime = accountCapsule.getLatestOperationTime();
-      //10 * 1000
-      if (now - latestOperationTime >= dynamicPropertiesStore.getOperatingTimeInterval()) {
-        accountCapsule.setLatestOperationTime(now);
-        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-        return;
-      }
-      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
-      long bandwidth;
-      if (contract.getType() == TransferAssetContract) {
-        AccountCapsule issuerAccountCapsule;
-        try {
-          ByteString assetName
-              = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
-          AssetIssueCapsule assetIssueCapsule
-              = this.getAssetIssueStore().get(assetName.toByteArray());
-          issuerAccountCapsule = this.getAccountStore()
-              .get(assetIssueCapsule.getOwnerAddress().toByteArray());
-          bandwidth = issuerAccountCapsule.getBandwidth();
-        } catch (Exception ex) {
-          throw new ValidateBandwidthException(ex.getMessage());
-        }
-        if (bandwidth < bandwidthPerTransaction) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
-        }
-        issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-        this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
-      } else {
-        bandwidth = accountCapsule.getBandwidth();
-        if (bandwidth < bandwidthPerTransaction) {
-          throw new ValidateBandwidthException("bandwidth is not enough");
-        }
-        accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-      }
-      accountCapsule.setLatestOperationTime(now);
-      this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    }
+  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    processor.consumeBandwidth(trx);
   }
 
   @Deprecated
@@ -633,7 +586,7 @@ public class Manager {
               applyBlock(item);
               tmpDialog.commit();
             } catch (ValidateBandwidthException e) {
-              logger.error("high freq", e);
+              logger.debug("high freq", e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -666,7 +619,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -704,6 +657,12 @@ public class Manager {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
+
+        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
+          return;
+        }
+
         // switch fork
         if (!newBlock
             .getParentHash()
@@ -713,11 +672,11 @@ public class Manager {
               newBlock.getNum(),
               newBlock.getBlockId());
 
-          logger.error(
+          logger.warn(
               "******** before switchFork ******* push block: "
-                  + block
+                  + block.getShortString()
                   + ", new block:"
-                  + newBlock
+                  + newBlock.getShortString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -734,11 +693,11 @@ public class Manager {
           switchFork(newBlock);
           logger.info("save block: " + newBlock);
 
-          logger.error(
+          logger.warn(
               "******** after switchFork ******* push block: "
-                  + block
+                  + block.getShortString()
                   + ", new block:"
-                  + newBlock
+                  + newBlock.getShortString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -759,18 +718,6 @@ public class Manager {
           tmpDialog.commit();
         } catch (RevokingStoreIllegalStateException e) {
           logger.error(e.getMessage(), e);
-        } catch (TaposException e) {
-          logger.debug(e.getMessage(), e);
-          khaosDb.removeBlk(block.getBlockId());
-        } catch (DupTransactionException e) {
-          logger.debug(e.getMessage(), e);
-          khaosDb.removeBlk(block.getBlockId());
-        } catch (TooBigTransactionException e) {
-          logger.debug(e.getMessage(), e);
-          khaosDb.removeBlk(block.getBlockId());
-        } catch (TransactionExpirationException e) {
-          logger.debug(e.getMessage(), e);
-          khaosDb.removeBlk(block.getBlockId());
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -805,6 +752,7 @@ public class Manager {
 
     logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
 
@@ -898,17 +846,25 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException,
+      DupTransactionException, TaposException {
+
     if (trxCap == null) {
       return false;
     }
+    validateTapos(trxCap);
+    validateCommon(trxCap);
+
+    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+      throw new ContractValidateException("act size greater than 1, this is extend feature");
+    }
 
     validateDup(trxCap);
+
     if (!trxCap.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
-    validateTapos(trxCap);
-    validateCommon(trxCap);
 
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -957,25 +913,22 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-
+    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
-
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += trx.getSerializedSize();
-      // judge block size
-      if (currentTrxSize > ChainConstant.TRXS_SIZE) {
-        postponedTrxCount++;
-        continue;
-      }
-
       if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-
+      currentTrxSize += trx.getSerializedSize();
+      // check the block size
+      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
@@ -1014,13 +967,24 @@ public class Manager {
     }
 
     logger.info(
-        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size() + "]");
-
+        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
+            + "]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
-    this.pushBlock(blockCapsule);
-    return blockCapsule;
+    try {
+      this.pushBlock(blockCapsule);
+      return blockCapsule;
+    } catch (TaposException e) {
+      logger.info("contract not processed during TaposException");
+    } catch (TooBigTransactionException e) {
+      logger.info("contract not processed during TooBigTransactionException");
+    } catch (DupTransactionException e) {
+      logger.info("contract not processed during DupTransactionException");
+    } catch (TransactionExpirationException e) {
+      logger.info("contract not processed during TransactionExpirationException");
+    }
+    return null;
   }
 
   private void setAccountStore(final AccountStore accountStore) {
@@ -1055,7 +1019,9 @@ public class Manager {
    * process block.
    */
   public void processBlock(BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateBandwidthException, TaposException, TooBigTransactionException,
+      DupTransactionException, TransactionExpirationException {
     // todo set revoking db max size.
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1076,9 +1042,16 @@ public class Manager {
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
+    this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
+  }
+
+  private void updateTransHashCache(BlockCapsule block) {
+    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      this.transactionIdCache.put(transactionCapsule.getTransactionId(), true);
+    }
   }
 
   public void updateRecentBlock(BlockCapsule block) {
@@ -1292,7 +1265,7 @@ public class Manager {
   public synchronized void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
-        + ",num:" + block.getNum());
+        + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);

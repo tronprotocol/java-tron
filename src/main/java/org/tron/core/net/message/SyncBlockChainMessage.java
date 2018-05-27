@@ -23,9 +23,9 @@ public class SyncBlockChainMessage extends BlockInventoryMessage {
     StringBuilder sb = new StringBuilder();
     int size = blockIdList.size();
     sb.append(super.toString()).append("size: ").append(size);
-    if (size >= 1){
+    if (size >= 1) {
       sb.append(", start block: " + blockIdList.get(0).getString());
-      if (size > 1){
+      if (size > 1) {
         sb.append(", end block " + blockIdList.get(blockIdList.size() - 1).getString());
       }
     }

@@ -271,11 +271,12 @@ Then, run `FullNode::main()` again.
 ### Running multi-nodes
 
 To run TRON on more than one node, you need to specify several seed nodes' IPs in `config.conf` in `seed.node.ip.list`:
-For private testnet, the IPs are allocated by yourself.
+For private test net, the IPs are allocated by yourself.
 
 ## Running a local node and connecting to the public testnet 
 
 * Ensure that the version number is consistent with the version number of the test network. If it is not consistent, Please modify the node.p2p.version in the config.conf file, and delete the out-directory directory (if it exists)
+* The current p2p.version is **61**
 
 ### Running a Full Node
 
@@ -291,8 +292,6 @@ For private testnet, the IPs are allocated by yourself.
 cd build/libs
 java -jar java-tron.jar
 ```
-
-It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
 ### Running a Super Node
 

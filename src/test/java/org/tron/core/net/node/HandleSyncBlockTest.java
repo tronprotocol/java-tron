@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.netty.util.internal.ConcurrentSet;
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +46,8 @@ public class HandleSyncBlockTest {
     ChannelManager channelManager;
     SyncPool pool;
     private static final String dbPath = "output-nodeImplTest/handleSyncBlock";
+    private static final String dbDirectory = "db_HandleSyncBlock_test";
+    private static final String indexDirectory = "index_HandleSyncBlock_test";
 
     private class Condition {
 
@@ -122,8 +125,8 @@ public class HandleSyncBlockTest {
         // build block Message
         BlockMessage blockMessage = buildBlockMessage();
         // build blockJustReceived
-        Set<BlockMessage> blockJustReceived = new ConcurrentSet<>();
-        blockJustReceived.add(blockMessage);
+        Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
+        blockJustReceived.put(blockMessage, new PeerConnection());
         ReflectUtils.setFieldValue(node,"blockJustReceived", blockJustReceived);
         Thread.sleep(1000);
         // retrieve the first active peer
@@ -147,7 +150,14 @@ public class HandleSyncBlockTest {
             @Override
             public void run() {
                 logger.info("Full node running.");
-                Args.setParam(new String[]{"-d",dbPath}, "config.conf");
+                Args.setParam(
+                    new String[]{
+                        "--output-directory", dbPath,
+                        "--storage-db-directory", dbDirectory,
+                        "--storage-index-directory", indexDirectory
+                    },
+                    "config.conf"
+                );
                 Args cfgArgs = Args.getInstance();
                 cfgArgs.setNodeListenPort(17891);
                 cfgArgs.setNodeDiscoveryEnable(false);

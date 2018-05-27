@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 
 @Slf4j
@@ -73,7 +74,7 @@ public class ConfigurationTest {
 
   @Test
   public void getShouldReturnConfiguration() {
-    Config config = Configuration.getByFileName("config-test.conf", "config-test.conf");
+    Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
     assertTrue(config.hasPath("storage"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));

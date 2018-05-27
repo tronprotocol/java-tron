@@ -17,10 +17,8 @@
  */
 package org.tron.common.overlay.server;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -93,6 +91,8 @@ public class Channel {
 
     private boolean isActive;
 
+    private volatile boolean isDisconnect;
+
     private String remoteId;
 
     private PeerStatistics peerStats = new PeerStatistics();
@@ -110,7 +110,7 @@ public class Channel {
         pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
         pipeline.addLast(stats.tcp);
         pipeline.addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
-        pipeline.addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
+        pipeline.addLast("lengthDecode", new TrxProtobufVarint32FrameDecoder(this));
 
         //handshake first
         pipeline.addLast("handshakeHandler", handshakeHandler);
@@ -138,7 +138,6 @@ public class Channel {
         setStartTime(msg.getTimestamp());
         setTronState(TronState.HANDSHAKE_FINISHED);
         getNodeStatistics().p2pHandShake.add();
-        channelManager.add(this);
         logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
     }
 
@@ -151,6 +150,7 @@ public class Channel {
     }
 
     public void disconnect(ReasonCode reason) {
+        this.isDisconnect = true;
         DisconnectMessage msg = new DisconnectMessage(reason);
         logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
         getNodeStatistics().nodeDisconnectedLocal(reason);
@@ -177,6 +177,7 @@ public class Channel {
     }
 
     public void close(){
+        this.isDisconnect = true;
         p2pHandler.close();
         msgQueue.close();
         ctx.close();
@@ -242,6 +243,10 @@ public class Channel {
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public boolean isDisconnect(){
+        return isDisconnect;
     }
 
     public boolean isProtocolsInitialized() {

@@ -10,24 +10,26 @@ import org.tron.core.exception.P2pException;
 public class TronMessageFactory extends MessageFactory {
 
   @Override
-  public TronMessage create(byte[] data) throws Exception{
+  public TronMessage create(byte[] data) throws Exception {
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (Exception e) {
-      if (e instanceof P2pException){
+      if (e instanceof P2pException) {
         throw e;
-      }else {
-        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED, "type=" + data[0] + ", len=" + data.length);
+      } else {
+        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
+            "type=" + data[0] + ", len=" + data.length);
       }
     }
   }
 
-  private TronMessage create(byte type, byte[] packed) throws Exception{
+  private TronMessage create(byte type, byte[] packed) throws Exception {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
-    if (receivedTypes == null){
-      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type  + ", len=" + packed.length);
+    if (receivedTypes == null) {
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
+          "type=" + type + ", len=" + packed.length);
     }
     switch (receivedTypes) {
       case TRX:
@@ -53,7 +55,8 @@ public class TronMessageFactory extends MessageFactory {
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
       default:
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, receivedTypes.toString() + ", len=" + packed.length);
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
+            receivedTypes.toString() + ", len=" + packed.length);
     }
   }
 }

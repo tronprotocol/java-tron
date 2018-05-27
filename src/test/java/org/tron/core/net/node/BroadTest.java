@@ -1,5 +1,6 @@
 package org.tron.core.net.node;
 
+import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -47,6 +49,8 @@ public class BroadTest {
   ChannelManager channelManager;
   SyncPool pool;
   private static final String dbPath = "output-nodeImplTest/broad";
+  private static final String dbDirectory = "db_Broad_test";
+  private static final String indexDirectory = "index_Broad_test";
 
   private class Condition {
 
@@ -91,6 +95,8 @@ public class BroadTest {
   private Condition testConsumerAdvObjToSpread() {
     Sha256Hash blockId = testBlockBroad();
     Sha256Hash transactionId = testTransactionBroad();
+    //remove the tx and block
+    removeTheTxAndBlock(blockId, transactionId);
 
     ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
@@ -109,6 +115,13 @@ public class BroadTest {
     }
     Assert.assertTrue(result);
     return new Condition(blockId, transactionId);
+  }
+
+  private void removeTheTxAndBlock(Sha256Hash blockId, Sha256Hash transactionId) {
+    Cache<Sha256Hash, TransactionMessage> trxCache = ReflectUtils.getFieldValue(node, "TrxCache");
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    trxCache.invalidate(transactionId);
+    blockCache.invalidate(blockId);
   }
 
   @Test
@@ -164,7 +177,14 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[]{"-d",dbPath}, "config.conf");
+        Args.setParam(
+            new String[]{
+                "--output-directory", dbPath,
+                "--storage-db-directory", dbDirectory,
+                "--storage-index-directory", indexDirectory
+            },
+            "config.conf"
+        );
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);
