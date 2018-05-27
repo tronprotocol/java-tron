@@ -25,11 +25,6 @@ public class TransactionMessage extends TronMessage {
   }
 
   @Override
-  public Sha256Hash getMessageId() {
-    return getTransactionCapsule().getTransactionId();
-  }
-
-  @Override
   public String toString() {
     return new StringBuilder().append(super.toString())
         .append("messageId: ").append(super.getMessageId()).toString();
