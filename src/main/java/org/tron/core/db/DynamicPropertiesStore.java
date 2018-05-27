@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -78,7 +79,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
 
   @Autowired
-  private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
+  private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
     try {
       this.getMaintenanceTimeInterval();
