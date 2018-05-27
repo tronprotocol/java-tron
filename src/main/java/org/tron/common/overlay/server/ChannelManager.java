@@ -17,8 +17,8 @@
  */
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.ReasonCode.DUPLICATE_PEER;
-import static org.tron.common.overlay.message.ReasonCode.TOO_MANY_PEERS;
+import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
+import static org.tron.protos.Protocol.ReasonCode.TOO_MANY_PEERS;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.protos.Protocol.ReasonCode;
 
 
 @Component
