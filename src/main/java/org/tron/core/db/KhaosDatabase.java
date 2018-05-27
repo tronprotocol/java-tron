@@ -14,6 +14,7 @@ import javafx.util.Pair;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -135,7 +136,7 @@ public class KhaosDatabase extends TronDatabase {
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   @Autowired
-  protected KhaosDatabase(@Qualifier("block_KDB") String dbName) {
+  protected KhaosDatabase(@Value("block_KDB") String dbName) {
     super(dbName);
   }
 

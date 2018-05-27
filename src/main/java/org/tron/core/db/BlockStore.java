@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -40,17 +41,10 @@ import org.tron.protos.Protocol.Block;
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   private BlockCapsule head;
-  private IndexedCollection<Block> blockIndex;
 
   @Autowired
-  private BlockStore(@Qualifier("block") String dbName) {
+  private BlockStore(@Value("block") String dbName) {
     super(dbName);
-  }
-
-  private static BlockStore instance;
-
-  public static void destroy() {
-    instance = null;
   }
 
   @Override
@@ -59,20 +53,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
-  }
-
-  /**
-   * create fun.
-   */
-  public static BlockStore create(String dbName) {
-    if (instance == null) {
-      synchronized (BlockStore.class) {
-        if (instance == null) {
-          instance = new BlockStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   @Override

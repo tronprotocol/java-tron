@@ -46,6 +46,8 @@ public class HandleSyncBlockTest {
     ChannelManager channelManager;
     SyncPool pool;
     private static final String dbPath = "output-nodeImplTest/handleSyncBlock";
+    private static final String dbDirectory = "db_HandleSyncBlock_test";
+    private static final String indexDirectory = "index_HandleSyncBlock_test";
 
     private class Condition {
 
@@ -148,7 +150,14 @@ public class HandleSyncBlockTest {
             @Override
             public void run() {
                 logger.info("Full node running.");
-                Args.setParam(new String[]{"-d",dbPath}, "config.conf");
+                Args.setParam(
+                    new String[]{
+                        "--output-directory", dbPath,
+                        "--storage-db-directory", dbDirectory,
+                        "--storage-index-directory", indexDirectory
+                    },
+                    "config.conf"
+                );
                 Args cfgArgs = Args.getInstance();
                 cfgArgs.setNodeListenPort(17891);
                 cfgArgs.setNodeDiscoveryEnable(false);

@@ -24,6 +24,7 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -48,6 +49,8 @@ public class BroadTest {
   ChannelManager channelManager;
   SyncPool pool;
   private static final String dbPath = "output-nodeImplTest/broad";
+  private static final String dbDirectory = "db_Broad_test";
+  private static final String indexDirectory = "index_Broad_test";
 
   private class Condition {
 
@@ -174,7 +177,14 @@ public class BroadTest {
       @Override
       public void run() {
         logger.info("Full node running.");
-        Args.setParam(new String[]{"-d",dbPath}, "config.conf");
+        Args.setParam(
+            new String[]{
+                "--output-directory", dbPath,
+                "--storage-db-directory", dbDirectory,
+                "--storage-index-directory", indexDirectory
+            },
+            "config.conf"
+        );
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17889);
         cfgArgs.setNodeDiscoveryEnable(false);

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -21,33 +22,11 @@ import org.tron.core.db.common.iterator.AccountIterator;
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
-  private static Map<String, byte[]> assertsAddress =
-      new HashMap<String, byte[]>(); // key = name , value = address
-  private static AccountStore instance;
+  private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
   @Autowired
-  private AccountStore(@Qualifier("account") String dbName) {
+  private AccountStore(@Value("account") String dbName) {
     super(dbName);
-  }
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static AccountStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountStore.class) {
-        if (instance == null) {
-          instance = new AccountStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   @Override

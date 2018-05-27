@@ -1,5 +1,6 @@
 package org.tron.core.net.message;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -10,7 +11,7 @@ public class BlockMessage extends TronMessage {
 
   private Block block;
 
-  public BlockMessage(byte[] data) throws Exception {
+  public BlockMessage(byte[] data) throws InvalidProtocolBufferException {
     this.type = MessageTypes.BLOCK.asByte();
     this.data = data;
     this.block = Protocol.Block.parseFrom(data);
