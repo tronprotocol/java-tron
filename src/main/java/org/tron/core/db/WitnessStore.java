@@ -46,34 +46,12 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     return null != account;
   }
 
-  private static WitnessStore instance;
-
-  public static void destory() {
-    instance = null;
-  }
-
   @Override
   public void put(byte[] key, WitnessCapsule item) {
     super.put(key, item);
     if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static WitnessStore create(String dbName) {
-    if (instance == null) {
-      synchronized (UtxoStore.class) {
-        if (instance == null) {
-          instance = new WitnessStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   /**

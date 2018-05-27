@@ -249,19 +249,6 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
-  // fot test only
-  public void destory() {
-    AccountStore.destroy();
-    TransactionStore.destroy();
-    BlockStore.destroy();
-    WitnessStore.destory();
-    AssetIssueStore.destroy();
-    DynamicPropertiesStore.destroy();
-    WitnessScheduleStore.destroy();
-    BlockIndexStore.destroy();
-    AccountIndexStore.destroy();
-  }
-
   @PostConstruct
   public void init() {
     revokingStore = RevokingStore.getInstance();

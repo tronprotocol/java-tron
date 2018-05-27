@@ -48,30 +48,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return dbSource.getTotal();
   }
 
-  private static TransactionStore instance;
-
-  public static void destory() {
-    instance = null;
-  }
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create Fun.
-   */
-  public static TransactionStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountStore.class) {
-        if (instance == null) {
-          instance = new TransactionStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
-
   /**
    * find a transaction  by it's id.
    */

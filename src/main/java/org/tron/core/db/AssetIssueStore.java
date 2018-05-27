@@ -17,31 +17,9 @@ import org.tron.core.db.common.iterator.AssetIssueIterator;
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
-  private static AssetIssueStore instance;
-
   @Autowired
   private AssetIssueStore(@Qualifier("asset-issue") String dbName) {
     super(dbName);
-  }
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static AssetIssueStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AssetIssueStore.class) {
-        if (instance == null) {
-          instance = new AssetIssueStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   @Override

@@ -17,28 +17,6 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
-  private static AccountIndexStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static AccountIndexStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountIndexStore.class) {
-        if (instance == null) {
-          instance = new AccountIndexStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
-
   public void put(AccountCapsule accountCapsule) {
     put(accountCapsule.getAccountName().toByteArray(),
         new BytesCapsule(accountCapsule.getAddress().toByteArray()));

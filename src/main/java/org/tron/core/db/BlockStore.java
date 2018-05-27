@@ -40,17 +40,10 @@ import org.tron.protos.Protocol.Block;
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   private BlockCapsule head;
-  private IndexedCollection<Block> blockIndex;
 
   @Autowired
   private BlockStore(@Qualifier("block") String dbName) {
     super(dbName);
-  }
-
-  private static BlockStore instance;
-
-  public static void destroy() {
-    instance = null;
   }
 
   @Override
@@ -59,20 +52,6 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
-  }
-
-  /**
-   * create fun.
-   */
-  public static BlockStore create(String dbName) {
-    if (instance == null) {
-      synchronized (BlockStore.class) {
-        if (instance == null) {
-          instance = new BlockStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   @Override

@@ -15,12 +15,6 @@ public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
-  private static BlockStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
   @Override
   public void put(byte[] key, BytesCapsule item) {
     super.put(key, item);

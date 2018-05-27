@@ -16,28 +16,6 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
     super(dbName);
   }
 
-  private static VotesStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static VotesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (VotesStore.class) {
-        if (instance == null) {
-          instance = new VotesStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
-
   @Override
   public VotesCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);

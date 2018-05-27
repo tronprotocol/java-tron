@@ -35,30 +35,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
     return false;
   }
 
-  private static WitnessScheduleStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static WitnessScheduleStore create(String dbName) {
-    if (instance == null) {
-      synchronized (WitnessScheduleStore.class) {
-        if (instance == null) {
-          instance = new WitnessScheduleStore(dbName);
-        }
-      }
-    }
-    return instance;
-  }
-
-
   private void saveData(byte[] species, List<ByteString> witnessesAddressList) {
     byte[] ba = new byte[witnessesAddressList.size() * ADDRESS_BYTE_ARRAY_LENGTH];
     int i = 0;
