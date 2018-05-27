@@ -195,10 +195,14 @@ public class RpcApiService implements Service {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = walletSolidity.getAccount(addressBs);
-        AccountCapsule accountCapsule = new AccountCapsule(reply);
-        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-        processor.updateUsage(accountCapsule);
-        responseObserver.onNext(accountCapsule.getInstance());
+        if (reply == null) {
+          responseObserver.onNext(null);
+        } else {
+          AccountCapsule accountCapsule = new AccountCapsule(reply);
+          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+          processor.updateUsage(accountCapsule);
+          responseObserver.onNext(accountCapsule.getInstance());
+        }
       } else {
         responseObserver.onNext(null);
       }

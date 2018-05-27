@@ -114,7 +114,8 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setPublicFreeAssetNetLimit(long newPublicLimit) {
-    this.assetIssueContract.toBuilder().setPublicFreeAssetNetLimit(newPublicLimit).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPublicFreeAssetNetLimit(newPublicLimit).build();
   }
 
   public long getPublicFreeAssetNetUsage() {
@@ -122,7 +123,8 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setPublicFreeAssetNetUsage(long value) {
-    this.assetIssueContract.toBuilder().setPublicFreeAssetNetUsage(value).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPublicFreeAssetNetUsage(value).build();
   }
 
   public long getPublicLatestFreeNetTime() {
@@ -130,6 +132,17 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public void setPublicLatestFreeNetTime(long time) {
-    this.assetIssueContract.toBuilder().setPublicLatestFreeNetTime(time).build();
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPublicLatestFreeNetTime(time).build();
+  }
+
+  public void setUrl(ByteString newUrl) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setUrl(newUrl).build();
+  }
+
+  public void setDescription(ByteString description) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setDescription(description).build();
   }
 }
