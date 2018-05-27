@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
@@ -48,7 +49,12 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException {
+      throws BadBlockException, UnLinkedBlockException, InterruptedException {
+
+    if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
+      throw new BadBlockException("block size over limit");
+    }
+
     // TODO timestamp shouble be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
@@ -61,7 +67,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
-            .map(TransactionCapsule::getHash)
+            .map(TransactionCapsule::getTransactionId)
             .collect(Collectors.toCollection(LinkedList::new));
       } else {
         return null;
@@ -77,8 +83,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception," + e.getMessage());
-    } catch (InterruptedException e) {
-      throw new BadBlockException("pre validate signature exception," + e.getMessage());
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {

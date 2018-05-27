@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.common.iterator.AssetIssueIterator;
@@ -17,31 +18,9 @@ import org.tron.core.db.common.iterator.AssetIssueIterator;
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
-  private static AssetIssueStore instance;
-
   @Autowired
-  private AssetIssueStore(@Qualifier("asset-issue") String dbName) {
+  private AssetIssueStore(@Value("asset-issue") String dbName) {
     super(dbName);
-  }
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static AssetIssueStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AssetIssueStore.class) {
-        if (instance == null) {
-          instance = new AssetIssueStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   @Override

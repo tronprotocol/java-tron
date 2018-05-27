@@ -22,7 +22,7 @@ public abstract class TronDatabase<T> implements Iterable<Map.Entry<byte[], T>>,
   protected IndexHelper indexHelper;
 
   protected TronDatabase(String dbName) {
-    dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectory(), dbName);
+    dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
     dbSource.initDB();
   }
 

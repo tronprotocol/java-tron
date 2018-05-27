@@ -34,10 +34,10 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
-import org.tron.common.overlay.message.ReasonCode;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Component
 @Scope("prototype")
@@ -92,7 +92,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         break;
       case P2P_DISCONNECT:
         if (channel.getNodeStatistics() != null){
-          channel.getNodeStatistics().nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
+          channel.getNodeStatistics()
+              .nodeDisconnectedRemote(((DisconnectMessage) msg).getReasonCode());
         }
         channel.close();
         break;

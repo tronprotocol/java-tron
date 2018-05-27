@@ -39,7 +39,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.message.ReasonCode;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
@@ -71,6 +70,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -764,8 +764,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //TODO: lack the complete flow.
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
-        LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
-
+        LinkedList<Sha256Hash> trxIds = null;
+        trxIds = del.handleBlock(block, false);
         freshBlockId.offer(block.getBlockId());
 
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
@@ -786,10 +786,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block.getBlockId().getString(), peer.getNode().getHost(),
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
-      } catch (Exception e) {
-        logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(),
-            peer.getNode().getHost(), e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
+
+      // logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(),
+      // peer.getNode().getHost(), e);
+
     }
   }
 
@@ -797,7 +800,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean isAccept = false;
     ReasonCode reason = null;
     try {
-      del.handleBlock(block, true);
+      try {
+        del.handleBlock(block, true);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       freshBlockId.offer(block.getBlockId());
       logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;

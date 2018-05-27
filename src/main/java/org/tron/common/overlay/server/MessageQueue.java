@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Component
 @Scope("prototype")

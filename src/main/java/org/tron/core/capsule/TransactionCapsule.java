@@ -180,12 +180,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
-  public Sha256Hash getHash() {
+  public Sha256Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(transBytes);
   }
 
-  public Sha256Hash getRawHash() {
+  private Sha256Hash getRawHash() {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
@@ -363,7 +363,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public Sha256Hash getTransactionId() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    return getRawHash();
   }
 
   @Override
