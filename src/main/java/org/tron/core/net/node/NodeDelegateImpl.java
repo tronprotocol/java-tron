@@ -254,8 +254,6 @@ public class NodeDelegateImpl implements NodeDelegate {
           logger.debug(e.getMessage());
         } catch (ItemNotFoundException e) {
           logger.debug(e.getMessage());
-        } catch (Exception e) {
-          logger.error("new BlockMessage fail", e);
         }
         return null;
       case TRX:
