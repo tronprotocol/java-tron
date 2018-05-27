@@ -18,7 +18,7 @@ import org.tron.core.net.message.MessageTypes;
 public interface NodeDelegate {
 
   LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException;
+      throws BadBlockException, UnLinkedBlockException, InterruptedException;
 
   void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 

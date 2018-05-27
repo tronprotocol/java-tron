@@ -764,8 +764,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //TODO: lack the complete flow.
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
-        LinkedList<Sha256Hash> trxIds = del.handleBlock(block, false);
-
+        LinkedList<Sha256Hash> trxIds = null;
+        trxIds = del.handleBlock(block, false);
         freshBlockId.offer(block.getBlockId());
 
         trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
@@ -786,10 +786,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block.getBlockId().getString(), peer.getNode().getHost(),
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
-      } catch (Exception e) {
-        logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(),
-            peer.getNode().getHost(), e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
+
+      // logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(),
+      // peer.getNode().getHost(), e);
+
     }
   }
 
@@ -797,7 +800,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean isAccept = false;
     ReasonCode reason = null;
     try {
-      del.handleBlock(block, true);
+      try {
+        del.handleBlock(block, true);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       freshBlockId.offer(block.getBlockId());
       logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;

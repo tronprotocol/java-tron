@@ -49,6 +49,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return dbSource.getTotal();
   }
 
+
   /**
    * find a transaction  by it's id.
    */

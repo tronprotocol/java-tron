@@ -13,7 +13,6 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -421,19 +420,21 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        String str = new Formatter().format(
+        String str = String.format(
             "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
             getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+        logger.info(str);
         throw new TaposException(str);
 
       }
     } catch (ItemNotFoundException e) {
-      String str = new Formatter().
+      String str = String.
           format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
               getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+      logger.info(str);
       throw new TaposException(str);
     }
   }
@@ -912,25 +913,22 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-
+    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
-
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += trx.getSerializedSize();
-      // judge block size
-      if (currentTrxSize > ChainConstant.TRXS_SIZE) {
-        postponedTrxCount++;
-        continue;
-      }
-
       if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-
+      currentTrxSize += trx.getSerializedSize();
+      // check the block size
+      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
