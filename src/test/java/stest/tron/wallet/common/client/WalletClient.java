@@ -70,7 +70,7 @@ public class WalletClient {
     private ECKey ecKey = null;
     private boolean loginState = false;
 
-    private static GrpcClient rpcCli = init();
+    private static GrpcClient rpcCli ;
     private static String dbPath;
     private static String txtPath;
 
