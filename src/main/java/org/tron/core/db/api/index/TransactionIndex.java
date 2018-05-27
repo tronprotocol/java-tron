@@ -1,25 +1,23 @@
 package org.tron.core.db.api.index;
 
+import static com.googlecode.cqengine.query.QueryFactory.attribute;
+
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.disk.DiskIndex;
 import com.googlecode.cqengine.persistence.disk.DiskPersistence;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.protos.Protocol.Transaction;
-
-import javax.annotation.PostConstruct;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
 @Slf4j
@@ -49,7 +47,7 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
   protected void setAttribute() {
     Transaction_ID =
         attribute("transaction id",
-            bytes -> new TransactionCapsule(getObject(bytes)).getRawHash().toString());
+            bytes -> new TransactionCapsule(getObject(bytes)).getTransactionId().toString());
     OWNERS =
         attribute(String.class, "owner address",
             bytes -> getObject(bytes).getRawData().getContractList().stream()

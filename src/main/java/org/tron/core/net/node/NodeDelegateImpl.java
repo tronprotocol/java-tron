@@ -67,7 +67,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
-            .map(TransactionCapsule::getHash)
+            .map(TransactionCapsule::getTransactionId)
             .collect(Collectors.toCollection(LinkedList::new));
       } else {
         return null;

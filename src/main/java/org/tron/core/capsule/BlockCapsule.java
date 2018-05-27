@@ -239,7 +239,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     Vector<Sha256Hash> ids = transactionsList.stream()
         .map(TransactionCapsule::new)
-        .map(TransactionCapsule::getHash)
+        .map(TransactionCapsule::getMerkleHash)
         .collect(Collectors.toCollection(Vector::new));
 
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();

@@ -1,5 +1,6 @@
 package org.tron.core.net.message;
 
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -18,6 +19,11 @@ public class TransactionMessage extends TronMessage {
     this.trx = trx;
     this.type = MessageTypes.TRX.asByte();
     this.data = trx.toByteArray();
+  }
+
+  @Override
+  public Sha256Hash getMessageId() {
+    return getTransactionCapsule().getTransactionId();
   }
 
   @Override
