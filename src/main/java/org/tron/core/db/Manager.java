@@ -333,6 +333,7 @@ public class Manager {
         this.initWitness();
         this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
+        this.updateRecentBlock(genesisBlock);
       }
     }
   }

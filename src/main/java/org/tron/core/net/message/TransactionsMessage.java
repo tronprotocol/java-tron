@@ -18,7 +18,7 @@ public class TransactionsMessage extends TronMessage {
     this.data = this.transactions.toByteArray();
   }
 
-  public TransactionsMessage(byte[] data) throws Exception{
+  public TransactionsMessage(byte[] data) throws Exception {
     this.type = MessageTypes.TRXS.asByte();
     this.data = data;
     this.transactions = Protocol.Transactions.parseFrom(data);
@@ -31,7 +31,7 @@ public class TransactionsMessage extends TronMessage {
   @Override
   public String toString() {
     return new StringBuilder().append(super.toString()).append(", trx_size: ")
-            .append(this.transactions.getTransactionsList().size()).toString();
+        .append(this.transactions.getTransactionsList().size()).toString();
   }
 
   @Override

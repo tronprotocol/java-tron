@@ -174,7 +174,7 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.BAD_TX ||
         tronLastLocalDisconnectReason == ReasonCode.FORKED ||
         tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
-        tronLastLocalDisconnectReason ==  ReasonCode.UNLINKABLE ||
+        tronLastLocalDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||

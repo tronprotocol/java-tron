@@ -35,7 +35,8 @@ public class PingMessage extends Message {
         .setPort(to.getPort())
         .setAddress(ByteString.copyFrom(ByteArray.fromString(to.getHost())))
         .build();
-    this.pingMessage = Discover.PingMessage.newBuilder().setVersion(Args.getInstance().getNodeP2pVersion())
+    this.pingMessage = Discover.PingMessage.newBuilder()
+        .setVersion(Args.getInstance().getNodeP2pVersion())
         .setFrom(fromEndpoint)
         .setTo(toEndpoint)
         .setTimestamp(System.currentTimeMillis())
@@ -43,14 +44,14 @@ public class PingMessage extends Message {
     this.data = this.pingMessage.toByteArray();
   }
 
-  public Node getFrom (){
+  public Node getFrom() {
     Endpoint from = this.pingMessage.getFrom();
     Node node = new Node(from.getNodeId().toByteArray(),
         ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
     return node;
   }
 
-  public Node getTo(){
+  public Node getTo() {
     Endpoint to = this.pingMessage.getTo();
     Node node = new Node(to.getNodeId().toByteArray(),
         ByteArray.toStr(to.getAddress().toByteArray()), to.getPort());
