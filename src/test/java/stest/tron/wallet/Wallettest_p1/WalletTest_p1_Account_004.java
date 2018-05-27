@@ -3,32 +3,25 @@ package stest.tron.wallet.Wallettest_p1;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.testng.annotations.*;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.*;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
-import org.testng.Assert;
-import java.math.BigInteger;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTest_p1_Account_004 {
@@ -128,11 +121,8 @@ public class WalletTest_p1_Account_004 {
         Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
         Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
         Long beforeFrozenBalance = 0L;
-        Long beforeBandwidth     = beforeFronzen.getBandwidth();
         if(beforeFronzen.getFrozenCount()!= 0){
             beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
-            //beforeBandwidth     = beforeFronzen.getBandwidth();
-            logger.info(Long.toString(beforeFronzen.getBandwidth()));
             logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
         }
 
@@ -173,13 +163,10 @@ public class WalletTest_p1_Account_004 {
 
         Account afterFronzen = queryAccount(ecKey, search_blockingStubFull);
         Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
-        Long afterBandwidth     = afterFronzen.getBandwidth();
-        logger.info(Long.toString(afterFronzen.getBandwidth()));
         logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
         //logger.info(Integer.toString(search.getFrozenCount()));
         logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen" + afterFrozenBalance.toString());
         Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
-        Assert.assertTrue(afterBandwidth - beforeBandwidth == freezeBalance * frozen_duration);
         return true;
 
 

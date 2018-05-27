@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
@@ -51,6 +52,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
@@ -193,7 +195,10 @@ public class RpcApiService implements Service {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = walletSolidity.getAccount(addressBs);
-        responseObserver.onNext(reply);
+        AccountCapsule accountCapsule = new AccountCapsule(reply);
+        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+        processor.updateUsage(accountCapsule);
+        responseObserver.onNext(accountCapsule.getInstance());
       } else {
         responseObserver.onNext(null);
       }
@@ -305,12 +310,13 @@ public class RpcApiService implements Service {
       TimeMessage timeMessage = request.getTimeMessage();
       long beginTime = timeMessage.getBeginInMilliseconds();
       long endTime = timeMessage.getEndInMilliseconds();
-      if (beginTime < 0 || endTime < 0 || endTime < beginTime) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (beginTime < 0 || endTime < 0 || endTime < beginTime || offset < 0 || limit < 0) {
         responseObserver.onNext(null);
       } else {
         TransactionList reply = walletSolidity
-            .getTransactionsByTimestamp(beginTime, endTime, request.getOffset(),
-                request.getLimit());
+            .getTransactionsByTimestamp(beginTime, endTime, offset, limit);
         responseObserver.onNext(reply);
       }
       responseObserver.onCompleted();
@@ -343,9 +349,11 @@ public class RpcApiService implements Service {
         return;
       }
       ByteString thisAddress = request.getAccount().getAddress();
-      if (null != thisAddress) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != thisAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, request.getOffset(), request.getLimit());
+            .getTransactionsFromThis(thisAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -362,9 +370,11 @@ public class RpcApiService implements Service {
         return;
       }
       ByteString toAddress = request.getAccount().getAddress();
-      if (null != toAddress) {
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != toAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, request.getOffset(), request.getLimit());
+            .getTransactionsToThis(toAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -416,7 +426,7 @@ public class RpcApiService implements Service {
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
-        Account reply = wallet.getBalance(req);
+        Account reply = wallet.getAccount(req);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -582,6 +592,21 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateAsset(Contract.UpdateAssetContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request,
+                ContractType.UpdateAssetContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -697,6 +722,19 @@ public class RpcApiService implements Service {
 
       if (fromBs != null) {
         responseObserver.onNext(wallet.getAssetIssueByAccount(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAccountNet(Account request,
+        StreamObserver<AccountNetMessage> responseObserver) {
+      ByteString fromBs = request.getAddress();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAccountNet(fromBs));
       } else {
         responseObserver.onNext(null);
       }

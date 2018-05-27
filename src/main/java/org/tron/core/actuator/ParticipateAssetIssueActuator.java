@@ -51,8 +51,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       long cost = participateAssetIssueContract.getAmount();
 
       //subtract from owner address
-      byte[] ownerAddressBytes = participateAssetIssueContract.getOwnerAddress().toByteArray();
-      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddressBytes);
+      byte[] ownerAddress = participateAssetIssueContract.getOwnerAddress().toByteArray();
+      AccountCapsule ownerAccount = this.dbManager.getAccountStore().get(ownerAddress);
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
@@ -66,16 +66,16 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       ownerAccount.addAssetAmount(assetIssueCapsule.getName(), exchangeAmount);
 
       //add to to_address
-      byte[] toAddressBytes = participateAssetIssueContract.getToAddress().toByteArray();
-      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddressBytes);
+      byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
+      AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
       if (!toAccount.reduceAssetAmount(assetIssueCapsule.getName(), exchangeAmount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
 
       //write to db
-      dbManager.getAccountStore().put(ownerAddressBytes, ownerAccount);
-      dbManager.getAccountStore().put(toAddressBytes, toAccount);
+      dbManager.getAccountStore().put(ownerAddress, ownerAccount);
+      dbManager.getAccountStore().put(toAddress, toAccount);
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -99,8 +99,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ParticipateAssetIssueContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
+              .getClass() + "]");
     }
 
     final ParticipateAssetIssueContract participateAssetIssueContract;
@@ -118,13 +119,13 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     long amount = participateAssetIssueContract.getAmount();
 
     if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalidate ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress");
     }
     if (!Wallet.addressValid(toAddress)) {
-      throw new ContractValidateException("Invalidate toAddress");
+      throw new ContractValidateException("Invalid toAddress");
     }
     if (!TransactionUtil.validAssetName(assetName)) {
-      throw new ContractValidateException("Invalidate assetName");
+      throw new ContractValidateException("Invalid assetName");
     }
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0!");

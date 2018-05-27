@@ -140,7 +140,7 @@ public class PeerConnection extends Channel {
     this.helloMessage = helloMessage;
   }
 
-  public HelloMessage getHelloMessage(){
+  public HelloMessage getHelloMessage() {
     return this.helloMessage;
   }
 
@@ -233,11 +233,11 @@ public class PeerConnection extends Channel {
     this.invWeAdv = invWeAdv;
   }
 
-  public boolean getSyncFlag(){
+  public boolean getSyncFlag() {
     return syncFlag;
   }
 
-  public void setSyncFlag(boolean syncFlag){
+  public void setSyncFlag(boolean syncFlag) {
     this.syncFlag = syncFlag;
   }
 

@@ -31,7 +31,7 @@ public class TransactionUtil {
       throws IllegalArgumentException {
 
     if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalidate address");
+      throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)

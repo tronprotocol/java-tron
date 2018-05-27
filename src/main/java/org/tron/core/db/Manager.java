@@ -13,6 +13,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,7 +46,6 @@ import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -74,7 +74,6 @@ import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -134,7 +133,6 @@ public class Manager {
   @Getter
   @Setter
   private WitnessController witnessController;
-
 
   private ExecutorService validateSignService;
 
@@ -294,7 +292,6 @@ public class Manager {
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-
   }
 
   public BlockId getGenesisBlockId() {
@@ -336,6 +333,7 @@ public class Manager {
         this.initWitness();
         this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
+        this.updateRecentBlock(genesisBlock);
       }
     }
   }
@@ -436,18 +434,20 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        logger.error(
-            "Tapos failed, different block hash, {}, {} , recent block {}, solid block {} head block {}",
+        String str = new Formatter().format(
+            "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(), getHeadBlockId().getString());
-        throw new TaposException("tapos failed");
+            getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+        throw new TaposException(str);
+
       }
     } catch (ItemNotFoundException e) {
-      logger.error("Tapos failed, block not found, ref block {}, {} , solid block {} head block {}",
-          ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-          getSolidBlockId().getString(), getHeadBlockId().getString());
-      throw new TaposException("tapos failed");
+      String str = new Formatter().
+          format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
+              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
+              getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+      throw new TaposException(str);
     }
   }
 
@@ -507,67 +507,8 @@ public class Manager {
 
 
   public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-    for (Transaction.Contract contract : contracts) {
-      byte[] address = TransactionCapsule.getOwner(contract);
-      AccountCapsule accountCapsule = this.getAccountStore().get(address);
-      if (accountCapsule == null) {
-        throw new ValidateBandwidthException("account not exists");
-      }
-      long now = getHeadBlockTimeStamp();
-      long latestOperationTime = accountCapsule.getLatestOperationTime();
-      //10 * 1000
-      long interval = dynamicPropertiesStore.getOperatingTimeInterval();
-      if (now - latestOperationTime >= interval) {
-        accountCapsule.setLatestOperationTime(now);
-        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-        return;
-      }
-
-      long bandwidthPerTransaction = getDynamicPropertiesStore().getBandwidthPerTransaction();
-      if (contract.getType() == TransferAssetContract) {
-        ByteString assetName;
-        try {
-          assetName = contract.getParameter().unpack(TransferAssetContract.class).getAssetName();
-        } catch (Exception ex) {
-          throw new RuntimeException(ex.getMessage());
-        }
-
-        Long lastAssetOperationTime = accountCapsule.getLatestAssetOperationTimeMap()
-            .get(ByteArray.toStr(assetName.toByteArray()));
-
-        if (lastAssetOperationTime == null || (now - lastAssetOperationTime >= interval)) {
-          AssetIssueCapsule assetIssueCapsule
-              = this.getAssetIssueStore().get(assetName.toByteArray());
-
-          AccountCapsule issuerAccountCapsule = this.getAccountStore()
-              .get(assetIssueCapsule.getOwnerAddress().toByteArray());
-          long bandwidth = issuerAccountCapsule.getBandwidth();
-
-          if (bandwidth < bandwidthPerTransaction) {
-            throw new ValidateBandwidthException("bandwidth is not enough");
-          }
-          issuerAccountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-          this.getAccountStore().put(issuerAccountCapsule.createDbKey(), issuerAccountCapsule);
-          accountCapsule.setLatestOperationTime(now);
-          accountCapsule
-              .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
-          this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-          return;
-        }
-        accountCapsule
-            .setLatestAssetOperationTimeMap(ByteArray.toStr(assetName.toByteArray()), now);
-      }
-
-      long bandwidth = accountCapsule.getBandwidth();
-      if (bandwidth < bandwidthPerTransaction) {
-        throw new ValidateBandwidthException("bandwidth is not enough");
-      }
-      accountCapsule.setBandwidth(bandwidth - bandwidthPerTransaction);
-      accountCapsule.setLatestOperationTime(now);
-      this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    }
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    processor.consumeBandwidth(trx);
   }
 
   @Deprecated
@@ -657,7 +598,7 @@ public class Manager {
               applyBlock(item);
               tmpDialog.commit();
             } catch (ValidateBandwidthException e) {
-              logger.error("high freq", e);
+              logger.debug("high freq", e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -931,8 +872,6 @@ public class Manager {
       throw new ContractValidateException("act size greater than 1, this is extend feature");
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
     validateDup(trxCap);
 
     if (!trxCap.validateSignature()) {

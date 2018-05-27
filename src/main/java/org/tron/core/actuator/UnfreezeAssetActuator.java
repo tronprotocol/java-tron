@@ -31,10 +31,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     try {
       final UnfreezeAssetContract unfreezeAssetContract = contract
           .unpack(UnfreezeAssetContract.class);
-      ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-      byte[] ownerAddressBytes = ownerAddress.toByteArray();
+      byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
 
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       long unfreezeAsset = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
       frozenList.addAll(accountCapsule.getFrozenSupplyList());
@@ -51,7 +50,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
-      dbManager.getAccountStore().put(ownerAddressBytes, accountCapsule);
+      dbManager.getAccountStore().put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -75,8 +74,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(UnfreezeAssetContract.class)) {
-      throw new ContractValidateException("contract type error,expected type [UnfreezeAssetContract],real type[" + contract
-          .getClass() + "]");
+      throw new ContractValidateException(
+          "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
+              .getClass() + "]");
     }
     final UnfreezeAssetContract unfreezeAssetContract;
     try {
@@ -85,19 +85,17 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    ByteString ownerAddress = unfreezeAssetContract.getOwnerAddress();
-    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
-      throw new ContractValidateException("Invalidate address");
+    byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid address");
     }
 
-    if (!dbManager.getAccountStore().has(ownerAddress.toByteArray())) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ownerAddress.toByteArray());
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {
       throw new ContractValidateException("no frozen supply balance");

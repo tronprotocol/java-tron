@@ -121,7 +121,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -279,7 +279,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -292,7 +292,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -305,7 +305,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -319,20 +319,21 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
     //Can't contain chinese characters
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract("测试", OWNER_ADDRESS), dbManager);
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
+              , OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountName", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

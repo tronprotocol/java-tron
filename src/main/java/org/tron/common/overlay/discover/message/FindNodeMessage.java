@@ -38,7 +38,7 @@ public class FindNodeMessage extends Message {
     this.data = this.findNeighbours.toByteArray();
   }
 
-  public byte[] getTargetId(){
+  public byte[] getTargetId() {
     return this.findNeighbours.getTargetId().toByteArray();
   }
 
