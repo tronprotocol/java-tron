@@ -15,31 +15,72 @@
 
 package org.tron.core.config.args;
 
+import org.iq80.leveldb.CompressionType;
+import org.iq80.leveldb.Options;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+
+import org.tron.core.Constant;
 
 public class StorageTest {
 
-  private Storage storage = new Storage();
+  private static Storage storage;
 
-  @Before
-  public void setStorage() {
-    storage.setDirectory("java-tron");
+  static {
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    storage = Args.getInstance().getStorage();
+  }
+
+  @AfterClass
+  public static void cleanup() {
+    Args.clearParam();
   }
 
   @Test
-  public void whenSetNullDirectory() {
-    storage.setDirectory(null);
+  public void getDirectory() {
+    Assert.assertEquals("database", storage.getDbDirectory());
+    Assert.assertEquals("index", storage.getIndexDirectory());
   }
 
   @Test
-  public void whenSetEmptyDirectory() {
-    storage.setDirectory("");
+  public void getPath() {
+    Assert.assertEquals("storage_directory_test", storage.getPathByDbName("account"));
+    Assert.assertEquals("test_path", storage.getPathByDbName("test_name"));
+    Assert.assertNull(storage.getPathByDbName("some_name_not_exists"));
   }
 
   @Test
-  public void getStorage() {
-    Assert.assertEquals("java-tron", storage.getDirectory());
+  public void getOptions() {
+    Options options = storage.getOptionsByDbName("account");
+    Assert.assertTrue(options.createIfMissing());
+    Assert.assertTrue(options.paranoidChecks());
+    Assert.assertTrue(options.verifyChecksums());
+    Assert.assertEquals(CompressionType.NONE, options.compressionType());
+    Assert.assertEquals(10485760, options.blockSize());
+    Assert.assertEquals(10485760, options.writeBufferSize());
+    Assert.assertEquals(0L, options.cacheSize());
+    Assert.assertEquals(32, options.maxOpenFiles());
+
+    options = storage.getOptionsByDbName("test_name");
+    Assert.assertFalse(options.createIfMissing());
+    Assert.assertFalse(options.paranoidChecks());
+    Assert.assertFalse(options.verifyChecksums());
+    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
+    Assert.assertEquals(2, options.blockSize());
+    Assert.assertEquals(3, options.writeBufferSize());
+    Assert.assertEquals(4L, options.cacheSize());
+    Assert.assertEquals(5, options.maxOpenFiles());
+
+    options = storage.getOptionsByDbName("some_name_not_exists");
+    Assert.assertTrue(options.createIfMissing());
+    Assert.assertTrue(options.paranoidChecks());
+    Assert.assertTrue(options.verifyChecksums());
+    Assert.assertEquals(CompressionType.NONE, options.compressionType());
+    Assert.assertEquals(10 * 1024 * 1024, options.blockSize());
+    Assert.assertEquals(10 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(0L, options.cacheSize());
+    Assert.assertEquals(32, options.maxOpenFiles());
   }
+
 }

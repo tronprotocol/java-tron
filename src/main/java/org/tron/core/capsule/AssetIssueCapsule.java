@@ -135,4 +135,12 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setPublicLatestFreeNetTime(time).build();
   }
+
+  public void setUrl(ByteString newUrl) {
+    this.assetIssueContract.toBuilder().setUrl(newUrl).build();
+  }
+
+  public void setDescription(ByteString string) {
+    this.assetIssueContract.toBuilder().setDescription(string).build();
+  }
 }
