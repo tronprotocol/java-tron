@@ -376,6 +376,9 @@ public class WitnessController {
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }
+    if (voteSum == 0) {
+      return;
+    }
     for (ByteString b : list) {
       long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
       AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
