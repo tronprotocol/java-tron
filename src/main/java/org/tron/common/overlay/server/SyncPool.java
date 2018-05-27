@@ -106,7 +106,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * fator) - activePeersCount.get();
+    int lackSize = (int) (maxActiveNodes * fator) - activePeers.size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();
@@ -199,7 +199,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - fator)) {
+    if (activePeers.size() >= maxActiveNodes) {
       return false;
     }
     return true;
