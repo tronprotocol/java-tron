@@ -225,7 +225,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().toByteArray()), getNum());
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
     }
     return blockId;
   }
@@ -239,7 +239,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     Vector<Sha256Hash> ids = transactionsList.stream()
         .map(TransactionCapsule::new)
-        .map(TransactionCapsule::getHash)
+        .map(TransactionCapsule::getMerkleHash)
         .collect(Collectors.toCollection(Vector::new));
 
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
@@ -347,11 +347,12 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     if (!getTransactions().isEmpty()) {
       toStringBuff.append("merkle root=").append(getMerkleRoot()).append("\n");
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
-      toStringBuff.append("tx: {");
-      getTransactions().forEach(tx -> toStringBuff
-          .append(index.getAndIncrement()).append(":")
-          .append(tx).append("\n"));
-      toStringBuff.append("}");
+//      toStringBuff.append("tx: {");
+//      getTransactions().forEach(tx -> toStringBuff
+
+//          .append(index.getAndIncrement()).append(":")
+//          .append(tx).append("\n"));
+//      toStringBuff.append("}");
     } else {
       toStringBuff.append("txs are empty\n");
     }

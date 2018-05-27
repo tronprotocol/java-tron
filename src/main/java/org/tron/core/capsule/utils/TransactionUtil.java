@@ -31,7 +31,7 @@ public class TransactionUtil {
       throws IllegalArgumentException {
 
     if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalidate address");
+      throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)
@@ -54,6 +54,11 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(accountName)) {
       return false;
     }
+
+    if (accountName.length < 8) {
+      return false;
+    }
+
     if (accountName.length > 32) {
       return false;
     }
@@ -87,6 +92,26 @@ public class TransactionUtil {
     }
     return true;
   }
+
+  public static boolean validTokenAbbrName(byte[] abbrName) {
+    if (ArrayUtils.isEmpty(abbrName)) {
+      return false;
+    }
+    if (abbrName.length > 5) {
+      return false;
+    }
+    // b must read able.
+    for (byte b : abbrName) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
+  }
+
 
   public static boolean validAssetDescription(byte[] description) {
     if (ArrayUtils.isEmpty(description)) {

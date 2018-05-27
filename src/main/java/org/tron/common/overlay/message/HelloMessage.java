@@ -17,25 +17,11 @@ public class HelloMessage extends P2pMessage {
 
   Protocol.HelloMessage helloMessage;
 
-  public HelloMessage(byte[] rawData) {
-    super(rawData);
-    this.type = MessageTypes.P2P_HELLO.asByte();
-    unPack();
-  }
-
-  public HelloMessage(byte type, byte[] rawData) {
+  public HelloMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
-    try {
-      this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
-    unPack();
+    this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
   }
 
-  /**
-   * Create hello message.
-   */
   public HelloMessage(Node from, long timestamp, BlockCapsule.BlockId genesisBlockId,
                       BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId){
 
@@ -74,22 +60,6 @@ public class HelloMessage extends P2pMessage {
     this.data = this.helloMessage.toByteArray();
   }
 
-  public void unPack() {
-    try {
-      this.helloMessage = Protocol.HelloMessage.parseFrom(this.data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
-  }
-
-  @Override
-  public byte[] getData() {
-    return this.data;
-  }
-
-  /**
-   * Get the version of p2p protocol.
-   */
   public int getVersion() {
     return this.helloMessage.getVersion();
   }
@@ -122,11 +92,6 @@ public class HelloMessage extends P2pMessage {
   @Override
   public Class<?> getAnswerMessage() {
     return null;
-  }
-
-  @Override
-  public MessageTypes getType() {
-    return MessageTypes.fromByte(this.type);
   }
 
   @Override

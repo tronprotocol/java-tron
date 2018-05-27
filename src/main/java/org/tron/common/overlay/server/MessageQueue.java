@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
-import org.tron.common.overlay.message.ReasonCode;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Component
 @Scope("prototype")
@@ -86,21 +86,18 @@ public class MessageQueue {
     this.channel = channel;
   }
 
-  public void sendMessage(Message msg) {
-
+  public boolean sendMessage(Message msg) {
     if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000){
-      return;
+      return false;
     }
-
     logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
-
     sendTime = System.currentTimeMillis();
-
     if (msg.getAnswerMessage() != null){
       requestQueue.add(new MessageRoundtrip(msg));
     }else {
       msgQueue.offer(msg);
     }
+    return true;
   }
 
   public void receivedMessage(Message msg){

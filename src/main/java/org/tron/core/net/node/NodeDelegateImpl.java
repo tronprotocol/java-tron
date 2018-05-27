@@ -1,6 +1,7 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
@@ -48,7 +49,12 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException {
+      throws BadBlockException, UnLinkedBlockException, InterruptedException {
+
+    if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
+      throw new BadBlockException("block size over limit");
+    }
+
     // TODO timestamp shouble be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
@@ -61,7 +67,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
-            .map(TransactionCapsule::getHash)
+            .map(TransactionCapsule::getTransactionId)
             .collect(Collectors.toCollection(LinkedList::new));
       } else {
         return null;
@@ -77,8 +83,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
       throw new BadBlockException("Contract Exectute exception," + e.getMessage());
-    } catch (InterruptedException e) {
-      throw new BadBlockException("pre validate signature exception," + e.getMessage());
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
@@ -94,27 +98,33 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
+    if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+      logger.warn("This transaction has been processed");
+      return;
+    } else {
+      dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+    }
     try {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
-      logger.error("Contract validate failed", e);
+      logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ContractExeException e) {
-      logger.error("Contract execute failed", e);
+      logger.info("Contract execute failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
-      logger.error("ValidateSignatureException");
+      logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateBandwidthException e) {
-      logger.error("ValidateBandwidthException");
+      logger.info("ValidateBandwidthException" + e.getMessage());
     } catch (DupTransactionException e) {
-      logger.error("dup trans");
+      logger.info("dup trans" + e.getMessage());
     } catch (TaposException e) {
-      logger.error("tapos error");
+      logger.info("tapos error" + e.getMessage());
     } catch (TooBigTransactionException e) {
-      logger.error("too big transaction");
+      logger.info("too big transaction" + e.getMessage());
     } catch (TransactionExpirationException e) {
-      logger.error("expiration transaction");
+      logger.info("expiration transaction" + e.getMessage());
     }
   }
 

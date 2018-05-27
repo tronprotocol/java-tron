@@ -1,5 +1,6 @@
 package org.tron.core.net.message;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -10,7 +11,7 @@ public class BlockMessage extends TronMessage {
 
   private Block block;
 
-  public BlockMessage(byte[] data) throws Exception {
+  public BlockMessage(byte[] data) throws InvalidProtocolBufferException {
     this.type = MessageTypes.BLOCK.asByte();
     this.data = data;
     this.block = Protocol.Block.parseFrom(data);
@@ -22,7 +23,7 @@ public class BlockMessage extends TronMessage {
     this.data = block.toByteArray();
   }
 
-  public BlockMessage(BlockCapsule block) throws Exception {
+  public BlockMessage(BlockCapsule block) {
     data = block.getData();
     this.type = MessageTypes.BLOCK.asByte();
     this.block = block.getInstance();
@@ -63,6 +64,6 @@ public class BlockMessage extends TronMessage {
   @Override
   public String toString() {
     return new StringBuilder().append(super.toString()).append(block.getBlockHeader().getRawData())
-            .append("trx size: ").append(block.getTransactionsList().size()).append("\n").toString();
+        .append("trx size: ").append(block.getTransactionsList().size()).append("\n").toString();
   }
 }

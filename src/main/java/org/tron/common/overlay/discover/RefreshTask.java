@@ -16,26 +16,25 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.common.overlay.discover;
+
 import java.util.ArrayList;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RefreshTask extends DiscoverTask {
 
-    public RefreshTask(NodeManager nodeManager) {
-        super(nodeManager);
-    }
+  public RefreshTask(NodeManager nodeManager) {
+    super(nodeManager);
+  }
 
-    public static byte[] getNodeId() {
-        Random gen = new Random();
-        byte[] id = new byte[64];
-        gen.nextBytes(id);
-        return id;
-    }
+  public static byte[] getNodeId() {
+    Random gen = new Random();
+    byte[] id = new byte[64];
+    gen.nextBytes(id);
+    return id;
+  }
 
-    @Override
-    public void run() {
-        discover(getNodeId(), 0, new ArrayList<Node>());
-    }
+  @Override
+  public void run() {
+    discover(getNodeId(), 0, new ArrayList<Node>());
+  }
 }

@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.P2pMessage;
-import org.tron.common.overlay.message.ReasonCode;
 
 @Component
 @Scope("prototype")
@@ -57,8 +56,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       if (!hasPing){
         sendPingTime = System.currentTimeMillis();
-        msgQueue.sendMessage(PING_MESSAGE);
-        hasPing = true;
+        hasPing = msgQueue.sendMessage(PING_MESSAGE);
       }
     }, 10, 10, TimeUnit.SECONDS);
   }
@@ -78,7 +76,8 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         channel.getPeerStats().pong(sendPingTime);
         break;
       case P2P_DISCONNECT:
-        channel.getNodeStatistics().nodeDisconnectedRemote(ReasonCode.fromInt(((DisconnectMessage) msg).getReason()));
+        channel.getNodeStatistics()
+            .nodeDisconnectedRemote(((DisconnectMessage) msg).getReasonCode());
         channel.close();
         break;
       default:

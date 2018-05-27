@@ -46,6 +46,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -77,7 +78,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /*lll
   public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
     if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalidate address");
+      throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)
@@ -179,12 +180,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
-  public Sha256Hash getHash() {
+  public Sha256Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(transBytes);
   }
 
-  public Sha256Hash getRawHash() {
+  private Sha256Hash getRawHash() {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
@@ -274,6 +275,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
+        case UpdateAssetContract:
+          owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
+          break;
         // todo add other contract
         default:
           return null;
@@ -359,7 +363,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public Sha256Hash getTransactionId() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    return getRawHash();
   }
 
   @Override
