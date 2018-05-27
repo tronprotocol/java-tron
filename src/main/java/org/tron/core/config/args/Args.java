@@ -27,7 +27,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.iq80.leveldb.Options;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -540,8 +539,7 @@ public class Args {
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
-        try {
-          Socket s = new Socket("www.baidu.com", 80);
+        try (Socket s = new Socket("www.baidu.com", 80)) {
           INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
         } catch (IOException e) {
@@ -559,9 +557,8 @@ public class Args {
         .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
-        try {
-          BufferedReader in = new BufferedReader(new InputStreamReader(
-              new URL("http://checkip.amazonaws.com").openStream()));
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+            new URL("http://checkip.amazonaws.com").openStream()))) {
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
