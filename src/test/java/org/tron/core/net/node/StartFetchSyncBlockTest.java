@@ -115,7 +115,7 @@ public class StartFetchSyncBlockTest {
     // invoke testing method
     addTheBlock(blockMessage);
     ReflectUtils.invokeMethod(node, "startFetchSyncBlock");
-    Map<BlockCapsule.BlockId, Long> syncBlockIdWeRequested = ReflectUtils
+    Cache syncBlockIdWeRequested = ReflectUtils
         .getFieldValue(node, "syncBlockIdWeRequested");
     Assert.assertTrue(syncBlockIdWeRequested.size() == 1);
   }

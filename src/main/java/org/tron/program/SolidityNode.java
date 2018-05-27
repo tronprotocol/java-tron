@@ -49,11 +49,18 @@ public class SolidityNode {
     }
   }
 
+  private void shutdownGrpcClient() {
+    if (databaseGrpcClient != null) {
+      databaseGrpcClient.shutdown();
+    }
+  }
+
   private void syncLoop(Args args) {
     while (true) {
       try {
         initGrpcClient(args.getTrustNodeAddr());
         syncSolidityBlock();
+        shutdownGrpcClient();
       } catch (Exception e) {
         logger.error("Error in sync solidity block " + e.getMessage(), e);
       }

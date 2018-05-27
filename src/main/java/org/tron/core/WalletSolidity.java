@@ -109,27 +109,39 @@ public class WalletSolidity {
     return null;
   }
 
-  public TransactionList getTransactionsByTimestamp(long beginTime, long endTime) {
+  public TransactionList getTransactionsByTimestamp(long beginTime, long endTime, long offset, long limit) {
     List<Transaction> transactionsByTimestamp = storeAPI
-        .getTransactionsByTimestamp(beginTime, endTime);
+        .getTransactionsByTimestamp(beginTime, endTime, offset, limit);
     TransactionList transactionList = TransactionList.newBuilder()
         .addAllTransaction(transactionsByTimestamp).build();
     return transactionList;
   }
 
-  public TransactionList getTransactionsFromThis(ByteString thisAddress) {
+  public NumberMessage getTransactionsByTimestampCount(long beginTime, long endTime) {
+    return NumberMessage.newBuilder().setNum(storeAPI
+            .getTransactionsByTimestampCount(beginTime, endTime)).build();
+  }
+
+  public TransactionList getTransactionsFromThis(ByteString thisAddress, long offset , long limit) {
     List<Transaction> transactionsFromThis = storeAPI
-        .getTransactionsFromThis(ByteArray.toHexString(thisAddress.toByteArray()));
+        .getTransactionsFromThis(ByteArray.toHexString(thisAddress.toByteArray()),offset , limit);
     TransactionList transactionList = TransactionList.newBuilder()
         .addAllTransaction(transactionsFromThis).build();
     return transactionList;
   }
 
-  public TransactionList getTransactionsToThis(ByteString toAddress) {
+  public TransactionList getTransactionsToThis(ByteString toAddress, long offset, long limit) {
     List<Transaction> transactionsToThis = storeAPI
-        .getTransactionsToThis(ByteArray.toHexString(toAddress.toByteArray()));
+        .getTransactionsToThis(ByteArray.toHexString(toAddress.toByteArray()), offset, limit);
     TransactionList transactionList = TransactionList.newBuilder()
         .addAllTransaction(transactionsToThis).build();
     return transactionList;
+  }
+  public NumberMessage getTransactionFromThisCount(ByteString toAddress) {
+    return NumberMessage.newBuilder().setNum(storeAPI.getTransactionsFromThisCount(ByteArray.toHexString(toAddress.toByteArray()))).build();
+  }
+
+  public NumberMessage getTransactionToThisCount(ByteString toAddress) {
+    return NumberMessage.newBuilder().setNum(storeAPI.getTransactionsToThisCount(ByteArray.toHexString(toAddress.toByteArray()))).build();
   }
 }

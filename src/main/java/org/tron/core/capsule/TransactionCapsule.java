@@ -46,6 +46,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -77,7 +78,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /*lll
   public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
     if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalidate address");
+      throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(value)
@@ -273,6 +274,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+          break;
+        case UpdateAssetContract:
+          owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

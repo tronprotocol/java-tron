@@ -31,7 +31,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -189,6 +188,30 @@ public class Args {
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
   private String trustNodeAddr;
 
+  @Getter
+  @Setter
+  private boolean getTransactionsFromThisFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsToThisFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsFromThisCountFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsToThisCountFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsByTimestampFeature;
+
+  @Getter
+  @Setter
+  private boolean getTransactionsByTimestampCountFeature;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -224,6 +247,12 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
+    INSTANCE.getTransactionsFromThisFeature = false;
+    INSTANCE.getTransactionsToThisFeature = false;
+    INSTANCE.getTransactionsFromThisCountFeature = false;
+    INSTANCE.getTransactionsToThisCountFeature = false;
+    INSTANCE.getTransactionsByTimestampFeature = false;
+    INSTANCE.getTransactionsByTimestampCountFeature = false;
   }
 
   /**
@@ -259,14 +288,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -308,7 +329,8 @@ public class Args {
         config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
 
     INSTANCE.minParticipationRate =
-        config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate") : 0;
+        config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
+            : 0;
 
     INSTANCE.nodeListenPort =
         config.hasPath("node.listen.port") ? config.getInt("node.listen.port") : 0;
@@ -347,12 +369,36 @@ public class Args {
         .getInt("node.udpNettyWorkThreadNum") : 1;
 
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
-      INSTANCE.trustNodeAddr = config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
+      INSTANCE.trustNodeAddr =
+          config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
     }
 
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
+    INSTANCE.getTransactionsFromThisFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
+
+    INSTANCE.getTransactionsToThisFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
+
+    INSTANCE.getTransactionsFromThisCountFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
+
+    INSTANCE.getTransactionsToThisCountFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
+
+    INSTANCE.getTransactionsByTimestampFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
+
+    INSTANCE.getTransactionsByTimestampCountFeature =
+        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config
+            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
   }
 
 
@@ -364,7 +410,8 @@ public class Args {
 
   private static Witness createWitness(final ConfigObject witnessAccount) {
     final Witness witness = new Witness();
-    witness.setAddress(Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
+    witness.setAddress(
+        Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;

@@ -1,5 +1,6 @@
 package org.tron.core.db.api;
 
+import static com.googlecode.cqengine.query.QueryFactory.ascending;
 import static com.googlecode.cqengine.query.QueryFactory.all;
 import static com.googlecode.cqengine.query.QueryFactory.and;
 import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
@@ -13,6 +14,7 @@ import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
 import static com.googlecode.cqengine.query.QueryFactory.threshold;
 import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
+import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -205,20 +207,34 @@ public class StoreAPI {
     }
   }
 
-  public List<Transaction> getTransactionsFromThis(String address) {
+  public List<Transaction> getTransactionsFromThis(String address,long offset,long limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");
       return Lists.newArrayList();
     }
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
-        index.retrieve(
-            equal(TransactionIndex.OWNERS, address))) {
-      return ImmutableList.copyOf(resultSet);
+                 index.retrieve(
+                         equal(TransactionIndex.OWNERS, address),
+                         queryOptions(
+                                 orderBy(ascending(TransactionIndex.TIMESTAMP)),
+                                 applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+      if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
+        limit = TRANSACTIONS_COUNT_LIMIT_MAX;
+      }
+      return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
     }
   }
 
-  public List<Transaction> getTransactionsToThis(String address) {
+  public long getTransactionsFromThisCount(String address) {
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet =
+                 index.retrieve(equal(TransactionIndex.OWNERS, address))) {
+      return resultSet.size();
+    }
+  }
+
+  public List<Transaction> getTransactionsToThis(String address, long offset, long limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");
       return Lists.newArrayList();
@@ -226,9 +242,22 @@ public class StoreAPI {
     Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
-            equal(TransactionIndex.TOS, address)
-        )) {
-      return ImmutableList.copyOf(resultSet);
+                equal(TransactionIndex.TOS, address),
+                queryOptions(
+                        orderBy(ascending(TransactionIndex.TIMESTAMP)),
+                        applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+      if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
+        limit = TRANSACTIONS_COUNT_LIMIT_MAX;
+      }
+      return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
+    }
+  }
+
+  public long getTransactionsToThisCount(String address) {
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet =
+                 index.retrieve(equal(TransactionIndex.TOS, address))) {
+      return resultSet.size();
     }
   }
 
@@ -248,7 +277,7 @@ public class StoreAPI {
   }
 
   public List<Transaction> getTransactionsByTimestamp(
-      long beginInMilliseconds, long endInMilliseconds) {
+      long beginInMilliseconds, long endInMilliseconds, long offset, long limit) {
     if (endInMilliseconds < beginInMilliseconds) {
       return Collections.emptyList();
     }
@@ -257,7 +286,22 @@ public class StoreAPI {
     try (ResultSet<Transaction> resultSet =
         index.retrieve(
             between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds))) {
-      return ImmutableList.copyOf(resultSet);
+      if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
+        limit = TRANSACTIONS_COUNT_LIMIT_MAX;
+      }
+      return ImmutableList.copyOf(Streams.stream(resultSet).skip(offset).limit(limit).iterator());
+    }
+  }
+
+  public long getTransactionsByTimestampCount(long beginInMilliseconds, long endInMilliseconds) {
+    if (endInMilliseconds < beginInMilliseconds) {
+      return 0;
+    }
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet =
+                 index.retrieve(
+                         between(TransactionIndex.TIMESTAMP, beginInMilliseconds, endInMilliseconds))) {
+      return resultSet.size();
     }
   }
 

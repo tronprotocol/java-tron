@@ -94,27 +94,33 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
+    if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+      logger.warn("This transaction has been processed");
+      return;
+    } else {
+      dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+    }
     try {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
-      logger.warn("Contract validate failed", e);
+      logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ContractExeException e) {
-      logger.error("Contract execute failed", e);
+      logger.info("Contract execute failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
-      logger.error("ValidateSignatureException");
+      logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateBandwidthException e) {
-      logger.warn("ValidateBandwidthException");
+      logger.info("ValidateBandwidthException" + e.getMessage());
     } catch (DupTransactionException e) {
-      logger.error("dup trans");
+      logger.info("dup trans" + e.getMessage());
     } catch (TaposException e) {
-      logger.error("tapos error");
+      logger.info("tapos error" + e.getMessage());
     } catch (TooBigTransactionException e) {
-      logger.error("too big transaction");
+      logger.info("too big transaction" + e.getMessage());
     } catch (TransactionExpirationException e) {
-      logger.error("expiration transaction");
+      logger.info("expiration transaction" + e.getMessage());
     }
   }
 

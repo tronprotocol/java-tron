@@ -58,16 +58,16 @@ public class ChainInventoryMessage extends TronMessage {
   public Long getRemainNum() {
     return getChainInventory().getRemainNum();
   }
-  
+
   @Override
   public String toString() {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(getBlockIds());
     StringBuilder sb = new StringBuilder(super.toString());
     int size = blockIdWeGet.size();
     sb.append("size: ").append(size);
-    if (size >= 1){
+    if (size >= 1) {
       sb.append(", first blockId: ").append(blockIdWeGet.peek().getString());
-      if (size > 1){
+      if (size > 1) {
         sb.append(", end blockId: ").append(blockIdWeGet.peekLast().getString());
       }
     }

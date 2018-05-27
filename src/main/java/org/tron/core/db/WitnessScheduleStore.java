@@ -65,7 +65,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
     for (ByteString address : witnessesAddressList) {
       System.arraycopy(address.toByteArray(), 0,
           ba, i * ADDRESS_BYTE_ARRAY_LENGTH, ADDRESS_BYTE_ARRAY_LENGTH);
-//      logger.debug("saveCurrentShuffledWitnesses--ba:" + ByteArray.toHexString(ba));
       i++;
     }
     ;
@@ -80,7 +79,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
           for (int i = 0; i < len; ++i) {
             byte[] b = new byte[ADDRESS_BYTE_ARRAY_LENGTH];
             System.arraycopy(ba, i * ADDRESS_BYTE_ARRAY_LENGTH, b, 0, ADDRESS_BYTE_ARRAY_LENGTH);
-//            logger.debug("address number" + i + ":" + ByteArray.toHexString(b));
             witnessesAddressList.add(ByteString.copyFrom(b));
           }
           logger.debug("getWitnesses:" + ByteArray.toStr(species) + witnessesAddressList);
@@ -91,32 +89,18 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void saveActiveWitnesses(List<ByteString> witnessesAddressList) {
-//    witnessesAddressList.forEach(address -> {
-//      logger.info("saveActiveWitnesses:" + ByteArray.toHexString(address.toByteArray()));
-//    });
     saveData(ACTIVE_WITNESSES, witnessesAddressList);
   }
 
   public List<ByteString> getActiveWitnesses() {
-//    getData(ACTIVE_WITNESSES).forEach(address -> {
-//      logger.debug("getActiveWitnesses:" + ByteArray.toHexString(address.toByteArray()));
-//    });
     return getData(ACTIVE_WITNESSES);
   }
 
-//  ByteArray.toHexString(scheduledWitness.toByteArray())
-
   public void saveCurrentShuffledWitnesses(List<ByteString> witnessesAddressList) {
-//    witnessesAddressList.forEach(address -> {
-//      logger.info("saveCurrentShuffledWitnesses:" + ByteArray.toHexString(address.toByteArray()));
-//    });
     saveData(CURRENT_SHUFFLED_WITNESSES, witnessesAddressList);
   }
 
   public List<ByteString> getCurrentShuffledWitnesses() {
-//    getData(CURRENT_SHUFFLED_WITNESSES).forEach(address -> {
-//      logger.debug("getCurrentShuffledWitnesses:" + ByteArray.toHexString(address.toByteArray()));
-//    });
     return getData(CURRENT_SHUFFLED_WITNESSES);
   }
 }

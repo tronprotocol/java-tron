@@ -154,7 +154,7 @@ public class UnfreezeBalanceActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
 
-      Assert.assertEquals("Invalidate address", e.getMessage());
+      Assert.assertEquals("Invalid address", e.getMessage());
 
     } catch (ContractExeException e) {
       Assert.assertTrue(e instanceof ContractExeException);
