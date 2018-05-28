@@ -104,11 +104,14 @@ public class RpcApiService implements Service {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
+
       Args args = Args.getInstance();
+
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
             .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
       }
+
       if (args.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(new WalletSolidityApi());
         if (args.isWalletExtensionApi()) {
@@ -117,7 +120,16 @@ public class RpcApiService implements Service {
       } else {
         serverBuilder = serverBuilder.addService(new WalletApi());
       }
-      serverBuilder.maxConnectionIdle(NetConstants.GRPC_IDLE_TIME_OUT, TimeUnit.MILLISECONDS);
+
+      // Set configs from config.conf or default value
+      serverBuilder
+          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(args.getFlowControlWindow())
+          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxMessageSize(args.getMaxMessageSize())
+          .maxHeaderListSize(args.getMaxHeaderListSize());
+
       apiServer = serverBuilder.build().start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
