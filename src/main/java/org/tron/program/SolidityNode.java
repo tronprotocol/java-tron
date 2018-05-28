@@ -16,6 +16,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -103,7 +104,10 @@ public class SolidityNode {
           throw new BadBlockException("too big exception");
         } catch (TransactionExpirationException e) {
           throw new BadBlockException("expiration exception");
+        } catch (BadNumberBlockException e) {
+          throw new BadBlockException("bad number exception");
         }
+
       } else {
         break;
       }
