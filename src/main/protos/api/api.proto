@@ -444,7 +444,7 @@ service WalletExtension {
       }
     };
   }
-}
+};
 
 // the api of tron's db
 service Database {
