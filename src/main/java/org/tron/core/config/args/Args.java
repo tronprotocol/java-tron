@@ -193,27 +193,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean getTransactionsFromThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsFromThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampCountFeature;
+  private boolean walletExtensionApi;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -258,13 +238,7 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
-    INSTANCE.getTransactionsFromThisFeature = false;
-    INSTANCE.getTransactionsToThisFeature = false;
-    INSTANCE.getTransactionsFromThisCountFeature = false;
-    INSTANCE.getTransactionsToThisCountFeature = false;
-    INSTANCE.getTransactionsByTimestampFeature = false;
-    INSTANCE.getTransactionsByTimestampCountFeature = false;
-
+    INSTANCE.walletExtensionApi = false;
   }
 
   /**
@@ -395,29 +369,8 @@ public class Args {
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
-    INSTANCE.getTransactionsFromThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
-
-    INSTANCE.getTransactionsToThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
-
-    INSTANCE.getTransactionsFromThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
-
-    INSTANCE.getTransactionsToThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
-
-    INSTANCE.getTransactionsByTimestampFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
-
-    INSTANCE.getTransactionsByTimestampCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
+    INSTANCE.walletExtensionApi =
+        config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
   }
 
 
