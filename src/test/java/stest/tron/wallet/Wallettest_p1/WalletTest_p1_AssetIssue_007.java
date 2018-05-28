@@ -70,22 +70,11 @@ public class WalletTest_p1_AssetIssue_007 {
                 .getAssetIssueByAccount(request1);
         Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
         if (queryAssetByAccount.get().getAssetIssueCount() == 0){
-            try {
-                Thread.sleep(16000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
             //Create a new asset issue.
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,1,start,end,
                     1, Description, Url, 1L,1L,testKey002));
-            try {
-                Thread.sleep(2500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
         else{
             logger.info("This account already create an assetisue");
@@ -97,11 +86,6 @@ public class WalletTest_p1_AssetIssue_007 {
     @Test(enabled = false)
     public void TestUseBandwitchParticipateAssetissue(){
         //Participate a asset issue
-        try {
-            Thread.sleep(18000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         logger.info(name);
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         Account beforeAsset = queryAccount(no_bandwitch,blockingStubFull);
@@ -109,11 +93,6 @@ public class WalletTest_p1_AssetIssue_007 {
 
         //Participate failed due to no bandwidth within 10 seconds.
         Assert.assertFalse(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
-        try {
-            Thread.sleep(18000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         //Participate success due to out of 10 seconds, the bandwidth is recover.
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),1L, NO_BANDWITCH_ADDRESS, no_bandwitch));
         Account afterAsset = queryAccount(no_bandwitch,blockingStubFull);
@@ -188,6 +167,8 @@ public class WalletTest_p1_AssetIssue_007 {
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+            builder.setFreeAssetNetLimit(20000);
+            builder.setPublicFreeAssetNetLimit(20000);
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);

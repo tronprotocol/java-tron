@@ -4,7 +4,7 @@
 <!--<suite name="Wallet case" >
     <test name="Debug case" preserve-order="true">
         <classes>
-            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_011"/>
         </classes>
     </test>
 </suite>-->
@@ -25,6 +25,8 @@
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_007"/>
 <!--            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_008"/>-->
             <class name="stest.tron.wallet.Wallettest_p0.Wallettest_p0_002"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_010"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_011"/>
         </classes>
     </test>
     <test name="Account" >
@@ -63,10 +65,11 @@
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_004"/>
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Block_005"/>
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Node_001"/>
-            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Account_001"/>
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_008"/>
             <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_Transfer_003"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_006"/>
+            <class name="stest.tron.wallet.Wallettest_p1.WalletTest_p1_AssetIssue_009"/>
         </classes>
     </test>
 </suite>

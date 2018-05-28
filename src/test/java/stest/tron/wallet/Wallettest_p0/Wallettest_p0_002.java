@@ -17,6 +17,7 @@ import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
@@ -83,11 +84,6 @@ public class Wallettest_p0_002 {
                 .getAssetIssueByAccount(request1);
         Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
         if (queryAssetByAccount.get().getAssetIssueCount() == 0){
-            try {
-                Thread.sleep(16000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             //Create a new AssetIssue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,100,now +900000,now+10000000000L,
                     1, Description, Url, 1L,1L,testKey002));
@@ -124,8 +120,10 @@ public class Wallettest_p0_002 {
     public void TestTransferAsset() {
         //byte assertName[] = name.getBytes();
         //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
+        Assert.assertTrue(PublicMethed.FreezeBalance(FROM_ADDRESS,10000000,3,testKey002,
+                blockingStubFull));
         Boolean ret = walletClient.transferAsset(TO_ADDRESS, name.getBytes(), AMOUNT);
-        if (ret == false){
+/*        if (ret == false){
             try {
                 Thread.sleep(16000);
             } catch (InterruptedException e) {
@@ -133,7 +131,7 @@ public class Wallettest_p0_002 {
             }
             ret = walletClient.transferAsset(TO_ADDRESS, name.getBytes(), AMOUNT);
 
-        }
+        }*/
 
         //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
         Assert.assertTrue(ret);

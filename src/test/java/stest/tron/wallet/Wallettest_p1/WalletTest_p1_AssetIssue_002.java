@@ -22,6 +22,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
@@ -71,22 +72,11 @@ public class WalletTest_p1_AssetIssue_002 {
                 .getAssetIssueByAccount(request1);
         Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
         if (queryAssetByAccount.get().getAssetIssueCount() == 0){
-/*            try {
-                Thread.sleep(16000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
-
             Long start = System.currentTimeMillis() + 2000;
             Long end   = System.currentTimeMillis() + 1000000000;
             //Create a new Asset Issue
             Assert.assertTrue(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,1,start,end,
                     1, Description, Url,1L,1L, testKey002));
-/*            try {
-                Thread.sleep(25000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
         }
         else{
             logger.info("This account already create an assetisue");
@@ -100,11 +90,9 @@ public class WalletTest_p1_AssetIssue_002 {
     public void TestParticipateAssetissue(){
         //Participate AssetIssue success
         logger.info(name);
-/*        try {
-            Thread.sleep(15000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
+        //Freeze amount to get bandwitch.
+        Assert.assertTrue(PublicMethed.FreezeBalance(TO_ADDRESS,10000000,3,testKey003,
+                blockingStubFull));
         Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(),100L, TO_ADDRESS, testKey003));
 
         //The amount is large than the total supply, participate failed.
@@ -187,6 +175,8 @@ public class WalletTest_p1_AssetIssue_002 {
             builder.setVoteScore(VoteScore);
             builder.setDescription(ByteString.copyFrom(Description.getBytes()));
             builder.setUrl(ByteString.copyFrom(URL.getBytes()));
+            builder.setFreeAssetNetLimit(20000);
+            builder.setPublicFreeAssetNetLimit(20000);
             Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
             frozenBuilder.setFrozenAmount(fronzenAmount);
             frozenBuilder.setFrozenDays(frozenDay);

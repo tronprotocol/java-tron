@@ -69,7 +69,7 @@ public class WalletTest_p1_AssetIssue_009 {
     @Test(enabled = true)
     public void TestGetAssetIssueByAccountOrNameFromSolidity(){
         //By name
-        ByteString addressBS = ByteString.copyFrom(SOLIDITY_ASSET_ADDRESS);
+        ByteString addressBS = ByteString.copyFrom(FROM_ADDRESS);
         Account request = Account.newBuilder().setAddress(addressBS).build();
         GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
                 .getAssetIssueByAccount(request);

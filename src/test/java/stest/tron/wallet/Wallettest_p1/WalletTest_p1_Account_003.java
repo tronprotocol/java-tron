@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
@@ -38,14 +39,14 @@ public class WalletTest_p1_Account_003 {
     private final static String testKey002 = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
     private final static String testKey003 = "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
     private final static String testKey004 = "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-    private final static String lowBalTest = "86ff0c39337e9e97526c80af51f0e80411f5a1251473035f380f3671c1aa2b4b";
+    //private final static String lowBalTest = "86ff0c39337e9e97526c80af51f0e80411f5a1251473035f380f3671c1aa2b4b";
 
     //testng001、testng002、testng003、testng004
     private static final byte[] BACK_ADDRESS = Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
     private static final byte[] FROM_ADDRESS = Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
     private static final byte[] TO_ADDRESS = Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-    private static final byte[] Low_Bal_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
+    //private static final byte[] Low_Bal_ADDRESS = Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
     private static final byte[] INVAILD_ADDRESS = Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
     private static final long now = System.currentTimeMillis();
@@ -54,12 +55,22 @@ public class WalletTest_p1_Account_003 {
     String Description = "just-test";
     String Url = "https://github.com/tronprotocol/wallet-cli/";
 
+    //get account
+    ECKey ecKey        =  new ECKey(Utils.getRandom());
+    byte[] Low_Bal_ADDRESS    = ecKey.getAddress();
+    String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(0);
 
+/*    ECKey ecKey        =  new ECKey(Utils.getRandom());
+    byte[] NOWITNESSADDRESS    = ecKey.getAddress();
+    String testKeyForNoWitness = ByteArray.toHexString(ecKey.getPrivKeyBytes());*/
+
     @BeforeClass
     public void beforeClass() {
+        logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
         channelFull = ManagedChannelBuilder.forTarget(fullnode)
                 .usePlaintext(true)
                 .build();
@@ -78,7 +89,7 @@ public class WalletTest_p1_Account_003 {
 
             //TestVoteToNonWitnessAccount
             HashMap<String,String> vote_to_non_witness_account=new HashMap<String,String>();
-            vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
+            vote_to_non_witness_account.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "1");
             HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
             vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
             Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L,testKey002));

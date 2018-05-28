@@ -88,11 +88,6 @@ public class WalletTest_p1_Witness_001 {
         //Assert.assertFalse(VoteWitness(small_vote_map, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
         //Freeze balance to get vote ability.
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L, testKey002));
 
         //Vote failed when the vote is large than the freeze balance.

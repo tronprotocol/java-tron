@@ -23,6 +23,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 import java.math.BigInteger;
@@ -45,7 +46,8 @@ public class WalletTest_p1_AssetIssue_003 {
     private static final byte[] NEED_CR_ADDRESS = Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
 
     private static final long now = System.currentTimeMillis();
-    private static final String name = "testAssetIssue_" + Long.toString(now);
+    //private static final String name = "testAssetIssue_" + Long.toString(now);
+    private static final String name = "a";
     private static final String tooLongName = "qazxswedcvfrtgbnhyujmkiolpoiuytre";
     private static final String chineseAssetIssuename = "中文都名字";
     private static final String tooLongDescription = "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcv";
@@ -70,12 +72,6 @@ public class WalletTest_p1_AssetIssue_003 {
                 .getAssetIssueByAccount(request1);
         Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
         if (queryAssetByAccount.get().getAssetIssueCount() == 0){
-            try {
-                Thread.sleep(16000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
             Long start = System.currentTimeMillis() + 100000;
             Long end   = System.currentTimeMillis() + 1000000000;
             //Freeze amount is large than total supply, create asset issue failed.
@@ -138,15 +134,11 @@ public class WalletTest_p1_AssetIssue_003 {
             //The description is too long, create failed.
             Assert.assertFalse(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
                     2, tooLongDescription, Url, 1L,3652L,testKey002));
-            //The voteScore is 0
-            //Assert.assertFalse(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
-              //      0, Description, Url, 1L,3652L,testKey002));
-            //The voteScore is -1
-            //Assert.assertFalse(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
-               //     -1, Description, Url, 1L,3652L,testKey002));
 
 
-
+            //FreezeBalance
+            Assert.assertTrue(PublicMethed.FreezeBalance(FROM_ADDRESS,10000000L,3,testKey002
+            ,blockingStubFull));
             //Create success
             start = System.currentTimeMillis() + 3000;
             end   = System.currentTimeMillis() + 1000000000;
@@ -175,11 +167,6 @@ public class WalletTest_p1_AssetIssue_003 {
             logger.info("unfreezeasset test");
 
             //Test one account only can create one asset issue.
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             start = System.currentTimeMillis() + 3000;
             end   = System.currentTimeMillis() + 1000000000;
             Assert.assertFalse(CreateAssetIssue(FROM_ADDRESS,name,TotalSupply, 1,10,start,end,
@@ -236,6 +223,8 @@ public class WalletTest_p1_AssetIssue_003 {
                 builder.setEndTime(EndTime);
                 builder.setVoteScore(VoteScore);
                 builder.setDescription(ByteString.copyFrom(Description.getBytes()));
+                builder.setFreeAssetNetLimit(10000);
+                builder.setPublicFreeAssetNetLimit(10000);
                 builder.setUrl(ByteString.copyFrom(URL.getBytes()));
                 Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply.newBuilder();
                 frozenBuilder.setFrozenAmount(fronzenAmount);
