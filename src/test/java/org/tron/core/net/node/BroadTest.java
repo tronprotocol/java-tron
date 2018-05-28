@@ -24,6 +24,7 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -73,7 +74,7 @@ public class BroadTest {
 
   private Sha256Hash testBlockBroad() {
     Block block = Block.getDefaultInstance();
-    BlockMessage blockMessage = new BlockMessage(block);
+    BlockMessage blockMessage = new BlockMessage(new BlockCapsule(block));
     node.broadcast(blockMessage);
     ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils
         .getFieldValue(node, "advObjToSpread");
