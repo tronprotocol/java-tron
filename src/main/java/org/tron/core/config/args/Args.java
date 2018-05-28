@@ -193,27 +193,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean getTransactionsFromThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsFromThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampCountFeature;
+  private boolean walletExtensionApi;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -258,13 +238,7 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
-    INSTANCE.getTransactionsFromThisFeature = false;
-    INSTANCE.getTransactionsToThisFeature = false;
-    INSTANCE.getTransactionsFromThisCountFeature = false;
-    INSTANCE.getTransactionsToThisCountFeature = false;
-    INSTANCE.getTransactionsByTimestampFeature = false;
-    INSTANCE.getTransactionsByTimestampCountFeature = false;
-
+    INSTANCE.walletExtensionApi = false;
   }
 
   /**
@@ -395,33 +369,12 @@ public class Args {
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
-    INSTANCE.getTransactionsFromThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
-
-    INSTANCE.getTransactionsToThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
-
-    INSTANCE.getTransactionsFromThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
-
-    INSTANCE.getTransactionsToThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
-
-    INSTANCE.getTransactionsByTimestampFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
-
-    INSTANCE.getTransactionsByTimestampCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
+    INSTANCE.walletExtensionApi =
+        config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
   }
 
 
-  private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
+  private static List<Witness> getWitnessesFromConfig(final Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
         .map(Args::createWitness)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -436,7 +389,7 @@ public class Args {
     return witness;
   }
 
-  private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
+  private static List<Account> getAccountsFromConfig(final Config config) {
     return config.getObjectList("genesis.block.assets").stream()
         .map(Args::createAccount)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -479,7 +432,7 @@ public class Args {
     return this.outputDirectory;
   }
 
-  private static List<Node> nodeActive(final com.typesafe.config.Config config) {
+  private static List<Node> nodeActive(final Config config) {
     if (!config.hasPath("node.active")) {
       return Collections.EMPTY_LIST;
     }
@@ -492,7 +445,7 @@ public class Args {
     return ret;
   }
 
-  private static void privateKey(final com.typesafe.config.Config config) {
+  private static void privateKey(final Config config) {
     if (config.hasPath("private.key")) {
       INSTANCE.privateKey = config.getString("private.key");
       if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
@@ -534,12 +487,13 @@ public class Args {
     return nodeId;
   }
 
-  private static void bindIp(final com.typesafe.config.Config config) {
+  private static void bindIp(final Config config) {
     if (!config.hasPath("node.discovery.bind.ip") || config.getString("node.discovery.bind.ip")
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
-        try (Socket s = new Socket("www.baidu.com", 80)) {
+        try {
+          Socket s = new Socket("www.baidu.com", 80);
           INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
         } catch (IOException e) {
@@ -552,13 +506,14 @@ public class Args {
     }
   }
 
-  private static void externalIp(final com.typesafe.config.Config config) {
+  private static void externalIp(final Config config) {
     if (!config.hasPath("node.discovery.external.ip") || config
         .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(
-            new URL("http://checkip.amazonaws.com").openStream()))) {
+        try {
+          BufferedReader in = new BufferedReader(new InputStreamReader(
+              new URL("http://checkip.amazonaws.com").openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
