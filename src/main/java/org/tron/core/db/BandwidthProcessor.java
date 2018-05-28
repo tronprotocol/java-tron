@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.AccountCreateContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
@@ -95,6 +96,10 @@ public class BandwidthProcessor {
         consumeForCreateNewAccount(accountCapsule, now);
       }
 
+      if (contract.getType() == AccountCreateContract) {
+        continue;
+      }
+
       if (contract.getType() == TransferAssetContract) {
         if (useAssetAccountNet(contract, accountCapsule, now, bytes)) {
           continue;
@@ -125,8 +130,10 @@ public class BandwidthProcessor {
 
     if (cost <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
+      accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     } else {
@@ -138,6 +145,8 @@ public class BandwidthProcessor {
   public boolean contractCreateNewAccount(Contract contract) {
     AccountCapsule toAccount;
     switch (contract.getType()) {
+      case AccountCreateContract:
+        return true;
       case TransferContract:
         TransferContract transferContract;
         try {
