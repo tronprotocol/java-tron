@@ -45,7 +45,7 @@ import com.google.common.primitives.UnsignedBytes;
 @SuppressWarnings("restriction")
 public abstract class FastByteComparisons {
 
-  public static boolean equal(byte[] b1, byte[] b2) {
+  public static boolean isEqual(byte[] b1, byte[] b2) {
     return b1.length == b2.length && compareTo(b1, 0, b1.length, b2, 0,
         b2.length) == 0;
   }

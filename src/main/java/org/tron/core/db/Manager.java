@@ -13,7 +13,6 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +34,6 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -58,6 +56,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -219,27 +218,27 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-  public PeersStore getPeersStore() {
-    return peersStore;
-  }
-
-  public void setPeersStore(PeersStore peersStore) {
-    this.peersStore = peersStore;
-  }
-
-  public Node getHomeNode() {
-    final Args args = Args.getInstance();
-    Set<Node> nodes = this.peersStore.get("home".getBytes());
-    if (nodes.size() > 0) {
-      return nodes.stream().findFirst().get();
-    } else {
-      Node node =
-          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
-      nodes.add(node);
-      this.peersStore.put("home".getBytes(), nodes);
-      return node;
-    }
-  }
+//  public PeersStore getPeersStore() {
+//    return peersStore;
+//  }
+//
+//  public void setPeersStore(PeersStore peersStore) {
+//    this.peersStore = peersStore;
+//  }
+//
+//  public Node getHomeNode() {
+//    final Args args = Args.getInstance();
+//    Set<Node> nodes = this.peersStore.get("home".getBytes());
+//    if (nodes.size() > 0) {
+//      return nodes.stream().findFirst().get();
+//    } else {
+//      Node node =
+//          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+//      nodes.add(node);
+//      this.peersStore.put("home".getBytes(), nodes);
+//      return node;
+//    }
+//  }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
@@ -247,19 +246,6 @@ public class Manager {
 
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
-  }
-
-  // fot test only
-  public void destory() {
-    AccountStore.destroy();
-    TransactionStore.destroy();
-    BlockStore.destroy();
-    WitnessStore.destory();
-    AssetIssueStore.destroy();
-    DynamicPropertiesStore.destroy();
-    WitnessScheduleStore.destroy();
-    BlockIndexStore.destroy();
-    AccountIndexStore.destroy();
   }
 
   @PostConstruct
@@ -373,12 +359,15 @@ public class Manager {
               byte[] keyAddress = key.getAddress();
               ByteString address = ByteString.copyFrom(keyAddress);
 
+              final AccountCapsule accountCapsule;
               if (!this.accountStore.has(keyAddress)) {
-                final AccountCapsule accountCapsule =
-                    new AccountCapsule(ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
-                accountCapsule.setIsWitness(true);
-                this.accountStore.put(keyAddress, accountCapsule);
+                accountCapsule = new AccountCapsule(ByteString.EMPTY,
+                    address, AccountType.AssetIssue, 0L);
+              } else {
+                accountCapsule = this.accountStore.get(keyAddress);
               }
+              accountCapsule.setIsWitness(true);
+              this.accountStore.put(keyAddress, accountCapsule);
 
               final WitnessCapsule witnessCapsule =
                   new WitnessCapsule(address, key.getVoteCount(), key.getUrl());
@@ -434,19 +423,21 @@ public class Manager {
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
       } else {
-        String str = new Formatter().format(
+        String str = String.format(
             "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
             getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+        logger.info(str);
         throw new TaposException(str);
 
       }
     } catch (ItemNotFoundException e) {
-      String str = new Formatter().
+      String str = String.
           format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
               getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+      logger.info(str);
       throw new TaposException(str);
     }
   }
@@ -631,7 +622,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -925,25 +916,22 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-
+    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
-
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      currentTrxSize += trx.getSerializedSize();
-      // judge block size
-      if (currentTrxSize > ChainConstant.TRXS_SIZE) {
-        postponedTrxCount++;
-        continue;
-      }
-
       if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-
+      currentTrxSize += trx.getSerializedSize();
+      // check the block size
+      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
@@ -998,7 +986,10 @@ public class Manager {
       logger.info("contract not processed during DupTransactionException");
     } catch (TransactionExpirationException e) {
       logger.info("contract not processed during TransactionExpirationException");
+    } catch (BadNumberBlockException e) {
+      logger.info("generate block using wrong number");
     }
+
     return null;
   }
 

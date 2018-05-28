@@ -7,7 +7,7 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -78,7 +78,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
 
   @Autowired
-  private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
+  private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
     try {
       this.getMaintenanceTimeInterval();
@@ -221,7 +221,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalNetWeight();
     } catch (IllegalArgumentException e) {
-      this.saveTotalNetWeight(1L);
+      this.saveTotalNetWeight(0L);
     }
 
     try {
@@ -273,23 +273,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public static void destroy() {
     instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static DynamicPropertiesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (DynamicPropertiesStore.class) {
-        if (instance == null) {
-          instance = new DynamicPropertiesStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   public String intArrayToString(int[] a) {

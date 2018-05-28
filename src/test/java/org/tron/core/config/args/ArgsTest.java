@@ -35,7 +35,7 @@ public class ArgsTest {
     Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
 
     Args args = Args.getInstance();
-    Assert.assertEquals("configFile-test", args.getStorage().getDirectory());
+    Assert.assertEquals("database", args.getStorage().getDbDirectory());
 
     Assert.assertEquals(11, args.getSeedNode().getIpList().size());
 
