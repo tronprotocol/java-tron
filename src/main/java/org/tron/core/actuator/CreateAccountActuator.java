@@ -29,7 +29,7 @@ public class CreateAccountActuator extends AbstractActuator {
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
           dbManager.getHeadBlockTimeStamp());
       dbManager.getAccountStore()
-          .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
+          .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -63,15 +63,21 @@ public class CreateAccountActuator extends AbstractActuator {
 //    if (contract.getAccountName().isEmpty()) {
 //      throw new ContractValidateException("AccountName is null");
 //    }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
-    if (contract.getType() == null) {
-      throw new ContractValidateException("Type is null");
+    byte[] accountAddress = contract.getAccountAddress().toByteArray();
+    if (!Wallet.addressValid(accountAddress)) {
+      throw new ContractValidateException("Invalid account address");
     }
 
-    if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+//    if (contract.getType() == null) {
+//      throw new ContractValidateException("Type is null");
+//    }
+
+    if (dbManager.getAccountStore().has(accountAddress)) {
       throw new ContractValidateException("Account has existed");
     }
 
