@@ -311,6 +311,7 @@ public class RpcApiService implements Service {
    * WalletExtensionApi.
    */
   private class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
+
     @Override
     public void getTransactionsByTimestamp(TimePaginatedMessage request, StreamObserver<TransactionList> responseObserver) {
       TimeMessage timeMessage = request.getTimeMessage();
