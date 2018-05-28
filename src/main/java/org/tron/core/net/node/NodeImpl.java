@@ -772,7 +772,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         getActivePeer().stream()
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
-            .forEach(p -> updateBlockWeBothHave(peer, block));
+            .forEach(p -> updateBlockWeBothHave(p, block));
 
         broadcast(new BlockMessage(block));
 
