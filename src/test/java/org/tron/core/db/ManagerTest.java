@@ -24,6 +24,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -86,7 +87,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -214,7 +215,7 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, ValidateBandwidthException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException,
-      TaposException {
+      TaposException, BadNumberBlockException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().dbSource.allKeys().size();
     System.out.print("block store size:" + size + "\n");
