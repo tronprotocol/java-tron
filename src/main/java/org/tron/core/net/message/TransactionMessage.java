@@ -24,6 +24,8 @@ public class TransactionMessage extends TronMessage {
     this.data = trx.toByteArray();
   }
 
+
+
   @Override
   public String toString() {
     return new StringBuilder().append(super.toString())

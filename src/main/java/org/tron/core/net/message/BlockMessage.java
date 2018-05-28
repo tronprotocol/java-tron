@@ -1,6 +1,5 @@
 package org.tron.core.net.message;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -8,21 +7,13 @@ import org.tron.core.exception.BadItemException;
 
 public class BlockMessage extends TronMessage {
 
-  //private Block block;
-
   private BlockCapsule block;
 
-  public BlockMessage(byte[] data) throws InvalidProtocolBufferException, BadItemException {
+  public BlockMessage(byte[] data) throws BadItemException {
     this.type = MessageTypes.BLOCK.asByte();
     this.data = data;
     this.block = new BlockCapsule(data);
   }
-
-//  public BlockMessage(Block block) {
-//    this.block = block;
-//    this.type = MessageTypes.BLOCK.asByte();
-//    this.data = block.toByteArray();
-//  }
 
   public BlockMessage(BlockCapsule block) {
     data = block.getData();
@@ -53,10 +44,6 @@ public class BlockMessage extends TronMessage {
   public BlockId getBlockId() {
     return getBlockCapsule().getBlockId();
   }
-
-//  public Block getBlock() {
-//    return block;
-//  }
 
   public BlockCapsule getBlockCapsule() {
     return block;

@@ -163,7 +163,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockCapsule(Block block) {
     this.block = block;
- //   initTxs();
+    initTxs();
   }
 
   public BlockCapsule(byte[] data) throws BadItemException {
@@ -171,7 +171,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       this.block = Block.parseFrom(data);
       initTxs();
     } catch (InvalidProtocolBufferException e) {
-      throw new BadItemException();
+      throw new BadItemException("Block proto data parse exception");
     }
   }
 
