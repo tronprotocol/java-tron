@@ -1,10 +1,8 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-
 import java.io.File;
 import java.util.Random;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -76,7 +74,6 @@ public class TransactionStoreTest {
    */
   private AccountCreateContract getContract(String name, String address) {
     return AccountCreateContract.newBuilder()
-        .setAccountName(ByteString.copyFromUtf8(name))
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
         .build();
   }

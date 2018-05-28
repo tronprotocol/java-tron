@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -31,15 +32,14 @@ public class CreateAccountActuatorTest {
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_CreateAccount_test";
-  private static final String ACCOUNT_NAME_FRIST = "ownerF";
-  private static final String OWNER_ADDRESS_FRIST;
+  private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS_FRIST =
+    OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -68,14 +68,14 @@ public class CreateAccountActuatorTest {
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
             AccountType.AssetIssue);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
   }
 
-  private Any getContract(String name, String address) {
+  private Any getContract(String ownerAddress, String accountAddress) {
     return Any.pack(
         Contract.AccountCreateContract.newBuilder()
-            .setAccountName(ByteString.copyFromUtf8(name))
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+            .setAccountAddress(ByteString.copyFrom(ByteArray.fromHexString(accountAddress)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .build());
   }
 
@@ -85,19 +85,21 @@ public class CreateAccountActuatorTest {
   @Test
   public void firstCreateAccount() {
     CreateAccountActuator actuator =
-        new CreateAccountActuator(getContract(ACCOUNT_NAME_FRIST, OWNER_ADDRESS_FRIST), dbManager);
+        new CreateAccountActuator(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST),
+            dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FRIST));
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
       Assert.assertNotNull(accountCapsule);
       Assert.assertEquals(
-          accountCapsule.getInstance().getAccountName(),
-          ByteString.copyFromUtf8(ACCOUNT_NAME_FRIST));
+          StringUtil.createReadableString(accountCapsule.getAddress()),
+          OWNER_ADDRESS_FIRST);
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -111,7 +113,7 @@ public class CreateAccountActuatorTest {
   public void secondCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(
-            getContract(ACCOUNT_NAME_SECOND, OWNER_ADDRESS_SECOND), dbManager);
+            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -122,8 +124,8 @@ public class CreateAccountActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
       Assert.assertNotNull(accountCapsule);
       Assert.assertEquals(
-          accountCapsule.getInstance().getAccountName(),
-          ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND));
+          accountCapsule.getAddress(),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
