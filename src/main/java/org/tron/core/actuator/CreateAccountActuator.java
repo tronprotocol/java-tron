@@ -16,15 +16,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuator extends AbstractActuator {
 
-  @Deprecated
-    //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
     long fee = calcFee();
@@ -45,8 +41,6 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
@@ -66,9 +60,9 @@ public class CreateAccountActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (contract.getAccountName().isEmpty()) {
-      throw new ContractValidateException("AccountName is null");
-    }
+//    if (contract.getAccountName().isEmpty()) {
+//      throw new ContractValidateException("AccountName is null");
+//    }
     if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
@@ -85,15 +79,11 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(AccountCreateContract.class).getOwnerAddress();
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public long calcFee() {
     return 0;
   }
