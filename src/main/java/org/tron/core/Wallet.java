@@ -363,6 +363,8 @@ public class Wallet {
 
     long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
@@ -374,6 +376,8 @@ public class Wallet {
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
         .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
