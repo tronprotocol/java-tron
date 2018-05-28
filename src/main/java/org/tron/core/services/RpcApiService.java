@@ -103,11 +103,11 @@ public class RpcApiService implements Service {
   public void start() {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-              .addService(new DatabaseApi());
+          .addService(new DatabaseApi());
       Args args = Args.getInstance();
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-                .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
       }
       if (args.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(new WalletSolidityApi());
@@ -140,15 +140,15 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
-                                  io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
+        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
       long headBlockNum = dbManager.getDynamicPropertiesStore()
-              .getLatestBlockHeaderNumber();
+          .getLatestBlockHeaderNumber();
       byte[] blockHeaderHash = dbManager.getDynamicPropertiesStore()
-              .getLatestBlockHeaderHash().getBytes();
+          .getLatestBlockHeaderHash().getBytes();
       BlockReference ref = BlockReference.newBuilder()
-              .setBlockHash(ByteString.copyFrom(blockHeaderHash))
-              .setBlockNum(headBlockNum)
-              .build();
+          .setBlockHash(ByteString.copyFrom(blockHeaderHash))
+          .setBlockNum(headBlockNum)
+          .build();
       responseObserver.onNext(ref);
       responseObserver.onCompleted();
     }
@@ -179,10 +179,10 @@ public class RpcApiService implements Service {
 
     @Override
     public void getDynamicProperties(EmptyMessage request,
-                                     StreamObserver<DynamicProperties> responseObserver) {
+        StreamObserver<DynamicProperties> responseObserver) {
       DynamicProperties.Builder builder = DynamicProperties.newBuilder();
       builder.setLastSolidityBlockNum(
-              dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
       DynamicProperties dynamicProperties = builder.build();
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
@@ -221,14 +221,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueList(EmptyMessage request,
-                                  StreamObserver<AssetIssueList> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(walletSolidity.getAssetIssueList());
       responseObserver.onCompleted();
     }
 
     @Override
     public void getAssetIssueListByTimestamp(NumberMessage request,
-                                             StreamObserver<AssetIssueList> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
 
       long timestamp = request.getNum();
       if (timestamp > 0) {
@@ -242,7 +242,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByAccount(Account request,
-                                       StreamObserver<AssetIssueList> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
 
       ByteString address = request.getAddress();
       if (null != address) {
@@ -256,7 +256,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByName(BytesMessage request,
-                                    StreamObserver<AssetIssueContract> responseObserver) {
+        StreamObserver<AssetIssueContract> responseObserver) {
       ByteString name = request.getValue();
       if (null != name) {
         AssetIssueContract reply = walletSolidity.getAssetIssueByName(name);
@@ -287,14 +287,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void totalTransaction(EmptyMessage request,
-                                 StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(walletSolidity.totalTransaction());
       responseObserver.onCompleted();
     }
 
     @Override
     public void getTransactionById(BytesMessage request,
-                                   StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
         Transaction reply = walletSolidity.getTransactionById(id);
@@ -323,7 +323,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       } else {
         TransactionList reply = walletSolidity
-                .getTransactionsByTimestamp(beginTime, endTime, offset, limit);
+            .getTransactionsByTimestamp(beginTime, endTime, offset, limit);
         responseObserver.onNext(reply);
       }
       responseObserver.onCompleted();
@@ -348,7 +348,7 @@ public class RpcApiService implements Service {
       long limit = request.getLimit();
       if (null != thisAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-                .getTransactionsFromThis(thisAddress, offset, limit);
+            .getTransactionsFromThis(thisAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -363,7 +363,7 @@ public class RpcApiService implements Service {
       long limit = request.getLimit();
       if (null != toAddress && offset >= 0 && limit >= 0) {
         TransactionList reply = walletSolidity
-                .getTransactionsToThis(toAddress, offset, limit);
+            .getTransactionsToThis(toAddress, offset, limit);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -413,20 +413,20 @@ public class RpcApiService implements Service {
 
     @Override
     public void createTransaction(TransferContract request,
-                                  StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver
-                .onNext(createTransactionCapsule(request, ContractType.TransferContract).getInstance());
+            .onNext(createTransactionCapsule(request, ContractType.TransferContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
     }
 
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
-                                                        ContractType contractType) throws ContractValidateException {
+        ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
       List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
@@ -451,7 +451,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void broadcastTransaction(Transaction req,
-                                     StreamObserver<GrpcAPI.Return> responseObserver) {
+        StreamObserver<GrpcAPI.Return> responseObserver) {
       GrpcAPI.Return retur = wallet.broadcastTransaction(req);
       responseObserver.onNext(retur);
       responseObserver.onCompleted();
@@ -459,10 +459,10 @@ public class RpcApiService implements Service {
 
     @Override
     public void createAssetIssue(AssetIssueContract request,
-                                 StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
+            createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
@@ -472,10 +472,10 @@ public class RpcApiService implements Service {
 
     @Override
     public void unfreezeAsset(UnfreezeAssetContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
+            createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
@@ -491,35 +491,35 @@ public class RpcApiService implements Service {
 
       AccountCapsule account = dbManager.getAccountStore().get(ownerAddress.toByteArray());
       Preconditions.checkNotNull(account,
-              "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
+          "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
       Preconditions.checkArgument(account.getTronPower() < votesCount,
-              "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
+          "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         WitnessCapsule witness = dbManager.getWitnessStore()
-                .get(voteAddress.toByteArray());
+            .get(voteAddress.toByteArray());
         String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
 
         Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(vote.getVoteCount() <= 0,
-                "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
-                        .getVoteCount() + "] <= 0");
+            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
+                .getVoteCount() + "] <= 0");
       });
     }
 
     @Override
     public void voteWitnessAccount(VoteWitnessContract request,
-                                   StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.VoteWitnessContract).getInstance());
+            createTransactionCapsule(request, ContractType.VoteWitnessContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -527,13 +527,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void createWitness(WitnessCreateContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
+            createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -542,13 +542,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void updateWitness(Contract.WitnessUpdateContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
+            createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -556,13 +556,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void updateAccount(Contract.AccountUpdateContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.AccountUpdateContract).getInstance());
+            createTransactionCapsule(request, ContractType.AccountUpdateContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -570,14 +570,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void updateAsset(Contract.UpdateAssetContract request,
-                            StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request,
-                        ContractType.UpdateAssetContract).getInstance());
+            createTransactionCapsule(request,
+                ContractType.UpdateAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -585,13 +585,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.FreezeBalanceContract).getInstance());
+            createTransactionCapsule(request, ContractType.FreezeBalanceContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -599,13 +599,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void unfreezeBalance(Contract.UnfreezeBalanceContract request,
-                                StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.UnfreezeBalanceContract).getInstance());
+            createTransactionCapsule(request, ContractType.UnfreezeBalanceContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -613,13 +613,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void withdrawBalance(Contract.WithdrawBalanceContract request,
-                                StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
-                createTransactionCapsule(request, ContractType.WithdrawBalanceContract).getInstance());
+            createTransactionCapsule(request, ContractType.WithdrawBalanceContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -650,13 +650,13 @@ public class RpcApiService implements Service {
       NodeList.Builder nodeListBuilder = NodeList.newBuilder();
 
       nodeHandlerMap.entrySet().stream()
-              .forEach(v -> {
-                org.tron.common.overlay.discover.Node node = v.getValue().getNode();
-                nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                        Address.newBuilder()
-                                .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                                .setPort(node.getPort())));
-              });
+          .forEach(v -> {
+            org.tron.common.overlay.discover.Node node = v.getValue().getNode();
+            nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+                Address.newBuilder()
+                    .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                    .setPort(node.getPort())));
+          });
 
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
@@ -664,14 +664,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void transferAsset(TransferAssetContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver
-                .onNext(createTransactionCapsule(request, ContractType.TransferAssetContract)
-                        .getInstance());
+            .onNext(createTransactionCapsule(request, ContractType.TransferAssetContract)
+                .getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -679,14 +679,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void participateAssetIssue(ParticipateAssetIssueContract request,
-                                      StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver
-                .onNext(createTransactionCapsule(request, ContractType.ParticipateAssetIssueContract)
-                        .getInstance());
+            .onNext(createTransactionCapsule(request, ContractType.ParticipateAssetIssueContract)
+                .getInstance());
       } catch (ContractValidateException e) {
         responseObserver
-                .onNext(null);
+            .onNext(null);
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
@@ -694,7 +694,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByAccount(Account request,
-                                       StreamObserver<AssetIssueList> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
       ByteString fromBs = request.getAddress();
 
       if (fromBs != null) {
@@ -707,7 +707,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAccountNet(Account request,
-                              StreamObserver<AccountNetMessage> responseObserver) {
+        StreamObserver<AccountNetMessage> responseObserver) {
       ByteString fromBs = request.getAddress();
 
       if (fromBs != null) {
@@ -720,7 +720,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByName(BytesMessage request,
-                                    StreamObserver<AssetIssueContract> responseObserver) {
+        StreamObserver<AssetIssueContract> responseObserver) {
       ByteString asertName = request.getValue();
 
       if (asertName != null) {
@@ -745,7 +745,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBlockByLimitNext(BlockLimit request,
-                                    StreamObserver<BlockList> responseObserver) {
+        StreamObserver<BlockList> responseObserver) {
       long startNum = request.getStartNum();
       long endNum = request.getEndNum();
 
@@ -759,7 +759,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBlockByLatestNum(NumberMessage request,
-                                    StreamObserver<BlockList> responseObserver) {
+        StreamObserver<BlockList> responseObserver) {
       long getNum = request.getNum();
 
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
@@ -772,7 +772,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getTransactionById(BytesMessage request,
-                                   StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       ByteString transactionId = request.getValue();
 
       if (Objects.nonNull(transactionId)) {
@@ -785,21 +785,21 @@ public class RpcApiService implements Service {
 
     @Override
     public void totalTransaction(EmptyMessage request,
-                                 StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(wallet.totalTransaction());
       responseObserver.onCompleted();
     }
 
     @Override
     public void getNextMaintenanceTime(EmptyMessage request,
-                                       StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(wallet.getNextMaintenanceTime());
       responseObserver.onCompleted();
     }
 
     @Override
     public void getAssetIssueList(EmptyMessage request,
-                                  StreamObserver<AssetIssueList> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(wallet.getAssetIssueList());
       responseObserver.onCompleted();
     }

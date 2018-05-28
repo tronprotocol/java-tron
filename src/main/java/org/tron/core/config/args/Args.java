@@ -268,19 +268,19 @@ public class Args {
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
-            .filter(StringUtils::isNotEmpty)
-            .orElse(config.getString("storage.db.directory")));
+        .filter(StringUtils::isNotEmpty)
+        .orElse(config.getString("storage.db.directory")));
 
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
-            .filter(StringUtils::isNotEmpty)
-            .orElse(config.getString("storage.index.directory")));
+        .filter(StringUtils::isNotEmpty)
+        .orElse(config.getString("storage.index.directory")));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
-            .filter(seedNode -> 0 != seedNode.size())
-            .orElse(config.getStringList("seed.node.ip.list")));
+        .filter(seedNode -> 0 != seedNode.size())
+        .orElse(config.getStringList("seed.node.ip.list")));
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -300,90 +300,90 @@ public class Args {
     }
 
     INSTANCE.needSyncCheck =
-            config.hasPath("block.needSyncCheck") && config.getBoolean("block.needSyncCheck");
+        config.hasPath("block.needSyncCheck") && config.getBoolean("block.needSyncCheck");
 
     INSTANCE.nodeDiscoveryEnable =
-            config.hasPath("node.discovery.enable") && config.getBoolean("node.discovery.enable");
+        config.hasPath("node.discovery.enable") && config.getBoolean("node.discovery.enable");
 
     INSTANCE.nodeDiscoveryPersist =
-            config.hasPath("node.discovery.persist") && config.getBoolean("node.discovery.persist");
+        config.hasPath("node.discovery.persist") && config.getBoolean("node.discovery.persist");
 
     INSTANCE.nodeConnectionTimeout =
-            config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
-                    : 0;
+        config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
+            : 0;
 
     INSTANCE.nodeActive = nodeActive(config);
 
     INSTANCE.nodeChannelReadTimeout =
-            config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
-                    : 0;
+        config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
+            : 0;
 
     INSTANCE.nodeMaxActiveNodes =
-            config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
+        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
 
     INSTANCE.minParticipationRate =
-            config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
-                    : 0;
+        config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
+            : 0;
 
     INSTANCE.nodeListenPort =
-            config.hasPath("node.listen.port") ? config.getInt("node.listen.port") : 0;
+        config.hasPath("node.listen.port") ? config.getInt("node.listen.port") : 0;
 
     bindIp(config);
     externalIp(config);
 
     INSTANCE.nodeDiscoveryPublicHomeNode =
-            config.hasPath("node.discovery.public.home.node") && config
-                    .getBoolean("node.discovery.public.home.node");
+        config.hasPath("node.discovery.public.home.node") && config
+            .getBoolean("node.discovery.public.home.node");
 
     INSTANCE.nodeP2pPingInterval =
-            config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
+        config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
 //
 //    INSTANCE.syncNodeCount =
 //        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
 
     INSTANCE.nodeP2pVersion =
-            config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
+        config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
 
     INSTANCE.rpcPort =
-            config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
+        config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
     INSTANCE.rpcThreadNum =
-            config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
-                    : Runtime.getRuntime().availableProcessors() / 2;
+        config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
+            : Runtime.getRuntime().availableProcessors() / 2;
 
     INSTANCE.maintenanceTimeInterval =
-            config.hasPath("block.maintenanceTimeInterval") ? config
-                    .getInt("block.maintenanceTimeInterval") : 21600000L;
+        config.hasPath("block.maintenanceTimeInterval") ? config
+            .getInt("block.maintenanceTimeInterval") : 21600000L;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
-            .getInt("node.tcpNettyWorkThreadNum") : 0;
+        .getInt("node.tcpNettyWorkThreadNum") : 0;
 
     INSTANCE.udpNettyWorkThreadNum = config.hasPath("node.udpNettyWorkThreadNum") ? config
-            .getInt("node.udpNettyWorkThreadNum") : 1;
+        .getInt("node.udpNettyWorkThreadNum") : 1;
 
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr =
-              config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
+          config.hasPath("node.trustNode") ? config.getString("node.trustNode") : null;
     }
 
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
-            .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
     INSTANCE.walletExtensionApi =
-            config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+        config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
   }
 
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
-            .map(Args::createWitness)
-            .collect(Collectors.toCollection(ArrayList::new));
+        .map(Args::createWitness)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private static Witness createWitness(final ConfigObject witnessAccount) {
     final Witness witness = new Witness();
     witness.setAddress(
-            Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
+        Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;
@@ -391,8 +391,8 @@ public class Args {
 
   private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.assets").stream()
-            .map(Args::createAccount)
-            .collect(Collectors.toCollection(ArrayList::new));
+        .map(Args::createAccount)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private static Account createAccount(final ConfigObject asset) {
@@ -450,7 +450,7 @@ public class Args {
       INSTANCE.privateKey = config.getString("private.key");
       if (INSTANCE.privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
         throw new RuntimeException(
-                "The peer.privateKey needs to be Hex encoded and 32 byte length");
+            "The peer.privateKey needs to be Hex encoded and 32 byte length");
       }
     } else {
       INSTANCE.privateKey = getGeneratedNodePrivateKey();
@@ -461,8 +461,8 @@ public class Args {
     String nodeId;
     try {
       File file = new File(
-              INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDbDirectory(),
-              "nodeId.properties");
+          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDbDirectory(),
+          "nodeId.properties");
       Properties props = new Properties();
       if (file.canRead()) {
         try (Reader r = new FileReader(file)) {
@@ -475,7 +475,7 @@ public class Args {
         file.getParentFile().mkdirs();
         try (Writer w = new FileWriter(file)) {
           props.store(w,
-                  "Generated NodeID. To use your own nodeId please refer to 'peer.privateKey' config option.");
+              "Generated NodeID. To use your own nodeId please refer to 'peer.privateKey' config option.");
         }
         logger.info("New nodeID generated: " + props.getProperty("nodeId"));
         logger.info("Generated nodeID and its private key stored in " + file);
@@ -489,7 +489,7 @@ public class Args {
 
   private static void bindIp(final com.typesafe.config.Config config) {
     if (!config.hasPath("node.discovery.bind.ip") || config.getString("node.discovery.bind.ip")
-            .trim().isEmpty()) {
+        .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
         try {
@@ -508,12 +508,12 @@ public class Args {
 
   private static void externalIp(final com.typesafe.config.Config config) {
     if (!config.hasPath("node.discovery.external.ip") || config
-            .getString("node.discovery.external.ip").trim().isEmpty()) {
+        .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         try {
           BufferedReader in = new BufferedReader(new InputStreamReader(
-                  new URL("http://checkip.amazonaws.com").openStream()));
+              new URL("http://checkip.amazonaws.com").openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
@@ -527,8 +527,8 @@ public class Args {
         } catch (IOException e) {
           INSTANCE.nodeExternalIp = INSTANCE.nodeDiscoveryBindIp;
           logger.warn(
-                  "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
-                          + e);
+              "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
+                  + e);
         }
       }
     } else {
