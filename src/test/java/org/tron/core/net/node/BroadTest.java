@@ -24,7 +24,6 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -254,7 +253,7 @@ public class BroadTest {
           peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
         }
       }).start();
-      Thread.sleep(1000);
+      Thread.sleep(5000);
 //      List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
 //      int tryTimes = 0;
 //      while (CollectionUtils.isEmpty(newChanelList) && ++tryTimes < 10) {
