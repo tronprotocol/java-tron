@@ -154,7 +154,6 @@ public abstract class BaseNetTest {
 
   @After
   public void destroy() {
-    appT.shutdown();
     executorService.shutdownNow();
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
