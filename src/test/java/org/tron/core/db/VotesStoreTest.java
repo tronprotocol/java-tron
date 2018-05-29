@@ -38,7 +38,7 @@ public class VotesStoreTest {
   public static void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
-    WitnessStore.destory();
+    WitnessStore.destroy();
     context.destroy();
   }
 

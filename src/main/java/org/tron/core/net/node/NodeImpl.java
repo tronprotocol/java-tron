@@ -331,7 +331,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   /**
    * broadcast msg.
    *
-   * @param msg msg to bradcast
+   * @param msg msg to broadcast
    */
   public void broadcast(Message msg) {
     InventoryType type;
@@ -1239,7 +1239,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setSyncChainRequested(
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (TronException e) { //TODO: use tron excpetion here
+    } catch (TronException e) { //TODO: use tron exception here
       logger.info(e.getMessage());
       logger.debug(e.getMessage(), e);
       disconnectPeer(peer, ReasonCode.FORKED);//TODO: unlink?

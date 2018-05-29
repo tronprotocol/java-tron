@@ -44,10 +44,10 @@ public class VoteWitnessActuatorTest {
   private static final String WITNESS_NAME = "witness";
   private static final String WITNESS_ADDRESS;
   private static final String URL = "https://tron.network";
-  private static final String ADDRESS_INVALIATE = "aaaa";
+  private static final String ADDRESS_INVALIDATE = "aaaa";
   private static final String WITNESS_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_NOACCOUNT;
-  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
+  private static final String OWNER_ADDRESS_BALANCENOTSUFFICIENT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -58,7 +58,7 @@ public class VoteWitnessActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
     OWNER_ADDRESS_NOACCOUNT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aae";
-    OWNER_ADDRESS_BALANCENOTSUFFIENT =
+    OWNER_ADDRESS_BALANCENOTSUFFICIENT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
   }
 
@@ -171,7 +171,7 @@ public class VoteWitnessActuatorTest {
   @Test
   public void invalidateAddress() {
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(ADDRESS_INVALIATE, WITNESS_ADDRESS, 1L),
+        new VoteWitnessActuator(getContract(ADDRESS_INVALIDATE, WITNESS_ADDRESS, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -267,7 +267,7 @@ public class VoteWitnessActuatorTest {
     dbManager.getAccountStore()
         .put(accountSecondCapsule.getAddress().toByteArray(), accountSecondCapsule);
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALIATE, 1L),
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALIDATE, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -444,13 +444,13 @@ public class VoteWitnessActuatorTest {
     AccountCapsule balanceNotSufficientCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("balanceNotSufficient"),
-            StringUtil.hexString2ByteString(OWNER_ADDRESS_BALANCENOTSUFFIENT),
+            StringUtil.hexString2ByteString(OWNER_ADDRESS_BALANCENOTSUFFICIENT),
             AccountType.Normal,
             500L);
     dbManager.getAccountStore()
         .put(balanceNotSufficientCapsule.getAddress().toByteArray(), balanceNotSufficientCapsule);
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS_BALANCENOTSUFFIENT, WITNESS_ADDRESS, 1L),
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS_BALANCENOTSUFFICIENT, WITNESS_ADDRESS, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -460,7 +460,7 @@ public class VoteWitnessActuatorTest {
           + balanceNotSufficientCapsule.getTronPower() + "]");
     } catch (ContractValidateException e) {
       Assert.assertEquals(0, dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFIENT)).getVotesList().size());
+          .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFICIENT)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert
           .assertEquals("The total number of votes[" + 1000000 + "] is greater than the tronPower["

@@ -78,7 +78,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
-   * construct account from AccountCreateContract and creatTime.
+   * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime) {
     this.account = Account.newBuilder()

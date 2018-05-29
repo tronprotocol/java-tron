@@ -48,7 +48,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
   private static WitnessStore instance;
 
-  public static void destory() {
+  public static void destroy() {
     instance = null;
   }
 

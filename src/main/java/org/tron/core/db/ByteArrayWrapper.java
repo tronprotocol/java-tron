@@ -30,7 +30,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
   private int hashCode = 0;
 
   /**
-   * construcor.
+   * constructor.
    */
   public ByteArrayWrapper(byte[] data) {
     if (data == null) {

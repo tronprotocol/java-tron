@@ -756,9 +756,9 @@ public class WalletClient {
                                                               long frozen_duration) {
         byte[] address = getAddress();
         Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
-        ByteString byteAddreess = ByteString.copyFrom(address);
+        ByteString byteAddress = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
+        builder.setOwnerAddress(byteAddress).setFrozenBalance(frozen_balance)
                 .setFrozenDuration(frozen_duration);
 
         return builder.build();
@@ -782,9 +782,9 @@ public class WalletClient {
         byte[] address = getAddress();
         Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
                 .newBuilder();
-        ByteString byteAddreess = ByteString.copyFrom(address);
+        ByteString byteAddress = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddreess);
+        builder.setOwnerAddress(byteAddress);
 
         return builder.build();
     }
@@ -807,9 +807,9 @@ public class WalletClient {
         byte[] address = getAddress();
         Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
                 .newBuilder();
-        ByteString byteAddreess = ByteString.copyFrom(address);
+        ByteString byteAddress = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddreess);
+        builder.setOwnerAddress(byteAddress);
 
         return builder.build();
     }
