@@ -1,27 +1,9 @@
 package org.tron.core.db.api;
 
-import static com.googlecode.cqengine.query.QueryFactory.ascending;
-import static com.googlecode.cqengine.query.QueryFactory.all;
-import static com.googlecode.cqengine.query.QueryFactory.and;
-import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
-import static com.googlecode.cqengine.query.QueryFactory.between;
-import static com.googlecode.cqengine.query.QueryFactory.descending;
-import static com.googlecode.cqengine.query.QueryFactory.equal;
-import static com.googlecode.cqengine.query.QueryFactory.greaterThan;
-import static com.googlecode.cqengine.query.QueryFactory.lessThan;
-import static com.googlecode.cqengine.query.QueryFactory.or;
-import static com.googlecode.cqengine.query.QueryFactory.orderBy;
-import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
-import static com.googlecode.cqengine.query.QueryFactory.threshold;
-import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
-import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.resultset.ResultSet;
-import java.util.Collections;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,6 +21,25 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
+
+import java.util.Collections;
+import java.util.List;
+
+import static com.googlecode.cqengine.query.QueryFactory.all;
+import static com.googlecode.cqengine.query.QueryFactory.and;
+import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
+import static com.googlecode.cqengine.query.QueryFactory.ascending;
+import static com.googlecode.cqengine.query.QueryFactory.between;
+import static com.googlecode.cqengine.query.QueryFactory.descending;
+import static com.googlecode.cqengine.query.QueryFactory.equal;
+import static com.googlecode.cqengine.query.QueryFactory.greaterThan;
+import static com.googlecode.cqengine.query.QueryFactory.lessThan;
+import static com.googlecode.cqengine.query.QueryFactory.or;
+import static com.googlecode.cqengine.query.QueryFactory.orderBy;
+import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
+import static com.googlecode.cqengine.query.QueryFactory.threshold;
+import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
+import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
 
 @Component
 @Slf4j

@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -13,30 +14,8 @@ import org.tron.core.capsule.BytesCapsule;
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
-  public AccountIndexStore(@Qualifier("account-index") String dbName) {
+  public AccountIndexStore(@Value("account-index") String dbName) {
     super(dbName);
-  }
-
-  private static AccountIndexStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-  public static AccountIndexStore create(String dbName) {
-    if (instance == null) {
-      synchronized (AccountIndexStore.class) {
-        if (instance == null) {
-          instance = new AccountIndexStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   public void put(AccountCapsule accountCapsule) {

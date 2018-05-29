@@ -129,6 +129,9 @@ public class AssetIssueActuator extends AbstractActuator {
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
     }
+    if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil.validAssetName(assetIssueContract.getAbbr().toByteArray())) {
+      throw new ContractValidateException("Invalid abbreviation for token");
+    }
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
       throw new ContractValidateException("Invalid url");
     }
@@ -165,6 +168,10 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (assetIssueContract.getNum() <= 0) {
       throw new ContractValidateException("Num must greater than 0!");
+    }
+
+    if (assetIssueContract.getPublicFreeAssetNetUsage() != 0) {
+      throw new ContractValidateException("PublicFreeAssetNetUsage must be 0!");
     }
 
     if (assetIssueContract.getFrozenSupplyCount()

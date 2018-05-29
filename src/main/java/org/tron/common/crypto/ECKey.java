@@ -1054,7 +1054,8 @@ public class ECKey implements Serializable {
     if (this == o) {
       return true;
     }
-    if (o == null || !(o instanceof ECKey)) {
+
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
 

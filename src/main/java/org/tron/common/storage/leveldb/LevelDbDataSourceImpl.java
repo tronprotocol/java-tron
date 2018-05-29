@@ -60,9 +60,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
    * constructor.
    */
   public LevelDbDataSourceImpl(String parentName, String name) {
-    parentName += Args.getInstance().getStorage().getDirectory();
-    this.parentName = parentName;
     this.dataBaseName = name;
+    this.parentName = Paths.get(
+            parentName,
+            Args.getInstance().getStorage().getDbDirectory()
+    ).toString();
   }
 
   @Override
@@ -79,7 +81,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      Options dbOptions = createDbOptions();
+      Options dbOptions = Args.getInstance().getStorage().getOptionsByDbName(dataBaseName);
 
       try {
         openDatabase(dbOptions);
@@ -109,6 +111,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  @Deprecated
   private Options createDbOptions() {
     Options dbOptions = new Options();
     dbOptions.createIfMissing(true);

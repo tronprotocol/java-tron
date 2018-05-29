@@ -65,8 +65,11 @@ public class Args {
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
 
-  @Parameter(names = {"--storage-directory"}, description = "Storage directory")
-  private String storageDirectory = "";
+  @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
+  private String storageDbDirectory = "";
+
+  @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
+  private String storageIndexDirectory = "";
 
   @Getter
   private Storage storage;
@@ -190,27 +193,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean getTransactionsFromThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsFromThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampCountFeature;
+  private boolean walletExtensionApi;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -218,8 +201,16 @@ public class Args {
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
-    INSTANCE.storageDirectory = "";
-    INSTANCE.storage = null;
+    INSTANCE.storageDbDirectory = "";
+    INSTANCE.storageIndexDirectory = "";
+
+    // FIXME: INSTANCE.storage maybe null ?
+    if (INSTANCE.storage != null) {
+      // WARNING: WILL DELETE DB STORAGE PATHS
+      INSTANCE.storage.deleteAllStoragePaths();
+      INSTANCE.storage = null;
+    }
+
     INSTANCE.overlay = null;
     INSTANCE.seedNode = null;
     INSTANCE.genesisBlock = null;
@@ -247,12 +238,7 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
-    INSTANCE.getTransactionsFromThisFeature = false;
-    INSTANCE.getTransactionsToThisFeature = false;
-    INSTANCE.getTransactionsFromThisCountFeature = false;
-    INSTANCE.getTransactionsToThisCountFeature = false;
-    INSTANCE.getTransactionsByTimestampFeature = false;
-    INSTANCE.getTransactionsByTimestampCountFeature = false;
+    INSTANCE.walletExtensionApi = false;
   }
 
   /**
@@ -281,9 +267,16 @@ public class Args {
     }
 
     INSTANCE.storage = new Storage();
-    INSTANCE.storage.setDirectory(Optional.ofNullable(INSTANCE.storageDirectory)
+    INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.directory")));
+        .orElse(config.getString("storage.db.directory")));
+
+    INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(config.getString("storage.index.directory")));
+
+    INSTANCE.storage.setPropertyMapFromConfig(config);
+
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
@@ -376,29 +369,8 @@ public class Args {
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
-    INSTANCE.getTransactionsFromThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
-
-    INSTANCE.getTransactionsToThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
-
-    INSTANCE.getTransactionsFromThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
-
-    INSTANCE.getTransactionsToThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
-
-    INSTANCE.getTransactionsByTimestampFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
-
-    INSTANCE.getTransactionsByTimestampCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
+    INSTANCE.walletExtensionApi =
+        config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
   }
 
 
@@ -434,6 +406,20 @@ public class Args {
 
   public static Args getInstance() {
     return INSTANCE;
+  }
+
+  /**
+   * Get storage path by name of database
+   *
+   * @param dbName name of database
+   * @return path of that database
+   */
+  public String getOutputDirectoryByDbName(String dbName) {
+    String path = storage.getPathByDbName(dbName);
+    if (!StringUtils.isBlank(path)) {
+      return path;
+    }
+    return getOutputDirectory();
   }
 
   /**
@@ -475,7 +461,7 @@ public class Args {
     String nodeId;
     try {
       File file = new File(
-          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDirectory(),
+          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDbDirectory(),
           "nodeId.properties");
       Properties props = new Properties();
       if (file.canRead()) {
@@ -506,8 +492,7 @@ public class Args {
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
-        try {
-          Socket s = new Socket("www.baidu.com", 80);
+        try (Socket s = new Socket("www.baidu.com", 80)) {
           INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
         } catch (IOException e) {
@@ -525,9 +510,8 @@ public class Args {
         .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
-        try {
-          BufferedReader in = new BufferedReader(new InputStreamReader(
-              new URL("http://checkip.amazonaws.com").openStream()));
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+            new URL("http://checkip.amazonaws.com").openStream()))) {
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
