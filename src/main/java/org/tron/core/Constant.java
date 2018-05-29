@@ -37,8 +37,8 @@ public class Constant {
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
-  public static final byte ADD_PRE_FIX_BYTE = (byte) 0xa0;   //a0 + address
-  public static final String ADD_PRE_FIX_STRING = "a0";
+  public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
+  public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
   public static final int ADDRESS_SIZE = 42;
 
   // config for transaction
