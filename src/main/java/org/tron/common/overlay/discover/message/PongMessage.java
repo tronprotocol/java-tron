@@ -14,13 +14,9 @@ public class PongMessage extends Message {
 
   private Discover.PongMessage pongMessage;
 
-  public PongMessage(byte[] data) {
+  public PongMessage(byte[] data) throws Exception{
     super(Message.PONG, data);
-    try {
-      this.pongMessage = Discover.PongMessage.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.info(e.getMessage(), e);
-    }
+    this.pongMessage = Discover.PongMessage.parseFrom(data);
   }
 
   public PongMessage(Node from) {

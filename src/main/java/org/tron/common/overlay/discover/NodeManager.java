@@ -64,7 +64,7 @@ public class NodeManager {
   Consumer<DiscoveryEvent> messageSender;
 
   NodeTable table;
-  public Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
+  private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
   final Node homeNode;
   private List<Node> bootNodes = new ArrayList<>();
 

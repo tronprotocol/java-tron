@@ -14,13 +14,9 @@ public class PingMessage extends Message {
 
   private Discover.PingMessage pingMessage;
 
-  public PingMessage(byte[] data) {
+  public PingMessage(byte[] data) throws Exception{
     super(Message.PING, data);
-    try {
-      this.pingMessage = Discover.PingMessage.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.info(e.getMessage(), e);
-    }
+    this.pingMessage = Discover.PingMessage.parseFrom(data);
   }
 
   public PingMessage(Node from, Node to) {

@@ -254,7 +254,7 @@ public class BroadTest {
           peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
         }
       }).start();
-      Thread.sleep(1000);
+      Thread.sleep(5000);
 //      List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
 //      int tryTimes = 0;
 //      while (CollectionUtils.isEmpty(newChanelList) && ++tryTimes < 10) {
