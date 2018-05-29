@@ -170,15 +170,7 @@ public class Wallet {
       logger.warn("Warning: Address is empty !!");
       return null;
     }
-    if (addressBase58.length() != Constant.BASE58CHECK_ADDRESS_SIZE) {
-      logger.warn(
-          "Warning: Base58 address length need " + Constant.BASE58CHECK_ADDRESS_SIZE + " but "
-              + addressBase58.length()
-              + " !!");
-      return null;
-    }
     byte[] address = decode58Check(addressBase58);
-
     if (address == null) {
       return null;
     }
