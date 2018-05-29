@@ -24,7 +24,6 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -234,6 +233,7 @@ public class BroadTest {
     }
   }
 
+  private static int trys = 0;
   private void prepare() {
     try {
       ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
@@ -241,10 +241,6 @@ public class BroadTest {
 
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
-
-//      ScheduledExecutorService mainWorker = ReflectUtils
-//          .getFieldValue(channelManager, "mainWorker");
-//      mainWorker.shutdownNow();
 
       Node node = new Node(
           "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
