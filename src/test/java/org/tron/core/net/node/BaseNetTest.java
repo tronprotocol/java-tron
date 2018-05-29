@@ -8,11 +8,14 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -40,22 +43,26 @@ public abstract class BaseNetTest {
   protected ChannelManager channelManager;
   protected SyncPool pool;
   protected Manager manager;
+  private Application appT;
 
   private String dbPath;
   private String dbDirectory;
   private String indexDirectory;
 
-  private static final int port = 17889;
+  private int port;
 
-  public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory) {
+  private ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+  public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory, int port) {
     this.dbPath = dbPath;
     this.dbDirectory = dbDirectory;
     this.indexDirectory = indexDirectory;
+    this.port = port;
   }
 
   @Before
   public void init() {
-    new Thread(new Runnable() {
+    executorService.execute(new Runnable() {
       @Override
       public void run() {
         logger.info("Full node running.");
@@ -80,7 +87,7 @@ public abstract class BaseNetTest {
           logger.info("Here is the help message.");
           return;
         }
-        Application appT = ApplicationFactory.create(context);
+        appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
@@ -101,7 +108,7 @@ public abstract class BaseNetTest {
         appT.startup();
         rpcApiService.blockUntilShutdown();
       }
-    }).start();
+    });
     int tryTimes = 1;
     while (tryTimes <= 30 && (node == null || peerClient == null
         || channelManager == null || pool == null)) {
@@ -117,7 +124,8 @@ public abstract class BaseNetTest {
     }
   }
 
-  protected Channel createClient() throws InterruptedException {
+  protected Channel createClient(ByteToMessageDecoder decoder)
+      throws InterruptedException {
     NioEventLoopGroup group = new NioEventLoopGroup(1);
     Bootstrap b = new Bootstrap();
     b.group(group).channel(NioSocketChannel.class)
@@ -133,6 +141,7 @@ public abstract class BaseNetTest {
                 .addLast("writeTimeoutHandler", new WriteTimeoutHandler(600, TimeUnit.SECONDS));
             ch.pipeline().addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
             ch.pipeline().addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
+            ch.pipeline().addLast("handshakeHandler", decoder);
 
             // be aware of channel closing
             ch.closeFuture();
@@ -145,7 +154,9 @@ public abstract class BaseNetTest {
 
   @After
   public void destroy() {
+    appT.shutdown();
+    executorService.shutdownNow();
     Args.clearParam();
-    FileUtil.deleteDir(new File("output-nodeImplTest"));
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

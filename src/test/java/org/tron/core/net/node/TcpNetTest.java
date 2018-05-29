@@ -1,12 +1,32 @@
 package org.tron.core.net.node;
 
+import static org.tron.core.net.message.MessageTypes.P2P_DISCONNECT;
+import static org.tron.core.net.message.MessageTypes.P2P_HELLO;
+import static org.tron.protos.Protocol.ReasonCode.FORKED;
+import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_CHAIN;
+import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_PROTOCOL;
+
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import java.net.InetAddress;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
+import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.P2pMessage;
+import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.args.Args;
 
 @Slf4j
 public class TcpNetTest extends BaseNetTest {
@@ -14,22 +34,100 @@ public class TcpNetTest extends BaseNetTest {
   private static final String dbPath = "output-nodeImplTest/tcpNet";
   private static final String dbDirectory = "db_tcp_test";
   private static final String indexDirectory = "index_tcp_test";
+  public static final int sleepTime = 1000;
+  private boolean finish = false;
+  private final static int tryTimes = 10;
+  private final static int port = 17899;
+
+  Node node = new Node(
+      "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
+
 
   public TcpNetTest() {
-    super(dbPath, dbDirectory, indexDirectory);
+    super(dbPath, dbDirectory, indexDirectory, port);
   }
 
-  @Test
+  private enum TestType {
+    normal, errorGenesisBlock, errorVersion, errorSolid
+  }
+
+  private class HandshakeHandler extends ByteToMessageDecoder {
+
+    private P2pMessageFactory messageFactory = new P2pMessageFactory();
+
+    private TestType testType;
+
+    public HandshakeHandler(TestType testType) {
+      this.testType = testType;
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out)
+        throws Exception {
+      byte[] encoded = new byte[buffer.readableBytes()];
+      buffer.readBytes(encoded);
+      P2pMessage msg = messageFactory.create(encoded);
+
+      logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+      switch (msg.getType()) {
+        case P2P_HELLO:
+          logger.info("HandshakeHandler success");
+          break;
+        case P2P_DISCONNECT:
+          logger.info("getReasonCode : {}", ((DisconnectMessage) msg).getReasonCode());
+          break;
+        default:
+          return;
+      }
+
+      switch (testType) {
+        case normal:
+          Assert.assertEquals(msg.getType(), P2P_HELLO);
+          break;
+        case errorGenesisBlock:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_CHAIN);
+          break;
+        case errorVersion:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_PROTOCOL);
+          break;
+        case errorSolid:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), FORKED);
+          break;
+        default:
+          break;
+      }
+
+      finish = true;
+    }
+  }
+
+  //Unpooled.wrappedBuffer(ArrayUtils.add("nihao".getBytes(), 0, (byte) 1))
+
+  //  @Test
   public void normalTest() throws InterruptedException {
-//    Thread.sleep(2000);
-    Channel channel = createClient();
-    org.tron.common.overlay.discover.Node node = new Node(
-        "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
+    Channel channel = createClient(new HandshakeHandler(TestType.normal));
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    channel.writeAndFlush(message.getSendData())
+        .addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            logger.info("send msg success");
+          } else {
+            logger.error("send msg fail", future.cause());
+          }
+        });
+    validResult(channel);
+  }
+
+  //  @Test
+  public void errorGenesisBlockIdTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.errorGenesisBlock));
     BlockId genesisBlockId = new BlockId();
-    HelloMessage message = new HelloMessage(node,
-        System.currentTimeMillis(), manager.getGenesisBlockId(), manager.getSolidBlockId(),
-        manager.getHeadBlockId());
-    //Unpooled.wrappedBuffer(ArrayUtils.add("nihao".getBytes(), 0, (byte) 1))
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), genesisBlockId,
+        manager.getSolidBlockId(), manager.getHeadBlockId());
     channel.writeAndFlush(message.getSendData())
         .addListener((ChannelFutureListener) future -> {
           if (future.isSuccess()) {
@@ -39,29 +137,65 @@ public class TcpNetTest extends BaseNetTest {
           }
         });
 
-    Thread.sleep(2000);
+    validResult(channel);
+  }
+
+  //  @Test
+  public void errorVersionTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.errorVersion));
+    Args.getInstance().setNodeP2pVersion(1);
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    Args.getInstance().setNodeP2pVersion(2);
+    channel.writeAndFlush(message.getSendData())
+        .addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            logger.info("send msg success");
+          } else {
+            logger.error("send msg fail", future.cause());
+          }
+        });
+
+    validResult(channel);
+  }
+
+  //  @Test
+  public void errorSolidBlockIdTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.errorSolid));
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
+        manager.getGenesisBlockId(), new BlockId(), manager.getHeadBlockId());
+    channel.writeAndFlush(message.getSendData())
+        .addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            logger.info("send msg success");
+          } else {
+            logger.error("send msg fail", future.cause());
+          }
+        });
+    validResult(channel);
+  }
+
+  private void validResult(Channel channel) throws InterruptedException {
+    int trys = 0;
+    while (!finish && ++trys < tryTimes) {
+      Thread.sleep(sleepTime);
+    }
+    Assert.assertEquals(finish, true);
+    finish = false;
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
+        .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
+    channel.close();
   }
 
   @Test
-  public void errorGenesisBlockIdTest() throws InterruptedException {
-//    Thread.sleep(2000);
-    Channel channel = createClient();
-    org.tron.common.overlay.discover.Node node = new Node(
-        "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
-    BlockId genesisBlockId = new BlockId();
-    HelloMessage message = new HelloMessage(node,
-        System.currentTimeMillis(), genesisBlockId, manager.getSolidBlockId(),
-        manager.getHeadBlockId());
-    //Unpooled.wrappedBuffer(ArrayUtils.add("nihao".getBytes(), 0, (byte) 1))
-    channel.writeAndFlush(message.getSendData())
-        .addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            logger.info("send msg success");
-          } else {
-            logger.error("send msg fail", future.cause());
-          }
-        });
-
-    Thread.sleep(2000);
+  public void testAll() throws InterruptedException {
+    logger.info("begin normal test ");
+    normalTest();
+    logger.info("begin errorGenesisBlockId test ");
+    errorGenesisBlockIdTest();
+    logger.info("begin errorVersion test ");
+    errorVersionTest();
+    logger.info("begin errorSolidBlockId test ");
+    errorSolidBlockIdTest();
   }
 }
