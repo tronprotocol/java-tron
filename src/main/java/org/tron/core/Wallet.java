@@ -268,7 +268,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
     } catch (ValidateBandwidthException e) {
-      logger.info("high freq" + e.getMessage());
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("high freq error"))
           .build();

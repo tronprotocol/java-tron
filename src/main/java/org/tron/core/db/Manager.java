@@ -589,7 +589,7 @@ public class Manager {
               applyBlock(item);
               tmpDialog.commit();
             } catch (ValidateBandwidthException e) {
-              logger.debug("high freq", e);
+              logger.debug(e.getMessage(), e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
