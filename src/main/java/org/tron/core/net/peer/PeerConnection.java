@@ -169,8 +169,12 @@ public class PeerConnection extends Channel {
   }
 
   public boolean isAdvInvFull() {
-    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND
-        + (MAX_INVENTORY_SIZE_IN_MINUTES + 1) * 60 / BLOCK_PRODUCED_INTERVAL;
+    if (advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND
+        + (MAX_INVENTORY_SIZE_IN_MINUTES + 1) * 60 / BLOCK_PRODUCED_INTERVAL) {
+      logger.info("adv is full!!!,  advObjSpreadToUs size:" + advObjSpreadToUs.size());
+      return true;
+    }
+    return false;
   }
 
   public boolean isBanned() {
