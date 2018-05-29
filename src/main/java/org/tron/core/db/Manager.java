@@ -459,9 +459,13 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
-      logger.debug(
-          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
+    try {
+      if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+        logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
+        throw new DupTransactionException("dup trans");
+      }
+    } catch (BadItemException e) {
+      logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
   }
