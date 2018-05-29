@@ -293,6 +293,20 @@ cd build/libs
 java -jar java-tron.jar
 ```
 
+### Running a Solidity Node
+
+* Use the executable JAR
+
+```bash
+cp src/main/resources/config.conf build/libs
+cd build/libs
+
+edit the file config.conf
+modify the 'trustNode', it should be a pair of ip and rpc port of a full node
+
+java -jar SolidityNode.jar -c config.conf
+```
+
 ### Running a Super Node
 
 * Use the executable JAR(Recommend the way)

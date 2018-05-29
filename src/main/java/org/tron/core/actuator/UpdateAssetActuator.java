@@ -102,11 +102,11 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
 
-    if ((newUrl != null) && (!TransactionUtil.validUrl(newUrl.toByteArray()))) {
+    if (!TransactionUtil.validUrl(newUrl.toByteArray())) {
       throw new ContractValidateException("Invalid url");
     }
 
-    if ((newDescription != null) && (!TransactionUtil.validAssetDescription(newDescription.toByteArray()))) {
+    if (!TransactionUtil.validAssetDescription(newDescription.toByteArray())) {
       throw new ContractValidateException("Invalid description");
     }
 

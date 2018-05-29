@@ -34,7 +34,6 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -57,6 +56,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -218,27 +218,27 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-  public PeersStore getPeersStore() {
-    return peersStore;
-  }
-
-  public void setPeersStore(PeersStore peersStore) {
-    this.peersStore = peersStore;
-  }
-
-  public Node getHomeNode() {
-    final Args args = Args.getInstance();
-    Set<Node> nodes = this.peersStore.get("home".getBytes());
-    if (nodes.size() > 0) {
-      return nodes.stream().findFirst().get();
-    } else {
-      Node node =
-          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
-      nodes.add(node);
-      this.peersStore.put("home".getBytes(), nodes);
-      return node;
-    }
-  }
+//  public PeersStore getPeersStore() {
+//    return peersStore;
+//  }
+//
+//  public void setPeersStore(PeersStore peersStore) {
+//    this.peersStore = peersStore;
+//  }
+//
+//  public Node getHomeNode() {
+//    final Args args = Args.getInstance();
+//    Set<Node> nodes = this.peersStore.get("home".getBytes());
+//    if (nodes.size() > 0) {
+//      return nodes.stream().findFirst().get();
+//    } else {
+//      Node node =
+//          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+//      nodes.add(node);
+//      this.peersStore.put("home".getBytes(), nodes);
+//      return node;
+//    }
+//  }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
@@ -622,7 +622,7 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
+      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -986,7 +986,10 @@ public class Manager {
       logger.info("contract not processed during DupTransactionException");
     } catch (TransactionExpirationException e) {
       logger.info("contract not processed during TransactionExpirationException");
+    } catch (BadNumberBlockException e) {
+      logger.info("generate block using wrong number");
     }
+
     return null;
   }
 

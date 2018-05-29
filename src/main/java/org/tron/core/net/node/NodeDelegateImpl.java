@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -20,6 +21,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -91,7 +93,10 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
+    } catch (BadNumberBlockException e) {
+      throw new BadBlockException("bad number exception," + e.getMessage());
     }
+
   }
 
 
@@ -145,9 +150,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-      return new LinkedList<BlockId>() {{
-        add(dbManager.getGenesisBlockId());
-      }};
+      return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);
