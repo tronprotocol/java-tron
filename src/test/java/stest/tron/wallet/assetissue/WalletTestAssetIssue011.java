@@ -45,7 +45,7 @@ public class WalletTestAssetIssue011 {
   private static String name = "testAssetIssue_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
-  private static final String updateMostLongName = "12345678901234567890123456789012";
+  private static final String updateMostLongName = "w2345678901234567890123456789012";
 
   Long freeAssetNetLimit = 10000L;
   Long publicFreeAssetNetLimit = 10000L;
