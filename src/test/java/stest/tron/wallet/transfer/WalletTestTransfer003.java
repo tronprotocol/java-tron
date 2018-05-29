@@ -1,3 +1,4 @@
+/*
 package stest.tron.wallet.transfer;
 
 import com.google.protobuf.ByteString;
@@ -78,7 +79,7 @@ public class WalletTestTransfer003 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetTransactionById() {
     long start = now - 16400000;
     long end = now;
@@ -181,3 +182,4 @@ public class WalletTestTransfer003 {
 }
 
 
+*/
