@@ -23,7 +23,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   @Override
-  public TransactionCapsule get (byte[] key) throws BadItemException {
+  public TransactionCapsule get(byte[] key) throws BadItemException {
     byte[] value = dbSource.getData(key);
     return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
   }

@@ -444,7 +444,7 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (BadItemException e) {}
-    if (Objects.nonNull(transactionCapsule)) {
+    if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
     }
     return null;
