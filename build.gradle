@@ -21,7 +21,8 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: "jacoco"
+apply plugin: 'jacoco'
+apply plugin: 'eclipse'
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
