@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.*;
+import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
@@ -26,6 +27,7 @@ public class GrpcClient {
     private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+    private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
 //  public GrpcClient(String host, int port) {
 //    channel = ManagedChannelBuilder.forAddress(host, port)
@@ -46,6 +48,7 @@ public class GrpcClient {
                     .usePlaintext(true)
                     .build();
             blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+            blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
         }
     }
 
@@ -216,7 +219,7 @@ public class GrpcClient {
         timePageMessage.setTimeMessage(timeMessage);
         timePageMessage.setOffset(offset);
         timePageMessage.setLimit(limit);
-        TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timePageMessage.build());
+        TransactionList transactionList = blockingStubExtension.getTransactionsByTimestamp(timePageMessage.build());
         return Optional.ofNullable(transactionList);
     }
 
@@ -226,7 +229,7 @@ public class GrpcClient {
         AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
         builder.setLimit(1000);
         builder.setOffset(0);
-        TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(builder.build());
+        TransactionList transactionList = blockingStubExtension.getTransactionsFromThis(builder.build());
         return Optional.ofNullable(transactionList);
     }
 
@@ -236,7 +239,7 @@ public class GrpcClient {
         AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
         builder.setLimit(1000);
         builder.setOffset(0);
-        TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(builder.build());
+        TransactionList transactionList = blockingStubExtension.getTransactionsToThis(builder.build());
         return Optional.ofNullable(transactionList);
     }
 
