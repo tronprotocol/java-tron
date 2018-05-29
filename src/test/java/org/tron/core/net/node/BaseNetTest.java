@@ -1,6 +1,19 @@
 package org.tron.core.net.node;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.DefaultMessageSizeEstimator;
+import io.netty.channel.FixedRecvByteBufAllocator;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -26,11 +39,13 @@ public abstract class BaseNetTest {
   protected PeerClient peerClient;
   protected ChannelManager channelManager;
   protected SyncPool pool;
+  protected Manager manager;
+
   private String dbPath;
   private String dbDirectory;
   private String indexDirectory;
 
-  private static boolean go = false;
+  private static final int port = 17889;
 
   public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory) {
     this.dbPath = dbPath;
@@ -53,7 +68,7 @@ public abstract class BaseNetTest {
             "config.conf"
         );
         Args cfgArgs = Args.getInstance();
-        cfgArgs.setNodeListenPort(17889);
+        cfgArgs.setNodeListenPort(port);
         cfgArgs.setNodeDiscoveryEnable(false);
         cfgArgs.getSeedNode().getIpList().clear();
         cfgArgs.setNeedSyncCheck(false);
@@ -78,8 +93,8 @@ public abstract class BaseNetTest {
         peerClient = context.getBean(PeerClient.class);
         channelManager = context.getBean(ChannelManager.class);
         pool = context.getBean(SyncPool.class);
-        Manager dbManager = context.getBean(Manager.class);
-        NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
+        manager = context.getBean(Manager.class);
+        NodeDelegate nodeDelegate = new NodeDelegateImpl(manager);
         node.setNodeDelegate(nodeDelegate);
         pool.init(node);
         
@@ -102,8 +117,30 @@ public abstract class BaseNetTest {
     }
   }
 
-  protected void buildClient() {
+  protected Channel createClient() throws InterruptedException {
+    NioEventLoopGroup group = new NioEventLoopGroup(1);
+    Bootstrap b = new Bootstrap();
+    b.group(group).channel(NioSocketChannel.class)
+        .handler(new ChannelInitializer<Channel>() {
+          @Override
+          protected void initChannel(Channel ch) throws Exception {
+            // limit the size of receiving buffer to 1024
+            ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
+            ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
+            ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
+            ch.pipeline()
+                .addLast("readTimeoutHandler", new ReadTimeoutHandler(600, TimeUnit.SECONDS))
+                .addLast("writeTimeoutHandler", new WriteTimeoutHandler(600, TimeUnit.SECONDS));
+            ch.pipeline().addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
+            ch.pipeline().addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
 
+            // be aware of channel closing
+            ch.closeFuture();
+          }
+        }).option(ChannelOption.SO_KEEPALIVE, true)
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
+        .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
+    return b.connect("127.0.0.1", port).sync().channel();
   }
 
   @After
