@@ -297,11 +297,11 @@ public class Args {
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.db.directory")));
+        .orElse(Storage.getDbDirectoryFromConfig(config)));
 
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.index.directory")));
+        .orElse(Storage.getIndexDirectoryFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
