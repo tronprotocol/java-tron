@@ -19,7 +19,7 @@ public class PongMessage extends Message {
     try {
       this.pongMessage = Discover.PongMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
+      logger.info(e.getMessage(), e);
     }
   }
 

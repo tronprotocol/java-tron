@@ -19,7 +19,7 @@ public class PingMessage extends Message {
     try {
       this.pingMessage = Discover.PingMessage.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
+      logger.info(e.getMessage(), e);
     }
   }
 

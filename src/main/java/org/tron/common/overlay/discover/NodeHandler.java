@@ -228,7 +228,7 @@ public class NodeHandler {
   }
 
   void sendPing() {
-    Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
+    Message ping = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
     waitForPong = true;
     pingSent = System.currentTimeMillis();
     sendMessage(ping);
@@ -262,7 +262,7 @@ public class NodeHandler {
   }
 
   void sendFindNode(byte[] target) {
-    Message findNode = new FindNodeMessage(node, target);
+    Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();
   }
