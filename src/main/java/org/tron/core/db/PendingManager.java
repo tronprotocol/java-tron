@@ -6,13 +6,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 
 @Slf4j
@@ -57,7 +57,7 @@ public class PendingManager implements AutoCloseable {
             logger.debug(e.getMessage(), e);
           } catch (ContractExeException e) {
             logger.debug(e.getMessage(), e);
-          } catch (ValidateBandwidthException e) {
+          } catch (AccountResourceInsufficientException e) {
             logger.debug(e.getMessage(), e);
           } catch (DupTransactionException e) {
             logger.debug("pending manager: dup trans", e);

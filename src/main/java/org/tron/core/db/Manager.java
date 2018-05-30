@@ -55,6 +55,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -69,7 +70,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -475,7 +475,7 @@ public class Manager {
    */
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException,
+      AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
@@ -501,7 +501,8 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx)
+      throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consumeBandwidth(trx);
   }
@@ -558,7 +559,7 @@ public class Manager {
   }
 
   private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -592,8 +593,8 @@ public class Manager {
             try (Dialog tmpDialog = revokingStore.buildDialog()) {
               applyBlock(item);
               tmpDialog.commit();
-            } catch (ValidateBandwidthException e) {
-              logger.debug("high freq", e);
+            } catch (AccountResourceInsufficientException e) {
+              logger.debug(e.getMessage(), e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -626,13 +627,13 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The siganature is not validated.");
+          logger.info("The signature is not validated.");
           // TODO: throw exception here.
           return;
         }
@@ -854,7 +855,7 @@ public class Manager {
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException,
+      AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException {
 
     if (trxCap == null) {
@@ -897,14 +898,13 @@ public class Manager {
   public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
-
   /**
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -930,9 +930,9 @@ public class Manager {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-      currentTrxSize += trx.getSerializedSize();
+      currentTrxSize += trx.getSerializedSize() + 2;
       // check the block size
-      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+      if (currentTrxSize  > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -1030,7 +1030,7 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, TaposException, TooBigTransactionException,
+      AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException {
     // todo set revoking db max size.
 
@@ -1233,7 +1233,7 @@ public class Manager {
     try {
       database.close();
     } catch (Exception e) {
-      System.err.println("faild to close  " + database.getName() + ". " + e);
+      System.err.println("failed to close  " + database.getName() + ". " + e);
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }

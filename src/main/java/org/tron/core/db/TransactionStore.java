@@ -50,7 +50,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return dbSource.getTotal();
   }
 
-
   @Override
   public Iterator<Entry<byte[], TransactionCapsule>> iterator() {
     return new TransactionIterator(dbSource.iterator());

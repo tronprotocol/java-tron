@@ -339,7 +339,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   /**
    * broadcast msg.
    *
-   * @param msg msg to bradcast
+   * @param msg msg to broadcast
    */
   public void broadcast(Message msg) {
     InventoryType type;

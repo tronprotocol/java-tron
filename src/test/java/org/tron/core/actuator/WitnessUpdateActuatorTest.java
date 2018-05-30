@@ -41,7 +41,7 @@ public class WitnessUpdateActuatorTest {
   private static final String OWNER_ADDRESS_NOTEXIST;
   private static final String URL = "https://tron.network";
   private static final String NewURL = "https://tron.org";
-  private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
+  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -135,7 +135,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void InvalidAddress() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-        getContract(OWNER_ADDRESS_INVALIATE, NewURL), dbManager);
+        getContract(OWNER_ADDRESS_INVALIDATE, NewURL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

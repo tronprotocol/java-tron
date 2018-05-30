@@ -18,6 +18,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
@@ -27,7 +28,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -93,8 +93,8 @@ public class SolidityNode {
           dbManager.pushBlock(blockCapsule);
           dbManager.getDynamicPropertiesStore()
               .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
-        } catch (ValidateBandwidthException e) {
-          throw new BadBlockException("validate Bandwidth exception");
+        } catch (AccountResourceInsufficientException e) {
+          throw new BadBlockException("validate AccountResource exception");
         } catch (ValidateScheduleException e) {
           throw new BadBlockException("validate schedule exception");
         } catch (ValidateSignatureException e) {
@@ -102,7 +102,7 @@ public class SolidityNode {
         } catch (ContractValidateException e) {
           throw new BadBlockException("ContractValidate exception");
         } catch (ContractExeException | UnLinkedBlockException e) {
-          throw new BadBlockException("Contract Exectute exception");
+          throw new BadBlockException("Contract Execute exception");
         } catch (TaposException e) {
           throw new BadBlockException("tapos exception");
         } catch (DupTransactionException e) {
