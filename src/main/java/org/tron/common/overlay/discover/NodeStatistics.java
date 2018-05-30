@@ -98,7 +98,7 @@ public class NodeStatistics {
     discoverReput +=
         min(discoverInNeighbours.get(), 1) * (discoverOutFind.get() == discoverInNeighbours.get() ? 50 : 1);
 
-    discoverReput += discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
+    discoverReput += (int)discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
 
     int reput = 0;
     reput += p2pHandShake.get() > 0 ? 20 : 0;
