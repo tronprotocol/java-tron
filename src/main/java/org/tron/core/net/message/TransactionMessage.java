@@ -2,24 +2,21 @@ package org.tron.core.net.message;
 
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol;
+import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction;
 
 public class TransactionMessage extends TronMessage {
 
-  private Transaction trx;
   private TransactionCapsule transactionCapsule;
 
-  public TransactionMessage(byte[] data) throws Exception {
-    this.type = MessageTypes.TRX.asByte();
+  public TransactionMessage(byte[] data) throws BadItemException {
+    this.transactionCapsule = new TransactionCapsule(data);
     this.data = data;
-    this.trx = Protocol.Transaction.parseFrom(data);
-    this.transactionCapsule = new TransactionCapsule(this.trx);
+    this.type = MessageTypes.TRX.asByte();
   }
 
   public TransactionMessage(Transaction trx) {
-    this.trx = trx;
-    this.transactionCapsule = new TransactionCapsule(this.trx);
+    this.transactionCapsule = new TransactionCapsule(trx);
     this.type = MessageTypes.TRX.asByte();
     this.data = trx.toByteArray();
   }
@@ -40,12 +37,7 @@ public class TransactionMessage extends TronMessage {
     return null;
   }
 
-  public Transaction getTransaction() {
-    return trx;
-  }
-
   public TransactionCapsule getTransactionCapsule() {
     return this.transactionCapsule;
   }
-
 }

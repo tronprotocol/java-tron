@@ -52,6 +52,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -438,13 +439,15 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    Transaction transaction = null;
-    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
-        .get(transactionId.toByteArray());
-    if (Objects.nonNull(transactionCapsule)) {
-      transaction = transactionCapsule.getInstance();
+    TransactionCapsule transactionCapsule = null;
+    try {
+      transactionCapsule = dbManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (BadItemException e) {}
+    if (transactionCapsule != null) {
+      return transactionCapsule.getInstance();
     }
-    return transaction;
+    return null;
   }
 
 }

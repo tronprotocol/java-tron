@@ -15,6 +15,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -63,9 +64,9 @@ public class ManagerTest {
     blockCapsule2 =
         new BlockCapsule(
             1,
-            ByteString.copyFrom(
+            Sha256Hash.wrap(ByteString.copyFrom(
                 ByteArray.fromHexString(
-                    "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")),
+                    "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
             0,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -92,7 +93,7 @@ public class ManagerTest {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            dbManager.getGenesisBlockId().getByteString(),
+            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -308,7 +309,7 @@ public class ManagerTest {
     WitnessController witnessController = dbManager.getWitnessController();
     ByteString witnessAddress =
         witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
-    BlockCapsule blockCapsule = new BlockCapsule(number, hash, time, witnessAddress);
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time, witnessAddress);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
