@@ -2,11 +2,13 @@ package org.tron.core.net.node;
 
 import static org.tron.core.net.message.MessageTypes.P2P_DISCONNECT;
 import static org.tron.core.net.message.MessageTypes.P2P_HELLO;
+import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
 import static org.tron.protos.Protocol.ReasonCode.FORKED;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_CHAIN;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_PROTOCOL;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -17,16 +19,21 @@ import java.util.Date;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.Block;
 
 @Slf4j
 public class TcpNetTest extends BaseNetTest {
@@ -48,7 +55,7 @@ public class TcpNetTest extends BaseNetTest {
   }
 
   private enum TestType {
-    normal, errorGenesisBlock, errorVersion, errorSolid
+    normal, errorGenesisBlock, errorVersion, errorSolid, repeatConnect
   }
 
   private class HandshakeHandler extends ByteToMessageDecoder {
@@ -96,6 +103,10 @@ public class TcpNetTest extends BaseNetTest {
           Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
           Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), FORKED);
           break;
+        case repeatConnect:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), DUPLICATE_PEER);
+          break;
         default:
           break;
       }
@@ -111,15 +122,8 @@ public class TcpNetTest extends BaseNetTest {
     Channel channel = createClient(new HandshakeHandler(TestType.normal));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
         manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
-    channel.writeAndFlush(message.getSendData())
-        .addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            logger.info("send msg success");
-          } else {
-            logger.error("send msg fail", future.cause());
-          }
-        });
-    validResult(channel);
+    sendMessage(channel, message);
+    validResultCloseConnect(channel);
   }
 
   //  @Test
@@ -128,16 +132,9 @@ public class TcpNetTest extends BaseNetTest {
     BlockId genesisBlockId = new BlockId();
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), genesisBlockId,
         manager.getSolidBlockId(), manager.getHeadBlockId());
-    channel.writeAndFlush(message.getSendData())
-        .addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            logger.info("send msg success");
-          } else {
-            logger.error("send msg fail", future.cause());
-          }
-        });
+    sendMessage(channel, message);
 
-    validResult(channel);
+    validResultCloseConnect(channel);
   }
 
   //  @Test
@@ -147,16 +144,9 @@ public class TcpNetTest extends BaseNetTest {
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
         manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     Args.getInstance().setNodeP2pVersion(2);
-    channel.writeAndFlush(message.getSendData())
-        .addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            logger.info("send msg success");
-          } else {
-            logger.error("send msg fail", future.cause());
-          }
-        });
+    sendMessage(channel, message);
 
-    validResult(channel);
+    validResultCloseConnect(channel);
   }
 
   //  @Test
@@ -164,6 +154,61 @@ public class TcpNetTest extends BaseNetTest {
     Channel channel = createClient(new HandshakeHandler(TestType.errorSolid));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
         manager.getGenesisBlockId(), new BlockId(), manager.getHeadBlockId());
+    sendMessage(channel, message);
+    validResultCloseConnect(channel);
+  }
+
+  //  @Test
+  public void repeatConnectTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.normal));
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    sendMessage(channel, message);
+    validResultUnCloseConnect();
+    Channel repeatChannel = createClient(new HandshakeHandler(TestType.repeatConnect));
+    sendMessage(repeatChannel, message);
+    validResultCloseConnect(repeatChannel);
+    clearConnect(channel);
+  }
+
+  //  @Test
+  public void unHandshakeTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.normal));
+    BlockMessage message = new BlockMessage(Block.getDefaultInstance());
+    List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+    sendMessage(channel, message);
+    List<PeerConnection> afterActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+    Assert.assertEquals(beforeActivePeers.size(), afterActivePeers.size());
+    clearConnect(channel);
+  }
+
+  //  @Test
+  public void errorMsgTest() throws InterruptedException {
+    Channel channel = createClient(new HandshakeHandler(TestType.normal));
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    sendMessage(channel, message);
+    validResultUnCloseConnect();
+    List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+    int beforeSize = beforeActivePeers.size();
+    logger.info("beforeSize : {}", beforeSize);
+    channel.writeAndFlush(Unpooled.wrappedBuffer(ArrayUtils.add("nihao".getBytes(), 0, (byte) 1)))
+        .addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            logger.info("send msg success");
+          } else {
+            logger.error("send msg fail", future.cause());
+          }
+        });
+    Thread.sleep(2000);
+    List<PeerConnection> afterActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+    int afterSize = afterActivePeers.size();
+    logger.info("afterSize : {}", afterSize);
+    Assert.assertEquals(beforeSize, afterSize + 1);
+    clearConnect(channel);
+  }
+
+  private void sendMessage(Channel channel, Message message) {
     channel.writeAndFlush(message.getSendData())
         .addListener((ChannelFutureListener) future -> {
           if (future.isSuccess()) {
@@ -172,16 +217,30 @@ public class TcpNetTest extends BaseNetTest {
             logger.error("send msg fail", future.cause());
           }
         });
-    validResult(channel);
   }
 
-  private void validResult(Channel channel) throws InterruptedException {
+  private void validResultCloseConnect(Channel channel) throws InterruptedException {
     int trys = 0;
     while (!finish && ++trys < tryTimes) {
       Thread.sleep(sleepTime);
     }
     Assert.assertEquals(finish, true);
     finish = false;
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
+        .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
+    channel.close();
+  }
+
+  private void validResultUnCloseConnect() throws InterruptedException {
+    int trys = 0;
+    while (!finish && ++trys < tryTimes) {
+      Thread.sleep(sleepTime);
+    }
+    Assert.assertEquals(finish, true);
+    finish = false;
+  }
+
+  private void clearConnect(Channel channel) {
     ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
         .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
     channel.close();
@@ -197,5 +256,11 @@ public class TcpNetTest extends BaseNetTest {
     errorVersionTest();
     logger.info("begin errorSolidBlockId test ");
     errorSolidBlockIdTest();
+    logger.info("begin repeatConnect test");
+    repeatConnectTest();
+    logger.info("begin unHandshake test");
+    unHandshakeTest();
+    logger.info("begin errorMsg test");
+    errorMsgTest();
   }
 }
