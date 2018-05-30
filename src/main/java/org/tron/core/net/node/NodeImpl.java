@@ -1074,7 +1074,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          if (peer.getSyncBlockToFetch().isEmpty()) {
+          if (peer.getSyncBlockToFetch().isEmpty() && del.containBlock(blockIdWeGet.peek())) {
             updateBlockWeBothHave(peer, blockIdWeGet.peek());
 
           }
