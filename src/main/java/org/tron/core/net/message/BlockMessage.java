@@ -21,6 +21,14 @@ public class BlockMessage extends TronMessage {
     this.block = block;
   }
 
+  public BlockId getBlockId() {
+    return getBlockCapsule().getBlockId();
+  }
+
+  public BlockCapsule getBlockCapsule() {
+    return block;
+  }
+
   @Override
   public Class<?> getAnswerMessage() {
     return null;
@@ -41,17 +49,9 @@ public class BlockMessage extends TronMessage {
     return super.hashCode();
   }
 
-  public BlockId getBlockId() {
-    return getBlockCapsule().getBlockId();
-  }
-
-  public BlockCapsule getBlockCapsule() {
-    return block;
-  }
-
   @Override
   public String toString() {
-    return new StringBuilder().append(super.toString()).append(block.getBlockId())
-        .append("trx size: ").append(block.getTransactions().size()).append("\n").toString();
+    return new StringBuilder().append(super.toString()).append(block.getBlockId().getString())
+        .append(", trx size: ").append(block.getTransactions().size()).append("\n").toString();
   }
 }
