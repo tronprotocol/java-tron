@@ -57,7 +57,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block size over limit");
     }
 
-    // TODO timestamp shouble be consistent.
+    // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
@@ -84,11 +84,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractValidateException e) {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
-      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
+      throw new BadBlockException("Contract Execute exception," + e.getMessage());
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
-      throw new BadBlockException("DupTransation exception," + e.getMessage());
+      throw new BadBlockException("DupTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {

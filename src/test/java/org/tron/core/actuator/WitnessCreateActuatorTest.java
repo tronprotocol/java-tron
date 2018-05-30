@@ -40,9 +40,9 @@ public class WitnessCreateActuatorTest {
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
   private static final String URL = "https://tron.network";
-  private static final String OWNER_ADDRESS_INVALIATE = "aaaa";
+  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
-  private static final String OWNER_ADDRESS_NALANCENOTSUFFIENT;
+  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -53,7 +53,7 @@ public class WitnessCreateActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_NOACCOUNT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-    OWNER_ADDRESS_NALANCENOTSUFFIENT =
+    OWNER_ADDRESS_BALANCENOTSUFFIENT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
   }
 
@@ -167,7 +167,7 @@ public class WitnessCreateActuatorTest {
   @Test
   public void InvalidAddress() {
     WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALIATE, URL), dbManager);
+        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALIDATE, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -285,14 +285,14 @@ public class WitnessCreateActuatorTest {
     AccountCapsule balanceNotSufficientCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("balanceNotSufficient"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NALANCENOTSUFFIENT)),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFIENT)),
             AccountType.Normal,
             50L);
 
     dbManager.getAccountStore()
         .put(balanceNotSufficientCapsule.getAddress().toByteArray(), balanceNotSufficientCapsule);
     WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_NALANCENOTSUFFIENT, URL), dbManager);
+        new WitnessCreateActuator(getContract(OWNER_ADDRESS_BALANCENOTSUFFIENT, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

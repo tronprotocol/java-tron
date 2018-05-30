@@ -80,7 +80,7 @@ public class KhaosDatabaseTest {
     }
 
     Assert.assertEquals(blockCapsule2, khaosDatabase.getBlock(blockCapsule2.getBlockId()));
-    Assert.assertTrue("conatain is error", khaosDatabase.containBlock(blockCapsule2.getBlockId()));
+    Assert.assertTrue("contain is error", khaosDatabase.containBlock(blockCapsule2.getBlockId()));
 
     khaosDatabase.removeBlk(blockCapsule2.getBlockId());
 

@@ -12,7 +12,6 @@ cache:
   directories:
     - '$HOME/.sonar/cache'
 script:
-- sh tron.sh
 - sonar-scanner
 skip_build:
 - README.md：
