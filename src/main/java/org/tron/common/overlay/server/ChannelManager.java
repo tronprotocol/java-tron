@@ -19,7 +19,10 @@ package org.tron.common.overlay.server;
 
 import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
 import static org.tron.protos.Protocol.ReasonCode.TOO_MANY_PEERS;
+import static org.tron.protos.Protocol.ReasonCode.UNKNOWN;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -30,14 +33,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.overlay.discover.Node;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.protos.Protocol.ReasonCode;
 
 
@@ -50,8 +58,11 @@ public class ChannelManager {
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
-  private Map<InetAddress, Date> recentlyDisconnected = Collections
-      .synchronizedMap(new LRUMap<InetAddress, Date>(500));
+  private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
+      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+
+  private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder().maximumSize(1000)
+      .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   private Args args = Args.getInstance();
 
@@ -75,55 +86,53 @@ public class ChannelManager {
     }
   }
 
-  public Set<String> nodesInUse() {
-    Set<String> ids = new HashSet<>();
-    for (Channel peer : getActivePeers()) {
-      ids.add(peer.getPeerId());
+  public void processDisconnect(Channel channel, ReasonCode reason){
+    InetAddress inetAddress = channel.getInetAddress();
+    if (inetAddress == null){
+      return;
     }
-    return ids;
-  }
-
-  public void disconnect(Channel peer, ReasonCode reason) {
-    peer.disconnect(reason);
-    InetSocketAddress socketAddress = (InetSocketAddress) peer.getChannelHandlerContext().channel()
-        .remoteAddress();
-    recentlyDisconnected.put(socketAddress.getAddress(), new Date());
+    switch (reason){
+      case FORKED:
+      case BAD_PROTOCOL:
+      case BAD_BLOCK:
+      case INCOMPATIBLE_CHAIN:
+      case INCOMPATIBLE_PROTOCOL:
+        badPeers.put(channel.getInetAddress(), reason);
+        break;
+      default:
+        recentlyDisconnected.put(channel.getInetAddress(), reason);
+        break;
+    }
   }
 
   public void notifyDisconnect(Channel channel) {
     syncPool.onDisconnect(channel);
     activePeers.values().remove(channel);
-    if (channel == null || channel.getChannelHandlerContext() == null
-        || channel.getChannelHandlerContext().channel() == null) {
-      return;
+    if (channel != null) {
+      if (channel.getNodeStatistics() != null) {
+        channel.getNodeStatistics().notifyDisconnect();
+      }
+      InetAddress inetAddress = channel.getInetAddress();
+      if (inetAddress != null && recentlyDisconnected.getIfPresent(inetAddress) != null){
+        recentlyDisconnected.put(channel.getInetAddress(), UNKNOWN);
+      }
     }
-    if (channel.getNodeStatistics() != null) {
-      channel.getNodeStatistics().notifyDisconnect();
-    }
-    InetSocketAddress socketAddress = (InetSocketAddress) channel.getChannelHandlerContext()
-        .channel().remoteAddress();
-    recentlyDisconnected.put(socketAddress.getAddress(), new Date());
   }
 
-  public boolean isRecentlyDisconnected(InetAddress peerAddr) {
-    Date disconnectTime = recentlyDisconnected.get(peerAddr);
-    if (disconnectTime != null &&
-        System.currentTimeMillis() - disconnectTime.getTime() < inboundConnectionBanTimeout) {
-      return true;
-    } else {
-      recentlyDisconnected.remove(peerAddr);
+  public synchronized boolean processPeer(Channel peer) {
+
+    if (recentlyDisconnected.getIfPresent(peer) != null){
+      logger.info("Peer {} recently disconnected.", peer.getInetAddress());
       return false;
     }
-  }
 
-  public synchronized boolean procPeer(Channel peer) {
-    if (peer.getNodeStatistics().isPenalized()) {
-      disconnect(peer, peer.getNodeStatistics().getDisconnectReason());
+    if (badPeers.getIfPresent(peer) != null) {
+      peer.disconnect(peer.getNodeStatistics().getDisconnectReason());
       return false;
     }
 
     if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
-      disconnect(peer, TOO_MANY_PEERS);
+      peer.disconnect(TOO_MANY_PEERS);
       return false;
     }
 
@@ -131,9 +140,9 @@ public class ChannelManager {
       Channel channel = activePeers.get(peer.getNodeIdWrapper());
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
-        disconnect(channel, DUPLICATE_PEER);
+        channel.disconnect(DUPLICATE_PEER);
       } else {
-        disconnect(peer, DUPLICATE_PEER);
+        peer.disconnect(DUPLICATE_PEER);
         return false;
       }
     }
@@ -143,7 +152,15 @@ public class ChannelManager {
   }
 
   public Collection<Channel> getActivePeers() {
-    return new ArrayList<>(activePeers.values());
+    return activePeers.values();
+  }
+
+  public Cache<InetAddress, ReasonCode> getRecentlyDisconnected(){
+    return this.recentlyDisconnected;
+  }
+
+  public Cache<InetAddress, ReasonCode> getBadPeers(){
+    return this.badPeers;
   }
 
   public void close() {
