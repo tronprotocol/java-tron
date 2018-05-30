@@ -182,8 +182,8 @@ public class IndexHelperTest {
 
   private int getIndexSizeOfWitness() {
     Index.Iface<Witness> witnessIndex = indexHelper.getWitnessIndex();
-    ImmutableList<Witness> wtinessImmutableList = ImmutableList.copyOf(witnessIndex);
-    return wtinessImmutableList.size();
+    ImmutableList<Witness> witnessImmutableList = ImmutableList.copyOf(witnessIndex);
+    return witnessImmutableList.size();
   }
 
   @Test

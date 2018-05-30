@@ -102,7 +102,7 @@ public class SolidityNode {
         } catch (ContractValidateException e) {
           throw new BadBlockException("ContractValidate exception");
         } catch (ContractExeException | UnLinkedBlockException e) {
-          throw new BadBlockException("Contract Exectute exception");
+          throw new BadBlockException("Contract Execute exception");
         } catch (TaposException e) {
           throw new BadBlockException("tapos exception");
         } catch (DupTransactionException e) {

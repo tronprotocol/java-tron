@@ -191,7 +191,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   /**
-   * cheack balance of the address.
+   * check balance of the address.
    */
   public boolean checkBalance(byte[] address, byte[] to, long amount, long balance) {
     if (!Wallet.addressValid(address)) {

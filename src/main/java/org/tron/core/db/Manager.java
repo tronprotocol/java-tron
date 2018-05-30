@@ -633,7 +633,7 @@ public class Manager {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The siganature is not validated.");
+          logger.info("The signature is not validated.");
           // TODO: throw exception here.
           return;
         }
@@ -1234,7 +1234,7 @@ public class Manager {
     try {
       database.close();
     } catch (Exception e) {
-      System.err.println("faild to close  " + database.getName() + ". " + e);
+      System.err.println("failed to close  " + database.getName() + ". " + e);
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }
