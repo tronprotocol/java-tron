@@ -135,7 +135,7 @@ public class WalletTestAccount003 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }*/
-      Assert.assertTrue(updateAccount(lowBalAddress, "testName".getBytes(), lowBalTest));
+      Assert.assertTrue(updateAccount(lowBalAddress, Long.toString(now).getBytes(), lowBalTest));
       tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
       Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
       Assert.assertFalse(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
