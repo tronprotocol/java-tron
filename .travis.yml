@@ -11,7 +11,7 @@ cache:
   directories:
     - '$HOME/.sonar/cache'
 script:
-- sonar-scanner
+
 skip_build:
 - README.md：
 - LICENSE
