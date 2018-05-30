@@ -19,6 +19,7 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
@@ -118,7 +119,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private Block block;
   public boolean generatedByMyself = false;
-  private List<TransactionCapsule> transactions;
+  private List<TransactionCapsule> transactions = new ArrayList<>();
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -136,24 +137,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     // block
     Block.Builder blockBuild = Block.newBuilder();
     this.block = blockBuild.setBlockHeader(blockHeader).build();
-  }
-
-  public BlockCapsule(long number, ByteString hash, long when, ByteString witnessAddress) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setNumber(number)
-        .setParentHash(hash)
-        .setTimestamp(when)
-        .setWitnessAddress(witnessAddress).build();
-
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
-
-    // block
-    Block.Builder blockBuild = Block.newBuilder();
-    this.block = blockBuild.setBlockHeader(blockHeader).build();
+    initTxs();
   }
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
@@ -174,25 +158,36 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     Block.Builder blockBuild = Block.newBuilder();
     transactionList.forEach(trx -> blockBuild.addTransactions(trx));
     this.block = blockBuild.setBlockHeader(blockHeader).build();
+    initTxs();
+  }
 
+  public BlockCapsule(Block block) {
+    this.block = block;
+    initTxs();
+  }
+
+  public BlockCapsule(byte[] data) throws BadItemException {
+    try {
+      this.block = Block.parseFrom(data);
+      initTxs();
+    } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException("Block proto data parse exception");
+    }
   }
 
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
-    //getTransactions().add(pendingTrx);
+    getTransactions().add(pendingTrx);
   }
 
   public List<TransactionCapsule> getTransactions() {
-    if (transactions == null) {
-      synchronized (BlockCapsule.class) {
-        if (transactions == null) {
-          transactions = this.block.getTransactionsList().stream()
-              .map(trx -> new TransactionCapsule(trx))
-              .collect(Collectors.toList());
-        }
-      }
-    }
     return transactions;
+  }
+
+  private void initTxs() {
+    transactions = this.block.getTransactionsList().stream()
+        .map(trx -> new TransactionCapsule(trx))
+        .collect(Collectors.toList());
   }
 
   public void sign(byte[] privateKey) {
@@ -260,18 +255,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public ByteString getWitnessAddress() {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
-  }
-
-  public BlockCapsule(Block block) {
-    this.block = block;
-  }
-
-  public BlockCapsule(byte[] data) throws BadItemException {
-    try {
-      this.block = Block.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      throw new BadItemException();
-    }
   }
 
   @Override

@@ -1,12 +1,10 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
-import io.netty.util.internal.ConcurrentSet;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +62,7 @@ public class HandleSyncBlockTest {
 
     private Sha256Hash testBlockBroad() {
         Protocol.Block block = Protocol.Block.getDefaultInstance();
-        BlockMessage blockMessage = new BlockMessage(block);
+        BlockMessage blockMessage = new BlockMessage(new BlockCapsule(block));
         node.broadcast(blockMessage);
         ConcurrentHashMap<Sha256Hash, Protocol.Inventory.InventoryType> advObjToSpread = ReflectUtils
                 .getFieldValue(node, "advObjToSpread");
