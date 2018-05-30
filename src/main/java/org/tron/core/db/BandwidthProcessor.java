@@ -12,7 +12,9 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.exception.ValidateBandwidthException;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -77,7 +79,8 @@ public class BandwidthProcessor {
     });
   }
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx)
+      throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
 
@@ -87,12 +90,13 @@ public class BandwidthProcessor {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
-        throw new ValidateBandwidthException("account not exists");
+        throw new ContractValidateException("account not exists");
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
-        consumeForCreateNewAccount(accountCapsule, now);
+        consumeForCreateNewAccount(accountCapsule, bytes, now);
+        continue;
       }
 
       if (contract.getType() == TransferAssetContract) {
@@ -109,35 +113,75 @@ public class BandwidthProcessor {
         continue;
       }
 
-      throw new ValidateBandwidthException("bandwidth is not enough");
+      if (useTransactionFee(accountCapsule, bytes)) {
+        continue;
+      }
+
+      throw new AccountResourceInsufficientException(
+          "Account Insufficient bandwidth and balance to create new account");
     }
   }
 
-  public void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
-      throws ValidateBandwidthException {
-    long cost = ChainConstant.CREATE_NEW_ACCOUNT_COST;
+  private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
+    try {
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+      accountCapsule.setLatestOperationTime(latestOperationTime);
+      dbManager.adjustBalance(accountCapsule.createDbKey(), -fee);
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
+  }
 
+  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
+    long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+    return consumeFee(accountCapsule, fee);
+  }
+
+  private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
+      long now) throws AccountResourceInsufficientException {
+    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
+
+    if (!ret) {
+      ret = consumeFeeForCreateNewAccount(accountCapsule);
+      if (!ret) {
+        throw new AccountResourceInsufficientException();
+      }
+    }
+  }
+
+
+  public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
+      long now) {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
-    if (cost <= (netLimit - newNetUsage)) {
+    if (bytes <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
-      newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+      newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
+      accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    } else {
-      throw new ValidateBandwidthException("bandwidth is not enough to create new account");
+      return true;
     }
+    return false;
+  }
 
+  public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule) {
+    long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+    return consumeFee(accountCapsule, fee);
   }
 
   public boolean contractCreateNewAccount(Contract contract) {
     AccountCapsule toAccount;
     switch (contract.getType()) {
+      case AccountCreateContract:
+        return true;
       case TransferContract:
         TransferContract transferContract;
         try {
@@ -165,7 +209,7 @@ public class BandwidthProcessor {
 
   private boolean useAssetAccountNet(Contract contract, AccountCapsule accountCapsule, long now,
       long bytes)
-      throws ValidateBandwidthException {
+      throws ContractValidateException {
 
     ByteString assetName;
     try {
@@ -177,7 +221,7 @@ public class BandwidthProcessor {
     AssetIssueCapsule assetIssueCapsule
         = dbManager.getAssetIssueStore().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
-      throw new ValidateBandwidthException("asset not exists");
+      throw new ContractValidateException("asset not exists");
     }
 
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {

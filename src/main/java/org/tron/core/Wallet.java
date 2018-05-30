@@ -52,6 +52,8 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -59,7 +61,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -80,8 +81,8 @@ public class Wallet {
   private NodeImpl p2pNode;
   @Autowired
   private Manager dbManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING;  //default testnet
-  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -170,17 +171,15 @@ public class Wallet {
       logger.warn("Warning: Address is empty !!");
       return null;
     }
-    if (addressBase58.length() != Constant.BASE58CHECK_ADDRESS_SIZE) {
-      logger.warn(
-          "Warning: Base58 address length need " + Constant.BASE58CHECK_ADDRESS_SIZE + " but "
-              + addressBase58.length()
-              + " !!");
+    byte[] address = decode58Check(addressBase58);
+    if (address == null) {
       return null;
     }
-    byte[] address = decode58Check(addressBase58);
+
     if (!addressValid(address)) {
       return null;
     }
+
     return address;
   }
 
@@ -261,10 +260,10 @@ public class Wallet {
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
-    } catch (ValidateBandwidthException e) {
-      logger.info("high freq" + e.getMessage());
+    } catch (AccountResourceInsufficientException e) {
+      logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("high freq error"))
+          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
           .build();
     } catch (DupTransactionException e) {
       logger.info("dup trans" + e.getMessage());
@@ -357,6 +356,8 @@ public class Wallet {
 
     long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
@@ -368,6 +369,8 @@ public class Wallet {
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
         .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
@@ -432,13 +435,15 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    Transaction transaction = null;
-    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
-        .get(transactionId.toByteArray());
-    if (Objects.nonNull(transactionCapsule)) {
-      transaction = transactionCapsule.getInstance();
+    TransactionCapsule transactionCapsule = null;
+    try {
+      transactionCapsule = dbManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (BadItemException e) {}
+    if (transactionCapsule != null) {
+      return transactionCapsule.getInstance();
     }
-    return transaction;
+    return null;
   }
 
 }

@@ -1,9 +1,9 @@
 package org.tron.core.db.common.iterator;
 
-import org.tron.core.capsule.TransactionCapsule;
-
 import java.util.Iterator;
 import java.util.Map.Entry;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.BadItemException;
 
 public class TransactionIterator extends AbstractIterator<TransactionCapsule> {
 
@@ -13,6 +13,10 @@ public class TransactionIterator extends AbstractIterator<TransactionCapsule> {
 
   @Override
   protected TransactionCapsule of(byte[] value) {
-    return new TransactionCapsule(value);
+    try {
+      return new TransactionCapsule(value);
+    } catch (BadItemException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

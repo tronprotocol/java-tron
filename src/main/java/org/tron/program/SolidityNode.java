@@ -1,5 +1,8 @@
 package org.tron.program;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -15,7 +18,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -23,7 +28,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -35,6 +39,8 @@ public class SolidityNode {
 
   private DatabaseGrpcClient databaseGrpcClient;
   private Manager dbManager;
+
+  private ScheduledExecutorService syncExecutor = Executors.newSingleThreadScheduledExecutor();
 
   public void setDbManager(Manager dbManager) {
     this.dbManager = dbManager;
@@ -56,20 +62,21 @@ public class SolidityNode {
   }
 
   private void syncLoop(Args args) {
-    while (true) {
-      try {
-        initGrpcClient(args.getTrustNodeAddr());
-        syncSolidityBlock();
-        shutdownGrpcClient();
-      } catch (Exception e) {
-        logger.error("Error in sync solidity block " + e.getMessage(), e);
-      }
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+//    while (true) {
+//      try {
+//        initGrpcClient(args.getTrustNodeAddr());
+//        syncSolidityBlock();
+//        shutdownGrpcClient();
+//      } catch (Exception e) {
+//        logger.error("Error in sync solidity block " + e.getMessage(), e);
+//      }
+//      try {
+//        Thread.sleep(5000);
+//      } catch (InterruptedException e) {
+//        Thread.currentThread().interrupt();
+//        e.printStackTrace();
+//      }
+//    }
   }
 
   private void syncSolidityBlock() throws BadBlockException {
@@ -78,6 +85,7 @@ public class SolidityNode {
     while (true) {
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
+      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}", lastSolidityBlockNum, remoteLastSolidityBlockNum);
       if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
@@ -85,8 +93,8 @@ public class SolidityNode {
           dbManager.pushBlock(blockCapsule);
           dbManager.getDynamicPropertiesStore()
               .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
-        } catch (ValidateBandwidthException e) {
-          throw new BadBlockException("validate Bandwidth exception");
+        } catch (AccountResourceInsufficientException e) {
+          throw new BadBlockException("validate AccountResource exception");
         } catch (ValidateScheduleException e) {
           throw new BadBlockException("validate schedule exception");
         } catch (ValidateSignatureException e) {
@@ -94,7 +102,7 @@ public class SolidityNode {
         } catch (ContractValidateException e) {
           throw new BadBlockException("ContractValidate exception");
         } catch (ContractExeException | UnLinkedBlockException e) {
-          throw new BadBlockException("Contract Exectute exception");
+          throw new BadBlockException("Contract Execute exception");
         } catch (TaposException e) {
           throw new BadBlockException("tapos exception");
         } catch (DupTransactionException e) {
@@ -103,7 +111,10 @@ public class SolidityNode {
           throw new BadBlockException("too big exception");
         } catch (TransactionExpirationException e) {
           throw new BadBlockException("expiration exception");
+        } catch (BadNumberBlockException e) {
+          throw new BadBlockException("bad number exception");
         }
+
       } else {
         break;
       }
@@ -112,7 +123,16 @@ public class SolidityNode {
   }
 
   private void start(Args cfgArgs) {
-    new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
+    syncExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        initGrpcClient(cfgArgs.getTrustNodeAddr());
+        syncSolidityBlock();
+        shutdownGrpcClient();
+      } catch (Throwable t) {
+        logger.error("Error in sync solidity block " + t.getMessage(), t);
+      }
+    }, 5000, 5000, TimeUnit.MILLISECONDS);
+    //new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
   }
 
   /**

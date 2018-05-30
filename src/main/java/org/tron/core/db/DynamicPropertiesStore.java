@@ -7,7 +7,6 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -77,6 +76,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
 
   private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
+
+  private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
+
+  private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -216,7 +219,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getFreeNetLimit();
     } catch (IllegalArgumentException e) {
-      this.saveFreeNetLimit(1000L);
+      this.saveFreeNetLimit(5000L);
     }
 
     try {
@@ -236,6 +239,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveBlockNetUsage(0L);
     }
+
+    try {
+      this.getCreateAccountFee();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+    try {
+      this.getTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveTransactionFee(1000L); // 10Drop
+    }
+
+
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -274,23 +290,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public static void destroy() {
     instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static DynamicPropertiesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (DynamicPropertiesStore.class) {
-        if (instance == null) {
-          instance = new DynamicPropertiesStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   public String intArrayToString(int[] a) {
@@ -563,6 +562,31 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
+  }
+
+  public void saveCreateAccountFee(long blockNetUsage) {
+    this.put(CREATE_ACCOUNT_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getCreateAccountFee() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_ACCOUNT_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
+  }
+
+
+  public void saveTransactionFee(long blockNetUsage) {
+    this.put(TRANSACTION_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getTransactionFee() {
+    return Optional.ofNullable(this.dbSource.getData(TRANSACTION_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TRANSACTION_FEE"));
   }
 
 

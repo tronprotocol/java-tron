@@ -30,7 +30,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
   private int hashCode = 0;
 
   /**
-   * construcor.
+   * constructor.
    */
   public ByteArrayWrapper(byte[] data) {
     if (data == null) {
@@ -45,7 +45,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
    * equals Objects.
    */
   public boolean equals(Object other) {
-    if (!(other instanceof ByteArrayWrapper)) {
+    if (other == null || this.getClass() != other.getClass()) {
       return false;
     }
     byte[] otherData = ((ByteArrayWrapper) other).getData();
