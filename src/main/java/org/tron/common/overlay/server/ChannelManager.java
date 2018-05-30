@@ -113,7 +113,7 @@ public class ChannelManager {
         channel.getNodeStatistics().notifyDisconnect();
       }
       InetAddress inetAddress = channel.getInetAddress();
-      if (inetAddress != null && recentlyDisconnected.getIfPresent(inetAddress) != null){
+      if (inetAddress != null && recentlyDisconnected.getIfPresent(inetAddress) == null){
         recentlyDisconnected.put(channel.getInetAddress(), UNKNOWN);
       }
     }
