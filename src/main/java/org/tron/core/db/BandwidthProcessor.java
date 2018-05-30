@@ -96,10 +96,7 @@ public class BandwidthProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
-        consumeForCreateNewAccount(accountCapsule, now);
-      }
-
-      if (contract.getType() == AccountCreateContract) {
+        consumeForCreateNewAccount(accountCapsule, bytes, now);
         continue;
       }
 
@@ -126,19 +123,26 @@ public class BandwidthProcessor {
     }
   }
 
-  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
-    long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+  private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
     try {
       dbManager.adjustBalance(accountCapsule.getAddress().toByteArray(), -fee);
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+      accountCapsule.setLatestOperationTime(latestOperationTime);
+      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;
     }
   }
 
-  private void consumeForCreateNewAccount(AccountCapsule accountCapsule,
+  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
+    long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+    return consumeFee(accountCapsule, fee);
+  }
+
+  private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) throws AccountResourceInsufficientException {
-    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, now);
+    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
 
     if (!ret) {
       ret = consumeFeeForCreateNewAccount(accountCapsule);
@@ -149,19 +153,18 @@ public class BandwidthProcessor {
   }
 
 
-  public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long now) {
-    long cost = ChainConstant.CREATE_NEW_ACCOUNT_BANDWIDTH_COST;
-
+  public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
+      long now) {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
-    if (cost <= (netLimit - newNetUsage)) {
+    if (bytes <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, cost, latestConsumeTime, now);
+      newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
@@ -173,12 +176,7 @@ public class BandwidthProcessor {
 
   public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-    try {
-      dbManager.adjustBalance(accountCapsule.getAddress().toByteArray(), -fee);
-      return true;
-    } catch (BalanceInsufficientException e) {
-      return false;
-    }
+    return consumeFee(accountCapsule, fee);
   }
 
   public boolean contractCreateNewAccount(Contract contract) {
