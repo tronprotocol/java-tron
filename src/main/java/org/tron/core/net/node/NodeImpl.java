@@ -960,8 +960,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         block = ((BlockMessage) msg).getBlockCapsule();
         peer.sendMessage(msg);
       } else {
-        transactions.add(((TransactionMessage) msg).getTransaction());
-        size += ((TransactionMessage) msg).getTransaction().getSerializedSize();
+        transactions.add(((TransactionMessage) msg).getTransactionCapsule().getInstance());
+        size += ((TransactionMessage) msg).getTransactionCapsule().getInstance().getSerializedSize();
         if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();
@@ -1074,7 +1074,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          if (peer.getSyncBlockToFetch().isEmpty()) {
+          if (peer.getSyncBlockToFetch().isEmpty() && del.containBlock(blockIdWeGet.peek())) {
             updateBlockWeBothHave(peer, blockIdWeGet.peek());
 
           }
