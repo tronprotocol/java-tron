@@ -3,7 +3,6 @@ package org.tron.core.net.node;
 import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +59,7 @@ public class StartFetchSyncBlockTest {
 
   private Sha256Hash testBlockBroad() {
     Protocol.Block block = Protocol.Block.getDefaultInstance();
-    BlockMessage blockMessage = new BlockMessage(block);
+    BlockMessage blockMessage = new BlockMessage(new BlockCapsule(block));
     node.broadcast(blockMessage);
     ConcurrentHashMap<Sha256Hash, Protocol.Inventory.InventoryType> advObjToSpread = ReflectUtils
         .getFieldValue(node, "advObjToSpread");
@@ -111,7 +110,7 @@ public class StartFetchSyncBlockTest {
     ReflectUtils.setFieldValue(activePeers.iterator().next(), "needSyncFromPeer", true);
     // construct a block
     Protocol.Block block = Protocol.Block.getDefaultInstance();
-    BlockMessage blockMessage = new BlockMessage(block);
+    BlockMessage blockMessage = new BlockMessage(new BlockCapsule(block));
     // push the block to syncBlockToFetch
     activePeers.iterator().next().getSyncBlockToFetch().push(blockMessage.getBlockId());
     // invoke testing method

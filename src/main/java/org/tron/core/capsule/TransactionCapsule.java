@@ -37,6 +37,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
@@ -67,11 +68,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * get account from bytes data.
    */
-  public TransactionCapsule(byte[] data) {
+  public TransactionCapsule(byte[] data) throws BadItemException{
     try {
       this.transaction = Transaction.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage());
+      throw new BadItemException("Transaction proto data parse exception");
     }
   }
 

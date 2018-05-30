@@ -18,6 +18,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.VoteWitnessContract;
@@ -121,7 +122,7 @@ public class TransactionStoreTest {
    * put and get CreateAccountTransaction.
    */
   @Test
-  public void CreateAccountTransactionStoreTest() {
+  public void CreateAccountTransactionStoreTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
@@ -137,7 +138,7 @@ public class TransactionStoreTest {
    * put and get CreateWitnessTransaction.
    */
   @Test
-  public void CreateWitnessTransactionStoreTest() {
+  public void CreateWitnessTransactionStoreTest() throws BadItemException {
     WitnessCreateContract witnessContract = getWitnessContract(OWNER_ADDRESS, URL);
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessContract);
     transactionStore.put(key1, transactionCapsule);
@@ -150,7 +151,7 @@ public class TransactionStoreTest {
    * put and get TransferTransaction.
    */
   @Test
-  public void TransferTransactionStorenTest() {
+  public void TransferTransactionStorenTest() throws BadItemException {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME),
@@ -173,7 +174,7 @@ public class TransactionStoreTest {
    */
 
   @Test
-  public void voteWitnessTransactionTest() {
+  public void voteWitnessTransactionTest() throws BadItemException {
 
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
@@ -198,7 +199,7 @@ public class TransactionStoreTest {
    * put value is null and get it.
    */
   @Test
-  public void TransactionValueNullTest() {
+  public void TransactionValueNullTest() throws BadItemException {
     TransactionCapsule transactionCapsule = null;
     transactionStore.put(key2, transactionCapsule);
     Assert.assertNull("put value is null", transactionStore.get(key2));
@@ -209,7 +210,7 @@ public class TransactionStoreTest {
    * put key is null and get it.
    */
   @Test
-  public void TransactionKeyNullTest() {
+  public void TransactionKeyNullTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,

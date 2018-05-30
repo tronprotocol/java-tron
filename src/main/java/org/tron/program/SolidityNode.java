@@ -85,6 +85,7 @@ public class SolidityNode {
     while (true) {
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
+      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}", lastSolidityBlockNum, remoteLastSolidityBlockNum);
       if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
