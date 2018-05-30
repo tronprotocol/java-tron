@@ -41,7 +41,7 @@
     <!-- Logger will block incoming events (log calls) until queue will free some space -->
     <!-- (the smaller value -> flush occurs often) -->
     <queueSize>100</queueSize>
-
+    <includeCallerData>true</includeCallerData>
     <appender-ref ref="FILE"/>
   </appender>
 
