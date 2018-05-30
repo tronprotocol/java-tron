@@ -869,7 +869,7 @@ public class Manager {
       return false;
     }
     validateTapos(trxCap);
-    //validateCommon(trxCap);
+    validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractValidateException("act size greater than 1, this is extend feature");
