@@ -81,8 +81,8 @@ public class Wallet {
   private NodeImpl p2pNode;
   @Autowired
   private Manager dbManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING;  //default testnet
-  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -171,15 +171,7 @@ public class Wallet {
       logger.warn("Warning: Address is empty !!");
       return null;
     }
-    if (addressBase58.length() != Constant.BASE58CHECK_ADDRESS_SIZE) {
-      logger.warn(
-          "Warning: Base58 address length need " + Constant.BASE58CHECK_ADDRESS_SIZE + " but "
-              + addressBase58.length()
-              + " !!");
-      return null;
-    }
     byte[] address = decode58Check(addressBase58);
-
     if (address == null) {
       return null;
     }
