@@ -174,7 +174,9 @@ public class NodeHandler {
     if (!nodeManager.table.getNode().equals(node)) {
       sendPong();
     }
-    if (state.equals(State.NonActive) || state.equals(State.Dead)) {
+    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
+      changeState(State.NonActive);
+    }else if (state.equals(State.NonActive) || state.equals(State.Dead)) {
       changeState(State.Discovered);
     }
   }

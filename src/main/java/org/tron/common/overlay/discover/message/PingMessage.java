@@ -40,6 +40,10 @@ public class PingMessage extends Message {
     this.data = this.pingMessage.toByteArray();
   }
 
+  public int getVersion(){
+    return this.pingMessage.getVersion();
+  }
+
   public Node getFrom() {
     Endpoint from = this.pingMessage.getFrom();
     Node node = new Node(from.getNodeId().toByteArray(),
