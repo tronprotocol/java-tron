@@ -1,4 +1,3 @@
-   
 # Protobuf protocol
 
 ## The protocol of TRON is defined by Google Protobuf and contains a range of layers, from account, block to transfer.
@@ -19,7 +18,7 @@
      `type`: what type of this account is – e.g. _0_ stands for type `Normal`.  
      `balance`: balance of this account – e.g. _4213312_.  
      `votes`: received votes on this account – e.g. _{(“0x1b7w…9xj3”,323), (“0x8djq…j12m”,88),…,(“0x82nd…mx6i”,10001)}_.  
-     `asset`: other assets expect TRX in this account – e.g. _{<“WishToken”,66666>,<”Dogie”,233>}_.
+     `asset`: other assets except TRX in this account – e.g. _{<“WishToken”,66666>,<”Dogie”,233>}_.
      `latest_operation_time`: the latest operation time of this account.
      
       // Account 
@@ -80,7 +79,7 @@
      `parentHash`: the hash of last block – e.g. “_7dacsa…3ed_.”  
      `number`: the height of this block – e.g. _13534657_.  
      `witness_id`: the id of witness which packed this block – e.g. “_0xu82h…7237_”.  
-     `witness_address`: the adresss of the witness packed this block – e.g. “_0xu82h…7237_”.
+     `witness_address`: the address of the witness packed this block – e.g. “_0xu82h…7237_”.
 
          message BlockHeader {   
            message raw {     
@@ -99,11 +98,11 @@
 
      message `ChainInventory` contains `BlockId` and `remain_num`.  
      `BlockId`: the identification of block.  
-     `remain_num`：the remain number of blocks in the synchronizing process. 
+     `remain_num`：the remaining number of blocks in the synchronizing process. 
      
      A `BlockId` contains 2 parameters:  
      `hash`: the hash of block.  
-     `number`: the hash and height of block.
+     `number`: the height of block.
      
          message ChainInventory {
             message BlockId {
@@ -213,7 +212,8 @@
      `trx_num`: the number of TRONIX – e.g._232241_.  
      `num`: number of corresponding asset.  
      `start_time`: the starting date of this contract – e.g._20170312_.  
-     `end_time`: the expiring date of this contract – e.g. _20170512_. 
+     `end_time`: the expiring date of this contract – e.g. _20170512_.  
+     `decay_ratio`: decay ratio.  
      `vote_score`: the vote score of this contract received – e.g. _12343_.  
      `description`: the description of this contract – e.g.”_trondada_”.  
      `url`: the url of this contract – e.g. “_https://www.noonetrust.com_”.
@@ -226,6 +226,7 @@
            int32 num = 8;   
            int64 start_time = 9;   
            int64 end_time = 10;   
+           int32 decay_ratio = 15;   
            int32 vote_score = 16;   
            bytes description = 20;   
            bytes url = 21; 
@@ -235,7 +236,7 @@
      `owner_address`: the address for contract owner – e.g. “_0xu82h…7237_”.  
      `to_address`: the receiver address – e.g. “_0xu82h…7237_”.  
      `asset_name`: the name of target asset.  
-     `amount`: the amount of drops.
+     `amount`: the amount of suns.
      
          message ParticipateAssetIssueContract {
            bytes owner_address = 1;
@@ -254,7 +255,7 @@
            }                       t
 
 +	Each transaction contains several TXInputs, TXOutputs and other related qualities.
-Input, transaction and head block all require signature.
+Input, transaction and block header all require signature.
 
      message `Transaction` contains `raw_data` and `signature`.  
      `raw_data`: message `raw`.  
@@ -351,7 +352,7 @@ Input, transaction and head block all require signature.
      `ret`: the state of transaction.  
      `fee`: the fee for transaction.
     
-     `code` is definition of `ret` and contains 2 types：`SUCCESS` and `FAILED`.
+     `code` is the enumerator that defines `ret` property and can be  2 types：`SUCCESS` and `FAILED`.
      
         message Result {
           enum code {
@@ -409,8 +410,8 @@ Input, transaction and head block all require signature.
          }
 
     `InventoryItems` contains `type` and `items`.  
-    `type`: what type of item.  
-    `items`: items in an `InventoryItems`.
+    `type`: what type of inventory.  
+    `items`: the list of inventory. 
 
         message InventoryItems {   
           int32 type = 1;   
@@ -434,9 +435,9 @@ Input, transaction and head block all require signature.
      `ids`: the identification of block.  
      `type`: what type of the block.
     
-     `ids` contains 2 paremeters:  
+     `ids` contains 2 parameters:  
      `hash`: the hash of block.  
-     `number`: the hash and height of block.
+     `number`: the height of block.
       
          message BlockId {
             bytes hash = 1;
@@ -483,11 +484,11 @@ Input, transaction and head block all require signature.
           UNKNOWN = 255;
         }
       
-     message`DisconnectMessage` contains `reason`.  
+     message `DisconnectMessage` contains `reason`:  
      `DisconnectMessage`: the message when disconnection occurs.  
      `reason`: the reason for disconnecting.
       
-     message`HelloMessage` contains 2 parameters:  
+     message `HelloMessage` contains 3 parameters:  
      `HelloMessage`: the message for building connection.  
      `from`: the nodes that request for building connection.  
      `version`: the version when connection is built.
@@ -498,57 +499,220 @@ Input, transaction and head block all require signature.
         
    `Wallet` service contains several RPCs.  
     __`GetBalance`__ :  
-    Return balance of an `Account`.  
+    `GetBlance` takes a parameter of Account, and returns an `Account` object.  
     __`CreateTransaction`__ ：  
-    Create a transaction by giving a `TransferContract`. A Transaction containing a transaction creation will be returned.  
+    `CreateTransaction` takes a parameter of TransferContract, and returns an `Transaction` object.   
     __`BroadcastTransaction`__ :  
-    Broadcast a `Transaction`. A `Return` will be returned indicating if broadcast is success of not.  
+   `BroadcastTransaction` takes a parameter of Transaction, and returns an `Return` object.   
     __`CreateAccount`__ :  
-    Create an account by giving a `AccountCreateContract`.  
-    __`CreatAssetIssue`__ :  
-    Issue an asset by giving a `AssetIssueContract`.  
+    `CreateAccount` takes a parameter of AccountCreateContract, and returns an `Transaction` object.  
+    __`CreateAssetIssue`__ :  
+    `CreateAssetIssue` takes a parameter of AssetIssueContract, and returns an `Transaction` object.   
     __`ListAccounts`__:  
-    Check out the list of accounts by giving a `ListAccounts`.  
+    `ListAccounts` takes a parameter of EmptyMessage, and returns an `AccountList` object.   
     __`UpdateAccount`__:  
-    Issue an asset by giving a `UpdateAccountContract`.  
+    `UpdateAccount` takes a parameter of AccountUpdateContract, and returns an `Transaction` object.   
     __`VoteWitnessAccount`__:  
-    Issue an asset by giving a `VoteWitnessContract`.  
+    `VoteWitnessAccount` takes a parameter of VoteWitnessContract, and returns an `Transaction` object.   
     __`WitnessList`__:  
-    Check out the list of witnesses by giving a `WitnessList`.  
+    `WitnessList` takes a parameter of WitnessUpdateContract, and returns an `WitnessList` object.   
     __`UpdateWitness`__:  
-    Issue an asset by giving a `WitnessUpdateContract`.  
+    `UpdateWitness` takes a parameter of WitnessUpdateContract, and returns an `Transaction` object.   
     __`CreateWitness`__:  
-    Issue an asset by giving a `WitnessCreateContract`.  
+    `CreateWitness` takes a parameter of WitnessCreateContract, and returns an `Transaction` object.   
     __`TransferAsset`__:  
-    Issue an asset by giving a `TransferAssetContract`.  
+    `TransferAsset` takes a parameter of TransferAssetContract, and returns an `Transaction` object.   
     __`ParticipateAssetIssue`__:  
-    Issue an asset by giving a `ParticipateAssetIssueContract`.  
+    `ParticipateAssetIssue` takes a parameter of ParticipateAssetIssueContract, and returns an `Transaction` object.   
     __`ListNodes`__:  
-    Check out the list of nodes by giving a `ListNodes`.  
+    `ListNodes` takes a parameter of EmptyMessage, and returns an `NodeList` object.   
     __`GetAssetIssueList`__:  
-    Get the list of issue asset by giving a `GetAssetIssueList`.  
+    `GetAssetIssueList` takes a parameter of EmptyMessage, and returns an `GetIssueList` object.   
     __`GetAssetIssueByAccount`__:  
-    Get issue asset by giving a `Account`.  
+    `GetAssetIssueByAccount` takes a parameter of Account, and returns an `AssetIssueList` object.   
     __`GetAssetIssueByName`__:  
-    Get issue asset by giving a`Name`.  
+    `GetAssetIssueByName` takes a parameter of BytesMessage, and returns an `AssetIssueContract` object.  
     __`GetNowBlock`__:  
-    Get block.  
+    `GetNowBlock` takes a parameter of EmptyMessage, and returns an `Block` object.   
     __`GetBlockByNum`__:  
-    Get block by block number.  
+    `GetBlockByNum` takes a parameter of NumberMessage, and returns an `Block` object.  
     __`TotalTransaction`__:  
-    Check out the total transaction.
+    `TotalTransaction` takes a parameter of EmptyMessage, and returns an `NumberMessage` object. 
    
       service Wallet {
-      
-        rpc GetAccount (Account) returns (Account) {
+      returns (Account) {
+          option (google.api.http) = {
+            post: "/wallet/getaccount"
+            body: "*"
+          };
       
         };
       
         rpc CreateTransaction (TransferContract) returns (Transaction) {
-      
+          option (google.api.http) = {
+            post: "/wallet/createtransaction"
+            body: "*"
+          };
         };
       
         rpc BroadcastTransaction (Transaction) returns (Return) {
+          option (google.api.http) = {
+            post: "/wallet/broadcasttransaction"
+            body: "*"
+          };
+        };
+      
+        rpc GetAccount (Account) 
+        rpc ListAccounts (EmptyMessage) returns (AccountList) {
+          option (google.api.http) = {
+                post: "/wallet/listaccount"
+                body: "*"
+            };
+      
+        };
+      
+        rpc UpdateAccount (AccountUpdateContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/updateaccount"
+            body: "*"
+          };
+        };
+      
+        rpc CreateAccount (AccountCreateContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/createaccount"
+            body: "*"
+          };
+        };
+      
+        rpc VoteWitnessAccount (VoteWitnessContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/votewitnessaccount"
+            body: "*"
+          };
+        };
+      
+        rpc CreateAssetIssue (AssetIssueContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/createassetissue"
+            body: "*"
+          };
+        };
+      
+        rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
+          option (google.api.http) = {
+            post: "/wallet/listwitnesses"
+            body: "*"
+          };
+        };
+      
+        rpc UpdateWitness (WitnessUpdateContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/updatewitness"
+            body: "*"
+          };
+        };
+      
+        rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/createwitness"
+            body: "*"
+          };
+        };
+      
+        rpc TransferAsset (TransferAssetContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/transferasset"
+            body: "*"
+          };
+        }
+      
+        rpc ParticipateAssetIssue (ParticipateAssetIssueContract) returns (Transaction) {
+          option (google.api.http) = {
+            post: "/wallet/participateassetissue"
+            body: "*"
+          };
+        }
+      
+        rpc ListNodes (EmptyMessage) returns (NodeList) {
+          option (google.api.http) = {
+            post: "/wallet/listnodes"
+            body: "*"
+          };
+        }
+        rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
+          option (google.api.http) = {
+            post: "/wallet/getassetissuelist"
+            body: "*"
+          };
+        }
+        rpc GetAssetIssueByAccount (Account) returns (AssetIssueList) {
+          option (google.api.http) = {
+            post: "/wallet/getassetissuebyaccount"
+            body: "*"
+          };
+        }
+        rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
+          option (google.api.http) = {
+            post: "/wallet/getassetissuebyname"
+            body: "*"
+          };
+        }
+        rpc GetNowBlock (EmptyMessage) returns (Block) {
+          option (google.api.http) = {
+            post: "/wallet/getnowblock"
+            body: "*"
+          };
+        }
+        rpc GetBlockByNum (NumberMessage) returns (Block) {
+          option (google.api.http) = {
+            post: "/wallet/getblockbynum"
+            body: "*"
+          };
+        }
+        rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
+          option (google.api.http) = {
+            post: "/wallet/totaltransaction"
+            body: "*"
+          };
+        }
+      };
+    
+   `WalletSolidity` service contains several RPCs.  
+    __`GetAccount`__ :  
+    `GetAccount` takes a parameter of Account, and returns an `Account` object.  
+    __`ListAccounts`__: 
+    `listAccounts` takes a parameter of EmptyMessage , and returns `listAccounts` object.  
+    __`ListWitness`__:  
+   `LitWitness` takes a parameter of EmptyMessage, and returns `WitnessList` object.    
+    __`ListNodes`__:  
+   `ListNodes` takes a parameter of EmptyMessage, and returns `NodeList` object.  
+    __`GetAssetIssueList`__:  
+    `GetAssetIssueList` takes a parameter of EmptyMessage, and returns `AssetIssueList` object.  
+    __`GetAssetIssueListByTimeStamp`__:  
+    `GetAssetIssueListByTimeStamp` takes a parameter of EmptyMessage, and returns `AsssetIssueList` object.  
+    __`GetAssetIssueByAccount`__:  
+    `GetAssetIssueByAccount` takes a parameter of `Account`, and returns `AssetIssueList` object. 
+    _`GetAssetIssueByName`__:  
+    `GetAssetIssueByName` takes a parameter of `BytesMessage`, and returns `AssetIssueContract` object.  
+    __`GetNowBlock`__:  
+    `GetNowBlock` takes a parameter of `EmptyMessage`, and returns `Block` object.  
+    __`GetBlockByNum`__:  
+    `GetBlockByNumber` takes a parameter of `NumberMessage`, and returns `Block` object.  
+    __`TotalTransaction`__:  
+    `TotalTransaction` takes a parameter of `EmptyMessage`, and returns `NumberMessage` object.  
+    __`getTransactionById`__:  
+    `getTransactionById` takes a parameter of `BytesMessage`, and returns `Transaction` object.  
+    __`getTransactionsByTimeStamp`__:  
+    `getTransactionsByTimeStamp` takes a parameter of `TimeMessage`, and returns `TransactionList` object.  
+    __`getTransactionsFromThis`__:  
+    `getTransactionsFromThis` takes a parameter of `Account`, and returns `TransactionList` object.  
+    __`getTransactionsToThis`__:  
+    `getTransactionsToThis` takes a parameter of `Account`, and returns `NumberMessage` object. 
+           
+      service WalletSolidity {
+      
+        rpc GetAccount (Account) returns (Account) {
       
         };
       
@@ -556,46 +720,17 @@ Input, transaction and head block all require signature.
       
         };
       
-        rpc UpdateAccount (AccountUpdateContract) returns (Transaction) {
-      
-        };
-      
-        rpc CreateAccount (AccountCreateContract) returns (Transaction) {
-      
-        };
-      
-        rpc VoteWitnessAccount (VoteWitnessContract) returns (Transaction) {
-      
-        };
-      
-        rpc CreateAssetIssue (AssetIssueContract) returns (Transaction) {
-      
-        };
-      
         rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
       
         };
-      
-        rpc UpdateWitness (WitnessUpdateContract) returns (Transaction) {
-      
-        };
-      
-        rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
-      
-        };
-      
-        rpc TransferAsset (TransferAssetContract) returns (Transaction) {
-      
-        }
-      
-        rpc ParticipateAssetIssue (ParticipateAssetIssueContract) returns (Transaction) {
-      
-        }
       
         rpc ListNodes (EmptyMessage) returns (NodeList) {
       
         }
         rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
+      
+        }
+        rpc GetAssetIssueListByTimestamp (NumberMessage) returns (AssetIssueList) {
       
         }
         rpc GetAssetIssueByAccount (Account) returns (AssetIssueList) {
@@ -610,12 +745,27 @@ Input, transaction and head block all require signature.
         rpc GetBlockByNum (NumberMessage) returns (Block) {
       
         }
+       
+        //Get transaction.
+        
         rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
       
         }
+        rpc getTransactionById (BytesMessage) returns (Transaction) {
+      
+        }
+        rpc getTransactionsByTimestamp (TimeMessage) returns (TransactionList) {
+      
+        }
+        rpc getTransactionsFromThis (Account) returns (TransactionList) {
+      
+        }
+        rpc getTransactionsToThis (Account) returns (NumberMessage) {
+      
+        }
       };
-   
-   `AccountList`: the list of acounts in the blockchain explorer.  
+      
+   `AccountList`: the list of accounts in the blockchain explorer.  
    message `AccountList` contains one parameter:  
    `account`:
    
@@ -648,7 +798,7 @@ Input, transaction and head block all require signature.
          }
    
    `Address`: the address  of nodes.  
-   message`Address` contains 2 parameters:  
+   message `Address` contains 2 parameters:  
    `host`: the host of nodes.  
    `port`: the port number of nodes.
    
@@ -667,7 +817,7 @@ Input, transaction and head block all require signature.
 + The message structure of UDP.
 
   `Endpoint`: the storage structure of nodes' information.  
-  message`Endpoint` contains 3 parameters:  
+  message `Endpoint` contains 3 parameters:  
   `address`: the address of nodes.  
   `port`: the port number.  
   `nodeId`:the ID of nodes.
@@ -680,10 +830,10 @@ Input, transaction and head block all require signature.
        }
    
    `PingMessage`: the message sent from one node to another in the connecting process.  
-   message`PingMessage` contains 4 parameters:  
+   message `PingMessage` contains 4 parameters:  
    `from`: which node does the message send from.  
    `to`: which node will the message send to.  
-   `version`: the version of the Internet.  
+   `version`: version of the message sending node.  
    `timestamp`: the timestamp of message.
    
        message PingMessage {
@@ -694,7 +844,7 @@ Input, transaction and head block all require signature.
         }
    
    `PongMessage`: the message implies that nodes are connected.  
-   message`PongMessage` contains 3 parameters:  
+   message `PongMessage` contains 3 parameters:  
    `from`: which node does the message send from.  
    `echo`:  
    `timestamp`: the timestamp of message.
@@ -706,7 +856,7 @@ Input, transaction and head block all require signature.
          }
    
    `FindNeighbours`: the message sent from one node to find another one.  
-   message`FindNeighbours` contains 3 parameters:  
+   message `FindNeighbours` contains 3 parameters:  
    `from`: which node does the message send from.  
    `targetId`: the ID of targeted node.  
    `timestamp`: the timestamp of message. 
@@ -718,7 +868,7 @@ Input, transaction and head block all require signature.
          }
   
    `FindNeighbour`: the message replied by the neighbour node.  
-    message`Neighbours` contains 3 parameters:  
+    message `Neighbours` contains 3 parameters:  
     `from`: which node does the message send from.    
     `neighbours`: the neighbour node.  
     `timestamp`: the timestamp of message.
