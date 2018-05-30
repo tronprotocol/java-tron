@@ -51,11 +51,9 @@ public class SyncPool {
 
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
-  private static final long WORKER_TIMEOUT = 16;
   private static final double fator = 0.4;
 
-  private final List<PeerConnection> activePeers = Collections
-      .synchronizedList(new ArrayList<PeerConnection>());
+  private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
@@ -94,7 +92,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, WORKER_TIMEOUT, WORKER_TIMEOUT, TimeUnit.SECONDS);
+    }, 30, 16, TimeUnit.SECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
