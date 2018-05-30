@@ -5,29 +5,43 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.*;
+import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SymmEncoder;
-import org.tron.common.utils.*;
-import stest.tron.wallet.common.client.Configuration;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
-import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Utils;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.*;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Witness;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
-
-import java.math.BigInteger;
-import java.util.*;
+import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 class AccountComparator implements Comparator {
 
@@ -433,7 +447,7 @@ public class WalletClient {
         ByteString bsaAdress = ByteString.copyFrom(address);
         ByteString bsAccountName = ByteString.copyFrom(accountName);
         builder.setType(accountType);
-        builder.setAccountName(bsAccountName);
+        builder.setAccountAddress(bsAccountName);
         builder.setOwnerAddress(bsaAdress);
 
         return builder.build();

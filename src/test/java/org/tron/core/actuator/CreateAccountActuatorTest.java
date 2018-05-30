@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -31,7 +32,6 @@ public class CreateAccountActuatorTest {
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_CreateAccount_test";
-  private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
@@ -71,11 +71,11 @@ public class CreateAccountActuatorTest {
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
   }
 
-  private Any getContract(String name, String address) {
+  private Any getContract(String ownerAddress, String accountAddress) {
     return Any.pack(
         Contract.AccountCreateContract.newBuilder()
-            .setAccountName(ByteString.copyFromUtf8(name))
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+            .setAccountAddress(ByteString.copyFrom(ByteArray.fromHexString(accountAddress)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .build());
   }
 
@@ -85,7 +85,8 @@ public class CreateAccountActuatorTest {
   @Test
   public void firstCreateAccount() {
     CreateAccountActuator actuator =
-        new CreateAccountActuator(getContract(ACCOUNT_NAME_FIRST, OWNER_ADDRESS_FIRST), dbManager);
+        new CreateAccountActuator(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST),
+            dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -95,9 +96,10 @@ public class CreateAccountActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
       Assert.assertNotNull(accountCapsule);
       Assert.assertEquals(
-          accountCapsule.getInstance().getAccountName(),
-          ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST));
+          StringUtil.createReadableString(accountCapsule.getAddress()),
+          OWNER_ADDRESS_FIRST);
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -111,7 +113,7 @@ public class CreateAccountActuatorTest {
   public void secondCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(
-            getContract(ACCOUNT_NAME_SECOND, OWNER_ADDRESS_SECOND), dbManager);
+            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -122,8 +124,8 @@ public class CreateAccountActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
       Assert.assertNotNull(accountCapsule);
       Assert.assertEquals(
-          accountCapsule.getInstance().getAccountName(),
-          ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND));
+          accountCapsule.getAddress(),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
