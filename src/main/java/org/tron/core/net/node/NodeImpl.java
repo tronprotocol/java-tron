@@ -706,7 +706,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     }
-    logger.info("Peer AdvObjSpreadToUs size:" + peer.getAdvObjSpreadToUs().size());
+    logger.info("Peer AdvObjSpreadToUs size: peer:" + peer.getNode().getHost() + "::" + peer.getAdvObjSpreadToUs().size());
     logger.info("this advObjToFetch size:" + this.advObjToFetch.size());
   }
 
