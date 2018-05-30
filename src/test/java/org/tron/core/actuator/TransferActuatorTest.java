@@ -203,11 +203,11 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate ownerAddress");
+      fail("Invalid ownerAddress");
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate ownerAddress", e.getMessage());
+      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -229,11 +229,11 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalidate toAddress");
+      fail("Invalid toAddress");
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalidate toAddress", e.getMessage());
+      Assert.assertEquals("Invalid toAddress", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -343,28 +343,6 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALIDATE));
       Assert.assertTrue(null == noExitAccount);
       actuator.validate();
-      Assert.assertEquals(noExitAccount.getBalance(), 0);
-      actuator.execute(ret);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      AccountCapsule noExitAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(To_ACCOUNT_INVALIDATE));
-      Assert.assertTrue(null == noExitAccount);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE);
-      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
-      dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALIDATE));
-    }
-
-  }
-
-  @Test
   public void zeroAmountTest() {
     TransferActuator actuator = new TransferActuator(getContract(0), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();

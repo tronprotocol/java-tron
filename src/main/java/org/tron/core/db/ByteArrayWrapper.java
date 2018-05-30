@@ -45,7 +45,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
    * equals Objects.
    */
   public boolean equals(Object other) {
-    if (!(other instanceof ByteArrayWrapper)) {
+    if (other == null || this.getClass() != other.getClass()) {
       return false;
     }
     byte[] otherData = ((ByteArrayWrapper) other).getData();

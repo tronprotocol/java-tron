@@ -7,7 +7,7 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -58,20 +58,27 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
-  private static final byte[] BANDWIDTH_PER_TRANSACTION = "BANDWIDTH_PER_TRANSACTION".getBytes();
-
-  private static final byte[] BANDWIDTH_PER_COINDAY = "BANDWIDTH_PER_COINDAY".getBytes();
-
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
   // 1_000_000L
   private static final byte[] NON_EXISTENT_ACCOUNT_TRANSFER_MIN = "NON_EXISTENT_ACCOUNT_TRANSFER_MIN"
       .getBytes();
 
-  private static final byte[] OPERATING_TIME_INTERVAL = "OPERATING_TIME_INTERVAL".getBytes();
+  private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
+  private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
+
+  private static final byte[] PUBLIC_NET_TIME = "PUBLIC_NET_TIME".getBytes();
+
+  private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
+
+  private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+
+  private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
+
+  private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
 
   @Autowired
-  private DynamicPropertiesStore(@Qualifier("properties") String dbName) {
+  private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
     try {
       this.getMaintenanceTimeInterval();
@@ -176,18 +183,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getBandwidthPerTransaction();
-    } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerTransaction(100_000);
-    }
-
-    try {
-      this.getBandwidthPerCoinday();
-    } catch (IllegalArgumentException e) {
-      this.saveBandwidthPerCoinday(1);
-    }
-
-    try {
       this.getAccountUpgradeCost();
     } catch (IllegalArgumentException e) {
       this.saveAccountUpgradeCost(9_999_000_000L);
@@ -199,13 +194,47 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveNonExistentAccountTransferLimit(1_000_000L);
     }
 
-
     try {
-      this.getOperatingTimeInterval();
+      this.getPublicNetUsage();
     } catch (IllegalArgumentException e) {
-      this.saveOperatingTimeInterval(10_000L);
+      this.savePublicNetUsage(0L);
     }
 
+    try {
+      this.getPublicNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.savePublicNetLimit(14_400_000_000L);
+    }
+
+    try {
+      this.getPublicNetTime();
+    } catch (IllegalArgumentException e) {
+      this.savePublicNetTime(0L);
+    }
+
+    try {
+      this.getFreeNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveFreeNetLimit(1000L);
+    }
+
+    try {
+      this.getTotalNetWeight();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalNetWeight(0L);
+    }
+
+    try {
+      this.getTotalNetLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalNetLimit(43_200_000_000L);
+    }
+
+    try {
+      this.getBlockNetUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockNetUsage(0L);
+    }
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -244,23 +273,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public static void destroy() {
     instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static DynamicPropertiesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (DynamicPropertiesStore.class) {
-        if (instance == null) {
-          instance = new DynamicPropertiesStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   public String intArrayToString(int[] a) {
@@ -424,32 +436,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found WITNESS_ALLOWANCE_FROZEN_TIME"));
   }
 
-  public void saveBandwidthPerTransaction(int bandwidthPerTransaction) {
-    logger.debug("BANDWIDTH_PER_TRANSACTION:" + bandwidthPerTransaction);
-    this.put(BANDWIDTH_PER_TRANSACTION,
-        new BytesCapsule(ByteArray.fromInt(bandwidthPerTransaction)));
-  }
-
-  public int getBandwidthPerTransaction() {
-    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_TRANSACTION))
-        .map(ByteArray::toInt)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found BANDWIDTH_PER_TRANSACTION"));
-  }
-
-  public void saveBandwidthPerCoinday(long bandwidthPerCoinday) {
-    logger.debug("BANDWIDTH_PER_COINDAY:" + bandwidthPerCoinday);
-    this.put(BANDWIDTH_PER_COINDAY,
-        new BytesCapsule(ByteArray.fromLong(bandwidthPerCoinday)));
-  }
-
-  public long getBandwidthPerCoinday() {
-    return Optional.ofNullable(this.dbSource.getData(BANDWIDTH_PER_COINDAY))
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found BANDWIDTH_PER_COINDAY"));
-  }
-
   public void saveAccountUpgradeCost(long accountUpgradeCost) {
     logger.debug("ACCOUNT_UPGRADE_COST:" + accountUpgradeCost);
     this.put(ACCOUNT_UPGRADE_COST,
@@ -477,19 +463,89 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void saveOperatingTimeInterval(long time) {
-    logger.debug("NON_EXISTENT_ACCOUNT_TRANSFER_MIN:" + time);
-    this.put(OPERATING_TIME_INTERVAL,
-        new BytesCapsule(ByteArray.fromLong(time)));
+  public void savePublicNetUsage(long publicNetUsage) {
+    this.put(PUBLIC_NET_USAGE,
+        new BytesCapsule(ByteArray.fromLong(publicNetUsage)));
   }
 
-  public long getOperatingTimeInterval() {
-    return Optional.ofNullable(this.dbSource.getData(OPERATING_TIME_INTERVAL))
+  public long getPublicNetUsage() {
+    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_USAGE))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found OPERATING_TIME_INTERVAL"));
+            () -> new IllegalArgumentException("not found PUBLIC_NET_USAGE"));
   }
 
+  public void savePublicNetLimit(long publicNetLimit) {
+    this.put(PUBLIC_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(publicNetLimit)));
+  }
+
+  public long getPublicNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found PUBLIC_NET_LIMIT"));
+  }
+
+  public void savePublicNetTime(long publicNetTime) {
+    this.put(PUBLIC_NET_TIME,
+        new BytesCapsule(ByteArray.fromLong(publicNetTime)));
+  }
+
+  public long getPublicNetTime() {
+    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_TIME))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found PUBLIC_NET_TIME"));
+  }
+
+  public void saveFreeNetLimit(long freeNetLimit) {
+    this.put(FREE_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(freeNetLimit)));
+  }
+
+  public long getFreeNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(FREE_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found FREE_NET_LIMIT"));
+  }
+
+  public void saveTotalNetWeight(long totalNetWeight) {
+    this.put(TOTAL_NET_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+  }
+
+  public long getTotalNetWeight() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_WEIGHT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+  }
+
+  public void saveTotalNetLimit(long totalNetLimit) {
+    this.put(TOTAL_NET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalNetLimit)));
+  }
+
+  public long getTotalNetLimit() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
+  }
+
+  public void saveBlockNetUsage(long blockNetUsage) {
+    this.put(BLOCK_NET_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getBlockNetUsage() {
+    return Optional.ofNullable(this.dbSource.getData(BLOCK_NET_USAGE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
+  }
 
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
@@ -654,4 +710,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     );
   }
 
+  //The unit is trx
+  public void addTotalNetWeight(long amount) {
+    long totalNetWeight = getTotalNetWeight();
+    totalNetWeight += amount;
+    saveTotalNetWeight(totalNetWeight);
+  }
 }

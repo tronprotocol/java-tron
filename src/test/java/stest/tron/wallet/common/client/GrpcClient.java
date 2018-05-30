@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.*;
+import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
@@ -26,6 +27,7 @@ public class GrpcClient {
     private ManagedChannel channelSolidity = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
     private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+    private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
 //  public GrpcClient(String host, int port) {
 //    channel = ManagedChannelBuilder.forAddress(host, port)
@@ -46,6 +48,7 @@ public class GrpcClient {
                     .usePlaintext(true)
                     .build();
             blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+            blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
         }
     }
 
@@ -208,25 +211,35 @@ public class GrpcClient {
         return Optional.ofNullable(assetIssueList);
     }
 
-    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end) {
+    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset , int limit) {
         TimeMessage.Builder timeMessage = TimeMessage.newBuilder();
         timeMessage.setBeginInMilliseconds(start);
         timeMessage.setEndInMilliseconds(end);
-        TransactionList transactionList = blockingStubSolidity.getTransactionsByTimestamp(timeMessage.build());
+        TimePaginatedMessage.Builder timePageMessage = TimePaginatedMessage.newBuilder();
+        timePageMessage.setTimeMessage(timeMessage);
+        timePageMessage.setOffset(offset);
+        timePageMessage.setLimit(limit);
+        TransactionList transactionList = blockingStubExtension.getTransactionsByTimestamp(timePageMessage.build());
         return Optional.ofNullable(transactionList);
     }
 
     public Optional<TransactionList> getTransactionsFromThis(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        TransactionList transactionList = blockingStubSolidity.getTransactionsFromThis(request);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
+        builder.setLimit(1000);
+        builder.setOffset(0);
+        TransactionList transactionList = blockingStubExtension.getTransactionsFromThis(builder.build());
         return Optional.ofNullable(transactionList);
     }
 
     public Optional<TransactionList> getTransactionsToThis(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);
-        Account request = Account.newBuilder().setAddress(addressBS).build();
-        TransactionList transactionList = blockingStubSolidity.getTransactionsToThis(request);
+        Account account = Account.newBuilder().setAddress(addressBS).build();
+        AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
+        builder.setLimit(1000);
+        builder.setOffset(0);
+        TransactionList transactionList = blockingStubExtension.getTransactionsToThis(builder.build());
         return Optional.ofNullable(transactionList);
     }
 

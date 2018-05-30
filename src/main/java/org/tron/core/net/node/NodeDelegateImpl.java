@@ -1,9 +1,11 @@
 package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -19,6 +21,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -48,7 +51,12 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException {
+      throws BadBlockException, UnLinkedBlockException, InterruptedException {
+
+    if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
+      throw new BadBlockException("block size over limit");
+    }
+
     // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
@@ -61,7 +69,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
-            .map(TransactionCapsule::getHash)
+            .map(TransactionCapsule::getTransactionId)
             .collect(Collectors.toCollection(LinkedList::new));
       } else {
         return null;
@@ -76,9 +84,13 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractValidateException e) {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
+<<<<<<< HEAD
       throw new BadBlockException("Contract Execute exception," + e.getMessage());
     } catch (InterruptedException e) {
       throw new BadBlockException("pre validate signature exception," + e.getMessage());
+=======
+      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
+>>>>>>> upstream/develop
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
@@ -87,34 +99,43 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
+    } catch (BadNumberBlockException e) {
+      throw new BadBlockException("bad number exception," + e.getMessage());
     }
+
   }
 
 
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
+    if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+      logger.warn("This transaction has been processed");
+      return;
+    } else {
+      dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+    }
     try {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
-      logger.warn("Contract validate failed", e);
+      logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ContractExeException e) {
-      logger.error("Contract execute failed", e);
+      logger.info("Contract execute failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
-      logger.error("ValidateSignatureException");
+      logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
     } catch (ValidateBandwidthException e) {
-      logger.warn("ValidateBandwidthException");
+      logger.info("ValidateBandwidthException" + e.getMessage());
     } catch (DupTransactionException e) {
-      logger.error("dup trans");
+      logger.info("dup trans" + e.getMessage());
     } catch (TaposException e) {
-      logger.error("tapos error");
+      logger.info("tapos error" + e.getMessage());
     } catch (TooBigTransactionException e) {
-      logger.error("too big transaction");
+      logger.info("too big transaction" + e.getMessage());
     } catch (TransactionExpirationException e) {
-      logger.error("expiration transaction");
+      logger.info("expiration transaction" + e.getMessage());
     }
   }
 
@@ -135,9 +156,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-      return new LinkedList<BlockId>() {{
-        add(dbManager.getGenesisBlockId());
-      }};
+      return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);

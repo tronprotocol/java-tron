@@ -315,7 +315,7 @@ public class WitnessController {
             .get(StringUtil.createDbKey(address));
         if (null == witnessCapsule) {
           logger.warn("witnessCapsule is null.address is {}",
-                  StringUtil.createReadableString(address));
+              StringUtil.createReadableString(address));
           return;
         }
 
@@ -327,7 +327,6 @@ public class WitnessController {
         } else {
           witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
           witnessCapsule.setIsJobs(false);
-//          newWitnessAddressList.add(address);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
@@ -340,6 +339,12 @@ public class WitnessController {
         setActiveWitnesses(newWitnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
       } else {
         setActiveWitnesses(newWitnessAddressList);
+      }
+
+      if (newWitnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
+        payStandbyWitness(newWitnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH));
+      } else {
+        payStandbyWitness(newWitnessAddressList);
       }
 
       getActiveWitnesses().forEach(address -> {
@@ -365,4 +370,19 @@ public class WitnessController {
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
+  private void payStandbyWitness(List<ByteString> list) {
+    long voteSum = 0;
+    long totalPay = ChainConstant.WITNESS_STANDBY_ALLOWANCE;
+    for (ByteString b : list) {
+      voteSum += getWitnesseByAddress(b).getVoteCount();
+    }
+    if (voteSum > 0) {
+      for (ByteString b : list) {
+        long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
+        AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
+        accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
+        manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+      }
+    }
+  }
 }

@@ -30,6 +30,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,7 +106,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * factor) - activePeersCount.get();
+    int lackSize = (int) (maxActiveNodes * factor) - activePeers.size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();
@@ -162,7 +164,13 @@ public class SyncPool {
   }
 
   public synchronized List<PeerConnection> getActivePeers() {
-    return new ArrayList<>(activePeers);
+    List<PeerConnection> peers = Lists.newArrayList();
+    activePeers.forEach(peer -> {
+      if (!peer.isDisconnect()){
+        peers.add(peer);
+      }
+    });
+    return peers;
   }
 
   public synchronized void onConnect(Channel peer) {
@@ -191,7 +199,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - factor)) {
+    if (activePeers.size() >= maxActiveNodes) {
       return false;
     }
     return true;

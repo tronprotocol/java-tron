@@ -17,78 +17,84 @@
  */
 package org.tron.common.overlay.discover;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.table.KademliaOptions;
 import org.tron.common.overlay.discover.table.NodeEntry;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DiscoverTask implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger("DiscoverTask");
 
-    NodeManager nodeManager;
+  private static final Logger logger = LoggerFactory.getLogger("DiscoverTask");
 
-    byte[] nodeId;
+  NodeManager nodeManager;
 
-    public DiscoverTask(NodeManager nodeManager) {
-        this.nodeManager = nodeManager;
-        nodeId = nodeManager.homeNode.getId();
-    }
+  byte[] nodeId;
 
-    @Override
-    public void run() {
-        discover(nodeId, 0, new ArrayList<Node>());
-    }
+  public DiscoverTask(NodeManager nodeManager) {
+    this.nodeManager = nodeManager;
+    nodeId = nodeManager.homeNode.getId();
+  }
 
-    public synchronized void discover(byte[] nodeId, int round, List<Node> prevTried) {
+  @Override
+  public void run() {
+    discover(nodeId, 0, new ArrayList<Node>());
+  }
 
-        try {
-            if (round == KademliaOptions.MAX_STEPS) {
-                logger.debug("Node table contains [{}] peers", nodeManager.getTable().getNodesCount());
-                logger.debug("{}", String.format("(KademliaOptions.MAX_STEPS) Terminating discover after %d rounds.", round));
-                logger.trace("{}\n{}", String.format("Nodes discovered %d ", nodeManager.getTable().getNodesCount()), dumpNodes());
-                return;
-            }
+  public synchronized void discover(byte[] nodeId, int round, List<Node> prevTried) {
 
-            List<Node> closest = nodeManager.getTable().getClosestNodes(nodeId);
-            List<Node> tried = new ArrayList<>();
-            for (Node n : closest) {
-                if (!tried.contains(n) && !prevTried.contains(n)) {
-                    try {
-                        nodeManager.getNodeHandler(n).sendFindNode(nodeId);
-                        tried.add(n);
-                        Thread.sleep(50);
-                    }catch (InterruptedException e) {
-                    } catch (Exception ex) {
-                        logger.error("Unexpected Exception " + ex, ex);
-                    }
-                }
-                if (tried.size() == KademliaOptions.ALPHA) {
-                    break;
-                }
-            }
+    try {
+      if (round == KademliaOptions.MAX_STEPS) {
+        logger.debug("Node table contains [{}] peers", nodeManager.getTable().getNodesCount());
+        logger.debug("{}", String
+            .format("(KademliaOptions.MAX_STEPS) Terminating discover after %d rounds.", round));
+        logger.trace("{}\n{}",
+            String.format("Nodes discovered %d ", nodeManager.getTable().getNodesCount()),
+            dumpNodes());
+        return;
+      }
 
-            if (tried.isEmpty()) {
-                logger.debug("{}", String.format("(tried.isEmpty()) Terminating discover after %d rounds.", round));
-                logger.trace("{}\n{}", String.format("Nodes discovered %d ", nodeManager.getTable().getNodesCount()), dumpNodes());
-                return;
-            }
-
-            tried.addAll(prevTried);
-
-            discover(nodeId, round + 1, tried);
-        } catch (Exception ex) {
-            logger.error("{}", ex);
+      List<Node> closest = nodeManager.getTable().getClosestNodes(nodeId);
+      List<Node> tried = new ArrayList<>();
+      for (Node n : closest) {
+        if (!tried.contains(n) && !prevTried.contains(n)) {
+          try {
+            nodeManager.getNodeHandler(n).sendFindNode(nodeId);
+            tried.add(n);
+            wait(50);
+          } catch (InterruptedException e) {
+          } catch (Exception ex) {
+            logger.error("Unexpected Exception " + ex, ex);
+          }
         }
-    }
-
-    private String dumpNodes() {
-        String ret = "";
-        for (NodeEntry entry : nodeManager.getTable().getAllNodes()) {
-            ret += "    " + entry.getNode() + "\n";
+        if (tried.size() == KademliaOptions.ALPHA) {
+          break;
         }
-        return ret;
+      }
+
+      if (tried.isEmpty()) {
+        logger.debug("{}",
+            String.format("(tried.isEmpty()) Terminating discover after %d rounds.", round));
+        logger.trace("{}\n{}",
+            String.format("Nodes discovered %d ", nodeManager.getTable().getNodesCount()),
+            dumpNodes());
+        return;
+      }
+
+      tried.addAll(prevTried);
+
+      discover(nodeId, round + 1, tried);
+    } catch (Exception ex) {
+      logger.error("{}", ex);
     }
+  }
+
+  private String dumpNodes() {
+    String ret = "";
+    for (NodeEntry entry : nodeManager.getTable().getAllNodes()) {
+      ret += "    " + entry.getNode() + "\n";
+    }
+    return ret;
+  }
 }

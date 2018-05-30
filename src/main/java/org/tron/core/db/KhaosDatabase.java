@@ -13,11 +13,12 @@ import java.util.stream.Stream;
 import javafx.util.Pair;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
@@ -135,7 +136,7 @@ public class KhaosDatabase extends TronDatabase {
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
   @Autowired
-  protected KhaosDatabase(@Qualifier("block_KDB") String dbName) {
+  protected KhaosDatabase(@Value("block_KDB") String dbName) {
     super(dbName);
   }
 
@@ -197,11 +198,16 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Push the block in the KhoasDB.
    */
-  public BlockCapsule push(BlockCapsule blk) throws UnLinkedBlockException {
+  public BlockCapsule push(BlockCapsule blk)
+      throws UnLinkedBlockException, BadNumberBlockException {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
+        if (blk.getNum() != kblock.num + 1) {
+          throw new BadNumberBlockException(
+              "parent number :" + kblock.num + ",block number :" + blk.getNum());
+        }
         block.setParent(kblock);
       } else {
         miniUnlinkedStore.insert(block);
