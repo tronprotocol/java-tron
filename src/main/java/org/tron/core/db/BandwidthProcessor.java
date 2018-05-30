@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.AccountCreateContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
