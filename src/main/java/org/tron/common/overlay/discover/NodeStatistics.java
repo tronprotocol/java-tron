@@ -93,11 +93,12 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 51 : 1);
-    discoverReput += min(discoverInNeighbours.get(), 10) * 10;
-    discoverReput += min(discoverInFind.get(), 50);
+        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
 
-    //discoverReput += 20 / (min((int)discoverMessageLatency.getAvrg(), 1) / 100);
+    discoverReput +=
+        min(discoverInNeighbours.get(), 1) * (discoverOutFind.get() == discoverInNeighbours.get() ? 50 : 1);
+
+    discoverReput += discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
 
     int reput = 0;
     reput += p2pHandShake.get() > 0 ? 20 : 0;
@@ -273,7 +274,7 @@ public class NodeStatistics {
     }
 
     public double getAvrg() {
-      return getSum() / getCount();
+      return count == 0 ? 0 : sum / count;
     }
 
     public String getName() {

@@ -80,14 +80,13 @@ public class NodeHandler {
   }
 
   Node node;
-  NodeManager nodeManager;
-  private NodeStatistics nodeStatistics;
-
   State state;
-  boolean waitForPong = false;
-  long pingSent;
-  int pingTrials = 3;
-  NodeHandler replaceCandidate;
+  private NodeManager nodeManager;
+  private NodeStatistics nodeStatistics;
+  private NodeHandler replaceCandidate;
+  private volatile boolean waitForPong = false;
+  private volatile int pingTrials = 3;
+  private long pingSent;
 
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
