@@ -70,9 +70,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(final AccountCreateContract contract) {
     this.account = Account.newBuilder()
-        .setAccountName(contract.getAccountName())
         .setType(contract.getType())
-        .setAddress(contract.getOwnerAddress())
+        .setAddress(contract.getAccountAddress())
         .setTypeValue(contract.getTypeValue())
         .build();
   }
@@ -82,9 +81,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime) {
     this.account = Account.newBuilder()
-        .setAccountName(contract.getAccountName())
         .setType(contract.getType())
-        .setAddress(contract.getOwnerAddress())
+        .setAddress(contract.getAccountAddress())
         .setTypeValue(contract.getTypeValue())
         .setCreateTime(createTime)
         .build();

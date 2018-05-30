@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -16,15 +17,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class CreateAccountActuator extends AbstractActuator {
 
-  @Deprecated
-    //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
     long fee = calcFee();
@@ -33,7 +30,7 @@ public class CreateAccountActuator extends AbstractActuator {
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
           dbManager.getHeadBlockTimeStamp());
       dbManager.getAccountStore()
-          .put(accountCreateContract.getOwnerAddress().toByteArray(), accountCapsule);
+          .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -45,8 +42,6 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
@@ -66,18 +61,31 @@ public class CreateAccountActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (contract.getAccountName().isEmpty()) {
-      throw new ContractValidateException("AccountName is null");
-    }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+//    if (contract.getAccountName().isEmpty()) {
+//      throw new ContractValidateException("AccountName is null");
+//    }
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
-    if (contract.getType() == null) {
-      throw new ContractValidateException("Type is null");
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    if (accountCapsule == null) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
     }
 
-    if (dbManager.getAccountStore().has(contract.getOwnerAddress().toByteArray())) {
+    byte[] accountAddress = contract.getAccountAddress().toByteArray();
+    if (!Wallet.addressValid(accountAddress)) {
+      throw new ContractValidateException("Invalid account address");
+    }
+
+//    if (contract.getType() == null) {
+//      throw new ContractValidateException("Type is null");
+//    }
+
+    if (dbManager.getAccountStore().has(accountAddress)) {
       throw new ContractValidateException("Account has existed");
     }
 
@@ -85,15 +93,11 @@ public class CreateAccountActuator extends AbstractActuator {
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(AccountCreateContract.class).getOwnerAddress();
   }
 
   @Override
-  @Deprecated
-  //Can not create account by api. Need send more than 1 trx , will create account if not exit.
   public long calcFee() {
     return 0;
   }
