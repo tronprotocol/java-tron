@@ -14,9 +14,11 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
@@ -173,12 +175,14 @@ public class TcpNetTest extends BaseNetTest {
 
   //  @Test
   public void unHandshakeTest() throws InterruptedException {
+    List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+    int beforeSize = beforeActivePeers.size();
     Channel channel = createClient(new HandshakeHandler(TestType.normal));
     BlockMessage message = new BlockMessage(Block.getDefaultInstance());
-    List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
     sendMessage(channel, message);
     List<PeerConnection> afterActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
-    Assert.assertEquals(beforeActivePeers.size(), afterActivePeers.size());
+    int afterSize = afterActivePeers.size();
+    Assert.assertEquals(beforeSize, afterSize);
     clearConnect(channel);
   }
 
@@ -226,9 +230,13 @@ public class TcpNetTest extends BaseNetTest {
     }
     Assert.assertEquals(finish, true);
     finish = false;
+    channel.close();
+    Thread.sleep(sleepTime);
     ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
         .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
-    channel.close();
+    ReflectUtils.setFieldValue(pool, "activePeers",
+        Collections.synchronizedList(new ArrayList<PeerConnection>()));
+    ReflectUtils.setFieldValue(channelManager, "activePeers", new ConcurrentHashMap<>());
   }
 
   private void validResultUnCloseConnect() throws InterruptedException {
@@ -240,27 +248,33 @@ public class TcpNetTest extends BaseNetTest {
     finish = false;
   }
 
-  private void clearConnect(Channel channel) {
+  private void clearConnect(Channel channel) throws InterruptedException {
+    channel.close();
+    Thread.sleep(org.tron.common.overlay.server.SyncPool.getActivePeers);
     ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
         .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
-    channel.close();
+    ReflectUtils.setFieldValue(pool, "activePeers",
+        Collections.synchronizedList(new ArrayList<PeerConnection>()));
+    ReflectUtils.setFieldValue(channelManager, "activePeers", new ConcurrentHashMap<>());
   }
 
   @Test
   public void testAll() throws InterruptedException {
-    logger.info("begin normal test ");
-    normalTest();
-    logger.info("begin errorGenesisBlockId test ");
-    errorGenesisBlockIdTest();
-    logger.info("begin errorVersion test ");
-    errorVersionTest();
-    logger.info("begin errorSolidBlockId test ");
-    errorSolidBlockIdTest();
-    logger.info("begin repeatConnect test");
-    repeatConnectTest();
-    logger.info("begin unHandshake test");
-    unHandshakeTest();
-    logger.info("begin errorMsg test");
-    errorMsgTest();
+    for (int i = 0; i < 100; i++) {
+      logger.info("begin normal test ");
+      normalTest();
+      logger.info("begin errorGenesisBlockId test ");
+      errorGenesisBlockIdTest();
+      logger.info("begin errorVersion test ");
+      errorVersionTest();
+      logger.info("begin errorSolidBlockId test ");
+      errorSolidBlockIdTest();
+      logger.info("begin repeatConnect test");
+      repeatConnectTest();
+      logger.info("begin unHandshake test");
+      unHandshakeTest();
+      logger.info("begin errorMsg test");
+      errorMsgTest();
+    }
   }
 }
