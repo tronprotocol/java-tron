@@ -106,7 +106,7 @@ public class AccountVoteWitnessTest {
   private void printWitness(final ByteString address) {
     final WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address.toByteArray());
     if (null == witnessCapsule) {
-      logger.info("address is {}  , winess is null", address.toStringUtf8());
+      logger.info("address is {}  , witness is null", address.toStringUtf8());
       return;
     }
     logger.info(

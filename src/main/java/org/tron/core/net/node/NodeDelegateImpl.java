@@ -19,6 +19,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
@@ -33,7 +34,6 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -57,7 +57,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block size over limit");
     }
 
-    // TODO timestamp shouble be consistent.
+    // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
@@ -75,8 +75,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         return null;
       }
 
-    } catch (ValidateBandwidthException e) {
-      throw new BadBlockException("Validate Bandwidth exception," + e.getMessage());
+    } catch (AccountResourceInsufficientException e) {
+      throw new BadBlockException("AccountResourceInsufficientException," + e.getMessage());
     } catch (ValidateScheduleException e) {
       throw new BadBlockException("validate schedule exception," + e.getMessage());
     } catch (ValidateSignatureException e) {
@@ -84,11 +84,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractValidateException e) {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
-      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
+      throw new BadBlockException("Contract Execute exception," + e.getMessage());
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
-      throw new BadBlockException("DupTransation exception," + e.getMessage());
+      throw new BadBlockException("DupTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
@@ -120,8 +120,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ValidateSignatureException e) {
       logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
-    } catch (ValidateBandwidthException e) {
-      logger.info("ValidateBandwidthException" + e.getMessage());
+    } catch (AccountResourceInsufficientException e) {
+      logger.info("AccountResourceInsufficientException" + e.getMessage());
     } catch (DupTransactionException e) {
       logger.info("dup trans" + e.getMessage());
     } catch (TaposException e) {

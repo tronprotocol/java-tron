@@ -565,8 +565,10 @@ public class Args {
         .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(
-            new URL("http://checkip.amazonaws.com").openStream()))) {
+        BufferedReader in = null;
+        try {
+          in = new BufferedReader(new InputStreamReader(
+              new URL("http://checkip.amazonaws.com").openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
@@ -582,6 +584,15 @@ public class Args {
           logger.warn(
               "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
                   + e);
+        }finally{
+          if (in != null){
+            try {
+              in.close();
+            } catch (IOException e) {
+              //ignore
+            }
+          }
+
         }
       }
     } else {
