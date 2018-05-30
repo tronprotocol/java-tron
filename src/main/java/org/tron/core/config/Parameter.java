@@ -23,7 +23,7 @@ public interface Parameter {
     long PRECISION = 1000_000;
     long ONE_DAY_NET_LIMIT = 57_600_000_000L;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
-    long CREATE_NEW_ACCOUNT_COST = 10000;
+    long CREATE_NEW_ACCOUNT_BANDWIDTH_COST = 200;
   }
 
   interface NodeConstant {

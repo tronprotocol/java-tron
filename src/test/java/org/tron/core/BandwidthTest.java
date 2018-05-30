@@ -150,11 +150,12 @@ public class BandwidthTest {
     ownerCapsule.setFrozen(10_000_000L, 0L);
 
     Assert.assertEquals(true, processor.contractCreateNewAccount(contract));
-    processor.consumeForCreateNewAccount(ownerCapsule, 1526647838000L);
+    processor.consumeBandwidthForCreateNewAccount(ownerCapsule, 1526647838000L);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    Assert.assertEquals(ChainConstant.CREATE_NEW_ACCOUNT_COST, ownerCapsuleNew.getNetUsage());
+    Assert.assertEquals(ChainConstant.CREATE_NEW_ACCOUNT_BANDWIDTH_COST,
+        ownerCapsuleNew.getNetUsage());
 
   }
 

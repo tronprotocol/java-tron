@@ -77,6 +77,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
 
+  private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
+
+  private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -235,6 +239,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveBlockNetUsage(0L);
     }
+
+    try {
+      this.getCreateAccountFee();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+    try {
+      this.getTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveTransactionFee(1000L); // 10Drop
+    }
+
+
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -545,6 +562,31 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
+  }
+
+  public void saveCreateAccountFee(long blockNetUsage) {
+    this.put(CREATE_ACCOUNT_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getCreateAccountFee() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_ACCOUNT_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
+  }
+
+
+  public void saveTransactionFee(long blockNetUsage) {
+    this.put(TRANSACTION_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getTransactionFee() {
+    return Optional.ofNullable(this.dbSource.getData(TRANSACTION_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TRANSACTION_FEE"));
   }
 
 

@@ -52,6 +52,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -59,7 +60,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -267,10 +267,10 @@ public class Wallet {
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error"))
           .build();
-    } catch (ValidateBandwidthException e) {
+    } catch (AccountResourceInsufficientException e) {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("high freq error"))
+          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficientException error"))
           .build();
     } catch (DupTransactionException e) {
       logger.info("dup trans" + e.getMessage());

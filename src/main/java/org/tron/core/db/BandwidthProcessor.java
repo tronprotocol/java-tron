@@ -13,7 +13,9 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.exception.ValidateBandwidthException;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -78,7 +80,8 @@ public class BandwidthProcessor {
     });
   }
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx)
+      throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
 
@@ -88,7 +91,7 @@ public class BandwidthProcessor {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
-        throw new ValidateBandwidthException("account not exists");
+        throw new ContractValidateException("account not exists");
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
@@ -114,13 +117,40 @@ public class BandwidthProcessor {
         continue;
       }
 
-      throw new ValidateBandwidthException("bandwidth is not enough");
+      if (useTransactionFee(accountCapsule, bytes)) {
+        continue;
+      }
+
+      throw new AccountResourceInsufficientException(
+          "Account Insufficient bandwidth and balance to create new account");
     }
   }
 
-  public void consumeForCreateNewAccount(AccountCapsule accountCapsule, long now)
-      throws ValidateBandwidthException {
-    long cost = ChainConstant.CREATE_NEW_ACCOUNT_COST;
+  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
+    long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+    try {
+      dbManager.adjustBalance(accountCapsule.getAddress().toByteArray(), -fee);
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
+  }
+
+  private void consumeForCreateNewAccount(AccountCapsule accountCapsule,
+      long now) throws AccountResourceInsufficientException {
+    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, now);
+
+    if (!ret) {
+      ret = consumeFeeForCreateNewAccount(accountCapsule);
+      if (!ret) {
+        throw new AccountResourceInsufficientException();
+      }
+    }
+  }
+
+
+  public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long now) {
+    long cost = ChainConstant.CREATE_NEW_ACCOUNT_BANDWIDTH_COST;
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
@@ -136,10 +166,19 @@ public class BandwidthProcessor {
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    } else {
-      throw new ValidateBandwidthException("bandwidth is not enough to create new account");
+      return true;
     }
+    return false;
+  }
 
+  public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule) {
+    long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+    try {
+      dbManager.adjustBalance(accountCapsule.getAddress().toByteArray(), -fee);
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
   }
 
   public boolean contractCreateNewAccount(Contract contract) {
@@ -174,7 +213,7 @@ public class BandwidthProcessor {
 
   private boolean useAssetAccountNet(Contract contract, AccountCapsule accountCapsule, long now,
       long bytes)
-      throws ValidateBandwidthException {
+      throws ContractValidateException {
 
     ByteString assetName;
     try {
@@ -186,7 +225,7 @@ public class BandwidthProcessor {
     AssetIssueCapsule assetIssueCapsule
         = dbManager.getAssetIssueStore().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
-      throw new ValidateBandwidthException("asset not exists");
+      throw new ContractValidateException("asset not exists");
     }
 
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
