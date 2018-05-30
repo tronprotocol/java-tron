@@ -51,7 +51,7 @@ public class SyncPool {
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private static final long WORKER_TIMEOUT = 16;
-  private static final double fator = 0.4;
+  private static final double factor = 0.4;
 
   private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
@@ -106,7 +106,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * fator) - activePeers.size();
+    int lackSize = (int) (maxActiveNodes * factor) - activePeers.size();
     if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = channelManager.nodesInUse();

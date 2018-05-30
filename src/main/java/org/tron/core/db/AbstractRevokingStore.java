@@ -62,7 +62,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       return;
     }
 
-    addIfEmtpy();
+    addIfEmpty();
     RevokingState state = stack.peekLast();
     state.newIds.add(tuple);
   }
@@ -73,7 +73,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       return;
     }
 
-    addIfEmtpy();
+    addIfEmpty();
     RevokingState state = stack.peekLast();
     if (state.newIds.contains(tuple) || state.oldValues.containsKey(tuple)) {
       return;
@@ -88,7 +88,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       return;
     }
 
-    addIfEmtpy();
+    addIfEmpty();
     RevokingState state = stack.peekLast();
     if (state.newIds.contains(tuple)) {
       state.newIds.remove(tuple);
@@ -239,7 +239,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     disabled = true;
   }
 
-  private void addIfEmtpy() {
+  private void addIfEmpty() {
     if (stack.isEmpty()) {
       stack.add(new RevokingState());
     }
@@ -280,7 +280,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         }
       }
     } catch (Exception e) {
-      System.err.println("******** faild to pop revokingStore. " + e);
+      System.err.println("******** failed to pop revokingStore. " + e);
     } finally {
       System.err.println("******** after revokingStore size:" + stack.size());
       System.err.println("******** after revokingStore contains:" + stack);
@@ -306,9 +306,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       this(revokingDatabase, false);
     }
 
-    public Dialog(RevokingDatabase revokingDatabase, boolean disbaleOnExit) {
+    public Dialog(RevokingDatabase revokingDatabase, boolean disableOnExit) {
       this.revokingDatabase = revokingDatabase;
-      this.disableOnExit = disbaleOnExit;
+      this.disableOnExit = disableOnExit;
     }
 
     void commit() throws RevokingStoreIllegalStateException {

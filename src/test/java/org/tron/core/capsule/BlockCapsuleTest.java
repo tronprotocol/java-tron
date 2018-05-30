@@ -20,9 +20,11 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class BlockCapsuleTest {
 
-  private static BlockCapsule blockCapsule0 = new BlockCapsule(1, ByteString
+  private static BlockCapsule blockCapsule0 = new BlockCapsule(1,
+      Sha256Hash.wrap(ByteString
       .copyFrom(ByteArray
-          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222")), 1234,
+          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+      1234,
       ByteString.copyFrom("1234567".getBytes()));
   private static String dbPath = "output_bloackcapsule_test";
 
@@ -67,9 +69,15 @@ public class BlockCapsuleTest {
         .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
     blockCapsule0.setMerkleRoot();
 
-    Assert.assertEquals(
-        "53421c1f1bcbbba67a4184cc3dbc1a59f90af7e2b0644dcfc8dc738fe30deffc",
-        blockCapsule0.getMerkleRoot().toString());
+    if (Constant.ADD_PRE_FIX_BYTE_TESTNET == Wallet.getAddressPreFixByte()) {
+      Assert.assertEquals(
+          "53421c1f1bcbbba67a4184cc3dbc1a59f90af7e2b0644dcfc8dc738fe30deffc",
+          blockCapsule0.getMerkleRoot().toString());
+    } else {
+      Assert.assertEquals(
+          "5bc862243292e6aa1d5e21a60bb6a673e4c2544709f6363d4a2f85ec29bcfe00",
+          blockCapsule0.getMerkleRoot().toString());
+    }
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }

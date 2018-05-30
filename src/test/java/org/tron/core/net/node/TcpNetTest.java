@@ -31,6 +31,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.BlockMessage;
@@ -178,7 +179,7 @@ public class TcpNetTest extends BaseNetTest {
     List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
     int beforeSize = beforeActivePeers.size();
     Channel channel = createClient(new HandshakeHandler(TestType.normal));
-    BlockMessage message = new BlockMessage(Block.getDefaultInstance());
+    BlockMessage message = new BlockMessage(new BlockCapsule(Block.getDefaultInstance()));
     sendMessage(channel, message);
     List<PeerConnection> afterActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");
     int afterSize = afterActivePeers.size();
@@ -250,7 +251,7 @@ public class TcpNetTest extends BaseNetTest {
 
   private void clearConnect(Channel channel) throws InterruptedException {
     channel.close();
-    Thread.sleep(org.tron.common.overlay.server.SyncPool.getActivePeers);
+    Thread.sleep(sleepTime);
     ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
         .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
     ReflectUtils.setFieldValue(pool, "activePeers",
@@ -260,7 +261,6 @@ public class TcpNetTest extends BaseNetTest {
 
   @Test
   public void testAll() throws InterruptedException {
-    for (int i = 0; i < 100; i++) {
       logger.info("begin normal test ");
       normalTest();
       logger.info("begin errorGenesisBlockId test ");
@@ -275,6 +275,5 @@ public class TcpNetTest extends BaseNetTest {
       unHandshakeTest();
       logger.info("begin errorMsg test");
       errorMsgTest();
-    }
   }
 }

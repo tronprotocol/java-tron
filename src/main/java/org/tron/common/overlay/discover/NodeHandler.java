@@ -80,14 +80,13 @@ public class NodeHandler {
   }
 
   Node node;
-  NodeManager nodeManager;
-  private NodeStatistics nodeStatistics;
-
   State state;
-  boolean waitForPong = false;
-  long pingSent;
-  int pingTrials = 3;
-  NodeHandler replaceCandidate;
+  private NodeManager nodeManager;
+  private NodeStatistics nodeStatistics;
+  private NodeHandler replaceCandidate;
+  private volatile boolean waitForPong = false;
+  private volatile int pingTrials = 3;
+  private long pingSent;
 
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
@@ -175,7 +174,9 @@ public class NodeHandler {
     if (!nodeManager.table.getNode().equals(node)) {
       sendPong();
     }
-    if (state.equals(State.NonActive) || state.equals(State.Dead)) {
+    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
+      changeState(State.NonActive);
+    }else if (state.equals(State.NonActive) || state.equals(State.Dead)) {
       changeState(State.Discovered);
     }
   }
@@ -228,7 +229,7 @@ public class NodeHandler {
   }
 
   void sendPing() {
-    Message ping = new PingMessage(nodeManager.table.getNode(), getNode());
+    Message ping = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
     waitForPong = true;
     pingSent = System.currentTimeMillis();
     sendMessage(ping);
@@ -262,7 +263,7 @@ public class NodeHandler {
   }
 
   void sendFindNode(byte[] target) {
-    Message findNode = new FindNodeMessage(node, target);
+    Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();
   }

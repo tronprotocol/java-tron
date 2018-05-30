@@ -117,7 +117,7 @@ public class ApplicationImpl implements Application {
     try {
       p2pNode.close();
     } catch (Exception e) {
-      System.err.println("faild to close p2pNode. " + e);
+      System.err.println("failed to close p2pNode. " + e);
     } finally {
       System.err.println("******** end to shutdown connection ********");
     }

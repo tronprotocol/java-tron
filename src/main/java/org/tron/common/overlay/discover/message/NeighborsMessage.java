@@ -17,13 +17,9 @@ public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] data) {
+  public NeighborsMessage(byte[] data) throws Exception{
     super(Message.GET_PEERS, data);
-    try {
-      this.neighbours = Discover.Neighbours.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
+    this.neighbours = Discover.Neighbours.parseFrom(data);
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
