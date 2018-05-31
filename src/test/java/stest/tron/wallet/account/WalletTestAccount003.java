@@ -481,11 +481,15 @@ public class WalletTestAccount003 {
     Contract.VoteWitnessContract contract = builder.build();
 
     Protocol.Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info(Integer.toString(transaction.getRawData().getAuthsCount()));
+
+    if (transaction == null) {
       logger.info("transaction == null");
       return false;
+    } else if (transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction auths count == {}", Integer.toString(transaction.getRawData().getAuthsCount()));
+      return false;
     }
+
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 
