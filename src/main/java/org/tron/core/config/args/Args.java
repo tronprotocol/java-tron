@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import io.grpc.internal.GrpcUtil;
+import io.grpc.netty.NettyServerBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -172,6 +176,30 @@ public class Args {
 
   @Getter
   @Setter
+  private int maxConcurrentCallsPerConnection;
+
+  @Getter
+  @Setter
+  private int flowControlWindow;
+
+  @Getter
+  @Setter
+  private long maxConnectionIdleInMillis;
+
+  @Getter
+  @Setter
+  private long maxConnectionAgeInMillis;
+
+  @Getter
+  @Setter
+  private int maxMessageSize;
+
+  @Getter
+  @Setter
+  private int maxHeaderListSize;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
   private int validateSignThreadNum;
 
@@ -270,11 +298,11 @@ public class Args {
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.db.directory")));
+        .orElse(Storage.getDbDirectoryFromConfig(config)));
 
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.index.directory")));
+        .orElse(Storage.getIndexDirectoryFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -359,6 +387,24 @@ public class Args {
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
+
+    INSTANCE.maxConcurrentCallsPerConnection = config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
+        config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
+
+    INSTANCE.flowControlWindow = config.hasPath("node.rpc.flowControlWindow") ?
+        config.getInt("node.rpc.flowControlWindow") : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+
+    INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
+        config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxConnectionAgeInMillis = config.hasPath("node.rpc.maxConnectionAgeInMillis") ?
+        config.getLong("node.rpc.maxConnectionAgeInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxMessageSize = config.hasPath("node.rpc.maxMessageSize") ?
+        config.getInt("node.rpc.maxMessageSize") : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+
+    INSTANCE.maxHeaderListSize = config.hasPath("node.rpc.maxHeaderListSize") ?
+        config.getInt("node.rpc.maxHeaderListSize") : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config

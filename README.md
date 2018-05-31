@@ -477,6 +477,10 @@ Then observe whether block synchronization success，If synchronization successf
 
 Read the [Quick Start](http://wiki.tron.network/en/latest/Quick_Start.html).
 
+# Advanced Configurations
+
+Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
+
 # Community
 
 * [Slack](https://join.slack.com/t/tronfoundation/shared_invite/enQtMzAzNzg4NTI4NDM3LTAyZGQzMzEzMjNkNDU0ZjNkNTA4OTYyNTA5YWZmYjE3MTEyOWZhNzljNzQwODM3NDQ0OWRiMTIyMDhlYzgyOGQ)
