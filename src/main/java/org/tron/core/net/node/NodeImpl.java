@@ -3,6 +3,7 @@ package org.tron.core.net.node;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
+import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
@@ -24,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -86,6 +88,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
       .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
+      .recordStats().build();
+
+  private Cache<Long, Long> fetchWaterLine = CacheBuilder.newBuilder()
+      .expireAfterWrite(BLOCK_PRODUCED_INTERVAL / 1000, TimeUnit.SECONDS)
       .recordStats().build();
 
   private int maxTrxsSize = 1_000_000;
@@ -687,7 +693,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //avoid TRX flood attack here.
         if (msg.getInventoryType().equals(InventoryType.TRX)
-            && peer.isAdvInvFull()) {
+            && (peer.isAdvInvFull()
+            || isFlooded())) {
           logger.info("A peer is flooding us, stop handle inv, the peer is:" + peer);
           return;
         }
@@ -696,6 +703,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
             if (!advObjToFetch.contains(id)) {
+              addWaterLine();
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             } else {
@@ -709,6 +717,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("Peer AdvObjSpreadToUs size: peer:" + peer.getNode().getHost() + "::" + peer.getAdvObjSpreadToUs().size());
     logger.info("this advObjToFetch size:" + this.advObjToFetch.size());
     logger.info("this advObjToRequest size" + this.advObjWeRequested.size());
+  }
+
+  private boolean isFlooded() {
+    return fetchWaterLine.asMap().values().stream().mapToLong(Long::longValue).sum()
+        > BLOCK_PRODUCED_INTERVAL * NET_MAX_TRX_PER_SECOND / 1000;
+  }
+
+  private void addWaterLine() {
+    try {
+      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
+      fetchWaterLine.put(Time.getCurrentMillis() / 1000, ++value);
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+    logger.info("water line:" + fetchWaterLine.asMap().values().stream().mapToLong(Long::longValue).sum());
   }
 
   @Override
