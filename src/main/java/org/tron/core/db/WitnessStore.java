@@ -33,13 +33,13 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] account = dbSource.getData(key);
-    if (account == null) {
+    if (account != null) {
       // For debugging
       String readableWitnessAddress = StringUtil.createReadableString(account);
       List<String> allReadableWitnessAddress =
           StringUtil.getAddressStringListFromByteArray(dbSource.allKeys());
       logger.warn(
-          "address is {},witness is {},allWitness : ",
+          "address is {},witness is {},allWitness : {}",
           key,
           readableWitnessAddress,
           allReadableWitnessAddress);
