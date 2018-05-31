@@ -211,7 +211,7 @@ public class GrpcClient {
         return Optional.ofNullable(assetIssueList);
     }*/
 
-    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset , int limit) {
+   /*    public Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset , int limit) {
         TimeMessage.Builder timeMessage = TimeMessage.newBuilder();
         timeMessage.setBeginInMilliseconds(start);
         timeMessage.setEndInMilliseconds(end);
@@ -221,7 +221,7 @@ public class GrpcClient {
         timePageMessage.setLimit(limit);
         TransactionList transactionList = blockingStubExtension.getTransactionsByTimestamp(timePageMessage.build());
         return Optional.ofNullable(transactionList);
-    }
+    }*/
 
     public Optional<TransactionList> getTransactionsFromThis(byte[] address) {
         ByteString addressBS = ByteString.copyFrom(address);

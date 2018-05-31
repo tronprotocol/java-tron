@@ -83,7 +83,7 @@ public class WalletTestTransfer004 {
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetTransactionsByTimestamp() {
     long start = now - 16400000;
     long end = now;
@@ -230,7 +230,7 @@ public class WalletTestTransfer004 {
     Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
 
 
-  }
+  }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {
