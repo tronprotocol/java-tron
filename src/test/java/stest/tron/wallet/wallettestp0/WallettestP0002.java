@@ -100,11 +100,11 @@ public class WallettestP0002 {
     }
   }
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueByName() {
     Contract.AssetIssueContract ret = walletClient.getAssetIssueByName(name);
     Assert.assertTrue(ret.getOwnerAddress() != null);
-  }
+  }*/
 
   @Test(enabled = true)
   public void testTransferAsset() {
@@ -120,13 +120,13 @@ public class WallettestP0002 {
   }
 
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueByAccount() {
     Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueByAccount(FROM_ADDRESS);
     logger.info("client  " + Integer.toString(result.get().getAssetIssueCount()));
     //logger.info(Integer.toString(result.get().getAssetIssue(0).getNum()));
     Assert.assertTrue(result.get().getAssetIssueCount() == 1);
-  }
+  }*/
 
   @Test(enabled = true)
   public void testGetAssetIssueList() {
@@ -136,7 +136,7 @@ public class WallettestP0002 {
     Assert.assertTrue(result.get().getAssetIssueCount() > 0);
   }
 
-  @Test(enabled = false)
+  /*  @Test(enabled = false)
   public void testGetAssetIssueByTimestamp() {
     long now = System.currentTimeMillis();
     Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueListByTimestamp(now);
@@ -150,7 +150,7 @@ public class WallettestP0002 {
     }
     Assert.assertTrue(foundThisName);
     logger.info("This is TestGetAssetIssueByTimestamp.");
-  }
+  }*/
 
   @Test(enabled = true)
   public void testParticipateAssetIssue() {

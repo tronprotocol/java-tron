@@ -189,15 +189,6 @@ public class NodeStatistics {
     return false;
   }
 
-  public boolean isPenalized() {
-    return tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
-        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
-        tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL;
-  }
-
   public void nodeDisconnectedRemote(ReasonCode reason) {
     lastDisconnectedTime = System.currentTimeMillis();
     tronLastRemoteDisconnectReason = reason;
