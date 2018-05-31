@@ -380,23 +380,30 @@ public class Manager {
     return this.accountStore;
   }
 
-  /**
-   * judge balance.
-   */
   public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = getAccountStore().get(accountAddress);
+    adjustBalance(account, amount);
+  }
+
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(AccountCapsule account, long amount)
+      throws BalanceInsufficientException {
+
     long balance = account.getBalance();
     if (amount == 0) {
       return;
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      throw new BalanceInsufficientException(account.createDbKey() + " Insufficient");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
+
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
@@ -633,7 +640,7 @@ public class Manager {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The siganature is not validated.");
+          logger.info("The signature is not validated.");
           // TODO: throw exception here.
           return;
         }
@@ -898,7 +905,6 @@ public class Manager {
   public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
-
   /**
    * Generate a block.
    */
@@ -931,9 +937,9 @@ public class Manager {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-      currentTrxSize += trx.getSerializedSize();
+      currentTrxSize += trx.getSerializedSize() + 2;
       // check the block size
-      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+      if (currentTrxSize  > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -1234,7 +1240,7 @@ public class Manager {
     try {
       database.close();
     } catch (Exception e) {
-      System.err.println("faild to close  " + database.getName() + ". " + e);
+      System.err.println("failed to close  " + database.getName() + ". " + e);
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }

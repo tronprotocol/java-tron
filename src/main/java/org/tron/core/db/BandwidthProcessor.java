@@ -124,10 +124,9 @@ public class BandwidthProcessor {
 
   private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
     try {
-      dbManager.adjustBalance(accountCapsule.getAddress().toByteArray(), -fee);
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+      dbManager.adjustBalance(accountCapsule.createDbKey(), -fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;
