@@ -14,16 +14,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.TimeMessage;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.TimePaginatedMessage;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.WalletExtensionGrpc;
-import org.tron.api.WalletExtensionGrpc.WalletExtensionStub;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
-import org.tron.common.utils.ByteArray;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -31,9 +29,9 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
-@Slf4j
-public class WalletTestTransfer003 {
 
+@Slf4j
+public class WalletTestTransfer004 {
   //testng001、testng002、testng003、testng004
   private final String testKey001 =
       "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -45,6 +43,7 @@ public class WalletTestTransfer003 {
       "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
   private final String notexist01 =
       "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
+
 
   //testng001、testng002、testng003、testng004
   private static final byte[] BACK_ADDRESS = Base58
@@ -66,15 +65,14 @@ public class WalletTestTransfer003 {
 
   private static final long now = System.currentTimeMillis();
 
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
   @BeforeClass
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
@@ -86,7 +84,7 @@ public class WalletTestTransfer003 {
   }
 
   /*  @Test(enabled = true)
-  public void testGetTransactionById() {
+  public void testGetTransactionsByTimestamp() {
     long start = now - 16400000;
     long end = now;
     GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
@@ -99,35 +97,139 @@ public class WalletTestTransfer003 {
     TransactionList transactionList = blockingStubExtension
         .getTransactionsByTimestamp(timePageMessage.build());
     Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional
-        .ofNullable(transactionList);
+            .ofNullable(transactionList);
 
-    logger.info(Long.toString(gettransactionbytimestamp.get().getTransactionCount()));
     if (gettransactionbytimestamp.get().getTransactionCount() == 0) {
       logger.info("Last one day there is no transfaction,please test for manual!!!");
-      Assert.assertTrue(gettransactionbytimestamp.isPresent());
-    } else {
-      logger.info(Integer.toString(gettransactionbytimestamp.get().getTransactionCount()));
-      Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(0).hasRawData());
-      logger.info(ByteArray.toHexString(Hash.sha256(
-          gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray())));
-
-      //Right ID, query success.
-      ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(
-          ByteArray.toHexString(Hash.sha256(
-              gettransactionbytimestamp.get().getTransaction(0).getRawData().toByteArray()))
-      ));
-      GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(bsTxid).build();
-      Transaction transaction = blockingStubSolidity.getTransactionById(request);
-      Optional<Transaction> getTransactionById = Optional.ofNullable(transaction);
-      Assert.assertTrue(getTransactionById.get().hasRawData());
-
-      //Wrong ID,query failed, no exception.
-      bsTxid = ByteString.copyFrom(FROM_ADDRESS);
-      request = GrpcAPI.BytesMessage.newBuilder().setValue(bsTxid).build();
-      transaction = blockingStubSolidity.getTransactionById(request);
-      getTransactionById = Optional.ofNullable(transaction);
-      Assert.assertFalse(getTransactionById.get().hasRawData());
     }
+
+    Assert.assertTrue(gettransactionbytimestamp.isPresent());
+    logger.info(Integer.toString(gettransactionbytimestamp.get().getTransactionCount()));
+    for (Integer j = 0; j < gettransactionbytimestamp.get().getTransactionCount(); j++) {
+      Assert.assertTrue(gettransactionbytimestamp.get().getTransaction(j).hasRawData());
+      Assert.assertFalse(gettransactionbytimestamp.get().getTransaction(j)
+          .getRawData().getContractList().isEmpty());
+    }
+  }
+
+  @Test(enabled = true)
+  public void testExceptionTimeToGetGetTransactionsByTimestamp() {
+    //Start time is below zero.
+    long start = -10000;
+    long end   = -1;
+    GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    TimePaginatedMessage.Builder timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(999);
+    TransactionList transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+    //Start time is equal with end time.
+    long now = System.currentTimeMillis();
+    start = now;
+    end   = now;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(999);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+    //No transeration occured.
+    now = System.currentTimeMillis();
+    start = now;
+    end   = now + 1;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(999);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+
+    //Start time is late than currently time,no exception.
+    start = now + 1000000;
+    end   = start + 1000000;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(999);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+    //Start time is late than the end time, no exception.
+    start = now;
+    end   = now - 10000000;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(999);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+    //The offset is -1
+    start = now - 10000000;
+    end   = now;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(-1);
+    timePageMessage.setLimit(999);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+    //The setLimit is -1
+    start = now - 10000000;
+    end   = now;
+    timeMessage = GrpcAPI.TimeMessage.newBuilder();
+    timeMessage.setBeginInMilliseconds(start);
+    timeMessage.setEndInMilliseconds(end);
+    timePageMessage = TimePaginatedMessage.newBuilder();
+    timePageMessage.setTimeMessage(timeMessage);
+    timePageMessage.setOffset(0);
+    timePageMessage.setLimit(-1);
+    transactionList = blockingStubExtension
+        .getTransactionsByTimestamp(timePageMessage.build());
+    gettransactionbytimestamp = Optional
+        .ofNullable(transactionList);
+    Assert.assertTrue(gettransactionbytimestamp.get().getTransactionCount() == 0);
+
+
   }*/
 
   @AfterClass
@@ -140,7 +242,7 @@ public class WalletTestTransfer003 {
     }
   }
 
-  public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
     if (ecKey == null) {
       String pubKey = loadPubKey(); //04 PubKey[128]
@@ -174,7 +276,6 @@ public class WalletTestTransfer003 {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     builder.setNum(blockNum);
     return blockingStubFull.getBlockByNum(builder.build());
-
   }
 
   private Transaction signTransaction(ECKey ecKey, Transaction transaction) {

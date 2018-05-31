@@ -73,7 +73,7 @@ public class WalletTestTransfer002 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetTotalTransaction() {
     NumberMessage beforeGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -93,7 +93,7 @@ public class WalletTestTransfer002 {
       logger.info("On soliditynode, there is no transactions,please test by manual");
     }
     Assert.assertTrue(solidityGetTotalTransaction.getNum() > 0);
-  }
+  }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {

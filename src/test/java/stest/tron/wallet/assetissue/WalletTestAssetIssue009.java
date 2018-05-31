@@ -77,7 +77,7 @@ public class WalletTestAssetIssue009 {
   }
 
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueByAccountOrNameFromSolidity() {
     //By name
     ByteString addressBs = ByteString.copyFrom(FROM_ADDRESS);
@@ -107,7 +107,7 @@ public class WalletTestAssetIssue009 {
     Assert.assertTrue(assetIssueByName.getTrxNum() > 0);
 
     logger.info("TestGetAssetIssueByNameFromSolidity");
-  }
+  }*/
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
