@@ -77,9 +77,10 @@ public class WalletTestAccount003 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  /*    ECKey ecKey        =  new ECKey(Utils.getRandom());
-    byte[] NOWITNESSADDRESS    = ecKey.getAddress();
-    String testKeyForNoWitness = ByteArray.toHexString(ecKey.getPrivKeyBytes());*/
+  //get account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] noBandwitchAddress = ecKey1.getAddress();
+  String noBandwitch = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeClass
   public void beforeClass() {
@@ -104,10 +105,11 @@ public class WalletTestAccount003 {
 
       //TestVoteToNonWitnessAccount
       HashMap<String, String> voteToNonWitnessAccount = new HashMap<String, String>();
-      voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "1");
+      voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "3");
       HashMap<String, String> voteToInvaildAddress = new HashMap<String, String>();
-      voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
+      voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "4");
       Assert.assertTrue(freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002));
+      voteWitness(voteToNonWitnessAccount, FROM_ADDRESS, testKey002);
       Assert.assertFalse(voteWitness(voteToNonWitnessAccount, FROM_ADDRESS, testKey002));
       Assert.assertFalse(voteWitness(voteToInvaildAddress, FROM_ADDRESS, testKey002));
 
@@ -469,9 +471,9 @@ public class WalletTestAccount003 {
           .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
-        continue;
+        return false;
       }
-      voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+      voteBuilder.setVoteAddress(ByteString.copyFrom(addRess));
       voteBuilder.setVoteCount(count);
       builder.addVotes(voteBuilder.build());
     }

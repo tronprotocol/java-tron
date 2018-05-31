@@ -45,7 +45,7 @@ public class WalletTestAssetIssue011 {
   private static String name = "testAssetIssue_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
-  private static final String updateMostLongName = "w2345678901234567890123456789012";
+  private static final String updateMostLongName = Long.toString(now) + "w234567890123456789";
 
   Long freeAssetNetLimit = 10000L;
   Long publicFreeAssetNetLimit = 10000L;
@@ -116,7 +116,7 @@ public class WalletTestAssetIssue011 {
     Account queryTransferAssetAccount = PublicMethed
         .queryAccount(transferAssetCreateKey, blockingStubFull);
     Assert.assertTrue(queryTransferAssetAccount.getAssetCount() == 1);
-    Assert.assertTrue(PublicMethed.updateAccount(asset011Address, "wwwxxxeeef"
+    Assert.assertTrue(PublicMethed.updateAccount(asset011Address, Long.toString(now)
         .getBytes(), testKeyForAssetIssue011, blockingStubFull));
     Assert.assertTrue(PublicMethed.updateAccount(transferAssetCreateAddress, updateMostLongName
         .getBytes(), transferAssetCreateKey, blockingStubFull));

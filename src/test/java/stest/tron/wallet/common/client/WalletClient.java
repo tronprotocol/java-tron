@@ -711,13 +711,13 @@ public class WalletClient {
         return result;
     }
 
-    public static Optional<AssetIssueList> getAssetIssueListByTimestamp(long timestamp) {
+    /*    public static Optional<AssetIssueList> getAssetIssueListByTimestamp(long timestamp) {
         return rpcCli.getAssetIssueListByTimestamp(timestamp);
-    }
+    }*/
 
-    public static Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset, int limit) {
+    /*    public static Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset, int limit) {
         return rpcCli.getTransactionsByTimestamp(start, end, offset, limit);
-    }
+    }*/
 
     public static Optional<AssetIssueList> getAssetIssueList() {
         return rpcCli.getAssetIssueList();
@@ -727,7 +727,7 @@ public class WalletClient {
         return rpcCli.listNodes();
     }
 
-    public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
+    /*    public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
         return rpcCli.getAssetIssueByAccount(address);
     }
 
@@ -737,7 +737,7 @@ public class WalletClient {
 
     public static GrpcAPI.NumberMessage getTotalTransaction() {
         return rpcCli.getTotalTransaction();
-    }
+    }*/
 
     public static Optional<TransactionList> getTransactionsFromThis(byte[] address) {
         return rpcCli.getTransactionsFromThis(address);
@@ -747,9 +747,9 @@ public class WalletClient {
         return rpcCli.getTransactionsToThis(address);
     }
 
-    public static Optional<Transaction> getTransactionById(String txID) {
+    /*    public static Optional<Transaction> getTransactionById(String txID) {
         return rpcCli.getTransactionById(txID);
-    }
+    }*/
 
     public boolean freezeBalance(long frozen_balance, long frozen_duration) {
 
@@ -770,9 +770,9 @@ public class WalletClient {
                                                               long frozen_duration) {
         byte[] address = getAddress();
         Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
-        ByteString byteAddress = ByteString.copyFrom(address);
+        ByteString byteAddreess = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddress).setFrozenBalance(frozen_balance)
+        builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
                 .setFrozenDuration(frozen_duration);
 
         return builder.build();
@@ -796,9 +796,9 @@ public class WalletClient {
         byte[] address = getAddress();
         Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
                 .newBuilder();
-        ByteString byteAddress = ByteString.copyFrom(address);
+        ByteString byteAddreess = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddress);
+        builder.setOwnerAddress(byteAddreess);
 
         return builder.build();
     }
@@ -821,9 +821,9 @@ public class WalletClient {
         byte[] address = getAddress();
         Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
                 .newBuilder();
-        ByteString byteAddress = ByteString.copyFrom(address);
+        ByteString byteAddreess = ByteString.copyFrom(address);
 
-        builder.setOwnerAddress(byteAddress);
+        builder.setOwnerAddress(byteAddreess);
 
         return builder.build();
     }
