@@ -126,7 +126,7 @@ public class BandwidthProcessor {
     try {
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule.createDbKey(), -fee);
+      dbManager.adjustBalance(accountCapsule, -fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;
