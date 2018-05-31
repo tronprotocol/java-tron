@@ -1,4 +1,3 @@
-/*
 package stest.tron.wallet.transfer;
 
 import com.google.protobuf.ByteString;
@@ -15,6 +14,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.TimeMessage;
+import org.tron.api.GrpcAPI.TimePaginatedMessage;
+import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.WalletExtensionGrpc;
+import org.tron.api.WalletExtensionGrpc.WalletExtensionStub;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -58,6 +62,7 @@ public class WalletTestTransfer003 {
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
   private static final long now = System.currentTimeMillis();
 
@@ -77,25 +82,26 @@ public class WalletTestTransfer003 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false)
+  /*  @Test(enabled = true)
   public void testGetTransactionById() {
     long start = now - 16400000;
     long end = now;
     GrpcAPI.TimeMessage.Builder timeMessage = GrpcAPI.TimeMessage.newBuilder();
     timeMessage.setBeginInMilliseconds(start);
     timeMessage.setEndInMilliseconds(end);
-    GrpcAPI.TimePaginatedMessage.Builder timePageMessage = GrpcAPI.TimePaginatedMessage
-        .newBuilder();
+    TimePaginatedMessage.Builder timePageMessage = TimePaginatedMessage.newBuilder();
     timePageMessage.setTimeMessage(timeMessage);
     timePageMessage.setOffset(0);
     timePageMessage.setLimit(999);
-    GrpcAPI.TransactionList transactionList = blockingStubSolidity
+    TransactionList transactionList = blockingStubExtension
         .getTransactionsByTimestamp(timePageMessage.build());
     Optional<GrpcAPI.TransactionList> gettransactionbytimestamp = Optional
         .ofNullable(transactionList);
 
+    logger.info(Long.toString(gettransactionbytimestamp.get().getTransactionCount()));
     if (gettransactionbytimestamp.get().getTransactionCount() == 0) {
       logger.info("Last one day there is no transfaction,please test for manual!!!");
       Assert.assertTrue(gettransactionbytimestamp.isPresent());
@@ -122,7 +128,7 @@ public class WalletTestTransfer003 {
       getTransactionById = Optional.ofNullable(transaction);
       Assert.assertFalse(getTransactionById.get().hasRawData());
     }
-  }
+  }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -182,4 +188,3 @@ public class WalletTestTransfer003 {
 }
 
 
-*/

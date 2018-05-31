@@ -173,10 +173,11 @@ public class WalletTestAccount004 {
     }
 
     Long afterBlockNum = 0L;
-
-    while (afterBlockNum < beforeBlockNum) {
+    Integer wait = 0;
+    while (afterBlockNum < beforeBlockNum && wait < 10) {
       Block currentBlock1 = searchBlockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
       afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
+      wait++;
       try {
         Thread.sleep(2000);
         logger.info("wait 2 second");
