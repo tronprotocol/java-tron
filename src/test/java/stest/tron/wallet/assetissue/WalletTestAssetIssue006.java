@@ -17,10 +17,13 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAssetIssue006 {
@@ -53,13 +56,21 @@ public class WalletTestAssetIssue006 {
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private static final long now = System.currentTimeMillis();
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  private static final long now = System.currentTimeMillis();
+  private static String name = "assetissue006" + Long.toString(now);
+  private static final long totalSupply = now;
+  String description = "test query assetissue by timestamp from soliditynode";
+  String url = "https://testqueryassetissue.com/bytimestamp/from/soliditynode/";
+
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] queryAssetIssueFromSoliAddress = ecKey.getAddress();
+  String queryAssetIssueKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
   @BeforeClass
   public void beforeClass() {
@@ -72,10 +83,42 @@ public class WalletTestAssetIssue006 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000,3,testKey002,
+        blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,FROM_ADDRESS,
+        testKey002,blockingStubFull));
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+    //Create a new AssetIssue success.
+    Assert.assertTrue(PublicMethed.createAssetIssue(queryAssetIssueFromSoliAddress, name,
+        totalSupply, 1, 100, start, end, 1, description, url, 1000L,
+        1000L,1L,1L,queryAssetIssueKey,blockingStubFull));
   }
 
-  @Test(enabled = true)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueListByTimestamp() {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage
+        .newBuilder().build());
+    Integer wait = 0;
+    while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      logger.info("Solidity didn't synchronize the fullnode block,please wait");
+      solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
+          .build());
+      wait++;
+      if (wait == 9) {
+        logger.info("Didn't syn,skip to next case.");
+      }
+    }
+
+
     long time = now;
     NumberMessage.Builder timeStamp = NumberMessage.newBuilder();
     timeStamp.setNum(time);
@@ -117,7 +160,7 @@ public class WalletTestAssetIssue006 {
     getAssetIssueListByTimestamp = Optional.ofNullable(assetIssueList);
     Assert.assertTrue(getAssetIssueListByTimestamp.get().getAssetIssueCount() == 0);
 
-  }
+  }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {

@@ -9,10 +9,12 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Block;
 
 
 public class PublicMethed {
@@ -376,5 +378,30 @@ public class PublicMethed {
     } else {
       return true;
     }
+  }
+
+  public static boolean waitSolidityNodeSynFullNodeData(WalletGrpc.WalletBlockingStub
+      blockingStubFull, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage
+        .newBuilder().build());
+    Integer wait = 0;
+    while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      logger.info("Solidity didn't synchronize the fullnode block,please wait");
+      solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
+          .build());
+      wait++;
+      if (wait == 9) {
+        logger.info("Didn't syn,skip to next case.");
+        return false;
+      }
+    }
+    return true;
   }
 }

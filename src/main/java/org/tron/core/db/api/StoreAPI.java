@@ -20,9 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.tron.core.db.api.index.Index;
 import org.tron.core.db.api.index.TransactionIndex;
-import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Witness;
 
 @Component
 @Slf4j
@@ -119,17 +117,17 @@ public class StoreAPI {
    *                            witness api                                      *
    *******************************************************************************
    */
-  public List<Witness> getWitnessAll() {
-    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
-    return ImmutableList.copyOf(index);
-  }
+//  public List<Witness> getWitnessAll() {
+//    Index.Iface<Witness> index = indexHelper.getWitnessIndex();
+//    return ImmutableList.copyOf(index);
+//  }
 
   /********************************************************************************
    *                         AssetIssue api                                       *
    ********************************************************************************
    */
-  public List<AssetIssueContract> getAssetIssueAll() {
-    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
-    return ImmutableList.copyOf(index);
-  }
+//  public List<AssetIssueContract> getAssetIssueAll() {
+//    Index.Iface<AssetIssueContract> index = indexHelper.getAssetIssueIndex();
+//    return ImmutableList.copyOf(index);
+//  }
 }
