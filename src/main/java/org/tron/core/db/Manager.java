@@ -565,8 +565,10 @@ public class Manager {
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
-  private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+  private void applyBlock(BlockCapsule block) throws ContractValidateException,
+      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      TaposException, ValidateScheduleException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -618,6 +620,8 @@ public class Manager {
               logger.debug(e.getMessage(), e);
             } catch (TransactionExpirationException e) {
               logger.debug(e.getMessage(), e);
+            } catch (ValidateScheduleException e) {
+              logger.debug(e.getMessage(), e);
             }
           });
       return;
@@ -656,11 +660,6 @@ public class Manager {
         }
       }
 
-      // checkWitness
-      if (!witnessController.validateWitnessSchedule(block)) {
-        throw new ValidateScheduleException("validateWitnessSchedule error");
-      }
-
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -670,11 +669,6 @@ public class Manager {
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
-          return;
-        }
-
-        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
-            .getLatestBlockHeaderTimestamp()) {
           return;
         }
 
@@ -1037,8 +1031,13 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException {
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException {
     // todo set revoking db max size.
+
+    // checkWitness
+    if (!witnessController.validateWitnessSchedule(block)) {
+      throw new ValidateScheduleException("validateWitnessSchedule error");
+    }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
