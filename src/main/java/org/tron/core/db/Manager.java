@@ -905,6 +905,7 @@ public class Manager {
   public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
+
   /**
    * Generate a block.
    */
@@ -933,13 +934,14 @@ public class Manager {
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
+      if (DateTime.now().getMillis() - when
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
         logger.debug("Processing transaction time exceeds the 50% producing time。");
         break;
       }
       currentTrxSize += trx.getSerializedSize() + 2;
       // check the block size
-      if (currentTrxSize  > ChainConstant.BLOCK_SIZE) {
+      if (currentTrxSize > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
