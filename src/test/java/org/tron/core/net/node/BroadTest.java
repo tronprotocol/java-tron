@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.common.overlay.server.SyncPool;
@@ -27,6 +29,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
@@ -242,10 +245,6 @@ public class BroadTest {
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-//      ScheduledExecutorService mainWorker = ReflectUtils
-//          .getFieldValue(channelManager, "mainWorker");
-//      mainWorker.shutdownNow();
-
       Node node = new Node(
           "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
       new Thread(new Runnable() {
@@ -254,30 +253,13 @@ public class BroadTest {
           peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
         }
       }).start();
-      Thread.sleep(5000);
-//      List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
-//      int tryTimes = 0;
-//      while (CollectionUtils.isEmpty(newChanelList) && ++tryTimes < 10) {
-//        Thread.sleep(1000);
-//      }
-//      logger.info("newChanelList size : {}", newChanelList.size());
-
-//      Field activePeersField = channelManager.getClass().getDeclaredField("activePeers");
-//      activePeersField.setAccessible(true);
-//      Map<ByteArrayWrapper, Channel> activePeersMap = (Map<ByteArrayWrapper, Channel>) activePeersField
-//          .get(channelManager);
-//
-//      Field apField = pool.getClass().getDeclaredField("activePeers");
-//      apField.setAccessible(true);
-//      List<PeerConnection> activePeers = (List<PeerConnection>) apField.get(pool);
-
-//      for (Channel channel : newChanelList) {
-//        activePeersMap.put(channel.getNodeIdWrapper(), channel);
-//        activePeers.add((PeerConnection) channel);
-//      }
-//      apField.set(pool, activePeers);
-//      activePeersField.set(channelManager, activePeersMap);
-      //
+      Thread.sleep(2000);
+      Map<ByteArrayWrapper, Channel> activePeers = ReflectUtils
+          .getFieldValue(channelManager, "activePeers");
+      int tryTimes = 0;
+      while (MapUtils.isEmpty(activePeers) && ++tryTimes < 10) {
+        Thread.sleep(1000);
+      }
       go = true;
     } catch (Exception e) {
       e.printStackTrace();

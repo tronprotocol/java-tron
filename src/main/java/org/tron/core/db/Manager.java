@@ -380,23 +380,30 @@ public class Manager {
     return this.accountStore;
   }
 
-  /**
-   * judge balance.
-   */
   public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = getAccountStore().get(accountAddress);
+    adjustBalance(account, amount);
+  }
+
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(AccountCapsule account, long amount)
+      throws BalanceInsufficientException {
+
     long balance = account.getBalance();
     if (amount == 0) {
       return;
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      throw new BalanceInsufficientException(account.createDbKey() + " Insufficient");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
+
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
