@@ -7,6 +7,7 @@ import static org.tron.protos.Protocol.ReasonCode.FORKED;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_CHAIN;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_PROTOCOL;
 
+import com.google.common.cache.CacheBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
@@ -233,8 +235,8 @@ public class TcpNetTest extends BaseNetTest {
     finish = false;
     channel.close();
     Thread.sleep(sleepTime);
-    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
-        .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", CacheBuilder.newBuilder().maximumSize(1000)
+        .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
     ReflectUtils.setFieldValue(pool, "activePeers",
         Collections.synchronizedList(new ArrayList<PeerConnection>()));
     ReflectUtils.setFieldValue(channelManager, "activePeers", new ConcurrentHashMap<>());
@@ -252,8 +254,8 @@ public class TcpNetTest extends BaseNetTest {
   private void clearConnect(Channel channel) throws InterruptedException {
     channel.close();
     Thread.sleep(sleepTime);
-    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", Collections
-        .synchronizedMap(new LRUMap<InetAddress, Date>(500)));
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", CacheBuilder.newBuilder().maximumSize(1000)
+        .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
     ReflectUtils.setFieldValue(pool, "activePeers",
         Collections.synchronizedList(new ArrayList<PeerConnection>()));
     ReflectUtils.setFieldValue(channelManager, "activePeers", new ConcurrentHashMap<>());
