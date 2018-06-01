@@ -254,7 +254,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(1000L); // 10Drop
+      this.saveTransactionFee(10L); // 10Drop
     }
 
     try {
