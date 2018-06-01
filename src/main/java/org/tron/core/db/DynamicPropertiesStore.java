@@ -249,12 +249,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getCreateAccountFee();
     } catch (IllegalArgumentException e) {
-      this.saveCreateAccountCost(100_000L); // 0.1TRX
+      this.saveCreateAccountFee(100_000L); // 0.1TRX
     }
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(10L); // 10Drop
+      this.saveTransactionFee(10L); // 10Drop/byte
     }
 
     try {
@@ -586,7 +586,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
   }
 
-  public void saveCreateAccountCost(long blockNetUsage) {
+  public void saveCreateAccountFee(long blockNetUsage) {
     this.put(CREATE_ACCOUNT_FEE,
         new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
   }
