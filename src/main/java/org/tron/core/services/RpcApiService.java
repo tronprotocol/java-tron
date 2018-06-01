@@ -720,7 +720,7 @@ public class RpcApiService implements Service {
 
   @Override
   public void stop() {
-
+    apiServer.shutdown();
   }
 
   /**
