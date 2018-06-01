@@ -51,6 +51,7 @@ public class BroadTest {
   PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
+  Application appT;
   private static final String dbPath = "output-nodeImplTest/broad";
   private static final String dbDirectory = "db_Broad_test";
   private static final String indexDirectory = "index_Broad_test";
@@ -201,7 +202,7 @@ public class BroadTest {
           logger.info("Here is the help message.");
           return;
         }
-        Application appT = ApplicationFactory.create(context);
+        appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
@@ -270,6 +271,7 @@ public class BroadTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File("output-nodeImplTest"));
+    appT.shutdown();
   }
   
 }

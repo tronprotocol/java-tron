@@ -157,5 +157,8 @@ public abstract class BaseNetTest {
     executorService.shutdownNow();
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
+    node.shutDown();
+    appT.shutdownServices();
+    appT.shutdown();
   }
 }
