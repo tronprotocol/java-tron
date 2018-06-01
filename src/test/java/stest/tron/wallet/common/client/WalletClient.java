@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NodeList;
@@ -493,6 +494,10 @@ public class WalletClient {
         }
 
         return builder.build();
+    }
+
+    public static AccountNetMessage getAccountNet(byte[] address) {
+        return rpcCli.getAccountNet(address);
     }
 
     private static String loadPassword() {

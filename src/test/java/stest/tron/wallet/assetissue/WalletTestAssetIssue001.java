@@ -110,7 +110,7 @@ public class WalletTestAssetIssue001 {
     }
   }
 
-  @Test(enabled = true)
+  @Test()
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
     Assert.assertTrue(
         transferAsset(TO_ADDRESS, name.getBytes(), 100L, noBandwitchAddress, noBandwitch));
