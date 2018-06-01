@@ -49,7 +49,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
@@ -732,7 +731,9 @@ public class RpcApiService implements Service {
 
   @Override
   public void stop() {
-    apiServer.shutdown();
+    if (apiServer != null) {
+      apiServer.shutdown();
+    }
   }
 
   /**
