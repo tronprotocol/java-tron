@@ -11,6 +11,8 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
+import java.util.Arrays;
+
 @Component
 public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -37,7 +39,7 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
       throws ItemNotFoundException {
     byte[] value = dbSource.getData(key);
     if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException("number: " + key + " is not found!");
+      throw new ItemNotFoundException("number: " + Arrays.toString(key) + " is not found!");
     }
     return new BytesCapsule(value);
   }
