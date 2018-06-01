@@ -19,6 +19,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -70,6 +71,11 @@ public class WalletTestAssetIssue002 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] participateAccountAddress = ecKey.getAddress();
+  String participateAccountKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -77,7 +83,7 @@ public class WalletTestAssetIssue002 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    ByteString addressBS1 = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBS1 = ByteString.copyFrom(participateAccountAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
@@ -85,9 +91,13 @@ public class WalletTestAssetIssue002 {
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
+      //send coin to the new account
+      Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,FROM_ADDRESS,
+          testKey002,blockingStubFull));
       //Create a new Asset Issue
-      Assert.assertTrue(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 1, start, end,
-          1, description, url, 1L, 1L, testKey002));
+      Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress, name, totalSupply, 1,
+          1, start, end, 1, description, url, 2000L,2000L,
+          1L, 1L, participateAccountKey,blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
@@ -98,35 +108,38 @@ public class WalletTestAssetIssue002 {
 
   @Test(enabled = true)
   public void testParticipateAssetissue() {
+    try {
+      Thread.sleep(3000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     //Participate AssetIssue success
     logger.info(name);
     //Freeze amount to get bandwitch.
     Assert.assertTrue(PublicMethed.freezeBalance(TO_ADDRESS, 10000000, 3, testKey003,
         blockingStubFull));
-    Assert.assertTrue(
-        participateAssetIssue(FROM_ADDRESS, name.getBytes(), 100L, TO_ADDRESS, testKey003));
+    Assert.assertTrue(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(),
+        100L, TO_ADDRESS, testKey003,blockingStubFull));
 
     //The amount is large than the total supply, participate failed.
-    Assert.assertFalse(
-        participateAssetIssue(FROM_ADDRESS, name.getBytes(), 9100000000000000000L, TO_ADDRESS,
-            testKey003));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(),
+        9100000000000000000L, TO_ADDRESS, testKey003,blockingStubFull));
 
     //The asset issue name is not correct, participate failed.
-    Assert.assertFalse(
-        participateAssetIssue(FROM_ADDRESS, (name + "wrong").getBytes(), 100L, TO_ADDRESS,
-            testKey003));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, (name + "wrong").getBytes(),
+        100L, TO_ADDRESS, testKey003,blockingStubFull));
 
     //The amount is 0, participate asset issue failed.
-    Assert.assertFalse(
-        participateAssetIssue(FROM_ADDRESS, name.getBytes(), 0L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(), 0L,
+        TO_ADDRESS, testKey003,blockingStubFull));
 
     //The amount is -1, participate asset issue failed.
-    Assert.assertFalse(
-        participateAssetIssue(FROM_ADDRESS, name.getBytes(), -1L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(), -1L,
+        TO_ADDRESS, testKey003,blockingStubFull));
 
     //The asset issue owner address is not correct, participate asset issue failed.
-    Assert.assertFalse(
-        participateAssetIssue(BACK_ADDRESS, name.getBytes(), 100L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(FROM_ADDRESS, name.getBytes(), 100L,
+        TO_ADDRESS, testKey003,blockingStubFull));
   }
 
   @AfterClass(enabled = true)

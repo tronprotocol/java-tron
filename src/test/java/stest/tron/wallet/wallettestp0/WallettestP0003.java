@@ -25,6 +25,7 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
@@ -89,7 +90,8 @@ public class WallettestP0003 {
     veryLargeMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "1000000000");
 
     //Freeze 10Trx
-    Assert.assertTrue(freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002));
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000L, 3L,
+        testKey002,blockingStubFull));
 
     //Vote success, the latest vote cover before vote
     Assert.assertTrue(voteWitness(smallVoteMap, FROM_ADDRESS, testKey002));

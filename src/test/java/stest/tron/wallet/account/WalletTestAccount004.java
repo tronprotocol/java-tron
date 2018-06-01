@@ -24,6 +24,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
@@ -103,7 +104,7 @@ public class WalletTestAccount004 {
       e.printStackTrace();
     }
     //Freeze balance success.
-    Assert.assertTrue(freezeBalance(FROM_ADDRESS, 1000000L, 3L, testKey002));
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 1000000L, 3L, testKey002,blockingStubFull));
   }
 
   @Test(enabled = false)
@@ -174,7 +175,7 @@ public class WalletTestAccount004 {
 
     Long afterBlockNum = 0L;
     Integer wait = 0;
-    while (afterBlockNum < beforeBlockNum && wait < 10) {
+    while (afterBlockNum < beforeBlockNum + 1 && wait < 10) {
       Block currentBlock1 = searchBlockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
       afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
       wait++;

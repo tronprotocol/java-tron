@@ -93,10 +93,6 @@ public class WalletTestTransfer005 {
   @Test(enabled = true)
   public void testgetTransactionsFromThis() {
 
-    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
-        blockingStubSolidity));
-
-
     ByteString addressBs = ByteString.copyFrom(FROM_ADDRESS);
     Account account = Account.newBuilder().setAddress(addressBs).build();
     AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder().setAccount(account);
@@ -108,7 +104,10 @@ public class WalletTestTransfer005 {
         .ofNullable(transactionList);
 
     if (gettransactionsfromthis.get().getTransactionCount() == 0) {
-      logger.info("This account didn't transfation any coin to other");
+      Assert.assertTrue(PublicMethed.sendcoin(TO_ADDRESS,1000000L,FROM_ADDRESS,
+          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
+          blockingStubSolidity));
     }
 
     Assert.assertTrue(gettransactionsfromthis.isPresent());

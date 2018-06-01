@@ -16,6 +16,7 @@ import org.tron.common.utils.ByteArray;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 //import org.tron.api.GrpcAPI.AccountList;
 
@@ -92,7 +93,8 @@ public class WallettestP0001 {
     //check freezeBalance
     //walletClient.freezeBalance(AMOUNT, F_DURATION);
     //long frozenbefore = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
-    boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
+    //boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
+    boolean ret = PublicMethed.freezeBalance(BACK_ADDRESS,AMOUNT,F_DURATION,testKey001,blockingStubFull);
     //long frozenafter = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
     Assert.assertTrue(ret);
     //logger.info(Long.toString(frozenbefore));

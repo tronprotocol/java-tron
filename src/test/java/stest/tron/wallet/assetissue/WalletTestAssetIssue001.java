@@ -99,8 +99,9 @@ public class WalletTestAssetIssue001 {
       Long end = System.currentTimeMillis() + 1000000000;
 
       //Create a new AssetIssue success.
-      Assert.assertTrue(createAssetIssue(noBandwitchAddress, name, totalSupply, 1, 100, start, end,
-          1, description, url, noBandwitch));
+      Assert.assertTrue(PublicMethed.createAssetIssue(noBandwitchAddress, name, totalSupply, 1,
+          100, start, end, 1, description, url, 10000L,10000L,
+          1L,1L,noBandwitch,blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);

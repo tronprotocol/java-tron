@@ -26,6 +26,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
@@ -96,8 +97,9 @@ public class WalletTestAssetIssue005 {
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
       //Create a new asset issue
-      Assert.assertTrue(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 100, start, end,
-          1, description, url, 1L, 1L, testKey002));
+      Assert.assertTrue(PublicMethed.createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 100,
+          start, end, 1, description, url,10000L,10000L,
+          1L, 1L, testKey002,blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);

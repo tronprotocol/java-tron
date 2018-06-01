@@ -98,18 +98,18 @@ public class WalletTestAssetIssue010 {
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
+      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000L,3,
+          testKey002,blockingStubFull));
       Assert.assertTrue(PublicMethed
           .sendcoin(asset010Address, sendAmount, FROM_ADDRESS, testKey002, blockingStubFull));
       Assert.assertTrue(PublicMethed
-          .freezeBalance(asset010Address, 100000000L, 3, testKeyForAssetIssue010,
+          .freezeBalance(asset010Address, 200000000L, 3, testKeyForAssetIssue010,
               blockingStubFull));
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
-      Assert.assertTrue(PublicMethed
-          .createAssetIssue(asset010Address, name, totalSupply, 1, 1, start, end, 1, description,
-              url, freeAssetNetLimit, publicFreeAssetNetLimit,
-              1L, 1L, testKeyForAssetIssue010,
-              blockingStubFull));
+      Assert.assertTrue(PublicMethed.createAssetIssue(asset010Address, name, totalSupply, 1, 1,
+          start, end, 1, description, url, freeAssetNetLimit, publicFreeAssetNetLimit,
+              1L, 1L, testKeyForAssetIssue010, blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);

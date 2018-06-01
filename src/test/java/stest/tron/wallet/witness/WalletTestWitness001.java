@@ -18,6 +18,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -27,6 +28,7 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
@@ -98,7 +100,7 @@ public class WalletTestWitness001 {
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
     //Freeze balance to get vote ability.
-    Assert.assertTrue(freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002));
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002,blockingStubFull));
 
     //Vote failed when the vote is large than the freeze balance.
     Assert.assertFalse(voteWitness(veryLargeMap, FROM_ADDRESS, testKey002));
@@ -169,7 +171,7 @@ public class WalletTestWitness001 {
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
     if (response.getResult() == false) {
-      logger.info("response.getresult() == false");
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     }
     try {
@@ -229,6 +231,7 @@ public class WalletTestWitness001 {
         .setFrozenDuration(frozenDuration);
 
     FreezeBalanceContract contract = builder.build();
+
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -248,7 +251,7 @@ public class WalletTestWitness001 {
         .EmptyMessage.newBuilder().build());
     Integer wait = 0;
     while (searchCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() && wait < 30) {
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 30) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -262,6 +265,7 @@ public class WalletTestWitness001 {
         logger.info("Didn't syn,skip to next case.");
       }
     }
+
 
     Account afterFronzen = queryAccount(ecKey, searchBlockingStubFull);
     Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();

@@ -25,6 +25,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
@@ -104,7 +105,8 @@ public class WalletTestTransfer001 {
         logger.info("Out 10 seconds");*/
 
     //Freeze balance to get bandwidth.
-    Assert.assertTrue(freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002));
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000L, 3L,
+        testKey002,blockingStubFull));
 
     //Send coin failed due to no enough balance.
     Assert.assertFalse(sendcoin(TO_ADDRESS, 9199999999999999999L, FROM_ADDRESS, testKey002));
@@ -176,7 +178,7 @@ public class WalletTestTransfer001 {
 
     Long afterBlockNum = 0L;
     Integer wait = 0;
-    while (afterBlockNum < beforeBlockNum && wait < 10) {
+    while (afterBlockNum < beforeBlockNum + 1 && wait < 10) {
       Block currentBlock1 = searchBlockingStubFull
           .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();

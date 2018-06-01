@@ -89,9 +89,10 @@ public class WallettestP0002 {
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
       //Create a new AssetIssue
-      Assert.assertTrue(createAssetIssue(FROM_ADDRESS, name, TotalSupply, 1, 100,
-          now + 900000, now + 10000000000L,
-          1, description, url, 1L, 1L, testKey002));
+      Assert.assertTrue(PublicMethed.createAssetIssue(FROM_ADDRESS, name, TotalSupply, 1, 100,
+          now + 900000, now + 10000000000L, 1,
+          description, url, 10000L,10000L,1L,
+          1L, testKey002,blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       logger.info(Integer.toString(queryAssetByAccount.get().getAssetIssueCount()));

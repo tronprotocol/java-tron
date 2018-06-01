@@ -93,36 +93,51 @@ public class WalletTestAssetIssue008 {
     Long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(queryAssetIssueFromSoliAddress, name,
-        totalSupply, 1, 100, start, end, 1, description, url, 1000L,
-        1000L,1L,1L,queryAssetIssueKey,blockingStubFull));
+        totalSupply, 1, 100, start, end, 1, description, url, 10000L,
+        10000L,1L,1L,queryAssetIssueKey,blockingStubFull));
   }
 
 
   @Test(enabled = true)
   public void testGetAllAssetIssueFromSolidity() {
-    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-    Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI
-        .EmptyMessage.newBuilder().build());
-    Integer wait = 0;
-    while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      logger.info("Solidity didn't synchronize the fullnode block,please wait");
-      solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
-          .build());
-      wait++;
-      if (wait == 9) {
-        logger.info("Didn't syn,skip to next case.");
-      }
-    }
-
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(assetIssueList.getAssetIssueCount()));
+
+
+
+    if (assetIssueList.getAssetIssueCount() == 0) {
+      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000L,3,
+          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.sendcoin(TO_ADDRESS,999999L,FROM_ADDRESS,
+          testKey002,blockingStubFull));
+      Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      logger.info("fullnode block num is " + Long.toString(currentBlock.getBlockHeader()
+          .getRawData().getNumber()));
+      Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI
+          .EmptyMessage.newBuilder().build());
+      Integer wait = 0;
+      while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
+          < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        logger.info("Solidity didn't synchronize the fullnode block,please wait");
+        solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
+            .build());
+        wait++;
+        logger.info("soliditynode block num is " + Long.toString(solidityCurrentBlock
+            .getBlockHeader().getRawData().getNumber()));
+        if (wait == 9) {
+          logger.info("Didn't syn,skip to next case.");
+        }
+      }
+    }
+
+    assetIssueList = blockingStubSolidity
+        .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(assetIssueList.getAssetIssueCount() >= 1);
     for (Integer j = 0; j < assetIssueList.getAssetIssueCount(); j++) {
       Assert.assertFalse(assetIssueList.getAssetIssue(j).getOwnerAddress().isEmpty());

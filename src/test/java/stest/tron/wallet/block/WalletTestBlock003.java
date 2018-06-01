@@ -74,6 +74,7 @@ public class WalletTestBlock003 {
     NumberMessage getNextMaintenanceTime = blockingStubFull
         .getNextMaintenanceTime(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(getNextMaintenanceTime.getNum()));
+    logger.info(Long.toString(now));
     Assert.assertTrue(getNextMaintenanceTime.getNum() > now);
 
   }
