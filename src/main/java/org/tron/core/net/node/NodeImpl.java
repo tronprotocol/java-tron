@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -45,6 +44,7 @@ import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.SlidingWindowCounter;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -90,9 +90,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
       .recordStats().build();
 
-  private Cache<Long, Long> fetchWaterLine = CacheBuilder.newBuilder()
-      .expireAfterWrite(BLOCK_PRODUCED_INTERVAL / 1000 * MSG_CACHE_DURATION_IN_BLOCKS, TimeUnit.SECONDS)
-      .recordStats().build();
+//  private Cache<Long, Long> fetchWaterLine = CacheBuilder.newBuilder()
+//      .expireAfterWrite(BLOCK_PRODUCED_INTERVAL / 1000 * MSG_CACHE_DURATION_IN_BLOCKS, TimeUnit.SECONDS)
+//      .recordStats().build();
+
+  private SlidingWindowCounter fetchWaterLine =
+      new SlidingWindowCounter(BLOCK_PRODUCED_INTERVAL / 100 * MSG_CACHE_DURATION_IN_BLOCKS);
+
+
 
   private int maxTrxsSize = 1_000_000;
 
@@ -287,6 +292,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ScheduledExecutorService handleSyncBlockExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
+  private ScheduledExecutorService fetchWaterLineExecutor = Executors
+      .newSingleThreadScheduledExecutor();
+
   private volatile boolean isHandleSyncBlockActive = false;
 
   private AtomicLong fetchSequenceCounter = new AtomicLong(0L);
@@ -473,6 +481,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Unhandled exception", t);
       }
     }, 10, 1, TimeUnit.SECONDS);
+
+    //fetchWaterLine:
+    fetchWaterLineExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        fetchWaterLine.advance();
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
+    }, 1000, 100, TimeUnit.MILLISECONDS);
   }
 
   private void consumerAdvObjToFetch() {
@@ -695,7 +712,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (msg.getInventoryType().equals(InventoryType.TRX)
             && (peer.isAdvInvFull()
             || isFlooded())) {
-          logger.info("A peer is flooding us, stop handle inv, the peer is:" + peer);
+          logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
           return;
         }
 
@@ -703,7 +720,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
             if (!advObjToFetch.contains(id)) {
-              addWaterLine();
+              fetchWaterLine.increase();
+              logger.info("water line:" + fetchWaterLine.totalCount());
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             } else {
@@ -714,32 +732,27 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     }
-    logger.info("Peer AdvObjSpreadToUs size: peer:" + peer.getNode().getHost() + "::" + peer.getAdvObjSpreadToUs().size());
-    logger.info("this advObjToFetch size:" + this.advObjToFetch.size());
-    logger.info("this advObjToRequest size" + this.advObjWeRequested.size());
   }
 
   private boolean isFlooded() {
-    try {
-      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
-      fetchWaterLine.put(Time.getCurrentMillis() / 1000, value);
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
-
-    return fetchWaterLine.asMap().values().stream().mapToLong(Long::longValue).sum()
+//    try {
+//      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
+//      fetchWaterLine.put(Time.getCurrentMillis() / 1000, value);
+//    } catch (ExecutionException e) {
+//      e.printStackTrace();
+//    }
+    return fetchWaterLine.totalCount()
         > BLOCK_PRODUCED_INTERVAL * NET_MAX_TRX_PER_SECOND * MSG_CACHE_DURATION_IN_BLOCKS / 1000;
   }
 
-  private void addWaterLine() {
-    try {
-      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
-      fetchWaterLine.put(Time.getCurrentMillis() / 1000, ++value);
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
-    logger.info("water line:" + fetchWaterLine.asMap().values().stream().mapToLong(Long::longValue).sum());
-  }
+//  private void addWaterLine() {
+//    try {
+//      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
+//      fetchWaterLine.put(Time.getCurrentMillis() / 1000, ++value);
+//    } catch (ExecutionException e) {
+//      e.printStackTrace();
+//    }
+//  }
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
