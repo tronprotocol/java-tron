@@ -136,7 +136,7 @@ public class BandwidthProcessor {
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
-      dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
+      dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
     } else {
       return false;

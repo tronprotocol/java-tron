@@ -818,7 +818,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void addTotalCreateAccountCost(long fee) {
     long newValue = getTotalCreateAccountCost() + fee;
-    saveCreateAccountCost(newValue);
+    saveTotalCreateAccountFee(newValue);
   }
 
   public void addTotalCreateWitnessCost(long fee) {
