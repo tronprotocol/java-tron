@@ -44,9 +44,6 @@ public class UtxoStore extends TronDatabase {
     super(dbName);
   }
 
-  public void reSet() {
-    this.dbSource.resetDb();
-  }
 
   public byte[] find(byte[] key) {
     return dbSource.getData(key);
