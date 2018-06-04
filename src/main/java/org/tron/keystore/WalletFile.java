@@ -400,7 +400,7 @@ public class WalletFile {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof ScryptKdfParams)) {
+            if (o.getClass() != ScryptKdfParams.class) {
                 return false;
             }
             
