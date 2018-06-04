@@ -70,7 +70,7 @@ public class WalletFile {
     if (o == null) {
       return false;
     }
-    if (o.getClass() != WalletFile.class) {
+    if (o.getClass() != this.getClass()) {
       return false;
     }
 
@@ -185,7 +185,7 @@ public class WalletFile {
       if (o == null) {
         return false;
       }
-      if (o.getClass() != Crypto.class) {
+      if (o.getClass() != this.getClass()) {
         return false;
       }
 
@@ -256,7 +256,7 @@ public class WalletFile {
       if (o == null) {
         return false;
       }
-      if (o.getClass() != CipherParams.class) {
+      if (o.getClass() != this.getClass()) {
         return false;
       }
 
@@ -331,7 +331,7 @@ public class WalletFile {
       if (o == null) {
         return false;
       }
-      if (o.getClass() != Aes128CtrKdfParams.class) {
+      if (o.getClass() != this.getClass()) {
         return false;
       }
 
@@ -421,7 +421,7 @@ public class WalletFile {
       if (o == null) {
         return false;
       }
-      if (o.getClass() != ScryptKdfParams.class) {
+      if (o.getClass() != this.getClass()) {
         return false;
       }
 
