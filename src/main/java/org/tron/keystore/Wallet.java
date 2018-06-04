@@ -55,8 +55,8 @@ public class Wallet {
   private static final int CURRENT_VERSION = 3;
 
   private static final String CIPHER = "aes-128-ctr";
-  static final String AES_128_CTR = "pbkdf2";
-  static final String SCRYPT = "scrypt";
+  protected static final String AES_128_CTR = "pbkdf2";
+  protected static final String SCRYPT = "scrypt";
 
   public static WalletFile create(String password, ECKey ecKeyPair, int n, int p)
       throws CipherException {
