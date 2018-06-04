@@ -23,7 +23,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.message.udp.Message;
 
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 

@@ -1,4 +1,4 @@
-package org.tron.common.overlay.discover.message;
+package org.tron.common.message.udp;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.Sha256Hash;

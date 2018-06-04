@@ -1,7 +1,6 @@
-package org.tron.common.overlay.discover.message;
+package org.tron.common.message.udp;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;

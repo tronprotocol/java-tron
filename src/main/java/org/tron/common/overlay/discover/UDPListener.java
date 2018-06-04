@@ -103,7 +103,7 @@ public class UDPListener {
           logger.info("Shutdown discovery UDPListener");
           break;
         }
-        logger.warn("UDP channel closed. Recreating after 5 sec pause...");
+        logger.warn(" . Recreating after 5 sec pause...");
         Thread.sleep(5000);
       }
     } catch (Exception e) {
