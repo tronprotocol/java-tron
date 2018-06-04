@@ -162,15 +162,10 @@ public class WalletTestWitness001 {
     Contract.VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
-
-    if (transaction == null) {
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
       return false;
-    } else if (transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction auths count == {}", Integer.toString(transaction.getRawData().getAuthsCount()));
-      return false;
     }
-
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 

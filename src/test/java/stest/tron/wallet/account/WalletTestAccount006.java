@@ -1,6 +1,7 @@
 package stest.tron.wallet.account;
 
 import com.google.protobuf.ByteString;
+import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -39,6 +40,9 @@ public class WalletTestAccount006 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  private static final long FREENETLIMIT = 5000L;
+  private static final long BASELINE = 4800L;
+
   //get account
   ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] account006Address = ecKey.getAddress();
@@ -59,7 +63,7 @@ public class WalletTestAccount006 {
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000, 3, testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 100000000, 3, testKey002,
         blockingStubFull));
     Assert.assertTrue(PublicMethed
         .sendcoin(account006Address, sendAmount, FROM_ADDRESS, testKey002, blockingStubFull));
@@ -68,12 +72,90 @@ public class WalletTestAccount006 {
   @Test(enabled = true)
   public void testGetAccountNet() {
     //Get new account net information.
-    ByteString addressBS = ByteString.copyFrom(account006Address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(account006Address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
     AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
+    logger.info(Long.toString(accountNetMessage.getNetLimit()));
+    logger.info(Long.toString(accountNetMessage.getNetUsed()));
+    logger.info(Long.toString(accountNetMessage.getFreeNetLimit()));
+    logger.info(Long.toString(accountNetMessage.getFreeNetUsed()));
+    logger.info(Long.toString(accountNetMessage.getTotalNetLimit()));
+    logger.info(Long.toString(accountNetMessage.getTotalNetWeight()));
+    Assert.assertTrue(accountNetMessage.getNetLimit() == 0);
+    Assert.assertTrue(accountNetMessage.getNetUsed() == 0);
+    Assert.assertTrue(accountNetMessage.getFreeNetLimit() == FREENETLIMIT);
+    Assert.assertTrue(accountNetMessage.getFreeNetUsed() == 0);
+    Assert.assertTrue(accountNetMessage.getTotalNetLimit() > 0);
+    Assert.assertTrue(accountNetMessage.getTotalNetWeight() > 0);
+
+  }
+
+  @Test(enabled = true)
+  public void testUseFreeNet() {
+
+    //Transfer some TRX to other to test free net cost.
+    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+        account006Key,blockingStubFull));
+    ByteString addressBs = ByteString.copyFrom(account006Address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
+    //Every transaction may cost 200 net.
+    Assert.assertTrue(accountNetMessage.getFreeNetUsed() > 0 && accountNetMessage
+        .getFreeNetUsed() < 300);
+  }
+
+  @Test(enabled = true)
+  public void testUseMoneyToDoTransaction() {
+    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+        account006Key,blockingStubFull));
+    ByteString addressBs = ByteString.copyFrom(account006Address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
+    //Use out the free net
+    while (accountNetMessage.getFreeNetUsed() < BASELINE) {
+      PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,account006Key,
+          blockingStubFull);
+      accountNetMessage = blockingStubFull.getAccountNet(request);
+    }
+
+    Account queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
+    Long beforeSendBalance = queryAccount.getBalance();
+    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,account006Key,
+        blockingStubFull));
+    queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
+    Long afterSendBalance = queryAccount.getBalance();
+    //when the free net is not enough and no balance freeze, use money to do the transaction.
+    Assert.assertTrue(beforeSendBalance - afterSendBalance > 1);
+  }
+
+  @Test(enabled = true)
+  public void testUseNet() {
+    //Freeze balance to own net.
+    Assert.assertTrue(PublicMethed.freezeBalance(account006Address,10000000L,
+        3,account006Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+        account006Key,blockingStubFull));
+    ByteString addressBs = ByteString.copyFrom(account006Address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
+    Assert.assertTrue(accountNetMessage.getNetLimit() > 0);
+    Assert.assertTrue(accountNetMessage.getNetUsed() > 150);
 
 
-
+    Account queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
+    Long beforeSendBalance = queryAccount.getBalance();
+    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+        account006Key,blockingStubFull));
+    queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
+    Long afterSendBalance = queryAccount.getBalance();
+    //when you freeze balance and has net,you didn't cost money.
+    Assert.assertTrue(beforeSendBalance - afterSendBalance == 1);
+    addressBs = ByteString.copyFrom(account006Address);
+    request = Account.newBuilder().setAddress(addressBs).build();
+    accountNetMessage = blockingStubFull.getAccountNet(request);
+    //when you freeze balance and has net,you cost net.
+    logger.info(Long.toString(accountNetMessage.getNetUsed()));
+    Assert.assertTrue(accountNetMessage.getNetUsed() > 350);
   }
 
 

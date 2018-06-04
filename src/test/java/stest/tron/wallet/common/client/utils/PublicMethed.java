@@ -8,12 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 
 
@@ -386,6 +388,8 @@ public class PublicMethed {
     Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage
         .newBuilder().build());
     Integer wait = 0;
+    logger.info("Fullnode block num is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
     while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
         < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
       try {
@@ -393,7 +397,8 @@ public class PublicMethed {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      logger.info("Solidity didn't synchronize the fullnode block,please wait");
+      logger.info("Soliditynode num is " + Long.toString(solidityCurrentBlock
+          .getBlockHeader().getRawData().getNumber()));
       solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
           .build());
       wait++;
@@ -403,5 +408,12 @@ public class PublicMethed {
       }
     }
     return true;
+  }
+
+  public static AccountNetMessage getAccountNet(byte[] address,WalletGrpc.WalletBlockingStub
+      blockingStubFull) {
+    ByteString addressBS = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBS).build();
+    return blockingStubFull.getAccountNet(request);
   }
 }
