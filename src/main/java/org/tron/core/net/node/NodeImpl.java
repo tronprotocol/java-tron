@@ -90,19 +90,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
       .recordStats().build();
 
-//  private Cache<Long, Long> fetchWaterLine = CacheBuilder.newBuilder()
-//      .expireAfterWrite(BLOCK_PRODUCED_INTERVAL / 1000 * MSG_CACHE_DURATION_IN_BLOCKS, TimeUnit.SECONDS)
-//      .recordStats().build();
-
   private SlidingWindowCounter fetchWaterLine =
-      new SlidingWindowCounter(BLOCK_PRODUCED_INTERVAL / 100 * MSG_CACHE_DURATION_IN_BLOCKS);
-
-
+      new SlidingWindowCounter(BLOCK_PRODUCED_INTERVAL * MSG_CACHE_DURATION_IN_BLOCKS / 100);
 
   private int maxTrxsSize = 1_000_000;
 
   private int maxTrxsCnt = 100;
-
 
   @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
@@ -735,24 +728,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private boolean isFlooded() {
-//    try {
-//      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
-//      fetchWaterLine.put(Time.getCurrentMillis() / 1000, value);
-//    } catch (ExecutionException e) {
-//      e.printStackTrace();
-//    }
     return fetchWaterLine.totalCount()
         > BLOCK_PRODUCED_INTERVAL * NET_MAX_TRX_PER_SECOND * MSG_CACHE_DURATION_IN_BLOCKS / 1000;
   }
-
-//  private void addWaterLine() {
-//    try {
-//      long value = fetchWaterLine.get(Time.getCurrentMillis() / 1000, () -> 0L);
-//      fetchWaterLine.put(Time.getCurrentMillis() / 1000, ++value);
-//    } catch (ExecutionException e) {
-//      e.printStackTrace();
-//    }
-//  }
 
   @Override
   public void syncFrom(Sha256Hash myHeadBlockHash) {
@@ -766,7 +744,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     logger.info("wait end");
   }
-
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();

@@ -102,8 +102,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
-    logger.info("handle transaction");
-
+    logger.debug("handle transaction");
     if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
       logger.warn("This transaction has been processed");
       return;

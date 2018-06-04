@@ -1,6 +1,5 @@
 package org.tron.core.net.peer;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
 import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 
@@ -169,12 +168,7 @@ public class PeerConnection extends Channel {
   }
 
   public boolean isAdvInvFull() {
-    if (advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND
-        + (MAX_INVENTORY_SIZE_IN_MINUTES + 1) * 60 / BLOCK_PRODUCED_INTERVAL) {
-      logger.info("adv is full!!!,  advObjSpreadToUs size:" + advObjSpreadToUs.size());
-      return true;
-    }
-    return false;
+   return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
   }
 
   public boolean isBanned() {
