@@ -398,11 +398,12 @@ public class WitnessController {
     }
     if (voteSum > 0) {
       for (ByteString b : list) {
-        long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
+        long pay = (long) (getWitnesseByAddress(b).getVoteCount() * ((double) totalPay / voteSum));
         AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
         accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
         manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
   }
+
 }
