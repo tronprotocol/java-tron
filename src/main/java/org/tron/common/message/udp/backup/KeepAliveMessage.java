@@ -1,15 +1,16 @@
-package org.tron.common.message.udp;
+package org.tron.common.message.udp.backup;
 
 import static org.tron.common.message.udp.UdpMessageTypeEnum.BACKUP;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.message.udp.Message;
 import org.tron.protos.Discover;
 
 public class KeepAliveMessage extends Message {
 
   private Discover.BackupMessage backupMessage;
 
-  public KeepAliveMessage(byte[] data) throws InvalidProtocolBufferException {
+  public KeepAliveMessage(byte[] data) throws Exception {
     super(BACKUP, data);
     backupMessage = Discover.BackupMessage.parseFrom(data);
   }

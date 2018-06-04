@@ -22,11 +22,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.message.udp.FindNodeMessage;
+import org.tron.common.message.udp.discover.FindNodeMessage;
 import org.tron.common.message.udp.Message;
-import org.tron.common.message.udp.NeighborsMessage;
-import org.tron.common.message.udp.PingMessage;
-import org.tron.common.message.udp.PongMessage;
+import org.tron.common.message.udp.discover.NeighborsMessage;
+import org.tron.common.message.udp.discover.PingMessage;
+import org.tron.common.message.udp.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoveryEvent;
 import org.tron.core.config.args.Args;
 

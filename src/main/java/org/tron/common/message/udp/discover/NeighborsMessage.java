@@ -1,4 +1,4 @@
-package org.tron.common.message.udp;
+package org.tron.common.message.udp.discover;
 
 import static org.tron.common.message.udp.UdpMessageTypeEnum.DISCOVER_NEIGHBORS;
 
@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.message.udp.Message;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Discover;

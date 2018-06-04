@@ -1,6 +1,11 @@
 package org.tron.common.message.udp;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.message.udp.backup.KeepAliveMessage;
+import org.tron.common.message.udp.discover.FindNodeMessage;
+import org.tron.common.message.udp.discover.NeighborsMessage;
+import org.tron.common.message.udp.discover.PingMessage;
+import org.tron.common.message.udp.discover.PongMessage;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;
 
@@ -62,7 +67,7 @@ public abstract class Message {
       case BACKUP:
         return new KeepAliveMessage(data);
       default:
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + encode[0]);
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);
     }
   }
 }
