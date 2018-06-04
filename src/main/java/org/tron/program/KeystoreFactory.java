@@ -46,8 +46,12 @@ public class KeystoreFactory {
       file.mkdir();
     } else {
       if (!file.isDirectory()) {
-        file.delete();
-        file.mkdir();
+        if ( file.delete()){
+          file.mkdir();
+        }
+        else {
+          throw new IOException("File is exists and can not delete!");
+        }
       }
     }
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
@@ -77,8 +81,14 @@ public class KeystoreFactory {
       file.mkdir();
     } else {
       if (!file.isDirectory()) {
-        file.delete();
-        file.mkdir();
+        if (!file.isDirectory()) {
+          if ( file.delete()){
+            file.mkdir();
+          }
+          else {
+            throw new IOException("File is exists and can not delete!");
+          }
+        }
       }
     }
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
