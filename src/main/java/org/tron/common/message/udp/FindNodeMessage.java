@@ -1,5 +1,7 @@
 package org.tron.common.message.udp;
 
+import static org.tron.common.message.udp.UdpMessageTypeEnum.DISCOVER_FIND_NODE;
+
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
@@ -14,12 +16,12 @@ public class FindNodeMessage extends Message {
   private Discover.FindNeighbours findNeighbours;
 
   public FindNodeMessage(byte[] data) throws Exception{
-    super(Message.FINE_PEERS, data);
+    super(DISCOVER_FIND_NODE, data);
     this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
   }
 
   public FindNodeMessage(Node from, byte[] targetId) {
-    super(Message.FINE_PEERS, null);
+    super(DISCOVER_FIND_NODE, null);
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .setPort(from.getPort())

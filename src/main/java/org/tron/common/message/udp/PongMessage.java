@@ -1,5 +1,7 @@
 package org.tron.common.message.udp;
 
+import static org.tron.common.message.udp.UdpMessageTypeEnum.DISCOVER_PONG;
+
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.Node;
@@ -14,12 +16,12 @@ public class PongMessage extends Message {
   private Discover.PongMessage pongMessage;
 
   public PongMessage(byte[] data) throws Exception{
-    super(Message.PONG, data);
+    super(DISCOVER_PONG, data);
     this.pongMessage = Discover.PongMessage.parseFrom(data);
   }
 
   public PongMessage(Node from) {
-    super(Message.PONG, null);
+    super(DISCOVER_PONG, null);
     Endpoint toEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .setPort(from.getPort())

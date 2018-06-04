@@ -36,12 +36,12 @@ import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.message.udp.FindNodeMessage;
 import org.tron.common.message.udp.Message;
 import org.tron.common.message.udp.NeighborsMessage;
 import org.tron.common.message.udp.PingMessage;
 import org.tron.common.message.udp.PongMessage;
+import org.tron.common.overlay.discover.NodeHandler.State;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
@@ -241,18 +241,17 @@ public class NodeManager {
     }
     NodeHandler nodeHandler = getNodeHandler(n);
 
-    byte type = m.getType();
-    switch (type) {
-      case 1:
+    switch (m.getType()) {
+      case DISCOVER_PING:
         nodeHandler.handlePing((PingMessage) m);
         break;
-      case 2:
+      case DISCOVER_PONG:
         nodeHandler.handlePong((PongMessage) m);
         break;
-      case 3:
+      case DISCOVER_FIND_NODE:
         nodeHandler.handleFindNode((FindNodeMessage) m);
         break;
-      case 4:
+      case DISCOVER_NEIGHBORS:
         nodeHandler.handleNeighbours((NeighborsMessage) m);
         break;
     }
