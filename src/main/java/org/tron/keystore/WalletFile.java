@@ -66,7 +66,7 @@ public class WalletFile {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof WalletFile)) {
+        if (o.getClass() != WalletFile.class) {
             return false;
         }
         
@@ -177,7 +177,7 @@ public class WalletFile {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Crypto)) {
+            if (o.getClass() != Crypto.class) {
                 return false;
             }
             
@@ -244,7 +244,7 @@ public class WalletFile {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof CipherParams)) {
+            if (o.getClass() != CipherParams.class) {
                 return false;
             }
             
@@ -314,7 +314,7 @@ public class WalletFile {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Aes128CtrKdfParams)) {
+            if (o.getClass() != Aes128CtrKdfParams.class) {
                 return false;
             }
             
