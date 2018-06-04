@@ -19,6 +19,8 @@ package org.tron.common.overlay.discover;
 
 import java.util.ArrayList;
 import java.util.Random;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.discover.node.NodeManager;
 
 public class RefreshTask extends DiscoverTask {
 

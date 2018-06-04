@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.backup;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -26,6 +26,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 import org.slf4j.LoggerFactory;
+import org.tron.common.overlay.discover.DiscoveryEvent;
 import org.tron.common.overlay.discover.node.NodeManager;
 
 

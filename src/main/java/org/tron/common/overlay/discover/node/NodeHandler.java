@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -27,6 +27,7 @@ import org.tron.common.message.udp.Message;
 import org.tron.common.message.udp.NeighborsMessage;
 import org.tron.common.message.udp.PingMessage;
 import org.tron.common.message.udp.PongMessage;
+import org.tron.common.overlay.discover.DiscoveryEvent;
 import org.tron.core.config.args.Args;
 
 /**

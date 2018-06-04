@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;

@@ -17,7 +17,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;

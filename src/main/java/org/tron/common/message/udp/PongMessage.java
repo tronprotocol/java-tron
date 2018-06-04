@@ -2,7 +2,7 @@ package org.tron.common.message.udp;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Discover;

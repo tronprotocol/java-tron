@@ -29,13 +29,14 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.args.Args;
 
 @Component
-public class UDPListener {
+public class Server {
 
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("UDPListener");
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("Server");
 
   private int port;
 
@@ -52,7 +53,7 @@ public class UDPListener {
   private DiscoveryExecutor discoveryExecutor;
 
   @Autowired
-  public UDPListener(final NodeManager nodeManager) {
+  public Server(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
     port = args.getNodeListenPort();
     if (args.isNodeDiscoveryEnable()) {
@@ -66,7 +67,7 @@ public class UDPListener {
             logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);
           }
-        }, "UDPListener").start();
+        }, "Server").start();
       }
     }
   }
@@ -96,11 +97,11 @@ public class UDPListener {
 
         channel = b.bind(port).sync().channel();
 
-        logger.info("Discovery UDPListener started, bind port {}", port);
+        logger.info("Discovery Server started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {
-          logger.info("Shutdown discovery UDPListener");
+          logger.info("Shutdown discovery Server");
           break;
         }
         logger.warn(" . Recreating after 5 sec pause...");
@@ -119,13 +120,13 @@ public class UDPListener {
   }
 
   public void close() {
-    logger.info("Closing UDPListener...");
+    logger.info("Closing Server...");
     shutdown = true;
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
       } catch (Exception e) {
-        logger.warn("Problems closing UDPListener", e);
+        logger.warn("Problems closing Server", e);
       }
     }
 

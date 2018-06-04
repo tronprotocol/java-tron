@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import static java.lang.Math.min;
 

@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;

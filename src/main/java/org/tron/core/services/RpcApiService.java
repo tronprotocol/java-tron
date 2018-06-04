@@ -36,8 +36,8 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.overlay.discover.NodeHandler;
-import org.tron.common.overlay.discover.NodeManager;
+import org.tron.common.overlay.discover.node.NodeHandler;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -557,7 +557,7 @@ public class RpcApiService implements Service {
 
       nodeHandlerMap.entrySet().stream()
           .forEach(v -> {
-            org.tron.common.overlay.discover.Node node = v.getValue().getNode();
+            org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
             nodeListBuilder.addNodes(Node.newBuilder().setAddress(
                 Address.newBuilder()
                     .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
