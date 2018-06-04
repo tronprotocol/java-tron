@@ -12,7 +12,7 @@
 
 
 <p align="center">
-  <a href="https://join.slack.com/t/tronfoundation/shared_invite/enQtMzAzNzg4NTI4NDM3LTAyZGQzMzEzMjNkNDU0ZjNkNTA4OTYyNTA5YWZmYjE3MTEyOWZhNzljNzQwODM3NDQ0OWRiMTIyMDhlYzgyOGQ">
+  <a href="https://tronfoundation.slack.com/">
     <img src="https://img.shields.io/badge/chat-on%20slack-brightgreen.svg">
   </a>
     
@@ -511,16 +511,15 @@ Then observe whether block synchronization success，If synchronization successf
 
 # Quick Start
 
-Read the [Quick Start](http://wiki.tron.network/en/latest/Quick_Start.html).
+Read the [Quick Start](http://wiki.tron.network/en/latest/The_TRON_Network.html#how-to-build).
 
 # Advanced Configurations
 
 Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
 
-# Community
+# Developer Community
 
-* [Slack](https://join.slack.com/t/tronfoundation/shared_invite/enQtMzAzNzg4NTI4NDM3LTAyZGQzMzEzMjNkNDU0ZjNkNTA4OTYyNTA5YWZmYjE3MTEyOWZhNzljNzQwODM3NDQ0OWRiMTIyMDhlYzgyOGQ)
-* [Telegram](https://t.me/tronnetworkEN)
+* [Slack](https://tronfoundation.slack.com/) Please email tian@tron.network for a developer invite
 
 # Links
 
