@@ -271,6 +271,11 @@ public class BroadTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File("output-nodeImplTest"));
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+    for (PeerConnection peer : peerConnections) {
+      peer.close();
+    }
+    peerClient.close();
     appT.shutdown();
   }
   

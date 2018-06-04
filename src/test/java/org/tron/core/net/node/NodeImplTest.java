@@ -77,6 +77,8 @@ public class NodeImplTest {
       logger.info("Release resources failure.");
     }
     context.destroy();
+    appT.shutdownServices();
+    appT.shutdown();
   }
 
   private static Boolean deleteFolder(File index) {
