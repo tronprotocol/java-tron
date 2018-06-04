@@ -28,6 +28,7 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WallettestP0002 {
 
   private WalletClient walletClient;
+
   //Devaccount
   private final String testKey001 =
       "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
@@ -38,15 +39,19 @@ public class WallettestP0002 {
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
-  //Devaccount
+  /*  //Devaccount
   private static final byte[] BACK_ADDRESS =
-      Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+      Base58.decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");
   //Zion
-  private static final byte[] FROM_ADDRESS =
-      Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
+  private static final byte[] fromAddress =
+      Base58.decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   //Sun
-  private static final byte[] TO_ADDRESS =
-      Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+  private static final byte[] toAddress =
+      Base58.decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+  private final byte[] backAddress = PublicMethed.GetFinalAddress(testKey001);
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+
   private static final Long AMOUNT = 101L;
 
   private static final long now = System.currentTimeMillis();
@@ -82,14 +87,14 @@ public class WallettestP0002 {
   @Test(enabled = true)
   public void testAssetIssue() {
 
-    ByteString addressBS1 = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBS1 = ByteString.copyFrom(fromAddress);
     Protocol.Account request1 = Protocol.Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
       //Create a new AssetIssue
-      Assert.assertTrue(PublicMethed.createAssetIssue(FROM_ADDRESS, name, TotalSupply, 1, 100,
+      Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, TotalSupply, 1, 100,
           now + 900000, now + 10000000000L, 1,
           description, url, 10000L,10000L,1L,
           1L, testKey002,blockingStubFull));
@@ -111,9 +116,9 @@ public class WallettestP0002 {
   public void testTransferAsset() {
     //byte assertName[] = name.getBytes();
     //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000, 3, testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
         blockingStubFull));
-    Boolean ret = walletClient.transferAsset(TO_ADDRESS, name.getBytes(), AMOUNT);
+    Boolean ret = walletClient.transferAsset(toAddress, name.getBytes(), AMOUNT);
 
     //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
     Assert.assertTrue(ret);
@@ -123,7 +128,7 @@ public class WallettestP0002 {
 
   /*  @Test(enabled = true)
   public void testGetAssetIssueByAccount() {
-    Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueByAccount(FROM_ADDRESS);
+    Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueByAccount(fromAddress);
     logger.info("client  " + Integer.toString(result.get().getAssetIssueCount()));
     //logger.info(Integer.toString(result.get().getAssetIssue(0).getNum()));
     Assert.assertTrue(result.get().getAssetIssueCount() == 1);
@@ -156,7 +161,7 @@ public class WallettestP0002 {
   @Test(enabled = true)
   public void testParticipateAssetIssue() {
     Contract.ParticipateAssetIssueContract result = walletClient.participateAssetIssueContract(
-        TO_ADDRESS, name.getBytes(), FROM_ADDRESS, AMOUNT);
+        toAddress, name.getBytes(), fromAddress, AMOUNT);
 
     Assert.assertTrue(result.getAmount() == AMOUNT);
   }

@@ -33,38 +33,26 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestAssetIssue001 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String notexist01 =
-      "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
-  //private final static  String no_bandwitch   =
-  // "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  private static final byte[] INVAILD_ADDRESS = Base58
-      .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
-  //private static final byte[] NO_BANDWITCH_ADDRESS =
-  // Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+
 
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue_" + Long.toString(now);
+  private static String name = "testAssetIssue001_" + Long.toString(now);
   private static final long totalSupply = now;
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
+  String description = "just-test-assetissue-001";
+  String url = "https://github.com/tronprotocol/wallet-cli/assetissue001";
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -93,7 +81,7 @@ public class WalletTestAssetIssue001 {
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
       Assert
-          .assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, FROM_ADDRESS, testKey002
+          .assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress, testKey002
               , blockingStubFull));
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
@@ -113,32 +101,32 @@ public class WalletTestAssetIssue001 {
   @Test()
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
     Assert.assertTrue(
-        transferAsset(TO_ADDRESS, name.getBytes(), 100L, noBandwitchAddress, noBandwitch));
+        transferAsset(toAddress, name.getBytes(), 100L, noBandwitchAddress, noBandwitch));
 
     //Transfer Asset failed when transfer to yourself
-    Assert.assertFalse(transferAsset(TO_ADDRESS, name.getBytes(), 100L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(transferAsset(toAddress, name.getBytes(), 100L, toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is large than the asset balance you have.
     Assert.assertFalse(
-        transferAsset(FROM_ADDRESS, name.getBytes(), 9100000000000000000L, TO_ADDRESS, testKey003));
+        transferAsset(fromAddress, name.getBytes(), 9100000000000000000L, toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is 0
-    Assert.assertFalse(transferAsset(FROM_ADDRESS, name.getBytes(), 0L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(transferAsset(fromAddress, name.getBytes(), 0L, toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is -1
-    Assert.assertFalse(transferAsset(FROM_ADDRESS, name.getBytes(), -1L, TO_ADDRESS, testKey003));
+    Assert.assertFalse(transferAsset(fromAddress, name.getBytes(), -1L, toAddress, testKey003));
     //Transfer failed when you want to transfer to an invalid address
     //Assert.assertFalse(TransferAsset(INVAILD_ADDRESS, name.getBytes(),
-    // 1L, TO_ADDRESS, testKey003));
+    // 1L, toAddress, testKey003));
     //Transfer failed when the asset issue name is not correct.
     Assert.assertFalse(
-        transferAsset(FROM_ADDRESS, (name + "wrong").getBytes(), 1L, TO_ADDRESS, testKey003));
+        transferAsset(fromAddress, (name + "wrong").getBytes(), 1L, toAddress, testKey003));
     //Transfer success.
-    Assert.assertTrue(transferAsset(FROM_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+    Assert.assertTrue(transferAsset(fromAddress, name.getBytes(), 1L, toAddress, testKey003));
 
     //No freeze asset, try to unfreeze asset failed.
     Assert.assertFalse(unFreezeAsset(noBandwitchAddress, noBandwitch));
     logger.info("Test no asset frozen balance, try to unfreeze asset, no exception. Test OK!!!");
 
     //Not create asset, try to unfreeze asset failed.No exception.
-    Assert.assertFalse(unFreezeAsset(TO_ADDRESS, testKey003));
+    Assert.assertFalse(unFreezeAsset(toAddress, testKey003));
     logger.info("Test not create asset issue, try to unfreeze asset, no exception. Test OK!!!");
 
 

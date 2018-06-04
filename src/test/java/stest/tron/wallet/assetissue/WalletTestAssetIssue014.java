@@ -32,12 +32,14 @@ public class WalletTestAssetIssue014 {
 
 
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+/*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
 
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress   = PublicMethed.GetFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "AssetIssue014_" + Long.toString(now);
@@ -84,10 +86,10 @@ public class WalletTestAssetIssue014 {
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000, 3, testKey002,
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
           blockingStubFull));
       Assert.assertTrue(PublicMethed
-          .sendcoin(asset014Address, sendAmount, FROM_ADDRESS, testKey002, blockingStubFull));
+          .sendcoin(asset014Address, sendAmount, fromAddress, testKey002, blockingStubFull));
       Assert.assertTrue(PublicMethed
           .freezeBalance(asset014Address, 100000000L, 3, testKeyForAssetIssue014,
               blockingStubFull));
@@ -113,7 +115,7 @@ public class WalletTestAssetIssue014 {
 
     //Transfer send some asset issue to default account, to test if this
     // transaction use the creator net.
-    Assert.assertTrue(PublicMethed.transferAsset(TO_ADDRESS,name.getBytes(),1L,
+    Assert.assertTrue(PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
 
     //Before use transfer net, query the net used from creator and transfer.
@@ -128,7 +130,7 @@ public class WalletTestAssetIssue014 {
 
     //Transfer send some asset issue to default account, to test if this
     // transaction use the transaction free net.
-    Assert.assertTrue(PublicMethed.transferAsset(TO_ADDRESS,name.getBytes(),1L,
+    Assert.assertTrue(PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
     assetCreatorNet = PublicMethed
         .getAccountNet(asset014Address,blockingStubFull);

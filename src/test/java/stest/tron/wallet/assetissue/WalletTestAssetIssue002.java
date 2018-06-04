@@ -33,35 +33,22 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestAssetIssue002 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String notexist01 =
-      "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
-  private final String noBandwitch =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  private static final byte[] INVAILD_ADDRESS = Base58
-      .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
-  private static final byte[] NO_BANDWITCH_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue_" + Long.toString(now);
+  private static String name = "testAssetIssue002_" + Long.toString(now);
   private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
@@ -92,12 +79,13 @@ public class WalletTestAssetIssue002 {
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
       //send coin to the new account
-      Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,FROM_ADDRESS,
+      Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,fromAddress,
           testKey002,blockingStubFull));
       //Create a new Asset Issue
-      Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress, name, totalSupply, 1,
-          1, start, end, 1, description, url, 2000L,2000L,
-          1L, 1L, participateAccountKey,blockingStubFull));
+      Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress,
+          name, totalSupply, 1, 1, start, end, 1, description, url,
+          2000L,2000L, 1L, 1L,
+          participateAccountKey,blockingStubFull));
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
@@ -116,30 +104,30 @@ public class WalletTestAssetIssue002 {
     //Participate AssetIssue success
     logger.info(name);
     //Freeze amount to get bandwitch.
-    Assert.assertTrue(PublicMethed.freezeBalance(TO_ADDRESS, 10000000, 3, testKey003,
+    Assert.assertTrue(PublicMethed.freezeBalance(toAddress, 10000000, 3, testKey003,
         blockingStubFull));
     Assert.assertTrue(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(),
-        100L, TO_ADDRESS, testKey003,blockingStubFull));
+        100L, toAddress, testKey003,blockingStubFull));
 
     //The amount is large than the total supply, participate failed.
-    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(),
-        9100000000000000000L, TO_ADDRESS, testKey003,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
+        name.getBytes(), 9100000000000000000L, toAddress, testKey003,blockingStubFull));
 
     //The asset issue name is not correct, participate failed.
-    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, (name + "wrong").getBytes(),
-        100L, TO_ADDRESS, testKey003,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
+        (name + "wrong").getBytes(), 100L, toAddress, testKey003,blockingStubFull));
 
     //The amount is 0, participate asset issue failed.
-    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(), 0L,
-        TO_ADDRESS, testKey003,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
+        name.getBytes(), 0L, toAddress, testKey003,blockingStubFull));
 
     //The amount is -1, participate asset issue failed.
-    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress, name.getBytes(), -1L,
-        TO_ADDRESS, testKey003,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
+        name.getBytes(), -1L, toAddress, testKey003,blockingStubFull));
 
     //The asset issue owner address is not correct, participate asset issue failed.
-    Assert.assertFalse(PublicMethed.participateAssetIssue(FROM_ADDRESS, name.getBytes(), 100L,
-        TO_ADDRESS, testKey003,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(fromAddress, name.getBytes(), 100L,
+        toAddress, testKey003,blockingStubFull));
   }
 
   @AfterClass(enabled = true)

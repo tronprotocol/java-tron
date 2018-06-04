@@ -27,8 +27,7 @@ public class WalletTestAccount006 {
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
 
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "AssetIssue012_" + Long.toString(now);
@@ -63,10 +62,10 @@ public class WalletTestAccount006 {
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 100000000, 3, testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 100000000, 3, testKey002,
         blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .sendcoin(account006Address, sendAmount, FROM_ADDRESS, testKey002, blockingStubFull));
+        .sendcoin(account006Address, sendAmount, fromAddress, testKey002, blockingStubFull));
   }
 
   @Test(enabled = true)
@@ -94,7 +93,7 @@ public class WalletTestAccount006 {
   public void testUseFreeNet() {
 
     //Transfer some TRX to other to test free net cost.
-    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
         account006Key,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
@@ -106,21 +105,21 @@ public class WalletTestAccount006 {
 
   @Test(enabled = true)
   public void testUseMoneyToDoTransaction() {
-    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
         account006Key,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
     //Use out the free net
     while (accountNetMessage.getFreeNetUsed() < BASELINE) {
-      PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,account006Key,
+      PublicMethed.sendcoin(fromAddress,1L,account006Address,account006Key,
           blockingStubFull);
       accountNetMessage = blockingStubFull.getAccountNet(request);
     }
 
     Account queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
     Long beforeSendBalance = queryAccount.getBalance();
-    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,account006Key,
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,account006Key,
         blockingStubFull));
     queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
     Long afterSendBalance = queryAccount.getBalance();
@@ -133,7 +132,7 @@ public class WalletTestAccount006 {
     //Freeze balance to own net.
     Assert.assertTrue(PublicMethed.freezeBalance(account006Address,10000000L,
         3,account006Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
         account006Key,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
@@ -144,7 +143,7 @@ public class WalletTestAccount006 {
 
     Account queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
     Long beforeSendBalance = queryAccount.getBalance();
-    Assert.assertTrue(PublicMethed.sendcoin(FROM_ADDRESS,1L,account006Address,
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
         account006Key,blockingStubFull));
     queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
     Long afterSendBalance = queryAccount.getBalance();

@@ -42,15 +42,18 @@ public class WalletTestAssetIssue008 {
   private final String testKey004 =
       "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
 
-  //testng001、testng002、testng003、testng004
+  /*  //testng001、testng002、testng003、testng004
   private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+      .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");
   private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
+      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress   = PublicMethed.GetFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -85,9 +88,9 @@ public class WalletTestAssetIssue008 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000,3,testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000,3,testKey002,
         blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,FROM_ADDRESS,
+    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -107,9 +110,9 @@ public class WalletTestAssetIssue008 {
 
 
     if (assetIssueList.getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000L,3,
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000L,3,
           testKey002,blockingStubFull));
-      Assert.assertTrue(PublicMethed.sendcoin(TO_ADDRESS,999999L,FROM_ADDRESS,
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress,999999L,fromAddress,
           testKey002,blockingStubFull));
       Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       logger.info("fullnode block num is " + Long.toString(currentBlock.getBlockHeader()

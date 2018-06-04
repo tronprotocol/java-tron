@@ -60,6 +60,7 @@ class WitnessComparator implements Comparator {
 
 public class WalletClient {
 
+
     private static final Logger logger = LoggerFactory.getLogger("WalletClient");
     private static final String FilePath = "Wallet";
     private ECKey ecKey = null;
@@ -68,6 +69,8 @@ public class WalletClient {
     private static GrpcClient rpcCli ;
     private static String dbPath;
     private static String txtPath;
+
+    private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_TESTNET;
 
 //  static {
 //    new Timer().schedule(new TimerTask() {
@@ -104,9 +107,45 @@ public class WalletClient {
         if(config.hasPath(fullNodepathname)){
             fullNode = config.getStringList(fullNodepathname).get(0);
         }
+        if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+        } else {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
+        }
         rpcCli   = new GrpcClient(fullNode, solidityNode);
         return true;
     }
+
+    public static GrpcClient init() {
+        //Config config = org.tron.core.config.Configuration.getByPath("config.conf");
+        Config config = Configuration.getByPath("testng.conf");
+        dbPath = config.getString("CityDb.DbPath");
+        txtPath = System.getProperty("user.dir") + "/" + config.getString("CityDb.TxtPath");
+
+        String fullNode = "";
+        String solidityNode = "";
+        if (config.hasPath("soliditynode.ip.list")) {
+            solidityNode = config.getStringList("soliditynode.ip.list").get(0);
+        }
+        if (config.hasPath("fullnode.ip.list")) {
+            fullNode = config.getStringList("fullnode.ip.list").get(0);
+        }
+        if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+        } else {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
+        }
+        return new GrpcClient(fullNode, solidityNode);
+    }
+
+    public static byte getAddressPreFixByte() {
+        return addressPreFixByte;
+    }
+
+    public static void setAddressPreFixByte(byte addressPreFixByte) {
+        WalletClient.addressPreFixByte = addressPreFixByte;
+    }
+
 
     public static String selectFullNode() {
         Map<String, String> witnessMap = new HashMap<>();

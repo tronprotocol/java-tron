@@ -34,30 +34,19 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestWitness001 {
 
-
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
+
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String noFrozenBalanceTestKey =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  private static final byte[] NO_FROZEN_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final String a = Base58.encode58Check(fromAddress);
+
+
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
@@ -82,39 +71,45 @@ public class WalletTestWitness001 {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testVoteWitness() {
+    //HashMap<String, String> smallVoteMap = new HashMap<String, String>();
+    //smallVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "1");
+    logger.info(ByteArray.toHexString(fromAddress));
+    logger.info(a);
+    byte[] b = PublicMethed.AddPreFix(a.getBytes());
+    logger.info(ByteArray.toHexString(b));
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
-    smallVoteMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "1");
+    smallVoteMap.put(ByteArray.toHexString(b), "1");
     HashMap<String, String> wrongVoteMap = new HashMap<String, String>();
-    wrongVoteMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "-1");
+    wrongVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "-1");
     HashMap<String, String> zeroVoteMap = new HashMap<String, String>();
-    zeroVoteMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "0");
+    zeroVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "0");
 
     HashMap<String, String> veryLargeMap = new HashMap<String, String>();
-    veryLargeMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "1000000000");
+    veryLargeMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "1000000000");
     HashMap<String, String> wrongDropMap = new HashMap<String, String>();
-    wrongDropMap.put("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv", "10000000000000000");
+    wrongDropMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "10000000000000000");
 
     //Vote failed due to no freeze balance.
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
     //Freeze balance to get vote ability.
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L, testKey002,blockingStubFull));
 
     //Vote failed when the vote is large than the freeze balance.
-    Assert.assertFalse(voteWitness(veryLargeMap, FROM_ADDRESS, testKey002));
+    Assert.assertFalse(voteWitness(veryLargeMap, fromAddress, testKey002));
     //Vote failed due to 0 vote.
-    Assert.assertFalse(voteWitness(zeroVoteMap, FROM_ADDRESS, testKey002));
+    Assert.assertFalse(voteWitness(zeroVoteMap, fromAddress, testKey002));
     //Vote failed duo to -1 vote.
-    Assert.assertFalse(voteWitness(wrongVoteMap, FROM_ADDRESS, testKey002));
+    Assert.assertFalse(voteWitness(wrongVoteMap, fromAddress, testKey002));
     //Vote is so large, vote failed.
-    Assert.assertFalse(voteWitness(wrongDropMap, FROM_ADDRESS, testKey002));
+    Assert.assertFalse(voteWitness(wrongDropMap, fromAddress, testKey002));
 
     //Vote success, the second latest vote is cover by the latest vote.
-    Assert.assertTrue(voteWitness(smallVoteMap, FROM_ADDRESS, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, FROM_ADDRESS, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, FROM_ADDRESS, testKey002));
+    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
+    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
+    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
   }
 
   @AfterClass
@@ -184,7 +179,7 @@ public class WalletTestWitness001 {
       for (int j = 0; j < afterVote.getVotesCount(); j++) {
         logger.info(Long.toString(Long.parseLong(witness.get(key))));
         logger.info(key);
-        if (key.equals("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv")) {
+        if (key.equals("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")) {
           logger.info("catch it");
           logger.info(Long.toString(afterVote.getVotes(j).getVoteCount()));
           logger.info(Long.toString(Long.parseLong(witness.get(key))));

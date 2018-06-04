@@ -32,35 +32,22 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestAssetIssue007 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String notexist01 =
-      "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
   private final String noBandwitch =
       "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  private static final byte[] INVAILD_ADDRESS = Base58
-      .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
-  private static final byte[] noBandwitch_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] noBandwitchAddress = Base58
+      .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] noBandwitchAddress   = PublicMethed.GetFinalAddress(noBandwitch);
 
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue_" + Long.toString(now);
+  private static String name = "testAssetIssue007_" + Long.toString(now);
   private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
@@ -77,7 +64,7 @@ public class WalletTestAssetIssue007 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    ByteString addressBS1 = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBS1 = ByteString.copyFrom(fromAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
@@ -86,7 +73,7 @@ public class WalletTestAssetIssue007 {
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
       //Create a new asset issue.
-      Assert.assertTrue(PublicMethed.createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 1,
+      Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 1,
           start, end, 1, description, url,10000L,10000L,
           1L, 1L, testKey002,blockingStubFull));
     } else {
@@ -100,17 +87,17 @@ public class WalletTestAssetIssue007 {
   public void testUseBandwitchParticipateAssetissue() {
     //Participate a asset issue
     logger.info(name);
-    Assert.assertTrue(PublicMethed.participateAssetIssue(FROM_ADDRESS, name.getBytes(), 1L, noBandwitch_ADDRESS,
+    Assert.assertTrue(PublicMethed.participateAssetIssue(fromAddress, name.getBytes(), 1L, noBandwitchAddress,
         noBandwitch,blockingStubFull));
     Account beforeAsset = queryAccount(noBandwitch, blockingStubFull);
     final Long beforeAssetBalance = beforeAsset.getAssetMap().get(name);
 
     //Participate failed due to no bandwidth within 10 seconds.
     Assert.assertFalse(
-        participateAssetIssue(FROM_ADDRESS, name.getBytes(), 1L, noBandwitch_ADDRESS,
+        participateAssetIssue(fromAddress, name.getBytes(), 1L, noBandwitchAddress,
             noBandwitch));
     //Participate success due to out of 10 seconds, the bandwidth is recover.
-    Assert.assertTrue(participateAssetIssue(FROM_ADDRESS, name.getBytes(), 1L, noBandwitch_ADDRESS,
+    Assert.assertTrue(participateAssetIssue(fromAddress, name.getBytes(), 1L, noBandwitchAddress,
         noBandwitch));
     Account afterAsset = queryAccount(noBandwitch, blockingStubFull);
     logger.info(Long.toString(afterAsset.getAssetMap().get(name)));

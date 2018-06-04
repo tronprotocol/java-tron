@@ -29,28 +29,6 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestTransfer002 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String notexist01 =
-      "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
-
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -79,7 +57,7 @@ public class WalletTestTransfer002 {
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(beforeGetTotalTransaction.getNum()));
     Long beforeTotalTransaction = beforeGetTotalTransaction.getNum();
-    Assert.assertTrue(sendcoin(TO_ADDRESS, 1000000, FROM_ADDRESS, testKey002));
+    Assert.assertTrue(sendcoin(toAddress, 1000000, fromAddress, testKey002));
     NumberMessage afterGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(afterGetTotalTransaction.getNum()));

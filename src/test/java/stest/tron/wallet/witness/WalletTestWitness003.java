@@ -24,6 +24,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 //import stest.tron.wallet.common.client.AccountComparator;
@@ -32,30 +33,16 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestWitness003 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  //private final static  String lowBalTest     = 
-  // "86ff0c39337e9e97526c80af51f0e80411f5a1251473035f380f3671c1aa2b4b";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  //private static final byte[] lowBalAddress =
-  // Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
+
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
   private static final byte[] INVAILD_ADDRESS = Base58
       .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
 
 
   private static final Long costForCreateWitness = 9999000000L;
@@ -93,26 +80,26 @@ public class WalletTestWitness003 {
   @Test
   public void testCreateWitness() {
     //If you are already is witness, apply failed
-    createWitness(FROM_ADDRESS, createUrl, testKey002);
-    Assert.assertFalse(createWitness(FROM_ADDRESS, createUrl, testKey002));
+    createWitness(fromAddress, createUrl, testKey002);
+    Assert.assertFalse(createWitness(fromAddress, createUrl, testKey002));
 
     //No balance,try to create witness.
     Assert.assertFalse(createWitness(lowBalAddress, createUrl, lowBalTest));
 
     //Send enough coin to the apply account to make that account
     // has ability to apply become witness.
-    Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, FROM_ADDRESS, testKey002));
+    Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
     if (createWitness(lowBalAddress, createUrl, lowBalTest) == false) {
       Account lowAccount = queryAccount(lowBalTest, blockingStubFull);
       logger.info(Long.toString(lowAccount.getBalance()));
-      Assert.assertTrue(sendcoin(FROM_ADDRESS, costForCreateWitness, lowBalAddress, lowBalTest));
+      Assert.assertTrue(sendcoin(fromAddress, costForCreateWitness, lowBalAddress, lowBalTest));
     }
 
     //Account lowAccount = queryAccount(lowBalTest,blockingStubFull);
     //if (lowAccount.getBalance()<costForCreateWitness)
     //{
     //Assert.assertFalse(CreateWitness(lowBalAddress,createUrl,lowBalTest));
-    //Assert.assertTrue(Sendcoin(lowBalAddress, costForCreateWitness,FROM_ADDRESS, testKey002));
+    //Assert.assertTrue(Sendcoin(lowBalAddress, costForCreateWitness,fromAddress, testKey002));
     //}
   }
 
@@ -124,9 +111,9 @@ public class WalletTestWitness003 {
       e.printStackTrace();
     }
     //null url, update failed
-    Assert.assertFalse(updateWitness(FROM_ADDRESS, wrongUrl, testKey002));
+    Assert.assertFalse(updateWitness(fromAddress, wrongUrl, testKey002));
     //Content space and special char, update success
-    Assert.assertTrue(updateWitness(FROM_ADDRESS, updateSpaceUrl, testKey002));
+    Assert.assertTrue(updateWitness(fromAddress, updateSpaceUrl, testKey002));
     try {
       Thread.sleep(15000);
     } catch (InterruptedException e) {

@@ -1,6 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
 import com.google.protobuf.ByteString;
+import com.typesafe.config.Config;
 import java.math.BigInteger;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -17,6 +18,9 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.WalletClient;
 
 
 public class PublicMethed {
@@ -415,5 +419,31 @@ public class PublicMethed {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();
     return blockingStubFull.getAccountNet(request);
+  }
+
+  public static byte[] AddPreFix (byte[] address) {
+    Config config = Configuration.getByPath("testng.conf");
+    byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
+    byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
+    byte[] preFix = new byte[1];
+    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+      WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+      preFix[0] = ADD_PRE_FIX_BYTE_MAINNET;
+    }else {
+      WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_TESTNET);
+      preFix[0] = ADD_PRE_FIX_BYTE_TESTNET;
+    }
+    byte[] finalAddress = new byte[preFix.length+address.length];
+    System.arraycopy(preFix, 0, finalAddress, 0, preFix.length);
+    System.arraycopy(address, 0, finalAddress, preFix.length, address.length);
+    return finalAddress;
+
+  }
+
+  public static byte[] GetFinalAddress (String priKey) {
+     WalletClient walletClient;
+    walletClient = new WalletClient(priKey);
+    //walletClient.init(0);
+    return walletClient.getAddress();
   }
 }
