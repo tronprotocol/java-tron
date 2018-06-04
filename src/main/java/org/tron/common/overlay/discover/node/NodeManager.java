@@ -243,18 +243,17 @@ public class NodeManager {
     }
     NodeHandler nodeHandler = getNodeHandler(n);
 
-    byte type = m.getType();
-    switch (type) {
-      case 1:
+    switch (m.getType()) {
+      case DISCOVER_PING:
         nodeHandler.handlePing((PingMessage) m);
         break;
-      case 2:
+      case DISCOVER_PONG:
         nodeHandler.handlePong((PongMessage) m);
         break;
-      case 3:
+      case DISCOVER_FIND_NODE:
         nodeHandler.handleFindNode((FindNodeMessage) m);
         break;
-      case 4:
+      case DISCOVER_NEIGHBORS:
         nodeHandler.handleNeighbours((NeighborsMessage) m);
         break;
     }

@@ -1,5 +1,7 @@
 package org.tron.common.message.udp;
 
+import static org.tron.common.message.udp.UdpMessageTypeEnum.DISCOVER_NEIGHBORS;
+
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +19,12 @@ public class NeighborsMessage extends Message {
   private Discover.Neighbours neighbours;
 
   public NeighborsMessage(byte[] data) throws Exception{
-    super(Message.GET_PEERS, data);
+    super(DISCOVER_NEIGHBORS, data);
     this.neighbours = Discover.Neighbours.parseFrom(data);
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
-    super(Message.GET_PEERS, null);
+    super(DISCOVER_NEIGHBORS, null);
     Builder builder = Neighbours.newBuilder()
         .setTimestamp(System.currentTimeMillis());
 

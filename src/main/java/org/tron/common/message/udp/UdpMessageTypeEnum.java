@@ -9,11 +9,13 @@ public enum  UdpMessageTypeEnum {
 
   DISCOVER_PONG((byte) 0x02),
 
-  DISCOVER_FIND_PEER((byte) 0x03),
+  DISCOVER_FIND_NODE((byte) 0x03),
 
-  DISCOVER_PEERS((byte) 0x04),
+  DISCOVER_NEIGHBORS((byte) 0x04),
 
-  LAST((byte) 0xFF);
+  BACKUP((byte) 0x05),
+
+  UNKNOWN((byte) 0xFF);
 
   private final byte type;
 
@@ -29,7 +31,12 @@ public enum  UdpMessageTypeEnum {
     this.type = type;
   }
 
-  public static UdpMessageTypeEnum fromByte(byte i) {
-    return intToTypeMap.get(i);
+  public static UdpMessageTypeEnum fromByte(byte type) {
+    UdpMessageTypeEnum typeEnum = intToTypeMap.get(type);
+    return typeEnum == null ? UNKNOWN : typeEnum;
+  }
+
+  public byte getType() {
+    return type;
   }
 }
