@@ -2,7 +2,6 @@ package org.tron.core.net.node;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
-import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
@@ -104,10 +103,6 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
     logger.info("handle transaction");
-    if (dbManager.getPendingTransactions().size() > MAX_TRANSACTION_PENDING * 2) {
-      logger.warn("The pending txs list is full");
-      return;
-    }
 
     if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
       logger.warn("This transaction has been processed");
