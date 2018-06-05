@@ -192,7 +192,7 @@ public class NodeImplTest {
     peer3.setSyncBlockRequested(syncBlockRequested3);
 
     // fetch failed
-    SyncPool pool = new SyncPool(new PeerClient());
+    SyncPool pool = new SyncPool();
     pool.addActivePeers(peer1);
     nodeImpl.setPool(pool);
     try {
@@ -203,7 +203,7 @@ public class NodeImplTest {
     }
 
     // sync failed
-    pool = new SyncPool(new PeerClient());
+    pool = new SyncPool();
     pool.addActivePeers(peer2);
     nodeImpl.setPool(pool);
     try {
@@ -214,7 +214,7 @@ public class NodeImplTest {
     }
 
     // should not disconnect
-    pool = new SyncPool(new PeerClient());
+    pool = new SyncPool();
     pool.addActivePeers(peer3);
     nodeImpl.setPool(pool);
     try {
