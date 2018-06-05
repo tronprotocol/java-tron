@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Map;
@@ -101,41 +103,10 @@ public class WitnessService implements Service {
       return;
     }
 
-    switch (result) {
-      case PRODUCED:
-        logger.debug("Produced");
-        break;
-      case NOT_SYNCED:
-        logger.info("Not sync");
-        break;
-      case UNELECTED:
-        logger.debug("Unelected");
-        break;
-      case NOT_MY_TURN:
-        logger.debug("It's not my turn");
-        break;
-      case NOT_TIME_YET:
-        logger.info("Not time yet");
-        break;
-      case NO_PRIVATE_KEY:
-        logger.info("No pri key");
-        break;
-      case LOW_PARTICIPATION:
-        logger.info("Low part");
-        break;
-      case LAG:
-        logger.info("Lag");
-        break;
-      case CONSECUTIVE:
-        logger.info("Consecutive");
-        break;
-      case TIME_OUT:
-        logger.debug("Time out");
-      case EXCEPTION_PRODUCING_BLOCK:
-        logger.info("Exception");
-        break;
-      default:
-        break;
+    if (result.ordinal() <= NOT_MY_TURN.ordinal()) {
+      logger.debug(result.toString());
+    } else {
+      logger.info(result.toString());
     }
   }
 
@@ -209,7 +180,7 @@ public class WitnessService implements Service {
       logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
           controller.getAbSlotAtTime(now));
-      return BlockProductionCondition.NOT_MY_TURN;
+      return NOT_MY_TURN;
     }
 
     long scheduledTime = controller.getSlotTime(slot);
