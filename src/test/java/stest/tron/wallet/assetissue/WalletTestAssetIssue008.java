@@ -11,6 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -20,11 +21,13 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
@@ -42,15 +45,18 @@ public class WalletTestAssetIssue008 {
   private final String testKey004 =
       "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
 
-  //testng001、testng002、testng003、testng004
+  /*  //testng001、testng002、testng003、testng004
   private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+      .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");
   private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
+      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress   = PublicMethed.GetFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -72,6 +78,12 @@ public class WalletTestAssetIssue008 {
   byte[] queryAssetIssueFromSoliAddress = ecKey.getAddress();
   String queryAssetIssueKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass
   public void beforeClass() {
     logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
@@ -85,44 +97,59 @@ public class WalletTestAssetIssue008 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
-    Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS,10000000,3,testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000,3,testKey002,
         blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,FROM_ADDRESS,
+    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(queryAssetIssueFromSoliAddress, name,
-        totalSupply, 1, 100, start, end, 1, description, url, 1000L,
-        1000L,1L,1L,queryAssetIssueKey,blockingStubFull));
+        totalSupply, 1, 100, start, end, 1, description, url, 10000L,
+        10000L,1L,1L,queryAssetIssueKey,blockingStubFull));
   }
 
 
   @Test(enabled = true)
   public void testGetAllAssetIssueFromSolidity() {
-    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-    Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI
-        .EmptyMessage.newBuilder().build());
-    Integer wait = 0;
-    while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      logger.info("Solidity didn't synchronize the fullnode block,please wait");
-      solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
-          .build());
-      wait++;
-      if (wait == 9) {
-        logger.info("Didn't syn,skip to next case.");
-      }
-    }
-
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(assetIssueList.getAssetIssueCount()));
+
+
+
+    if (assetIssueList.getAssetIssueCount() == 0) {
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000L,3,
+          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress,999999L,fromAddress,
+          testKey002,blockingStubFull));
+      Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      logger.info("fullnode block num is " + Long.toString(currentBlock.getBlockHeader()
+          .getRawData().getNumber()));
+      Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI
+          .EmptyMessage.newBuilder().build());
+      Integer wait = 0;
+      while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
+          < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        logger.info("Solidity didn't synchronize the fullnode block,please wait");
+        solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
+            .build());
+        wait++;
+        logger.info("soliditynode block num is " + Long.toString(solidityCurrentBlock
+            .getBlockHeader().getRawData().getNumber()));
+        if (wait == 9) {
+          logger.info("Didn't syn,skip to next case.");
+        }
+      }
+    }
+
+    assetIssueList = blockingStubSolidity
+        .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(assetIssueList.getAssetIssueCount() >= 1);
     for (Integer j = 0; j < assetIssueList.getAssetIssueCount(); j++) {
       Assert.assertFalse(assetIssueList.getAssetIssue(j).getOwnerAddress().isEmpty());

@@ -13,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountPaginated;
@@ -22,10 +23,12 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
@@ -35,8 +38,6 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestTransfer005 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001     =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002     =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003     =
@@ -46,19 +47,17 @@ public class WalletTestTransfer005 {
   private final String notexist01     =
       "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS    =
-      Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS    =
-      Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS      =
-      Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS =
-      Base58.decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  private static final byte[] ONLINE_ADDRESS  =
-      Base58.decodeFromBase58Check("27Vmxj4BZPCTyHnpJ1cd5Un9aehqK82dbFT");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress    =
+      Base58.decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress      =
+      Base58.decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
   private static final byte[] INVAILD_ADDRESS =
       Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -71,6 +70,13 @@ public class WalletTestTransfer005 {
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
 
   @BeforeClass
   public void beforeClass() {
@@ -86,18 +92,14 @@ public class WalletTestTransfer005 {
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
 
     //Create a transfer.
-    Assert.assertTrue(PublicMethed.sendcoin(TO_ADDRESS,1000000,FROM_ADDRESS,
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
         testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testgetTransactionsFromThis() {
 
-    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
-        blockingStubSolidity));
-
-
-    ByteString addressBs = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account account = Account.newBuilder().setAddress(addressBs).build();
     AccountPaginated.Builder accountPaginated = AccountPaginated.newBuilder().setAccount(account);
     accountPaginated.setOffset(1000);
@@ -108,7 +110,10 @@ public class WalletTestTransfer005 {
         .ofNullable(transactionList);
 
     if (gettransactionsfromthis.get().getTransactionCount() == 0) {
-      logger.info("This account didn't transfation any coin to other");
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000L,fromAddress,
+          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
+          blockingStubSolidity));
     }
 
     Assert.assertTrue(gettransactionsfromthis.isPresent());
