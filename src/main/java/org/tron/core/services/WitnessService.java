@@ -131,6 +131,7 @@ public class WitnessService implements Service {
         break;
       case TIME_OUT:
         logger.debug("Time out");
+        break;
       case EXCEPTION_PRODUCING_BLOCK:
         logger.info("Exception");
         break;
