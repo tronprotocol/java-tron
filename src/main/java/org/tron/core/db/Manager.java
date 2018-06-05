@@ -1275,8 +1275,13 @@ public class Manager {
 
     @Override
     public Boolean call() throws ValidateSignatureException {
-      trx.validateSignature();
-      countDownLatch.countDown();
+      try {
+        trx.validateSignature();
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
       return true;
     }
   }
