@@ -274,8 +274,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ExecutorLoop<Message> loopAdvertiseInv;
 
-  private ExecutorLoop<Message> handleBacklogBlocks;
-
   private ExecutorService handleBackLogBlocksPool = Executors.newCachedThreadPool();
 
 
@@ -1295,6 +1293,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           });
     }
+  }
+
+  public void shutDown() {
+    logExecutor.shutdown();
+    trxsHandlePool.shutdown();
+    disconnectInactiveExecutor.shutdown();
+    cleanInventoryExecutor.shutdown();
+    broadPool.shutdown();
+    loopSyncBlockChain.shutdown();
+    loopFetchBlocks.shutdown();
+    loopAdvertiseInv.shutdown();
+    handleBackLogBlocksPool.shutdown();
+    fetchSyncBlocksExecutor.shutdown();
+    handleSyncBlockExecutor.shutdown();
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {

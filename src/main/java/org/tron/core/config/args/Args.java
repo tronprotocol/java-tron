@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import io.grpc.internal.GrpcUtil;
+import io.grpc.netty.NettyServerBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,10 +36,14 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.core.Constant;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
+import org.tron.keystore.CipherException;
+import org.tron.keystore.Credentials;
+import org.tron.keystore.WalletUtils;
 
 @Slf4j
 @NoArgsConstructor
@@ -172,6 +180,30 @@ public class Args {
 
   @Getter
   @Setter
+  private int maxConcurrentCallsPerConnection;
+
+  @Getter
+  @Setter
+  private int flowControlWindow;
+
+  @Getter
+  @Setter
+  private long maxConnectionIdleInMillis;
+
+  @Getter
+  @Setter
+  private long maxConnectionAgeInMillis;
+
+  @Getter
+  @Setter
+  private int maxMessageSize;
+
+  @Getter
+  @Setter
+  private int maxHeaderListSize;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
   private int validateSignThreadNum;
 
@@ -252,7 +284,6 @@ public class Args {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath("localwitness")) {
-
       INSTANCE.localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList("localwitness");
       if (localwitness.size() > 1) {
@@ -261,6 +292,30 @@ public class Args {
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
       logger.debug("Got privateKey from config.conf");
+    } else if (config.hasPath("localwitnesskeystore")) {
+      INSTANCE.localWitnesses = new LocalWitnesses();
+      List<String> privateKeys = new ArrayList<String>();
+      if (INSTANCE.isWitness()) {
+        List<String> localwitness = config.getStringList("localwitnesskeystore");
+        if (localwitness.size() > 0) {
+          String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
+          System.out.println("Please input your password.");
+          String password = WalletUtils.inputPassword();
+          try {
+            Credentials credentials = WalletUtils
+                .loadCredentials(password, new File(fileName));
+            ECKey ecKeyPair = credentials.getEcKeyPair();
+            String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
+            privateKeys.add(prikey);
+          } catch (IOException e) {
+            logger.warn(e.getMessage());
+          } catch (CipherException e) {
+            logger.warn(e.getMessage());
+          }
+        }
+      }
+      INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
+      logger.debug("Got privateKey from keystore");
     }
 
     if (INSTANCE.isWitness() && CollectionUtils.isEmpty(INSTANCE.localWitnesses.getPrivateKeys())) {
@@ -270,11 +325,11 @@ public class Args {
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.db.directory")));
+        .orElse(Storage.getDbDirectoryFromConfig(config)));
 
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.index.directory")));
+        .orElse(Storage.getIndexDirectoryFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -359,6 +414,24 @@ public class Args {
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
+
+    INSTANCE.maxConcurrentCallsPerConnection = config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
+        config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
+
+    INSTANCE.flowControlWindow = config.hasPath("node.rpc.flowControlWindow") ?
+        config.getInt("node.rpc.flowControlWindow") : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+
+    INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
+        config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxConnectionAgeInMillis = config.hasPath("node.rpc.maxConnectionAgeInMillis") ?
+        config.getLong("node.rpc.maxConnectionAgeInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxMessageSize = config.hasPath("node.rpc.maxMessageSize") ?
+        config.getInt("node.rpc.maxMessageSize") : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+
+    INSTANCE.maxHeaderListSize = config.hasPath("node.rpc.maxHeaderListSize") ?
+        config.getInt("node.rpc.maxHeaderListSize") : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config

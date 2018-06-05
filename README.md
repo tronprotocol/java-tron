@@ -63,7 +63,7 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 * JDK 1.8 (JDK 1.9+ are not supported yet)
 * On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
 
-## Getting the code
+## Getting the code with git
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
 * develop branch: the newnest code 
@@ -77,6 +77,42 @@ git checkout -t origin/master
 * For Mac, you can also install **[GitHub for Mac](https://mac.github.com/)** then **[fork and clone our repository](https://guides.github.com/activities/forking/)**. 
 
 * If you'd rather not use Git, [Download the ZIP](https://github.com/tronprotocol/java-tron/archive/develop.zip)
+
+## Including java-tron as dependency
+
+* If you don't want to checkout the code and build the project, you can include it directly as a dependency
+
+**Using gradle:**
+
+```
+repositories {
+   maven { url 'https://jitpack.io' }
+}
+dependencies {
+   implementation 'com.github.tronprotocol:java-tron:develop-SNAPSHOT'
+}
+```
+  
+**Using maven:**
+
+```xml
+...
+<repositories>
+  <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+...
+<dependency>
+    <groupId>com.github.tronprotocol</groupId>
+    <artifactId>java-tron</artifactId>
+    <version>develop-SNAPSHOT</version><!--You can use any of the tag/branch name available-->
+</dependency>
+```
+
+
+
 
 ## Building from source code
 
@@ -476,6 +512,10 @@ Then observe whether block synchronization success，If synchronization successf
 # Quick Start
 
 Read the [Quick Start](http://wiki.tron.network/en/latest/Quick_Start.html).
+
+# Advanced Configurations
+
+Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
 
 # Community
 

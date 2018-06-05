@@ -13,8 +13,10 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-# Custom jvm options as needed
-# JVM_OPTIONS="-Xms256m -Xmx4096m"
+# Increase memory limit that JVM can use to avoid OOM error:
+# 80% of your physical memory may be a proper ceiling that JVM can use.
+# By default there, JVM initializes with 1g memory and can use 32g at most.
+JVM_OPTIONS="-Xms1g -Xmx32g"
 
 JAR_FILE_PATH="./build/libs/java-tron.jar"
 PID_FILE_PATH="java-tron.pid"
