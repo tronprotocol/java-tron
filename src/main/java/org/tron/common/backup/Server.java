@@ -24,7 +24,7 @@ public class Server {
 
   private int port;
 
-  private MemberManager memberManager;
+  private BackupManager memberManager;
 
   Args args = Args.getInstance();
 
@@ -33,7 +33,7 @@ public class Server {
   private DiscoveryExecutor discoveryExecutor;
 
   @Autowired
-  public Server(final MemberManager memberManager) {
+  public Server(final BackupManager memberManager) {
     this.memberManager = memberManager;
     port = args.getNodeListenPort();
     if (args.isNodeDiscoveryEnable()) {
