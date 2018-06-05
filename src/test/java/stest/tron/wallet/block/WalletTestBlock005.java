@@ -12,14 +12,17 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 
 //import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
@@ -33,6 +36,12 @@ public class WalletTestBlock005 {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass
   public void beforeClass() {

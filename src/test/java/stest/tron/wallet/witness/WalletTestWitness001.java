@@ -12,6 +12,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -19,6 +20,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -26,6 +28,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -44,7 +47,6 @@ public class WalletTestWitness001 {
   private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
   private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final String a = Base58.encode58Check(fromAddress);
 
 
 
@@ -58,8 +60,17 @@ public class WalletTestWitness001 {
       .getStringList("fullnode.ip.list").get(1);
 
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass
   public void beforeClass() {
+
+    WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    logger.info("Pre fix byte =====  " + WalletClient.getAddressPreFixByte());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -71,25 +82,20 @@ public class WalletTestWitness001 {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testVoteWitness() {
-    //HashMap<String, String> smallVoteMap = new HashMap<String, String>();
-    //smallVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "1");
-    logger.info(ByteArray.toHexString(fromAddress));
-    logger.info(a);
-    byte[] b = PublicMethed.AddPreFix(a.getBytes());
-    logger.info(ByteArray.toHexString(b));
+    String voteStr = "TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes";
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
-    smallVoteMap.put(ByteArray.toHexString(b), "1");
+    smallVoteMap.put(voteStr, "1");
     HashMap<String, String> wrongVoteMap = new HashMap<String, String>();
-    wrongVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "-1");
+    wrongVoteMap.put(voteStr, "-1");
     HashMap<String, String> zeroVoteMap = new HashMap<String, String>();
-    zeroVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "0");
+    zeroVoteMap.put(voteStr, "0");
 
     HashMap<String, String> veryLargeMap = new HashMap<String, String>();
-    veryLargeMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "1000000000");
+    veryLargeMap.put(voteStr, "1000000000");
     HashMap<String, String> wrongDropMap = new HashMap<String, String>();
-    wrongDropMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "10000000000000000");
+    wrongDropMap.put(voteStr, "10000000000000000");
 
     //Vote failed due to no freeze balance.
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
@@ -146,6 +152,7 @@ public class WalletTestWitness001 {
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
+      logger.info("address ====== " + ByteArray.toHexString(address));
       if (address == null) {
         continue;
       }

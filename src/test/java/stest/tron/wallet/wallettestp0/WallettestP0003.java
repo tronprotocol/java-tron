@@ -12,17 +12,21 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -48,8 +52,15 @@ public class WallettestP0003 {
       .getStringList("fullnode.ip.list").get(1);
 
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass
   public void beforeClass() {
+    WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -61,15 +72,16 @@ public class WallettestP0003 {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testVoteWitness() {
+    String voteStr = "TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes";
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
-    smallVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "2");
+    smallVoteMap.put(voteStr, "2");
     HashMap<String, String> largeVoteMap = new HashMap<String, String>();
-    largeVoteMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "3");
+    largeVoteMap.put(voteStr, "3");
 
     HashMap<String, String> veryLargeMap = new HashMap<String, String>();
-    veryLargeMap.put("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7", "1000000000");
+    veryLargeMap.put(voteStr, "1000000000");
 
     //Freeze 10Trx
     Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L,
@@ -108,6 +120,7 @@ public class WallettestP0003 {
     if (beforeVote.getVotesCount() != 0) {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
+
     Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
@@ -116,6 +129,7 @@ public class WallettestP0003 {
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
+      logger.info("address ====== " + ByteArray.toHexString(address));
       if (address == null) {
         continue;
       }
@@ -135,10 +149,30 @@ public class WallettestP0003 {
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
     if (response.getResult() == false) {
-      logger.info("response.getresult() == false");
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     }
-    Account afterVote = queryAccount(ecKey, blockingStubFull);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Account afterVote = queryAccount(ecKey, searchBlockingStubFull);
+    //Long afterVoteNum = afterVote.getVotes(0).getVoteCount();
+    for (String key : witness.keySet()) {
+      for (int j = 0; j < afterVote.getVotesCount(); j++) {
+        logger.info(Long.toString(Long.parseLong(witness.get(key))));
+        logger.info(key);
+        if (key.equals("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")) {
+          logger.info("catch it");
+          logger.info(Long.toString(afterVote.getVotes(j).getVoteCount()));
+          logger.info(Long.toString(Long.parseLong(witness.get(key))));
+          Assert
+              .assertTrue(afterVote.getVotes(j).getVoteCount() == Long.parseLong(witness.get(key)));
+        }
+
+      }
+    }
     return true;
   }
 

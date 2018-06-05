@@ -12,6 +12,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
@@ -21,8 +22,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import org.tron.core.Wallet;
 
 
 @Slf4j
@@ -31,6 +35,8 @@ public class WalletTestAccount001 {
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String invalidTestKey =
       "592BB6C9BB255409A6A45EFD18E9A74FECDDCCE93A40D96B70FBE334E6361E36";
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -43,6 +49,12 @@ public class WalletTestAccount001 {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass
   public void beforeClass() {
@@ -62,7 +74,10 @@ public class WalletTestAccount001 {
   public void testqueryaccountfromfullnode() {
     //Query success, get the right balance,bandwidth and the account name.
     Account queryResult = queryAccount(testKey002, blockingStubFull);
+    /*    Account queryResult = PublicMethed.queryAccountByAddress(fromAddress,blockingStubFull);
+    logger.info(ByteArray.toStr(queryResult.getAccountName().toByteArray()));
     logger.info(Long.toString(queryResult.getBalance()));
+    logger.info(ByteArray.toStr(queryResult.getAddress().toByteArray()));*/
     Assert.assertTrue(queryResult.getBalance() > 0);
     //Assert.assertTrue(queryResult.getBandwidth() >= 0);
     Assert.assertTrue(queryResult.getAccountName().toByteArray().length > 0);

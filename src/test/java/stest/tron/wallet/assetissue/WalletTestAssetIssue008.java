@@ -11,6 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -20,11 +21,13 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
@@ -74,6 +77,12 @@ public class WalletTestAssetIssue008 {
   ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] queryAssetIssueFromSoliAddress = ecKey.getAddress();
   String queryAssetIssueKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass
   public void beforeClass() {
