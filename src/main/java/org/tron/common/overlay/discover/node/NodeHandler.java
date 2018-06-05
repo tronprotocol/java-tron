@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.message.udp.discover.FindNodeMessage;
 import org.tron.common.message.udp.Message;
+import org.tron.common.message.udp.discover.FindNodeMessage;
 import org.tron.common.message.udp.discover.NeighborsMessage;
 import org.tron.common.message.udp.discover.PingMessage;
 import org.tron.common.message.udp.discover.PongMessage;
@@ -170,7 +170,7 @@ public class NodeHandler {
     state = newState;
   }
 
-  void handlePing(PingMessage msg) {
+  public void handlePing(PingMessage msg) {
     getNodeStatistics().discoverInPing.add();
     if (!nodeManager.table.getNode().equals(node)) {
       sendPong();
@@ -182,7 +182,7 @@ public class NodeHandler {
     }
   }
 
-  void handlePong(PongMessage msg) {
+  public void handlePong(PongMessage msg) {
     if (waitForPong) {
       waitForPong = false;
       getNodeStatistics().discoverInPong.add();
@@ -198,7 +198,7 @@ public class NodeHandler {
     }
   }
 
-  void handleNeighbours(NeighborsMessage msg) {
+  public void handleNeighbours(NeighborsMessage msg) {
     getNodeStatistics().discoverInNeighbours.add();
     for (Node n : msg.getNodes()) {
       if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())) {
@@ -207,13 +207,13 @@ public class NodeHandler {
     }
   }
 
-  void handleFindNode(FindNodeMessage msg) {
+  public void handleFindNode(FindNodeMessage msg) {
     getNodeStatistics().discoverInFind.add();
     List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
     sendNeighbours(closest);
   }
 
-  void handleTimedOut() {
+  public void handleTimedOut() {
     logger.debug("ping timeout {}", node);
     waitForPong = false;
     if (--pingTrials > 0) {
@@ -229,7 +229,7 @@ public class NodeHandler {
     }
   }
 
-  void sendPing() {
+  public void sendPing() {
     Message ping = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
     waitForPong = true;
     pingSent = System.currentTimeMillis();
@@ -251,19 +251,19 @@ public class NodeHandler {
     }, PingTimeout, TimeUnit.MILLISECONDS);
   }
 
-  void sendPong() {
+  public void sendPong() {
     Message pong = new PongMessage(nodeManager.getPublicHomeNode());
     sendMessage(pong);
     getNodeStatistics().discoverOutPong.add();
   }
 
-  void sendNeighbours(List<Node> neighbours) {
+  public void sendNeighbours(List<Node> neighbours) {
     Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
     sendMessage(neighbors);
     getNodeStatistics().discoverOutNeighbours.add();
   }
 
-  void sendFindNode(byte[] target) {
+  public void sendFindNode(byte[] target) {
     Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();

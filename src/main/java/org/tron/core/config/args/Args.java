@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -195,6 +196,22 @@ public class Args {
   @Getter
   @Setter
   private boolean walletExtensionApi;
+
+  @Getter
+  @Setter
+  private boolean backupFlag;
+
+  @Getter
+  @Setter
+  private int backupPriority;
+
+  @Getter
+  @Setter
+  private int backupPort;
+
+  @Getter
+  @Setter
+  private List<String> backupIpList;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -380,6 +397,8 @@ public class Args {
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+
+    initBackupProperty(config);
   }
 
 
@@ -560,5 +579,14 @@ public class Args {
     }
 
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  }
+
+  private static void initBackupProperty(Config config) {
+    INSTANCE.backupFlag = config.hasPath("backup.flag") && config.getBoolean("backup.flag");
+    INSTANCE.backupPriority = config.hasPath("backup.priority")
+        ? config.getInt("backup.priority") : new Random(1000).nextInt();
+    INSTANCE.backupPort = config.hasPath("backup.port") ? config.getInt("backup.port") : 18999;
+    INSTANCE.backupIpList = config.hasPath("backup.ip.list")
+        ? config.getStringList("backup.ip.list") : new ArrayList<>();
   }
 }

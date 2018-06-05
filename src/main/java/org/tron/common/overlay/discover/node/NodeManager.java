@@ -36,14 +36,14 @@ import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.DiscoverListener;
-import org.tron.common.overlay.discover.DiscoveryEvent;
-import org.tron.common.overlay.discover.node.NodeHandler.State;
-import org.tron.common.message.udp.discover.FindNodeMessage;
 import org.tron.common.message.udp.Message;
+import org.tron.common.message.udp.discover.FindNodeMessage;
 import org.tron.common.message.udp.discover.NeighborsMessage;
 import org.tron.common.message.udp.discover.PingMessage;
 import org.tron.common.message.udp.discover.PongMessage;
+import org.tron.common.overlay.discover.DiscoverListener;
+import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
@@ -115,7 +115,7 @@ public class NodeManager {
     return pongTimer;
   }
 
-  void channelActivated() {
+  public void channelActivated() {
     // channel activated now can send messages
     if (!inited) {
       // no another init on a new channel activation

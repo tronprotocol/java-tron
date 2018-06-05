@@ -64,7 +64,7 @@ public abstract class Message {
         return new FindNodeMessage(data);
       case DISCOVER_NEIGHBORS:
         return new NeighborsMessage(data);
-      case BACKUP:
+      case BACKUP_KEEP_ALIVE:
         return new KeepAliveMessage(data);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type);

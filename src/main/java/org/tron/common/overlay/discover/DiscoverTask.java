@@ -36,7 +36,7 @@ public class DiscoverTask implements Runnable {
 
   public DiscoverTask(NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    nodeId = nodeManager.homeNode.getId();
+    nodeId = nodeManager.getPublicHomeNode().getId();
   }
 
   @Override

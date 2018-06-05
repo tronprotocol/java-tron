@@ -13,7 +13,7 @@ public enum  UdpMessageTypeEnum {
 
   DISCOVER_NEIGHBORS((byte) 0x04),
 
-  BACKUP((byte) 0x05),
+  BACKUP_KEEP_ALIVE((byte) 0x05),
 
   UNKNOWN((byte) 0xFF);
 
