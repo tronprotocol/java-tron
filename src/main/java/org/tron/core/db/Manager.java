@@ -928,7 +928,7 @@ public class Manager {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
-        logger.debug("Processing transaction time exceeds the 50% producing time。");
+        logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
       // check the block size
@@ -1271,8 +1271,13 @@ public class Manager {
 
     @Override
     public Boolean call() throws ValidateSignatureException {
-      trx.validateSignature();
-      countDownLatch.countDown();
+      try {
+        trx.validateSignature();
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
       return true;
     }
   }
