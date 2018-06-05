@@ -10,8 +10,8 @@ import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
+import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.discover.Server;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -166,7 +166,7 @@ public class SolidityNode {
 //    appT.startup();
 
     //Disable peer discovery for solidity node
-    Server udpListener = context.getBean(Server.class);
+    DiscoverServer udpListener = context.getBean(DiscoverServer.class);
     udpListener.close();
     ChannelManager channelManager = context.getBean(ChannelManager.class);
     channelManager.close();

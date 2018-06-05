@@ -36,11 +36,9 @@ import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.args.Args;
 
 @Component
-public class Server {
+public class DiscoverServer {
 
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("Server");
-
-  private int port;
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("DiscoverServer");
 
   @Autowired
   private NodeManager nodeManager;
@@ -50,14 +48,15 @@ public class Server {
 
   Args args = Args.getInstance();
 
+  private int port = args.getNodeListenPort();
+
   private Channel channel;
   private volatile boolean shutdown = false;
   private DiscoveryExecutor discoveryExecutor;
 
   @Autowired
-  public Server(final NodeManager nodeManager) {
+  public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    port = args.getNodeListenPort();
     if (args.isNodeDiscoveryEnable()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
@@ -69,7 +68,7 @@ public class Server {
             logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);
           }
-        }, "Server").start();
+        }, "BackupServer").start();
       }
     }
   }
@@ -99,11 +98,11 @@ public class Server {
 
         channel = b.bind(port).sync().channel();
 
-        logger.info("Discovery Server started, bind port {}", port);
+        logger.info("Discovery BackupServer started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {
-          logger.info("Shutdown discovery Server");
+          logger.info("Shutdown discovery BackupServer");
           break;
         }
         logger.warn(" . Recreating after 5 sec pause...");
@@ -122,13 +121,13 @@ public class Server {
   }
 
   public void close() {
-    logger.info("Closing Server...");
+    logger.info("Closing BackupServer...");
     shutdown = true;
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
       } catch (Exception e) {
-        logger.warn("Problems closing Server", e);
+        logger.warn("Problems closing BackupServer", e);
       }
     }
 

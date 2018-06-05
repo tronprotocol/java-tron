@@ -20,6 +20,14 @@ public class KeepAliveMessage extends Message {
     data = backupMessage.toByteArray();
   }
 
+  public boolean getFlag(){
+    return backupMessage.getFlag();
+  }
+
+  public int getPriority(){
+    return backupMessage.getPriority();
+  }
+
   @Override
   public byte[] getNodeId() {
     return null;

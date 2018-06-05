@@ -199,10 +199,6 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean backupFlag;
-
-  @Getter
-  @Setter
   private int backupPriority;
 
   @Getter
@@ -211,7 +207,7 @@ public class Args {
 
   @Getter
   @Setter
-  private List<String> backupIpList;
+  private List<String> backupMembers;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -582,11 +578,10 @@ public class Args {
   }
 
   private static void initBackupProperty(Config config) {
-    INSTANCE.backupFlag = config.hasPath("backup.flag") && config.getBoolean("backup.flag");
-    INSTANCE.backupPriority = config.hasPath("backup.priority")
-        ? config.getInt("backup.priority") : new Random(1000).nextInt();
-    INSTANCE.backupPort = config.hasPath("backup.port") ? config.getInt("backup.port") : 18999;
-    INSTANCE.backupIpList = config.hasPath("backup.ip.list")
-        ? config.getStringList("backup.ip.list") : new ArrayList<>();
+    INSTANCE.backupPriority = config.hasPath("node.backup.priority")
+        ? config.getInt("node.backup.priority") : new Random(1000).nextInt();
+    INSTANCE.backupPort = config.hasPath("node.backup.port") ? config.getInt("node.backup.port") : 10001;
+    INSTANCE.backupMembers = config.hasPath("node.backup.members")
+        ? config.getStringList("node.backup.members") : new ArrayList<>();
   }
 }

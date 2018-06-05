@@ -93,7 +93,7 @@ public class PeerServer {
 
         } catch (Exception e) {
             logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
-            throw new Error("Server Disconnected");
+            throw new Error("BackupServer Disconnected");
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
