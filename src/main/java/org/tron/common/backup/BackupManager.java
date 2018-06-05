@@ -115,6 +115,13 @@ public class BackupManager implements EventHandler{
       logger.info("Receive not keep alive message from {}, type {}", sender.getHostString(), msg.getType());
       return;
     }
+    if (members.contains(sender.getHostString())){
+      logger.info("Receive keep alive message from {} is not my member.", sender.getHostString());
+      return;
+    }
+
+    lastKeepAliveTime = System.currentTimeMillis();
+
     KeepAliveMessage keepAliveMessage = (KeepAliveMessage) msg;
 
     if (status.equals(MASTER)){
