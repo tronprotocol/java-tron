@@ -22,7 +22,7 @@ deploy:
   provider: script
   script: bash deploy.sh
   on:
-    branch: addtestng
+    branch: develop
 after_deploy:
 - "./gradlew stest"
 
