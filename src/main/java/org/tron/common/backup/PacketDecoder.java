@@ -23,8 +23,8 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 import org.slf4j.LoggerFactory;
-import org.tron.common.message.udp.Message;
-import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.handler.UdpEvent;
 
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 
@@ -45,7 +45,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     byte[] encoded = new byte[length];
     buf.readBytes(encoded);
     try {
-      DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
+      UdpEvent event = new UdpEvent(Message.parse(encoded), packet.sender());
       out.add(event);
     } catch (Exception e) {
       logger.error("Parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length,

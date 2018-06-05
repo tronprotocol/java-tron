@@ -1,4 +1,4 @@
-package org.tron.common.message.udp;
+package org.tron.common.net.udp.message;
 
 import java.util.HashMap;
 import java.util.Map;

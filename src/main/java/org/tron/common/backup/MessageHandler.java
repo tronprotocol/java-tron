@@ -26,12 +26,12 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.overlay.discover.node.NodeManager;
 
 
-public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
-    implements Consumer<DiscoveryEvent> {
+public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
+    implements Consumer<UdpEvent> {
 
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
@@ -50,23 +50,23 @@ public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
   }
 
   @Override
-  public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent discoveryEvent)
+  public void channelRead0(ChannelHandlerContext ctx, UdpEvent udpEvent)
       throws Exception {
     logger.debug("rcv udp msg type {}, len {} from {} ",
-        discoveryEvent.getMessage().getType(),
-        discoveryEvent.getMessage().getSendData().length,
-        discoveryEvent.getAddress());
-    nodeManager.handleInbound(discoveryEvent);
+        udpEvent.getMessage().getType(),
+        udpEvent.getMessage().getSendData().length,
+        udpEvent.getAddress());
+    nodeManager.handleInbound(udpEvent);
   }
 
   @Override
-  public void accept(DiscoveryEvent discoveryEvent) {
+  public void accept(UdpEvent udpEvent) {
     logger.debug("send udp msg type {}, len {} to {} ",
-        discoveryEvent.getMessage().getType(),
-        discoveryEvent.getMessage().getSendData().length,
-        discoveryEvent.getAddress());
-    InetSocketAddress address = discoveryEvent.getAddress();
-    sendPacket(discoveryEvent.getMessage().getSendData(), address);
+        udpEvent.getMessage().getType(),
+        udpEvent.getMessage().getSendData().length,
+        udpEvent.getAddress());
+    InetSocketAddress address = udpEvent.getAddress();
+    sendPacket(udpEvent.getMessage().getSendData(), address);
   }
 
   void sendPacket(byte[] wire, InetSocketAddress address) {

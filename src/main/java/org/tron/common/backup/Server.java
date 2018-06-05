@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.DiscoveryExecutor;
-import org.tron.common.overlay.discover.MessageHandler;
-import org.tron.common.overlay.discover.PacketDecoder;
+import org.tron.common.net.udp.handler.MessageHandler;
+import org.tron.common.net.udp.handler.PacketDecoder;
 import org.tron.core.config.args.Args;
 
 @Component

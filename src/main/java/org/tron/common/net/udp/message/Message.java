@@ -1,11 +1,11 @@
-package org.tron.common.message.udp;
+package org.tron.common.net.udp.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.message.udp.backup.KeepAliveMessage;
-import org.tron.common.message.udp.discover.FindNodeMessage;
-import org.tron.common.message.udp.discover.NeighborsMessage;
-import org.tron.common.message.udp.discover.PingMessage;
-import org.tron.common.message.udp.discover.PongMessage;
+import org.tron.common.net.udp.message.backup.KeepAliveMessage;
+import org.tron.common.net.udp.message.discover.FindNodeMessage;
+import org.tron.common.net.udp.message.discover.NeighborsMessage;
+import org.tron.common.net.udp.message.discover.PingMessage;
+import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;
 

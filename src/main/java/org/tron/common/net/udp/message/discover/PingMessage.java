@@ -1,10 +1,10 @@
-package org.tron.common.message.udp.discover;
+package org.tron.common.net.udp.message.discover;
 
-import static org.tron.common.message.udp.UdpMessageTypeEnum.DISCOVER_PING;
+import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_PING;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.message.udp.Message;
+import org.tron.common.net.udp.message.Message;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;

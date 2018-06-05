@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.net.udp.handler;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -29,43 +29,43 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.discover.node.NodeManager;
 
 
-public class MessageHandler extends SimpleChannelInboundHandler<DiscoveryEvent>
-    implements Consumer<DiscoveryEvent> {
+public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
+    implements Consumer<UdpEvent> {
 
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
   public Channel channel;
 
-  NodeManager nodeManager;
+  EventHandler eventHandler;
 
-  public MessageHandler(NioDatagramChannel ch, NodeManager nodeManager) {
+  public MessageHandler(NioDatagramChannel ch, EventHandler eventHandler) {
     channel = ch;
-    this.nodeManager = nodeManager;
+    this.eventHandler = eventHandler;
   }
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    nodeManager.channelActivated();
+    eventHandler.channelActivated();
   }
 
   @Override
-  public void channelRead0(ChannelHandlerContext ctx, DiscoveryEvent discoveryEvent)
+  public void channelRead0(ChannelHandlerContext ctx, UdpEvent udpEvent)
       throws Exception {
     logger.debug("rcv udp msg type {}, len {} from {} ",
-        discoveryEvent.getMessage().getType(),
-        discoveryEvent.getMessage().getSendData().length,
-        discoveryEvent.getAddress());
-    nodeManager.handleInbound(discoveryEvent);
+        udpEvent.getMessage().getType(),
+        udpEvent.getMessage().getSendData().length,
+        udpEvent.getAddress());
+    eventHandler.handleEvent(udpEvent);
   }
 
   @Override
-  public void accept(DiscoveryEvent discoveryEvent) {
+  public void accept(UdpEvent udpEvent) {
     logger.debug("send udp msg type {}, len {} to {} ",
-        discoveryEvent.getMessage().getType(),
-        discoveryEvent.getMessage().getSendData().length,
-        discoveryEvent.getAddress());
-    InetSocketAddress address = discoveryEvent.getAddress();
-    sendPacket(discoveryEvent.getMessage().getSendData(), address);
+        udpEvent.getMessage().getType(),
+        udpEvent.getMessage().getSendData().length,
+        udpEvent.getAddress());
+    InetSocketAddress address = udpEvent.getAddress();
+    sendPacket(udpEvent.getMessage().getSendData(), address);
   }
 
   void sendPacket(byte[] wire, InetSocketAddress address) {

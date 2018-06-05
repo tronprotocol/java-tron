@@ -17,6 +17,7 @@
  */
 package org.tron.common.overlay.discover.node;
 
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -36,13 +37,15 @@ import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.message.udp.Message;
-import org.tron.common.message.udp.discover.FindNodeMessage;
-import org.tron.common.message.udp.discover.NeighborsMessage;
-import org.tron.common.message.udp.discover.PingMessage;
-import org.tron.common.message.udp.discover.PongMessage;
+import org.tron.common.net.udp.handler.EventHandler;
+import org.tron.common.net.udp.handler.MessageHandler;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.message.discover.FindNodeMessage;
+import org.tron.common.net.udp.message.discover.NeighborsMessage;
+import org.tron.common.net.udp.message.discover.PingMessage;
+import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
-import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
@@ -50,7 +53,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 @Component
-public class NodeManager {
+public class NodeManager implements EventHandler {
 
   static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
@@ -63,7 +66,7 @@ public class NodeManager {
   static final int MAX_NODES = 2000;
   static final int NODES_TRIM_THRESHOLD = 3000;
 
-  Consumer<DiscoveryEvent> messageSender;
+  Consumer<UdpEvent> messageSender;
 
   NodeTable table;
   private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
@@ -84,9 +87,7 @@ public class NodeManager {
 
   @Autowired
   public NodeManager(Manager dbManager) {
-
     this.dbManager = dbManager;
-
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
     homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
@@ -115,15 +116,10 @@ public class NodeManager {
     return pongTimer;
   }
 
+  @Override
   public void channelActivated() {
-    // channel activated now can send messages
     if (!inited) {
-      // no another init on a new channel activation
       inited = true;
-
-      // this task is done asynchronously with some fixed rate
-      // to avoid any overhead in the NodeStatistics classes keeping them lightweight
-      // (which might be critical since they might be invoked from time critical sections)
       nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
         @Override
         public void run() {
@@ -177,7 +173,7 @@ public class NodeManager {
     dbManager.clearAndWriteNeighbours(batch);
   }
 
-  public void setMessageSender(Consumer<DiscoveryEvent> messageSender) {
+  public void setMessageSender(Consumer<UdpEvent> messageSender) {
     this.messageSender = messageSender;
   }
 
@@ -230,15 +226,15 @@ public class NodeManager {
     return getNodeHandler(n).getNodeStatistics();
   }
 
-  public void handleInbound(DiscoveryEvent discoveryEvent) {
-    Message m = discoveryEvent.getMessage();
-    InetSocketAddress sender = discoveryEvent.getAddress();
+  @Override
+  public void handleEvent(UdpEvent udpEvent) {
+    Message m = udpEvent.getMessage();
+    InetSocketAddress sender = udpEvent.getAddress();
 
     Node n = new Node(m.getNodeId(), sender.getHostString(), sender.getPort());
 
     if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
-      logger.debug(
-          "=/=> (" + sender + "): inbound packet from unknown peer rejected due to config option.");
+      logger.debug("Inbound packet from unknown peer {}.", sender.getAddress());
       return;
     }
     NodeHandler nodeHandler = getNodeHandler(n);
@@ -259,9 +255,9 @@ public class NodeManager {
     }
   }
 
-  public void sendOutbound(DiscoveryEvent discoveryEvent) {
+  public void sendOutbound(UdpEvent udpEvent) {
     if (discoveryEnabled && messageSender != null) {
-      messageSender.accept(discoveryEvent);
+      messageSender.accept(udpEvent);
     }
   }
 

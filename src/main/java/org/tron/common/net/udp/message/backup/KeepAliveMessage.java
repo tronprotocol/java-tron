@@ -1,8 +1,8 @@
-package org.tron.common.message.udp.backup;
+package org.tron.common.net.udp.message.backup;
 
-import static org.tron.common.message.udp.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
+import static org.tron.common.net.udp.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
-import org.tron.common.message.udp.Message;
+import org.tron.common.net.udp.message.Message;
 import org.tron.protos.Discover;
 
 public class KeepAliveMessage extends Message {

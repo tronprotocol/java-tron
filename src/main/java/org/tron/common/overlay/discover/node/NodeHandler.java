@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.message.udp.Message;
-import org.tron.common.message.udp.discover.FindNodeMessage;
-import org.tron.common.message.udp.discover.NeighborsMessage;
-import org.tron.common.message.udp.discover.PingMessage;
-import org.tron.common.message.udp.discover.PongMessage;
-import org.tron.common.overlay.discover.DiscoveryEvent;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.message.discover.FindNodeMessage;
+import org.tron.common.net.udp.message.discover.NeighborsMessage;
+import org.tron.common.net.udp.message.discover.PingMessage;
+import org.tron.common.net.udp.message.discover.PongMessage;
+import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.core.config.args.Args;
 
 /**
@@ -270,7 +270,7 @@ public class NodeHandler {
   }
 
   private void sendMessage(Message msg) {
-    nodeManager.sendOutbound(new DiscoveryEvent(msg, getInetSocketAddress()));
+    nodeManager.sendOutbound(new UdpEvent(msg, getInetSocketAddress()));
   }
 
   @Override
