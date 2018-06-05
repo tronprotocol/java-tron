@@ -82,7 +82,7 @@ public class PublicMethed {
         logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
         return false;
       } else {
-        try {
+                try {
           Thread.sleep(3000);
         } catch (InterruptedException e) {
           e.printStackTrace();
@@ -192,7 +192,7 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
-      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
       //logger.info(name);
