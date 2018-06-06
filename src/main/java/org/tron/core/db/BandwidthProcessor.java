@@ -126,7 +126,7 @@ public class BandwidthProcessor {
     try {
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule.createDbKey(), -fee);
+      dbManager.adjustBalance(accountCapsule, -fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;
@@ -135,7 +135,12 @@ public class BandwidthProcessor {
 
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
-    return consumeFee(accountCapsule, fee);
+    if (consumeFee(accountCapsule, fee)) {
+      dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
@@ -174,7 +179,12 @@ public class BandwidthProcessor {
 
   public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-    return consumeFee(accountCapsule, fee);
+    if (consumeFee(accountCapsule, fee)) {
+      dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public boolean contractCreateNewAccount(Contract contract) {

@@ -40,11 +40,13 @@ import lombok.Setter;
 
 public class Storage {
 
-  private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
-
   /**
    * Keys (names) of database config
    */
+  private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
+  private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
+  private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
+
   private static final String NAME_CONFIG_KEY = "name";
   private static final String PATH_CONFIG_KEY = "path";
   private static final String CREATE_IF_MISSING_CONFIG_KEY = "createIfMissing";
@@ -57,13 +59,25 @@ public class Storage {
   private static final String MAX_OPEN_FILES_CONFIG_KEY = "maxOpenFiles";
 
   /**
-   * Default values of database config
+   * Default values of directory
    */
-  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.NONE;
-  private static final int DEFAULT_BLOCK_SIZE = 10 * 1024 * 1024;
+  private static final String DEFAULT_DB_DIRECTORY = "database";
+  private static final String DEFAULT_INDEX_DIRECTORY = "index";
+
+  /**
+   * Default values of db options:
+   * <p>
+   * DEFAULT_COMPRESSION_TYPE: compressed with snappy
+   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B
+   * DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 * 1024 * 1024 B
+   * DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B
+   * DEFAULT_MAX_OPEN_FILES:   100
+   */
+  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
+  private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;
-  private static final long DEFAULT_CACHE_SIZE = 0L;
-  private static final int DEFAULT_MAX_OPEN_FILES = 32;
+  private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024L;
+  private static final int DEFAULT_MAX_OPEN_FILES = 100;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -95,15 +109,27 @@ public class Storage {
    */
   private Map<String, Property> propertyMap;
 
+  public static String getDbDirectoryFromConfig(final Config config) {
+    return config.hasPath(DB_DIRECTORY_CONFIG_KEY) ?
+        config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
+  }
+
+  public static String getIndexDirectoryFromConfig(final Config config) {
+    return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY) ?
+        config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
+  }
+
   /**
    * Set propertyMap of Storage object from Config
    *
    * @param config Config object from "config.conf" file
    */
   public void setPropertyMapFromConfig(final Config config) {
-    propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
-        .map(Storage::createProperty)
-        .collect(Collectors.toMap(Property::getName, p -> p));
+    if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
+      propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
+          .map(Storage::createProperty)
+          .collect(Collectors.toMap(Property::getName, p -> p));
+    }
   }
 
   /**

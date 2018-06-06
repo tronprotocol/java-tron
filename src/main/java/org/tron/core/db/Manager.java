@@ -398,7 +398,7 @@ public class Manager {
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(account.createDbKey() + " Insufficient");
+      throw new BalanceInsufficientException(StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -414,7 +414,7 @@ public class Manager {
     }
 
     if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      throw new BalanceInsufficientException(StringUtil.createReadableString(accountAddress) + " insufficient balance");
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
@@ -565,8 +565,10 @@ public class Manager {
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
-  private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+  private void applyBlock(BlockCapsule block) throws ContractValidateException,
+      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      TaposException, ValidateScheduleException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -618,6 +620,8 @@ public class Manager {
               logger.debug(e.getMessage(), e);
             } catch (TransactionExpirationException e) {
               logger.debug(e.getMessage(), e);
+            } catch (ValidateScheduleException e) {
+              logger.debug(e.getMessage(), e);
             }
           });
       return;
@@ -656,11 +660,6 @@ public class Manager {
         }
       }
 
-      // checkWitness
-      if (!witnessController.validateWitnessSchedule(block)) {
-        throw new ValidateScheduleException("validateWitnessSchedule error");
-      }
-
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -670,11 +669,6 @@ public class Manager {
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
-          return;
-        }
-
-        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
-            .getLatestBlockHeaderTimestamp()) {
           return;
         }
 
@@ -905,6 +899,7 @@ public class Manager {
   public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
+
   /**
    * Generate a block.
    */
@@ -922,24 +917,22 @@ public class Manager {
       throw new IllegalArgumentException("generate block timestamp is invalid.");
     }
 
-    long currentTrxSize = 0;
     long postponedTrxCount = 0;
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
-        logger.debug("Processing transaction time exceeds the 50% producing time。");
+      if (DateTime.now().getMillis() - when
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+        logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-      currentTrxSize += trx.getSerializedSize() + 2;
       // check the block size
-      if (currentTrxSize  > ChainConstant.BLOCK_SIZE) {
+      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -1038,8 +1031,13 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException {
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException {
     // todo set revoking db max size.
+
+    // checkWitness
+    if (!witnessController.validateWitnessSchedule(block)) {
+      throw new ValidateScheduleException("validateWitnessSchedule error");
+    }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
@@ -1273,8 +1271,13 @@ public class Manager {
 
     @Override
     public Boolean call() throws ValidateSignatureException {
-      trx.validateSignature();
-      countDownLatch.countDown();
+      try {
+        trx.validateSignature();
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
       return true;
     }
   }

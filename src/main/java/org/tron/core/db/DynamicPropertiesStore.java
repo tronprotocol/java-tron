@@ -81,6 +81,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
+  private static final byte[] TOTAL_TRANSACTION_COST = "TOTAL_TRANSACTION_COST".getBytes();
+
+  private static final byte[] TOTAL_CREATE_ACCOUNT_COST = "TOTAL_CREATE_ACCOUNT_COST".getBytes();
+
+  private static final byte[] TOTAL_CREATE_WITNESS_COST = "TOTAL_CREATE_WITNESS_FEE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -248,10 +254,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(1000L); // 10Drop
+      this.saveTransactionFee(10L); // 10Drop/byte
     }
 
+    try {
+      this.getTotalTransactionCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalTransactionCost(0L);
+    }
 
+    try {
+      this.getTotalCreateWitnessCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCreateWitnessFee(0L);
+    }
+
+    try {
+      this.getTotalCreateAccountCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCreateAccountFee(0L);
+    }
 
     try {
       this.getBlockFilledSlotsNumber();
@@ -589,6 +611,41 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TRANSACTION_FEE"));
   }
 
+  public void saveTotalTransactionCost(long value) {
+    this.put(TOTAL_TRANSACTION_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalTransactionCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_TRANSACTION_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_TRANSACTION_COST"));
+  }
+
+  public void saveTotalCreateAccountFee(long value) {
+    this.put(TOTAL_CREATE_ACCOUNT_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalCreateAccountCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_ACCOUNT_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CREATE_ACCOUNT_COST"));
+  }
+
+  public void saveTotalCreateWitnessFee(long value) {
+    this.put(TOTAL_CREATE_WITNESS_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalCreateWitnessCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_WITNESS_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CREATE_WITNESS_COST"));
+  }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
@@ -757,5 +814,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     saveTotalNetWeight(totalNetWeight);
+  }
+
+  public void addTotalCreateAccountCost(long fee) {
+    long newValue = getTotalCreateAccountCost() + fee;
+    saveTotalCreateAccountFee(newValue);
+  }
+
+  public void addTotalCreateWitnessCost(long fee) {
+    long newValue = getTotalCreateWitnessCost() + fee;
+    saveTotalCreateWitnessFee(newValue);
+  }
+
+  public void addTotalTransactionCost(long fee) {
+    long newValue = getTotalTransactionCost() + fee;
+    saveTotalTransactionCost(newValue);
   }
 }

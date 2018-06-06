@@ -13,6 +13,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
@@ -159,11 +160,15 @@ public class WalletTestWitness001 {
     Contract.VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info(Integer.toString(transaction.getRawData().getAuthsCount()));
+
+    if (transaction == null) {
       logger.info("transaction == null");
       return false;
+    } else if (transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction auths count == {}", Integer.toString(transaction.getRawData().getAuthsCount()));
+      return false;
     }
+
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
@@ -211,6 +216,7 @@ public class WalletTestWitness001 {
     }
     ECKey ecKey = temKey;
     Account beforeFronzen = queryAccount(ecKey, blockingStubFull);
+
     Long beforeFrozenBalance = 0L;
     //Long beforeBandwidth     = beforeFronzen.getBandwidth();
     if (beforeFronzen.getFrozenCount() != 0) {
@@ -241,10 +247,24 @@ public class WalletTestWitness001 {
       return false;
     }
 
-    try {
-      Thread.sleep(20000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Block searchCurrentBlock = searchBlockingStubFull.getNowBlock(GrpcAPI
+        .EmptyMessage.newBuilder().build());
+    Integer wait = 0;
+    while (searchCurrentBlock.getBlockHeader().getRawData().getNumber()
+        < currentBlock.getBlockHeader().getRawData().getNumber() && wait < 30) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      logger.info("Another fullnode didn't syn the first fullnode data");
+      searchCurrentBlock = searchBlockingStubFull.getNowBlock(GrpcAPI
+          .EmptyMessage.newBuilder().build());
+      wait++;
+      if (wait == 9) {
+        logger.info("Didn't syn,skip to next case.");
+      }
     }
 
     Account afterFronzen = queryAccount(ecKey, searchBlockingStubFull);

@@ -3,9 +3,11 @@ package org.tron.core.net.node;
 import com.google.common.cache.Cache;
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -15,6 +17,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
@@ -23,6 +26,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -39,6 +43,7 @@ public class StartFetchSyncBlockTest {
   PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
+  Application appT;
   private static final String dbPath = "output-nodeImplTest/startFetchSyncBlockTest";
   private static final String dbDirectory = "db_StartFetchSyncBlock_test";
   private static final String indexDirectory = "index_StartFetchSyncBlock_test";
@@ -151,7 +156,7 @@ public class StartFetchSyncBlockTest {
           logger.info("Here is the help message.");
           return;
         }
-        Application appT = ApplicationFactory.create(context);
+        appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
@@ -200,11 +205,7 @@ public class StartFetchSyncBlockTest {
 
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
-
-//      ScheduledExecutorService mainWorker = ReflectUtils
-//          .getFieldValue(channelManager, "mainWorker");
-//      mainWorker.shutdownNow();
-
+      
       Node node = new Node(
           "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17890");
       new Thread(new Runnable() {
@@ -214,29 +215,12 @@ public class StartFetchSyncBlockTest {
         }
       }).start();
       Thread.sleep(1000);
-//      List<Channel> newChanelList = ReflectUtils.getFieldValue(channelManager, "newPeers");
-//      int tryTimes = 0;
-//      while (CollectionUtils.isEmpty(newChanelList) && ++tryTimes < 10) {
-//        Thread.sleep(1000);
-//      }
-//      logger.info("newChanelList size : {}", newChanelList.size());
-//
-//      Field activePeersField = channelManager.getClass().getDeclaredField("activePeers");
-//      activePeersField.setAccessible(true);
-//      Map<ByteArrayWrapper, Channel> activePeersMap = (Map<ByteArrayWrapper, Channel>) activePeersField
-//          .get(channelManager);
-//
-//      Field apField = pool.getClass().getDeclaredField("activePeers");
-//      apField.setAccessible(true);
-//      List<PeerConnection> activePeers = (List<PeerConnection>) apField.get(pool);
-//
-//      for (Channel channel : newChanelList) {
-//        activePeersMap.put(channel.getNodeIdWrapper(), channel);
-//        activePeers.add((PeerConnection) channel);
-//      }
-//      apField.set(pool, activePeers);
-//      activePeersField.set(channelManager, activePeersMap);
-      //
+      Map<ByteArrayWrapper, Channel> activePeers = ReflectUtils
+          .getFieldValue(channelManager, "activePeers");
+      int tryTimes = 0;
+      while (MapUtils.isEmpty(activePeers) && ++tryTimes < 10) {
+        Thread.sleep(1000);
+      }
       go = true;
     } catch (Exception e) {
       e.printStackTrace();
@@ -247,6 +231,12 @@ public class StartFetchSyncBlockTest {
   public void destroy() {
     Args.clearParam();
     FileUtil.deleteDir(new File("output-nodeImplTest"));
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+    for (PeerConnection peer : peerConnections) {
+      peer.close();
+    }
     peerClient.close();
+    appT.shutdownServices();
+    appT.shutdown();
   }
 }

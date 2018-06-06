@@ -151,23 +151,22 @@ public class WitnessController {
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
         .getWitnessAddress();
     //to deal with other condition later
-    if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() != 0 && manager
-        .getDynamicPropertiesStore().getLatestBlockHeaderHash()
-        .equals(block.getParentHash())) {
-      long slot = getSlotAtTime(block.getTimeStamp());
-      final ByteString scheduledWitness = getScheduledWitness(slot);
-      if (!scheduledWitness.equals(witnessAddress)) {
-        logger.warn(
-            "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
-            ByteArray.toHexString(scheduledWitness.toByteArray()),
-            ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
-            slot);
-        return false;
-      }
-      logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
-          ByteArray.toHexString(witnessAddress.toByteArray()));
+    if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
+      return true;
+    }
+    long slot = getSlotAtTime(block.getTimeStamp());
+    final ByteString scheduledWitness = getScheduledWitness(slot);
+    if (!scheduledWitness.equals(witnessAddress)) {
+      logger.warn(
+          "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
+          ByteArray.toHexString(scheduledWitness.toByteArray()),
+          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+          slot);
+      return false;
     }
 
+    logger.debug("Validate witnessSchedule successfully,scheduledWitness:{}",
+        ByteArray.toHexString(witnessAddress.toByteArray()));
     return true;
   }
 
@@ -399,11 +398,12 @@ public class WitnessController {
     }
     if (voteSum > 0) {
       for (ByteString b : list) {
-        long pay = getWitnesseByAddress(b).getVoteCount() * totalPay / voteSum;
+        long pay = (long) (getWitnesseByAddress(b).getVoteCount() * ((double) totalPay / voteSum));
         AccountCapsule accountCapsule = manager.getAccountStore().get(b.toByteArray());
         accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
         manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
   }
+
 }
