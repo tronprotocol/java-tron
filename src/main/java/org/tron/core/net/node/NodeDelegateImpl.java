@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -18,8 +19,10 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -31,7 +34,6 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -55,7 +57,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block size over limit");
     }
 
-    // TODO timestamp shouble be consistent.
+    // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
@@ -73,8 +75,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         return null;
       }
 
-    } catch (ValidateBandwidthException e) {
-      throw new BadBlockException("Validate Bandwidth exception," + e.getMessage());
+    } catch (AccountResourceInsufficientException e) {
+      throw new BadBlockException("AccountResourceInsufficientException," + e.getMessage());
     } catch (ValidateScheduleException e) {
       throw new BadBlockException("validate schedule exception," + e.getMessage());
     } catch (ValidateSignatureException e) {
@@ -82,22 +84,25 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ContractValidateException e) {
       throw new BadBlockException("ContractValidate exception," + e.getMessage());
     } catch (ContractExeException e) {
-      throw new BadBlockException("Contract Exectute exception," + e.getMessage());
+      throw new BadBlockException("Contract Execute exception," + e.getMessage());
     } catch (TaposException e) {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
-      throw new BadBlockException("DupTransation exception," + e.getMessage());
+      throw new BadBlockException("DupTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
+    } catch (BadNumberBlockException e) {
+      throw new BadBlockException("bad number exception," + e.getMessage());
     }
+
   }
 
 
   @Override
   public void handleTransaction(TransactionCapsule trx) throws BadTransactionException {
-    logger.info("handle transaction");
+    logger.debug("handle transaction");
     if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
       logger.warn("This transaction has been processed");
       return;
@@ -115,8 +120,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ValidateSignatureException e) {
       logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
-    } catch (ValidateBandwidthException e) {
-      logger.info("ValidateBandwidthException" + e.getMessage());
+    } catch (AccountResourceInsufficientException e) {
+      logger.info("AccountResourceInsufficientException" + e.getMessage());
     } catch (DupTransactionException e) {
       logger.info("dup trans" + e.getMessage());
     } catch (TaposException e) {
@@ -145,9 +150,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
         && blockChainSummary.get(0).getNum() == 0) {
-      return new LinkedList<BlockId>() {{
-        add(dbManager.getGenesisBlockId());
-      }};
+      return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
       Collections.reverse(blockChainSummary);

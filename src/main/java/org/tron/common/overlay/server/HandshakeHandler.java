@@ -157,7 +157,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     channel.getNodeStatistics().p2pInHello.add();
 
     channel.publicHandshakeFinished(ctx, msg);
-    if (!channelManager.procPeer(channel)) {
+    if (!channelManager.processPeer(channel)) {
       return;
     }
 

@@ -6,11 +6,12 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.common.iterator.TransactionIterator;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.StoreException;
 
 @Slf4j
 @Component
@@ -22,7 +23,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   @Override
-  public TransactionCapsule get(byte[] key) {
+  public TransactionCapsule get(byte[] key) throws BadItemException {
     byte[] value = dbSource.getData(key);
     return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
   }
@@ -49,14 +50,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return dbSource.getTotal();
   }
 
-
-  /**
-   * find a transaction  by it's id.
-   */
-  public byte[] findTransactionByHash(byte[] trxHash) {
-    return dbSource.getData(trxHash);
-  }
-
   @Override
   public Iterator<Entry<byte[], TransactionCapsule>> iterator() {
     return new TransactionIterator(dbSource.iterator());
@@ -70,9 +63,14 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   private void deleteIndex(byte[] key) {
     if (Objects.nonNull(indexHelper)) {
-      TransactionCapsule item = get(key);
-      if (Objects.nonNull(item)) {
-        indexHelper.remove(item.getInstance());
+      TransactionCapsule item;
+      try {
+        item = get(key);
+        if (Objects.nonNull(item)) {
+          indexHelper.remove(item.getInstance());
+        }
+      } catch (StoreException e) {
+        return;
       }
     }
   }

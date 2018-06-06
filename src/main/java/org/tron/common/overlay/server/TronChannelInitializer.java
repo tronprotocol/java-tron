@@ -60,13 +60,6 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     @Override
     public void initChannel(NioSocketChannel ch) throws Exception {
         try {
-            if (isInbound() && channelManager.isRecentlyDisconnected(ch.remoteAddress().getAddress())) {
-                // avoid too frequent connection attempts
-                logger.info("Drop connection - the same IP was disconnected recently, channel: {}", ch.toString());
-                ch.disconnect();
-                return;
-            }
-
             final Channel channel = ctx.getBean(PeerConnection.class);
 
             channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);

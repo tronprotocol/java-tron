@@ -7,7 +7,6 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -77,6 +76,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
 
   private static final byte[] BLOCK_NET_USAGE = "BLOCK_NET_USAGE".getBytes();
+
+  private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
+
+  private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
+
+  private static final byte[] TOTAL_TRANSACTION_COST = "TOTAL_TRANSACTION_COST".getBytes();
+
+  private static final byte[] TOTAL_CREATE_ACCOUNT_COST = "TOTAL_CREATE_ACCOUNT_COST".getBytes();
+
+  private static final byte[] TOTAL_CREATE_WITNESS_COST = "TOTAL_CREATE_WITNESS_FEE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -216,7 +225,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getFreeNetLimit();
     } catch (IllegalArgumentException e) {
-      this.saveFreeNetLimit(1000L);
+      this.saveFreeNetLimit(5000L);
     }
 
     try {
@@ -235,6 +244,35 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBlockNetUsage();
     } catch (IllegalArgumentException e) {
       this.saveBlockNetUsage(0L);
+    }
+
+    try {
+      this.getCreateAccountFee();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+    try {
+      this.getTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveTransactionFee(10L); // 10Drop/byte
+    }
+
+    try {
+      this.getTotalTransactionCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalTransactionCost(0L);
+    }
+
+    try {
+      this.getTotalCreateWitnessCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCreateWitnessFee(0L);
+    }
+
+    try {
+      this.getTotalCreateAccountCost();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCreateAccountFee(0L);
     }
 
     try {
@@ -274,23 +312,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public static void destroy() {
     instance = null;
-  }
-
-  /**
-   * create fun.
-   *
-   * @param dbName the name of database
-   */
-
-  public static DynamicPropertiesStore create(String dbName) {
-    if (instance == null) {
-      synchronized (DynamicPropertiesStore.class) {
-        if (instance == null) {
-          instance = new DynamicPropertiesStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   public String intArrayToString(int[] a) {
@@ -565,6 +586,66 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
   }
 
+  public void saveCreateAccountFee(long blockNetUsage) {
+    this.put(CREATE_ACCOUNT_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getCreateAccountFee() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_ACCOUNT_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
+  }
+
+
+  public void saveTransactionFee(long blockNetUsage) {
+    this.put(TRANSACTION_FEE,
+        new BytesCapsule(ByteArray.fromLong(blockNetUsage)));
+  }
+
+  public long getTransactionFee() {
+    return Optional.ofNullable(this.dbSource.getData(TRANSACTION_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TRANSACTION_FEE"));
+  }
+
+  public void saveTotalTransactionCost(long value) {
+    this.put(TOTAL_TRANSACTION_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalTransactionCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_TRANSACTION_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_TRANSACTION_COST"));
+  }
+
+  public void saveTotalCreateAccountFee(long value) {
+    this.put(TOTAL_CREATE_ACCOUNT_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalCreateAccountCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_ACCOUNT_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CREATE_ACCOUNT_COST"));
+  }
+
+  public void saveTotalCreateWitnessFee(long value) {
+    this.put(TOTAL_CREATE_WITNESS_COST,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getTotalCreateWitnessCost() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_WITNESS_COST))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CREATE_WITNESS_COST"));
+  }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
@@ -733,5 +814,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     saveTotalNetWeight(totalNetWeight);
+  }
+
+  public void addTotalCreateAccountCost(long fee) {
+    long newValue = getTotalCreateAccountCost() + fee;
+    saveTotalCreateAccountFee(newValue);
+  }
+
+  public void addTotalCreateWitnessCost(long fee) {
+    long newValue = getTotalCreateWitnessCost() + fee;
+    saveTotalCreateWitnessFee(newValue);
+  }
+
+  public void addTotalTransactionCost(long fee) {
+    long newValue = getTotalTransactionCost() + fee;
+    saveTotalTransactionCost(newValue);
   }
 }

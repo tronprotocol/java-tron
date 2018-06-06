@@ -34,7 +34,6 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -56,7 +55,9 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -69,7 +70,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.ValidateBandwidthException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -218,27 +218,27 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-  public PeersStore getPeersStore() {
-    return peersStore;
-  }
-
-  public void setPeersStore(PeersStore peersStore) {
-    this.peersStore = peersStore;
-  }
-
-  public Node getHomeNode() {
-    final Args args = Args.getInstance();
-    Set<Node> nodes = this.peersStore.get("home".getBytes());
-    if (nodes.size() > 0) {
-      return nodes.stream().findFirst().get();
-    } else {
-      Node node =
-          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
-      nodes.add(node);
-      this.peersStore.put("home".getBytes(), nodes);
-      return node;
-    }
-  }
+//  public PeersStore getPeersStore() {
+//    return peersStore;
+//  }
+//
+//  public void setPeersStore(PeersStore peersStore) {
+//    this.peersStore = peersStore;
+//  }
+//
+//  public Node getHomeNode() {
+//    final Args args = Args.getInstance();
+//    Set<Node> nodes = this.peersStore.get("home".getBytes());
+//    if (nodes.size() > 0) {
+//      return nodes.stream().findFirst().get();
+//    } else {
+//      Node node =
+//          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+//      nodes.add(node);
+//      this.peersStore.put("home".getBytes(), nodes);
+//      return node;
+//    }
+//  }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
@@ -380,23 +380,30 @@ public class Manager {
     return this.accountStore;
   }
 
-  /**
-   * judge balance.
-   */
   public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = getAccountStore().get(accountAddress);
+    adjustBalance(account, amount);
+  }
+
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(AccountCapsule account, long amount)
+      throws BalanceInsufficientException {
+
     long balance = account.getBalance();
     if (amount == 0) {
       return;
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      throw new BalanceInsufficientException(StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
+
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
@@ -407,7 +414,7 @@ public class Manager {
     }
 
     if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(accountAddress + " Insufficient");
+      throw new BalanceInsufficientException(StringUtil.createReadableString(accountAddress) + " insufficient balance");
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
@@ -459,9 +466,13 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
-      logger.debug(
-          getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()).toString());
+    try {
+      if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+        logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
+        throw new DupTransactionException("dup trans");
+      }
+    } catch (BadItemException e) {
+      logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
   }
@@ -471,7 +482,7 @@ public class Manager {
    */
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, DupTransactionException, TaposException,
+      AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException {
     logger.info("push transaction");
 
@@ -497,7 +508,8 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx) throws ValidateBandwidthException {
+  public void consumeBandwidth(TransactionCapsule trx)
+      throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consumeBandwidth(trx);
   }
@@ -553,8 +565,10 @@ public class Manager {
     popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
-  private void applyBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException, ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException {
+  private void applyBlock(BlockCapsule block) throws ContractValidateException,
+      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      TaposException, ValidateScheduleException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -588,8 +602,8 @@ public class Manager {
             try (Dialog tmpDialog = revokingStore.buildDialog()) {
               applyBlock(item);
               tmpDialog.commit();
-            } catch (ValidateBandwidthException e) {
-              logger.debug("high freq", e);
+            } catch (AccountResourceInsufficientException e) {
+              logger.debug(e.getMessage(), e);
             } catch (ValidateSignatureException e) {
               logger.debug(e.getMessage(), e);
             } catch (ContractValidateException e) {
@@ -605,6 +619,8 @@ public class Manager {
             } catch (TooBigTransactionException e) {
               logger.debug(e.getMessage(), e);
             } catch (TransactionExpirationException e) {
+              logger.debug(e.getMessage(), e);
+            } catch (ValidateScheduleException e) {
               logger.debug(e.getMessage(), e);
             }
           });
@@ -622,13 +638,13 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The siganature is not validated.");
+          logger.info("The signature is not validated.");
           // TODO: throw exception here.
           return;
         }
@@ -644,11 +660,6 @@ public class Manager {
         }
       }
 
-      // checkWitness
-      if (!witnessController.validateWitnessSchedule(block)) {
-        throw new ValidateScheduleException("validateWitnessSchedule error");
-      }
-
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -658,11 +669,6 @@ public class Manager {
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
-          return;
-        }
-
-        if (newBlock.getTimeStamp() <= getDynamicPropertiesStore()
-            .getLatestBlockHeaderTimestamp()) {
           return;
         }
 
@@ -850,7 +856,7 @@ public class Manager {
    */
   public boolean processTransaction(final TransactionCapsule trxCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, TransactionExpirationException, TooBigTransactionException,
+      AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException {
 
     if (trxCap == null) {
@@ -900,7 +906,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, ValidateBandwidthException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -911,24 +917,22 @@ public class Manager {
       throw new IllegalArgumentException("generate block timestamp is invalid.");
     }
 
-    long currentTrxSize = 0;
     long postponedTrxCount = 0;
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-    currentTrxSize = blockCapsule.getInstance().getSerializedSize();
     dialog.reset();
     dialog.setValue(revokingStore.buildDialog());
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
-      if (DateTime.now().getMillis() - when > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5) {
-        logger.debug("Processing transaction time exceeds the 50% producing time。");
+      if (DateTime.now().getMillis() - when
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+        logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
-      currentTrxSize += trx.getSerializedSize();
       // check the block size
-      if (currentTrxSize + 2 > ChainConstant.BLOCK_SIZE) {
+      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -986,7 +990,10 @@ public class Manager {
       logger.info("contract not processed during DupTransactionException");
     } catch (TransactionExpirationException e) {
       logger.info("contract not processed during TransactionExpirationException");
+    } catch (BadNumberBlockException e) {
+      logger.info("generate block using wrong number");
     }
+
     return null;
   }
 
@@ -1023,9 +1030,14 @@ public class Manager {
    */
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      ValidateBandwidthException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException {
+      AccountResourceInsufficientException, TaposException, TooBigTransactionException,
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException {
     // todo set revoking db max size.
+
+    // checkWitness
+    if (!witnessController.validateWitnessSchedule(block)) {
+      throw new ValidateScheduleException("validateWitnessSchedule error");
+    }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
@@ -1226,7 +1238,7 @@ public class Manager {
     try {
       database.close();
     } catch (Exception e) {
-      System.err.println("faild to close  " + database.getName() + ". " + e);
+      System.err.println("failed to close  " + database.getName() + ". " + e);
     } finally {
       System.err.println("******** end to close " + database.getName() + " ********");
     }
@@ -1259,8 +1271,13 @@ public class Manager {
 
     @Override
     public Boolean call() throws ValidateSignatureException {
-      trx.validateSignature();
-      countDownLatch.countDown();
+      try {
+        trx.validateSignature();
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
       return true;
     }
   }

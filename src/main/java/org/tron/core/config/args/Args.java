@@ -4,6 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+import io.grpc.internal.GrpcUtil;
+import io.grpc.netty.NettyServerBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -27,15 +29,19 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.iq80.leveldb.Options;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.Node;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
+import org.tron.keystore.CipherException;
+import org.tron.keystore.Credentials;
+import org.tron.keystore.WalletUtils;
 
 @Slf4j
 @NoArgsConstructor
@@ -65,6 +71,9 @@ public class Args {
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
+
+  @Parameter(names = {"--password"}, description = "password")
+  private String password;
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   private String storageDbDirectory = "";
@@ -172,6 +181,30 @@ public class Args {
 
   @Getter
   @Setter
+  private int maxConcurrentCallsPerConnection;
+
+  @Getter
+  @Setter
+  private int flowControlWindow;
+
+  @Getter
+  @Setter
+  private long maxConnectionIdleInMillis;
+
+  @Getter
+  @Setter
+  private long maxConnectionAgeInMillis;
+
+  @Getter
+  @Setter
+  private int maxMessageSize;
+
+  @Getter
+  @Setter
+  private int maxHeaderListSize;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
   private int validateSignThreadNum;
 
@@ -194,27 +227,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean getTransactionsFromThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsFromThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsToThisCountFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampFeature;
-
-  @Getter
-  @Setter
-  private boolean getTransactionsByTimestampCountFeature;
+  private boolean walletExtensionApi;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -259,13 +272,7 @@ public class Args {
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
-    INSTANCE.getTransactionsFromThisFeature = false;
-    INSTANCE.getTransactionsToThisFeature = false;
-    INSTANCE.getTransactionsFromThisCountFeature = false;
-    INSTANCE.getTransactionsToThisCountFeature = false;
-    INSTANCE.getTransactionsByTimestampFeature = false;
-    INSTANCE.getTransactionsByTimestampCountFeature = false;
-
+    INSTANCE.walletExtensionApi = false;
   }
 
   /**
@@ -278,7 +285,6 @@ public class Args {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath("localwitness")) {
-
       INSTANCE.localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList("localwitness");
       if (localwitness.size() > 1) {
@@ -287,6 +293,41 @@ public class Args {
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
       logger.debug("Got privateKey from config.conf");
+    } else if (config.hasPath("localwitnesskeystore")) {
+      INSTANCE.localWitnesses = new LocalWitnesses();
+      List<String> privateKeys = new ArrayList<String>();
+      if (INSTANCE.isWitness()) {
+        List<String> localwitness = config.getStringList("localwitnesskeystore");
+        if (localwitness.size() > 0) {
+          String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
+          String password;
+          if (StringUtils.isEmpty(INSTANCE.password)) {
+            System.out.println("Please input your password.");
+            password = WalletUtils.inputPassword();
+          } else {
+            password = INSTANCE.password;
+            INSTANCE.password = null;
+          }
+
+          try {
+            Credentials credentials = WalletUtils
+                .loadCredentials(password, new File(fileName));
+            ECKey ecKeyPair = credentials.getEcKeyPair();
+            String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
+            privateKeys.add(prikey);
+          } catch (IOException e) {
+            logger.error(e.getMessage());
+            logger.error("Witness node start faild!");
+            System.exit(-1);
+          } catch (CipherException e) {
+            logger.error(e.getMessage());
+            logger.error("Witness node start faild!");
+            System.exit(-1);
+          }
+        }
+      }
+      INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
+      logger.debug("Got privateKey from keystore");
     }
 
     if (INSTANCE.isWitness() && CollectionUtils.isEmpty(INSTANCE.localWitnesses.getPrivateKeys())) {
@@ -296,11 +337,11 @@ public class Args {
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
-        .orElse(config.getString("storage.db.directory")));
+        .orElse(Storage.getDbDirectoryFromConfig(config)));
 
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
-            .filter(StringUtils::isNotEmpty)
-            .orElse(config.getString("storage.index.directory")));
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getIndexDirectoryFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -308,6 +349,14 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
+
+    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -378,6 +427,26 @@ public class Args {
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
 
+    INSTANCE.maxConcurrentCallsPerConnection =
+        config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
+            config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
+
+    INSTANCE.flowControlWindow = config.hasPath("node.rpc.flowControlWindow") ?
+        config.getInt("node.rpc.flowControlWindow")
+        : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+
+    INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
+        config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxConnectionAgeInMillis = config.hasPath("node.rpc.maxConnectionAgeInMillis") ?
+        config.getLong("node.rpc.maxConnectionAgeInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.maxMessageSize = config.hasPath("node.rpc.maxMessageSize") ?
+        config.getInt("node.rpc.maxMessageSize") : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+
+    INSTANCE.maxHeaderListSize = config.hasPath("node.rpc.maxHeaderListSize") ?
+        config.getInt("node.rpc.maxHeaderListSize") : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
+
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
@@ -396,29 +465,8 @@ public class Args {
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
         .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
 
-    INSTANCE.getTransactionsFromThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisFeature");
-
-    INSTANCE.getTransactionsToThisFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisFeature");
-
-    INSTANCE.getTransactionsFromThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsFromThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsFromThisCountFeature");
-
-    INSTANCE.getTransactionsToThisCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsToThisCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsToThisCountFeature");
-
-    INSTANCE.getTransactionsByTimestampFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampFeature");
-
-    INSTANCE.getTransactionsByTimestampCountFeature =
-        config.hasPath("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature") && config
-            .getBoolean("solidityNodeApiFeatures.getTransactionsByTimestampCountFeature");
+    INSTANCE.walletExtensionApi =
+        config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
   }
 
 
@@ -540,8 +588,7 @@ public class Args {
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
-        try {
-          Socket s = new Socket("www.baidu.com", 80);
+        try (Socket s = new Socket("www.baidu.com", 80)) {
           INSTANCE.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", INSTANCE.nodeDiscoveryBindIp);
         } catch (IOException e) {
@@ -559,8 +606,9 @@ public class Args {
         .getString("node.discovery.external.ip").trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
+        BufferedReader in = null;
         try {
-          BufferedReader in = new BufferedReader(new InputStreamReader(
+          in = new BufferedReader(new InputStreamReader(
               new URL("http://checkip.amazonaws.com").openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
@@ -577,6 +625,15 @@ public class Args {
           logger.warn(
               "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
                   + e);
+        } finally {
+          if (in != null) {
+            try {
+              in.close();
+            } catch (IOException e) {
+              //ignore
+            }
+          }
+
         }
       }
     } else {

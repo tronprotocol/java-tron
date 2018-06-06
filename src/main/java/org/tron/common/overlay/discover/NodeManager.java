@@ -216,7 +216,7 @@ public class NodeManager {
     }
   }
 
-  boolean hasNodeHandler(Node n) {
+  public boolean hasNodeHandler(Node n) {
     return nodeHandlerMap.containsKey(getKey(n));
   }
 

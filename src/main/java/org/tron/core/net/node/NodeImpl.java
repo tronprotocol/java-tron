@@ -3,6 +3,7 @@ package org.tron.core.net.node;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
+import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
@@ -43,6 +44,7 @@ import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.SlidingWindowCounter;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -88,10 +90,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
       .recordStats().build();
 
+  private SlidingWindowCounter fetchWaterLine =
+      new SlidingWindowCounter(BLOCK_PRODUCED_INTERVAL * MSG_CACHE_DURATION_IN_BLOCKS / 100);
+
   private int maxTrxsSize = 1_000_000;
 
   private int maxTrxsCnt = 100;
-
 
   @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
@@ -270,8 +274,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private ExecutorLoop<Message> loopAdvertiseInv;
 
-  private ExecutorLoop<Message> handleBacklogBlocks;
-
   private ExecutorService handleBackLogBlocksPool = Executors.newCachedThreadPool();
 
 
@@ -279,6 +281,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .newSingleThreadScheduledExecutor();
 
   private ScheduledExecutorService handleSyncBlockExecutor = Executors
+      .newSingleThreadScheduledExecutor();
+
+  private ScheduledExecutorService fetchWaterLineExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
   private volatile boolean isHandleSyncBlockActive = false;
@@ -339,7 +344,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   /**
    * broadcast msg.
    *
-   * @param msg msg to bradcast
+   * @param msg msg to broadcast
    */
   public void broadcast(Message msg) {
     InventoryType type;
@@ -467,6 +472,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Unhandled exception", t);
       }
     }, 10, 1, TimeUnit.SECONDS);
+
+    //fetchWaterLine:
+    fetchWaterLineExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        fetchWaterLine.advance();
+      } catch (Throwable t) {
+        logger.error("Unhandled exception", t);
+      }
+    }, 1000, 100, TimeUnit.MILLISECONDS);
   }
 
   private void consumerAdvObjToFetch() {
@@ -687,8 +701,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //avoid TRX flood attack here.
         if (msg.getInventoryType().equals(InventoryType.TRX)
-            && peer.isAdvInvFull()) {
-          logger.info("A peer is flooding us, stop handle inv, the peer is:" + peer);
+            && (peer.isAdvInvFull()
+            || isFlooded())) {
+          logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
           return;
         }
 
@@ -696,6 +711,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
             if (!advObjToFetch.contains(id)) {
+              fetchWaterLine.increase();
+              logger.info("water line:" + fetchWaterLine.totalCount());
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             } else {
@@ -706,6 +723,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       }
     }
+  }
+
+  private boolean isFlooded() {
+    return fetchWaterLine.totalCount()
+        > BLOCK_PRODUCED_INTERVAL * NET_MAX_TRX_PER_SECOND * MSG_CACHE_DURATION_IN_BLOCKS / 1000;
   }
 
   @Override
@@ -720,7 +742,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     logger.info("wait end");
   }
-
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
@@ -772,7 +793,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         getActivePeer().stream()
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
-            .forEach(p -> updateBlockWeBothHave(peer, block));
+            .forEach(p -> updateBlockWeBothHave(p, block));
 
         broadcast(new BlockMessage(block));
 
@@ -960,8 +981,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         block = ((BlockMessage) msg).getBlockCapsule();
         peer.sendMessage(msg);
       } else {
-        transactions.add(((TransactionMessage) msg).getTransaction());
-        size += ((TransactionMessage) msg).getTransaction().getSerializedSize();
+        transactions.add(((TransactionMessage) msg).getTransactionCapsule().getInstance());
+        size += ((TransactionMessage) msg).getTransactionCapsule().getInstance().getSerializedSize();
         if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();
@@ -1074,7 +1095,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          if (peer.getSyncBlockToFetch().isEmpty()) {
+          if (peer.getSyncBlockToFetch().isEmpty() && del.containBlock(blockIdWeGet.peek())) {
             updateBlockWeBothHave(peer, blockIdWeGet.peek());
 
           }
@@ -1272,6 +1293,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           });
     }
+  }
+
+  public void shutDown() {
+    logExecutor.shutdown();
+    trxsHandlePool.shutdown();
+    disconnectInactiveExecutor.shutdown();
+    cleanInventoryExecutor.shutdown();
+    broadPool.shutdown();
+    loopSyncBlockChain.shutdown();
+    loopFetchBlocks.shutdown();
+    loopAdvertiseInv.shutdown();
+    handleBackLogBlocksPool.shutdown();
+    fetchSyncBlocksExecutor.shutdown();
+    handleSyncBlockExecutor.shutdown();
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {

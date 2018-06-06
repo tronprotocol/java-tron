@@ -1,6 +1,7 @@
 package org.tron.program;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
@@ -27,7 +28,11 @@ public class FullNode {
       return;
     }
 
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+    beanFactory.setAllowCircularReferences(false);
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
+    context.register(DefaultConfig.class);
+    context.refresh();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);

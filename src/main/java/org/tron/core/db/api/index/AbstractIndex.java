@@ -95,7 +95,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Ifa
 
   @Override
   public boolean update(WrappedByteArray bytes) {
-    return update(bytes);
+    return add(bytes);
   }
 
   @Override

@@ -56,11 +56,11 @@ public class StorageTest {
     Assert.assertTrue(options.createIfMissing());
     Assert.assertTrue(options.paranoidChecks());
     Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.NONE, options.compressionType());
-    Assert.assertEquals(10485760, options.blockSize());
+    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
+    Assert.assertEquals(4096, options.blockSize());
     Assert.assertEquals(10485760, options.writeBufferSize());
-    Assert.assertEquals(0L, options.cacheSize());
-    Assert.assertEquals(32, options.maxOpenFiles());
+    Assert.assertEquals(10485760L, options.cacheSize());
+    Assert.assertEquals(100, options.maxOpenFiles());
 
     options = storage.getOptionsByDbName("test_name");
     Assert.assertFalse(options.createIfMissing());
@@ -76,11 +76,11 @@ public class StorageTest {
     Assert.assertTrue(options.createIfMissing());
     Assert.assertTrue(options.paranoidChecks());
     Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.NONE, options.compressionType());
-    Assert.assertEquals(10 * 1024 * 1024, options.blockSize());
+    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
+    Assert.assertEquals(4 * 1024, options.blockSize());
     Assert.assertEquals(10 * 1024 * 1024, options.writeBufferSize());
-    Assert.assertEquals(0L, options.cacheSize());
-    Assert.assertEquals(32, options.maxOpenFiles());
+    Assert.assertEquals(10 * 1024 * 1024L, options.cacheSize());
+    Assert.assertEquals(100, options.maxOpenFiles());
   }
 
 }

@@ -131,6 +131,8 @@ public class BandwidthTest {
   public void testCreateNewAccount() throws Exception {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     TransferAssetContract transferAssetContract = getTransferAssetContract();
+    TransactionCapsule trx = new TransactionCapsule(transferAssetContract);
+
     String NOT_EXISTS_ADDRESS =
         Wallet.getAddressPreFixString() + "008794500882809695a8a687866e76d4271a1abc";
     transferAssetContract = transferAssetContract.toBuilder()
@@ -150,11 +152,12 @@ public class BandwidthTest {
     ownerCapsule.setFrozen(10_000_000L, 0L);
 
     Assert.assertEquals(true, processor.contractCreateNewAccount(contract));
-    processor.consumeForCreateNewAccount(ownerCapsule, 1526647838000L);
+    long bytes = trx.getSerializedSize();
+    processor.consumeBandwidthForCreateNewAccount(ownerCapsule, bytes, 1526647838000L);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    Assert.assertEquals(ChainConstant.CREATE_NEW_ACCOUNT_COST, ownerCapsuleNew.getNetUsage());
+    Assert.assertEquals(122L, ownerCapsuleNew.getNetUsage());
 
   }
 
@@ -282,5 +285,47 @@ public class BandwidthTest {
     Assert.assertEquals(508897012L, ownerCapsuleNew.getLatestConsumeTime());
 
   }
+
+
+  @Test
+  public void testUsingFee() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
+    dbManager.getDynamicPropertiesStore().saveFreeNetLimit(0L);
+
+    TransferAssetContract contract = getTransferAssetContract();
+    TransactionCapsule trx = new TransactionCapsule(contract);
+
+    AccountCapsule ownerCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.setBalance(10_000_000L);
+
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    dbManager.consumeBandwidth(trx);
+
+    AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+    long transactionFee = 122L * dbManager.getDynamicPropertiesStore().getTransactionFee();
+    Assert.assertEquals(transactionFee,
+        dbManager.getDynamicPropertiesStore().getTotalTransactionCost());
+    Assert.assertEquals(
+        10_000_000L - transactionFee,
+        ownerCapsuleNew.getBalance());
+
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
+    dbManager.consumeBandwidth(trx);
+
+    long createAccountFee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+    ownerCapsuleNew = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getCreateAccountFee(),
+        dbManager.getDynamicPropertiesStore().getTotalCreateAccountCost());
+    Assert.assertEquals(
+        10_000_000L - transactionFee - createAccountFee, ownerCapsuleNew.getBalance());
+
+
+  }
+
 
 }

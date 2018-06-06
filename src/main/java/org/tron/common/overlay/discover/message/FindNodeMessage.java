@@ -14,13 +14,9 @@ public class FindNodeMessage extends Message {
 
   private Discover.FindNeighbours findNeighbours;
 
-  public FindNodeMessage(byte[] data) {
+  public FindNodeMessage(byte[] data) throws Exception{
     super(Message.FINE_PEERS, data);
-    try {
-      this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
+    this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
   }
 
   public FindNodeMessage(Node from, byte[] targetId) {

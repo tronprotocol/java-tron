@@ -16,6 +16,8 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import io.grpc.internal.GrpcUtil;
+import io.grpc.netty.NettyServerBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -65,5 +67,13 @@ public class ArgsTest {
     Assert.assertEquals(43, args.getNodeP2pVersion());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
+    // gRPC network configs checking
+    Assert.assertEquals(50051, args.getRpcPort());
+    Assert.assertEquals(Integer.MAX_VALUE, args.getMaxConcurrentCallsPerConnection());
+    Assert.assertEquals(NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW, args.getFlowControlWindow());
+    Assert.assertEquals(60000L, args.getMaxConnectionIdleInMillis());
+    Assert.assertEquals(Long.MAX_VALUE, args.getMaxConnectionAgeInMillis());
+    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, args.getMaxMessageSize());
+    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, args.getMaxHeaderListSize());
   }
 }
