@@ -157,7 +157,7 @@ public class Node implements Serializable {
       return true;
     }
 
-    if (o instanceof Node) {
+    if (o.getClass() == getClass()) {
       return StringUtils.equals(getIdString(), ((Node) o).getIdString());
     }
 
