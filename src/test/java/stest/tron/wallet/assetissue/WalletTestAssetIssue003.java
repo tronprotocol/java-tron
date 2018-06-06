@@ -12,6 +12,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -19,11 +20,13 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
@@ -32,28 +35,23 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestAssetIssue003 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
-  //private static final String name = "testAssetIssue_" + Long.toString(now);
-  private static final String name = "a";
+  private static final String name = "testAssetIssue003_" + Long.toString(now);
+  private static final String shortname = "a";
   private static final String tooLongName = "qazxswedcvfrtgbnhyujmkiolpoiuytre";
   private static final String chineseAssetIssuename = "中文都名字";
   private static final String tooLongDescription =
@@ -74,13 +72,19 @@ public class WalletTestAssetIssue003 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    ByteString addressBS1 = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBS1 = ByteString.copyFrom(fromAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
         .getAssetIssueByAccount(request1);
@@ -89,82 +93,102 @@ public class WalletTestAssetIssue003 {
       Long start = System.currentTimeMillis() + 100000;
       Long end = System.currentTimeMillis() + 1000000000;
       //Freeze amount is large than total supply, create asset issue failed.
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 9000000000000000000L, 1L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          9000000000000000000L, 1L, testKey003,blockingStubFull));
       //Freeze day is 0, create failed
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 100L, 0L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          100L, 0L, testKey003,blockingStubFull));
       //Freeze amount is 0, create failed
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 0L, 1L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          0L, 1L, testKey003,blockingStubFull));
       //Freeze day is -1, create failed
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 100L, -1L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 1000L,1000L,
+          1000L, -1L, testKey003,blockingStubFull));
       //Freeze amount is -1, create failed
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, -1L, 1L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          -1L, 1L, testKey003,blockingStubFull));
       //Freeze day is 3653(10 years + 1 day), create failed
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3653L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3653L, testKey002,blockingStubFull));
       //Start time is late than end time.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, end, start,
-          2, description, url, 1L, 2L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          end, start, 2, description, url, 10000L,10000L,
+          1L, 2L, testKey002,blockingStubFull));
       //Start time is early than currently time.
-      Assert.assertFalse(
-          createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start - 1000000L, end,
-              2, description, url, 1L, 2L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start - 1000000L, end, 2, description, url, 10000L,
+          10000L,1L, 2L, testKey002,blockingStubFull));
       //totalSupply is zero.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, 0L, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, 0L, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //Total supply is -1.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, -1L, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, -1L, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //TrxNum is zero.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 0, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 0, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //TrxNum is -1.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, -1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, -1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //IcoNum is 0.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 0, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 0,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //IcoNum is -1.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, -1, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, -1,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //The asset issue name is null.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, "", totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, "", totalSupply, 1, 10,
+          start, end, 2, description, url,10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //The asset issue name is large than 33 char.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, tooLongName, totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, tooLongName, totalSupply, 1, 10,
+          start, end, 2, description, url,10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //The asset issue name is chinese name.
-      Assert.assertFalse(
-          createAssetIssue(FROM_ADDRESS, chineseAssetIssuename, totalSupply, 1, 10, start, end,
-              2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename, totalSupply, 1,
+          10, start, end, 2, description, url,10000L,
+          10000L,1L, 3652L, testKey002,blockingStubFull));
       //The URL is null.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, "", 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, "",10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //The URL is too long.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, tooLongUrl, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, tooLongUrl, 10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //The description is too long, create failed.
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, tooLongDescription, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start, end, 2, tooLongDescription, url,10000L,
+          10000L,1L, 3652L, testKey002,blockingStubFull));
 
       //FreezeBalance
-      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000L, 3, testKey002,
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3, testKey002,
           blockingStubFull));
       //Create success
       start = System.currentTimeMillis() + 3000;
       end = System.currentTimeMillis() + 1000000000;
-      Assert.assertTrue(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url,10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       //Test not in the duration time, participate failed.
-      Assert.assertFalse(
-          participateAssetIssue(FROM_ADDRESS, name.getBytes(), 1L, TO_ADDRESS, testKey003));
+      Assert.assertFalse(PublicMethed.participateAssetIssue(fromAddress, name.getBytes(), 1L,
+          toAddress, testKey003,blockingStubFull));
       //Test another address try to create the same name asset issue, create failed.
-      Assert.assertFalse(createAssetIssue(TO_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey003));
+      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
+          start, end, 2, description, url, 10000L,10000L,
+          1L, 3652L, testKey003,blockingStubFull));
 
       try {
         Thread.sleep(4000);
@@ -172,7 +196,7 @@ public class WalletTestAssetIssue003 {
         e.printStackTrace();
       }
       //Assert.assertFalse(participateAssetIssue
-      // (FROM_ADDRESS, name.getBytes(),1L, TO_ADDRESS, testKey003));
+      // (fromAddress, name.getBytes(),1L, toAddress, testKey003));
       GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
           .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
       logger.info(Integer.toString(assetIssueList.getAssetIssue(0).getFrozenSupplyCount()));
@@ -180,14 +204,15 @@ public class WalletTestAssetIssue003 {
       //Assert.assertTrue(assetIssueList.getAssetIssue(j).getFrozenSupplyCount() > 0);
       Assert.assertTrue(assetIssueList.getAssetIssue(0).getFrozenSupply(0).getFrozenAmount() > 0);
       Assert.assertTrue(assetIssueList.getAssetIssue(0).getFrozenSupply(0).getFrozenDays() > 0);
-      Assert.assertFalse(unFreezeAsset(FROM_ADDRESS, testKey002));
+      Assert.assertFalse(unFreezeAsset(fromAddress, testKey002));
       logger.info("unfreezeasset test");
 
       //Test one account only can create one asset issue.
       start = System.currentTimeMillis() + 3000;
       end = System.currentTimeMillis() + 1000000000;
-      Assert.assertFalse(createAssetIssue(FROM_ADDRESS, name, totalSupply, 1, 10, start, end,
-          2, description, url, 1L, 3652L, testKey002));
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, shortname, totalSupply, 1, 10,
+          start, end, 2, description, url,10000L,10000L,
+          1L, 3652L, testKey002,blockingStubFull));
       logger.info("FROM ADDRESS create asset issue in this case!!!");
 
     } else {

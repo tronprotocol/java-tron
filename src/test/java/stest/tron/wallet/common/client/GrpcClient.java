@@ -117,6 +117,12 @@ public class GrpcClient {
         return response.getResult();
     }
 
+    public AccountNetMessage getAccountNet(byte[] address) {
+        ByteString addressBS = ByteString.copyFrom(address);
+        Account request = Account.newBuilder().setAddress(addressBS).build();
+        return blockingStubFull.getAccountNet(request);
+    }
+
     public Block getBlock(long blockNum) {
         if (blockNum < 0) {
             if(blockingStubSolidity != null) {

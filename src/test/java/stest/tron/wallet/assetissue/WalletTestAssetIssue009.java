@@ -11,17 +11,20 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
@@ -44,11 +47,11 @@ public class WalletTestAssetIssue009 {
 
   //testng001、testng002、testng003、testng004
   private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+      .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");
   private static final byte[] NEED_CR_ADDRESS = Base58
       .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
   private static final byte[] SOLIDITY_ASSET_ADDRESS = Base58
@@ -62,6 +65,12 @@ public class WalletTestAssetIssue009 {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass
   public void beforeClass() {
@@ -80,7 +89,7 @@ public class WalletTestAssetIssue009 {
   /*  @Test(enabled = true)
   public void testGetAssetIssueByAccountOrNameFromSolidity() {
     //By name
-    ByteString addressBs = ByteString.copyFrom(FROM_ADDRESS);
+    ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueByAccount(request);

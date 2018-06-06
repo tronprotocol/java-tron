@@ -4,18 +4,23 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.WalletGrpc;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 //import org.tron.api.GrpcAPI.AccountList;
 
@@ -36,15 +41,18 @@ public class WallettestP0001 {
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
-  //Devaccount
+  /*  //Devaccount
   private static final byte[] BACK_ADDRESS =
-      Base58.decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
+      Base58.decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");
   //Zion
-  private static final byte[] FROM_ADDRESS =
-      Base58.decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
+  private static final byte[] fromAddress =
+      Base58.decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   //Sun
-  private static final byte[] TO_ADDRESS =
-      Base58.decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
+  private static final byte[] toAddress =
+      Base58.decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+  private final byte[] backAddress = PublicMethed.GetFinalAddress(testKey001);
+  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
 
   private static final Long AMOUNT = 1000000L;
   private static final Long F_DURATION = 3L;
@@ -59,10 +67,18 @@ public class WallettestP0001 {
     logger.info("test man.");
   }
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass
   public void beforeClass() {
     walletClient = new WalletClient(testKey002);
     walletClient.init(0);
+    walletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
 
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -75,42 +91,41 @@ public class WallettestP0001 {
     boolean ret = walletClient.freezeBalance(10000000000L, F_DURATION);
     Assert.assertTrue(ret);
 
-    //logger.info("freeze amount:");
-    //logger.info(Integer.toString(walletClient.queryAccount(FROM_ADDRESS).getFrozenCount()));
-    //logger.info(Long.toString(walletClient.queryAccount(FROM_ADDRESS).getBandwidth()));
-    //logger.info("this is before class");
 
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void checkTrxCoinTrade() {
     //init check node client
     WalletClient checkclient = new WalletClient(testKey001);
     checkclient.init(1);
+    checkclient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
     //check freezeBalance
     //walletClient.freezeBalance(AMOUNT, F_DURATION);
-    //long frozenbefore = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
-    boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
-    //long frozenafter = walletClient.queryAccount(FROM_ADDRESS).getBandwidth();
+    //long frozenbefore = walletClient.queryAccount(fromAddress).getBandwidth();
+    //boolean ret = walletClient.freezeBalance(AMOUNT, F_DURATION);
+    boolean ret = PublicMethed.freezeBalance(backAddress,AMOUNT,F_DURATION,
+        testKey001,blockingStubFull);
+    //long frozenafter = walletClient.queryAccount(fromAddress).getBandwidth();
     Assert.assertTrue(ret);
     //logger.info(Long.toString(frozenbefore));
     //logger.info(Long.toString(frozenafter));
 
     //check sendcoin
-    long balancebefore = walletClient.queryAccount(FROM_ADDRESS).getBalance();
-    ret = walletClient.sendCoin(TO_ADDRESS, AMOUNT);
-    Assert.assertEquals(walletClient.queryAccount(FROM_ADDRESS).getBalance(),
+    long balancebefore = walletClient.queryAccount(fromAddress).getBalance();
+    ret = walletClient.sendCoin(toAddress, AMOUNT);
+    Assert.assertEquals(walletClient.queryAccount(fromAddress).getBalance(),
         balancebefore - AMOUNT);
-    Assert.assertEquals(walletClient.queryAccount(FROM_ADDRESS).getBalance(),
-        checkclient.queryAccount(FROM_ADDRESS).getBalance());
+    Assert.assertEquals(walletClient.queryAccount(fromAddress).getBalance(),
+        checkclient.queryAccount(fromAddress).getBalance());
     Assert.assertTrue(ret);
   }
 
 
   //check vote
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void checkTrxCoinVote() {
     Optional<GrpcAPI.WitnessList> witnessResult = walletClient.listWitnesses();
 
@@ -195,8 +210,10 @@ public class WallettestP0001 {
   }
 
 
-  @AfterClass
-  public void afterClass() {
-    logger.info("this is after class");
+  @AfterClass(enabled = true)
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
   }
 }

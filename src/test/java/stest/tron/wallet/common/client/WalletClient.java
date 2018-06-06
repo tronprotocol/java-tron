@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NodeList;
@@ -59,6 +60,7 @@ class WitnessComparator implements Comparator {
 
 public class WalletClient {
 
+
     private static final Logger logger = LoggerFactory.getLogger("WalletClient");
     private static final String FilePath = "Wallet";
     private ECKey ecKey = null;
@@ -67,6 +69,8 @@ public class WalletClient {
     private static GrpcClient rpcCli ;
     private static String dbPath;
     private static String txtPath;
+
+    private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
 
 //  static {
 //    new Timer().schedule(new TimerTask() {
@@ -103,9 +107,45 @@ public class WalletClient {
         if(config.hasPath(fullNodepathname)){
             fullNode = config.getStringList(fullNodepathname).get(0);
         }
+        if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+        } else {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
+        }
         rpcCli   = new GrpcClient(fullNode, solidityNode);
         return true;
     }
+
+    public static GrpcClient init() {
+        //Config config = org.tron.core.config.Configuration.getByPath("config.conf");
+        Config config = Configuration.getByPath("testng.conf");
+        dbPath = config.getString("CityDb.DbPath");
+        txtPath = System.getProperty("user.dir") + "/" + config.getString("CityDb.TxtPath");
+
+        String fullNode = "";
+        String solidityNode = "";
+        if (config.hasPath("soliditynode.ip.list")) {
+            solidityNode = config.getStringList("soliditynode.ip.list").get(0);
+        }
+        if (config.hasPath("fullnode.ip.list")) {
+            fullNode = config.getStringList("fullnode.ip.list").get(0);
+        }
+        if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+        } else {
+            WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
+        }
+        return new GrpcClient(fullNode, solidityNode);
+    }
+
+    public static byte getAddressPreFixByte() {
+        return addressPreFixByte;
+    }
+
+    public static void setAddressPreFixByte(byte addressPreFixByte) {
+        WalletClient.addressPreFixByte = addressPreFixByte;
+    }
+
 
     public static String selectFullNode() {
         Map<String, String> witnessMap = new HashMap<>();
@@ -343,7 +383,7 @@ public class WalletClient {
         return rpcCli.broadcastTransaction(transaction);
     }
 
-    public boolean createAssetIssue(Contract.AssetIssueContract contract) {
+    public boolean createAssetIssue(AssetIssueContract contract) {
         Transaction transaction = rpcCli.createAssetIssue(contract);
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
             return false;
@@ -374,7 +414,7 @@ public class WalletClient {
         return rpcCli.voteWitnessAccount(contract);
     }
 
-    public static Transaction createAssetIssueTransaction(Contract.AssetIssueContract contract) {
+    public static Transaction createAssetIssueTransaction(AssetIssueContract contract) {
         return rpcCli.createAssetIssue(contract);
     }
 
@@ -495,6 +535,10 @@ public class WalletClient {
         return builder.build();
     }
 
+    public static AccountNetMessage getAccountNet(byte[] address) {
+        return rpcCli.getAccountNet(address);
+    }
+
     private static String loadPassword() {
         char[] buf = new char[0x100];
         int len = FileUtil.readData(FilePath, buf);
@@ -613,8 +657,8 @@ public class WalletClient {
             return false;
         }
         byte preFixbyte = address[0];
-        if (preFixbyte != CommonConstant.ADD_PRE_FIX_BYTE) {
-            logger.warn("Warning: Address need prefix with " + CommonConstant.ADD_PRE_FIX_BYTE + " but "
+        if (preFixbyte != getAddressPreFixByte()) {
+            logger.warn("Warning: Address need prefix with " + getAddressPreFixByte() + " but "
                     + preFixbyte + " !!");
             return false;
         }
@@ -628,7 +672,7 @@ public class WalletClient {
         byte[] inputCheck = new byte[input.length + 4];
         System.arraycopy(input, 0, inputCheck, 0, input.length);
         System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-        return stest.tron.wallet.common.client.utils.Base58.encode(inputCheck);
+        return Base58.encode(inputCheck);
     }
 
     private static byte[] decode58Check(String input) {
@@ -652,13 +696,6 @@ public class WalletClient {
     public static byte[] decodeFromBase58Check(String addressBase58) {
         if (StringUtils.isEmpty(addressBase58)) {
             logger.warn("Warning: Address is empty !!");
-            return null;
-        }
-        if (addressBase58.length() != CommonConstant.BASE58CHECK_ADDRESS_SIZE) {
-            logger.warn(
-                    "Warning: Base58 address length need " + CommonConstant.BASE58CHECK_ADDRESS_SIZE + " but "
-                            + addressBase58.length()
-                            + " !!");
             return null;
         }
         byte[] address = decode58Check(addressBase58);
@@ -753,7 +790,7 @@ public class WalletClient {
 
     public boolean freezeBalance(long frozen_balance, long frozen_duration) {
 
-        Contract.FreezeBalanceContract contract = createFreezeBalanceContract(frozen_balance,
+        FreezeBalanceContract contract = createFreezeBalanceContract(frozen_balance,
                 frozen_duration);
 
         Transaction transaction = rpcCli.createTransaction(contract);
@@ -769,7 +806,7 @@ public class WalletClient {
     private FreezeBalanceContract createFreezeBalanceContract(long frozen_balance,
                                                               long frozen_duration) {
         byte[] address = getAddress();
-        Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+        FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
         ByteString byteAddreess = ByteString.copyFrom(address);
 
         builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
@@ -779,7 +816,7 @@ public class WalletClient {
     }
 
     public boolean unfreezeBalance() {
-        Contract.UnfreezeBalanceContract contract = createUnfreezeBalanceContract();
+        UnfreezeBalanceContract contract = createUnfreezeBalanceContract();
 
         Transaction transaction = rpcCli.createTransaction(contract);
 
@@ -794,7 +831,7 @@ public class WalletClient {
     private UnfreezeBalanceContract createUnfreezeBalanceContract() {
 
         byte[] address = getAddress();
-        Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+        UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
                 .newBuilder();
         ByteString byteAddreess = ByteString.copyFrom(address);
 
@@ -804,7 +841,7 @@ public class WalletClient {
     }
 
     public boolean withdrawBalance() {
-        Contract.WithdrawBalanceContract contract = createWithdrawBalanceContract();
+        WithdrawBalanceContract contract = createWithdrawBalanceContract();
 
         Transaction transaction = rpcCli.createTransaction(contract);
 
@@ -819,7 +856,7 @@ public class WalletClient {
     private WithdrawBalanceContract createWithdrawBalanceContract() {
 
         byte[] address = getAddress();
-        Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
+        WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
                 .newBuilder();
         ByteString byteAddreess = ByteString.copyFrom(address);
 

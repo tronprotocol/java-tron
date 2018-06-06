@@ -4,7 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-
+import io.grpc.internal.GrpcUtil;
+import io.grpc.netty.NettyServerBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -23,9 +24,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.stream.Collectors;
-
-import io.grpc.internal.GrpcUtil;
-import io.grpc.netty.NettyServerBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -74,6 +72,9 @@ public class Args {
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
+
+  @Parameter(names = {"--password"}, description = "password")
+  private String password;
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   private String storageDbDirectory = "";
@@ -312,8 +313,15 @@ public class Args {
         List<String> localwitness = config.getStringList("localwitnesskeystore");
         if (localwitness.size() > 0) {
           String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
-          System.out.println("Please input your password.");
-          String password = WalletUtils.inputPassword();
+          String password;
+          if (StringUtils.isEmpty(INSTANCE.password)) {
+            System.out.println("Please input your password.");
+            password = WalletUtils.inputPassword();
+          } else {
+            password = INSTANCE.password;
+            INSTANCE.password = null;
+          }
+
           try {
             Credentials credentials = WalletUtils
                 .loadCredentials(password, new File(fileName));
@@ -321,9 +329,13 @@ public class Args {
             String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
             privateKeys.add(prikey);
           } catch (IOException e) {
-            logger.warn(e.getMessage());
+            logger.error(e.getMessage());
+            logger.error("Witness node start faild!");
+            System.exit(-1);
           } catch (CipherException e) {
-            logger.warn(e.getMessage());
+            logger.error(e.getMessage());
+            logger.error("Witness node start faild!");
+            System.exit(-1);
           }
         }
       }
@@ -358,7 +370,7 @@ public class Args {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     }
-    
+
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
@@ -428,11 +440,13 @@ public class Args {
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
 
-    INSTANCE.maxConcurrentCallsPerConnection = config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
-        config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
+    INSTANCE.maxConcurrentCallsPerConnection =
+        config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
+            config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
 
     INSTANCE.flowControlWindow = config.hasPath("node.rpc.flowControlWindow") ?
-        config.getInt("node.rpc.flowControlWindow") : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+        config.getInt("node.rpc.flowControlWindow")
+        : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
 
     INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
         config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
@@ -626,8 +640,8 @@ public class Args {
           logger.warn(
               "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
                   + e);
-        }finally{
-          if (in != null){
+        } finally {
+          if (in != null) {
             try {
               in.close();
             } catch (IOException e) {
