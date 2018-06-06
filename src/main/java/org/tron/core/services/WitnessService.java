@@ -63,8 +63,6 @@ public class WitnessService implements Service {
     this.context = context;
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
-    System.out.println(backupManager);
-    System.out.println(backupServer);
     generateThread = new Thread(scheduleProductionLoop);
     controller = tronApp.getDbManager().getWitnessController();
     new Thread(()->{
@@ -74,7 +72,7 @@ public class WitnessService implements Service {
         }catch (Exception e){}
       }
       backupServer.initServer();
-    });
+    }).start();
   }
 
   /**
