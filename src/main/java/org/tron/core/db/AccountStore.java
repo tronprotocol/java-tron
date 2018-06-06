@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
@@ -52,17 +50,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
-  }
-
-  /**
-   * get all accounts.
-   */
-  public List<AccountCapsule> getAllAccounts() {
-    return dbSource
-        .allValues()
-        .stream()
-        .map(bytes -> new AccountCapsule(bytes))
-        .collect(Collectors.toList());
   }
 
   /**
