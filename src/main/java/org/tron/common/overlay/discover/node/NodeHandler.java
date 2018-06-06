@@ -20,14 +20,15 @@ package org.tron.common.overlay.discover.node;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
-import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.core.config.args.Args;
 
 /**
@@ -36,9 +37,9 @@ import org.tron.core.config.args.Args;
  */
 public class NodeHandler {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeHandler");
+  private static final Logger logger = LoggerFactory.getLogger("NodeHandler");
 
-  static long PingTimeout = 15000;
+  private static long PingTimeout = 15000;
 
   public enum State {
     /**
@@ -80,8 +81,8 @@ public class NodeHandler {
     NonActive
   }
 
-  Node node;
-  State state;
+  private Node node;
+  private State state;
   private NodeManager nodeManager;
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
@@ -105,6 +106,10 @@ public class NodeHandler {
 
   public State getState() {
     return state;
+  }
+
+  public void setNode(Node node) {
+    this.node = node;
   }
 
   public NodeStatistics getNodeStatistics() {

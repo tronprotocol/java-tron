@@ -17,7 +17,6 @@
  */
 package org.tron.common.overlay.discover.node;
 
-import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -38,14 +37,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.EventHandler;
-import org.tron.common.net.udp.handler.MessageHandler;
+import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
-import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
@@ -148,9 +146,9 @@ public class NodeManager implements EventHandler {
   }
 
   public boolean isNodeAlive(NodeHandler nodeHandler) {
-    return nodeHandler.state.equals(State.Alive) ||
-        nodeHandler.state.equals(State.Active) ||
-        nodeHandler.state.equals(State.EvictCandidate);
+    return nodeHandler.getState().equals(State.Alive) ||
+        nodeHandler.getState().equals(State.Active) ||
+        nodeHandler.getState().equals(State.EvictCandidate);
   }
 
   private void dbRead() {
@@ -195,7 +193,7 @@ public class NodeManager implements EventHandler {
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      ret.node = n;
+      ret.setNode(n);
     }
     return ret;
   }
@@ -352,9 +350,9 @@ public class NodeManager implements EventHandler {
 
   private class ListenerHandler {
 
-    Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
-    DiscoverListener listener;
-    Predicate<NodeStatistics> filter;
+    private Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
+    private DiscoverListener listener;
+    private Predicate<NodeStatistics> filter;
 
     ListenerHandler(DiscoverListener listener, Predicate<NodeStatistics> filter) {
       this.listener = listener;
