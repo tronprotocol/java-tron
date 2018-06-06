@@ -666,8 +666,9 @@ public class Args {
 
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")
-        ? config.getInt("node.backup.priority") : new Random(1000).nextInt();
-    INSTANCE.backupPort = config.hasPath("node.backup.port") ? config.getInt("node.backup.port") : 10001;
+        ? config.getInt("node.backup.priority") : 0;
+    INSTANCE.backupPort = config.hasPath("node.backup.port")
+        ? config.getInt("node.backup.port") : 10001;
     INSTANCE.backupMembers = config.hasPath("node.backup.members")
         ? config.getStringList("node.backup.members") : new ArrayList<>();
   }
