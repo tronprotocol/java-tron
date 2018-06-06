@@ -73,7 +73,7 @@ public class Args {
   private String privateKey = "";
 
   @Parameter(names = {"--password"}, description = "password")
-  private String password = "";
+  private String password;
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   private String storageDbDirectory = "";
@@ -306,7 +306,7 @@ public class Args {
             password = WalletUtils.inputPassword();
           } else {
             password = INSTANCE.password;
-            INSTANCE.password = "";
+            INSTANCE.password = null;
           }
 
           try {
