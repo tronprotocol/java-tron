@@ -127,7 +127,7 @@ public class NodeHandler {
     }
     if (!node.isDiscoveryNode()) {
       if (newState == State.Alive) {
-        Node evictCandidate = nodeManager.table.addNode(this.node);
+        Node evictCandidate = nodeManager.getTable().addNode(this.node);
         if (evictCandidate == null) {
           newState = State.Active;
         } else {
@@ -140,7 +140,7 @@ public class NodeHandler {
       if (newState == State.Active) {
         if (oldState == State.Alive) {
           // new node won the challenge
-          nodeManager.table.addNode(node);
+          nodeManager.getTable().addNode(node);
         } else if (oldState == State.EvictCandidate) {
           // nothing to do here the node is already in the table
         } else {
@@ -152,7 +152,7 @@ public class NodeHandler {
         if (oldState == State.EvictCandidate) {
           // lost the challenge
           // Removing ourselves from the table
-          nodeManager.table.dropNode(node);
+          nodeManager.getTable().dropNode(node);
           // Congratulate the winner
           replaceCandidate.changeState(State.Active);
         } else if (oldState == State.Alive) {
@@ -172,7 +172,7 @@ public class NodeHandler {
 
   public void handlePing(PingMessage msg) {
     getNodeStatistics().discoverInPing.add();
-    if (!nodeManager.table.getNode().equals(node)) {
+    if (!nodeManager.getTable().getNode().equals(node)) {
       sendPong();
     }
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
@@ -209,7 +209,7 @@ public class NodeHandler {
 
   public void handleFindNode(FindNodeMessage msg) {
     getNodeStatistics().discoverInFind.add();
-    List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
+    List<Node> closest = nodeManager.getTable().getClosestNodes(msg.getTargetId());
     sendNeighbours(closest);
   }
 
