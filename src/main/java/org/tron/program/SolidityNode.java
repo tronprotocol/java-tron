@@ -166,8 +166,8 @@ public class SolidityNode {
 //    appT.startup();
 
     //Disable peer discovery for solidity node
-    DiscoverServer udpListener = context.getBean(DiscoverServer.class);
-    udpListener.close();
+    DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
+    discoverServer.close();
     ChannelManager channelManager = context.getBean(ChannelManager.class);
     channelManager.close();
     NodeManager nodeManager = context.getBean(NodeManager.class);

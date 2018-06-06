@@ -83,7 +83,7 @@ public class BackupServer {
         logger.warn("Restart backup server ...");
       }
     } catch (Exception e) {
-      logger.error("Start backup server with port {} failed.", port);
+      logger.error("Start backup server with port {} failed.", port, e);
     } finally {
       group.shutdownGracefully().sync();
     }
