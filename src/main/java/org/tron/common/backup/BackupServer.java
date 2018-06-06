@@ -39,6 +39,9 @@ public class BackupServer {
   @Autowired
   public BackupServer(final BackupManager backupManager) {
     this.backupManager = backupManager;
+  }
+
+  public void initServer(){
     if (port > 0 && args.getBackupMembers().size() > 0) {
       new Thread(() -> {
         try {

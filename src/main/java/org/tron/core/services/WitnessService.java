@@ -8,8 +8,12 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.backup.BackupManager;
+import org.tron.common.backup.BackupManager.BackupStatusEnum;
+import org.tron.common.backup.BackupServer;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
@@ -41,17 +45,36 @@ public class WitnessService implements Service {
   private Thread generateThread;
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
-  private boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
+  private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private WitnessController controller;
+
+  private AnnotationConfigApplicationContext context;
+
+  private BackupManager backupManager;
+
+  private BackupServer backupServer;
 
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp) {
+  public WitnessService(Application tronApp, AnnotationConfigApplicationContext context) {
     this.tronApp = tronApp;
+    this.context = context;
+    backupManager = context.getBean(BackupManager.class);
+    backupServer = context.getBean(BackupServer.class);
+    System.out.println(backupManager);
+    System.out.println(backupServer);
     generateThread = new Thread(scheduleProductionLoop);
     controller = tronApp.getDbManager().getWitnessController();
+    new Thread(()->{
+      while (needSyncCheck){
+        try{
+          Thread.sleep(100);
+        }catch (Exception e){}
+      }
+      backupServer.initServer();
+    });
   }
 
   /**
@@ -115,6 +138,9 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
+    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)){
+      return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
+    }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
