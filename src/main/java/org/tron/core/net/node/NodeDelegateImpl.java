@@ -113,13 +113,13 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.pushTransactions(trx);
     } catch (ContractValidateException e) {
       logger.info("Contract validate failed" + e.getMessage());
-      throw new BadTransactionException();
+      //throw new BadTransactionException();
     } catch (ContractExeException e) {
       logger.info("Contract execute failed" + e.getMessage());
-      throw new BadTransactionException();
+      //throw new BadTransactionException();
     } catch (ValidateSignatureException e) {
       logger.info("ValidateSignatureException" + e.getMessage());
-      throw new BadTransactionException();
+      //throw new BadTransactionException();
     } catch (AccountResourceInsufficientException e) {
       logger.info("AccountResourceInsufficientException" + e.getMessage());
     } catch (DupTransactionException e) {
