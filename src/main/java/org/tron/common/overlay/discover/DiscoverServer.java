@@ -44,15 +44,17 @@ public class DiscoverServer {
   private NodeManager nodeManager;
 
   @Autowired
-  WireTrafficStats stats;
+  private WireTrafficStats stats;
 
-  Args args = Args.getInstance();
+  private Args args = Args.getInstance();
 
   private int port = args.getNodeListenPort();
 
   private Channel channel;
-  private volatile boolean shutdown = false;
+
   private DiscoveryExecutor discoveryExecutor;
+
+  private volatile boolean shutdown = false;
 
   @Autowired
   public DiscoverServer(final NodeManager nodeManager) {

@@ -32,11 +32,11 @@ import org.tron.common.overlay.discover.node.NodeManager;
 public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
     implements Consumer<UdpEvent> {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
-  public Channel channel;
+  private Channel channel;
 
-  EventHandler eventHandler;
+  private EventHandler eventHandler;
 
   public MessageHandler(NioDatagramChannel ch, EventHandler eventHandler) {
     channel = ch;

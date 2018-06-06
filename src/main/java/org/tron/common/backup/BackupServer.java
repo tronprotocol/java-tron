@@ -34,7 +34,7 @@ public class BackupServer {
   private volatile boolean shutdown = false;
 
   @Autowired
-  WireTrafficStats stats;
+  private WireTrafficStats stats;
 
   @Autowired
   public BackupServer(final BackupManager backupManager) {

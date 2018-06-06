@@ -55,7 +55,7 @@ import org.tron.core.db.Manager;
 @Component
 public class NodeManager implements EventHandler {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private Args args = Args.getInstance();
 
@@ -63,18 +63,18 @@ public class NodeManager implements EventHandler {
 
   private static final long LISTENER_REFRESH_RATE = 1000L;
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
-  static final int MAX_NODES = 2000;
-  static final int NODES_TRIM_THRESHOLD = 3000;
+  private static final int MAX_NODES = 2000;
+  private static final int NODES_TRIM_THRESHOLD = 3000;
 
-  Consumer<UdpEvent> messageSender;
+  private Consumer<UdpEvent> messageSender;
 
-  NodeTable table;
+  private NodeTable table;
+  private Node homeNode;
   private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
-  final Node homeNode;
   private List<Node> bootNodes = new ArrayList<>();
 
   // option to handle inbounds only from known peers (i.e. which were discovered by ourselves)
-  boolean inboundOnlyFromKnownNodes = false;
+  private boolean inboundOnlyFromKnownNodes = false;
 
   private boolean discoveryEnabled;
 

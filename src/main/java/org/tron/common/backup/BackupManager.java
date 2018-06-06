@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ import org.tron.core.config.args.Args;
 @Component
 public class BackupManager implements EventHandler{
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("BackupManager");
+  private static final Logger logger = LoggerFactory.getLogger("BackupManager");
 
   private Args args = Args.getInstance();
 
@@ -49,13 +50,13 @@ public class BackupManager implements EventHandler{
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  MessageHandler messageHandler;
+  private MessageHandler messageHandler;
+
+  private volatile BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
 
   private volatile long keepAliveTimeout = 3000;
-
-  private volatile BackupStatusEnum status = MASTER;
 
   public void setMessageHandler(MessageHandler messageHandler) {
     this.messageHandler = messageHandler;
