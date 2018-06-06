@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,8 @@ import org.tron.common.crypto.SymmEncoder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.exception.CancelException;
+import org.tron.keystore.CipherException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -489,6 +492,32 @@ public class WalletClient {
         builder.setType(accountType);
         builder.setAccountAddress(bsAccountName);
         builder.setOwnerAddress(bsaAdress);
+
+        return builder.build();
+    }
+
+    public boolean createAccount(byte[] address)
+        throws CipherException, IOException, CancelException {
+        byte[] owner = getAddress();
+        Transaction transaction = createAccountTransaction(owner, address);
+        if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+            return false;
+        }
+
+        transaction = signTransaction(transaction);
+        return rpcCli.broadcastTransaction(transaction);
+    }
+
+    public static Transaction createAccountTransaction(byte[] owner, byte[] address) {
+        Contract.AccountCreateContract contract = createAccountCreateContract(owner, address);
+        return rpcCli.createAccount(contract);
+    }
+
+    public static Contract.AccountCreateContract createAccountCreateContract(byte[] owner,
+        byte[] address) {
+        Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setAccountAddress(ByteString.copyFrom(address));
 
         return builder.build();
     }

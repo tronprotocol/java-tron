@@ -36,7 +36,7 @@ public class WalletTestAccount001 {
   private final String invalidTestKey =
       "592BB6C9BB255409A6A45EFD18E9A74FECDDCCE93A40D96B70FBE334E6361E36";
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;

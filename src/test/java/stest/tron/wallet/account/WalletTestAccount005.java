@@ -46,8 +46,8 @@ public class WalletTestAccount005 {
   private static final byte[] NOT_WITNESS = Base58
       .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");*/
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] notWitness = PublicMethed.GetFinalAddress(notWitnessTestKey);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] notWitness = PublicMethed.getFinalAddress(notWitnessTestKey);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;

@@ -52,9 +52,9 @@ public class WallettestP0002 {
   //Sun
   private static final byte[] toAddress =
       Base58.decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-  private final byte[] backAddress = PublicMethed.GetFinalAddress(testKey001);
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+  private final byte[] backAddress = PublicMethed.getFinalAddress(testKey001);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final Long AMOUNT = 101L;
 

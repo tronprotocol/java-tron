@@ -46,8 +46,8 @@ public class WalletTestAssetIssue007 {
   private static final byte[] noBandwitchAddress = Base58
       .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");*/
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] noBandwitchAddress   = PublicMethed.GetFinalAddress(noBandwitch);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] noBandwitchAddress   = PublicMethed.getFinalAddress(noBandwitch);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "testAssetIssue007_" + Long.toString(now);
