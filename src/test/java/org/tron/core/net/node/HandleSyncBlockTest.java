@@ -179,7 +179,7 @@ public class HandleSyncBlockTest {
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
-          appT.addService(new WitnessService(appT));
+          appT.addService(new WitnessService(appT, context));
         }
 //        appT.initServices(cfgArgs);
 //        appT.startServices();
