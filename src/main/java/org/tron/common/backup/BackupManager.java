@@ -43,6 +43,8 @@ public class BackupManager implements EventHandler{
 
   private int priority = args.getBackupPriority();
 
+  private int port = args.getBackupPort();
+
   private Set<String> members = new ConcurrentSet<>();
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
@@ -100,7 +102,7 @@ public class BackupManager implements EventHandler{
           return;
         }
         members.forEach(member -> messageHandler.accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
-            InetSocketAddress.createUnresolved(member, args.getBackupPort()))));
+            new InetSocketAddress(member, port))));
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
@@ -111,11 +113,11 @@ public class BackupManager implements EventHandler{
   public void handleEvent(UdpEvent udpEvent) {
     InetSocketAddress sender = udpEvent.getAddress();
     Message msg = udpEvent.getMessage();
-    if (msg.getType().equals(BACKUP_KEEP_ALIVE)){
+    if (!msg.getType().equals(BACKUP_KEEP_ALIVE)){
       logger.info("Receive not keep alive message from {}, type {}", sender.getHostString(), msg.getType());
       return;
     }
-    if (members.contains(sender.getHostString())){
+    if (!members.contains(sender.getHostString())){
       logger.info("Receive keep alive message from {} is not my member.", sender.getHostString());
       return;
     }

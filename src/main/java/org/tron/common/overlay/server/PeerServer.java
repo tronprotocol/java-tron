@@ -92,8 +92,7 @@ public class PeerServer {
             logger.info("TCP listener is closed");
 
         } catch (Exception e) {
-            logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
-            throw new Error("BackupServer Disconnected");
+            logger.error("Start TCP server failed.", e);
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
@@ -104,11 +103,10 @@ public class PeerServer {
     public void close() {
         if (listening && channelFuture != null && channelFuture.channel().isOpen()) {
             try {
-                logger.info("Closing PeerServer...");
+                logger.info("Closing TCP server...");
                 channelFuture.channel().close().sync();
-                logger.info("PeerServer closed.");
             } catch (Exception e) {
-                logger.warn("Problems closing server channel", e);
+                logger.warn("Closing TCP server failed.", e);
             }
         }
     }

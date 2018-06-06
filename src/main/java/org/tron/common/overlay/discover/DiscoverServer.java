@@ -68,7 +68,7 @@ public class DiscoverServer {
             logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);
           }
-        }, "BackupServer").start();
+        }, "DiscoverServer").start();
       }
     }
   }
@@ -98,36 +98,31 @@ public class DiscoverServer {
 
         channel = b.bind(port).sync().channel();
 
-        logger.info("Discovery BackupServer started, bind port {}", port);
+        logger.info("Discovery server started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {
-          logger.info("Shutdown discovery BackupServer");
+          logger.info("Shutdown discovery server");
           break;
         }
-        logger.warn(" . Recreating after 5 sec pause...");
+        logger.warn(" Restart discovery server after 5 sec pause...");
         Thread.sleep(5000);
       }
     } catch (Exception e) {
-      if (e instanceof BindException && e.getMessage().contains("Address already in use")) {
-        logger.error(
-            "Port " + port + " is busy. Check if another instance is running with the same port.");
-      } else {
-        logger.error("Can't start discover: ", e);
-      }
+      logger.error("Start discovery server with port {} failed.", port, e);
     } finally {
       group.shutdownGracefully().sync();
     }
   }
 
   public void close() {
-    logger.info("Closing BackupServer...");
+    logger.info("Closing discovery server...");
     shutdown = true;
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
       } catch (Exception e) {
-        logger.warn("Problems closing BackupServer", e);
+        logger.info("Closing discovery server failed.", e);
       }
     }
 
@@ -135,7 +130,7 @@ public class DiscoverServer {
       try {
         discoveryExecutor.close();
       } catch (Exception e) {
-        logger.warn("Problems closing DiscoveryExecutor", e);
+        logger.info("Closing discovery executor failed.", e);
       }
     }
   }
