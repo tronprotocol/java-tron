@@ -105,9 +105,9 @@ public class BackupManager implements EventHandler{
         members.forEach(member -> messageHandler.accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
             new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in sync worker", t);
+        logger.error("Exception in send keep alive message", t);
       }
-    }, 1000, 500, TimeUnit.MILLISECONDS);
+    }, 1, 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -115,11 +115,11 @@ public class BackupManager implements EventHandler{
     InetSocketAddress sender = udpEvent.getAddress();
     Message msg = udpEvent.getMessage();
     if (!msg.getType().equals(BACKUP_KEEP_ALIVE)){
-      logger.info("Receive not keep alive message from {}, type {}", sender.getHostString(), msg.getType());
+      logger.warn("Receive not keep alive message from {}, type {}", sender.getHostString(), msg.getType());
       return;
     }
     if (!members.contains(sender.getHostString())){
-      logger.info("Receive keep alive message from {} is not my member.", sender.getHostString());
+      logger.warn("Receive keep alive message from {} is not my member.", sender.getHostString());
       return;
     }
 
