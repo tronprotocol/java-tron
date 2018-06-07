@@ -1,7 +1,6 @@
 package org.tron.core.exception;
 
 public class ContractSizeNotEqualToOneException extends ContractValidateException{
-
   public ContractSizeNotEqualToOneException() {
     super();
   }
