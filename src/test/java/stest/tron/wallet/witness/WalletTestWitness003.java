@@ -86,7 +86,7 @@ public class WalletTestWitness003 {
     Assert.assertFalse(createWitness(INVAILD_ADDRESS, createUrl, testKey002));
   }
 
-  @Test
+  @Test(enabled = true)
   public void testCreateWitness() {
     //If you are already is witness, apply failed
     createWitness(fromAddress, createUrl, testKey002);
@@ -112,7 +112,7 @@ public class WalletTestWitness003 {
     //}
   }
 
-  @Test
+  @Test(enabled = true)
   public void testUpdateWitness() {
     try {
       Thread.sleep(18000);

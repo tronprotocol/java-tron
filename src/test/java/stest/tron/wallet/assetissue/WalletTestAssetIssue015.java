@@ -47,7 +47,7 @@ public class WalletTestAssetIssue015 {
 
 
   private static final long now = System.currentTimeMillis();
-  private static String name = "AssetIssue014_" + Long.toString(now);
+  private static String name = "AssetIssue015_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;

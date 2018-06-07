@@ -65,6 +65,7 @@ public class WalletTestTransfer006 {
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
 
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -107,6 +108,7 @@ public class WalletTestTransfer006 {
     accountPaginated.setLimit(0);
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsToThis(accountPaginated.build());
+
     Optional<GrpcAPI.TransactionList>  gettransactionstothis = Optional
         .ofNullable(transactionList);
 

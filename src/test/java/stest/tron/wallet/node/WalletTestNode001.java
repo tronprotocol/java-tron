@@ -59,11 +59,22 @@ public class WalletTestNode001 {
       Assert.assertFalse(nodeList.getNodesCount() == 0);
     }
     for (Integer j = 0; j < nodeList.getNodesCount(); j++) {
+      Assert.assertTrue(nodeList.getNodes(j).hasAddress());
       Assert.assertFalse(nodeList.getNodes(j).getAddress().getHost().isEmpty());
       Assert.assertTrue(nodeList.getNodes(j).getAddress().getPort() < 65535);
       logger.info(ByteArray.toStr(nodeList.getNodes(j).getAddress().getHost().toByteArray()));
     }
     logger.info("get listnode succesuflly");
+
+    //Improve coverage.
+    GrpcAPI.NodeList newNodeList = blockingStubFull
+        .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+    nodeList.equals(nodeList);
+    nodeList.equals(newNodeList);
+    nodeList.getNodesList();
+    nodeList.hashCode();
+    nodeList.isInitialized();
+
   }
 
   @AfterClass

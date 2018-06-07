@@ -87,6 +87,12 @@ public class WalletTestAccount001 {
     Account invalidQueryResult = queryAccount(invalidTestKey, blockingStubFull);
     Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
     Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
+
+    //Improve coverage.
+    queryResult.hashCode();
+    queryResult.getSerializedSize();
+    queryResult.equals(queryResult);
+    queryResult.equals(invalidQueryResult);
   }
 
   @Test

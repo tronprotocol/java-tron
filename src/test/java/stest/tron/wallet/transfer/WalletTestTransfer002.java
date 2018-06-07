@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
+import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -27,15 +28,25 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestTransfer002 {
+  //testng001、testng002、testng003、testng004
+  private final String testKey002 =
+      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey003 =
+      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
+
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -58,29 +69,35 @@ public class WalletTestTransfer002 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
-  /*  @Test(enabled = true)
+    @Test(enabled = true)
   public void testGetTotalTransaction() {
     NumberMessage beforeGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(beforeGetTotalTransaction.getNum()));
     Long beforeTotalTransaction = beforeGetTotalTransaction.getNum();
-    Assert.assertTrue(sendcoin(toAddress, 1000000, fromAddress, testKey002));
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000, fromAddress,
+        testKey002,blockingStubFull));
     NumberMessage afterGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(afterGetTotalTransaction.getNum()));
     Long afterTotalTransaction = afterGetTotalTransaction.getNum();
     Assert.assertTrue(afterTotalTransaction - beforeTotalTransaction == 1);
 
-    NumberMessage solidityGetTotalTransaction = blockingStubSolidity
-        .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
-    logger.info(Long.toString(solidityGetTotalTransaction.getNum()));
-    if (solidityGetTotalTransaction.getNum() == 0) {
-      logger.info("On soliditynode, there is no transactions,please test by manual");
-    }
-    Assert.assertTrue(solidityGetTotalTransaction.getNum() > 0);
-  }*/
+    //Improve coverage.
+    afterGetTotalTransaction.equals(beforeGetTotalTransaction);
+    afterGetTotalTransaction.equals(afterGetTotalTransaction);
+    afterGetTotalTransaction.hashCode();
+    afterGetTotalTransaction.isInitialized();
+    afterGetTotalTransaction.getSerializedSize();
+    afterGetTotalTransaction.getDefaultInstanceForType();
+    afterGetTotalTransaction.getParserForType();
+    afterGetTotalTransaction.getUnknownFields();
+
+
+  }
 
   @AfterClass
   public void shutdown() throws InterruptedException {

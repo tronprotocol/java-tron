@@ -90,7 +90,18 @@ public class WalletTestWitness002 {
       Assert.assertFalse(result.get().getWitnesses(j).getAddress().isEmpty());
       Assert.assertFalse(result.get().getWitnesses(j).getUrl().isEmpty());
       //Assert.assertTrue(result.get().getWitnesses(j).getLatestSlotNum() > 0);
+      result.get().getWitnesses(j).getUrlBytes();
+      result.get().getWitnesses(j).getLatestBlockNum();
+      result.get().getWitnesses(j).getLatestSlotNum();
+      result.get().getWitnesses(j).getTotalMissed();
+      result.get().getWitnesses(j).getTotalProduced();
     }
+
+    //Improve coverage.
+    witnesslist.equals(result.get());
+    witnesslist.hashCode();
+    witnesslist.getSerializedSize();
+    witnesslist.equals(null);
   }
 
   @Test(enabled = true)

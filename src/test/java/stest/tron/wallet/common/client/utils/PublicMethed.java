@@ -195,6 +195,9 @@ public class PublicMethed {
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(Integer.toString(response.getCode().getNumber()));
+      logger.info(Integer.toString(response.getCodeValue()));
+
       return false;
     } else {
       //logger.info(name);
@@ -441,6 +444,36 @@ public class PublicMethed {
       wait++;
       if (wait == 9) {
         logger.info("Didn't syn,skip to next case.");
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean waitProduceNextBlock(WalletGrpc.WalletBlockingStub
+      blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    final Long currentNum = currentBlock.getBlockHeader().getRawData().getNumber();
+
+    Block nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
+
+    Integer wait = 0;
+    logger.info("Block num is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
+    while (nextNum <= currentNum + 1 && wait < 10) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      logger.info("Wait to produce next block");
+      nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
+      wait++;
+      if (wait == 9) {
+        logger.info("These 30 second didn't produce a block,please check.");
         return false;
       }
     }

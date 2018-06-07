@@ -232,6 +232,16 @@ public class WalletTestAssetIssue003 {
       Assert.assertTrue(assetIssueList.getAssetIssue(j).getTotalSupply() > 0);
       logger.info("test get all assetissue");
     }
+
+    //Improve coverage.
+    assetIssueList.equals(assetIssueList);
+    assetIssueList.equals(null);
+    GrpcAPI.AssetIssueList newAssetIssueList = blockingStubFull
+        .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
+    assetIssueList.equals(newAssetIssueList);
+    assetIssueList.hashCode();
+    assetIssueList.getSerializedSize();
+
   }
 
   @AfterClass(enabled = true)
