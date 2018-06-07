@@ -1,6 +1,7 @@
 package stest.tron.wallet.account;
 
 import com.google.protobuf.ByteString;
+import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
@@ -11,43 +12,31 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
+import org.tron.core.Wallet;
 
 
 @Slf4j
 public class WalletTestAccount001 {
-
-
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
   private final String invalidTestKey =
       "592BB6C9BB255409A6A45EFD18E9A74FECDDCCE93A40D96B70FBE334E6361E36";
-  private final String solidityKey =
-      "86ff0c39337e9e97526c80af51f0e80411f5a1251473035f380f3671c1aa2b4b";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -60,6 +49,12 @@ public class WalletTestAccount001 {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass
   public void beforeClass() {
@@ -79,6 +74,10 @@ public class WalletTestAccount001 {
   public void testqueryaccountfromfullnode() {
     //Query success, get the right balance,bandwidth and the account name.
     Account queryResult = queryAccount(testKey002, blockingStubFull);
+    /*    Account queryResult = PublicMethed.queryAccountByAddress(fromAddress,blockingStubFull);
+    logger.info(ByteArray.toStr(queryResult.getAccountName().toByteArray()));
+    logger.info(Long.toString(queryResult.getBalance()));
+    logger.info(ByteArray.toStr(queryResult.getAddress().toByteArray()));*/
     Assert.assertTrue(queryResult.getBalance() > 0);
     //Assert.assertTrue(queryResult.getBandwidth() >= 0);
     Assert.assertTrue(queryResult.getAccountName().toByteArray().length > 0);
@@ -88,6 +87,12 @@ public class WalletTestAccount001 {
     Account invalidQueryResult = queryAccount(invalidTestKey, blockingStubFull);
     Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
     Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
+
+    //Improve coverage.
+    queryResult.hashCode();
+    queryResult.getSerializedSize();
+    queryResult.equals(queryResult);
+    queryResult.equals(invalidQueryResult);
   }
 
   @Test
@@ -118,7 +123,6 @@ public class WalletTestAccount001 {
 
   public Account queryAccount(String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    byte[] address;
     ECKey temKey = null;
     try {
       BigInteger priK = new BigInteger(priKey, 16);
@@ -137,14 +141,19 @@ public class WalletTestAccount001 {
       byte[] pubKeyHex = Hex.decode(pubKeyAsc);
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
+    logger.info(Integer.toString(ecKey.getAddress().length));
+
+    //PublicMethed.AddPreFix();
+    logger.info(Integer.toString(ecKey.getAddress().length));
+    System.out.println("address ====== " + ByteArray.toHexString(ecKey.getAddress()));
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
+    //return grpcQueryAccount(address,blockingStubFull);
   }
 
 
   public Account solidityqueryAccount(String priKey,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
 
-    byte[] address;
     ECKey temKey = null;
     try {
       BigInteger priK = new BigInteger(priKey, 16);
@@ -163,7 +172,9 @@ public class WalletTestAccount001 {
       byte[] pubKeyHex = Hex.decode(pubKeyAsc);
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
+    //byte[] address = PublicMethed.AddPreFix(ecKey.getAddress());
     return grpcQueryAccountSolidity(ecKey.getAddress(), blockingStubSolidity);
+    //return grpcQueryAccountSolidity(address,blockingStubSolidity);
   }
 
   public String loadPubKey() {
@@ -177,6 +188,7 @@ public class WalletTestAccount001 {
 
   public Account grpcQueryAccount(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    //address = PublicMethed.AddPreFix(address);
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
@@ -184,6 +196,7 @@ public class WalletTestAccount001 {
 
   public Account grpcQueryAccountSolidity(byte[] address,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    //address = PublicMethed.AddPreFix(address);
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubSolidity.getAccount(request);

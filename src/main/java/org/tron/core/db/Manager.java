@@ -848,7 +848,7 @@ public class Manager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return blockStore.dbSource.allKeys().size() > 0 || this.khaosDb.hasData();
+    return blockStore.dbSource.iterator().hasNext() || this.khaosDb.hasData();
   }
 
   /**
