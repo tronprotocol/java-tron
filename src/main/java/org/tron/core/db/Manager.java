@@ -867,7 +867,7 @@ public class Manager {
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException("act size greater than 1, this is extend feature");
+      throw new ContractSizeNotEqualToOneException("act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
