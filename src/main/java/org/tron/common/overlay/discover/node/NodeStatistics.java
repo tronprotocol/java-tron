@@ -31,7 +31,7 @@ public class NodeStatistics {
 
   public class StatHandler {
 
-    AtomicLong count = new AtomicLong(0);
+    private AtomicLong count = new AtomicLong(0);
 
     public void add() {
       count.incrementAndGet();

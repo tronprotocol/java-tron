@@ -113,7 +113,7 @@ public class Node implements Serializable {
   }
 
   public void setId(byte[] id) {
-    this.id = id;
+    this.id = id == null ? null : id.clone();
   }
 
   public String getHost() {
