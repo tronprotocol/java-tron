@@ -25,6 +25,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -111,13 +112,17 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushTransactions(trx);
+    } catch (ContractSizeNotEqualToOneException e){
+      logger.info("Contract validate failed" + e.getMessage());
+      throw new BadTransactionException();
     } catch (ContractValidateException e) {
       logger.info("Contract validate failed" + e.getMessage());
       //throw new BadTransactionException();
       return false;
     } catch (ContractExeException e) {
       logger.info("Contract execute failed" + e.getMessage());
-      throw new BadTransactionException();
+      //throw new BadTransactionException();
+      return false;
     } catch (ValidateSignatureException e) {
       logger.info("ValidateSignatureException" + e.getMessage());
       throw new BadTransactionException();
