@@ -50,13 +50,15 @@ public class BackupManager implements EventHandler{
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private MessageHandler messageHandler;
+  private volatile MessageHandler messageHandler;
 
   private volatile BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
 
   private volatile long keepAliveTimeout = 3000;
+
+  private volatile boolean isInit = false;
 
   public void setMessageHandler(MessageHandler messageHandler) {
     this.messageHandler = messageHandler;
@@ -78,6 +80,11 @@ public class BackupManager implements EventHandler{
   }
 
   public void init() {
+
+    if (isInit){
+      return;
+    }
+    isInit = true;
 
     for (String member : args.getBackupMembers()) {
       members.add(member);
@@ -105,7 +112,7 @@ public class BackupManager implements EventHandler{
         members.forEach(member -> messageHandler.accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
             new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message", t);
+        logger.error("Exception in send keep alive message.", t.getMessage());
       }
     }, 1, 1, TimeUnit.SECONDS);
   }
@@ -146,6 +153,5 @@ public class BackupManager implements EventHandler{
   public void channelActivated(){
     init();
   }
-
 
 }

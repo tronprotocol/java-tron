@@ -53,7 +53,7 @@ public class BackupServer {
     }
   }
 
-  public void start() throws Exception {
+  private void start() throws Exception {
     NioEventLoopGroup group = new NioEventLoopGroup(1);
     try {
       while (!shutdown) {
