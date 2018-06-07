@@ -283,6 +283,5 @@ public class NodeHandler {
     return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort()
         + ", id=" + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
   }
-
-
+  
 }
