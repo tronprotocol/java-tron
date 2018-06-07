@@ -241,10 +241,13 @@ public class WitnessController {
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
-    final List<VotesCapsule> votesList = votesStore.getAllVotes();
+    org.tron.core.db.common.iterator.DBIterator dbIterator = votesStore.getIterator();
     AccountStore accountStore = this.manager.getAccountStore();
-    logger.info("there is {} new votes in this epoch", votesList.size());
-    votesList.forEach(votes -> {
+
+    long sizeCount = 0;
+    while (dbIterator.hasNext()) {
+      VotesCapsule votes = new VotesCapsule(dbIterator.next().getValue());
+
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
 
@@ -285,7 +288,10 @@ public class WitnessController {
                   + sum.get() + "]");
         }
       }
-    });
+      sizeCount++;
+    }
+    logger.info("there is {} new votes in this epoch", sizeCount);
+
     votesStore.reset();
     return countWitness;
   }
