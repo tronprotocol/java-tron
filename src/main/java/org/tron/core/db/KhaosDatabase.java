@@ -14,6 +14,7 @@ import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 import javafx.util.Pair;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -108,10 +109,12 @@ public class KhaosDatabase extends TronDatabase {
         ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id.equals(hash));
-          if (listBlk.isEmpty()) {
-            numKblkMap.remove(num);
-          }
         }
+
+        if (CollectionUtils.isEmpty(listBlk)) {
+          numKblkMap.remove(num);
+        }
+
         this.hashKblkMap.remove(hash);
         return true;
       }
