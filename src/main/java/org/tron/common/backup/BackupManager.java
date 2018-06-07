@@ -83,7 +83,7 @@ public class BackupManager implements EventHandler{
       members.add(member);
     }
 
-    logger.info("Backup members : size= {}, {}", members.size(), members);
+    logger.info("Backup members: size= {}, {}", members.size(), members);
 
     setStatus(INIT);
 
