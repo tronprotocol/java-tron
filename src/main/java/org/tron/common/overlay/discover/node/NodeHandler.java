@@ -15,18 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.net.udp.handler.UdpEvent;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.message.discover.FindNodeMessage;
+import org.tron.common.net.udp.message.discover.NeighborsMessage;
+import org.tron.common.net.udp.message.discover.PingMessage;
+import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.core.config.args.Args;
 
 /**
@@ -35,9 +37,9 @@ import org.tron.core.config.args.Args;
  */
 public class NodeHandler {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeHandler");
+  private static final Logger logger = LoggerFactory.getLogger("NodeHandler");
 
-  static long PingTimeout = 15000;
+  private static long PingTimeout = 15000;
 
   public enum State {
     /**
@@ -79,8 +81,8 @@ public class NodeHandler {
     NonActive
   }
 
-  Node node;
-  State state;
+  private Node node;
+  private State state;
   private NodeManager nodeManager;
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
@@ -106,6 +108,10 @@ public class NodeHandler {
     return state;
   }
 
+  public void setNode(Node node) {
+    this.node = node;
+  }
+
   public NodeStatistics getNodeStatistics() {
     if (nodeStatistics == null) {
       nodeStatistics = new NodeStatistics(node);
@@ -126,7 +132,7 @@ public class NodeHandler {
     }
     if (!node.isDiscoveryNode()) {
       if (newState == State.Alive) {
-        Node evictCandidate = nodeManager.table.addNode(this.node);
+        Node evictCandidate = nodeManager.getTable().addNode(this.node);
         if (evictCandidate == null) {
           newState = State.Active;
         } else {
@@ -139,7 +145,7 @@ public class NodeHandler {
       if (newState == State.Active) {
         if (oldState == State.Alive) {
           // new node won the challenge
-          nodeManager.table.addNode(node);
+          nodeManager.getTable().addNode(node);
         } else if (oldState == State.EvictCandidate) {
           // nothing to do here the node is already in the table
         } else {
@@ -151,7 +157,7 @@ public class NodeHandler {
         if (oldState == State.EvictCandidate) {
           // lost the challenge
           // Removing ourselves from the table
-          nodeManager.table.dropNode(node);
+          nodeManager.getTable().dropNode(node);
           // Congratulate the winner
           replaceCandidate.changeState(State.Active);
         } else if (oldState == State.Alive) {
@@ -169,9 +175,9 @@ public class NodeHandler {
     state = newState;
   }
 
-  void handlePing(PingMessage msg) {
+  public void handlePing(PingMessage msg) {
     getNodeStatistics().discoverInPing.add();
-    if (!nodeManager.table.getNode().equals(node)) {
+    if (!nodeManager.getTable().getNode().equals(node)) {
       sendPong();
     }
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
@@ -181,7 +187,7 @@ public class NodeHandler {
     }
   }
 
-  void handlePong(PongMessage msg) {
+  public void handlePong(PongMessage msg) {
     if (waitForPong) {
       waitForPong = false;
       getNodeStatistics().discoverInPong.add();
@@ -197,7 +203,7 @@ public class NodeHandler {
     }
   }
 
-  void handleNeighbours(NeighborsMessage msg) {
+  public void handleNeighbours(NeighborsMessage msg) {
     getNodeStatistics().discoverInNeighbours.add();
     for (Node n : msg.getNodes()) {
       if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())) {
@@ -206,13 +212,13 @@ public class NodeHandler {
     }
   }
 
-  void handleFindNode(FindNodeMessage msg) {
+  public void handleFindNode(FindNodeMessage msg) {
     getNodeStatistics().discoverInFind.add();
-    List<Node> closest = nodeManager.table.getClosestNodes(msg.getTargetId());
+    List<Node> closest = nodeManager.getTable().getClosestNodes(msg.getTargetId());
     sendNeighbours(closest);
   }
 
-  void handleTimedOut() {
+  public void handleTimedOut() {
     logger.debug("ping timeout {}", node);
     waitForPong = false;
     if (--pingTrials > 0) {
@@ -228,7 +234,7 @@ public class NodeHandler {
     }
   }
 
-  void sendPing() {
+  public void sendPing() {
     Message ping = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
     waitForPong = true;
     pingSent = System.currentTimeMillis();
@@ -250,26 +256,26 @@ public class NodeHandler {
     }, PingTimeout, TimeUnit.MILLISECONDS);
   }
 
-  void sendPong() {
+  public void sendPong() {
     Message pong = new PongMessage(nodeManager.getPublicHomeNode());
     sendMessage(pong);
     getNodeStatistics().discoverOutPong.add();
   }
 
-  void sendNeighbours(List<Node> neighbours) {
+  public void sendNeighbours(List<Node> neighbours) {
     Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
     sendMessage(neighbors);
     getNodeStatistics().discoverOutNeighbours.add();
   }
 
-  void sendFindNode(byte[] target) {
+  public void sendFindNode(byte[] target) {
     Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();
   }
 
   private void sendMessage(Message msg) {
-    nodeManager.sendOutbound(new DiscoveryEvent(msg, getInetSocketAddress()));
+    nodeManager.sendOutbound(new UdpEvent(msg, getInetSocketAddress()));
   }
 
   @Override
@@ -277,6 +283,5 @@ public class NodeHandler {
     return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort()
         + ", id=" + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
   }
-
-
+  
 }

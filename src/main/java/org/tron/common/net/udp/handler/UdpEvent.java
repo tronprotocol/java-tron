@@ -15,17 +15,17 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.net.udp.handler;
 
 import java.net.InetSocketAddress;
-import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.net.udp.message.Message;
 
-public class DiscoveryEvent {
+public class UdpEvent {
 
   private Message message;
   private InetSocketAddress address;
 
-  public DiscoveryEvent(Message m, InetSocketAddress a) {
+  public UdpEvent(Message m, InetSocketAddress a) {
     message = m;
     address = a;
   }

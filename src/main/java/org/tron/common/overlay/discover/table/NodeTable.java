@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 
 /**
  * Created by kest on 5/25/15.

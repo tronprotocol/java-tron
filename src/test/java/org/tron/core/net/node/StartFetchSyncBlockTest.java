@@ -16,7 +16,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -160,7 +160,7 @@ public class StartFetchSyncBlockTest {
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
         if (cfgArgs.isWitness()) {
-          appT.addService(new WitnessService(appT));
+          appT.addService(new WitnessService(appT, context));
         }
 //        appT.initServices(cfgArgs);
 //        appT.startServices();
@@ -206,7 +206,7 @@ public class StartFetchSyncBlockTest {
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-      org.tron.common.overlay.discover.Node node = new Node(
+      Node node = new Node(
           "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17890");
       new Thread(new Runnable() {
         @Override

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.net.udp.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -23,7 +23,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.message.Message;
+import org.tron.common.net.udp.message.Message;
 
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 
@@ -32,19 +32,17 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
   private int maxSize = 2048;
 
   @Override
-  public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out)
-      throws Exception {
+  public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {
     ByteBuf buf = packet.content();
     int length = buf.readableBytes();
     if (length > maxSize) {
-      logger
-          .error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
+      logger.error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
       return;
     }
     byte[] encoded = new byte[length];
     buf.readBytes(encoded);
     try {
-      DiscoveryEvent event = new DiscoveryEvent(Message.parse(encoded), packet.sender());
+      UdpEvent event = new UdpEvent(Message.parse(encoded), packet.sender());
       out.add(event);
     } catch (Exception e) {
       logger.error("Parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length,

@@ -1,11 +1,13 @@
-package org.tron.common.overlay.discover.message;
+package org.tron.common.net.udp.message.discover;
+
+import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_NEIGHBORS;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
@@ -18,12 +20,12 @@ public class NeighborsMessage extends Message {
   private Discover.Neighbours neighbours;
 
   public NeighborsMessage(byte[] data) throws Exception{
-    super(Message.GET_PEERS, data);
+    super(DISCOVER_NEIGHBORS, data);
     this.neighbours = Discover.Neighbours.parseFrom(data);
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours) {
-    super(Message.GET_PEERS, null);
+    super(DISCOVER_NEIGHBORS, null);
     Builder builder = Neighbours.newBuilder()
         .setTimestamp(System.currentTimeMillis());
 
