@@ -55,14 +55,15 @@ public class WalletTestTransfer006 {
   private static final byte[] INVAILD_ADDRESS =
       Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
+
 
 
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -107,6 +108,7 @@ public class WalletTestTransfer006 {
     accountPaginated.setLimit(0);
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsToThis(accountPaginated.build());
+
     Optional<GrpcAPI.TransactionList>  gettransactionstothis = Optional
         .ofNullable(transactionList);
 

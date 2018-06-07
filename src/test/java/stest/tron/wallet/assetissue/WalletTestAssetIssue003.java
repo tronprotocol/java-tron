@@ -46,8 +46,8 @@ public class WalletTestAssetIssue003 {
   private static final byte[] toAddress = Base58
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue003_" + Long.toString(now);
@@ -232,6 +232,16 @@ public class WalletTestAssetIssue003 {
       Assert.assertTrue(assetIssueList.getAssetIssue(j).getTotalSupply() > 0);
       logger.info("test get all assetissue");
     }
+
+    //Improve coverage.
+    assetIssueList.equals(assetIssueList);
+    assetIssueList.equals(null);
+    GrpcAPI.AssetIssueList newAssetIssueList = blockingStubFull
+        .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
+    assetIssueList.equals(newAssetIssueList);
+    assetIssueList.hashCode();
+    assetIssueList.getSerializedSize();
+
   }
 
   @AfterClass(enabled = true)

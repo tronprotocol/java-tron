@@ -46,7 +46,7 @@ public class WalletTestAssetIssue004 {
   private static final byte[] INVALID_ADDRESS = Base58
       .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue004_" + Long.toString(now);

@@ -69,6 +69,15 @@ public class WalletTestBlock001 {
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("test getcurrentblock");
+
+    //Improve coverage.
+    currentBlock.equals(currentBlock);
+    Block newBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    newBlock.equals(currentBlock);
+    newBlock.hashCode();
+    newBlock.getSerializedSize();
+    newBlock.getTransactionsCount();
+    newBlock.getTransactionsList();
   }
 
   @Test

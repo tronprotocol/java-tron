@@ -19,6 +19,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -45,8 +46,8 @@ public class WalletTestTransfer001 {
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   private static final byte[] toAddress = Base58
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.GetFinalAddress(testKey003);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
 
   private ManagedChannel channelFull = null;
@@ -57,6 +58,17 @@ public class WalletTestTransfer001 {
       .get(0);
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private
+
+  //send account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] sendAccountAddress = ecKey1.getAddress();
+  String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+  //receipt account
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiptAccountAddress = ecKey2.getAddress();
+  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -75,28 +87,34 @@ public class WalletTestTransfer001 {
         .usePlaintext(true)
         .build();
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
+
+    Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,
+        fromAddress,testKey002,blockingStubFull));
   }
 
   @Test
-  public void testExceptTransferAssetBandwitchDecreaseWithin10Second() {
-    /*        try {
-            Thread.sleep(16000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        logger.info("First time");
-        Assert.assertTrue(Sendcoin(toAddress, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        logger.info("Within 10 seconds");
-        //Assert.assertFalse(Sendcoin(toAddress, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        Assert.assertFalse(Sendcoin(toAddress, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        //Assert.assertFalse(Sendcoin(toAddress, 1000000L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        try {
-            Thread.sleep(16000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        Assert.assertTrue(Sendcoin(toAddress, 10L, NO_BANDWITCH_ADDRESS,no_bandwitch));
-        logger.info("Out 10 seconds");*/
+  public void testSendCoin() {
+    //Test send coin.
+    Account sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
+    Long sendAccountBeforeBalance = sendAccount.getBalance();
+    Assert.assertTrue(sendAccountBeforeBalance == 90000000000L);
+    Account receiptAccount = PublicMethed.queryAccount(receiptAccountKey,blockingStubFull);
+    Long receiptAccountBeforeBalance = receiptAccount.getBalance();
+    Assert.assertTrue(receiptAccountBeforeBalance == 0);
+
+    //Test send coin
+    Assert.assertTrue(PublicMethed.sendcoin(receiptAccountAddress,49880000000L,
+        sendAccountAddress,sendAccountKey,blockingStubFull));
+
+    sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
+    Long sendAccountAfterBalance = sendAccount.getBalance();
+    logger.info(Long.toString(sendAccountAfterBalance));
+    Assert.assertTrue(sendAccountAfterBalance == 90000000000L - 49880000000L - 100000L);
+
+    receiptAccount = PublicMethed.queryAccount(receiptAccountKey,blockingStubFull);
+    Long receiptAccountAfterBalance = receiptAccount.getBalance();
+    Assert.assertTrue(receiptAccountAfterBalance == 49880000000L);
+
 
     //Freeze balance to get bandwidth.
     Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L,

@@ -19,6 +19,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -82,7 +83,7 @@ public class PublicMethed {
         logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
         return false;
       } else {
-                try {
+        try {
           Thread.sleep(3000);
         } catch (InterruptedException e) {
           e.printStackTrace();
@@ -95,10 +96,11 @@ public class PublicMethed {
     }
   }
 
-  public static Account queryAccountByAddress(byte[] address,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static Account queryAccountByAddress(byte[] address,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBS = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
 
@@ -193,6 +195,9 @@ public class PublicMethed {
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(Integer.toString(response.getCode().getNumber()));
+      logger.info(Integer.toString(response.getCodeValue()));
+
       return false;
     } else {
       //logger.info(name);
@@ -445,24 +450,54 @@ public class PublicMethed {
     return true;
   }
 
+  public static boolean waitProduceNextBlock(WalletGrpc.WalletBlockingStub
+      blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    final Long currentNum = currentBlock.getBlockHeader().getRawData().getNumber();
+
+    Block nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
+
+    Integer wait = 0;
+    logger.info("Block num is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
+    while (nextNum <= currentNum + 1 && wait < 10) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      logger.info("Wait to produce next block");
+      nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
+      wait++;
+      if (wait == 9) {
+        logger.info("These 30 second didn't produce a block,please check.");
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static AccountNetMessage getAccountNet(byte[] address,WalletGrpc.WalletBlockingStub
       blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBS = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccountNet(request);
   }
 
-  public static byte[] AddPreFix (byte[] address) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    Config config = Configuration.getByPath("testng.conf");
-    byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
-    byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
-    byte[] preFix = new byte[1];
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
-      preFix[0] = ADD_PRE_FIX_BYTE_MAINNET;
-    }else {
+  /*  public static byte[] addPreFix(byte[] address) {
+  Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  Config config = Configuration.getByPath("testng.conf");
+  byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
+  byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
+  byte[] preFix = new byte[1];
+  if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
+    WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+    preFix[0] = ADD_PRE_FIX_BYTE_MAINNET;
+   }else {
       WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_TESTNET);
       preFix[0] = ADD_PRE_FIX_BYTE_TESTNET;
     }
@@ -471,13 +506,45 @@ public class PublicMethed {
     System.arraycopy(address, 0, finalAddress, preFix.length, address.length);
     return finalAddress;
 
-  }
+  }*/
 
-  public static byte[] GetFinalAddress (String priKey) {
+  public static byte[] getFinalAddress(String priKey) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-     WalletClient walletClient;
+    WalletClient walletClient;
     walletClient = new WalletClient(priKey);
     walletClient.init(0);
     return walletClient.getAddress();
+  }
+
+  public static boolean createAccount(byte[] ownerAddress,byte[] newAddress,String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setAccountAddress(ByteString.copyFrom(newAddress));
+    Contract.AccountCreateContract contract = builder.build();
+    Transaction transaction = blockingStubFull.createAccount(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction == null");
+    }
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
+
   }
 }

@@ -40,7 +40,7 @@ public class WallettestP0003 {
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
 
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;

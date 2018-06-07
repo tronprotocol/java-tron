@@ -45,8 +45,8 @@ public class WalletTestAccount004 {
   private static final byte[] NO_FROZEN_ADDRESS = Base58
       .decodeFromBase58Check("TKVyqEJaq8QRPQfWE8s8WPb5c92kanAdLo");*/
 
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
-  private final byte[] noFrozenAddress = PublicMethed.GetFinalAddress(noFrozenBalanceTestKey);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] noFrozenAddress = PublicMethed.getFinalAddress(noFrozenBalanceTestKey);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;

@@ -46,7 +46,7 @@ public class WalletTestWitness001 {
   /*  //testng001、testng002、testng003、testng004
   private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
-  private final byte[] fromAddress = PublicMethed.GetFinalAddress(testKey002);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
 
 
@@ -84,6 +84,8 @@ public class WalletTestWitness001 {
 
   @Test(enabled = true)
   public void testVoteWitness() {
+    Base58.encode58Check(fromAddress);
+    logger.info(Base58.encode58Check(fromAddress));
     String voteStr = "TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes";
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
@@ -186,7 +188,7 @@ public class WalletTestWitness001 {
       for (int j = 0; j < afterVote.getVotesCount(); j++) {
         logger.info(Long.toString(Long.parseLong(witness.get(key))));
         logger.info(key);
-        if (key.equals("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")) {
+        if (key.equals("TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes")) {
           logger.info("catch it");
           logger.info(Long.toString(afterVote.getVotes(j).getVoteCount()));
           logger.info(Long.toString(Long.parseLong(witness.get(key))));
