@@ -59,7 +59,6 @@ public class KeystoreFactory {
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
     System.out.println("Your address is " + credentials.getAddress());
-    ;
   }
 
   private void importPrivatekey() throws CipherException, IOException {
@@ -98,7 +97,6 @@ public class KeystoreFactory {
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
     System.out.println("Your address is " + credentials.getAddress());
-    ;
   }
 
   private void help() {
