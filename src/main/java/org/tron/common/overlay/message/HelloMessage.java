@@ -1,13 +1,10 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;

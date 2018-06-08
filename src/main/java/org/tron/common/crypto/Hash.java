@@ -36,28 +36,11 @@ public class Hash {
   private static final String HASH_256_ALGORITHM_NAME;
   private static final String HASH_512_ALGORITHM_NAME;
 
-  private static final MessageDigest sha256digest;
-
   static {
     Security.addProvider(TronCastleProvider.getInstance());
     CRYPTO_PROVIDER = Security.getProvider("SC");
     HASH_256_ALGORITHM_NAME = "TRON-KECCAK-256";
     HASH_512_ALGORITHM_NAME = "TRON-KECCAK-512";
-    try {
-      sha256digest = MessageDigest.getInstance("SHA-256");
-    } catch (NoSuchAlgorithmException e) {
-      logger.error("Can't initialize HashUtils", e);
-      throw new RuntimeException(e); // Can't happen.
-    }
-
-  }
-
-  /**
-   * @param input - data for hashing
-   * @return - sha256 hash of the data
-   */
-  public static byte[] sha256(byte[] input) {
-    return sha256digest.digest(input);
   }
 
   public static byte[] sha3(byte[] input) {

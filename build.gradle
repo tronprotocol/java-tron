@@ -244,6 +244,25 @@ test {
     jacoco {
         append = true
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+}
+
+task stest(type: Test) {
+
+    useTestNG {
+        suites(file('src/test/resources/testng.xml'))
+    }
+
+    testLogging {
+        exceptionFormat = 'full'
+        showStackTraces = "true"
+    }
+
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
 }
 
@@ -253,17 +272,7 @@ jacocoTestReport {
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }
-}
-
-task stest(type: Test) {
-    useTestNG {
-        suites(file('src/test/resources/testng.xml'))
-    }
-
-    testLogging {
-        exceptionFormat = 'full'
-        showStackTraces = "true"
-    }
+    executionData = files('build/jacoco/jacocoTest.exec')
 }
 
 def binaryRelease(taskName, jarName, mainClass) {

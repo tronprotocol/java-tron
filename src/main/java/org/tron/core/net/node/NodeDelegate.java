@@ -20,7 +20,7 @@ public interface NodeDelegate {
   LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException, InterruptedException;
 
-  void handleTransaction(TransactionCapsule trx) throws BadTransactionException;
+  boolean handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
   LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws StoreException;
 

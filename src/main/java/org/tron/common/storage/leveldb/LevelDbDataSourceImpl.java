@@ -224,6 +224,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  @Deprecated
   @Override
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
@@ -240,6 +241,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  @Deprecated
   @Override
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();

@@ -17,6 +17,9 @@
  */
 package org.tron.common.overlay.discover;
 
+import org.tron.common.overlay.discover.node.NodeHandler;
+import org.tron.common.overlay.discover.node.NodeManager;
+
 /**
  * Allows to handle discovered nodes state changes
  *

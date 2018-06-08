@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import static org.tron.common.crypto.Hash.sha3;
 
@@ -89,7 +89,9 @@ public class Node implements Serializable {
   }
 
   public Node(byte[] id, String host, int port) {
-    this.id = id;
+    if (id != null) {
+      this.id = id.clone();
+    }
     this.host = host;
     this.port = port;
   }
@@ -107,11 +109,11 @@ public class Node implements Serializable {
   }
 
   public byte[] getId() {
-    return id;
+    return id == null ? id : id.clone();
   }
 
   public void setId(byte[] id) {
-    this.id = id;
+    this.id = id == null ? null : id.clone();
   }
 
   public String getHost() {
@@ -157,7 +159,7 @@ public class Node implements Serializable {
       return true;
     }
 
-    if (o instanceof Node) {
+    if (o.getClass() == getClass()) {
       return StringUtils.equals(getIdString(), ((Node) o).getIdString());
     }
 

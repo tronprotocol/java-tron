@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -36,21 +36,24 @@ import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.NodeHandler.State;
-import org.tron.common.overlay.discover.message.FindNodeMessage;
-import org.tron.common.overlay.discover.message.Message;
-import org.tron.common.overlay.discover.message.NeighborsMessage;
-import org.tron.common.overlay.discover.message.PingMessage;
-import org.tron.common.overlay.discover.message.PongMessage;
+import org.tron.common.net.udp.handler.EventHandler;
+import org.tron.common.net.udp.handler.UdpEvent;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.message.discover.FindNodeMessage;
+import org.tron.common.net.udp.message.discover.NeighborsMessage;
+import org.tron.common.net.udp.message.discover.PingMessage;
+import org.tron.common.net.udp.message.discover.PongMessage;
+import org.tron.common.overlay.discover.DiscoverListener;
+import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 @Component
-public class NodeManager {
+public class NodeManager implements EventHandler {
 
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private Args args = Args.getInstance();
 
@@ -58,18 +61,18 @@ public class NodeManager {
 
   private static final long LISTENER_REFRESH_RATE = 1000L;
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
-  static final int MAX_NODES = 2000;
-  static final int NODES_TRIM_THRESHOLD = 3000;
+  private static final int MAX_NODES = 2000;
+  private static final int NODES_TRIM_THRESHOLD = 3000;
 
-  Consumer<DiscoveryEvent> messageSender;
+  private Consumer<UdpEvent> messageSender;
 
-  NodeTable table;
+  private NodeTable table;
+  private Node homeNode;
   private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
-  final Node homeNode;
   private List<Node> bootNodes = new ArrayList<>();
 
   // option to handle inbounds only from known peers (i.e. which were discovered by ourselves)
-  boolean inboundOnlyFromKnownNodes = false;
+  private boolean inboundOnlyFromKnownNodes = false;
 
   private boolean discoveryEnabled;
 
@@ -82,9 +85,7 @@ public class NodeManager {
 
   @Autowired
   public NodeManager(Manager dbManager) {
-
     this.dbManager = dbManager;
-
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
     homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
@@ -113,15 +114,10 @@ public class NodeManager {
     return pongTimer;
   }
 
-  void channelActivated() {
-    // channel activated now can send messages
+  @Override
+  public void channelActivated() {
     if (!inited) {
-      // no another init on a new channel activation
       inited = true;
-
-      // this task is done asynchronously with some fixed rate
-      // to avoid any overhead in the NodeStatistics classes keeping them lightweight
-      // (which might be critical since they might be invoked from time critical sections)
       nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
         @Override
         public void run() {
@@ -150,9 +146,9 @@ public class NodeManager {
   }
 
   public boolean isNodeAlive(NodeHandler nodeHandler) {
-    return nodeHandler.state.equals(State.Alive) ||
-        nodeHandler.state.equals(State.Active) ||
-        nodeHandler.state.equals(State.EvictCandidate);
+    return nodeHandler.getState().equals(State.Alive) ||
+        nodeHandler.getState().equals(State.Active) ||
+        nodeHandler.getState().equals(State.EvictCandidate);
   }
 
   private void dbRead() {
@@ -175,7 +171,7 @@ public class NodeManager {
     dbManager.clearAndWriteNeighbours(batch);
   }
 
-  public void setMessageSender(Consumer<DiscoveryEvent> messageSender) {
+  public void setMessageSender(Consumer<UdpEvent> messageSender) {
     this.messageSender = messageSender;
   }
 
@@ -197,7 +193,7 @@ public class NodeManager {
       ret = new NodeHandler(n, this);
       nodeHandlerMap.put(key, ret);
     } else if (ret.getNode().isDiscoveryNode() && !n.isDiscoveryNode()) {
-      ret.node = n;
+      ret.setNode(n);
     }
     return ret;
   }
@@ -228,39 +224,38 @@ public class NodeManager {
     return getNodeHandler(n).getNodeStatistics();
   }
 
-  public void handleInbound(DiscoveryEvent discoveryEvent) {
-    Message m = discoveryEvent.getMessage();
-    InetSocketAddress sender = discoveryEvent.getAddress();
+  @Override
+  public void handleEvent(UdpEvent udpEvent) {
+    Message m = udpEvent.getMessage();
+    InetSocketAddress sender = udpEvent.getAddress();
 
     Node n = new Node(m.getNodeId(), sender.getHostString(), sender.getPort());
 
     if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
-      logger.debug(
-          "=/=> (" + sender + "): inbound packet from unknown peer rejected due to config option.");
+      logger.debug("Inbound packet from unknown peer {}.", sender.getAddress());
       return;
     }
     NodeHandler nodeHandler = getNodeHandler(n);
 
-    byte type = m.getType();
-    switch (type) {
-      case 1:
+    switch (m.getType()) {
+      case DISCOVER_PING:
         nodeHandler.handlePing((PingMessage) m);
         break;
-      case 2:
+      case DISCOVER_PONG:
         nodeHandler.handlePong((PongMessage) m);
         break;
-      case 3:
+      case DISCOVER_FIND_NODE:
         nodeHandler.handleFindNode((FindNodeMessage) m);
         break;
-      case 4:
+      case DISCOVER_NEIGHBORS:
         nodeHandler.handleNeighbours((NeighborsMessage) m);
         break;
     }
   }
 
-  public void sendOutbound(DiscoveryEvent discoveryEvent) {
+  public void sendOutbound(UdpEvent udpEvent) {
     if (discoveryEnabled && messageSender != null) {
-      messageSender.accept(discoveryEvent);
+      messageSender.accept(udpEvent);
     }
   }
 
@@ -355,9 +350,9 @@ public class NodeManager {
 
   private class ListenerHandler {
 
-    Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
-    DiscoverListener listener;
-    Predicate<NodeStatistics> filter;
+    private Map<NodeHandler, Object> discoveredNodes = new IdentityHashMap<>();
+    private DiscoverListener listener;
+    private Predicate<NodeStatistics> filter;
 
     ListenerHandler(DiscoverListener listener, Predicate<NodeStatistics> filter) {
       this.listener = listener;
