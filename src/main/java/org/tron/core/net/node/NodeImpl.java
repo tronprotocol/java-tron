@@ -886,8 +886,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             peer.getNode().getHost());
         return;
       }
-      del.handleTransaction(trxMsg.getTransactionCapsule());
-      broadcast(trxMsg);
+      if(del.handleTransaction(trxMsg.getTransactionCapsule())){
+        broadcast(trxMsg);
+      }
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
