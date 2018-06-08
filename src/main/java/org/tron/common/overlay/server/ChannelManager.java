@@ -23,9 +23,13 @@ import static org.tron.protos.Protocol.ReasonCode.UNKNOWN;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -33,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.protos.Protocol.ReasonCode;
@@ -53,6 +59,8 @@ public class ChannelManager {
   private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder().maximumSize(1000)
       .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
+  private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
+
   private Args args = Args.getInstance();
 
   private int maxActivePeers = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
@@ -69,10 +77,16 @@ public class ChannelManager {
     this.peerServer = peerServer;
     this.peerClient = peerClient;
 
-    if (this.args.getNodeListenPort() > 0) {
+    if (args.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
     }
+
+    for (Node node : args.getTrustNodes()){
+      logger.info(new InetSocketAddress(node.getHost(), node.getPort()).getAddress().toString());
+      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress() , node);
+    }
+    logger.info("Trust peer size {}", trustPeers.size());
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason){
@@ -110,19 +124,21 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (recentlyDisconnected.getIfPresent(peer) != null){
-      logger.info("Peer {} recently disconnected.", peer.getInetAddress());
-      return false;
-    }
+    if (!trustPeers.containsKey(peer.getInetAddress())){
+      if (recentlyDisconnected.getIfPresent(peer) != null){
+        logger.info("Peer {} recently disconnected.", peer.getInetAddress());
+        return false;
+      }
 
-    if (badPeers.getIfPresent(peer) != null) {
-      peer.disconnect(peer.getNodeStatistics().getDisconnectReason());
-      return false;
-    }
+      if (badPeers.getIfPresent(peer) != null) {
+        peer.disconnect(peer.getNodeStatistics().getDisconnectReason());
+        return false;
+      }
 
-    if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
-      peer.disconnect(TOO_MANY_PEERS);
-      return false;
+      if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+        peer.disconnect(TOO_MANY_PEERS);
+        return false;
+      }
     }
 
     if (activePeers.containsKey(peer.getNodeIdWrapper())) {
@@ -150,6 +166,10 @@ public class ChannelManager {
 
   public Cache<InetAddress, ReasonCode> getBadPeers(){
     return this.badPeers;
+  }
+
+  public Map<InetAddress, Node> getTrustPeers(){
+    return trustPeers;
   }
 
   public void close() {
