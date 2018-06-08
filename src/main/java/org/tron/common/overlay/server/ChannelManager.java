@@ -83,7 +83,6 @@ public class ChannelManager {
     }
 
     for (Node node : args.getTrustNodes()){
-      logger.info(new InetSocketAddress(node.getHost(), node.getPort()).getAddress().toString());
       trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress() , node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
