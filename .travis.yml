@@ -26,3 +26,9 @@ deploy:
 after_deploy:
 - "./gradlew stest"
 
+notifications:
+    webhooks: https://oapi.dingtalk.com/robot/send?access_token=e53bf02346738c483a624d092eb468cf653ec8747537d085c5d84728d6bd65cf
+    on_success: never # default: change
+    on_failure: always # default: always
+    on:
+      branch: develop
