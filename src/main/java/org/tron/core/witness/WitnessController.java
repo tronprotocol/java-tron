@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
@@ -246,7 +247,8 @@ public class WitnessController {
 
     long sizeCount = 0;
     while (dbIterator.hasNext()) {
-      VotesCapsule votes = new VotesCapsule(dbIterator.next().getValue());
+      Entry<byte[], byte[]> next = dbIterator.next();
+      VotesCapsule votes = new VotesCapsule(next.getValue());
 
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
@@ -289,10 +291,10 @@ public class WitnessController {
         }
       }
       sizeCount++;
+      votesStore.delete(next.getKey());
     }
     logger.info("there is {} new votes in this epoch", sizeCount);
 
-    votesStore.reset();
     return countWitness;
   }
 
