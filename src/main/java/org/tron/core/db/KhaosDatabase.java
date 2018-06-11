@@ -183,7 +183,7 @@ public class KhaosDatabase extends TronDatabase {
         .max(Comparator.comparingLong(Map.Entry::getKey))
         .map(Map.Entry::getValue)
         .map(list -> list.get(0))
-        .orElse(null);
+        .orElseThrow(() -> new RuntimeException("khaosDB head should not be null."));
   }
 
   /**
