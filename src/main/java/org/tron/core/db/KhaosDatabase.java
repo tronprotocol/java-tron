@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -12,6 +13,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import javafx.util.Pair;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -107,6 +109,11 @@ public class KhaosDatabase extends TronDatabase {
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id.equals(hash));
         }
+
+        if (CollectionUtils.isEmpty(listBlk)) {
+          numKblkMap.remove(num);
+        }
+
         this.hashKblkMap.remove(hash);
         return true;
       }
@@ -171,6 +178,12 @@ public class KhaosDatabase extends TronDatabase {
     if (!miniStore.remove(hash)) {
       miniUnlinkedStore.remove(hash);
     }
+
+    head = miniStore.numKblkMap.entrySet().stream()
+        .max(Comparator.comparingLong(Map.Entry::getKey))
+        .map(Map.Entry::getValue)
+        .map(list -> list.get(0))
+        .orElseThrow(() -> new RuntimeException("khaosDB head should not be null."));
   }
 
   /**
