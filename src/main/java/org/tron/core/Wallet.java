@@ -326,6 +326,16 @@ public class Wallet {
     return builder.build();
   }
 
+  public AssetIssueList getAssetIssueList(long offset, long limit) {
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    List<AssetIssueCapsule> AssetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
+    if ( null == AssetIssueList || AssetIssueList.size() == 0){
+      return null;
+    }
+    AssetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    return builder.build();
+  }
+
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
     if (accountAddress == null || accountAddress.size() == 0) {
       return null;
