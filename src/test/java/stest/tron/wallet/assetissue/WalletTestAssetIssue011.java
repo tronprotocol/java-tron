@@ -9,14 +9,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -26,23 +29,17 @@ public class WalletTestAssetIssue011 {
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  //private final static  String testKeyForAssetIssue011 = 
-  // "66BB2BA4233E8DC8CFDBC36D28E0898E7F7A58D8B78061ADB9215B9E7ED5F666";
-  //private final static  String transferAssetCreateKey =
-  // "895FBF2CEE60509EC4EE6F7D3ACE608FD30AEBD3A95293C46ECE7FD851B3FA72";
 
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  //private static final byte[] asset011Address =
-  // Base58.decodeFromBase58Check("27meuueCQsoqrDBpRM6XBPREvYtxHU5q6TU");
-  //private static final byte[] transferAssetCreateAddress =
-  // Base58.decodeFromBase58Check("27RC2QnokoC1QBAGc1NMj7FSe2KZ5CTLvfV");
 
+/*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
+
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue_" + Long.toString(now);
+  private static String name = "testAssetIssue011_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final String updateMostLongName = Long.toString(now) + "w234567890123456789";
@@ -68,6 +65,11 @@ public class WalletTestAssetIssue011 {
   byte[] transferAssetCreateAddress = ecKey2.getAddress();
   String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -86,10 +88,10 @@ public class WalletTestAssetIssue011 {
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000, 3, testKey002,
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
           blockingStubFull));
       Assert.assertTrue(PublicMethed
-          .sendcoin(asset011Address, sendAmount, FROM_ADDRESS, testKey002, blockingStubFull));
+          .sendcoin(asset011Address, sendAmount, fromAddress, testKey002, blockingStubFull));
       Assert.assertTrue(PublicMethed
           .freezeBalance(asset011Address, 100000000L, 3, testKeyForAssetIssue011,
               blockingStubFull));

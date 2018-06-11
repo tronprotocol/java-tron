@@ -17,8 +17,6 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 
 
-
-
 public class KeystoreFactory {
 
   private static final Logger logger = LoggerFactory.getLogger("KeystoreFactory");
@@ -43,13 +41,16 @@ public class KeystoreFactory {
     ECKey eCkey = new ECKey(Utils.random);
     File file = new File(FilePath);
     if (!file.exists()) {
-      file.mkdir();
+      if (!file.mkdir()) {
+        throw new IOException("Make directory faild!");
+      }
     } else {
       if (!file.isDirectory()) {
-        if ( file.delete()){
-          file.mkdir();
-        }
-        else {
+        if (file.delete()) {
+          if (!file.mkdir()) {
+            throw new IOException("Make directory faild!");
+          }
+        } else {
           throw new IOException("File is exists and can not delete!");
         }
       }
@@ -57,7 +58,7 @@ public class KeystoreFactory {
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
-    System.out.println("Your address is " + credentials.getAddress());;
+    System.out.println("Your address is " + credentials.getAddress());
   }
 
   private void importPrivatekey() throws CipherException, IOException {
@@ -67,7 +68,7 @@ public class KeystoreFactory {
     while (true) {
       String input = in.nextLine().trim();
       privateKey = input.split("\\s+")[0];
-      if (priKeyValid(privateKey)){
+      if (priKeyValid(privateKey)) {
         break;
       }
       System.out.println("Invalid private key, please input again.");
@@ -78,23 +79,24 @@ public class KeystoreFactory {
     ECKey eCkey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
     File file = new File(FilePath);
     if (!file.exists()) {
-      file.mkdir();
+      if (!file.mkdir()) {
+        throw new IOException("Make directory faild!");
+      }
     } else {
       if (!file.isDirectory()) {
-        if (!file.isDirectory()) {
-          if ( file.delete()){
-            file.mkdir();
+        if (file.delete()) {
+          if (!file.mkdir()) {
+            throw new IOException("Make directory faild!");
           }
-          else {
-            throw new IOException("File is exists and can not delete!");
-          }
+        } else {
+          throw new IOException("File is exists and can not delete!");
         }
       }
     }
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
-    System.out.println("Your address is " + credentials.getAddress());;
+    System.out.println("Your address is " + credentials.getAddress());
   }
 
   private void help() {

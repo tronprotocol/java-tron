@@ -13,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -20,11 +21,13 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -36,30 +39,20 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 public class WalletTestAccount003 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey001 =
-      "8CB4480194192F30907E14B52498F594BD046E21D7C4D8FE866563A6760AC891";
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004 =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  //private final static String lowBalTest =
-  // "86ff0c39337e9e97526c80af51f0e80411f5a1251473035f380f3671c1aa2b4b";
 
-  //testng001、testng002、testng003、testng004
-  private static final byte[] BACK_ADDRESS = Base58
-      .decodeFromBase58Check("27YcHNYcxHGRf5aujYzWQaJSpQ4WN4fJkiU");
-  private static final byte[] FROM_ADDRESS = Base58
-      .decodeFromBase58Check("27WvzgdLiUvNAStq2BCvA1LZisdD3fBX8jv");
-  private static final byte[] TO_ADDRESS = Base58
-      .decodeFromBase58Check("27iDPGt91DX3ybXtExHaYvrgDt5q5d6EtFM");
-  private static final byte[] NEED_CR_ADDRESS = Base58
-      .decodeFromBase58Check("27QEkeaPHhUSQkw9XbxX3kCKg684eC2w67T");
-  //private static final byte[] Low_Bal_ADDRESS =
-  // Base58.decodeFromBase58Check("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT");
-  private static final byte[] INVAILD_ADDRESS = Base58
-      .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
+  /*  //testng001、testng002、testng003、testng004
+  private static final byte[] fromAddress = Base58
+      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
+  private static final byte[] toAddress = Base58
+      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue_" + Long.toString(now);
@@ -82,6 +75,12 @@ public class WalletTestAccount003 {
   byte[] noBandwitchAddress = ecKey1.getAddress();
   String noBandwitch = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
   @BeforeClass
   public void beforeClass() {
     logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
@@ -95,10 +94,10 @@ public class WalletTestAccount003 {
   public void testCreateAccount() {
     Account noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     if (noCreateAccount.getAccountName().isEmpty()) {
-      Assert.assertTrue(PublicMethed.freezeBalance(FROM_ADDRESS, 10000000, 3, testKey002,
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
           blockingStubFull));
-      Assert.assertTrue(sendCoin(lowBalAddress, 1L, FROM_ADDRESS, testKey002));
-      //Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1000000L, FROM_ADDRESS, testKey002));
+      Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
+      //Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1000000L, fromAddress, testKey002));
       noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
       logger.info(Long.toString(noCreateAccount.getBalance()));
       Assert.assertTrue(noCreateAccount.getBalance() == 1);
@@ -108,10 +107,10 @@ public class WalletTestAccount003 {
       voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "3");
       HashMap<String, String> voteToInvaildAddress = new HashMap<String, String>();
       voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "4");
-      Assert.assertTrue(freezeBalance(FROM_ADDRESS, 10000000L, 3L, testKey002));
-      voteWitness(voteToNonWitnessAccount, FROM_ADDRESS, testKey002);
-      Assert.assertFalse(voteWitness(voteToNonWitnessAccount, FROM_ADDRESS, testKey002));
-      Assert.assertFalse(voteWitness(voteToInvaildAddress, FROM_ADDRESS, testKey002));
+      Assert.assertTrue(freezeBalance(fromAddress, 10000000L, 3L, testKey002));
+      voteWitness(voteToNonWitnessAccount, fromAddress, testKey002);
+      Assert.assertFalse(voteWitness(voteToNonWitnessAccount, fromAddress, testKey002));
+      Assert.assertFalse(voteWitness(voteToInvaildAddress, fromAddress, testKey002));
 
       logger.info("vote to non witness account ok!!!");
 
@@ -157,24 +156,25 @@ public class WalletTestAccount003 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }*/
-      Assert.assertTrue(sendCoin(TO_ADDRESS, lowaccount.getBalance(), lowBalAddress, lowBalTest));
+      Assert.assertTrue(sendCoin(toAddress, lowaccount.getBalance(), lowBalAddress, lowBalTest));
     }
     //Create AssetIssue failed when there is no enough balance.
-    Assert.assertFalse(createAssetIssue(lowBalAddress, name, TotalSupply, 1, 1, now + 100000000L,
-        now + 10000000000L, 2, description, url, lowBalTest));
+    Assert.assertFalse(PublicMethed.createAssetIssue(lowBalAddress, name, TotalSupply, 1, 1,
+        now + 100000000L, now + 10000000000L, 2, description, url,10000L,
+        10000L,1L,1L,lowBalTest,blockingStubFull));
     logger.info("nobalancecreateassetissue");
   }
 
   @Test
   public void testNoBalanceTransferTrx() {
     //Send Coin failed when there is no enough balance.
-    Assert.assertFalse(sendCoin(TO_ADDRESS, 100000000000000000L, lowBalAddress, lowBalTest));
+    Assert.assertFalse(sendCoin(toAddress, 100000000000000000L, lowBalAddress, lowBalTest));
   }
 
   @Test
   public void testNoBalanceCreateWitness() {
     //Apply to be super witness failed when no enough balance.
-    Assert.assertFalse(createWitness(lowBalAddress, FROM_ADDRESS, lowBalTest));
+    Assert.assertFalse(createWitness(lowBalAddress, fromAddress, lowBalTest));
   }
 
   @Test
@@ -195,9 +195,9 @@ public class WalletTestAccount003 {
         vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
         HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
         vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
-        Assert.assertTrue(FreezeBalance(FROM_ADDRESS,10000000L, 3L,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_non_witness_account,FROM_ADDRESS,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_invaild_address,FROM_ADDRESS,testKey002));
+        Assert.assertTrue(FreezeBalance(fromAddress,10000000L, 3L,testKey002));
+        Assert.assertFalse(VoteWitness(vote_to_non_witness_account,fromAddress,testKey002));
+        Assert.assertFalse(VoteWitness(vote_to_invaild_address,fromAddress,testKey002));
 
         logger.info("vote to non witness account ok!!!");
 
@@ -481,15 +481,10 @@ public class WalletTestAccount003 {
     Contract.VoteWitnessContract contract = builder.build();
 
     Protocol.Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
-
-    if (transaction == null) {
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
       return false;
-    } else if (transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction auths count == {}", Integer.toString(transaction.getRawData().getAuthsCount()));
-      return false;
     }
-
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 

@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.core.Constant;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -228,6 +230,18 @@ public class Args {
   @Getter
   @Setter
   private boolean walletExtensionApi;
+
+  @Getter
+  @Setter
+  private int backupPriority;
+
+  @Getter
+  @Setter
+  private int backupPort;
+
+  @Getter
+  @Setter
+  private List<String> backupMembers;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -467,6 +481,8 @@ public class Args {
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+
+    initBackupProperty(config);
   }
 
 
@@ -647,5 +663,14 @@ public class Args {
     }
 
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  }
+
+  private static void initBackupProperty(Config config) {
+    INSTANCE.backupPriority = config.hasPath("node.backup.priority")
+        ? config.getInt("node.backup.priority") : 0;
+    INSTANCE.backupPort = config.hasPath("node.backup.port")
+        ? config.getInt("node.backup.port") : 10001;
+    INSTANCE.backupMembers = config.hasPath("node.backup.members")
+        ? config.getStringList("node.backup.members") : new ArrayList<>();
   }
 }

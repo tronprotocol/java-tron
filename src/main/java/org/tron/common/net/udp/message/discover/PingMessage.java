@@ -1,9 +1,11 @@
-package org.tron.common.overlay.discover.message;
+package org.tron.common.net.udp.message.discover;
+
+import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_PING;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.overlay.discover.Node;
+import org.tron.common.net.udp.message.Message;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Discover;
@@ -15,12 +17,12 @@ public class PingMessage extends Message {
   private Discover.PingMessage pingMessage;
 
   public PingMessage(byte[] data) throws Exception{
-    super(Message.PING, data);
+    super(DISCOVER_PING, data);
     this.pingMessage = Discover.PingMessage.parseFrom(data);
   }
 
   public PingMessage(Node from, Node to) {
-    super(Message.PING, null);
+    super(DISCOVER_PING, null);
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
         .setPort(from.getPort())

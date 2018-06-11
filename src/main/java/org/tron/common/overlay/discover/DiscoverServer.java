@@ -29,32 +29,36 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.net.udp.handler.MessageHandler;
+import org.tron.common.net.udp.handler.PacketDecoder;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.args.Args;
 
 @Component
-public class UDPListener {
+public class DiscoverServer {
 
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("UDPListener");
-
-  private int port;
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("DiscoverServer");
 
   @Autowired
   private NodeManager nodeManager;
 
   @Autowired
-  WireTrafficStats stats;
+  private WireTrafficStats stats;
 
-  Args args = Args.getInstance();
+  private Args args = Args.getInstance();
+
+  private int port = args.getNodeListenPort();
 
   private Channel channel;
-  private volatile boolean shutdown = false;
+
   private DiscoveryExecutor discoveryExecutor;
 
+  private volatile boolean shutdown = false;
+
   @Autowired
-  public UDPListener(final NodeManager nodeManager) {
+  public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    port = args.getNodeListenPort();
     if (args.isNodeDiscoveryEnable()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
@@ -66,7 +70,7 @@ public class UDPListener {
             logger.debug(e.getMessage(), e);
             throw new RuntimeException(e);
           }
-        }, "UDPListener").start();
+        }, "DiscoverServer").start();
       }
     }
   }
@@ -96,36 +100,31 @@ public class UDPListener {
 
         channel = b.bind(port).sync().channel();
 
-        logger.info("Discovery UDPListener started, bind port {}", port);
+        logger.info("Discovery server started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {
-          logger.info("Shutdown discovery UDPListener");
+          logger.info("Shutdown discovery server");
           break;
         }
-        logger.warn("UDP channel closed. Recreating after 5 sec pause...");
+        logger.warn(" Restart discovery server after 5 sec pause...");
         Thread.sleep(5000);
       }
     } catch (Exception e) {
-      if (e instanceof BindException && e.getMessage().contains("Address already in use")) {
-        logger.error(
-            "Port " + port + " is busy. Check if another instance is running with the same port.");
-      } else {
-        logger.error("Can't start discover: ", e);
-      }
+      logger.error("Start discovery server with port {} failed.", port, e);
     } finally {
       group.shutdownGracefully().sync();
     }
   }
 
   public void close() {
-    logger.info("Closing UDPListener...");
+    logger.info("Closing discovery server...");
     shutdown = true;
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
       } catch (Exception e) {
-        logger.warn("Problems closing UDPListener", e);
+        logger.info("Closing discovery server failed.", e);
       }
     }
 
@@ -133,7 +132,7 @@ public class UDPListener {
       try {
         discoveryExecutor.close();
       } catch (Exception e) {
-        logger.warn("Problems closing DiscoveryExecutor", e);
+        logger.info("Closing discovery executor failed.", e);
       }
     }
   }

@@ -7,6 +7,7 @@ public interface Parameter {
         String ADD_PRE_FIX_STRING = "a0";
         int ADDRESS_SIZE = 21;
         int BASE58CHECK_ADDRESS_SIZE = 35;
+        byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
+        byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
     }
-
 }

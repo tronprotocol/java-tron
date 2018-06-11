@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.discover;
+package org.tron.common.overlay.discover.node;
 
 import static java.lang.Math.min;
 
@@ -31,7 +31,7 @@ public class NodeStatistics {
 
   public class StatHandler {
 
-    AtomicLong count = new AtomicLong(0);
+    private AtomicLong count = new AtomicLong(0);
 
     public void add() {
       count.incrementAndGet();

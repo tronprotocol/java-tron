@@ -100,6 +100,10 @@ public class GrpcClient {
         return blockingStubFull.participateAssetIssue(contract);
     }
 
+    public Transaction createAccount(Contract.AccountCreateContract contract) {
+        return blockingStubFull.createAccount(contract);
+    }
+
     public Transaction createAssetIssue(Contract.AssetIssueContract contract) {
         return blockingStubFull.createAssetIssue(contract);
     }
@@ -115,6 +119,12 @@ public class GrpcClient {
     public boolean broadcastTransaction(Transaction signaturedTransaction) {
         GrpcAPI.Return response = blockingStubFull.broadcastTransaction(signaturedTransaction);
         return response.getResult();
+    }
+
+    public AccountNetMessage getAccountNet(byte[] address) {
+        ByteString addressBS = ByteString.copyFrom(address);
+        Account request = Account.newBuilder().setAddress(addressBS).build();
+        return blockingStubFull.getAccountNet(request);
     }
 
     public Block getBlock(long blockNum) {

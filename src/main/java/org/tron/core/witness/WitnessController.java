@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
@@ -241,10 +242,14 @@ public class WitnessController {
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
-    final List<VotesCapsule> votesList = votesStore.getAllVotes();
+    org.tron.core.db.common.iterator.DBIterator dbIterator = votesStore.getIterator();
     AccountStore accountStore = this.manager.getAccountStore();
-    logger.info("there is {} new votes in this epoch", votesList.size());
-    votesList.forEach(votes -> {
+
+    long sizeCount = 0;
+    while (dbIterator.hasNext()) {
+      Entry<byte[], byte[]> next = dbIterator.next();
+      VotesCapsule votes = new VotesCapsule(next.getValue());
+
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
 
@@ -285,8 +290,11 @@ public class WitnessController {
                   + sum.get() + "]");
         }
       }
-    });
-    votesStore.reset();
+      sizeCount++;
+      votesStore.delete(next.getKey());
+    }
+    logger.info("there is {} new votes in this epoch", sizeCount);
+
     return countWitness;
   }
 
