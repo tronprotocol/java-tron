@@ -137,7 +137,7 @@ public class NodeImplTest {
             .getAddress());
     BlockHeader.raw raw = BlockHeader.raw.newBuilder()
         .setTimestamp(System.currentTimeMillis())
-        .setParentHash(genesisBlockCapsule.getParentHash().getByteString())
+        .setParentHash(genesisBlockCapsule.getBlockId().getByteString())
         .setNumber(genesisBlockCapsule.getNum() + 1)
         .setWitnessAddress(witnessAddress)
         .setWitnessId(1).build();
@@ -148,9 +148,9 @@ public class NodeImplTest {
     Block block = Block.newBuilder().setBlockHeader(blockHeader).build();
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
+    blockCapsule.setMerkleRoot();
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
-    blockCapsule.setMerkleRoot();
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
     peer.getAdvObjWeRequested().put(new Item(blockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
     nodeImpl.onMessage(peer, blockMessage);

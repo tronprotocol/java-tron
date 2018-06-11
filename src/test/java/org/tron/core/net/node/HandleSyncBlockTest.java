@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.DefaultConfig;
@@ -105,7 +106,7 @@ public class HandleSyncBlockTest {
             .getAddress());
     Protocol.BlockHeader.raw raw = Protocol.BlockHeader.raw.newBuilder()
         .setTimestamp(System.currentTimeMillis())
-        .setParentHash(genesisBlockCapsule.getParentHash().getByteString())
+        .setParentHash(genesisBlockCapsule.getBlockId().getByteString())
         .setNumber(genesisBlockCapsule.getNum() + 1)
         .setWitnessAddress(witnessAddress)
         .setWitnessId(1).build();
@@ -116,9 +117,8 @@ public class HandleSyncBlockTest {
     Protocol.Block block = Protocol.Block.newBuilder().setBlockHeader(blockHeader).build();
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
-    blockCapsule.sign(
-        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
     blockCapsule.setMerkleRoot();
+    blockCapsule.sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
     return blockMessage;
   }
@@ -160,7 +160,7 @@ public class HandleSyncBlockTest {
                 "--storage-db-directory", dbDirectory,
                 "--storage-index-directory", indexDirectory
             },
-            "config.conf"
+            Constant.TEST_CONF
         );
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(17891);
