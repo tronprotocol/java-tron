@@ -8,7 +8,7 @@
                     </package>
                 </packages>
 <!--        <classes>
-            <class name="stest.tron.wallet.assetissue.WalletTestAssetIssue002"/>
+            <class name="stest.tron.wallet.witness.WalletTestWitness003"/>
         </classes>-->
     </test>
 </suite>

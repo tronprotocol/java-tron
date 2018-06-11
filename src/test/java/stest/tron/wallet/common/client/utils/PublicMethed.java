@@ -370,7 +370,11 @@ public class PublicMethed {
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction == null || transaction.getRawData().getContractCount() == 0");
+      if (transaction == null){
+        logger.info("transaction == null");
+      } else {
+        logger.info("transaction.getRawData().getContractCount() == 0");
+      }
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
