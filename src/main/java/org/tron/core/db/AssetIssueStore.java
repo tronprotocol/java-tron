@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -56,6 +58,22 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return dbSource.allKeys().stream()
         .map(this::get)
         .collect(Collectors.toList());
+  }
+
+  public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
+    if (limit < 0){
+      return null;
+    }
+    List<AssetIssueCapsule> AssetIssueList = dbSource.allKeys().stream()
+        .map(this::get)
+        .collect(Collectors.toList());
+    AssetIssueList.sort((o1, o2) -> {
+      return o1.getName().toStringUtf8().compareTo(o2.getName().toStringUtf8());
+    });
+    limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
+    long end = offset + limit;
+    end = end > AssetIssueList.size() ? AssetIssueList.size() : end ;
+    return AssetIssueList.subList((int)offset,(int)end);
   }
 
   @Override

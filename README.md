@@ -52,9 +52,9 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 The Tron Protocol, one of the largest blockchain based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem. 
 
-TRON enables large-scale development and engagement. With over 2000 TPS, high concurrency, low latency and massive data transmission, TRON is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission, TRON is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
-TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their communities, with smart contracts making decentralized crowdfunding and token issuance easier than ever.
+TRON Protocol and the Tron Virtual Machine (TVM) allow anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
 
 # How to Build
 
@@ -66,7 +66,7 @@ TRON Protocol and the TVM allow anyone to develop DAPPs for themselves or their 
 ## Getting the code with git
 
 * Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
-* develop branch: the newnest code 
+* develop branch: the newest code 
 * master branch: more stable than develop.
 In the shell command, type:
 ```bash
@@ -143,8 +143,8 @@ cd java-tron
 ### How to run a full node
 
 * You should modify the config.conf
-  1. genesis.block.witnesses replace to yourself address
-  2. seed.node ip.list replace to yourself ip list
+  1. Replace existing entry in genesis.block.witnesses with your address.
+  2. Replace existing entry in seed.node ip.list with your ip list.
 
 * In the Terminal
 
@@ -166,12 +166,12 @@ java -jar java-tron.jar
 ### How to run a Super Node
 * use master branch
 * You should modify the config.conf
-  1. genesis.block.witnesses replace to yourself address
-  2. seed.node.ip.list replace to yourself ip list
-  3. the first Super Node start, needSyncCheck should be set false
-  4. set p2pversion to 61 
+  1. Replace existing entry in genesis.block.witnesses with your address.
+  2. Replace existing entry in seed.node ip.list with your ip list.
+  3. The first Super Node start, needSyncCheck should be set false
+  4. Set p2pversion to 61 
 
-* Use the executable JAR(Recommend the way)
+* Use the executable JAR(Recommended way)
 
 ```bash
 cd build/libs
@@ -182,7 +182,7 @@ java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348
 ```
 
 * In the Terminal
-  in the config.conf localwitness add yourself private key
+  Un the config.conf localwitness add your private key.
 ```bash
 ./gradlew run -Pwitness
 ```
@@ -311,7 +311,7 @@ For private test net, the IPs are allocated by yourself.
 
 ## Running a local node and connecting to the public testnet 
 
-* Ensure that the version number is consistent with the version number of the test network. If it is not consistent, Please modify the node.p2p.version in the config.conf file, and delete the out-directory directory (if it exists)
+* Ensure that the version number is consistent with the version number of the test network. If it is not consistent, please modify the node.p2p.version in the config.conf file and delete the out-directory directory (if it exists).
 * The current p2p.version is **61**
 
 ### Running a Full Node
@@ -345,7 +345,7 @@ java -jar SolidityNode.jar -c config.conf
 
 ### Running a Super Node
 
-* Use the executable JAR(Recommend the way)
+* Use the executable JAR(Recommended way)
 
 ```bash
 cd build/libs
@@ -355,7 +355,7 @@ java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348
 
 ```
 
-It is almost the same as that does in the private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
+This is similar to running a private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
 
 <details>
 <summary>Correct output</summary>
