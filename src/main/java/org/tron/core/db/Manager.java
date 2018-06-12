@@ -1163,16 +1163,15 @@ public class Manager {
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
-    AccountCapsule sun = accountStore.getSun();
     try {
-      adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
+      adjustBalance(accountStore.getSun(), -WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
     }
     try {
       adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
     }
 
     logger.debug(

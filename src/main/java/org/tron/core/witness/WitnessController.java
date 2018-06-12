@@ -25,6 +25,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.HeaderNotFound;
 
 @Slf4j
@@ -399,6 +400,13 @@ public class WitnessController {
         manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
+
+    try {
+      manager.adjustBalance(manager.getAccountStore().getSun(), -totalPay);
+    } catch (BalanceInsufficientException e) {
+      logger.warn(e.getMessage(), e);
+    }
+
   }
 
 }
