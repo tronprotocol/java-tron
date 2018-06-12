@@ -105,12 +105,8 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = (int) (maxActiveNodes * factor) - activePeers.size();
-    if (lackSize <= 0) {
-      if (activePeersCount.get() < maxActiveNodes * activeFactor) {
-        lackSize = (int) (maxActiveNodes * activeFactor - activePeersCount.get());
-      }
-    }
+    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
+        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
     if (lackSize <= 0) {
       return;
     }
@@ -197,7 +193,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (activePeers.size() >= maxActiveNodes * (1 - activeFactor)) {
+    if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
       return false;
     }
     return true;
