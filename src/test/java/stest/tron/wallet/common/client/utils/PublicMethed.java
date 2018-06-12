@@ -285,7 +285,7 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Protocol.Account search = queryAccount(priKey, blockingStubFull);
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
     Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
@@ -297,11 +297,13 @@ public class PublicMethed {
     Contract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
       return true;
