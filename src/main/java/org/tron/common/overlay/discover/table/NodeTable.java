@@ -59,6 +59,9 @@ public class NodeTable {
 
   public synchronized Node addNode(Node n) {
     NodeEntry e = new NodeEntry(node.getId(), n);
+    if (nodes.contains(e)) {
+      return null;
+    }
     NodeEntry lastSeen = buckets[getBucketId(e)].addNode(e);
     if (lastSeen != null) {
       return lastSeen.getNode();
