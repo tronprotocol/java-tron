@@ -44,6 +44,12 @@ public class NodeBucket {
       } else {
         nodes.add(e);
       }
+    } else {
+      nodes.stream().forEach(nodeEntry -> {
+        if (nodeEntry.equals(e)) {
+          nodeEntry.getNode().setId(e.getNode().getId());
+        }
+      });
     }
 
     return null;

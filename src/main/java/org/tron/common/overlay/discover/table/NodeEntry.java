@@ -33,7 +33,7 @@ public class NodeEntry {
   public NodeEntry(Node n) {
     this.node = n;
     this.ownerId = n.getId();
-    entryId = n.toString();
+    entryId = n.getHost();
     distance = distance(ownerId, n.getId());
     touch();
   }
@@ -41,7 +41,7 @@ public class NodeEntry {
   public NodeEntry(byte[] ownerId, Node n) {
     this.node = n;
     this.ownerId = ownerId;
-    entryId = n.toString();
+    entryId = n.getHost();
     distance = distance(ownerId, n.getId());
     touch();
   }
