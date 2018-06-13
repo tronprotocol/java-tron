@@ -134,7 +134,8 @@ public class BandwidthProcessor {
     }
   }
 
-  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes, TransactionResultCapsule ret) {
+  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
+      TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
       ret.setFee(fee);
