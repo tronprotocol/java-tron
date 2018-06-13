@@ -264,7 +264,24 @@ service Wallet {
       }
     };
   }
-
+  rpc DeployContract (ContractDeployContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/deploycontract"
+      body: "*"
+    };
+  }
+  rpc TriggerContract (ContractTriggerContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/triggercontract"
+      body: "*"
+    };
+  }
+  rpc GetContract (BytesMessage) returns (ContractDeployContract) {
+    option (google.api.http) = {
+      post: "/wallet/getcontract"
+      body: "*"
+    };
+  }
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/wallet/listwitnesses"
