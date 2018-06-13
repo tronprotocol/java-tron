@@ -335,7 +335,7 @@ public class BandwidthTest {
         dbManager.getDynamicPropertiesStore().getTotalCreateAccountCost());
     Assert.assertEquals(
         10_000_000L - transactionFee - createAccountFee, ownerCapsuleNew.getBalance());
-    Assert.assertEquals(100000L, ret.getFee());
+    Assert.assertEquals(101220L, ret.getFee());
 
   }
 
