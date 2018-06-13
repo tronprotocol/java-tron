@@ -46,13 +46,6 @@ public class PingMessage extends Message {
     return this.pingMessage.getVersion();
   }
 
-  public Node getFrom() {
-    Endpoint from = this.pingMessage.getFrom();
-    Node node = new Node(from.getNodeId().toByteArray(),
-        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
-    return node;
-  }
-
   public Node getTo() {
     Endpoint to = this.pingMessage.getTo();
     Node node = new Node(to.getNodeId().toByteArray(),
@@ -61,8 +54,8 @@ public class PingMessage extends Message {
   }
 
   @Override
-  public byte[] getNodeId() {
-    return this.pingMessage.getFrom().getNodeId().toByteArray();
+  public Node getFrom() {
+    return Message.getNode(pingMessage.getFrom());
   }
 
   @Override

@@ -4,6 +4,7 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -51,7 +52,7 @@ public class UdpTest {
   @Test
   public void test() {}
 
- // @Test
+  //@Test
   public void udpTest() throws Exception {
 
     Thread.sleep(10000);
@@ -104,7 +105,7 @@ public class UdpTest {
       socket.receive(packet);
       byte[] bytes = Arrays.copyOfRange(data, 0, packet.getLength());
       Message msg = Message.parse(bytes);
-      Assert.assertTrue(Arrays.equals(msg.getNodeId(), nodeManager.getPublicHomeNode().getId()));
+      Assert.assertTrue(Arrays.equals(msg.getFrom().getId(), nodeManager.getPublicHomeNode().getId()));
       if (!pingFlag) {
         pingFlag = true;
         Assert.assertTrue(msg instanceof PingMessage);
@@ -131,7 +132,7 @@ public class UdpTest {
     socket.close();
   }
 
-  @After
+  //@After
   public void after() {
     FileUtil.deleteDir(new File("udp_test"));
   }
