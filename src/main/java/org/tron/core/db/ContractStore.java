@@ -2,9 +2,6 @@ package org.tron.core.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
@@ -72,7 +69,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * @param contractAddress
    * @return
    */
-  public Contract.ContractDeployContract.ABI getABI(byte[] contractAddress) {
+  public Contract.SmartContract.ABI getABI(byte[] contractAddress) {
     byte[] value = dbSource.getData(contractAddress);
     if (ArrayUtils.isEmpty(value)) {
       return null;
@@ -80,12 +77,12 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 
     ContractCapsule contractCapsule = new ContractCapsule(value);
     Protocol.Transaction trx = contractCapsule.getInstance();
-    Contract.ContractDeployContract contractDeployContract = ContractCapsule.getDeployContractFromTransaction(trx);
-    if (contractDeployContract == null) {
+    Contract.SmartContract smartContract = ContractCapsule.getSmartContractFromTransaction(trx);
+    if (smartContract == null) {
       return null;
     }
 
-    return contractDeployContract.getAbi();
+    return smartContract.getAbi();
   }
 
 }

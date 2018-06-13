@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract.ContractDeployContract;
-import org.tron.protos.Contract.ContractTriggerContract;
+import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -46,20 +46,20 @@ public class ContractCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  public static ContractDeployContract getDeployContractFromTransaction(Transaction trx) {
+  public static SmartContract getSmartContractFromTransaction(Transaction trx) {
     try {
       Any any = trx.getRawData().getContract(0).getParameter();
-      ContractDeployContract contractDeployContract = any.unpack(ContractDeployContract.class);
-      return contractDeployContract;
+      SmartContract smartContract = any.unpack(SmartContract.class);
+      return smartContract;
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
   }
 
-  public static ContractTriggerContract getTriggerContractFromTransaction(Transaction trx) {
+  public static TriggerSmartContract getTriggerContractFromTransaction(Transaction trx) {
     try {
       Any any = trx.getRawData().getContract(0).getParameter();
-      ContractTriggerContract contractTriggerContract = any.unpack(ContractTriggerContract.class);
+      TriggerSmartContract contractTriggerContract = any.unpack(TriggerSmartContract.class);
       return contractTriggerContract;
     } catch (InvalidProtocolBufferException e) {
       return null;
@@ -78,8 +78,8 @@ public class ContractCapsule implements ProtoCapsule<Transaction> {
   public Sha256Hash getCodeHash() {
     try {
       Any any = transaction.getRawData().getContract(0).getParameter();
-      ContractDeployContract contractDeployContract = any.unpack(ContractDeployContract.class);
-      byte[] bytecode = contractDeployContract.getBytecode().toByteArray();
+      SmartContract smartContract = any.unpack(SmartContract.class);
+      byte[] bytecode = smartContract.getBytecode().toByteArray();
       return Sha256Hash.of(bytecode);
     } catch (InvalidProtocolBufferException e) {
       return null;

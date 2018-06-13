@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.runtime.config.SystemProperties;
-import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -18,12 +17,11 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.*;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.ContractDeployContract;
+import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
-import javax.xml.crypto.Data;
 import java.util.List;
 
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
@@ -161,7 +159,7 @@ public class Runtime {
     }
 
     private void call() {
-        Contract.ContractTriggerContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+        Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
         if (contract == null) return;
 
         byte[] contractAddress = contract.getContractAddress().toByteArray();
@@ -191,11 +189,11 @@ public class Runtime {
     /*
      **/
     private void create() {
-        ContractDeployContract contract = ContractCapsule.getDeployContractFromTransaction(trx);
+        SmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
 
         // Create a Contract Account by ownerAddress or If the address exist, random generate one
         byte[] code = contract.getBytecode().toByteArray();
-        ContractDeployContract.ABI abi = contract.getAbi();
+        SmartContract.ABI abi = contract.getAbi();
         byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
         ByteString newContractAddress = contract.getContractAddress();
 

@@ -68,9 +68,8 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.protos.Contract.ContractDeployContract;
-import org.tron.protos.Contract.ContractTriggerContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -483,31 +482,31 @@ public class Wallet {
     return null;
   }
 
-  public Transaction deployContract(ContractDeployContract contractDeployContract) {
-    return new TransactionCapsule(contractDeployContract, Transaction.Contract.ContractType.DeployContract)
+  public Transaction deployContract(SmartContract smartContract) {
+    return new TransactionCapsule(smartContract, Transaction.Contract.ContractType.DeployContract)
             .getInstance();
   }
 
-  public Transaction triggerContract(ContractTriggerContract contractTriggerContract) {
+  public Transaction triggerContract(SmartContract smartContract) {
     ContractStore contractStore = dbManager.getContractStore();
-    byte[] contractAddress = contractTriggerContract.getContractAddress().toByteArray();
-    ContractDeployContract.ABI abi = contractStore.getABI(contractAddress);
+    byte[] contractAddress = smartContract.getContractAddress().toByteArray();
+    SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
       return null;
     }
 
     try {
-      byte[] selector = getSelector(contractTriggerContract.getData().toByteArray());
+      byte[] selector = getSelector(smartContract.getData().toByteArray());
       if (selector == null) {
         return null;
       }
 
       Transaction trx = null;
       if (!isConstant(abi, selector)) {
-        trx = new TransactionCapsule(contractTriggerContract, Transaction.Contract.ContractType.TriggerContract)
+        trx = new TransactionCapsule(smartContract, Transaction.Contract.ContractType.TriggerContract)
                 .getInstance();
       } else {
-        TransactionCapsule trxCap = new TransactionCapsule(contractTriggerContract, Transaction.Contract.ContractType.TriggerContract);
+        TransactionCapsule trxCap = new TransactionCapsule(smartContract, Transaction.Contract.ContractType.TriggerContract);
         /*ProgramResult programResult = DepositController.getInstance().processConstantTransaction(trxCap);
         Transaction.Result.Builder builder = Transaction.Result.newBuilder();
         builder.setConstantResult(ByteString.copyFrom(programResult.getHReturn()));
@@ -522,7 +521,7 @@ public class Wallet {
     }
   }
 
-  public ContractDeployContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
@@ -533,9 +532,9 @@ public class Wallet {
     ContractCapsule contractCapsule = dbManager.getContractStore().get(bytesMessage.getValue().toByteArray());
     Transaction trx = contractCapsule.getInstance();
     Any contract = trx.getRawData().getContract(0).getParameter();
-    if (contract.is(ContractDeployContract.class)) {
+    if (contract.is(SmartContract.class)) {
       try {
-        return contract.unpack(ContractDeployContract.class);
+        return contract.unpack(SmartContract.class);
       } catch (InvalidProtocolBufferException e) {
         return null;
       }
@@ -554,14 +553,14 @@ public class Wallet {
     return ret;
   }
 
-  private boolean isConstant(ContractDeployContract.ABI abi, byte[] selector) throws Exception{
+  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception{
     if (selector == null || selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
 
     for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ContractDeployContract.ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ContractDeployContract.ABI.Entry.EntryType.Function) {
+      SmartContract.ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != SmartContract.ABI.Entry.EntryType.Function) {
         continue;
       }
 
@@ -570,7 +569,7 @@ public class Wallet {
       sb.append(entry.getName().toStringUtf8());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
-        ContractDeployContract.ABI.Entry.Param param = entry.getInputs(k);
+        SmartContract.ABI.Entry.Param param = entry.getInputs(k);
         sb.append(param.getType().toStringUtf8());
         if (k + 1 < inputCount) {
           sb.append(",");

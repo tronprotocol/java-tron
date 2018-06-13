@@ -27,8 +27,8 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.ContractDeployContract;
-import org.tron.protos.Contract.ContractTriggerContract;
+import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
@@ -58,7 +58,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
         long number = -1L;
 
         if (trxType == TRX_CONTRACT_CREATION_TYPE) {
-            ContractDeployContract contract = ContractCapsule.getDeployContractFromTransaction(tx);
+            SmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
             contractAddress = contract.getContractAddress().toByteArray();
             ownerAddress = contract.getOwnerAddress().toByteArray();
             AccountCapsule accountCapsule = manager.getAccountStore().get(ownerAddress);
@@ -83,7 +83,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
                     lastHash, coinbase, timestamp, number, manager);
 
         } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
-            ContractTriggerContract contract = ContractCapsule.getTriggerContractFromTransaction(tx);
+            TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(tx);
             /***         ADDRESS op       ***/
             // YP: Get address of currently executing account.
             // byte[] address = tx.isContractCreation() ? tx.getContractAddress() : tx.getReceiveAddress();

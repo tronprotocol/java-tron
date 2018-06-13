@@ -15,16 +15,10 @@
 
 package org.tron.core.capsule;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.ContractDeployContract;
-import org.tron.protos.Contract.ContractTriggerContract;
-import org.tron.protos.Protocol.Transaction;
 
 /**
  *
