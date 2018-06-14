@@ -11,6 +11,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -79,7 +80,7 @@ public class BandwidthProcessor {
     });
   }
 
-  public void consumeBandwidth(TransactionCapsule trx)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -95,7 +96,7 @@ public class BandwidthProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
-        consumeForCreateNewAccount(accountCapsule, bytes, now);
+        consumeForCreateNewAccount(accountCapsule, bytes, now, ret);
         continue;
       }
 
@@ -113,7 +114,7 @@ public class BandwidthProcessor {
         continue;
       }
 
-      if (useTransactionFee(accountCapsule, bytes)) {
+      if (useTransactionFee(accountCapsule, bytes, ret)) {
         continue;
       }
 
@@ -133,9 +134,11 @@ public class BandwidthProcessor {
     }
   }
 
-  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes) {
+  private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
+      TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
+      ret.addFee(fee);
       dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
     } else {
@@ -144,11 +147,12 @@ public class BandwidthProcessor {
   }
 
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
-      long now) throws AccountResourceInsufficientException {
+      long now, TransactionResultCapsule resultCapsule)
+      throws AccountResourceInsufficientException {
     boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
 
     if (!ret) {
-      ret = consumeFeeForCreateNewAccount(accountCapsule);
+      ret = consumeFeeForCreateNewAccount(accountCapsule, resultCapsule);
       if (!ret) {
         throw new AccountResourceInsufficientException();
       }
@@ -177,9 +181,11 @@ public class BandwidthProcessor {
     return false;
   }
 
-  public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule) {
+  public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule,
+      TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
     if (consumeFee(accountCapsule, fee)) {
+      ret.addFee(fee);
       dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

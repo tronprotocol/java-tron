@@ -399,7 +399,8 @@ public class Manager {
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
+      throw new BalanceInsufficientException(
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -415,7 +416,8 @@ public class Manager {
     }
 
     if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(StringUtil.createReadableString(accountAddress) + " insufficient balance");
+      throw new BalanceInsufficientException(
+          StringUtil.createReadableString(accountAddress) + " insufficient balance");
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
@@ -509,10 +511,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx);
+    processor.consumeBandwidth(trx, ret);
   }
 
   @Deprecated
@@ -867,7 +869,8 @@ public class Manager {
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException("act size should be exactly 1, this is extend feature");
+      throw new ContractSizeNotEqualToOneException(
+          "act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
@@ -879,13 +882,14 @@ public class Manager {
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    consumeBandwidth(trxCap);
+    consumeBandwidth(trxCap, ret);
 
     for (Actuator act : actuatorList) {
       act.validate();
       act.execute(ret);
-      trxCap.setResult(ret);
     }
+    trxCap.setResult(ret);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
@@ -933,7 +937,8 @@ public class Manager {
         break;
       }
       // check the block size
-      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
+      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
+          > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
