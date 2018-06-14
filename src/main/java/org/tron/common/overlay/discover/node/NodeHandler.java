@@ -81,12 +81,14 @@ public class NodeHandler {
     NonActive
   }
 
+  private Node sourceNode;
   private Node node;
   private State state;
   private NodeManager nodeManager;
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
   private volatile boolean waitForPong = false;
+  private volatile boolean waitForNeighbors = false;
   private volatile int pingTrials = 3;
   private long pingSent;
 
@@ -98,6 +100,14 @@ public class NodeHandler {
 
   public InetSocketAddress getInetSocketAddress() {
     return new InetSocketAddress(node.getHost(), node.getPort());
+  }
+
+  public void setSourceNode(Node sourceNode) {
+    this.sourceNode = sourceNode;
+  }
+
+  public Node getSourceNode() {
+    return sourceNode;
   }
 
   public Node getNode() {
@@ -128,7 +138,11 @@ public class NodeHandler {
   public void changeState(State newState) {
     State oldState = state;
     if (newState == State.Discovered) {
-      sendPing();
+      if (sourceNode != null && sourceNode.getPort() != node.getPort()){
+        changeState(State.Dead);
+      }else {
+        sendPing();
+      }
     }
     if (!node.isDiscoveryNode()) {
       if (newState == State.Alive) {
@@ -194,7 +208,7 @@ public class NodeHandler {
       getNodeStatistics().discoverMessageLatency
           .add((double) System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
-      node.setId(msg.getNodeId());
+      node.setId(msg.getFrom().getId());
       if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
         changeState(State.NonActive);
       } else {
@@ -204,6 +218,11 @@ public class NodeHandler {
   }
 
   public void handleNeighbours(NeighborsMessage msg) {
+    if (!waitForNeighbors){
+      logger.warn("Receive neighbors from {} without send find nodes.", node.getHost());
+      return;
+    }
+    waitForNeighbors = false;
     getNodeStatistics().discoverInNeighbours.add();
     for (Node n : msg.getNodes()) {
       if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())) {
@@ -219,7 +238,6 @@ public class NodeHandler {
   }
 
   public void handleTimedOut() {
-    logger.debug("ping timeout {}", node);
     waitForPong = false;
     if (--pingTrials > 0) {
       sendPing();
@@ -269,6 +287,7 @@ public class NodeHandler {
   }
 
   public void sendFindNode(byte[] target) {
+    waitForNeighbors = true;
     Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();

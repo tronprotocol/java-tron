@@ -511,10 +511,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx);
+    processor.consumeBandwidth(trx, ret);
   }
 
   @Deprecated
@@ -882,13 +882,14 @@ public class Manager {
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    consumeBandwidth(trxCap);
+    consumeBandwidth(trxCap, ret);
 
     for (Actuator act : actuatorList) {
       act.validate();
       act.execute(ret);
-      trxCap.setResult(ret);
     }
+    trxCap.setResult(ret);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
