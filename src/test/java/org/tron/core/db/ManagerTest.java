@@ -218,68 +218,70 @@ public class ManagerTest {
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
-    long size = dbManager.getBlockStore().dbSource.allKeys().size();
-    System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
-    byte[] privateKey = ByteArray.fromHexString(key);
-    final ECKey ecKey = ECKey.fromPrivate(privateKey);
-    byte[] address = ecKey.getAddress();
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
-    IntStream.range(0, 1)
-        .forEach(
-            i -> {
-              try {
-                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-              } catch (Exception e) {
-                logger.debug(e.getMessage(), e);
-              }
-            });
+    synchronized (RevokingStore.getInstance()) {
+      Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      long size = dbManager.getBlockStore().dbSource.allKeys().size();
+      System.out.print("block store size:" + size + "\n");
+      String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+      byte[] privateKey = ByteArray.fromHexString(key);
+      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      byte[] address = ecKey.getAddress();
+      WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+      dbManager.addWitness(ByteString.copyFrom(address));
+      IntStream.range(0, 1)
+          .forEach(
+              i -> {
+                try {
+                  dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+                } catch (Exception e) {
+                  logger.debug(e.getMessage(), e);
+                }
+              });
 
-    Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+      Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
-    long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    BlockCapsule blockCapsule0 =
-        createTestBlockCapsule(
-            num + 1,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
-            addressToProvateKeys);
+      long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+      BlockCapsule blockCapsule0 =
+          createTestBlockCapsule(
+              num + 1,
+              dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+              addressToProvateKeys);
 
-    BlockCapsule blockCapsule1 =
-        createTestBlockCapsule(
-            num + 1,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
-            addressToProvateKeys);
+      BlockCapsule blockCapsule1 =
+          createTestBlockCapsule(
+              num + 1,
+              dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+              addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 =
-        createTestBlockCapsule(
-            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+      BlockCapsule blockCapsule2 =
+          createTestBlockCapsule(
+              num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
-    dbManager.pushBlock(blockCapsule0);
-    dbManager.pushBlock(blockCapsule1);
-    dbManager.pushBlock(blockCapsule2);
+      dbManager.pushBlock(blockCapsule0);
+      dbManager.pushBlock(blockCapsule1);
+      dbManager.pushBlock(blockCapsule2);
 
-    Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule1.getBlockId().getBytes()));
-    Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()));
+      Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule1.getBlockId().getBytes()));
+      Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()));
 
-    Assert.assertEquals(
-        dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
-        blockCapsule1.getBlockId());
+      Assert.assertEquals(
+          dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
+          blockCapsule1.getBlockId());
 
-    Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 3);
+      Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 3);
 
-    Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1), blockCapsule1.getBlockId());
-    Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2), blockCapsule1.getParentHash());
+      Assert.assertEquals(
+          dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1), blockCapsule1.getBlockId());
+      Assert.assertEquals(
+          dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2), blockCapsule1.getParentHash());
 
-    Assert.assertEquals(
-        blockCapsule2.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
-    Assert.assertEquals(
-        dbManager.getHead().getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      Assert.assertEquals(
+          blockCapsule2.getBlockId(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      Assert.assertEquals(
+          dbManager.getHead().getBlockId(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    }
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
