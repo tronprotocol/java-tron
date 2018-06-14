@@ -75,7 +75,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
-
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 @Component
@@ -483,7 +483,7 @@ public class Wallet {
   }
 
   public Transaction deployContract(SmartContract smartContract) {
-    return new TransactionCapsule(smartContract, Transaction.Contract.ContractType.DeployContract)
+    return new TransactionCapsule(smartContract, ContractType.SmartContract)
             .getInstance();
   }
 
@@ -503,10 +503,10 @@ public class Wallet {
 
       Transaction trx = null;
       if (!isConstant(abi, selector)) {
-        trx = new TransactionCapsule(smartContract, Transaction.Contract.ContractType.TriggerContract)
+        trx = new TransactionCapsule(smartContract, ContractType.TriggerSmartContract)
                 .getInstance();
       } else {
-        TransactionCapsule trxCap = new TransactionCapsule(smartContract, Transaction.Contract.ContractType.TriggerContract);
+        TransactionCapsule trxCap = new TransactionCapsule(smartContract, ContractType.TriggerSmartContract);
         /*ProgramResult programResult = DepositController.getInstance().processConstantTransaction(trxCap);
         Transaction.Result.Builder builder = Transaction.Result.newBuilder();
         builder.setConstantResult(ByteString.copyFrom(programResult.getHReturn()));

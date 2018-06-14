@@ -23,6 +23,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 import java.util.List;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.*;
@@ -67,10 +68,10 @@ public class Runtime {
 
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
         switch (contractType.getNumber()) {
-            case Transaction.Contract.ContractType.TriggerContract_VALUE:
+            case ContractType.TriggerSmartContract_VALUE:
                 trxType = TRX_CONTRACT_CALL_TYPE;
                 break;
-            case Transaction.Contract.ContractType.DeployContract_VALUE:
+            case ContractType.SmartContract_VALUE:
                 trxType = TRX_CONTRACT_CREATION_TYPE;
                 break;
             default:
@@ -93,10 +94,10 @@ public class Runtime {
         this.executerType = ET_PRE_TYPE;
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
         switch (contractType.getNumber()) {
-            case Transaction.Contract.ContractType.TriggerContract_VALUE:
+            case ContractType.TriggerSmartContract_VALUE:
                 trxType = TRX_CONTRACT_CALL_TYPE;
                 break;
-            case Transaction.Contract.ContractType.DeployContract_VALUE:
+            case ContractType.SmartContract_VALUE:
                 trxType = TRX_CONTRACT_CREATION_TYPE;
                 break;
             default:

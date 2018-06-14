@@ -388,7 +388,7 @@ public class RpcApiService implements Service {
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
-      if (contractType != ContractType.DeployContract && contractType != ContractType.DeployContract) {
+      if (contractType != ContractType.SmartContract && contractType != ContractType.TriggerSmartContract) {
         List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
         for (Actuator act : actList) {
           act.validate();
@@ -818,13 +818,14 @@ public class RpcApiService implements Service {
                                io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
       Transaction trx;
       try {
-        trx = createTransactionCapsule(request, ContractType.DeployContract)
+        trx = createTransactionCapsule(request, ContractType.SmartContract)
             .getInstance(); //wallet.deployContract(request);
       } catch (ContractValidateException e) {
         trx = null;
       }
 
       responseObserver.onNext(trx);
+      responseObserver.onCompleted();
     }
 
     public void totalTransaction(EmptyMessage request,
@@ -852,12 +853,13 @@ public class RpcApiService implements Service {
                                 StreamObserver<Transaction> responseObserver) {
       Transaction trx;
       try {
-        trx = createTransactionCapsule(request, ContractType.TriggerContract)
+        trx = createTransactionCapsule(request, ContractType.TriggerSmartContract)
             .getInstance();//wallet.triggerContract(request);
       } catch (ContractValidateException e) {
         trx = null;
       }
       responseObserver.onNext(trx);
+      responseObserver.onCompleted();
     }
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
@@ -870,6 +872,7 @@ public class RpcApiService implements Service {
                             StreamObserver<Contract.SmartContract> responseObserver) {
       Contract.SmartContract contract = wallet.getContract(request);
       responseObserver.onNext(contract);
+      responseObserver.onCompleted();
     }
 
     public void listWitnesses(EmptyMessage request,

@@ -274,10 +274,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
-        case DeployContract:
+        case SmartContract:
           owner = contractParameter.unpack(Contract.SmartContract.class).getOwnerAddress();
           break;
-        case TriggerContract:
+        case TriggerSmartContract:
           owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
           break;
         case UpdateAssetContract:
