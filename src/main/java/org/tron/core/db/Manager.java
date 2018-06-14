@@ -399,7 +399,8 @@ public class Manager {
     }
 
     if (amount < 0 && balance < -amount) {
-      throw new BalanceInsufficientException(StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
+      throw new BalanceInsufficientException(
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -415,7 +416,8 @@ public class Manager {
     }
 
     if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(StringUtil.createReadableString(accountAddress) + " insufficient balance");
+      throw new BalanceInsufficientException(
+          StringUtil.createReadableString(accountAddress) + " insufficient balance");
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
@@ -867,7 +869,8 @@ public class Manager {
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException("act size should be exactly 1, this is extend feature");
+      throw new ContractSizeNotEqualToOneException(
+          "act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
@@ -933,7 +936,8 @@ public class Manager {
         break;
       }
       // check the block size
-      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
+      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
+          > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -964,6 +968,12 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (TransactionExpirationException e) {
         logger.info("contract not processed during TransactionExpirationException");
+        logger.debug(e.getMessage(), e);
+      } catch (AccountResourceInsufficientException e) {
+        logger.info("contract not processed during AccountResourceInsufficientException");
+        logger.debug(e.getMessage(), e);
+      } catch (ValidateSignatureException e) {
+        logger.info("contract not processed during ValidateSignatureException");
         logger.debug(e.getMessage(), e);
       }
     }
