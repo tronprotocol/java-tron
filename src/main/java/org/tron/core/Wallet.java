@@ -45,7 +45,9 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -71,6 +73,7 @@ import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -487,34 +490,36 @@ public class Wallet {
             .getInstance();
   }
 
-  public Transaction triggerContract(SmartContract smartContract) {
+  public Transaction triggerContract(TriggerSmartContract triggerSmartContract, Transaction trx) {
     ContractStore contractStore = dbManager.getContractStore();
-    byte[] contractAddress = smartContract.getContractAddress().toByteArray();
+    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
       return null;
     }
 
     try {
-      byte[] selector = getSelector(smartContract.getData().toByteArray());
+      byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
         return null;
       }
 
-      Transaction trx = null;
       if (!isConstant(abi, selector)) {
-        trx = new TransactionCapsule(smartContract, ContractType.TriggerSmartContract)
-                .getInstance();
+        return trx;
       } else {
-        TransactionCapsule trxCap = new TransactionCapsule(smartContract, ContractType.TriggerSmartContract);
-        /*ProgramResult programResult = DepositController.getInstance().processConstantTransaction(trxCap);
-        Transaction.Result.Builder builder = Transaction.Result.newBuilder();
-        builder.setConstantResult(ByteString.copyFrom(programResult.getHReturn()));
-        trx = trxCap.getInstance();
-        trx = trx.toBuilder().addRet(builder.build()).build();*/
-      }
+        Runtime runtime = new Runtime(trx, dbManager, new ProgramInvokeFactoryImpl());
+        runtime.execute();
+        runtime.go();
+        if (runtime.getResult().getException() != null) {
+          throw new RuntimeException("Runtime exe failed!");
+        }
 
-      return trx;
+        ProgramResult result = runtime.getResult();
+        Transaction.Result.Builder builder = Transaction.Result.newBuilder();
+        builder.setConstantResult(ByteString.copyFrom(result.getHReturn()));
+        trx = trx.toBuilder().addRet(builder.build()).build();
+        return trx;
+      }
     } catch (Exception e) {
       logger.error(e.getMessage());
       return null;

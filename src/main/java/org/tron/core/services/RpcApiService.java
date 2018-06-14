@@ -857,7 +857,12 @@ public class RpcApiService implements Service {
             .getInstance();//wallet.triggerContract(request);
       } catch (ContractValidateException e) {
         trx = null;
+        responseObserver.onNext(trx);
+        responseObserver.onCompleted();
+        return;
       }
+
+      trx = wallet.triggerContract(request, trx);
       responseObserver.onNext(trx);
       responseObserver.onCompleted();
     }
