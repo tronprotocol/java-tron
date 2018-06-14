@@ -887,8 +887,9 @@ public class Manager {
     for (Actuator act : actuatorList) {
       act.validate();
       act.execute(ret);
-      trxCap.setResult(ret);
     }
+    trxCap.setResult(ret);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
