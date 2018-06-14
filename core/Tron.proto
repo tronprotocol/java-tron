@@ -149,8 +149,8 @@ message Transaction {
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
       CustomContract = 20;
-      DeployContract = 0x30;
-      TriggerContract = 0x31;
+      SmartContract = 0x30;
+      TriggerSmartContract = 0x31;
       GetContract = 0x32;
     }
     ContractType type = 1;
