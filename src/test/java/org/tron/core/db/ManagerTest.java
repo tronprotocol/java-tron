@@ -238,6 +238,7 @@ public class ManagerTest {
                 }
               });
 
+
       Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
       long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
