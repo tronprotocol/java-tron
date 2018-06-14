@@ -125,7 +125,7 @@ public class AttackSendcoin {
   }
 
   //@Test(enabled = true)
-  @Test(enabled = true,threadPoolSize = 200, invocationCount = 200)
+  @Test(enabled = false,threadPoolSize = 200, invocationCount = 200)
   public void freezeAndSendcoin() throws InterruptedException {
 
     Integer i = 0;

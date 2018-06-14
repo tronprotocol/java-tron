@@ -84,7 +84,7 @@ public class PublicMethed {
         return false;
       } else {
         try {
-          Thread.sleep(3000);
+          Thread.sleep(4000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -372,7 +372,7 @@ public class PublicMethed {
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      if (transaction == null){
+      if (transaction == null) {
         logger.info("transaction == null");
       } else {
         logger.info("transaction.getRawData().getContractCount() == 0");
@@ -437,7 +437,7 @@ public class PublicMethed {
     logger.info("Fullnode block num is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
     while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait <= 10) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -447,11 +447,11 @@ public class PublicMethed {
           .getBlockHeader().getRawData().getNumber()));
       solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
           .build());
-      wait++;
-      if (wait == 9) {
+      if (wait == 10) {
         logger.info("Didn't syn,skip to next case.");
         return false;
       }
+      wait++;
     }
     return true;
   }
