@@ -512,10 +512,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx);
+    processor.consumeBandwidth(trx, ret);
   }
 
   @Deprecated
@@ -870,7 +870,8 @@ public class Manager {
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException("act size should be exactly 1, this is extend feature");
+      throw new ContractSizeNotEqualToOneException(
+          "act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
@@ -882,7 +883,7 @@ public class Manager {
     final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    consumeBandwidth(trxCap);
+    consumeBandwidth(trxCap, ret);
 
     for (Actuator act : actuatorList) {
       act.validate();
@@ -1175,16 +1176,15 @@ public class Manager {
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
-    AccountCapsule sun = accountStore.getSun();
     try {
-      adjustBalance(sun.getAddress().toByteArray(), -WITNESS_PAY_PER_BLOCK);
+      adjustBalance(accountStore.getSun(), -WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
     }
     try {
       adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
     }
 
     logger.debug(
