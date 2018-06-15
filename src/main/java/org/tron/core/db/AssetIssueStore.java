@@ -67,6 +67,9 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     List<AssetIssueCapsule> assetIssueList = dbSource.allKeys().stream()
         .map(this::get)
         .collect(Collectors.toList());
+    if (assetIssueList.size() <= offset) {
+      return null;
+    }
     assetIssueList.sort((o1, o2) -> {
       return o1.getName().toStringUtf8().compareTo(o2.getName().toStringUtf8());
     });
