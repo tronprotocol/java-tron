@@ -36,6 +36,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.Constant;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;

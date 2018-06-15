@@ -56,6 +56,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -641,25 +642,25 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
+      BadNumberBlockException, BadBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The signature is not validated.");
-          // TODO: throw exception here.
-          return;
+          logger.warn("The signature is not validated.");
+          throw new BadBlockException("The signature is not validated");
         }
 
         if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-          logger.info(
-              "The merkler root doesn't match, Calc result is "
+          logger.warn(
+              "The merkle root doesn't match, Calc result is "
                   + block.calcMerkleRoot()
                   + " , the headers is "
                   + block.getMerkleRoot());
-          // TODO:throw exception here.
-          return;
+          throw new BadBlockException("The merkle hash is not validated");
         }
       }
 
@@ -1004,6 +1005,8 @@ public class Manager {
       logger.info("contract not processed during TransactionExpirationException");
     } catch (BadNumberBlockException e) {
       logger.info("generate block using wrong number");
+    } catch (BadBlockException e) {
+      logger.info("block exception");
     }
 
     return null;
