@@ -115,7 +115,7 @@ public class WalletTestAssetIssue015 {
     }
   }
 
-  @Test(enabled = true,priority = 1)
+  @Test(enabled = true)
   public void testWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
     //Transfer asset to an account.
     Assert.assertTrue(PublicMethed
@@ -150,7 +150,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed > netCostMeasure);
   }
 
-  @Test(enabled = true,priority = 2)
+  @Test(enabled = true,priority = 1)
   public void testWhenTransferHasNoEnoughBandwidthUseBalance() {
     Boolean ret = true;
     while (ret) {
@@ -178,7 +178,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(beforeBalance - afterBalance > 2000);
   }
 
-  @Test(enabled = true,priority = 3)
+  @Test(enabled = true,priority = 2)
   public void testWhenFreezeBalanceUseNet() {
     Assert.assertTrue(PublicMethed.freezeBalance(transferAssetAddress,5000000,
         3,transferAssetCreateKey,blockingStubFull));

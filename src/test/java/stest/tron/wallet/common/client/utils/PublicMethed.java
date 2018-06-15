@@ -84,7 +84,7 @@ public class PublicMethed {
         return false;
       } else {
         try {
-          Thread.sleep(4000);
+          Thread.sleep(3000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -468,7 +468,7 @@ public class PublicMethed {
     Integer wait = 0;
     logger.info("Block num is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
-    while (nextNum <= currentNum + 1 && wait < 10) {
+    while (nextNum <= currentNum + 1 && wait <= 15) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -477,11 +477,11 @@ public class PublicMethed {
       logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
-      wait++;
-      if (wait == 9) {
-        logger.info("These 30 second didn't produce a block,please check.");
+      if (wait == 15) {
+        logger.info("These 45 second didn't produce a block,please check.");
         return false;
       }
+      wait++;
     }
     return true;
   }

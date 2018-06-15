@@ -105,17 +105,12 @@ public class WalletTestWitness003 {
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
       Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-      if (createWitness(lowBalAddress, createUrl, lowBalTest) == false) {
-        Account lowAccount = queryAccount(lowBalTest, blockingStubFull);
-        logger.info(Long.toString(lowAccount.getBalance()));
-        Assert.assertTrue(sendcoin(fromAddress, costForCreateWitness, lowBalAddress, lowBalTest));
-      }
-    } else {
-      logger.info("Create witness case had been test.This time skip it.");
+      Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
+
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,priority = 1)
   public void testUpdateWitness() {
     GrpcAPI.WitnessList witnesslist = blockingStubFull
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -123,9 +118,9 @@ public class WalletTestWitness003 {
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
       //null url, update failed
-      Assert.assertFalse(updateWitness(fromAddress, wrongUrl, testKey002));
+      Assert.assertFalse(updateWitness(lowBalAddress, wrongUrl, lowBalTest));
       //Content space and special char, update success
-      Assert.assertTrue(updateWitness(fromAddress, updateSpaceUrl, testKey002));
+      Assert.assertTrue(updateWitness(lowBalAddress, updateSpaceUrl, lowBalTest));
       //update success
       Assert.assertTrue(updateWitness(lowBalAddress, updateUrl, lowBalTest));
     } else {
