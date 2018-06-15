@@ -110,7 +110,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void testUseFeeOrNet() {
+  public void atestUseFeeOrNet() {
     Long feeNum = 0L;
     Long netNum = 0L;
     Long sendNum = 0L;
@@ -157,8 +157,8 @@ public class WalletTestTransfer003 {
     Assert.assertTrue(feeCost + sendNum + afterBalance == beforeBalance);
   }
 
-  @Test(enabled = true,priority = 1)
-  public void testCreateAccountUseFee() {
+  @Test(enabled = true)
+  public void btestCreateAccountUseFee() {
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     final Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("before balance " + Long.toString(beforeBalance));
@@ -182,8 +182,8 @@ public class WalletTestTransfer003 {
 
   }
 
-  @Test(enabled = true,priority = 2)
-  public void testInvalidGetTransactionById() {
+  @Test(enabled = true)
+  public void ctestInvalidGetTransactionById() {
     String txId = "";
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
@@ -200,8 +200,8 @@ public class WalletTestTransfer003 {
     Assert.assertTrue(getTransactionById.get().getRawData().getContractCount() == 0);
   }
 
-  @Test(enabled = true,priority = 3)
-  public void testNoBalanceCanSend() {
+  @Test(enabled = true)
+  public void dtestNoBalanceCanSend() {
     Long feeNum = 0L;
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();

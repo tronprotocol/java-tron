@@ -110,7 +110,7 @@ public class WalletTestWitness003 {
     }
   }
 
-  @Test(enabled = true,priority = 1)
+  @Test(enabled = true)
   public void testUpdateWitness() {
     GrpcAPI.WitnessList witnesslist = blockingStubFull
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());

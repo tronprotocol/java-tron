@@ -123,8 +123,8 @@ public class WalletTestAssetIssue017 {
     }
   }
 
-  @Test(enabled = true,priority = 1)
-  public void testGetPaginatedAssetIssueList() {
+  @Test(enabled = true)
+  public void atestGetPaginatedAssetIssueList() {
 
     Integer offset = 0;
     Integer limit = 100;
@@ -143,8 +143,8 @@ public class WalletTestAssetIssue017 {
     }
   }
 
-  @Test(enabled = true,priority = 2)
-  public void testGetPaginatedAssetIssueListException() {
+  @Test(enabled = true)
+  public void btestGetPaginatedAssetIssueListException() {
     //offset is 0, limit is 0.
     Integer offset = 0;
     Integer limit = 0;
@@ -194,8 +194,8 @@ public class WalletTestAssetIssue017 {
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
   }
 
-  @Test(enabled = true,priority = 3)
-  public void testGetPaginatedAssetIssueListOnSolidityNode() {
+  @Test(enabled = true)
+  public void ctestGetPaginatedAssetIssueListOnSolidityNode() {
 
     Integer offset = 0;
     Integer limit = 100;
@@ -216,8 +216,8 @@ public class WalletTestAssetIssue017 {
     }
   }
 
-  @Test(enabled = true,priority = 4)
-  public void testGetPaginatedAssetIssueListExceptionOnSolidityNode() {
+  @Test(enabled = true)
+  public void dtestGetPaginatedAssetIssueListExceptionOnSolidityNode() {
     //offset is 0, limit is 0.
     Integer offset = 0;
     Integer limit = 0;
@@ -242,9 +242,21 @@ public class WalletTestAssetIssue017 {
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
 
-    //offset is 1, limit is 50.
+    //offset is 0, limit is 50.
     offset = 0;
     limit = 50;
+    pageMessageBuilder = PaginatedMessage.newBuilder();
+    pageMessageBuilder.setOffset(offset);
+    pageMessageBuilder.setLimit(limit);
+    assetIssueList = blockingStubSolidity
+        .getPaginatedAssetIssueList(pageMessageBuilder.build());
+    assetIssueListPaginated = Optional.ofNullable(assetIssueList);
+    logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
+    Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
+
+    //offset is 0, limit is 1000.
+    offset = 0;
+    limit = 1000;
     pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
