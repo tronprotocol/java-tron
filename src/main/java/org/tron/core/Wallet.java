@@ -328,11 +328,11 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> AssetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
-    if ( null == AssetIssueList || AssetIssueList.size() == 0){
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
+    if (null == assetIssueList || assetIssueList.size() == 0) {
       return null;
     }
-    AssetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 

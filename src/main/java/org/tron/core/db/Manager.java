@@ -970,6 +970,12 @@ public class Manager {
       } catch (TransactionExpirationException e) {
         logger.info("contract not processed during TransactionExpirationException");
         logger.debug(e.getMessage(), e);
+      } catch (AccountResourceInsufficientException e) {
+        logger.info("contract not processed during AccountResourceInsufficientException");
+        logger.debug(e.getMessage(), e);
+      } catch (ValidateSignatureException e) {
+        logger.info("contract not processed during ValidateSignatureException");
+        logger.debug(e.getMessage(), e);
       }
     }
 
