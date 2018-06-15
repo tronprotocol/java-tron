@@ -30,6 +30,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
         .setRet(code).build();
   }
 
+  public long getFee() {
+    return transactionResult.getFee();
+  }
+
   public void setFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
   }
