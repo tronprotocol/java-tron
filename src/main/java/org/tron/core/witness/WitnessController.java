@@ -26,6 +26,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.HeaderNotFound;
 
 @Slf4j
@@ -243,7 +244,6 @@ public class WitnessController {
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     org.tron.core.db.common.iterator.DBIterator dbIterator = votesStore.getIterator();
-    AccountStore accountStore = this.manager.getAccountStore();
 
     long sizeCount = 0;
     while (dbIterator.hasNext()) {
@@ -253,43 +253,37 @@ public class WitnessController {
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
 
+      // TODO add vote reward
+      // long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
+      //    .getVoteRewardRate());
+      //account.setBalance(account.getBalance() + reward);
+      //accountStore.put(account.createDbKey(), account);
       Optional<Long> sum = votes.getNewVotes().stream().map(vote -> vote.getVoteCount())
           .reduce((a, b) -> a + b);
-      if (sum.isPresent()) {
-        AccountCapsule account = accountStore.get(votes.createDbKey());
-        if (sum.get() <= account.getTronPower()) {
-          // TODO add vote reward
-          // long reward = Math.round(sum.get() * this.manager.getDynamicPropertiesStore()
-          //    .getVoteRewardRate());
-          //account.setBalance(account.getBalance() + reward);
-          //accountStore.put(account.createDbKey(), account);
-          votes.getOldVotes().forEach(vote -> {
-            //TODO validate witness //active_witness
-            ByteString voteAddress = vote.getVoteAddress();
-            long voteCount = vote.getVoteCount();
-            if (countWitness.containsKey(voteAddress)) {
-              countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
-            } else {
-              countWitness.put(voteAddress, -voteCount);
-            }
-          });
-          votes.getNewVotes().forEach(vote -> {
-            //TODO validate witness //active_witness
-            ByteString voteAddress = vote.getVoteAddress();
-            long voteCount = vote.getVoteCount();
-            if (countWitness.containsKey(voteAddress)) {
-              countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
-            } else {
-              countWitness.put(voteAddress, voteCount);
-            }
-          });
-        } else {
-          logger.info(
-              "account" + account.createReadableString() + ",tronPower[" + account.getTronPower()
-                  + "] < voteSum["
-                  + sum.get() + "]");
-        }
+      if (sum.isPresent()) { //todo: will be removed in next deployment
+        votes.getOldVotes().forEach(vote -> {
+          //TODO validate witness //active_witness
+          ByteString voteAddress = vote.getVoteAddress();
+          long voteCount = vote.getVoteCount();
+          if (countWitness.containsKey(voteAddress)) {
+            countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
+          } else {
+            countWitness.put(voteAddress, -voteCount);
+          }
+        });
+        votes.getNewVotes().forEach(vote -> {
+          //TODO validate witness //active_witness
+          ByteString voteAddress = vote.getVoteAddress();
+          long voteCount = vote.getVoteCount();
+          if (countWitness.containsKey(voteAddress)) {
+            countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
+          } else {
+            countWitness.put(voteAddress, voteCount);
+          }
+        });
       }
+
+
       sizeCount++;
       votesStore.delete(next.getKey());
     }
@@ -412,6 +406,13 @@ public class WitnessController {
         manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       }
     }
+
+    try {
+      manager.adjustBalance(manager.getAccountStore().getSun(), -totalPay);
+    } catch (BalanceInsufficientException e) {
+      logger.warn(e.getMessage(), e);
+    }
+
   }
 
 }
