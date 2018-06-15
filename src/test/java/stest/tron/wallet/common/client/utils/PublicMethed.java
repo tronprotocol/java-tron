@@ -285,7 +285,7 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Protocol.Account search = queryAccount(priKey, blockingStubFull);
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
     Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
@@ -297,11 +297,13 @@ public class PublicMethed {
     Contract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
       return true;
@@ -370,7 +372,11 @@ public class PublicMethed {
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction == null || transaction.getRawData().getContractCount() == 0");
+      if (transaction == null) {
+        logger.info("transaction == null");
+      } else {
+        logger.info("transaction.getRawData().getContractCount() == 0");
+      }
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
@@ -431,7 +437,7 @@ public class PublicMethed {
     logger.info("Fullnode block num is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
     while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait < 10) {
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait <= 10) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -441,11 +447,11 @@ public class PublicMethed {
           .getBlockHeader().getRawData().getNumber()));
       solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
           .build());
-      wait++;
-      if (wait == 9) {
+      if (wait == 10) {
         logger.info("Didn't syn,skip to next case.");
         return false;
       }
+      wait++;
     }
     return true;
   }
@@ -462,7 +468,7 @@ public class PublicMethed {
     Integer wait = 0;
     logger.info("Block num is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
-    while (nextNum <= currentNum + 1 && wait < 10) {
+    while (nextNum <= currentNum + 1 && wait <= 15) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -471,11 +477,11 @@ public class PublicMethed {
       logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
-      wait++;
-      if (wait == 9) {
-        logger.info("These 30 second didn't produce a block,please check.");
+      if (wait == 15) {
+        logger.info("These 45 second didn't produce a block,please check.");
         return false;
       }
+      wait++;
     }
     return true;
   }
