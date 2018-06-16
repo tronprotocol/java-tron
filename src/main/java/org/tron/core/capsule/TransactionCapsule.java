@@ -133,6 +133,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     createTransaction(participateAssetIssueContract, ContractType.ParticipateAssetIssueContract);
   }
 
+  public void resetResult() {
+    this.transaction = this.getInstance().toBuilder().clearRet().build();
+  }
+
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
     this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
         .build();
