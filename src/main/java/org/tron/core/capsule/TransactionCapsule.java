@@ -221,11 +221,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return true;
   }
 
-  @Deprecated
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
