@@ -132,7 +132,6 @@ public class SyncPool {
     activePeers.add(p);
   }
 
-
   synchronized void logActivePeers() {
 
     logger.info("-------- active connect channel {}", activePeersCount.get());
