@@ -121,11 +121,7 @@ public class Args {
 
   @Getter
   @Setter
-  private List<Node> activeNodes;
-
-  @Getter
-  @Setter
-  private List<Node> trustNodes;
+  private List<Node> nodeActive;
 
   @Getter
   @Setter
@@ -272,8 +268,7 @@ public class Args {
     INSTANCE.nodeDiscoveryEnable = false;
     INSTANCE.nodeDiscoveryPersist = false;
     INSTANCE.nodeConnectionTimeout = 0;
-    INSTANCE.activeNodes = Collections.emptyList();
-    INSTANCE.trustNodes = Collections.emptyList();
+    INSTANCE.nodeActive = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 0;
     INSTANCE.minParticipationRate = 0;
@@ -407,9 +402,7 @@ public class Args {
         config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
             : 0;
 
-    INSTANCE.activeNodes = getNodes(config, "active.node");
-
-    INSTANCE.trustNodes = getNodes(config, "trust.node");
+    INSTANCE.nodeActive = nodeActive(config);
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
@@ -551,12 +544,12 @@ public class Args {
     return this.outputDirectory;
   }
 
-  private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
-    if (!config.hasPath(path)) {
+  private static List<Node> nodeActive(final com.typesafe.config.Config config) {
+    if (!config.hasPath("node.active")) {
       return Collections.EMPTY_LIST;
     }
     List<Node> ret = new ArrayList<>();
-    List<String> list = config.getStringList(path);
+    List<String> list = config.getStringList("node.active");
     for (String configString : list) {
       Node n = Node.instanceOf(configString);
       ret.add(n);

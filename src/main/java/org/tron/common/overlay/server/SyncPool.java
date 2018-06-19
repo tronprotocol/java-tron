@@ -19,7 +19,6 @@ package org.tron.common.overlay.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Lists;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +52,8 @@ public class SyncPool {
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private static final double factor = 0.4;
-  private static final double activeFactor = 0.2;
 
-  private final List<PeerConnection> activePeers = Collections
-      .synchronizedList(new ArrayList<PeerConnection>());
+  private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
@@ -88,10 +87,6 @@ public class SyncPool {
 
     peerClient = ctx.getBean(PeerClient.class);
 
-    for (Node node : args.getActiveNodes()) {
-      nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
-
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
@@ -109,11 +104,8 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
-        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
-    if (lackSize <= 0) {
-      return;
-    }
+    int lackSize = (int) (maxActiveNodes * factor) - activePeers.size();
+    if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = new HashSet<>();
     channelManager.getActivePeers().forEach(channel -> nodesInUse.add(channel.getPeerId()));
@@ -197,7 +189,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
+    if (activePeers.size() >= maxActiveNodes) {
       return false;
     }
     return true;
