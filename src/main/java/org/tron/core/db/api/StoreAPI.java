@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.tron.core.db.api.index.Index;
 import org.tron.core.db.api.index.TransactionIndex;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -74,7 +75,24 @@ public class StoreAPI {
    *                       transaction api                                       *
    *******************************************************************************
    */
+  public Transaction getTransactionById(String id) throws NonUniqueObjectException {
+    if (StringUtils.isEmpty(id)) {
+      logger.info("id is empty");
+      return null;
+    }
+    Index.Iface<Transaction> index = indexHelper.getTransactionIndex();
+    try (ResultSet<Transaction> resultSet = index
+        .retrieve(equal(TransactionIndex.Transaction_ID, id))) {
+      if (resultSet.isEmpty()) {
+        return null;
+      }
 
+      return resultSet.uniqueResult();
+    } catch (com.googlecode.cqengine.resultset.common.NonUniqueObjectException e) {
+      throw new NonUniqueObjectException(e);
+    }
+  }
+  
   public List<Transaction> getTransactionsFromThis(String address, long offset, long limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");

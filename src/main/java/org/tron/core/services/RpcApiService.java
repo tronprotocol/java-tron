@@ -240,7 +240,7 @@ public class RpcApiService implements Service {
     @Override
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
-      responseObserver.onNext(wallet.getAssetIssueList(request.getOffset(),request.getLimit()));
+      responseObserver.onNext(wallet.getAssetIssueList(request.getOffset(), request.getLimit()));
       responseObserver.onCompleted();
     }
 
@@ -255,6 +255,20 @@ public class RpcApiService implements Service {
       long num = request.getNum();
       if (num >= 0) {
         Block reply = wallet.getBlockByNum(num);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionById(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        Transaction reply = walletSolidity.getTransactionById(id);
+
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -732,7 +746,7 @@ public class RpcApiService implements Service {
     @Override
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
-      responseObserver.onNext(wallet.getAssetIssueList(request.getOffset(),request.getLimit()));
+      responseObserver.onNext(wallet.getAssetIssueList(request.getOffset(), request.getLimit()));
       responseObserver.onCompleted();
     }
 

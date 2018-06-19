@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.db.api.StoreAPI;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -17,6 +18,17 @@ public class WalletSolidity {
   @Autowired
   private StoreAPI storeAPI;
 
+  public Transaction getTransactionById(ByteString id) {
+    try {
+      Transaction transactionById = storeAPI
+          .getTransactionById(ByteArray.toHexString(id.toByteArray()));
+      return transactionById;
+    } catch (NonUniqueObjectException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+  
   public TransactionList getTransactionsFromThis(ByteString thisAddress, long offset, long limit) {
     List<Transaction> transactionsFromThis = storeAPI
         .getTransactionsFromThis(ByteArray.toHexString(thisAddress.toByteArray()), offset, limit);
