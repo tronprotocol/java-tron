@@ -41,6 +41,7 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.overlay.discover.node.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -228,15 +229,19 @@ public class SyncPool {
         return false;
       }
 
+      if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
+        return false;
+      }
+
+      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED){
+        return true;
+      }
+
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
       if (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null) {
         return false;
       }
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
-        return false;
-      }
-
-      if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
 
