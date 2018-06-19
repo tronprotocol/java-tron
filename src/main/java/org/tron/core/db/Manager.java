@@ -946,7 +946,7 @@ public class Manager {
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
-        trx.resetResult();
+//        trx.resetResult();
         tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
