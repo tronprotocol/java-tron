@@ -62,7 +62,7 @@ public class ArgsTest {
     Assert.assertEquals("46.168.1.1", args.getNodeExternalIp());
     Assert.assertEquals(18888, args.getNodeListenPort());
     Assert.assertEquals(2000, args.getNodeConnectionTimeout());
-    Assert.assertEquals(0, args.getNodeActive().size());
+    Assert.assertEquals(0, args.getActiveNodes().size());
     Assert.assertEquals(30, args.getNodeMaxActiveNodes());
     Assert.assertEquals(43, args.getNodeP2pVersion());
     //Assert.assertEquals(30, args.getSyncNodeCount());
