@@ -20,6 +20,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
@@ -346,4 +347,19 @@ public class StoreAPITest {
     Assert.assertEquals("TransactionsToThis4", 0, transactionList.size());
   }
 
+  @Test
+  public void getTransactionById() {
+    try {
+      Transaction transaction =
+          storeAPI.getTransactionById(
+              new TransactionCapsule(transaction1).getTransactionId().toString());
+      Assert.assertEquals("TransactionById1", transaction1, transaction);
+      transaction =
+          storeAPI.getTransactionById(
+              new TransactionCapsule(transaction2).getTransactionId().toString());
+      Assert.assertEquals("TransactionById2", transaction2, transaction);
+    } catch (NonUniqueObjectException e) {
+      Assert.fail("Exception " + e);
+    }
+  }
 }
