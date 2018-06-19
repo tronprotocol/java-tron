@@ -47,6 +47,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
@@ -69,6 +70,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 
 @Slf4j
@@ -328,7 +330,8 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
+        .getAssetIssuesPaginated(offset, limit);
     if (null == assetIssueList || assetIssueList.size() == 0) {
       return null;
     }
@@ -449,6 +452,12 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
+
+      long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * transactionCapsule
+          .getSerializedSize();
+      TransactionResultCapsule ret = new TransactionResultCapsule(code.SUCESS,fee);
+      transactionCapsule.setResult(ret);
+
     } catch (BadItemException e) {
     }
     if (transactionCapsule != null) {
