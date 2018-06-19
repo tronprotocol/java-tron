@@ -70,6 +70,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionSign;
 
 @Component
 @Slf4j
@@ -370,6 +371,14 @@ public class RpcApiService implements Service {
         headerNotFound.printStackTrace();
       }
       return trx;
+    }
+
+    @Override
+    public void getTransactionSign(TransactionSign req,
+        StreamObserver<Transaction> responseObserver) {
+      TransactionCapsule retur = wallet.getTransactionSign(req);
+      responseObserver.onNext(retur.getInstance());
+      responseObserver.onCompleted();
     }
 
     @Override
