@@ -28,7 +28,7 @@ public class Constant {
   public static final String TRANSACTION_DB_NAME = "transaction_data";
 
   //config for testnet, mainnet, beta
-  public static final String TESTNET_CONF = "config-localtest.conf";
+  public static final String TESTNET_CONF = "config.conf";
 
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
