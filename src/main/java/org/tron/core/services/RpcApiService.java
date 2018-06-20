@@ -399,10 +399,11 @@ public class RpcApiService implements Service {
     public void easyTransfer(EasyTransferMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
       byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      byte[] owner = ECKey.computeAddress(privateKey);
+      ECKey ecKey = ECKey.fromPrivate(privateKey);
+      byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));
-      builder.setOwnerAddress(req.getToAddress());
+      builder.setToAddress(req.getToAddress());
       builder.setAmount(req.getAmount());
 
       TransactionCapsule transactionCapsule = null;
@@ -412,9 +413,8 @@ public class RpcApiService implements Service {
         transactionCapsule = createTransactionCapsule(builder.build(),
             ContractType.TransferContract);
       } catch (ContractValidateException e) {
-        logger.info(e.getMessage());
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8("contract validate error"));
+            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
         responseBuild.setResult(returnBuilder.build());
         responseObserver.onNext(responseBuild.build());
         responseObserver.onCompleted();

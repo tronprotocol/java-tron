@@ -307,7 +307,8 @@ public class Wallet {
 
   public byte[] createAdresss(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
-    return ECKey.computeAddress(privateKey);
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    return ecKey.getAddress();
   }
 
   public Block getNowBlock() {
