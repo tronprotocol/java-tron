@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -52,14 +54,11 @@ public class ManagerTest {
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
 
-  static {
+  @Before
+  public void init() {
+
     Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-  }
-
-  @BeforeClass
-  public static void init() {
-
     dbManager = context.getBean(Manager.class);
 
     blockCapsule2 =
@@ -79,8 +78,8 @@ public class ManagerTest {
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
   }
 
-  @AfterClass
-  public static void removeDb() {
+  @After
+  public void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
     context.destroy();
@@ -227,15 +226,8 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    IntStream.range(0, 1)
-        .forEach(
-            i -> {
-              try {
-                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-              } catch (Exception e) {
-                logger.debug(e.getMessage(), e);
-              }
-            });
+
+    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -256,6 +248,9 @@ public class ManagerTest {
         createTestBlockCapsule(
             num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
+    logger.info("******block0:" + blockCapsule0);
+    logger.info("******block1:" + blockCapsule1);
+    logger.info("******block2:" + blockCapsule2);
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     dbManager.pushBlock(blockCapsule2);

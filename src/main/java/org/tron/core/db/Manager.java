@@ -55,6 +55,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
+import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -579,7 +580,7 @@ public class Manager {
   }
 
   private void switchFork(BlockCapsule newHead) {
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree =
+    Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree =
         khaosDb.getBranch(
             newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
 
@@ -598,37 +599,93 @@ public class Manager {
     }
 
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
-      LinkedList<BlockCapsule> branch = binaryTree.getKey();
-      Collections.reverse(branch);
-      branch.forEach(
-          item -> {
+      List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
+      Collections.reverse(first);
+      for (KhaosBlock item : first) {
+        Exception exception = null;
+        // todo  process the exception carefully later
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          applyBlock(item.getBlk());
+          tmpDialog.commit();
+        } catch (AccountResourceInsufficientException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (ValidateSignatureException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (ContractValidateException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (ContractExeException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (RevokingStoreIllegalStateException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (TaposException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (DupTransactionException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (TooBigTransactionException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (TransactionExpirationException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        } catch (ValidateScheduleException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+        }
+
+        if (exception != null) {
+          first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
+          khaosDb.setHead(binaryTree.getValue().peekFirst());
+
+          while (!getDynamicPropertiesStore()
+              .getLatestBlockHeaderHash()
+              .equals(binaryTree.getValue().peekLast().getParentHash())) {
+            try {
+              eraseBlock();
+            } catch (BadItemException e) {
+              logger.info(e.getMessage());
+            } catch (ItemNotFoundException e) {
+              logger.info(e.getMessage());
+            }
+          }
+
+          List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
+          Collections.reverse(second);
+          for (KhaosBlock khaosBlock : second) {
             // todo  process the exception carefully later
             try (Dialog tmpDialog = revokingStore.buildDialog()) {
-              applyBlock(item);
+              applyBlock(khaosBlock.getBlk());
               tmpDialog.commit();
             } catch (AccountResourceInsufficientException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (ValidateSignatureException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (ContractValidateException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (ContractExeException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (RevokingStoreIllegalStateException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (TaposException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (DupTransactionException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (TooBigTransactionException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (TransactionExpirationException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             } catch (ValidateScheduleException e) {
-              logger.debug(e.getMessage(), e);
+              logger.warn(e.getMessage(), e);
             }
-          });
-      return;
+          }
+        }
+      }
     }
   }
 
@@ -785,11 +842,11 @@ public class Manager {
    * Get the fork branch.
    */
   public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
-    final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
+    final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
 
-    LinkedList<BlockCapsule> blockCapsules = branch.getValue();
+    LinkedList<KhaosBlock> blockCapsules = branch.getValue();
 
     if (blockCapsules.isEmpty()) {
       logger.info("empty branch {}", forkBlockHash);
@@ -797,10 +854,11 @@ public class Manager {
     }
 
     LinkedList<BlockId> result = blockCapsules.stream()
-        .map(blockCapsule -> blockCapsule.getBlockId())
+        .map(KhaosBlock::getBlk)
+        .map(BlockCapsule::getBlockId)
         .collect(Collectors.toCollection(LinkedList::new));
 
-    result.add(blockCapsules.peekLast().getParentBlockId());
+    result.add(blockCapsules.peekLast().getBlk().getParentBlockId());
 
     return result;
   }
