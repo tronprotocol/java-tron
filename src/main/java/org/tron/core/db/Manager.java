@@ -521,6 +521,11 @@ public class Manager {
     processor.consumeBandwidth(trx, ret);
   }
 
+  public long computeFee(TransactionCapsule trx) throws ContractValidateException {
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    return processor.computeFee(trx);
+  }
+
   @Deprecated
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =
