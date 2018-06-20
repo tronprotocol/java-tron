@@ -37,6 +37,7 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.utils.ByteArray;
@@ -68,6 +69,7 @@ import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.EasyTransferMessage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
@@ -388,6 +390,27 @@ public class RpcApiService implements Service {
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       responseObserver.onNext(builder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransfer(EasyTransferMessage req,
+        StreamObserver<Transaction> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      byte[] owner = ECKey.computeAddress(privateKey);
+      TransferContract.Builder builder = TransferContract.newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(owner));
+      builder.setOwnerAddress(req.getToAddress());
+      builder.setAmount(req.getAmount());
+
+      try {
+        TransactionCapsule transaction = createTransactionCapsule(builder.build(), ContractType.TransferContract);
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+      }
+
+      TransactionCapsule retur = null;
+      responseObserver.onNext(retur.getInstance());
       responseObserver.onCompleted();
     }
 

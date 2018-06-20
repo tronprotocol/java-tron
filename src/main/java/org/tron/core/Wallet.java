@@ -301,14 +301,13 @@ public class Wallet {
     return trx;
   }
 
-  private byte[] pass2Key(byte[] passPhrase){
+  public byte[] pass2Key(byte[] passPhrase){
     return Sha256Hash.hash(passPhrase);
   }
 
   public byte[] createAdresss(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    return ecKey.getAddress();
+    return ECKey.computeAddress(privateKey);
   }
 
   public Block getNowBlock() {
