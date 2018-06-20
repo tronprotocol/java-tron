@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -259,31 +258,26 @@ public class WitnessController {
       //    .getVoteRewardRate());
       //account.setBalance(account.getBalance() + reward);
       //accountStore.put(account.createDbKey(), account);
-      Optional<Long> sum = votes.getNewVotes().stream().map(vote -> vote.getVoteCount())
-          .reduce((a, b) -> a + b);
-      if (sum.isPresent()) { //todo: will be removed in next deployment
-        votes.getOldVotes().forEach(vote -> {
-          //TODO validate witness //active_witness
-          ByteString voteAddress = vote.getVoteAddress();
-          long voteCount = vote.getVoteCount();
-          if (countWitness.containsKey(voteAddress)) {
-            countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
-          } else {
-            countWitness.put(voteAddress, -voteCount);
-          }
-        });
-        votes.getNewVotes().forEach(vote -> {
-          //TODO validate witness //active_witness
-          ByteString voteAddress = vote.getVoteAddress();
-          long voteCount = vote.getVoteCount();
-          if (countWitness.containsKey(voteAddress)) {
-            countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
-          } else {
-            countWitness.put(voteAddress, voteCount);
-          }
-        });
-      }
-
+      votes.getOldVotes().forEach(vote -> {
+        //TODO validate witness //active_witness
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        if (countWitness.containsKey(voteAddress)) {
+          countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
+        } else {
+          countWitness.put(voteAddress, -voteCount);
+        }
+      });
+      votes.getNewVotes().forEach(vote -> {
+        //TODO validate witness //active_witness
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        if (countWitness.containsKey(voteAddress)) {
+          countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
+        } else {
+          countWitness.put(voteAddress, voteCount);
+        }
+      });
 
       sizeCount++;
       votesStore.delete(next.getKey());
