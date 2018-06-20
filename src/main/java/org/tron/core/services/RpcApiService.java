@@ -382,6 +382,16 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createAdresss(BytesMessage req,
+        StreamObserver<BytesMessage> responseObserver) {
+      byte[] address = wallet.createAdresss(req.getValue().toByteArray());
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      builder.setValue(ByteString.copyFrom(address));
+      responseObserver.onNext(builder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void broadcastTransaction(Transaction req,
         StreamObserver<GrpcAPI.Return> responseObserver) {
       GrpcAPI.Return retur = wallet.broadcastTransaction(req);
