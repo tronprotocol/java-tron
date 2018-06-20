@@ -167,10 +167,7 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
-    int64 blockNumber = 3;
-    int64 blockTimeStamp = 4;
   }
-
 
   message raw {
     bytes ref_block_bytes = 1;
@@ -191,6 +188,13 @@ message Transaction {
   // only support size = 1,  repeated list here for muti-sig extension
   repeated bytes signature = 2;
   repeated Result ret = 5;
+}
+
+message TransactionInfo {
+ bytes id = 1;
+ int64 fee = 2;
+ int64 blockNumber = 3;
+ int64 blockTimeStamp = 4;
 }
 
 message Transactions {
