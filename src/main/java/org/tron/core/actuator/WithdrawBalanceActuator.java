@@ -92,8 +92,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] is not a witnessAccount");
     }
 
-    boolean isGP = Args.getInstance().getGenesisBlock().getWitnesses().stream().filter(witness ->
-        Arrays.equals(ownerAddress, witness.getAddress())).count() > 0;
+    boolean isGP = Args.getInstance().getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+        Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress
