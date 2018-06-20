@@ -1,6 +1,8 @@
 package org.tron.core.capsule;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 
@@ -14,6 +16,14 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
    */
   public TransactionResultCapsule(Transaction.Result trxRet) {
     this.transactionResult = trxRet;
+  }
+
+  public TransactionResultCapsule(byte[] data) throws BadItemException {
+    try {
+      this.transactionResult = Transaction.Result.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException("TransactionResult proto data parse exception");
+    }
   }
 
   public TransactionResultCapsule() {
@@ -42,6 +52,22 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
   public void addFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder()
         .setFee(this.transactionResult.getFee() + fee).build();
+  }
+
+  public long getBlockNumber() {
+    return transactionResult.getBlockNumber();
+  }
+
+  public void setBlockNumber(long num) {
+    this.transactionResult = this.transactionResult.toBuilder().setBlockNumber(num).build();
+  }
+
+  public long getBlockTimeStamp() {
+    return transactionResult.getBlockTimeStamp();
+  }
+
+  public void setBlockTimeStamp(long time) {
+    this.transactionResult = this.transactionResult.toBuilder().setBlockTimeStamp(time).build();
   }
 
   public void setErrorCode(Transaction.Result.code code) {

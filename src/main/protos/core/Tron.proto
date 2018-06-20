@@ -167,7 +167,10 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
+    int64 blockNumber = 3;
+    int64 blockTimeStamp = 4;
   }
+
 
   message raw {
     bytes ref_block_bytes = 1;

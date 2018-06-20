@@ -107,6 +107,9 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private VotesStore votesStore;
+  @Autowired
+  private TransactionHistoryStore transactionHistoryStore;
+
 
   // for network
   @Autowired
@@ -1023,6 +1026,14 @@ public class Manager {
 
   private void setTransactionStore(final TransactionStore transactionStore) {
     this.transactionStore = transactionStore;
+  }
+
+  public TransactionHistoryStore getTransactionHistoryStore() {
+    return this.transactionHistoryStore;
+  }
+
+  private void setTransactionHistoryStore(final TransactionHistoryStore transactionHistoryStore) {
+    this.transactionHistoryStore = transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {

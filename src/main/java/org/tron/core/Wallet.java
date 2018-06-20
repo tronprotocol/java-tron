@@ -47,6 +47,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
@@ -328,7 +329,8 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
+        .getAssetIssuesPaginated(offset, limit);
     if (null == assetIssueList || assetIssueList.size() == 0) {
       return null;
     }
@@ -449,6 +451,12 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
+
+      TransactionResultCapsule txRet = dbManager.getTransactionHistoryStore()
+          .get(transactionId.toByteArray());
+      if (txRet != null) {
+        transactionCapsule.setResult(txRet);
+      }
     } catch (BadItemException e) {
     }
     if (transactionCapsule != null) {
