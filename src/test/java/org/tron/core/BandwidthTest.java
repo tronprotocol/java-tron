@@ -305,6 +305,17 @@ public class BandwidthTest {
 
   @Test
   public void testUsingFee() throws Exception {
+
+    Args.getInstance().getGenesisBlock().getAssets().forEach(account -> {
+      AccountCapsule capsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8(""),
+              ByteString.copyFrom(account.getAddress()),
+              AccountType.AssetIssue,
+              100L);
+      dbManager.getAccountStore().put(account.getAddress(), capsule);
+    });
+
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveFreeNetLimit(0L);
 
