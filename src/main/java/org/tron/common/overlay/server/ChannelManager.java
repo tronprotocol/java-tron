@@ -118,10 +118,13 @@ public class ChannelManager {
         return false;
       }
 
+      int cnt = 0;
       for (Channel channel: activePeers.values()){
         if (channel.getInetAddress().equals(peer.getInetAddress())){
-          logger.warn("Peer ip {} already exist.", peer.getInetAddress());
-          return false;
+          if ((++cnt) > 1){
+            logger.warn("Already exist enough ip {}.", peer.getInetAddress());
+            return false;
+          }
         }
       }
     }
