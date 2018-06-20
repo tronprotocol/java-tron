@@ -418,6 +418,7 @@ public class RpcApiService implements Service {
         responseBuild.setResult(returnBuilder.build());
         responseObserver.onNext(responseBuild.build());
         responseObserver.onCompleted();
+        return;
       }
 
       transactionCapsule.sign(privateKey);
