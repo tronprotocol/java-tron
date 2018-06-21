@@ -47,7 +47,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
@@ -452,11 +451,11 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
 
-      TransactionResultCapsule txRet = dbManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
-      if (txRet != null) {
-        transactionCapsule.setResult(txRet);
-      }
+//      TransactionInfoCapsule txRet = dbManager.getTransactionHistoryStore()
+//          .get(transactionId.toByteArray());
+//      if (txRet != null) {
+//        transactionCapsule.setResult(txRet);
+//      }
     } catch (BadItemException e) {
     }
     if (transactionCapsule != null) {

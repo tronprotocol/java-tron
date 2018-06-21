@@ -54,22 +54,6 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
         .setFee(this.transactionResult.getFee() + fee).build();
   }
 
-  public long getBlockNumber() {
-    return transactionResult.getBlockNumber();
-  }
-
-  public void setBlockNumber(long num) {
-    this.transactionResult = this.transactionResult.toBuilder().setBlockNumber(num).build();
-  }
-
-  public long getBlockTimeStamp() {
-    return transactionResult.getBlockTimeStamp();
-  }
-
-  public void setBlockTimeStamp(long time) {
-    this.transactionResult = this.transactionResult.toBuilder().setBlockTimeStamp(time).build();
-  }
-
   public void setErrorCode(Transaction.Result.code code) {
     this.transactionResult = this.transactionResult.toBuilder().setRet(code).build();
   }

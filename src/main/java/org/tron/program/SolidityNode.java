@@ -18,7 +18,7 @@ import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -37,7 +37,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
-import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class SolidityNode {
@@ -102,8 +101,8 @@ public class SolidityNode {
           dbManager.pushBlock(blockCapsule);
           int idx = 0;
           for (TransactionCapsule trx : blockCapsule.getTransactions()) {
-            TransactionResultCapsule ret = new TransactionResultCapsule();
-            ret.setStatus(fees.get(idx++), code.SUCESS);
+            TransactionInfoCapsule ret = new TransactionInfoCapsule();
+            ret.setFee(fees.get(idx++));
             ret.setBlockNumber(blockCapsule.getNum());
             ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
             dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);

@@ -8,11 +8,10 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
-import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class TransactionHistoryTest {
 
@@ -45,18 +44,18 @@ public class TransactionHistoryTest {
   @BeforeClass
   public static void init() {
     transactionHistoryStore = context.getBean(TransactionHistoryStore.class);
-    TransactionResultCapsule transactionResultCapsule = new TransactionResultCapsule(code.SUCESS,
-        1000L);
+    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
 
-    transactionResultCapsule.setBlockNumber(100L);
-    transactionResultCapsule.setBlockTimeStamp(200L);
-    transactionHistoryStore.put(transactionId, transactionResultCapsule);
+    transactionInfoCapsule.setFee(1000L);
+    transactionInfoCapsule.setBlockNumber(100L);
+    transactionInfoCapsule.setBlockTimeStamp(200L);
+    transactionHistoryStore.put(transactionId, transactionInfoCapsule);
   }
 
   @Test
   public void get() throws BadItemException {
     //test get and has Method
-    TransactionResultCapsule resultCapsule = transactionHistoryStore.get(transactionId);
+    TransactionInfoCapsule resultCapsule = transactionHistoryStore.get(transactionId);
     Assert.assertEquals(1000L, resultCapsule.getFee());
     Assert.assertEquals(100L, resultCapsule.getBlockNumber());
     Assert.assertEquals(200L, resultCapsule.getBlockTimeStamp());

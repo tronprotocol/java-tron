@@ -70,6 +70,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
 
 @Component
 @Slf4j
@@ -268,6 +269,20 @@ public class RpcApiService implements Service {
       ByteString id = request.getValue();
       if (null != id) {
         Transaction reply = walletSolidity.getTransactionById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionInfoById(BytesMessage request,
+        StreamObserver<TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
 
         responseObserver.onNext(reply);
       } else {
