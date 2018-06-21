@@ -558,7 +558,7 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+      BlockCapsule oldHeadBlock = getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.pop();
