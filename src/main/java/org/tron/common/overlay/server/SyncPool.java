@@ -74,7 +74,9 @@ public class SyncPool {
 
   private Args args = Args.getInstance();
 
-  private int maxActiveNodes = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
+  private int maxActiveNodes = args.getNodeMaxActiveNodes();
+
+  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -242,6 +244,9 @@ public class SyncPool {
         return false;
       }
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
+        return false;
+      }
+      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp){
         return false;
       }
 
