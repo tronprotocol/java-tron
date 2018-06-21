@@ -137,6 +137,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int nodeMaxActiveNodesWithSameIp;
+
+  @Getter
+  @Setter
   private int minParticipationRate;
 
   @Getter
@@ -275,7 +279,8 @@ public class Args {
     INSTANCE.activeNodes = Collections.emptyList();
     INSTANCE.trustNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
-    INSTANCE.nodeMaxActiveNodes = 0;
+    INSTANCE.nodeMaxActiveNodes = 30;
+    INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
     INSTANCE.minParticipationRate = 0;
     INSTANCE.nodeListenPort = 0;
     INSTANCE.nodeDiscoveryBindIp = "";
@@ -416,7 +421,10 @@ public class Args {
             : 0;
 
     INSTANCE.nodeMaxActiveNodes =
-        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
+        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 30;
+
+    INSTANCE.nodeMaxActiveNodesWithSameIp =
+        config.hasPath("node.maxActiveNodesWithSameIp") ? config.getInt("node.maxActiveNodesWithSameIp") : 2;
 
     INSTANCE.minParticipationRate =
         config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")

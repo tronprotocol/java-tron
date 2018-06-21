@@ -2,6 +2,7 @@ package org.tron.common.overlay.server;
 
 import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
 import static org.tron.protos.Protocol.ReasonCode.TOO_MANY_PEERS;
+import static org.tron.protos.Protocol.ReasonCode.TOO_MANY_PEERS_WITH_SAME_IP;
 import static org.tron.protos.Protocol.ReasonCode.UNKNOWN;
 
 import com.google.common.cache.Cache;
@@ -12,6 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,11 +40,14 @@ public class ChannelManager {
   private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder().maximumSize(1000)
       .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
+  @Getter
   private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
 
   private Args args = Args.getInstance();
 
-  private int maxActivePeers = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
+  private int maxActivePeers = args.getNodeMaxActiveNodes();
+
+  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
 
   private PeerServer peerServer;
 
@@ -118,14 +123,9 @@ public class ChannelManager {
         return false;
       }
 
-      int cnt = 0;
-      for (Channel channel: activePeers.values()){
-        if (channel.getInetAddress().equals(peer.getInetAddress())){
-          if ((++cnt) > 1){
-            logger.warn("Already exist enough ip {}.", peer.getInetAddress());
-            return false;
-          }
-        }
+      if (getConnectionNum(peer.getInetAddress()) >= getMaxActivePeersWithSameIp){
+        peer.disconnect(TOO_MANY_PEERS_WITH_SAME_IP);
+        return false;
       }
     }
 
@@ -142,6 +142,16 @@ public class ChannelManager {
     activePeers.put(peer.getNodeIdWrapper(), peer);
     logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
     return true;
+  }
+
+  public int getConnectionNum(InetAddress inetAddress){
+    int cnt = 0;
+    for (Channel channel: activePeers.values()){
+      if (channel.getInetAddress().equals(inetAddress)){
+        cnt++;
+      }
+    }
+    return cnt;
   }
 
   public Collection<Channel> getActivePeers() {
