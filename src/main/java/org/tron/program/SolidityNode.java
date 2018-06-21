@@ -1,5 +1,7 @@
 package org.tron.program;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +17,8 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -90,7 +94,20 @@ public class SolidityNode {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
           BlockCapsule blockCapsule = new BlockCapsule(block);
+          List<Long> fees = new ArrayList<>();
+          for (TransactionCapsule trx : blockCapsule.getTransactions()) {
+            fees.add(dbManager.computeFee(trx));
+          }
           dbManager.pushBlock(blockCapsule);
+          int idx = 0;
+          for (TransactionCapsule trx : blockCapsule.getTransactions()) {
+            TransactionInfoCapsule ret = new TransactionInfoCapsule();
+            ret.setId(trx.getTransactionId().getBytes());
+            ret.setFee(fees.get(idx++));
+            ret.setBlockNumber(blockCapsule.getNum());
+            ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
+            dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
+          }
           dbManager.getDynamicPropertiesStore()
               .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
         } catch (AccountResourceInsufficientException e) {

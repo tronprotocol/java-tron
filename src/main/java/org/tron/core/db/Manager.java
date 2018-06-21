@@ -107,6 +107,9 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private VotesStore votesStore;
+  @Autowired
+  private TransactionHistoryStore transactionHistoryStore;
+
 
   // for network
   @Autowired
@@ -516,6 +519,11 @@ public class Manager {
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consumeBandwidth(trx, ret);
+  }
+
+  public long computeFee(TransactionCapsule trx) throws ContractValidateException {
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    return processor.computeFee(trx);
   }
 
   @Deprecated
@@ -1023,6 +1031,14 @@ public class Manager {
 
   private void setTransactionStore(final TransactionStore transactionStore) {
     this.transactionStore = transactionStore;
+  }
+
+  public TransactionHistoryStore getTransactionHistoryStore() {
+    return this.transactionHistoryStore;
+  }
+
+  private void setTransactionHistoryStore(final TransactionHistoryStore transactionHistoryStore) {
+    this.transactionHistoryStore = transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {

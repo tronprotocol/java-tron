@@ -176,6 +176,7 @@ public class BandwidthTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -190,6 +191,7 @@ public class BandwidthTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526691038000L); // + 12h
 
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
     ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
@@ -222,6 +224,7 @@ public class BandwidthTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -238,6 +241,7 @@ public class BandwidthTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526691038000L); // + 12h
 
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
 
     ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -270,6 +274,7 @@ public class BandwidthTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -285,6 +290,7 @@ public class BandwidthTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526691038000L); // + 12h
 
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(0L, dbManager.computeFee(trx));
 
     ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -299,6 +305,17 @@ public class BandwidthTest {
 
   @Test
   public void testUsingFee() throws Exception {
+
+    Args.getInstance().getGenesisBlock().getAssets().forEach(account -> {
+      AccountCapsule capsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8(""),
+              ByteString.copyFrom(account.getAddress()),
+              AccountType.AssetIssue,
+              100L);
+      dbManager.getAccountStore().put(account.getAddress(), capsule);
+    });
+
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveFreeNetLimit(0L);
 
@@ -313,6 +330,7 @@ public class BandwidthTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.consumeBandwidth(trx, ret);
+    Assert.assertEquals(1220L, dbManager.computeFee(trx));
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -337,6 +355,7 @@ public class BandwidthTest {
         10_000_000L - transactionFee - createAccountFee, ownerCapsuleNew.getBalance());
     Assert.assertEquals(101220L, ret.getFee());
 
+    Assert.assertEquals(100000L, dbManager.computeFee(trx));
   }
 
 
