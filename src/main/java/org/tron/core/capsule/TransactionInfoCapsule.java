@@ -9,74 +9,74 @@ import org.tron.protos.Protocol.TransactionInfo;
 @Slf4j
 public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
-  private TransactionInfo transactionInfoCapsule;
+  private TransactionInfo transactionInfo;
 
   /**
    * constructor TransactionCapsule.
    */
   public TransactionInfoCapsule(TransactionInfo trxRet) {
-    this.transactionInfoCapsule = trxRet;
+    this.transactionInfo = trxRet;
   }
 
   public TransactionInfoCapsule(byte[] data) throws BadItemException {
     try {
-      this.transactionInfoCapsule = TransactionInfo.parseFrom(data);
+      this.transactionInfo = TransactionInfo.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       throw new BadItemException("TransactionInfoCapsule proto data parse exception");
     }
   }
 
   public TransactionInfoCapsule() {
-    this.transactionInfoCapsule = TransactionInfo.newBuilder().build();
+    this.transactionInfo = TransactionInfo.newBuilder().build();
   }
 
   public long getFee() {
-    return transactionInfoCapsule.getFee();
+    return transactionInfo.getFee();
   }
 
   public void setId(byte[] id) {
-    this.transactionInfoCapsule = this.transactionInfoCapsule.toBuilder()
+    this.transactionInfo = this.transactionInfo.toBuilder()
         .setId(ByteString.copyFrom(id)).build();
   }
 
   public byte[] getId() {
-    return transactionInfoCapsule.getId().toByteArray();
+    return transactionInfo.getId().toByteArray();
   }
 
   public void setFee(long fee) {
-    this.transactionInfoCapsule = this.transactionInfoCapsule.toBuilder().setFee(fee).build();
+    this.transactionInfo = this.transactionInfo.toBuilder().setFee(fee).build();
   }
 
   public void addFee(long fee) {
-    this.transactionInfoCapsule = this.transactionInfoCapsule.toBuilder()
-        .setFee(this.transactionInfoCapsule.getFee() + fee).build();
+    this.transactionInfo = this.transactionInfo.toBuilder()
+        .setFee(this.transactionInfo.getFee() + fee).build();
   }
 
   public long getBlockNumber() {
-    return transactionInfoCapsule.getBlockNumber();
+    return transactionInfo.getBlockNumber();
   }
 
   public void setBlockNumber(long num) {
-    this.transactionInfoCapsule = this.transactionInfoCapsule.toBuilder().setBlockNumber(num)
+    this.transactionInfo = this.transactionInfo.toBuilder().setBlockNumber(num)
         .build();
   }
 
   public long getBlockTimeStamp() {
-    return transactionInfoCapsule.getBlockTimeStamp();
+    return transactionInfo.getBlockTimeStamp();
   }
 
   public void setBlockTimeStamp(long time) {
-    this.transactionInfoCapsule = this.transactionInfoCapsule.toBuilder().setBlockTimeStamp(time)
+    this.transactionInfo = this.transactionInfo.toBuilder().setBlockTimeStamp(time)
         .build();
   }
 
   @Override
   public byte[] getData() {
-    return this.transactionInfoCapsule.toByteArray();
+    return this.transactionInfo.toByteArray();
   }
 
   @Override
   public TransactionInfo getInstance() {
-    return this.transactionInfoCapsule;
+    return this.transactionInfo;
   }
 }
