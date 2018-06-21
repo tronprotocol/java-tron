@@ -706,13 +706,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
           if (!badAdvObj.containsKey(id)) {
-            if (!advObjToFetch.containsKey(id)) {
+            PriorItem targetPriorItem = this.advObjToFetch.get(id);
+
+            if (targetPriorItem != null) {
+              //another peer tell this trx to us, refresh its time.
+              targetPriorItem.refreshTime();
+            } else {
               fetchWaterLine.increase();
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
-            } else {
-              //another peer tell this trx to us, refresh its time.
-              this.advObjToFetch.get(id).refreshTime();
             }
           }
         }
