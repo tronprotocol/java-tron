@@ -804,7 +804,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
       } catch (NonCommonBlockException e) {
-        logger.error("We get a block {} that has not common block with the current main chain, from {}, reason is {} ",
+        logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
         disconnectPeer(peer, ReasonCode.FORKED);
@@ -840,7 +840,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           del.getHeadBlockId().getString());
       reason = ReasonCode.UNLINKABLE;
     } catch (NonCommonBlockException e) {
-      logger.error("We get a block {} that has not common block with the current main chain, head is {}",
+      logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, head is {}",
           block.getBlockId().getString(),
           del.getHeadBlockId().getString());
       reason = ReasonCode.FORKED;
