@@ -117,6 +117,16 @@ public class ChannelManager {
         peer.disconnect(TOO_MANY_PEERS);
         return false;
       }
+
+      int cnt = 0;
+      for (Channel channel: activePeers.values()){
+        if (channel.getInetAddress().equals(peer.getInetAddress())){
+          if ((++cnt) > 1){
+            logger.warn("Already exist enough ip {}.", peer.getInetAddress());
+            return false;
+          }
+        }
+      }
     }
 
     if (activePeers.containsKey(peer.getNodeIdWrapper())) {
