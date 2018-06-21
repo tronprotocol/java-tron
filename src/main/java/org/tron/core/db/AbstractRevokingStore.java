@@ -148,7 +148,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         .filter(e -> {
           boolean has = prevState.oldValues.containsKey(e.getKey());
           if (has) {
-            prevState.removed.put(e.getKey(), e.getValue());
+            prevState.removed.put(e.getKey(), prevState.oldValues.get(e.getKey()));
             prevState.oldValues.remove(e.getKey());
           }
 
