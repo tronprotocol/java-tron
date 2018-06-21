@@ -305,7 +305,7 @@ public class Wallet {
     return Sha256Hash.hash(passPhrase);
   }
 
-  public byte[] createAdresss(byte[] passPhrase) {
+  public byte[] createAddress(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     return ecKey.getAddress();

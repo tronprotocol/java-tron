@@ -80,7 +80,7 @@
      `parentHash`: the hash of last block – e.g. “_7dacsa…3ed_.”  
      `number`: the height of this block – e.g. _13534657_.  
      `witness_id`: the id of witness which packed this block – e.g. “_0xu82h…7237_”.  
-     `witness_address`: the adresss of the witness packed this block – e.g. “_0xu82h…7237_”.
+     `witness_address`: the address of the witness packed this block – e.g. “_0xu82h…7237_”.
 
          message BlockHeader {   
            message raw {     
