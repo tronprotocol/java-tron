@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +8,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.exception.BadItemException;
 
 @Component
-public class TransactionHistoryStore extends TronDatabase<TransactionInfoCapsule> {
+public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionInfoCapsule> {
 
   @Autowired
   public TransactionHistoryStore(@Value("transactionHistoryStore") String dbName) {
@@ -19,15 +18,12 @@ public class TransactionHistoryStore extends TronDatabase<TransactionInfoCapsule
 
   @Override
   public void put(byte[] key, TransactionInfoCapsule item) {
-    if (Objects.isNull(key) || Objects.isNull(item)) {
-      return;
-    }
-    dbSource.putData(key, item.getData());
+    super.put(key, item);
   }
 
   @Override
   public void delete(byte[] key) {
-    dbSource.deleteData(key);
+    super.delete(key);
   }
 
   @Override

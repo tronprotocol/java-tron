@@ -22,6 +22,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -87,7 +88,8 @@ public class SolidityNode {
     while (true) {
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
-      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}", lastSolidityBlockNum, remoteLastSolidityBlockNum);
+      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}",
+          lastSolidityBlockNum, remoteLastSolidityBlockNum);
       if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
@@ -97,9 +99,15 @@ public class SolidityNode {
 //            fees.add(dbManager.computeFee(trx));
 //          }
           dbManager.pushBlock(blockCapsule);
-          int idx = 0;
+//          int idx = 0;
           for (TransactionCapsule trx : blockCapsule.getTransactions()) {
-            TransactionInfoCapsule ret = new TransactionInfoCapsule();
+            TransactionInfoCapsule ret;
+            try {
+              ret = dbManager.getTransactionHistoryStore().get(trx.getTransactionId().getBytes());
+            } catch (BadItemException ex) {
+              logger.warn("", ex);
+              continue;
+            }
             ret.setId(trx.getTransactionId().getBytes());
 //            ret.setFee(fees.get(idx++));
             ret.setBlockNumber(blockCapsule.getNum());
