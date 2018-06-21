@@ -579,7 +579,11 @@ public class Manager {
     this.blockIndexStore.put(block.getBlockId());
   }
 
-  private void switchFork(BlockCapsule newHead) {
+  private void switchFork(BlockCapsule newHead)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
+      BadNumberBlockException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree =
         khaosDb.getBranch(
             newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
@@ -607,81 +611,57 @@ public class Manager {
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           applyBlock(item.getBlk());
           tmpDialog.commit();
-        } catch (AccountResourceInsufficientException e) {
+        } catch (AccountResourceInsufficientException
+            | ValidateSignatureException
+            | ContractValidateException
+            | ContractExeException
+            | TaposException
+            | DupTransactionException
+            | TransactionExpirationException
+            | TooBigTransactionException
+            | ValidateScheduleException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
-        } catch (ValidateSignatureException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (ContractValidateException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (ContractExeException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
+          throw e;
         } catch (RevokingStoreIllegalStateException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
-        } catch (TaposException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (DupTransactionException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (TooBigTransactionException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (TransactionExpirationException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        } catch (ValidateScheduleException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-        }
+        } finally {
+          if (exception != null) {
+            first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
+            khaosDb.setHead(binaryTree.getValue().peekFirst());
 
-        if (exception != null) {
-          first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
-          khaosDb.setHead(binaryTree.getValue().peekFirst());
-
-          while (!getDynamicPropertiesStore()
-              .getLatestBlockHeaderHash()
-              .equals(binaryTree.getValue().peekLast().getParentHash())) {
-            try {
-              eraseBlock();
-            } catch (BadItemException e) {
-              logger.info(e.getMessage());
-            } catch (ItemNotFoundException e) {
-              logger.info(e.getMessage());
+            while (!getDynamicPropertiesStore()
+                .getLatestBlockHeaderHash()
+                .equals(binaryTree.getValue().peekLast().getParentHash())) {
+              try {
+                eraseBlock();
+              } catch (BadItemException e) {
+                logger.info(e.getMessage());
+              } catch (ItemNotFoundException e) {
+                logger.info(e.getMessage());
+              }
             }
-          }
 
-          List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
-          Collections.reverse(second);
-          for (KhaosBlock khaosBlock : second) {
-            // todo  process the exception carefully later
-            try (Dialog tmpDialog = revokingStore.buildDialog()) {
-              applyBlock(khaosBlock.getBlk());
-              tmpDialog.commit();
-            } catch (AccountResourceInsufficientException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (ValidateSignatureException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (ContractValidateException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (ContractExeException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (RevokingStoreIllegalStateException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (TaposException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (DupTransactionException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (TooBigTransactionException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (TransactionExpirationException e) {
-              logger.warn(e.getMessage(), e);
-            } catch (ValidateScheduleException e) {
-              logger.warn(e.getMessage(), e);
+            List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
+            Collections.reverse(second);
+            for (KhaosBlock khaosBlock : second) {
+              // todo  process the exception carefully later
+              try (Dialog tmpDialog = revokingStore.buildDialog()) {
+                applyBlock(khaosBlock.getBlk());
+                tmpDialog.commit();
+              } catch (AccountResourceInsufficientException
+                  | ValidateSignatureException
+                  | ContractValidateException
+                  | RevokingStoreIllegalStateException
+                  | ContractExeException
+                  | TaposException
+                  | DupTransactionException
+                  | TransactionExpirationException
+                  | TooBigTransactionException
+                  | ValidateScheduleException e) {
+                logger.warn(e.getMessage(), e);
+              }
             }
           }
         }
