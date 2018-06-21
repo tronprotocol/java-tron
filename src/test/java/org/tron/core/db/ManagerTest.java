@@ -54,11 +54,13 @@ public class ManagerTest {
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
 
-  @Before
-  public void init() {
-
+  static {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+  }
+
+  @BeforeClass
+  public static void init() {
     dbManager = context.getBean(Manager.class);
 
     blockCapsule2 =
@@ -78,8 +80,8 @@ public class ManagerTest {
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
   }
 
-  @After
-  public void removeDb() {
+  @AfterClass
+  public static void removeDb() {
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
     context.destroy();
