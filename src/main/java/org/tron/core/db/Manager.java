@@ -557,17 +557,15 @@ public class Manager {
    */
   public void eraseBlock() {
     dialog.reset();
-    BlockCapsule oldHeadBlock =
-        null;
     try {
-      oldHeadBlock = getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+      BlockCapsule oldHeadBlock = getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
+      revokingStore.pop();
+      logger.info("erase block:" + oldHeadBlock);
+      khaosDb.pop();
+      popedTransactions.addAll(oldHeadBlock.getTransactions());
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
-    revokingStore.pop();
-    logger.info("erase block:" + oldHeadBlock);
-    khaosDb.pop();
-    popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
