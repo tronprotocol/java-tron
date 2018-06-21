@@ -227,15 +227,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    IntStream.range(0, 1)
-        .forEach(
-            i -> {
-              try {
-                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-              } catch (Exception e) {
-                logger.debug(e.getMessage(), e);
-              }
-            });
+    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
