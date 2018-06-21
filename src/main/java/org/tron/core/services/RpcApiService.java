@@ -386,9 +386,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createAdresss(BytesMessage req,
+    public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
-      byte[] address = wallet.createAdresss(req.getValue().toByteArray());
+      byte[] address = wallet.createAddress(req.getValue().toByteArray());
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       responseObserver.onNext(builder.build());
