@@ -59,7 +59,6 @@ public class ManagerTest {
 
   @BeforeClass
   public static void init() {
-
     dbManager = context.getBean(Manager.class);
 
     blockCapsule2 =
@@ -227,15 +226,8 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    IntStream.range(0, 1)
-        .forEach(
-            i -> {
-              try {
-                dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
-              } catch (Exception e) {
-                logger.debug(e.getMessage(), e);
-              }
-            });
+
+    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -256,6 +248,9 @@ public class ManagerTest {
         createTestBlockCapsule(
             num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
+    logger.info("******block0:" + blockCapsule0);
+    logger.info("******block1:" + blockCapsule1);
+    logger.info("******block2:" + blockCapsule2);
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     dbManager.pushBlock(blockCapsule2);
