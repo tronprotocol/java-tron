@@ -102,6 +102,7 @@ public class SolidityNode {
           int idx = 0;
           for (TransactionCapsule trx : blockCapsule.getTransactions()) {
             TransactionInfoCapsule ret = new TransactionInfoCapsule();
+            ret.setId(trx.getTransactionId().getBytes());
             ret.setFee(fees.get(idx++));
             ret.setBlockNumber(blockCapsule.getNum());
             ret.setBlockTimeStamp(blockCapsule.getTimeStamp());

@@ -451,11 +451,6 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
 
-//      TransactionInfoCapsule txRet = dbManager.getTransactionHistoryStore()
-//          .get(transactionId.toByteArray());
-//      if (txRet != null) {
-//        transactionCapsule.setResult(txRet);
-//      }
     } catch (BadItemException e) {
     }
     if (transactionCapsule != null) {

@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -46,6 +47,7 @@ public class TransactionHistoryTest {
     transactionHistoryStore = context.getBean(TransactionHistoryStore.class);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
 
+    transactionInfoCapsule.setId(transactionId);
     transactionInfoCapsule.setFee(1000L);
     transactionInfoCapsule.setBlockNumber(100L);
     transactionInfoCapsule.setBlockTimeStamp(200L);
@@ -59,5 +61,7 @@ public class TransactionHistoryTest {
     Assert.assertEquals(1000L, resultCapsule.getFee());
     Assert.assertEquals(100L, resultCapsule.getBlockNumber());
     Assert.assertEquals(200L, resultCapsule.getBlockTimeStamp());
+    Assert.assertEquals(ByteArray.toHexString(transactionId),
+        ByteArray.toHexString(resultCapsule.getId()));
   }
 }
