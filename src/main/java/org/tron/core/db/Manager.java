@@ -559,9 +559,10 @@ public class Manager {
     dialog.reset();
     try {
       BlockCapsule oldHeadBlock = getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
-      revokingStore.pop();
-      logger.info("erase block:" + oldHeadBlock);
+      logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
+      revokingStore.pop();
+      logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
