@@ -274,39 +274,39 @@ public class KhaosDatabase extends TronDatabase {
     LinkedList<KhaosBlock> list1 = new LinkedList<>();
     LinkedList<KhaosBlock> list2 = new LinkedList<>();
     KhaosBlock kblk1 = miniStore.getByHash(block1);
-    check(kblk1);
+    checkNull(kblk1);
     KhaosBlock kblk2 = miniStore.getByHash(block2);
-    check(kblk2);
+    checkNull(kblk2);
 
     while (kblk1.num > kblk2.num) {
       list1.add(kblk1);
       kblk1 = kblk1.getParent();
-      check(kblk1);
-      check(miniStore.getByHash(kblk1.id));
+      checkNull(kblk1);
+      checkNull(miniStore.getByHash(kblk1.id));
     }
 
     while (kblk2.num > kblk1.num) {
       list2.add(kblk2);
       kblk2 = kblk2.getParent();
-      check(kblk2);
-      check(miniStore.getByHash(kblk2.id));
+      checkNull(kblk2);
+      checkNull(miniStore.getByHash(kblk2.id));
     }
 
     while (!Objects.equals(kblk1, kblk2)) {
       list1.add(kblk1);
       list2.add(kblk2);
       kblk1 = kblk1.getParent();
-      check(kblk1);
-      check(miniStore.getByHash(kblk1.id));
+      checkNull(kblk1);
+      checkNull(miniStore.getByHash(kblk1.id));
       kblk2 = kblk2.getParent();
-      check(kblk2);
-      check(miniStore.getByHash(kblk2.id));
+      checkNull(kblk2);
+      checkNull(miniStore.getByHash(kblk2.id));
     }
 
     return new Pair<>(list1, list2);
   }
 
-  private void check(Object o) throws NonCommonBlockException {
+  private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();
     }
