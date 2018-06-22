@@ -69,6 +69,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionSign;
 
 
 @Slf4j
@@ -291,6 +292,23 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("other error"))
           .build();
     }
+  }
+
+  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.sign(privateKey);
+    return trx;
+  }
+
+  public byte[] pass2Key(byte[] passPhrase){
+    return Sha256Hash.hash(passPhrase);
+  }
+
+  public byte[] createAdresss(byte[] passPhrase) {
+    byte[] privateKey = pass2Key(passPhrase);
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    return ecKey.getAddress();
   }
 
   public Block getNowBlock() {
