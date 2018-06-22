@@ -27,6 +27,7 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
@@ -129,6 +130,8 @@ public class SolidityNode {
           throw new BadBlockException("expiration exception");
         } catch (BadNumberBlockException e) {
           throw new BadBlockException("bad number exception");
+        } catch (NonCommonBlockException e) {
+          throw new BadBlockException("non common exception");
         }
 
       } else {

@@ -54,6 +54,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
@@ -804,6 +805,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block.getBlockId().getString(), peer.getNode().getHost(),
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
+      } catch (NonCommonBlockException e) {
+        logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
+            block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
+        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+        disconnectPeer(peer, ReasonCode.FORKED);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
@@ -835,6 +841,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.error("We get a unlinked block {}, head is {}", block.getBlockId().getString(),
           del.getHeadBlockId().getString());
       reason = ReasonCode.UNLINKABLE;
+    } catch (NonCommonBlockException e) {
+      logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, head is {}",
+          block.getBlockId().getString(),
+          del.getHeadBlockId().getString());
+      reason = ReasonCode.FORKED;
     }
 
     if (!isAccept) {

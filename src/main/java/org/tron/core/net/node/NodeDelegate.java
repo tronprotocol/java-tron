@@ -10,15 +10,17 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.net.message.MessageTypes;
+import sun.security.krb5.internal.crypto.Nonce;
 
 public interface NodeDelegate {
 
   LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException, InterruptedException;
+      throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException;
 
   boolean handleTransaction(TransactionCapsule trx) throws BadTransactionException;
 
