@@ -258,6 +258,7 @@ public class WitnessController {
       //    .getVoteRewardRate());
       //account.setBalance(account.getBalance() + reward);
       //accountStore.put(account.createDbKey(), account);
+
       votes.getOldVotes().forEach(vote -> {
         //TODO validate witness //active_witness
         ByteString voteAddress = vote.getVoteAddress();
@@ -278,6 +279,7 @@ public class WitnessController {
           countWitness.put(voteAddress, voteCount);
         }
       });
+
 
       sizeCount++;
       votesStore.delete(next.getKey());
