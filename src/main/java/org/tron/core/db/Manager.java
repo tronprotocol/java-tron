@@ -618,6 +618,8 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
+            logger.warn("switch back because exception thrown while switching forks. " + exception.getMessage(),
+                exception);
             first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
             khaosDb.setHead(binaryTree.getValue().peekFirst());
 
