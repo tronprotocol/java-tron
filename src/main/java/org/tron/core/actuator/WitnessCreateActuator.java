@@ -104,7 +104,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
   }
 
   private void createWitness(final WitnessCreateContract witnessCreateContract)

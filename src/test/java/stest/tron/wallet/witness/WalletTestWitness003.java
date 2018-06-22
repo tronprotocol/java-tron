@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +16,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -89,47 +91,42 @@ public class WalletTestWitness003 {
   @Test(enabled = true)
   public void testCreateWitness() {
     //If you are already is witness, apply failed
-    createWitness(fromAddress, createUrl, testKey002);
-    Assert.assertFalse(createWitness(fromAddress, createUrl, testKey002));
+    //createWitness(fromAddress, createUrl, testKey002);
+    //Assert.assertFalse(createWitness(fromAddress, createUrl, testKey002));
 
     //No balance,try to create witness.
     Assert.assertFalse(createWitness(lowBalAddress, createUrl, lowBalTest));
 
     //Send enough coin to the apply account to make that account
     // has ability to apply become witness.
-    Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-    if (createWitness(lowBalAddress, createUrl, lowBalTest) == false) {
-      Account lowAccount = queryAccount(lowBalTest, blockingStubFull);
-      logger.info(Long.toString(lowAccount.getBalance()));
-      Assert.assertTrue(sendcoin(fromAddress, costForCreateWitness, lowBalAddress, lowBalTest));
-    }
+    GrpcAPI.WitnessList witnesslist = blockingStubFull
+        .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
+    Optional<WitnessList> result = Optional.ofNullable(witnesslist);
+    GrpcAPI.WitnessList witnessList = result.get();
+    if (result.get().getWitnessesCount() < 6) {
+      Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
+      Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
 
-    //Account lowAccount = queryAccount(lowBalTest,blockingStubFull);
-    //if (lowAccount.getBalance()<costForCreateWitness)
-    //{
-    //Assert.assertFalse(CreateWitness(lowBalAddress,createUrl,lowBalTest));
-    //Assert.assertTrue(Sendcoin(lowBalAddress, costForCreateWitness,fromAddress, testKey002));
-    //}
+    }
   }
 
   @Test(enabled = true)
   public void testUpdateWitness() {
-    try {
-      Thread.sleep(18000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    GrpcAPI.WitnessList witnesslist = blockingStubFull
+        .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
+    Optional<WitnessList> result = Optional.ofNullable(witnesslist);
+    GrpcAPI.WitnessList witnessList = result.get();
+    if (result.get().getWitnessesCount() < 6) {
+      //null url, update failed
+      Assert.assertFalse(updateWitness(lowBalAddress, wrongUrl, lowBalTest));
+      //Content space and special char, update success
+      Assert.assertTrue(updateWitness(lowBalAddress, updateSpaceUrl, lowBalTest));
+      //update success
+      Assert.assertTrue(updateWitness(lowBalAddress, updateUrl, lowBalTest));
+    } else {
+      logger.info("Update witness case had been test.This time skip it.");
     }
-    //null url, update failed
-    Assert.assertFalse(updateWitness(fromAddress, wrongUrl, testKey002));
-    //Content space and special char, update success
-    Assert.assertTrue(updateWitness(fromAddress, updateSpaceUrl, testKey002));
-    try {
-      Thread.sleep(15000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    //update success
-    Assert.assertTrue(updateWitness(lowBalAddress, updateUrl, lowBalTest));
+
 
   }
 

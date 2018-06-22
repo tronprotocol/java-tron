@@ -69,6 +69,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionSign;
 
 
 @Slf4j
@@ -293,6 +294,13 @@ public class Wallet {
     }
   }
 
+  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.sign(privateKey);
+    return trx;
+  }
+
   public Block getNowBlock() {
     List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockList)) {
@@ -328,11 +336,12 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> AssetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
-    if ( null == AssetIssueList || AssetIssueList.size() == 0){
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
+        .getAssetIssuesPaginated(offset, limit);
+    if (null == assetIssueList || assetIssueList.size() == 0) {
       return null;
     }
-    AssetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 

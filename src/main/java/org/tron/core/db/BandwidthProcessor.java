@@ -86,7 +86,7 @@ public class BandwidthProcessor {
         trx.getInstance().getRawData().getContractList();
 
     for (Contract contract : contracts) {
-      long bytes = trx.getSerializedSize();
+      long bytes = trx.getInstance().getRawData().getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
@@ -138,7 +138,7 @@ public class BandwidthProcessor {
       TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
-      ret.setFee(fee);
+      ret.addFee(fee);
       dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
     } else {
@@ -185,7 +185,7 @@ public class BandwidthProcessor {
       TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
     if (consumeFee(accountCapsule, fee)) {
-      ret.setFee(fee);
+      ret.addFee(fee);
       dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

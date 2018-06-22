@@ -61,19 +61,22 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   }
 
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
-    if (limit < 0){
+    if (limit < 0 || offset < 0) {
       return null;
     }
-    List<AssetIssueCapsule> AssetIssueList = dbSource.allKeys().stream()
+    List<AssetIssueCapsule> assetIssueList = dbSource.allKeys().stream()
         .map(this::get)
         .collect(Collectors.toList());
-    AssetIssueList.sort((o1, o2) -> {
+    if (assetIssueList.size() <= offset) {
+      return null;
+    }
+    assetIssueList.sort((o1, o2) -> {
       return o1.getName().toStringUtf8().compareTo(o2.getName().toStringUtf8());
     });
     limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
-    end = end > AssetIssueList.size() ? AssetIssueList.size() : end ;
-    return AssetIssueList.subList((int)offset,(int)end);
+    end = end > assetIssueList.size() ? assetIssueList.size() : end ;
+    return assetIssueList.subList((int)offset,(int)end);
   }
 
   @Override

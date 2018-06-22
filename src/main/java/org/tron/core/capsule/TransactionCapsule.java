@@ -133,8 +133,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     createTransaction(participateAssetIssueContract, ContractType.ParticipateAssetIssueContract);
   }
 
+  public void resetResult() {
+    this.transaction = this.getInstance().toBuilder().clearRet().build();
+  }
+
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-    this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance()).build();
+    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+        .build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
@@ -217,11 +222,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return true;
   }
 
-  @Deprecated
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 

@@ -887,8 +887,9 @@ public class Manager {
     for (Actuator act : actuatorList) {
       act.validate();
       act.execute(ret);
-      trxCap.setResult(ret);
     }
+    trxCap.setResult(ret);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     return true;
   }
@@ -944,6 +945,7 @@ public class Manager {
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
+        trx.resetResult();
         tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -968,6 +970,12 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (TransactionExpirationException e) {
         logger.info("contract not processed during TransactionExpirationException");
+        logger.debug(e.getMessage(), e);
+      } catch (AccountResourceInsufficientException e) {
+        logger.info("contract not processed during AccountResourceInsufficientException");
+        logger.debug(e.getMessage(), e);
+      } catch (ValidateSignatureException e) {
+        logger.info("contract not processed during ValidateSignatureException");
         logger.debug(e.getMessage(), e);
       }
     }

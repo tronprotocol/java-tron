@@ -157,6 +157,8 @@ public class WalletTestAccount006 {
     queryAccount = PublicMethed.queryAccount(account006Key,blockingStubFull);
     Long afterSendBalance = queryAccount.getBalance();
     //when you freeze balance and has net,you didn't cost money.
+    logger.info("before is " + Long.toString(beforeSendBalance) + " and after is "
+        + Long.toString(afterSendBalance));
     Assert.assertTrue(beforeSendBalance - afterSendBalance == 1);
     addressBs = ByteString.copyFrom(account006Address);
     request = Account.newBuilder().setAddress(addressBs).build();

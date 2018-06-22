@@ -98,8 +98,8 @@ public class WalletTestAssetIssue015 {
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000, 3, testKey002,
-          blockingStubFull));
+      //Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000, 3, testKey002,
+      //    blockingStubFull));
       Assert.assertTrue(PublicMethed
           .sendcoin(asset015Address, sendAmount, fromAddress, testKey002, blockingStubFull));
       Long start = System.currentTimeMillis() + 2000;
@@ -115,8 +115,8 @@ public class WalletTestAssetIssue015 {
     }
   }
 
-  @Test(enabled = true,priority = 1)
-  public void testWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
+  @Test(enabled = true)
+  public void atestWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
     //Transfer asset to an account.
     Assert.assertTrue(PublicMethed
         .transferAsset(transferAssetAddress, name.getBytes(), 10000000L, asset015Address,
@@ -150,8 +150,8 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed > netCostMeasure);
   }
 
-  @Test(enabled = true,priority = 2)
-  public void testWhenTransferHasNoEnoughBandwidthUseBalance() {
+  @Test(enabled = true)
+  public void btestWhenTransferHasNoEnoughBandwidthUseBalance() {
     Boolean ret = true;
     while (ret) {
       ret = PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
@@ -159,6 +159,7 @@ public class WalletTestAssetIssue015 {
     }
     AccountNetMessage assetTransferNet = PublicMethed
         .getAccountNet(transferAssetAddress,blockingStubFull);
+    logger.info(Long.toString(assetTransferNet.getFreeNetUsed()));
     Assert.assertTrue(assetTransferNet.getFreeNetUsed() >= 4700);
 
     Assert.assertTrue(PublicMethed.sendcoin(transferAssetAddress,
@@ -178,8 +179,8 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(beforeBalance - afterBalance > 2000);
   }
 
-  @Test(enabled = true,priority = 3)
-  public void testWhenFreezeBalanceUseNet() {
+  @Test(enabled = true)
+  public void ctestWhenFreezeBalanceUseNet() {
     Assert.assertTrue(PublicMethed.freezeBalance(transferAssetAddress,5000000,
         3,transferAssetCreateKey,blockingStubFull));
     AccountNetMessage assetTransferNet = PublicMethed
