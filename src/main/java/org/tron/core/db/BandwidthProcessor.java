@@ -86,7 +86,7 @@ public class BandwidthProcessor {
         trx.getInstance().getRawData().getContractList();
 
     for (Contract contract : contracts) {
-      long bytes = trx.getSerializedSize();
+      long bytes = trx.getInstance().getRawData().getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
@@ -128,6 +128,7 @@ public class BandwidthProcessor {
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
       dbManager.adjustBalance(accountCapsule, -fee);
+      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;
@@ -158,7 +159,6 @@ public class BandwidthProcessor {
       }
     }
   }
-
 
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) {
@@ -388,6 +388,7 @@ public class BandwidthProcessor {
     return true;
 
   }
+
 }
 
 

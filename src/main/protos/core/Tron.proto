@@ -190,6 +190,13 @@ message Transaction {
   repeated Result ret = 5;
 }
 
+message TransactionInfo {
+ bytes id = 1;
+ int64 fee = 2;
+ int64 blockNumber = 3;
+ int64 blockTimeStamp = 4;
+}
+
 message Transactions {
   repeated Transaction transactions = 1;
 }
@@ -296,6 +303,7 @@ enum ReasonCode {
   INCOMPATIBLE_CHAIN = 0x19;
   TIME_OUT = 0x20;
   CONNECT_FAIL = 0x21;
+  TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
   UNKNOWN = 0xFF;
 }
 
