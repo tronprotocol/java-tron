@@ -49,6 +49,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -109,6 +110,9 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private VotesStore votesStore;
+  @Autowired
+  private TransactionHistoryStore transactionHistoryStore;
+
 
   // for network
   @Autowired
@@ -911,6 +915,12 @@ public class Manager {
     trxCap.setResult(ret);
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    if (Args.getInstance().isSolidityNode()) {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+      transactionInfoCapsule.setFee(ret.getFee());
+      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+    }
     return true;
   }
 
@@ -1041,6 +1051,14 @@ public class Manager {
 
   private void setTransactionStore(final TransactionStore transactionStore) {
     this.transactionStore = transactionStore;
+  }
+
+  public TransactionHistoryStore getTransactionHistoryStore() {
+    return this.transactionHistoryStore;
+  }
+
+  private void setTransactionHistoryStore(final TransactionHistoryStore transactionHistoryStore) {
+    this.transactionHistoryStore = transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {
