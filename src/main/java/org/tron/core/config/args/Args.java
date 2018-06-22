@@ -119,7 +119,11 @@ public class Args {
 
   @Getter
   @Setter
-  private List<Node> nodeActive;
+  private List<Node> activeNodes;
+
+  @Getter
+  @Setter
+  private List<Node> trustNodes;
 
   @Getter
   @Setter
@@ -128,6 +132,10 @@ public class Args {
   @Getter
   @Setter
   private int nodeMaxActiveNodes;
+
+  @Getter
+  @Setter
+  private int nodeMaxActiveNodesWithSameIp;
 
   @Getter
   @Setter
@@ -266,9 +274,11 @@ public class Args {
     INSTANCE.nodeDiscoveryEnable = false;
     INSTANCE.nodeDiscoveryPersist = false;
     INSTANCE.nodeConnectionTimeout = 0;
-    INSTANCE.nodeActive = Collections.emptyList();
+    INSTANCE.activeNodes = Collections.emptyList();
+    INSTANCE.trustNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
-    INSTANCE.nodeMaxActiveNodes = 0;
+    INSTANCE.nodeMaxActiveNodes = 30;
+    INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
     INSTANCE.minParticipationRate = 0;
     INSTANCE.nodeListenPort = 0;
     INSTANCE.nodeDiscoveryBindIp = "";
@@ -400,14 +410,19 @@ public class Args {
         config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
             : 0;
 
-    INSTANCE.nodeActive = nodeActive(config);
+    INSTANCE.activeNodes = getNodes(config, "active.node");
+
+    INSTANCE.trustNodes = getNodes(config, "trust.node");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
             : 0;
 
     INSTANCE.nodeMaxActiveNodes =
-        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 0;
+        config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 30;
+
+    INSTANCE.nodeMaxActiveNodesWithSameIp =
+        config.hasPath("node.maxActiveNodesWithSameIp") ? config.getInt("node.maxActiveNodesWithSameIp") : 2;
 
     INSTANCE.minParticipationRate =
         config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
@@ -542,12 +557,12 @@ public class Args {
     return this.outputDirectory;
   }
 
-  private static List<Node> nodeActive(final com.typesafe.config.Config config) {
-    if (!config.hasPath("node.active")) {
+  private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
+    if (!config.hasPath(path)) {
       return Collections.EMPTY_LIST;
     }
     List<Node> ret = new ArrayList<>();
-    List<String> list = config.getStringList("node.active");
+    List<String> list = config.getStringList(path);
     for (String configString : list) {
       Node n = Node.instanceOf(configString);
       ret.add(n);
