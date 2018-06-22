@@ -94,12 +94,7 @@ public class SolidityNode {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
           BlockCapsule blockCapsule = new BlockCapsule(block);
-//          List<Long> fees = new ArrayList<>();
-//          for (TransactionCapsule trx : blockCapsule.getTransactions()) {
-//            fees.add(dbManager.computeFee(trx));
-//          }
           dbManager.pushBlock(blockCapsule);
-//          int idx = 0;
           for (TransactionCapsule trx : blockCapsule.getTransactions()) {
             TransactionInfoCapsule ret;
             try {
@@ -109,7 +104,6 @@ public class SolidityNode {
               continue;
             }
             ret.setId(trx.getTransactionId().getBytes());
-//            ret.setFee(fees.get(idx++));
             ret.setBlockNumber(blockCapsule.getNum());
             ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
             dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
