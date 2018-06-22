@@ -379,6 +379,15 @@ service WalletSolidity {
       }
     };
   }
+  rpc GetTransactionById (BytesMessage) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/walletsolidity/gettransactionbyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/gettransactionbyid"
+      }
+    };
+  }
 };
 
 service WalletExtension {
