@@ -315,11 +315,19 @@ public class ManagerTest {
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
+    Exception exception = null;
     try {
       dbManager.pushBlock(blockCapsule2);
     } catch (NonCommonBlockException e) {
       logger.info("do not switch fork");
       Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()));
+      Assert.assertEquals(blockCapsule0.getBlockId(),
+          dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
+      exception = e;
+    }
+
+    if (exception == null) {
+      throw new IllegalStateException();
     }
   }
 
@@ -365,11 +373,13 @@ public class ManagerTest {
     dbManager.pushBlock(blockCapsule1);
     try {
       dbManager.pushBlock(blockCapsule2);
-    } catch (Exception e) {
+    } catch (ValidateScheduleException e) {
       logger.info("the fork chain has error block");
     }
 
     Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()));
+    Assert.assertEquals(blockCapsule0.getBlockId(),
+        dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
