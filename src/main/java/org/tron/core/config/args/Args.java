@@ -125,7 +125,7 @@ public class Args {
 
   @Getter
   @Setter
-  private List<Node> trustNodes;
+  private List<Node> passiveNodes;
 
   @Getter
   @Setter
@@ -277,7 +277,7 @@ public class Args {
     INSTANCE.nodeDiscoveryPersist = false;
     INSTANCE.nodeConnectionTimeout = 0;
     INSTANCE.activeNodes = Collections.emptyList();
-    INSTANCE.trustNodes = Collections.emptyList();
+    INSTANCE.passiveNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 30;
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
@@ -414,7 +414,7 @@ public class Args {
 
     INSTANCE.activeNodes = getNodes(config, "active.node");
 
-    INSTANCE.trustNodes = getNodes(config, "trust.node");
+    INSTANCE.passiveNodes = getNodes(config, "passive.node");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
