@@ -103,7 +103,6 @@ public class SolidityNode {
               logger.warn("", ex);
               continue;
             }
-            ret.setId(trx.getTransactionId().getBytes());
             ret.setBlockNumber(blockCapsule.getNum());
             ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
             dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
