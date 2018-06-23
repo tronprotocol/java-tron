@@ -1215,11 +1215,6 @@ public class Manager {
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     try {
-      adjustBalance(accountStore.getSun(), -WITNESS_PAY_PER_BLOCK);
-    } catch (BalanceInsufficientException e) {
-      logger.warn(e.getMessage(), e);
-    }
-    try {
       adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
