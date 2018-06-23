@@ -594,9 +594,8 @@ public class Manager {
       logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
-        BlockCapsule parent = khaosDb.getParentBlock(tmp.getBlockId());
         khaosDb.removeBlk(tmp.getBlockId());
-        tmp = parent;
+        tmp = khaosDb.getBlock(tmp.getParentHash());
       }
 
       throw e;
