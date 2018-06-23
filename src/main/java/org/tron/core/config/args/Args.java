@@ -412,9 +412,9 @@ public class Args {
         config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
             : 0;
 
-    INSTANCE.activeNodes = getNodes(config, "active.node");
+    INSTANCE.activeNodes = getNodes(config, "node.active");
 
-    INSTANCE.passiveNodes = getNodes(config, "passive.node");
+    INSTANCE.passiveNodes = getNodes(config, "node.passive");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
