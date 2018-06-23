@@ -180,7 +180,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
             if (key.equals(InventoryType.BLOCK)) {
-              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+              value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new InventoryMessage(value, key));
           }));
@@ -190,7 +190,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
             if (key.equals(InventoryType.BLOCK)) {
-              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+              value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new FetchInvDataMessage(value, key));
           }));

@@ -66,7 +66,7 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
-    for (Node node : args.getTrustNodes()){
+    for (Node node : args.getPassiveNodes()){
       trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress() , node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
