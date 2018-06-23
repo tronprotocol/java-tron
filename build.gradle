@@ -139,10 +139,6 @@ dependencies {
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
     // end google grpc
 
-    compile group: 'io.scalecube', name: 'scalecube-services', version: '1.0.7'
-    compile group: 'io.scalecube', name: 'scalecube-cluster', version: '1.0.7'
-    compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
-
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
     compile 'org.aspectj:aspectjrt:1.8.13'
