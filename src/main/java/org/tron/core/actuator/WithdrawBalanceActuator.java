@@ -5,6 +5,9 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.rovak.Logger;
+import org.rovak.events.ClaimRewards;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -25,6 +28,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+
+
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
     try {
@@ -35,10 +40,15 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
+    ClaimRewards claimRewards = new ClaimRewards(ByteArray.toHexString(withdrawBalanceContract.getOwnerAddress().toByteArray()));
+
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
+
+    claimRewards.setBalanceBefore(oldBalance);
+    claimRewards.setRewards(allowance);
 
     long now = dbManager.getHeadBlockTimeStamp();
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
@@ -46,8 +56,14 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         .setAllowance(0L)
         .setLatestWithdrawTime(now)
         .build());
+
+
+    claimRewards.setBalanceAfter(oldBalance + allowance);
+
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     ret.setStatus(fee, code.SUCESS);
+
+    Logger.LogClaimRewards(claimRewards, dbManager);
 
     return true;
   }

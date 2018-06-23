@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.owlike.genson.Genson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -245,6 +246,8 @@ public class Args {
   @Getter
   @Setter
   private List<String> backupMembers;
+
+  public Genson jsonSerialize = new Genson();
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";

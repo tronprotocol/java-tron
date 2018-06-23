@@ -151,6 +151,9 @@ dependencies {
     compile 'com.googlecode.cqengine:cqengine:2.12.4'
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+
+    compile group: 'com.owlike', name: 'genson', version: '1.4'
 }
 
 check.dependsOn 'lint'

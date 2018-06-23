@@ -4,20 +4,30 @@ import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.rovak.Logger;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -148,12 +158,13 @@ public class VoteWitnessActuator extends AbstractActuator {
     votesCapsule.clearNewVotes();
 
     voteContract.getVotesList().forEach(vote -> {
-      logger.debug("countVoteAccount,address[{}]",
-          ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
-
+      logger.debug("countVoteAccount,address[{}]", ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
       votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
+
+
+    Logger.LogAccountVote(accountCapsule, dbManager);
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     votesStore.put(ownerAddress, votesCapsule);

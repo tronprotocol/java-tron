@@ -31,6 +31,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
+import org.rovak.Logger;
+import org.rovak.events.RoundEnded;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -1150,6 +1152,7 @@ public class Manager {
   private void processMaintenance(BlockCapsule block) {
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+    Logger.LogRoundEnded(new RoundEnded(), this);
   }
 
   /**
