@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -21,6 +22,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Witness;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -228,6 +230,54 @@ public class WithdrawBalanceActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("witnessAccount does not have any allowance", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void isGR() {
+    Witness w = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
+    byte[] address = w.getAddress();
+    AccountCapsule grCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("gr"),
+            ByteString.copyFrom(address),
+            AccountType.Normal,
+            initBalance);
+    dbManager.getAccountStore().put(grCapsule.createDbKey(), grCapsule);
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    try {
+      dbManager.adjustAllowance(address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(accountCapsule.getAllowance(), allowance);
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
+        100, "http://google.com");
+
+    dbManager.getAccountStore().put(address, accountCapsule);
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
+        getContract(ByteArray.toHexString(address)), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertTrue(dbManager.getWitnessStore().has(address));
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      String readableOwnerAddress = StringUtil.createReadableString(address);
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Account[" + readableOwnerAddress
+          + "] is a guard representative and is not allowed to withdraw Balance", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

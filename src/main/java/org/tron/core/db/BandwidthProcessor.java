@@ -160,7 +160,6 @@ public class BandwidthProcessor {
     }
   }
 
-
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) {
     long netUsage = accountCapsule.getNetUsage();
@@ -389,6 +388,7 @@ public class BandwidthProcessor {
     return true;
 
   }
+
 }
 
 

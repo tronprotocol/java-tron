@@ -346,7 +346,8 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore().getAssetIssuesPaginated(offset, limit);
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
+        .getAssetIssuesPaginated(offset, limit);
     if (null == assetIssueList || assetIssueList.size() == 0) {
       return null;
     }
@@ -467,6 +468,7 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
+
     } catch (BadItemException e) {
     }
     if (transactionCapsule != null) {

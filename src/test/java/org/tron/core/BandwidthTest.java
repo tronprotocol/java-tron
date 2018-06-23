@@ -347,7 +347,6 @@ public class BandwidthTest {
     Assert.assertEquals(
         10_000_000L - transactionFee - createAccountFee, ownerCapsuleNew.getBalance());
     Assert.assertEquals(101220L, ret.getFee());
-
   }
 
 

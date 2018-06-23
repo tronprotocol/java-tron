@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,7 +33,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.core.Constant;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -175,9 +173,9 @@ public class Args {
   @Setter
   private String p2pNodeId;
 
+  //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
-  //If you are running a solidity node for java tron, this flag is set to true
   private boolean solidityNode = false;
 
   @Getter
