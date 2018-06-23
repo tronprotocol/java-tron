@@ -172,7 +172,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
-    logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
@@ -181,7 +180,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
-    logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
