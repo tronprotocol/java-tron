@@ -111,8 +111,6 @@ dependencies {
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
     compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
 
-    compile "org.apache.commons:commons-collections4:4.0"
-
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
     compile group: 'junit', name: 'junit', version: '4.12'
