@@ -87,6 +87,7 @@ public class NodeHandler {
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
   private volatile boolean waitForPong = false;
+  private volatile boolean waitForNeighbors = false;
   private volatile int pingTrials = 3;
   private long pingSent;
 
@@ -204,6 +205,11 @@ public class NodeHandler {
   }
 
   public void handleNeighbours(NeighborsMessage msg) {
+    if (!waitForNeighbors){
+      logger.warn("Receive neighbors from {} without send find nodes.", node.getHost());
+      return;
+    }
+    waitForNeighbors = false;
     getNodeStatistics().discoverInNeighbours.add();
     for (Node n : msg.getNodes()) {
       if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())) {
@@ -269,6 +275,7 @@ public class NodeHandler {
   }
 
   public void sendFindNode(byte[] target) {
+    waitForNeighbors = true;
     Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
     getNodeStatistics().discoverOutFind.add();
