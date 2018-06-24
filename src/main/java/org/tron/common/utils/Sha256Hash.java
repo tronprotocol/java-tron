@@ -45,9 +45,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
   private final byte[] bytes;
 
-  private long blockNum;
-
-
   private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {
     byte[] numBytes = Longs.toByteArray(blockNum);
     byte[] hash = blockHash.getBytes();
@@ -62,22 +59,16 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     return hash;
   }
 
-  public long getBlockNum(){
-    return blockNum;
-  }
-
   public Sha256Hash(long num, byte[] hash) {
     byte[] rawHashBytes = this.generateBlockId(num, hash);
     checkArgument(rawHashBytes.length == LENGTH);
     this.bytes = rawHashBytes;
-    this.blockNum = num;
   }
 
   public Sha256Hash(long num, Sha256Hash hash) {
     byte[] rawHashBytes = this.generateBlockId(num, hash);
     checkArgument(rawHashBytes.length == LENGTH);
     this.bytes = rawHashBytes;
-    this.blockNum = num;
   }
 
   /**

@@ -138,10 +138,6 @@ public class NodeManager implements EventHandler {
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
-
-      for (Node node : args.getNodeActive()) {
-        getNodeHandler(node).getNodeStatistics().setPredefined(true);
-      }
     }
   }
 
