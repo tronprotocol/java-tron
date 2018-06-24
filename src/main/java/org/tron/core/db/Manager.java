@@ -585,9 +585,21 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException {
-    Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree =
-        khaosDb.getBranch(
-            newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
+    try {
+      binaryTree =
+          khaosDb.getBranch(
+              newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    } catch (NonCommonBlockException e) {
+      logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      BlockCapsule tmp = newHead;
+      while (tmp != null) {
+        khaosDb.removeBlk(tmp.getBlockId());
+        tmp = khaosDb.getBlock(tmp.getParentHash());
+      }
+
+      throw e;
+    }
 
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
