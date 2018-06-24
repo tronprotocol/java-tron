@@ -19,7 +19,6 @@ package org.tron.common.overlay.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Lists;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,6 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.discover.node.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -52,10 +52,8 @@ public class SyncPool {
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private static final double factor = 0.4;
-  private static final double activeFactor = 0.2;
 
-  private final List<PeerConnection> activePeers = Collections
-      .synchronizedList(new ArrayList<PeerConnection>());
+  private final List<PeerConnection> activePeers = Collections.synchronizedList(new ArrayList<PeerConnection>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
@@ -74,9 +72,7 @@ public class SyncPool {
 
   private Args args = Args.getInstance();
 
-  private int maxActiveNodes = args.getNodeMaxActiveNodes();
-
-  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int maxActiveNodes = args.getNodeMaxActiveNodes() > 0 ? args.getNodeMaxActiveNodes() : 30;
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -90,10 +86,6 @@ public class SyncPool {
     channelManager = ctx.getBean(ChannelManager.class);
 
     peerClient = ctx.getBean(PeerClient.class);
-
-    for (Node node : args.getActiveNodes()) {
-      nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -112,11 +104,8 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
-        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
-    if (lackSize <= 0) {
-      return;
-    }
+    int lackSize = (int) (maxActiveNodes * factor) - activePeers.size();
+    if(lackSize <= 0) return;
 
     final Set<String> nodesInUse = new HashSet<>();
     channelManager.getActivePeers().forEach(channel -> nodesInUse.add(channel.getPeerId()));
@@ -200,7 +189,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
+    if (activePeers.size() >= maxActiveNodes) {
       return false;
     }
     return true;
@@ -231,14 +220,6 @@ public class SyncPool {
         return false;
       }
 
-      if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
-        return false;
-      }
-
-      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED){
-        return true;
-      }
-
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
       if (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null) {
         return false;
@@ -246,7 +227,8 @@ public class SyncPool {
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
         return false;
       }
-      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp){
+
+      if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
       }
 
