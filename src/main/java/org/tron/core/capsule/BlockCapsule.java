@@ -253,8 +253,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public void  setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
-            ByteString.copyFrom(witness.getBytes()))
-            .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
+            ByteString.copyFrom(witness.getBytes())).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
