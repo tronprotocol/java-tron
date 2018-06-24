@@ -75,6 +75,10 @@ public class WalletTestAssetIssue015 {
   byte[] transferAssetAddress = ecKey2.getAddress();
   String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] newAddress = ecKey3.getAddress();
+  String testKeyForNewAddress = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -85,6 +89,7 @@ public class WalletTestAssetIssue015 {
   public void beforeClass() {
     logger.info(testKeyForAssetIssue015);
     logger.info(transferAssetCreateKey);
+    logger.info(testKeyForNewAddress);
 
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
