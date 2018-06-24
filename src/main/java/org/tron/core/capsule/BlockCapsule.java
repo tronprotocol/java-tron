@@ -140,6 +140,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     initTxs();
   }
 
+
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
       List<Transaction> transactionList) {
     // blockheader raw
@@ -243,6 +244,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public void setMerkleRoot() {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder()
+            .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+  /* only for genisis */
+  public void  setWitness(String witness) {
+    BlockHeader.raw blockHeaderRaw =
+        this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
+            ByteString.copyFrom(witness.getBytes()))
             .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
