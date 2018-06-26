@@ -296,6 +296,7 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
     }
 
     @Override
