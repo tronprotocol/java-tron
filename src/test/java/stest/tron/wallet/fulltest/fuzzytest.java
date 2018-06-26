@@ -125,31 +125,36 @@ public class fuzzytest {
     }
   }
 
-  @Test(enabled = false)
-  public void atestGetPaginatedAssetIssueList() {
-    Random rand = new Random();
-    Integer offset = rand.nextInt(1000000) - 500000;
-    Integer limit = rand.nextInt(1000000) - 500000;
-    Integer times = 0;
-    while (times++ < 5000) {
-      offset = rand.nextInt(1000000) - 500000;
-      limit = rand.nextInt(1000000) - 500000;
-      GrpcAPI.BlockLimit.Builder builder = GrpcAPI.BlockLimit.newBuilder();
-      builder.setStartNum(offset);
-      builder.setEndNum(limit);
-      GrpcAPI.BlockList blockList = blockingStubFull.getBlockByLimitNext(builder.build());
-      Optional<GrpcAPI.BlockList> getBlockByLimitNext = Optional.ofNullable(blockList);
+  @Test(enabled = false,threadPoolSize = 5, invocationCount = 5)
+  public void tooManyChannelFull() {
+    Integer i = 0;
+    while (i++ < 20000) {
+      ManagedChannel channelFull = null;
+      WalletGrpc.WalletBlockingStub blockingStubFull = null;
+      channelFull = ManagedChannelBuilder.forTarget(fullnode)
+          .usePlaintext(true)
+          .build();
+      blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+      GrpcAPI.NodeList nodeList = blockingStubFull
+          .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+      if (i%100 == 0) {
+        logger.info(Integer.toString(i));
+      }
+
     }
+
+
+
   }
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
-    if (channelFull != null) {
+/*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelSolidity != null) {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
+    }*/
   }
 
   public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,

@@ -88,6 +88,8 @@ public class WalletTestAccount005 {
     //Assert.assertTrue(WithdrawBalance(fromAddress,testKey002));
     //Withdraw failed when the latest time to withdraw within 1 day.
 
+
+
     if (withdrawBalance(fromAddress, testKey002)) {
       Assert.assertFalse(withdrawBalance(fromAddress, testKey002));
     } else {

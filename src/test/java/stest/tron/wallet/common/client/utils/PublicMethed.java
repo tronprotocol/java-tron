@@ -483,6 +483,7 @@ public class PublicMethed {
       }
       wait++;
     }
+    logger.info("quit normally");
     return true;
   }
 
