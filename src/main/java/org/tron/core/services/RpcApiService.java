@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -21,6 +22,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.Address;
+import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
@@ -37,10 +39,12 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.WalletSolidity;
@@ -274,6 +278,20 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void generateAddress(EmptyMessage request, StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver){
+      ECKey ecKey = new ECKey(Utils.getRandom());
+      byte[] priKey = ecKey.getPrivKeyBytes();
+      byte[] address = ecKey.getAddress();
+      String addressStr = Wallet.encode58Check(address);
+      String priKeyStr = Hex.encodeHexString(priKey);
+      AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
+      builder.setAddress(addressStr);
+      builder.setPrivateKey(priKeyStr);
+      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
   }
@@ -763,6 +781,20 @@ public class RpcApiService implements Service {
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void generateAddress(EmptyMessage request, StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver){
+      ECKey ecKey = new ECKey(Utils.getRandom());
+      byte[] priKey = ecKey.getPrivKeyBytes();
+      byte[] address = ecKey.getAddress();
+      String addressStr = Wallet.encode58Check(address);
+      String priKeyStr = Hex.encodeHexString(priKey);
+      AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
+      builder.setAddress(addressStr);
+      builder.setPrivateKey(priKeyStr);
+      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
   }
