@@ -320,6 +320,16 @@ service Wallet {
       }
     };
   };
+  //Warning: do not invoke this interface provided by others.
+  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
+    option (google.api.http) = {
+      post: "/wallet/generateaddress"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/generateaddress"
+      }
+    };
+  }
 };
 
 
@@ -385,6 +395,16 @@ service WalletSolidity {
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactionbyid"
+      }
+    };
+  }
+  //Warning: do not invoke this interface provided by others.
+  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
+    option (google.api.http) = {
+      post: "/walletsolidity/generateaddress"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/generateaddress"
       }
     };
   }
@@ -532,4 +552,9 @@ message AccountNetMessage {
 message PaginatedMessage {
   int64 offset = 1;
   int64 limit = 2;
+}
+
+message AddressPrKeyPairMessage {
+  string address = 1;
+  string privateKey = 2;
 }
