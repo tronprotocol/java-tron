@@ -1,27 +1,56 @@
 package org.tron.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.http.AccountServlet;
-import org.tron.core.services.http.BlockServlet;
+import org.tron.common.application.Service;
 
+@Component
+//@Slf4j
+public class HttpApiService implements Service{
 
-public class HttpApiService {
+  private int port = Args.getInstance().getHttpPort();
 
-  public static void main(String[] args) throws Exception {
+  private Server server;
 
+  @Autowired
+  private AccountServlet accountServlet;
 
-    Server server = new Server(8006);
+  @Override
+  public void init() {
 
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context.setContextPath("/");
-    server.setHandler(context);
+  }
 
-    context.addServlet(new ServletHolder(new AccountServlet()), "/account");
-    context.addServlet(new ServletHolder(new BlockServlet()), "/block");
+  @Override
+  public void init(Args args) {
 
-    server.start();
-    server.join();
+  }
+
+  @Override
+  public void start() {
+    try {
+      server = new Server(port);
+      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      context.setContextPath("/");
+      server.setHandler(context);
+      context.addServlet(new ServletHolder(accountServlet), "/account");
+      server.start();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Override
+  public void stop() {
+    try {
+      server.stop();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

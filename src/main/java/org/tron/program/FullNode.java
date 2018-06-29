@@ -9,6 +9,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.HttpApiService;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
@@ -42,10 +43,19 @@ public class FullNode {
     if (cfgArgs.isWitness()) {
       appT.addService(new WitnessService(appT, context));
     }
+    //http
+    HttpApiService httpApiService = context.getBean(HttpApiService.class);
+    appT.addService(httpApiService);
+
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
+
+    System.out.println("start end");
+
     rpcApiService.blockUntilShutdown();
+
+
   }
 
   public static void shutdown(final Application app) {
