@@ -44,8 +44,8 @@ public class FullNode {
       appT.addService(new WitnessService(appT, context));
     }
     //http
-    HttpApiService httpApiService = context.getBean(HttpApiService.class);
-    appT.addService(httpApiService);
+//    HttpApiService httpApiService = context.getBean(HttpApiService.class);
+//    appT.addService(httpApiService);
 
     appT.initServices(cfgArgs);
     appT.startServices();
