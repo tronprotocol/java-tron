@@ -14,7 +14,7 @@ public class SolidityNodeHttpApiService implements Service {
   private Server server;
 
   @Autowired
-  private GetAccountServlet accountServlet;
+  private GetTransactionFromSolidityServlet getTransactionFromSolidityServlet;
 
 
   @Override
@@ -34,7 +34,7 @@ public class SolidityNodeHttpApiService implements Service {
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/");
       server.setHandler(context);
-      context.addServlet(new ServletHolder(accountServlet), "/getaccount");
+      context.addServlet(new ServletHolder(getTransactionFromSolidityServlet), "/gettransactionbyid");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();

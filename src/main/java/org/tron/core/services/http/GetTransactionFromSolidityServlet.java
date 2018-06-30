@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j
-public class GetTransactionServlet extends HttpServlet {
+public class GetTransactionFromSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletSolidity walletSolidity;
