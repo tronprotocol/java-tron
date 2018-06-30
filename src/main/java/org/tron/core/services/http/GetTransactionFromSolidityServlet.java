@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.WalletSolidity;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -22,7 +23,11 @@ public class GetTransactionFromSolidityServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     BytesMessage.Builder build = BytesMessage.newBuilder();
-    JsonFormat.merge(input, build);
+    try {
+      JsonFormat.merge(input, build);
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    }
     Transaction tx = walletSolidity.getTransactionById(build.build().getValue());
     response.getWriter().println(JsonFormat.printToString(tx));
   }

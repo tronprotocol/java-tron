@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.core.Wallet;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -22,7 +23,11 @@ public class BroadcastServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     Transaction.Builder build = Transaction.newBuilder();
-    JsonFormat.merge(input, build);
+    try {
+      JsonFormat.merge(input, build);
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    }
     GrpcAPI.Return retur = wallet.broadcastTransaction(build.build());
     response.getWriter().println(JsonFormat.printToString(retur));
   }

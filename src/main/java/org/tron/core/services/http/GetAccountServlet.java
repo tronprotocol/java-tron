@@ -12,6 +12,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
 
 
@@ -28,7 +29,11 @@ public class GetAccountServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String account = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     Account.Builder build = Account.newBuilder();
-    JsonFormat.merge(account, build);
+    try {
+      JsonFormat.merge(account, build);
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    }
     Account reply = wallet.getAccount(build.build());
     AccountCapsule accountCapsule = new AccountCapsule(reply);
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);

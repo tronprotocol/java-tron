@@ -13,14 +13,14 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
 @Slf4j
-public class TransferServlet extends HttpServlet {
+public class CreateAccountServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
@@ -28,9 +28,9 @@ public class TransferServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     try {
       String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-      TransferContract.Builder build = TransferContract.newBuilder();
+      AccountCreateContract.Builder build = AccountCreateContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract).getInstance();
+      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.AccountCreateContract).getInstance();
       String txid = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
       response.getWriter().println(JsonFormat.printToString(tx) + "\n\n\ntxid=" + txid);
     } catch (ContractValidateException e) {

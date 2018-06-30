@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.TransactionSign;
 
 
@@ -22,7 +23,11 @@ public class TransactionSignServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     TransactionSign.Builder build = TransactionSign.newBuilder();
-    JsonFormat.merge(contract, build);
+    try {
+      JsonFormat.merge(contract, build);
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    }
     TransactionCapsule retur = wallet.getTransactionSign(build.build());
     response.getWriter().println(JsonFormat.printToString(retur.getInstance()));
   }
