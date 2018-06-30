@@ -8,23 +8,23 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI;
-import org.tron.core.Wallet;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.core.WalletSolidity;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j
-public class BroadcastServlet extends HttpServlet {
+public class GetTransactionServlet extends HttpServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletSolidity walletSolidity;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    Transaction.Builder build = Transaction.newBuilder();
+    BytesMessage.Builder build = BytesMessage.newBuilder();
     JsonFormat.merge(input, build);
-    GrpcAPI.Return retur = wallet.broadcastTransaction(build.build());
-    response.getWriter().println(JsonFormat.printToString(retur));
+    Transaction tx = walletSolidity.getTransactionById(build.build().getValue());
+    response.getWriter().println(JsonFormat.printToString(tx));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
