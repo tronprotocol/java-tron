@@ -43,6 +43,8 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -57,6 +59,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -69,6 +72,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
 
 
@@ -211,6 +215,31 @@ public class Wallet {
   public Transaction createTransaction(TransferContract contract) {
     AccountStore accountStore = dbManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
+  }
+
+
+  public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
+      ContractType contractType) throws ContractValidateException {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+    for (Actuator act : actList) {
+      act.validate();
+    }
+    try {
+      BlockCapsule headBlock = null;
+      List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
+      if (CollectionUtils.isEmpty(blockList)) {
+        throw new HeaderNotFound("latest block not found");
+      } else {
+        headBlock = blockList.get(0);
+      }
+      trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
+      long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+      trx.setExpiration(expiration);
+    } catch (HeaderNotFound headerNotFound) {
+      headerNotFound.printStackTrace();
+    }
+    return trx;
   }
 
   /**

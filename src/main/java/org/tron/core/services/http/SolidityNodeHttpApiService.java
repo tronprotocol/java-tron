@@ -1,25 +1,21 @@
-package org.tron.core.services;
+package org.tron.core.services.http;
 
-import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tron.core.config.args.Args;
-import org.tron.core.services.http.AccountServlet;
 import org.tron.common.application.Service;
+import org.tron.core.config.args.Args;
 
-@Component
-//@Slf4j
-public class HttpApiService implements Service{
+public class SolidityNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getHttpPort();
 
   private Server server;
 
   @Autowired
-  private AccountServlet accountServlet;
+  private GetAccountServlet accountServlet;
+
 
   @Override
   public void init() {
@@ -38,7 +34,7 @@ public class HttpApiService implements Service{
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/");
       server.setHandler(context);
-      context.addServlet(new ServletHolder(accountServlet), "/account");
+      context.addServlet(new ServletHolder(accountServlet), "/getaccount");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();

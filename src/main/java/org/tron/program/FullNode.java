@@ -2,14 +2,13 @@ package org.tron.program;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.HttpApiService;
+import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
@@ -44,18 +43,14 @@ public class FullNode {
       appT.addService(new WitnessService(appT, context));
     }
     //http
-    HttpApiService httpApiService = context.getBean(HttpApiService.class);
+    FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     appT.addService(httpApiService);
 
     appT.initServices(cfgArgs);
     appT.startServices();
     appT.startup();
 
-    System.out.println("start end");
-
     rpcApiService.blockUntilShutdown();
-
-
   }
 
   public static void shutdown(final Application app) {

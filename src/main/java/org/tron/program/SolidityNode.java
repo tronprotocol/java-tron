@@ -34,7 +34,9 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.http.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
@@ -179,6 +181,9 @@ public class SolidityNode {
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
+    //http
+    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
+    appT.addService(httpApiService);
 
     appT.initServices(cfgArgs);
     appT.startServices();
