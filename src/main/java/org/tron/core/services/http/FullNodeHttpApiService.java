@@ -30,6 +30,16 @@ public class FullNodeHttpApiService implements Service{
   private TransactionSignServlet transactionSignServlet;
   @Autowired
   private UpdateAccountServlet updateAccountServlet;
+  @Autowired
+  private VoteWitnessAccountServlet voteWitnessAccountServlet;
+  @Autowired
+  private CreateAssetIssueServlet createAssetIssueServlet;
+  @Autowired
+  private UpdateWitnessServlet updateWitnessServlet;
+  @Autowired
+  private CreateAccountServlet createAccountServlet;
+  @Autowired
+  private CreateWitnessServlet createWitnessServlet;
 
   @Override
   public void init() {
@@ -53,6 +63,11 @@ public class FullNodeHttpApiService implements Service{
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
       context.addServlet(new ServletHolder(transactionSignServlet), "/gettransactionsign");
       context.addServlet(new ServletHolder(updateAccountServlet), "/updateaccount");
+      context.addServlet(new ServletHolder(voteWitnessAccountServlet), "/votewitnessaccount");
+      context.addServlet(new ServletHolder(createAssetIssueServlet), "/createassetissue");
+      context.addServlet(new ServletHolder(updateWitnessServlet), "/updatewitness");
+      context.addServlet(new ServletHolder(createAccountServlet), "/createaccount");
+      context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();

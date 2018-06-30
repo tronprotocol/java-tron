@@ -13,14 +13,14 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
 @Slf4j
-public class CreateAssetIssueServlet extends HttpServlet {
+public class CreateWitnessServlet  extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
@@ -28,9 +28,9 @@ public class CreateAssetIssueServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     try {
       String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-      AssetIssueContract.Builder build = AssetIssueContract.newBuilder();
+      WitnessCreateContract.Builder build = WitnessCreateContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.AssetIssueContract).getInstance();
+      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.WitnessCreateContract).getInstance();
       String txid = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
       response.getWriter().println(JsonFormat.printToString(tx) + "\n\n\ntxid=" + txid);
     } catch (ContractValidateException e) {
