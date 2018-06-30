@@ -188,6 +188,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int solidityHttpPort;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   private int rpcThreadNum;
 
@@ -293,6 +297,7 @@ public class Args {
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
     INSTANCE.httpPort = 0;
+    INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
@@ -457,6 +462,9 @@ public class Args {
 
     INSTANCE.httpPort =
         config.hasPath("node.http.port") ? config.getInt("node.http.port") : 8080;
+
+    INSTANCE.solidityHttpPort =
+        config.hasPath("node.solidityHttp.port") ? config.getInt("node.solidityHttp.port") : 8081;
 
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")

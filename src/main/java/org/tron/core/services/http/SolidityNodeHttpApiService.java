@@ -9,7 +9,7 @@ import org.tron.core.config.args.Args;
 
 public class SolidityNodeHttpApiService implements Service {
 
-  private int port = Args.getInstance().getHttpPort();
+  private int port = Args.getInstance().getSolidityHttpPort();
 
   private Server server;
 
