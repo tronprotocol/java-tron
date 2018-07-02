@@ -38,6 +38,8 @@ public class FullNodeHttpApiService implements Service{
   private CreateWitnessServlet createWitnessServlet;
   @Autowired
   private TransferAssetServlet transferAssetServlet;
+  @Autowired
+  private ParticipateAssetIssueServlet participateAssetIssue;
 
   @Override
   public void init() {
@@ -67,6 +69,7 @@ public class FullNodeHttpApiService implements Service{
       context.addServlet(new ServletHolder(createAccountServlet), "/createaccount");
       context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
       context.addServlet(new ServletHolder(transferAssetServlet), "/transferasset");
+      context.addServlet(new ServletHolder(participateAssetIssue), "/participateassetissue");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();
