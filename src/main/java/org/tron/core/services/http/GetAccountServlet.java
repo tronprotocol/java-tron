@@ -26,8 +26,10 @@ public class GetAccountServlet extends HttpServlet {
   @Autowired
   private Manager dbManager;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    String account = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    String account = request.getReader().lines()
+        .collect(Collectors.joining(System.lineSeparator()));
     Account.Builder build = Account.newBuilder();
     try {
       JsonFormat.merge(account, build);
@@ -35,13 +37,18 @@ public class GetAccountServlet extends HttpServlet {
       logger.debug("ParseException: {}", e.getMessage());
     }
     Account reply = wallet.getAccount(build.build());
-    AccountCapsule accountCapsule = new AccountCapsule(reply);
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-    processor.updateUsage(accountCapsule);
-    response.getWriter().println(JsonFormat.printToString(accountCapsule.getInstance()));
+    if (reply != null) {
+      AccountCapsule accountCapsule = new AccountCapsule(reply);
+      BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+      processor.updateUsage(accountCapsule);
+      response.getWriter().println(JsonFormat.printToString(accountCapsule.getInstance()));
+    } else {
+      response.getWriter().println("{}");
+    }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     doGet(request, response);
   }
 }

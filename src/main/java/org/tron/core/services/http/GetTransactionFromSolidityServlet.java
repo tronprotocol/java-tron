@@ -28,8 +28,12 @@ public class GetTransactionFromSolidityServlet extends HttpServlet {
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     }
-    Transaction tx = walletSolidity.getTransactionById(build.build().getValue());
-    response.getWriter().println(JsonFormat.printToString(tx));
+    Transaction reply = walletSolidity.getTransactionById(build.build().getValue());
+    if(reply != null){
+      response.getWriter().println(JsonFormat.printToString(reply));
+    }else{
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {

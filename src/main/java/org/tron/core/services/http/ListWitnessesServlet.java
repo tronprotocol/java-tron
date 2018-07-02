@@ -18,12 +18,18 @@ public class ListWitnessesServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     WitnessList reply = wallet.getWitnessList();
-    response.getWriter().println(JsonFormat.printToString(reply));
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply));
+    } else {
+      response.getWriter().println("{}");
+    }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     doGet(request, response);
   }
 }

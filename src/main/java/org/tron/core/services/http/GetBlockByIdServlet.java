@@ -29,7 +29,11 @@ public class GetBlockByIdServlet extends HttpServlet {
       logger.debug("ParseException: {}", e.getMessage());
     }
     Block reply = wallet.getBlockById(build.getValue());
-    response.getWriter().println(JsonFormat.printToString(reply));
+    if(reply != null){
+      response.getWriter().println(JsonFormat.printToString(reply));
+    }else{
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {

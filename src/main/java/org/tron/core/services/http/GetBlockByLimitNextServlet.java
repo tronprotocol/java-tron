@@ -21,7 +21,8 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
   private Wallet wallet;
   private static final long BLOCK_LIMIT_NUM = 100;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     BlockLimit.Builder build = BlockLimit.newBuilder();
     try {
@@ -34,11 +35,16 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
 
     if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
       BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
-      response.getWriter().println(JsonFormat.printToString(reply));
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+        return;
+      }
     }
+    response.getWriter().println("{}");
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     doGet(request, response);
   }
 }

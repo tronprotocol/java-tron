@@ -20,7 +20,11 @@ public class ListNodesServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     NodeList reply = wallet.listNodes();
-    response.getWriter().println(JsonFormat.printToString(reply));
+    if(reply != null){
+      response.getWriter().println(JsonFormat.printToString(reply));
+    }else{
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {

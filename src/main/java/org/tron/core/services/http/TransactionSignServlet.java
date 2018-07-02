@@ -28,8 +28,12 @@ public class TransactionSignServlet extends HttpServlet {
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     }
-    TransactionCapsule retur = wallet.getTransactionSign(build.build());
-    response.getWriter().println(JsonFormat.printToString(retur.getInstance()));
+    TransactionCapsule reply = wallet.getTransactionSign(build.build());
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply.getInstance()));
+    } else {
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {

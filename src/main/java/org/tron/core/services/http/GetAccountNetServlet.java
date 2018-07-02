@@ -32,7 +32,11 @@ public class GetAccountNetServlet extends HttpServlet {
       logger.debug("ParseException: {}", e.getMessage());
     }
     AccountNetMessage reply = wallet.getAccountNet(build.getAddress());
-    response.getWriter().println(JsonFormat.printToString(reply));
+    if(reply != null){
+      response.getWriter().println(JsonFormat.printToString(reply));
+    }else{
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)

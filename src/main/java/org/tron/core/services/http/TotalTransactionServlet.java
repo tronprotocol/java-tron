@@ -19,7 +19,11 @@ public class TotalTransactionServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     NumberMessage reply = wallet.totalTransaction();
-    response.getWriter().println(JsonFormat.printToString(reply));
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply));
+    } else {
+      response.getWriter().println("{}");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {

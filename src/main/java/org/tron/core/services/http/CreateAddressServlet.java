@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -30,7 +31,9 @@ public class CreateAddressServlet extends HttpServlet {
       logger.debug("ParseException: {}", e.getMessage());
     }
     byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-    response.getWriter().println(JsonFormat.printToString(BytesMessage.parseFrom(address)));
+    BytesMessage.Builder builder = BytesMessage.newBuilder();
+    builder.setValue(ByteString.copyFrom(address));
+    response.getWriter().println(JsonFormat.printToString(builder.build()));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
