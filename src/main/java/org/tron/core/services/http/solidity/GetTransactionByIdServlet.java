@@ -1,4 +1,4 @@
-package org.tron.core.services.http;
+package org.tron.core.services.http.solidity;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -10,12 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.WalletSolidity;
+import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j
-public class GetTransactionFromSolidityServlet extends HttpServlet {
+public class GetTransactionByIdServlet extends HttpServlet {
 
   @Autowired
   private WalletSolidity walletSolidity;

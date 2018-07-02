@@ -34,9 +34,8 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.http.SolidityNodeHttpApiService;
+import org.tron.core.services.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
@@ -89,6 +88,11 @@ public class SolidityNode {
     DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
     long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
     while (true) {
+      try {
+        Thread.sleep(10000);
+      } catch (Exception e) {
+
+      }
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
       logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}",
@@ -178,6 +182,7 @@ public class SolidityNode {
     }
     Application appT = ApplicationFactory.create(context);
     FullNode.shutdown(appT);
+
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
