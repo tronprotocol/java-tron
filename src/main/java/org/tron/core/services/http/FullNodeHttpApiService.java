@@ -5,12 +5,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.config.args.Args;
-import org.tron.core.services.http.BroadcastServlet;
-import org.tron.core.services.http.GetAccountServlet;
 import org.tron.common.application.Service;
-import org.tron.core.services.http.TransactionSignServlet;
-import org.tron.core.services.http.TransferServlet;
+import org.tron.core.config.args.Args;
 
 @Component
 //@Slf4j
@@ -40,6 +36,8 @@ public class FullNodeHttpApiService implements Service{
   private CreateAccountServlet createAccountServlet;
   @Autowired
   private CreateWitnessServlet createWitnessServlet;
+  @Autowired
+  private TransferAssetServlet transferAssetServlet;
 
   @Override
   public void init() {
@@ -68,6 +66,7 @@ public class FullNodeHttpApiService implements Service{
       context.addServlet(new ServletHolder(updateWitnessServlet), "/updatewitness");
       context.addServlet(new ServletHolder(createAccountServlet), "/createaccount");
       context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
+      context.addServlet(new ServletHolder(transferAssetServlet), "/transferasset");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();
