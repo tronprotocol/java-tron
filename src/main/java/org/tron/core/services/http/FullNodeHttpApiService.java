@@ -10,7 +10,7 @@ import org.tron.core.config.args.Args;
 
 @Component
 //@Slf4j
-public class FullNodeHttpApiService implements Service{
+public class FullNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getHttpPort();
 
@@ -42,6 +42,48 @@ public class FullNodeHttpApiService implements Service{
   private ParticipateAssetIssueServlet participateAssetIssueServlet;
   @Autowired
   private FreezeBalanceServlet freezeBalanceServlet;
+  @Autowired
+  private UnFreezeBalanceServlet unFreezeBalanceServlet;
+  @Autowired
+  private UnFreezeAssetServlet unFreezeAssetServlet;
+  @Autowired
+  private WithdrawBalanceServlet withdrawBalanceServlet;
+  @Autowired
+  private UpdateAssetServlet updateAssetServlet;
+  @Autowired
+  private ListNodesServlet listNodesServlet;
+  @Autowired
+  private GetAssetIssueByAccountServlet getAssetIssueByAccountServlet;
+  @Autowired
+  private GetAccountNetServlet getAccountNetServlet;
+  @Autowired
+  private GetAssetIssueByNameServlet getAssetIssueByNameServlet;
+  @Autowired
+  private GetNowBlockServlet getNowBlockServlet;
+  @Autowired
+  private GetBlockByNumServlet getBlockByNumServlet;
+  @Autowired
+  private GetBlockByIdServlet getBlockByIdServlet;
+  @Autowired
+  private GetBlockByLimitNextServlet getBlockByLimitNextServlet;
+  @Autowired
+  private GetBlockByLatestNumServlet getBlockByLatestNumServlet;
+  @Autowired
+  private GetTransactionByIdServlet getTransactionByIdServlet;
+  @Autowired
+  private ListWitnessesServlet listWitnessesServlet;
+  @Autowired
+  private GetAssetIssueListServlet getAssetIssueListServlet;
+  @Autowired
+  private GetPaginatedAssetIssueListServlet getPaginatedAssetIssueListServlet;
+  @Autowired
+  private TotalTransactionServlet totalTransactionServlet;
+  @Autowired
+  private GetNextMaintenanceTimeServlet getNextMaintenanceTimeServlet;
+  @Autowired
+  private EasyTransferServlet easyTransferServlet;
+  @Autowired
+  private CreateAddressServlet createAdressServlet;
 
   @Override
   public void init() {
@@ -72,7 +114,31 @@ public class FullNodeHttpApiService implements Service{
       context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
       context.addServlet(new ServletHolder(transferAssetServlet), "/transferasset");
       context.addServlet(new ServletHolder(participateAssetIssueServlet), "/participateassetissue");
-      context.addServlet(new ServletHolder(freezeBalanceServlet), "/participateassetissue");
+      context.addServlet(new ServletHolder(freezeBalanceServlet), "/freezebalance");
+      context.addServlet(new ServletHolder(unFreezeBalanceServlet), "/unfreezebalance");
+      context.addServlet(new ServletHolder(unFreezeAssetServlet), "/unfreezeasset");
+      context.addServlet(new ServletHolder(withdrawBalanceServlet), "/withdrawbalance");
+      context.addServlet(new ServletHolder(updateAssetServlet), "/updateasset");
+      context.addServlet(new ServletHolder(listNodesServlet), "/listnodes");
+      context
+          .addServlet(new ServletHolder(getAssetIssueByAccountServlet), "/getassetissuebyaccount");
+      context.addServlet(new ServletHolder(getAccountNetServlet), "/getaccountnet");
+      context.addServlet(new ServletHolder(getAssetIssueByNameServlet), "/getassetissuebyname");
+      context.addServlet(new ServletHolder(getNowBlockServlet), "/getnowblock");
+      context.addServlet(new ServletHolder(getBlockByNumServlet), "/getblockbynum");
+      context.addServlet(new ServletHolder(getBlockByIdServlet), "/getblockbyid");
+      context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
+      context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(listWitnessesServlet), "/listwitnesses");
+      context.addServlet(new ServletHolder(getAssetIssueListServlet), "/getassetissuelist");
+      context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),
+          "/getpaginatedassetissuelist");
+      context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
+      context
+          .addServlet(new ServletHolder(getNextMaintenanceTimeServlet), "/getnextmaintenancetime");
+      context.addServlet(new ServletHolder(createAdressServlet), "/createadresss");
+      context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();

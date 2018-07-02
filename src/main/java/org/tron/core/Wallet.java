@@ -32,12 +32,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.Node;
+import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.node.NodeHandler;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
@@ -86,6 +91,8 @@ public class Wallet {
   private NodeImpl p2pNode;
   @Autowired
   private Manager dbManager;
+  @Autowired
+  private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
@@ -506,4 +513,25 @@ public class Wallet {
     return null;
   }
 
+  public NodeList listNodes(){
+    List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
+
+    Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
+    for (NodeHandler handler : handlerList) {
+      String key = handler.getNode().getHexId() + handler.getNode().getHost();
+      nodeHandlerMap.put(key, handler);
+    }
+
+    NodeList.Builder nodeListBuilder = NodeList.newBuilder();
+
+    nodeHandlerMap.entrySet().stream()
+        .forEach(v -> {
+          org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
+          nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+              Address.newBuilder()
+                  .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                  .setPort(node.getPort())));
+        });
+    return nodeListBuilder.build();
+  }
 }
