@@ -39,6 +39,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -934,15 +935,17 @@ public class Manager {
     /**  VM execute  **/
     //Runtime(Transaction tx, Block block, Manager dbManager,
     //                   ProgramInvokeFactory programInvokeFactory)
+
+    DepositImpl deposit = DepositImpl.createRoot(this);
     if (block != null) {
-      Runtime runtime = new Runtime(trxCap.getInstance(), block, this, new ProgramInvokeFactoryImpl());
+      Runtime runtime = new Runtime(trxCap.getInstance(), block, deposit, new ProgramInvokeFactoryImpl());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {
         throw new RuntimeException("Runtime exe failed!");
       }
     } else {
-      Runtime runtime = new Runtime(trxCap.getInstance(), this, new ProgramInvokeFactoryImpl());
+      Runtime runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {

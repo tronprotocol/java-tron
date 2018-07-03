@@ -23,12 +23,10 @@ import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteUtil;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.db.Manager;
-import org.tron.protos.Contract.SmartContract;
-import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
@@ -47,7 +45,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     // Invocation by the wire tx
     @Override
     public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType, InternalTransaction.ExecuterType executerType,
-                                             Transaction tx, Block block, Manager manager) {
+                                             Transaction tx, Block block, Deposit deposit) {
         byte[] contractAddress;
         byte[] ownerAddress;
         long balance;
@@ -58,11 +56,10 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
         long number = -1L;
 
         if (trxType == TRX_CONTRACT_CREATION_TYPE) {
-            SmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
+            Contract.SmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
             contractAddress = contract.getContractAddress().toByteArray();
             ownerAddress = contract.getOwnerAddress().toByteArray();
-            AccountCapsule accountCapsule = manager.getAccountStore().get(ownerAddress);
-            balance = accountCapsule.getBalance();
+            balance = deposit.getBalance(ownerAddress);
             data = ByteUtil.EMPTY_BYTE_ARRAY;
 
             switch (executerType) {
@@ -80,10 +77,10 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
 
             return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
-                    lastHash, coinbase, timestamp, number, manager);
+                    lastHash, coinbase, timestamp, number, deposit);
 
         } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
-            TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(tx);
+            Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(tx);
             /***         ADDRESS op       ***/
             // YP: Get address of currently executing account.
             // byte[] address = tx.isContractCreation() ? tx.getContractAddress() : tx.getReceiveAddress();
@@ -101,7 +98,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
             /***         BALANCE op       ***/
             // byte[] balance = repository.getBalance(address).toByteArray();
-            balance = manager.getAccountStore().get(caller).getBalance();
+            balance = deposit.getBalance(caller);
 
             /***        CALLVALUE op      ***/
             // byte[] callValue = nullToEmpty(tx.getValue());
@@ -133,7 +130,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
             }
 
             return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-                    lastHash, coinbase, timestamp, number, manager);
+                    lastHash, coinbase, timestamp, number, deposit);
         } else {
             return null;
         }
@@ -146,7 +143,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     @Override
     public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,
                                              DataWord inValue, long balanceInt, byte[] dataIn,
-                                             Manager manager, boolean isStaticCall, boolean byTestingSuite) {
+                                             Deposit deposit, boolean isStaticCall, boolean byTestingSuite) {
 
         DataWord address = toAddress;
         DataWord origin = program.getOriginAddress();
@@ -164,6 +161,6 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
         return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
                 data, lastHash, coinbase, timestamp, number, difficulty,
-                manager, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
+                deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
     }
 }

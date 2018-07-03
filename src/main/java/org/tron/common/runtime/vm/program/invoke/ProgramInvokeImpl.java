@@ -18,8 +18,8 @@
 package org.tron.common.runtime.vm.program.invoke;
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.Manager;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -35,7 +35,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
      /* BLOCK  env **/
     private final DataWord prevHash, coinbase, timestamp, number;
 
-    private Manager dbManager;
+    private Deposit deposit = null;
     private boolean byTransaction = true;
     private boolean byTestingSuite = false;
     private int callDeep = 0;
@@ -44,7 +44,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance, DataWord callValue, byte[] msgData,
                              DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number, DataWord difficulty,
-                             Manager manager, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
+                             Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
         this.address = address;
         this.origin = origin;
         this.caller = caller;
@@ -58,7 +58,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         this.timestamp = timestamp;
         this.number = number;
 
-        this.dbManager = manager;
+        this.deposit = deposit;
         this.byTransaction = false;
         this.isStaticCall = isStaticCall;
         this.byTestingSuite = byTestingSuite;
@@ -69,15 +69,15 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
                              byte[] callValue, byte[] msgData,
                              byte[] lastHash, byte[] coinbase, long timestamp, long number,
-                             Manager manager, boolean byTestingSuite) {
+                             Deposit deposit, boolean byTestingSuite) {
         this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-                timestamp, number, manager);
+                timestamp, number, deposit);
         this.byTestingSuite = byTestingSuite;
     }
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
                              byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase,
-                             long timestamp, long number, Manager manager) {
+                             long timestamp, long number, Deposit deposit) {
 
         // Transaction env
         this.address = new DataWord(address);
@@ -92,7 +92,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         this.coinbase = new DataWord(coinbase);
         this.timestamp = new DataWord(timestamp);
         this.number = new DataWord(number);
-        this.dbManager = manager;
+        this.deposit = deposit;
         this.dropLimit = new DataWord(balance);
     }
 
@@ -217,6 +217,10 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     }
     */
 
+    public Deposit getDeposit() {
+        return deposit;
+    }
+
     @Override
     public BlockStore getBlockStore() {
         return null;
@@ -244,11 +248,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     }
 
     @Override
-    public Manager getDbManager() {
-        return dbManager;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -262,10 +261,16 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         if (callValue != null ? !callValue.equals(that.callValue) : that.callValue != null) return false;
         if (caller != null ? !caller.equals(that.caller) : that.caller != null) return false;
         if (coinbase != null ? !coinbase.equals(that.coinbase) : that.coinbase != null) return false;
+        //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
+        //if (gas != null ? !gas.equals(that.gas) : that.gas != null) return false;
+        //if (gasPrice != null ? !gasPrice.equals(that.gasPrice) : that.gasPrice != null) return false;
+        //if (gaslimit != null ? !gaslimit.equals(that.gaslimit) : that.gaslimit != null) return false;
         if (!Arrays.equals(msgData, that.msgData)) return false;
         if (number != null ? !number.equals(that.number) : that.number != null) return false;
         if (origin != null ? !origin.equals(that.origin) : that.origin != null) return false;
         if (prevHash != null ? !prevHash.equals(that.prevHash) : that.prevHash != null) return false;
+        if (deposit != null ? !deposit.equals(that.deposit) : that.deposit != null) return false;
+        //if (storage != null ? !storage.equals(that.storage) : that.storage != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
 
         return true;

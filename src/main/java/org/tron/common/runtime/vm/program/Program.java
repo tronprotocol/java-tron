@@ -17,7 +17,6 @@
  */
 package org.tron.common.runtime.vm.program;
 
-import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,23 +34,23 @@ import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 import org.tron.common.runtime.vm.program.listener.ProgramStorageChangeListener;
 import org.tron.common.runtime.vm.trace.ProgramTrace;
 import org.tron.common.runtime.vm.trace.ProgramTraceListener;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArraySet;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.CodeCapsule;
-import org.tron.core.capsule.StorageCapsule;
-import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.protos.Protocol;
+
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.*;
+
 import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 
@@ -73,7 +72,7 @@ public class Program {
     private ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
 
     private ProgramOutListener listener;
-    //private ProgramTraceListener traceListener;
+    private ProgramTraceListener traceListener;
     private ProgramStorageChangeListener storageDiffListener = new ProgramStorageChangeListener();
     private CompositeProgramListener programListener = new CompositeProgramListener();
 
@@ -83,9 +82,9 @@ public class Program {
     private byte[] returnDataBuffer;
 
     private ProgramResult result = new ProgramResult();
-    //private ProgramTrace trace = new ProgramTrace();
+    private ProgramTrace trace = new ProgramTrace();
 
-    private byte[] codeHash;
+    //private byte[] codeHash;
     private byte[] ops;
     private int pc;
     private byte lastOp;
@@ -114,14 +113,14 @@ public class Program {
         this.invoke = programInvoke;
         this.transaction = transaction;
 
-        this.codeHash = codeHash;
+        //this.codeHash = codeHash;
         this.ops = nullToEmpty(ops);
 
-        //traceListener = new ProgramTraceListener(config.vmTrace());
+        traceListener = new ProgramTraceListener(config.vmTrace());
         this.memory = setupProgramListener(new Memory());
         this.stack = setupProgramListener(new Stack());
         this.storage = setupProgramListener(new Storage(programInvoke));
-        //this.trace = new ProgramTrace(config, programInvoke);
+        this.trace = new ProgramTrace(config, programInvoke);
     }
 
     public ProgramPrecompile getProgramPrecompile() {
@@ -166,7 +165,7 @@ public class Program {
 
     private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
         if (programListener.isEmpty()) {
-            //programListener.addListener(traceListener);
+            programListener.addListener(traceListener);
             programListener.addListener(storageDiffListener);
         }
 
@@ -287,7 +286,7 @@ public class Program {
      */
     public void verifyStackSize(int stackSize) {
         if (stack.size() < stackSize) {
-            throw Program.Exception.tooSmallStack(stackSize, stack.size());
+            throw Exception.tooSmallStack(stackSize, stack.size());
         }
     }
 
@@ -355,11 +354,11 @@ public class Program {
     }
 
 
-    public void suicide(DataWord obtainerAddress) throws BalanceInsufficientException {
+    public void suicide(DataWord obtainerAddress) {
 
         byte[] owner = getOwnerAddress().getLast20Bytes();
         byte[] obtainer = obtainerAddress.getLast20Bytes();
-        long balance = invoke.getDbManager().getAccountStore().get(owner).getBalance();
+        long balance = getStorage().getBalance(owner);
 
         if (logger.isInfoEnabled())
             logger.info("Transfer to: [{}] heritage: [{}]",
@@ -370,24 +369,20 @@ public class Program {
 
         if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
             // if owner == obtainer just zeroing account according to Yellow Paper
-            invoke.getDbManager().adjustBalance(owner, -balance);
-            // getStorage().addBalance(owner, -balance);
+            getStorage().addBalance(owner, -balance);
         } else {
-            // transfer(getStorage(), owner, obtainer, balance);
-            invoke.getDbManager().adjustBalance(owner, -balance);
-            invoke.getDbManager().adjustBalance(obtainer, balance);
+            transfer(getStorage(), owner, obtainer, balance);
         }
 
         getResult().addDeleteAccount(this.getOwnerAddress());
     }
 
-    public Manager getStorage() {
-        return invoke.getDbManager();
+    public Deposit getStorage() {
+        return this.storage;
     }
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    public void createContract(DataWord value, DataWord memStart, DataWord memSize)
-            throws BalanceInsufficientException {
+    public void createContract(DataWord value, DataWord memStart, DataWord memSize) {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -397,7 +392,7 @@ public class Program {
 
         byte[] senderAddress = this.getOwnerAddress().getLast20Bytes();
         long endowment = value.value().longValue();
-        if (invoke.getDbManager().getAccountStore().get(senderAddress).getBalance() <  endowment) {
+        if (getStorage().getBalance(senderAddress) <  endowment) {
             stackPushZero();
             return;
         }
@@ -420,9 +415,9 @@ public class Program {
         ECKey ecKey = ECKey.fromPrivate(privKey);
         byte[] newAddress = ecKey.getAddress();
 
-        AccountCapsule existingAddr = invoke.getDbManager().getAccountStore().get(newAddress);
+        AccountCapsule existingAddr = getStorage().getAccount(newAddress);
         //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
-        boolean contractAlreadyExists = existingAddr != null && existingAddr.getCodeHash().length != 0;
+        boolean contractAlreadyExists = existingAddr != null;
 
         /*
         if (byTestingSuite()) {
@@ -433,21 +428,19 @@ public class Program {
         }
         */
 
-        Manager manager = getStorage();
+        Deposit deposit = getStorage();
 
         //In case of hashing collisions, check for any balance before createAccount()
-        long oldBalance = manager.getAccountStore().get(newAddress).getBalance();
-        manager.getAccountStore().put(newAddress,
-                new AccountCapsule(ByteString.copyFrom(newAddress), Protocol.AccountType.Contract));
+        long oldBalance = deposit.getBalance(newAddress);
+        deposit.createAccount(newAddress, Protocol.AccountType.Contract);
 
-        manager.adjustBalance(newAddress, oldBalance);
+        deposit.addBalance(newAddress, oldBalance);
 
         // [4] TRANSFER THE BALANCE
         long newBalance = 0L;
         if (!byTestingSuite()) {
-            manager.adjustBalance(senderAddress, -endowment);
-            manager.adjustBalance(newAddress, endowment);
-            newBalance = manager.getAccountStore().get(newAddress).getBalance();
+            deposit.addBalance(senderAddress, -endowment);
+            newBalance = deposit.addBalance(newAddress, endowment);
         }
 
 
@@ -455,7 +448,7 @@ public class Program {
         InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, null, endowment, programCode, "create");
         ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
                 this, new DataWord(newAddress), getOwnerAddress(), value,
-                newBalance, null, manager, false, byTestingSuite());
+                newBalance, null, deposit, false, byTestingSuite());
 
         ProgramResult result = ProgramResult.createEmpty();
 
@@ -477,11 +470,11 @@ public class Program {
         long storageCost = getLength(code) * DropCost.getInstance().getCREATE_DATA();
         long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
         if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
-            result.setException(Program.Exception.notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
+            result.setException(Exception.notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
                     storageCost, this));
         } else if (!result.isRevert()){
             result.spendDrop(storageCost);
-            manager.getCodeStore().put(newAddress, new CodeCapsule(code));
+            deposit.saveCode(newAddress, code);
         }
 
         if (result.getException() != null || result.isRevert()) {
@@ -501,6 +494,9 @@ public class Program {
                 returnDataBuffer = result.getHReturn();
             }
         } else {
+            if (!byTestingSuite())
+                deposit.commit();
+
             // IN SUCCESS PUSH THE ADDRESS INTO THE STACK
             stackPush(new DataWord(newAddress));
         }
@@ -525,7 +521,7 @@ public class Program {
      *
      * @param msg is the message call object
      */
-    public void callToAddress(MessageCall msg) throws BalanceInsufficientException {
+    public void callToAddress(MessageCall msg) {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -545,11 +541,12 @@ public class Program {
             logger.info(msg.getType().name() + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
                     Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(), msg.getOutDataSize().longValue());
 
-        Manager manager = getStorage();
+        //Repository track = getStorage().startTracking();
+        Deposit deposit = getStorage().newDepositChild();
 
         // 2.1 PERFORM THE VALUE (endowment) PART
         long endowment = msg.getEndowment().value().longValue();
-        long senderBalance = manager.getAccountStore().get(senderAddress).getBalance();
+        long senderBalance = deposit.getBalance(senderAddress);
         if (senderBalance < endowment) {
             stackPushZero();
             refundGas(msg.getGas().longValue(), "refund gas from message call");
@@ -558,9 +555,9 @@ public class Program {
 
 
         // FETCH THE CODE
-        AccountCapsule accountCapsule = getStorage().getAccountStore().get(codeAddress);
+        AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);
 
-        byte[] programCode = accountCapsule != null ? getStorage().getCodeStore().get(codeAddress).getData() : EMPTY_BYTE_ARRAY;
+        byte[] programCode = accountCapsule != null ? getStorage().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
 
         long contextBalance = 0L;
@@ -570,9 +567,8 @@ public class Program {
                     msg.getGas().getNoLeadZeroesData(),
                     msg.getEndowment().getNoLeadZeroesData());
         } else {
-            manager.adjustBalance(senderAddress, -endowment);
-            manager.adjustBalance(contextAddress, endowment);
-            contextBalance = manager.getAccountStore().get(contextAddress).getBalance();
+            deposit.addBalance(senderAddress, -endowment);
+            contextBalance = deposit.addBalance(contextAddress, endowment);
         }
 
         // CREATE CALL INTERNAL TRANSACTION
@@ -584,10 +580,10 @@ public class Program {
                     this, new DataWord(contextAddress),
                     msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
                     msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
-                    contextBalance, data, manager,msg.getType().callIsStatic() || isStaticCall(), byTestingSuite());
+                    contextBalance, data, deposit,msg.getType().callIsStatic() || isStaticCall(), byTestingSuite());
 
             VM vm = new VM(config);
-            Program program = new Program(getStorage().getAccountStore().get(codeAddress).getCodeHash(), programCode, programInvoke, internalTx, config);
+            Program program = new Program(null, programCode, programInvoke, internalTx, config);
             vm.play(program);
             result = program.getResult();
 
@@ -610,6 +606,7 @@ public class Program {
                 }
             } else {
                 // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
+                deposit.commit();
                 stackPushOne();
             }
 
@@ -620,6 +617,7 @@ public class Program {
             }
         } else {
             // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
+            deposit.commit();
             stackPushOne();
         }
 
@@ -651,7 +649,7 @@ public class Program {
 
     public void spendDrop(long dropValue, String cause) {
         if (getDroplimitLong() < dropValue) {
-            throw Program.Exception.notEnoughSpendingGas(cause, dropValue, this);
+            throw Exception.notEnoughSpendingGas(cause, dropValue, this);
         }
         getResult().spendDrop(dropValue);
     }
@@ -678,9 +676,7 @@ public class Program {
         //storageSave(word1.getData(), word2.getData());
         DataWord keyWord = word1.clone();
         DataWord valWord = word2.clone();
-        StorageCapsule storageCapsule = getStorage().getStorageStore().get(getOwnerAddress().getLast20Bytes());
-        storageCapsule.put(keyWord, valWord);
-        getStorage().getStorageStore().put(getOwnerAddress().getLast20Bytes(), storageCapsule);
+        getStorage().addStorageValue(getOwnerAddress().getLast20Bytes(), keyWord, valWord);
     }
 
     /*
@@ -696,7 +692,7 @@ public class Program {
     }
 
     public byte[] getCodeAt(DataWord address) {
-        byte[] code = invoke.getDbManager().getCodeStore().get(address.getLast20Bytes()).getData();
+        byte[] code = invoke.getDeposit().getCode(address.getLast20Bytes());
         return nullToEmpty(code);
     }
 
@@ -722,7 +718,7 @@ public class Program {
     }
 
     public DataWord getBalance(DataWord address) {
-        long balance = getStorage().getAccountStore().get(address.getLast20Bytes()).getBalance();
+        long balance = getStorage().getBalance(address.getLast20Bytes());
         return new DataWord(balance);
     }
 
@@ -777,8 +773,7 @@ public class Program {
     }
 
     public DataWord storageLoad(DataWord key) {
-        StorageCapsule storageCapsule = getStorage().getStorageStore().get(getOwnerAddress().getLast20Bytes());
-        DataWord ret = storageCapsule.get(key.clone());
+        DataWord ret = getStorage().getStorageValue(getOwnerAddress().getLast20Bytes(), key.clone());
         return ret == null ? null : ret.clone();
     }
 
@@ -905,16 +900,13 @@ public class Program {
     }
 
     public void saveOpTrace() {
-        /*
         if (this.pc < ops.length) {
             trace.addOp(ops[pc], pc, getCallDeep(), getDroplimit(), traceListener.resetActions());
         }
-        */
     }
 
     public ProgramTrace getTrace() {
-        //return trace;
-        return null;
+        return trace;
     }
 
     static String formatBinData(byte[] binData, int startPC) {
@@ -1098,17 +1090,16 @@ public class Program {
 
     public int verifyJumpDest(DataWord nextPC) {
         if (nextPC.bytesOccupied() > 4) {
-            throw Program.Exception.badJumpDestination(-1);
+            throw Exception.badJumpDestination(-1);
         }
         int ret = nextPC.intValue();
         if (!getProgramPrecompile().hasJumpDest(ret)) {
-            throw Program.Exception.badJumpDestination(ret);
+            throw Exception.badJumpDestination(ret);
         }
         return ret;
     }
 
-    public void callToPrecompiledAddress(MessageCall msg, PrecompiledContracts.PrecompiledContract contract)
-            throws BalanceInsufficientException {
+    public void callToPrecompiledAddress(MessageCall msg, PrecompiledContracts.PrecompiledContract contract) {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -1117,7 +1108,8 @@ public class Program {
             return;
         }
 
-        Manager manager = getStorage();
+        // Repository track = getStorage().startTracking();
+        Deposit deposit = getStorage();
 
         byte[] senderAddress = this.getOwnerAddress().getLast20Bytes();
         byte[] codeAddress = msg.getCodeAddress().getLast20Bytes();
@@ -1125,7 +1117,7 @@ public class Program {
 
 
         long endowment = msg.getEndowment().value().longValue();
-        long senderBalance = manager.getAccountStore().get(senderAddress).getBalance();
+        long senderBalance = deposit.getBalance(senderAddress);
         if (senderBalance < endowment) {
             stackPushZero();
             this.refundGas(msg.getGas().longValue(), "refund gas from message call");
@@ -1134,8 +1126,9 @@ public class Program {
 
         byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
                 msg.getInDataSize().intValue());
-        manager.adjustBalance(senderAddress, -msg.getEndowment().value().longValue());
-        manager.adjustBalance(contextAddress, msg.getEndowment().value().longValue());
+
+        // Charge for endowment - is not reversible by rollback
+        transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
 
         long requiredGas = contract.getGasForData(data);
         if (requiredGas > msg.getGas().longValue()) {
@@ -1151,6 +1144,7 @@ public class Program {
                 this.refundGas(msg.getGas().longValue() - requiredGas, "call pre-compiled");
                 this.stackPushOne();
                 returnDataBuffer = out.getRight();
+                deposit.commit();
             } else {
                 // spend all gas on failure, push zero and revert state changes
                 this.refundGas(0, "call pre-compiled");

@@ -48,6 +48,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -507,7 +508,8 @@ public class Wallet {
       if (!isConstant(abi, selector)) {
         return trx;
       } else {
-        Runtime runtime = new Runtime(trx, dbManager, new ProgramInvokeFactoryImpl());
+        DepositImpl deposit = DepositImpl.createRoot(dbManager);
+        Runtime runtime = new Runtime(trx, deposit, new ProgramInvokeFactoryImpl());
         runtime.execute();
         runtime.go();
         if (runtime.getResult().getException() != null) {

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.BalanceInsufficientException;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ public class VM {
 
     /* Keeps track of the number of steps performed in this VM */
     private int vmCounter = 0;
-    //private boolean vmTrace;
+    private boolean vmTrace;
     // private long dumpBlock;
 
     private final SystemProperties config;
@@ -43,7 +42,7 @@ public class VM {
     @Autowired
     public VM(SystemProperties config) {
         this.config = config;
-        //vmTrace = config.vmTrace();
+        vmTrace = config.vmTrace();
         // dumpBlock = config.dumpBlock();
     }
 
@@ -73,12 +72,10 @@ public class VM {
         return dropConsume;
     }
 
-    public void step(Program program) throws BalanceInsufficientException {
-        /*
+    public void step(Program program) {
         if (vmTrace) {
             program.saveOpTrace();
         }
-        */
 
         try {
             OpCode op = OpCode.code(program.getCurrentOp());
@@ -1210,9 +1207,7 @@ public class VM {
 
         } catch (RuntimeException e) {
             program.setRuntimeFailure(e);
-        } catch (BalanceInsufficientException e) {
-            program.setRuntimeFailure(new RuntimeException(e.getMessage()));
-        }catch (StackOverflowError soe){
+        } catch (StackOverflowError soe){
             logger.error("\n !!! StackOverflowError: update your java run command with -Xss2M !!!\n", soe);
             System.exit(-1);
         } finally {

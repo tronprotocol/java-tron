@@ -18,8 +18,8 @@
 package org.tron.common.runtime.vm.program.invoke;
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.Manager;
 
 /**
  * @author Roman Mandeleil
@@ -63,9 +63,9 @@ public interface ProgramInvoke {
 
     int getCallDeep();
 
+    Deposit getDeposit();
+
     BlockStore getBlockStore();
 
     boolean isStaticCall();
-
-    Manager getDbManager();
 }

@@ -21,8 +21,12 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.storage.Deposit;
+import org.tron.common.storage.DepositImpl;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.Manager;
+import org.tron.protos.Protocol;
+
+// import org.tron.core.db.BlockStoreDummy;
 
 /**
  * @author Roman Mandeleil
@@ -32,7 +36,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
     private byte[] msgData;
 
-    private Manager dbManager;
+    private DepositImpl deposit;
     private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
     private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 
@@ -48,7 +52,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
 
         // this.repository = new RepositoryRoot(new HashMapDB<byte[]>());
-        /*
         this.deposit = DepositImpl.createRoot(null);
         this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
@@ -59,7 +62,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
                         + "6040016014525451606001601e52545160800160"
                         + "28525460a052546016604860003960166000f260"
                         + "00603f556103e75660005460005360200235"));
-                        */
     }
 
     public ProgramInvokeMockImpl(boolean defaults) {
@@ -225,13 +227,17 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     }
 
     @Override
-    public Manager getDbManager() {
-        return dbManager;
+    public Deposit getDeposit() {
+        return this.deposit;
     }
 
     @Override
     public BlockStore getBlockStore() {
         return null; // new BlockStoreDummy();
+    }
+
+    public void setRepository(DepositImpl deposit) {
+        this.deposit = deposit;
     }
 
     @Override

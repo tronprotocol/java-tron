@@ -17,24 +17,31 @@
  */
 package org.tron.common.runtime.vm.program;
 
-import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
+import org.tron.common.storage.Deposit;
+import org.tron.common.storage.Key;
+import org.tron.common.storage.Value;
 import org.tron.core.capsule.*;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.protos.Protocol;
 
-public class Storage implements ProgramListenerAware {
-    private Manager dbManager;
+public class Storage implements Deposit, ProgramListenerAware {
+
+    private  Deposit deposit;
     private final DataWord address;
     private ProgramListener programListener;
 
     public Storage(ProgramInvoke programInvoke) {
         this.address = programInvoke.getOwnerAddress();
-        this.dbManager = programInvoke.getDbManager();
+        this.deposit = programInvoke.getDeposit();
+    }
+
+    @Override
+    public Manager getDbManager() {
+        return deposit.getDbManager();
     }
 
     @Override
@@ -42,61 +49,150 @@ public class Storage implements ProgramListenerAware {
         this.programListener = listener;
     }
 
+    @Override
     public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
-        AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(addr), type);
-        dbManager.getAccountStore().put(addr, accountCapsule);
-        return accountCapsule;
+        return deposit.createAccount(addr, type);
     }
 
+    @Override
     public AccountCapsule getAccount(byte[] addr) {
-        return dbManager.getAccountStore().get(addr);
+        return deposit.getAccount(addr);
     }
 
+    @Override
     public void createContract(byte[] codeHash, ContractCapsule contractCapsule) {
-        dbManager.getContractStore().put(codeHash, contractCapsule);
+        deposit.createContract(codeHash, contractCapsule);
     }
 
+    @Override
     public ContractCapsule getContract(byte[] codeHash) {
-        return dbManager.getContractStore().get(codeHash);
+        return deposit.getContract(codeHash);
     }
 
+    @Override
     public void saveCode(byte[] addr, byte[] code) {
-        dbManager.getCodeStore().put(addr, new CodeCapsule(code));
+        deposit.saveCode(addr, code);
     }
 
+    @Override
     public byte[] getCode(byte[] addr) {
-        return dbManager.getCodeStore().get(addr).getData();
+        return deposit.getCode(addr);
     }
 
+    /*
+    @Override
     public byte[] getCodeHash(byte[] addr) {
-        return dbManager.getAccountStore().get(addr).getCodeHash();
+        return deposit.getCodeHash(addr);
     }
+    */
 
+    @Override
     public void addStorageValue(byte[] addr, DataWord key, DataWord value) {
         if (canListenTrace(addr)) programListener.onStoragePut(key, value);
-        StorageCapsule storageCapsule = dbManager.getStorageStore().get(addr);
-        storageCapsule.put(key, value);
-        dbManager.getStorageStore().put(addr, storageCapsule);
+        deposit.addStorageValue(addr, key, value);
     }
 
     private boolean canListenTrace(byte[] address) {
         return (programListener != null) && this.address.equals(new DataWord(address));
     }
 
+    @Override
     public DataWord getStorageValue(byte[] addr, DataWord key) {
-        StorageCapsule storageCapsule = dbManager.getStorageStore().get(addr);
-        return storageCapsule.get(key);
+        return deposit.getStorageValue(addr, key);
     }
 
+    @Override
     public long getBalance(byte[] addr) {
-        return dbManager.getAccountStore().get(addr).getBalance();
+        return deposit.getBalance(addr);
     }
 
-    public void addBalance(byte[] addr, long value) throws BalanceInsufficientException {
-        dbManager.adjustBalance(addr, value);
+    @Override
+    public long addBalance(byte[] addr, long value) {
+        return deposit.addBalance(addr, value);
     }
 
+    @Override
+    public Deposit newDepositChild() {
+        return deposit.newDepositChild();
+    }
+
+    @Override
+    public Deposit newDepositNext() {
+        return deposit.newDepositNext();
+    }
+
+    @Override
+    public void flush() {
+        deposit.flush();
+    }
+
+    @Override
+    public void commit() {
+        deposit.commit();
+    }
+
+    @Override
     public StorageCapsule getStorage(byte[] address) {
-        return dbManager.getStorageStore().get(address);
+        return deposit.getStorage(address);
+    }
+
+    @Override
+    public void putAccount(Key key, Value value) {
+        deposit.putAccount(key, value);
+    }
+
+    @Override
+    public void putTransaction(Key key, Value value) {
+        deposit.putTransaction(key, value);
+    }
+
+    @Override
+    public void putBlock(Key key, Value value) {
+        deposit.putBlock(key, value);
+    }
+
+    @Override
+    public void putWitness(Key key, Value value) {
+        deposit.putWitness(key, value);
+    }
+
+    @Override
+    public void putCode(Key key, Value value) {
+        deposit.putCode(key, value);
+    }
+
+    @Override
+    public void putContract(Key key, Value value) {
+        deposit.putContract(key, value);
+    }
+
+    @Override
+    public void putStorage(Key key, Value value) {
+        deposit.putStorage(key, value);
+    }
+
+    @Override
+    public void setParent(Deposit deposit) {
+        this.deposit.setParent(deposit);
+    }
+
+    @Override
+    public void setPrevDeposit(Deposit deposit) {
+        this.deposit.setPrevDeposit(deposit);
+    }
+
+    @Override
+    public void setNextDeposit(Deposit deposit) {
+        this.deposit.setNextDeposit(deposit);
+    }
+
+    @Override
+    public TransactionCapsule getTransaction(byte[] trxHash) {
+        return this.deposit.getTransaction(trxHash);
+    }
+
+    @Override
+    public BlockCapsule getBlock(byte[] blockHash) {
+        return this.deposit.getBlock(blockHash);
     }
 }

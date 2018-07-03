@@ -15,10 +15,15 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.Transaction;
 
 /**
  *
@@ -35,6 +40,26 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   public CodeCapsule(ByteString bs) {
     this.code = bs.toByteArray();
+  }
+
+  public static SmartContract getCreationContractFromTransaction(Transaction trx) {
+    try {
+      Any any = trx.getRawData().getContract(0).getParameter();
+      SmartContract contractCreationContract = any.unpack(SmartContract.class);
+      return contractCreationContract;
+    } catch (InvalidProtocolBufferException e) {
+      return null;
+    }
+  }
+
+  public static TriggerSmartContract getCallContractFromTransaction(Transaction trx) {
+    try {
+      Any any = trx.getRawData().getContract(0).getParameter();
+      TriggerSmartContract contractCallContract = any.unpack(TriggerSmartContract.class);
+      return contractCallContract;
+    } catch (InvalidProtocolBufferException e) {
+      return null;
+    }
   }
 
   public Sha256Hash getHash() {
