@@ -25,11 +25,7 @@ public class GetNowBlockServlet extends HttpServlet {
     try {
       Block reply = wallet.getNowBlock();
       if (reply != null) {
-        BlockCapsule blockCapsule = new BlockCapsule(reply);
-        String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-        JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(reply));
-        jsonObject.put("blockID", blockID);
-        response.getWriter().println(jsonObject);
+        response.getWriter().println(Util.printBlock(reply));
       } else {
         response.getWriter().println("{}");
       }

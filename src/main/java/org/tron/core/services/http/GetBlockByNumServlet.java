@@ -31,11 +31,7 @@ public class GetBlockByNumServlet extends HttpServlet {
       JsonFormat.merge(input, build);
       Block reply = wallet.getBlockByNum(build.getNum());
       if (reply != null) {
-        BlockCapsule blockCapsule = new BlockCapsule(reply);
-        String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-        JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(reply));
-        jsonObject.put("blockID", blockID);
-        response.getWriter().println(jsonObject);
+        response.getWriter().println(Util.printBlock(reply));
       } else {
         response.getWriter().println("{}");
       }
