@@ -42,7 +42,7 @@ public class GetTransactionsFromThisServlet extends HttpServlet {
       TransactionList list = walletSolidity.getTransactionsFromThis(thisAddress, offset, limit);
       resp.getWriter().println(JsonFormat.printToString(list));
     } else {
-      resp.getWriter().print("");
+      resp.getWriter().print("{}");
     }
   }
 

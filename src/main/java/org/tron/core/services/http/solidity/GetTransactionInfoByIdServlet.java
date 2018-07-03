@@ -36,7 +36,7 @@ public class GetTransactionInfoByIdServlet extends HttpServlet {
 
     TransactionInfo transInfo = walletSolidity.getTransactionInfoById(build.build().getValue());
     if (transInfo == null) {
-      response.getWriter().println("");
+      response.getWriter().println("{}");
     } else {
       response.getWriter().println(JsonFormat.printToString(transInfo));
     }
