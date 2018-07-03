@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -31,8 +32,10 @@ public class WithdrawBalanceServlet extends HttpServlet {
       WithdrawBalanceContract.Builder build = WithdrawBalanceContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.WithdrawBalanceContract).getInstance();
-      String txid = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
-      response.getWriter().println(JsonFormat.printToString(tx) + "\n\n\ntxid=" + txid);
+      JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(tx));
+      String txID = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
+      jsonObject.put("txID", txID);
+      response.getWriter().println(jsonObject);
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
     } catch (ParseException e) {
