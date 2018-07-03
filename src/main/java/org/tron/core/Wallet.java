@@ -243,6 +243,7 @@ public class Wallet {
       trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
       long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
       trx.setExpiration(expiration);
+      trx.setTimestamp();
     } catch (HeaderNotFound headerNotFound) {
       headerNotFound.printStackTrace();
     }

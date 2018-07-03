@@ -163,6 +163,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return transaction.getRawData().getExpiration();
   }
 
+  public void setTimestamp() {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setTimestamp(System.currentTimeMillis())
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public long getTimestamp() {
+    return transaction.getRawData().getTimestamp();
+  }
+
   @Deprecated
   public TransactionCapsule(AssetIssueContract assetIssueContract) {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
