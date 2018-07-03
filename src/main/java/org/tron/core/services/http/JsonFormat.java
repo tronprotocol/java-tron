@@ -104,12 +104,12 @@ public class JsonFormat {
     }
   }
 
-  public static String printErrorMsg(String msg){
+  public static String printErrorMsg(Exception ex){
     StringBuilder text = new StringBuilder();
     text.append("{");
-    text.append("\"Error:\"");
+    text.append("\"Error\":");
     text.append("\"");
-    text.append(msg);
+    text.append(ex.getMessage());
     text.append("\"");
     text.append("}");
     return text.toString();

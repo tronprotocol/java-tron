@@ -35,6 +35,11 @@ public class VoteWitnessAccountServlet extends HttpServlet {
       response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        ioe.printStackTrace();
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     } catch (IOException e) {

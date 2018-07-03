@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -39,6 +38,11 @@ public class UpdateAccountServlet extends HttpServlet {
       response.getWriter().println(jsonObject);
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        ioe.printStackTrace();
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     } catch (IOException e) {
