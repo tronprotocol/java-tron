@@ -240,9 +240,9 @@ public class Runtime {
 
     try {
       if (vm != null) {
-        if (config.vmOn()) {
+//        if (config.vmOn()) {
           vm.play(program);
-        }
+//        }
 
         result = program.getResult();
         if (result.getException() != null || result.isRevert()) {

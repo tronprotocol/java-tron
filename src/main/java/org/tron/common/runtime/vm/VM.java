@@ -42,7 +42,7 @@ public class VM {
     @Autowired
     public VM(SystemProperties config) {
         this.config = config;
-        vmTrace = config.vmTrace();
+        // vmTrace = config.vmTrace();
         // dumpBlock = config.dumpBlock();
     }
 

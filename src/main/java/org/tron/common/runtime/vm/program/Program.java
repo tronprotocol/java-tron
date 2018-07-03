@@ -116,11 +116,11 @@ public class Program {
         //this.codeHash = codeHash;
         this.ops = nullToEmpty(ops);
 
-        traceListener = new ProgramTraceListener(config.vmTrace());
+        //traceListener = new ProgramTraceListener(config.vmTrace());
         this.memory = setupProgramListener(new Memory());
         this.stack = setupProgramListener(new Stack());
         this.storage = setupProgramListener(new Storage(programInvoke));
-        this.trace = new ProgramTrace(config, programInvoke);
+        //this.trace = new ProgramTrace(config, programInvoke);
     }
 
     public ProgramPrecompile getProgramPrecompile() {
@@ -165,7 +165,7 @@ public class Program {
 
     private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
         if (programListener.isEmpty()) {
-            programListener.addListener(traceListener);
+            //programListener.addListener(traceListener);
             programListener.addListener(storageDiffListener);
         }
 
