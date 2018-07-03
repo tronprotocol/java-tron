@@ -32,10 +32,7 @@ public class VoteWitnessAccountServlet extends HttpServlet {
       VoteWitnessContract.Builder build = VoteWitnessContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.VoteWitnessContract).getInstance();
-      JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(tx));
-      String txID = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
-      jsonObject.put("txID", txID);
-      response.getWriter().println(jsonObject);
+      response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
     } catch (ParseException e) {
