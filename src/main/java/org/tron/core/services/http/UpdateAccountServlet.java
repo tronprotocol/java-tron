@@ -32,10 +32,7 @@ public class UpdateAccountServlet extends HttpServlet {
       AccountUpdateContract.Builder build = AccountUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.AccountUpdateContract).getInstance();
-      JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(tx));
-      String txID = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
-      jsonObject.put("txID", txID);
-      response.getWriter().println(jsonObject);
+      response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
       try {

@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -9,8 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
@@ -32,10 +29,7 @@ public class TransferAssetServlet extends HttpServlet {
       TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferAssetContract).getInstance();
-      JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(tx));
-      String txID = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
-      jsonObject.put("txID", txID);
-      response.getWriter().println(jsonObject);
+      response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
       try {
