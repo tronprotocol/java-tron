@@ -83,7 +83,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private EasyTransferServlet easyTransferServlet;
   @Autowired
-  private CreateAddressServlet createAdressServlet;
+  private CreateAddressServlet createAddressServlet;
+  @Autowired
+  private GenerateAddressServlet generateAddressServlet;
 
   @Override
   public void init() {
@@ -137,8 +139,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
       context
           .addServlet(new ServletHolder(getNextMaintenanceTimeServlet), "/getnextmaintenancetime");
-      context.addServlet(new ServletHolder(createAdressServlet), "/createadresss");
+      context.addServlet(new ServletHolder(createAddressServlet), "/createadresss");
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
+      context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       server.start();
     } catch (Exception e) {
       e.printStackTrace();
