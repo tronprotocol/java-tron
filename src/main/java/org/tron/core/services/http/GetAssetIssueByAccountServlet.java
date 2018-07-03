@@ -21,26 +21,26 @@ public class GetAssetIssueByAccountServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    String account = request.getReader().lines()
-        .collect(Collectors.joining(System.lineSeparator()));
-    Account.Builder build = Account.newBuilder();
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String account = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
+      AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
-    }
-    AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());
-    if(reply != null){
-      response.getWriter().println(JsonFormat.printToString(reply));
-    }else{
-      response.getWriter().println("{}");
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

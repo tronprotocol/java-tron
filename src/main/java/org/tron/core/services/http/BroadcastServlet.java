@@ -20,19 +20,22 @@ public class BroadcastServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    Transaction.Builder build = Transaction.newBuilder();
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Transaction.Builder build = Transaction.newBuilder();
       JsonFormat.merge(input, build);
+      GrpcAPI.Return retur = wallet.broadcastTransaction(build.build());
+      response.getWriter().println(JsonFormat.printToString(retur));
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
-    GrpcAPI.Return retur = wallet.broadcastTransaction(build.build());
-    response.getWriter().println(JsonFormat.printToString(retur));
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

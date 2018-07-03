@@ -25,22 +25,24 @@ public class UnFreezeAssetServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       UnfreezeBalanceContract.Builder build = UnfreezeBalanceContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.UnfreezeBalanceContract).getInstance();
+      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.UnfreezeAssetContract).getInstance();
       String txid = ByteArray.toHexString(Sha256Hash.hash(tx.getRawData().toByteArray()));
       response.getWriter().println(JsonFormat.printToString(tx) + "\n\n\ntxid=" + txid);
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

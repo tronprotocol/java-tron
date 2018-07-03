@@ -21,23 +21,26 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
   @Autowired
   private WalletSolidity walletSolidity;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    BytesMessage.Builder build = BytesMessage.newBuilder();
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
+      Transaction reply = walletSolidity.getTransactionById(build.build().getValue());
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
-    }
-    Transaction reply = walletSolidity.getTransactionById(build.build().getValue());
-    if(reply != null){
-      response.getWriter().println(JsonFormat.printToString(reply));
-    }else{
-      response.getWriter().println("{}");
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

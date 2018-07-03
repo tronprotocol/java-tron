@@ -18,16 +18,20 @@ public class ListNodesServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    NodeList reply = wallet.listNodes();
-    if(reply != null){
-      response.getWriter().println(JsonFormat.printToString(reply));
-    }else{
-      response.getWriter().println("{}");
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      NodeList reply = wallet.listNodes();
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

@@ -24,31 +24,30 @@ public class GetTransactionsToThisServlet extends HttpServlet {
   private WalletSolidity walletSolidity;
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
-    String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    AccountPaginated.Builder builder = AccountPaginated.newBuilder();
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
     try {
+      String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      AccountPaginated.Builder builder = AccountPaginated.newBuilder();
       JsonFormat.merge(input, builder);
+      AccountPaginated accountPaginated = builder.build();
+      ByteString toAddress = accountPaginated.getAccount().getAddress();
+      long offset = accountPaginated.getOffset();
+      long limit = accountPaginated.getLimit();
+      if (toAddress != null && offset >= 0 && limit >= 0) {
+        TransactionList list = walletSolidity.getTransactionsToThis(toAddress, offset, limit);
+        resp.getWriter().println(JsonFormat.printToString(list));
+      } else {
+        resp.getWriter().print("{}");
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
-    }
-
-    AccountPaginated accountPaginated = builder.build();
-    ByteString toAddress = accountPaginated.getAccount().getAddress();
-    long offset = accountPaginated.getOffset();
-    long limit = accountPaginated.getLimit();
-    if (toAddress != null && offset >= 0 && limit >= 0) {
-      TransactionList list = walletSolidity.getTransactionsToThis(toAddress, offset, limit);
-      resp.getWriter().println(JsonFormat.printToString(list));
-    } else {
-      resp.getWriter().print("{}");
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
     doPost(req, resp);
   }
 }

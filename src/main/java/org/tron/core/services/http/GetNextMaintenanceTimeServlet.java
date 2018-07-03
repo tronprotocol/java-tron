@@ -17,16 +17,20 @@ public class GetNextMaintenanceTimeServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    NumberMessage reply = wallet.getNextMaintenanceTime();
-    if(reply != null){
-      response.getWriter().println(JsonFormat.printToString(reply));
-    }else{
-      response.getWriter().println("{}");
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      NumberMessage reply = wallet.getNextMaintenanceTime();
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

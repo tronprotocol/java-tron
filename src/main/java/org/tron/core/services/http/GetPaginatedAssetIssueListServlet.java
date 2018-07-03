@@ -21,25 +21,26 @@ public class GetPaginatedAssetIssueListServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build);
+      AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
-    }
-    AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());
-    if(reply != null){
-      response.getWriter().println(JsonFormat.printToString(reply));
-    }else{
-      response.getWriter().println("{}");
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

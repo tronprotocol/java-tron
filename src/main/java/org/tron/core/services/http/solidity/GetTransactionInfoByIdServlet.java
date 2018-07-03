@@ -24,21 +24,22 @@ public class GetTransactionInfoByIdServlet extends HttpServlet {
   private WalletSolidity walletSolidity;
 
   @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    BytesMessage.Builder build = BytesMessage.newBuilder();
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
+      TransactionInfo transInfo = walletSolidity.getTransactionInfoById(build.build().getValue());
+      if (transInfo == null) {
+        response.getWriter().println("{}");
+      } else {
+        response.getWriter().println(JsonFormat.printToString(transInfo));
+      }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
-    }
-
-    TransactionInfo transInfo = walletSolidity.getTransactionInfoById(build.build().getValue());
-    if (transInfo == null) {
-      response.getWriter().println("{}");
-    } else {
-      response.getWriter().println(JsonFormat.printToString(transInfo));
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 

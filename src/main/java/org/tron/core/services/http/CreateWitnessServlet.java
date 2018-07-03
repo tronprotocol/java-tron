@@ -25,7 +25,7 @@ public class CreateWitnessServlet  extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       WitnessCreateContract.Builder build = WitnessCreateContract.newBuilder();
@@ -37,10 +37,12 @@ public class CreateWitnessServlet  extends HttpServlet {
       logger.debug("ContractValidateException: {}", e.getMessage());
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }

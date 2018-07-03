@@ -21,28 +21,29 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
   private Wallet wallet;
   private static final long BLOCK_LIMIT_NUM = 100;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-    NumberMessage.Builder build = NumberMessage.newBuilder();
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
+      long getNum = build.getNum();
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlockByLatestNum(getNum);
+        if (reply != null) {
+          response.getWriter().println(JsonFormat.printToString(reply));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
-    long getNum = build.getNum();
-    if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlockByLatestNum(getNum);
-      if(reply != null){
-        response.getWriter().println(JsonFormat.printToString(reply));
-        return;
-      }
-    }
-    response.getWriter().println("{}");
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
 }
