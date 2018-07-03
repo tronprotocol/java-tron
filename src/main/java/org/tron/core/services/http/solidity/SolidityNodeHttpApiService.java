@@ -83,10 +83,10 @@ public class SolidityNodeHttpApiService implements Service {
       // for extension api
       if (args.isWalletExtensionApi()) {
         context.addServlet(new ServletHolder(getTransactionsFromThisServlet),
-            "/gettransactionsfromthisservlet");
+            "/gettransactionsfromthis");
         context
             .addServlet(new ServletHolder(getTransactionsToThisServlet),
-                "/gettransactionstothisservlet");
+                "/gettransactionstothis");
       }
 
       server.start();
