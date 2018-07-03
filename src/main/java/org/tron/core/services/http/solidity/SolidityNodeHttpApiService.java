@@ -1,4 +1,4 @@
-package org.tron.core.services;
+package org.tron.core.services.http.solidity;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -13,10 +13,6 @@ import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
-import org.tron.core.services.http.solidity.GetTransactionByIdServlet;
-import org.tron.core.services.http.solidity.GetTransactionInfoByIdServlet;
-import org.tron.core.services.http.solidity.GetTransactionsFromThisServlet;
-import org.tron.core.services.http.solidity.GetTransactionsToThisServlet;
 
 @Component
 //@Slf4j
@@ -31,7 +27,7 @@ public class SolidityNodeHttpApiService implements Service {
 
 
   @Autowired
-  private GetTransactionByIdServlet getTransactionByIdServlet;
+  private GetTransactionByIdSolidityServlet getTransactionByIdServlet;
   @Autowired
   private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
   @Autowired

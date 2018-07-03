@@ -8,9 +8,9 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.FullNodeHttpApiService;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
+import org.tron.core.services.http.FullNodeHttpApiService;
 
 @Slf4j
 public class FullNode {

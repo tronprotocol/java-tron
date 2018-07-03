@@ -35,7 +35,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.SolidityNodeHttpApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
@@ -88,11 +88,11 @@ public class SolidityNode {
     DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
     long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
     while (true) {
-      try {
-        Thread.sleep(10000);
-      } catch (Exception e) {
-
-      }
+//      try {
+//        Thread.sleep(10000);
+//      } catch (Exception e) {
+//
+//      }
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
       logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}",
