@@ -139,7 +139,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
       context
           .addServlet(new ServletHolder(getNextMaintenanceTimeServlet), "/getnextmaintenancetime");
-      context.addServlet(new ServletHolder(createAddressServlet), "/createadresss");
+      context.addServlet(new ServletHolder(createAddressServlet), "/createaddress");
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       server.start();

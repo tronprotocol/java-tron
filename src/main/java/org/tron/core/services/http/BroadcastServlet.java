@@ -20,7 +20,7 @@ public class BroadcastServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
@@ -33,9 +33,5 @@ public class BroadcastServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

@@ -23,6 +23,24 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      long getNum = Long.parseLong(request.getParameter("num"));
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlockByLatestNum(getNum);
+        if (reply != null) {
+          response.getWriter().println(JsonFormat.printToString(reply));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       NumberMessage.Builder build = NumberMessage.newBuilder();
@@ -41,9 +59,5 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

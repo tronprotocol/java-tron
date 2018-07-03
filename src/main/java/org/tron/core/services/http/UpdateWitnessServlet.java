@@ -18,17 +18,23 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j
-public class UpdateWitnessServlet  extends HttpServlet {
+public class UpdateWitnessServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      String contract = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.AssetIssueContract).getInstance();
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.AssetIssueContract).getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
@@ -42,9 +48,5 @@ public class UpdateWitnessServlet  extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

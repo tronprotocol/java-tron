@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -28,6 +29,29 @@ public class GetAccountServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      String address = request.getParameter("address");
+      Account.Builder build = Account.newBuilder();
+      JSONObject jsonObject = new JSONObject();
+      jsonObject.put("address", address);
+      JsonFormat.merge(jsonObject.toJSONString(), build);
+      Account reply = wallet.getAccount(build.build());
+      if (reply != null) {
+        AccountCapsule accountCapsule = new AccountCapsule(reply);
+        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+        processor.updateUsage(accountCapsule);
+        response.getWriter().println(JsonFormat.printToString(accountCapsule.getInstance()));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Account.Builder build = Account.newBuilder();
@@ -46,9 +70,5 @@ public class GetAccountServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

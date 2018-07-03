@@ -55,14 +55,13 @@ import org.tron.common.utils.ByteArray;
 
 /**
  * Provide ascii text parsing and formatting support for proto2 instances. The implementation
- * largely follows google/protobuf/text_format.cc.
- * <p>
- * (c) 2009-10 Orbitz World Wide. All Rights Reserved.
+ * largely follows google/protobuf/text_format.cc. <p> (c) 2009-10 Orbitz World Wide. All Rights
+ * Reserved.
  *
  * @author eliran.bivas@gmail.com Eliran Bivas
  * @author aantonov@orbitz.com Alex Antonov
- *         <p/>
- *         Based on the original code by:
+ * <p/>
+ * Based on the original code by:
  * @author wenboz@google.com Wenbo Zhu
  * @author kenton@google.com Kenton Varda
  */
@@ -99,12 +98,13 @@ public class JsonFormat {
       print(message, text);
       return text.toString();
     } catch (IOException e) {
-      throw new RuntimeException("Writing to a StringBuilder threw an IOException (should never happen).",
+      throw new RuntimeException(
+          "Writing to a StringBuilder threw an IOException (should never happen).",
           e);
     }
   }
 
-  public static String printErrorMsg(Exception ex){
+  public static String printErrorMsg(Exception ex) {
     StringBuilder text = new StringBuilder();
     text.append("{");
     text.append("\"Error\":");
@@ -124,26 +124,30 @@ public class JsonFormat {
       print(fields, text);
       return text.toString();
     } catch (IOException e) {
-      throw new RuntimeException("Writing to a StringBuilder threw an IOException (should never happen).",
+      throw new RuntimeException(
+          "Writing to a StringBuilder threw an IOException (should never happen).",
           e);
     }
   }
 
   protected static void print(Message message, JsonGenerator generator) throws IOException {
 
-    for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet().iterator(); iter.hasNext();) {
+    for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet()
+        .iterator(); iter.hasNext(); ) {
       Map.Entry<FieldDescriptor, Object> field = iter.next();
       printField(field.getKey(), field.getValue(), generator);
       if (iter.hasNext()) {
         generator.print(",");
       }
     }
-    if (message.getUnknownFields().asMap().size() > 0)
+    if (message.getUnknownFields().asMap().size() > 0) {
       generator.print(", ");
+    }
     printUnknownFields(message.getUnknownFields(), generator);
   }
 
-  public static void printField(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
+  public static void printField(FieldDescriptor field, Object value, JsonGenerator generator)
+      throws IOException {
 
     printSingleField(field, value, generator);
   }
@@ -183,11 +187,10 @@ public class JsonFormat {
       generator.print(": ");
     }
 
-
     if (field.isRepeated()) {
       // Repeated field. Print each element.
       generator.print("[");
-      for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext();) {
+      for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext(); ) {
         printFieldValue(field, iter.next(), generator);
         if (iter.hasNext()) {
           generator.print(",");
@@ -202,7 +205,8 @@ public class JsonFormat {
     }
   }
 
-  private static void printFieldValue(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
+  private static void printFieldValue(FieldDescriptor field, Object value, JsonGenerator generator)
+      throws IOException {
     switch (field.getType()) {
       case INT32:
       case INT64:
@@ -256,13 +260,17 @@ public class JsonFormat {
     }
   }
 
-  protected static void printUnknownFields(UnknownFieldSet unknownFields, JsonGenerator generator) throws IOException {
+  protected static void printUnknownFields(UnknownFieldSet unknownFields, JsonGenerator generator)
+      throws IOException {
     boolean firstField = true;
     for (Map.Entry<Integer, UnknownFieldSet.Field> entry : unknownFields.asMap().entrySet()) {
       UnknownFieldSet.Field field = entry.getValue();
 
-      if (firstField) {firstField = false;}
-      else {generator.print(", ");}
+      if (firstField) {
+        firstField = false;
+      } else {
+        generator.print(", ");
+      }
 
       generator.print("\"");
       generator.print(entry.getKey().toString());
@@ -271,30 +279,45 @@ public class JsonFormat {
 
       boolean firstValue = true;
       for (long value : field.getVarintList()) {
-        if (firstValue) {firstValue = false;}
-        else {generator.print(", ");}
+        if (firstValue) {
+          firstValue = false;
+        } else {
+          generator.print(", ");
+        }
         generator.print(unsignedToString(value));
       }
       for (int value : field.getFixed32List()) {
-        if (firstValue) {firstValue = false;}
-        else {generator.print(", ");}
+        if (firstValue) {
+          firstValue = false;
+        } else {
+          generator.print(", ");
+        }
         generator.print(String.format((Locale) null, "0x%08x", value));
       }
       for (long value : field.getFixed64List()) {
-        if (firstValue) {firstValue = false;}
-        else {generator.print(", ");}
+        if (firstValue) {
+          firstValue = false;
+        } else {
+          generator.print(", ");
+        }
         generator.print(String.format((Locale) null, "0x%016x", value));
       }
       for (ByteString value : field.getLengthDelimitedList()) {
-        if (firstValue) {firstValue = false;}
-        else {generator.print(", ");}
+        if (firstValue) {
+          firstValue = false;
+        } else {
+          generator.print(", ");
+        }
         generator.print("\"");
         generator.print(escapeBytes(value));
         generator.print("\"");
       }
       for (UnknownFieldSet value : field.getGroupList()) {
-        if (firstValue) {firstValue = false;}
-        else {generator.print(", ");}
+        if (firstValue) {
+          firstValue = false;
+        } else {
+          generator.print(", ");
+        }
         generator.print("{");
         printUnknownFields(value, generator);
         generator.print("}");
@@ -395,26 +418,21 @@ public class JsonFormat {
   /**
    * Represents a stream of tokens parsed from a {@code String}.
    * <p/>
-   * <p>
-   * The Java standard library provides many classes that you might think would be useful for
+   * <p> The Java standard library provides many classes that you might think would be useful for
    * implementing this, but aren't. For example:
    * <p/>
-   * <ul>
-   * <li>{@code java.io.StreamTokenizer}: This almost does what we want -- or, at least, something
-   * that would get us close to what we want -- except for one fatal flaw: It automatically
-   * un-escapes strings using Java escape sequences, which do not include all the escape sequences
-   * we need to support (e.g. '\x').
-   * <li>{@code java.util.Scanner}: This seems like a great way at least to parse regular
-   * expressions out of a stream (so we wouldn't have to load the entire input into a single
-   * string before parsing). Sadly, {@code Scanner} requires that tokens be delimited with some
-   * delimiter. Thus, although the text "foo:" should parse to two tokens ("foo" and ":"), {@code
-   * Scanner} would recognize it only as a single token. Furthermore, {@code Scanner} provides no
-   * way to inspect the contents of delimiters, making it impossible to keep track of line and
-   * column numbers.
-   * </ul>
+   * <ul> <li>{@code java.io.StreamTokenizer}: This almost does what we want -- or, at least,
+   * something that would get us close to what we want -- except for one fatal flaw: It
+   * automatically un-escapes strings using Java escape sequences, which do not include all the
+   * escape sequences we need to support (e.g. '\x'). <li>{@code java.util.Scanner}: This seems like
+   * a great way at least to parse regular expressions out of a stream (so we wouldn't have to load
+   * the entire input into a single string before parsing). Sadly, {@code Scanner} requires that
+   * tokens be delimited with some delimiter. Thus, although the text "foo:" should parse to two
+   * tokens ("foo" and ":"), {@code Scanner} would recognize it only as a single token. Furthermore,
+   * {@code Scanner} provides no way to inspect the contents of delimiters, making it impossible to
+   * keep track of line and column numbers. </ul>
    * <p/>
-   * <p>
-   * Luckily, Java's regular expression support does manage to be useful to us. (Barely: We need
+   * <p> Luckily, Java's regular expression support does manage to be useful to us. (Barely: We need
    * {@code Matcher.usePattern()}, which is new in Java 1.5.) So, we can use that, at least.
    * Unfortunately, this implies that we need to have the entire input in one contiguous string.
    */
@@ -535,8 +553,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token exactly matches {@code token}, consume it. Otherwise, throw a
-     * {@link ParseException}.
+     * If the next token exactly matches {@code token}, consume it. Otherwise, throw a {@link
+     * ParseException}.
      */
     public void consume(String token) throws ParseException {
       if (!tryConsume(token)) {
@@ -611,8 +629,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a 32-bit unsigned integer, consume it and return its value.
-     * Otherwise, throw a {@link ParseException}.
+     * If the next token is a 32-bit unsigned integer, consume it and return its value. Otherwise,
+     * throw a {@link ParseException}.
      */
     public int consumeUInt32() throws ParseException {
       try {
@@ -639,8 +657,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a 64-bit unsigned integer, consume it and return its value.
-     * Otherwise, throw a {@link ParseException}.
+     * If the next token is a 64-bit unsigned integer, consume it and return its value. Otherwise,
+     * throw a {@link ParseException}.
      */
     public long consumeUInt64() throws ParseException {
       try {
@@ -653,8 +671,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a double, consume it and return its value. Otherwise, throw a
-     * {@link ParseException}.
+     * If the next token is a double, consume it and return its value. Otherwise, throw a {@link
+     * ParseException}.
      */
     public double consumeDouble() throws ParseException {
       // We need to parse infinity and nan separately because
@@ -678,8 +696,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a float, consume it and return its value. Otherwise, throw a
-     * {@link ParseException}.
+     * If the next token is a float, consume it and return its value. Otherwise, throw a {@link
+     * ParseException}.
      */
     public float consumeFloat() throws ParseException {
       // We need to parse infinity and nan separately because
@@ -703,8 +721,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a boolean, consume it and return its value. Otherwise, throw a
-     * {@link ParseException}.
+     * If the next token is a boolean, consume it and return its value. Otherwise, throw a {@link
+     * ParseException}.
      */
     public boolean consumeBoolean() throws ParseException {
       if (currentToken.equals("true")) {
@@ -719,8 +737,8 @@ public class JsonFormat {
     }
 
     /**
-     * If the next token is a string, consume it and return its (unescaped) value. Otherwise,
-     * throw a {@link ParseException}.
+     * If the next token is a string, consume it and return its (unescaped) value. Otherwise, throw
+     * a {@link ParseException}.
      */
     public String consumeString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
@@ -766,8 +784,8 @@ public class JsonFormat {
     }
 
     /**
-     * Returns a {@link ParseException} with the current line and column numbers in the
-     * description, suitable for throwing.
+     * Returns a {@link ParseException} with the current line and column numbers in the description,
+     * suitable for throwing.
      */
     public ParseException parseException(String description) {
       // Note: People generally prefer one-based line and column numbers.
@@ -775,8 +793,8 @@ public class JsonFormat {
     }
 
     /**
-     * Returns a {@link ParseException} with the line and column numbers of the previous token
-     * in the description, suitable for throwing.
+     * Returns a {@link ParseException} with the line and column numbers of the previous token in
+     * the description, suitable for throwing.
      */
     public ParseException parseExceptionPreviousToken(String description) {
       // Note: People generally prefer one-based line and column numbers.
@@ -785,16 +803,16 @@ public class JsonFormat {
     }
 
     /**
-     * Constructs an appropriate {@link ParseException} for the given {@code
-     * NumberFormatException} when trying to parse an integer.
+     * Constructs an appropriate {@link ParseException} for the given {@code NumberFormatException}
+     * when trying to parse an integer.
      */
     private ParseException integerParseException(NumberFormatException e) {
       return parseException("Couldn't parse integer: " + e.getMessage());
     }
 
     /**
-     * Constructs an appropriate {@link ParseException} for the given {@code
-     * NumberFormatException} when trying to parse a float or double.
+     * Constructs an appropriate {@link ParseException} for the given {@code NumberFormatException}
+     * when trying to parse a float or double.
      */
     private ParseException floatParseException(NumberFormatException e) {
       return parseException("Couldn't parse number: " + e.getMessage());
@@ -880,7 +898,8 @@ public class JsonFormat {
     }
     // Test to make sure the tokenizer has reached the end of the stream.
     if (!tokenizer.atEnd()) {
-      throw tokenizer.parseException("Expecting the end of the stream, but there seems to be more data!  Check the input for a valid JSON format.");
+      throw tokenizer.parseException(
+          "Expecting the end of the stream, but there seems to be more data!  Check the input for a valid JSON format.");
     }
   }
 
@@ -1023,7 +1042,8 @@ public class JsonFormat {
     }
   }
 
-  private static Object handlePrimitive(Tokenizer tokenizer, FieldDescriptor field) throws ParseException {
+  private static Object handlePrimitive(Tokenizer tokenizer, FieldDescriptor field)
+      throws ParseException {
     Object value = null;
     if ("null".equals(tokenizer.currentToken())) {
       tokenizer.consume("null");
@@ -1154,9 +1174,9 @@ public class JsonFormat {
 
   /**
    * Escapes bytes in the format used in protocol buffer text format, which is the same as the
-   * format used for C string literals. All bytes that are not printable 7-bit ASCII characters
-   * are escaped, as well as backslash, single-quote, and double-quote characters. Characters for
-   * which no defined short-hand escape sequence is defined will be escaped using 3-digit octal
+   * format used for C string literals. All bytes that are not printable 7-bit ASCII characters are
+   * escaped, as well as backslash, single-quote, and double-quote characters. Characters for which
+   * no defined short-hand escape sequence is defined will be escaped using 3-digit octal
    * sequences.
    */
   static String escapeBytes(ByteString input) {
@@ -1319,8 +1339,8 @@ public class JsonFormat {
   }
 
   /**
-   * Thrown by {@link JsonFormat#unescapeBytes} and {@link JsonFormat#unescapeText} when an
-   * invalid escape sequence is seen.
+   * Thrown by {@link JsonFormat#unescapeBytes} and {@link JsonFormat#unescapeText} when an invalid
+   * escape sequence is seen.
    */
   static class InvalidEscapeSequence extends IOException {
 
@@ -1333,18 +1353,16 @@ public class JsonFormat {
 
   /**
    * Implements JSON string escaping as specified <a href="http://www.ietf.org/rfc/rfc4627.txt">here</a>.
-   * <ul>
-   *  <li>The following characters are escaped by prefixing them with a '\' : \b,\f,\n,\r,\t,\,"</li>
-   *  <li>Other control characters in the range 0x0000-0x001F are escaped using the \\uXXXX notation</li>
-   *  <li>UTF-16 surrogate pairs are encoded using the \\uXXXX\\uXXXX notation</li>
-   *  <li>any other character is printed as-is</li>
-   * </ul>
+   * <ul> <li>The following characters are escaped by prefixing them with a '\' :
+   * \b,\f,\n,\r,\t,\,"</li> <li>Other control characters in the range 0x0000-0x001F are escaped
+   * using the \\uXXXX notation</li> <li>UTF-16 surrogate pairs are encoded using the \\uXXXX\\uXXXX
+   * notation</li> <li>any other character is printed as-is</li> </ul>
    */
   static String escapeText(String input) {
     StringBuilder builder = new StringBuilder(input.length());
     CharacterIterator iter = new StringCharacterIterator(input);
-    for(char c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
-      switch(c) {
+    for (char c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
+      switch (c) {
         case '\b':
           builder.append("\\b");
           break;
@@ -1368,13 +1386,16 @@ public class JsonFormat {
           break;
         default:
           // Check for other control characters
-          if(c >= 0x0000 && c <= 0x001F) {
+          if (c >= 0x0000 && c <= 0x001F) {
             appendEscapedUnicode(builder, c);
-          } else if(Character.isHighSurrogate(c)) {
+          } else if (Character.isHighSurrogate(c)) {
             // Encode the surrogate pair using 2 six-character sequence (\\uXXXX\\uXXXX)
             appendEscapedUnicode(builder, c);
             c = iter.next();
-            if(c == CharacterIterator.DONE) throw new IllegalArgumentException("invalid unicode string: unexpected high surrogate pair value without corresponding low value.");
+            if (c == CharacterIterator.DONE) {
+              throw new IllegalArgumentException(
+                  "invalid unicode string: unexpected high surrogate pair value without corresponding low value.");
+            }
             appendEscapedUnicode(builder, c);
           } else {
             // Anything else can be printed as-is
@@ -1388,11 +1409,11 @@ public class JsonFormat {
 
   static void appendEscapedUnicode(StringBuilder builder, char ch) {
     String prefix = "\\u";
-    if(ch < 0x10) {
+    if (ch < 0x10) {
       prefix = "\\u000";
-    } else if(ch < 0x100) {
+    } else if (ch < 0x100) {
       prefix = "\\u00";
-    } else if(ch < 0x1000) {
+    } else if (ch < 0x1000) {
       prefix = "\\u0";
     }
     builder.append(prefix).append(Integer.toHexString(ch));
@@ -1404,13 +1425,13 @@ public class JsonFormat {
   static String unescapeText(String input) throws InvalidEscapeSequence {
     StringBuilder builder = new StringBuilder();
     char[] array = input.toCharArray();
-    for(int i = 0; i < array.length; i++) {
+    for (int i = 0; i < array.length; i++) {
       char c = array[i];
-      if(c == '\\') {
-        if(i + 1 < array.length) {
+      if (c == '\\') {
+        if (i + 1 < array.length) {
           ++i;
           c = array[i];
-          switch(c) {
+          switch (c) {
             case 'b':
               builder.append('\b');
               break;
@@ -1437,11 +1458,11 @@ public class JsonFormat {
               break;
             case 'u':
               // read the next 4 chars
-              if(i + 4 < array.length) {
+              if (i + 4 < array.length) {
                 ++i;
                 int code = Integer.parseInt(new String(array, i, 4), 16);
                 // this cast is safe because we know how many chars we read
-                builder.append((char)code);
+                builder.append((char) code);
                 i += 3;
               } else {
                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\u' at end of string.");
@@ -1492,8 +1513,8 @@ public class JsonFormat {
 
   /**
    * Parse a 32-bit signed integer from the text. Unlike the Java standard {@code
-   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify
-   * hexidecimal and octal numbers, respectively.
+   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify hexidecimal
+   * and octal numbers, respectively.
    */
   static int parseInt32(String text) throws NumberFormatException {
     return (int) parseInteger(text, true, false);
@@ -1501,9 +1522,9 @@ public class JsonFormat {
 
   /**
    * Parse a 32-bit unsigned integer from the text. Unlike the Java standard {@code
-   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify
-   * hexidecimal and octal numbers, respectively. The result is coerced to a (signed) {@code int}
-   * when returned since Java has no unsigned integer type.
+   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify hexidecimal
+   * and octal numbers, respectively. The result is coerced to a (signed) {@code int} when returned
+   * since Java has no unsigned integer type.
    */
   static int parseUInt32(String text) throws NumberFormatException {
     return (int) parseInteger(text, false, false);
@@ -1511,8 +1532,8 @@ public class JsonFormat {
 
   /**
    * Parse a 64-bit signed integer from the text. Unlike the Java standard {@code
-   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify
-   * hexidecimal and octal numbers, respectively.
+   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify hexidecimal
+   * and octal numbers, respectively.
    */
   static long parseInt64(String text) throws NumberFormatException {
     return parseInteger(text, true, true);
@@ -1520,15 +1541,16 @@ public class JsonFormat {
 
   /**
    * Parse a 64-bit unsigned integer from the text. Unlike the Java standard {@code
-   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify
-   * hexidecimal and octal numbers, respectively. The result is coerced to a (signed) {@code long}
-   * when returned since Java has no unsigned long type.
+   * Integer.parseInt()}, this function recognizes the prefixes "0x" and "0" to signify hexidecimal
+   * and octal numbers, respectively. The result is coerced to a (signed) {@code long} when returned
+   * since Java has no unsigned long type.
    */
   static long parseUInt64(String text) throws NumberFormatException {
     return parseInteger(text, false, true);
   }
 
-  private static long parseInteger(String text, boolean isSigned, boolean isLong) throws NumberFormatException {
+  private static long parseInteger(String text, boolean isSigned, boolean isLong)
+      throws NumberFormatException {
     int pos = 0;
 
     boolean negative = false;

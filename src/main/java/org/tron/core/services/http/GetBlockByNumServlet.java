@@ -25,6 +25,22 @@ public class GetBlockByNumServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      long num = Long.parseLong(request.getParameter("num"));
+      Block reply = wallet.getBlockByNum(num);
+      if (reply != null) {
+        response.getWriter().println(Util.printBlock(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       NumberMessage.Builder build = NumberMessage.newBuilder();
@@ -40,9 +56,5 @@ public class GetBlockByNumServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

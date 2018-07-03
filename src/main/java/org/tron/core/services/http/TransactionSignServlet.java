@@ -17,10 +17,15 @@ import org.tron.protos.Protocol.TransactionSign;
 @Component
 @Slf4j
 public class TransactionSignServlet extends HttpServlet {
+
   @Autowired
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
@@ -37,9 +42,5 @@ public class TransactionSignServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

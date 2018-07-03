@@ -24,11 +24,18 @@ public class TransferAssetServlet extends HttpServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      String contract = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
       TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferAssetContract).getInstance();
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.TransferAssetContract)
+          .getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (ContractValidateException e) {
       logger.debug("ContractValidateException: {}", e.getMessage());
@@ -42,9 +49,5 @@ public class TransferAssetServlet extends HttpServlet {
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

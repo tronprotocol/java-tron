@@ -23,13 +23,8 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      BlockLimit.Builder build = BlockLimit.newBuilder();
-      JsonFormat.merge(input, build);
-      long startNum = build.getStartNum();
-      long endNum = build.getEndNum();
-
+      long startNum = Long.parseLong(request.getParameter("startNum"));
+      long endNum = Long.parseLong(request.getParameter("endNum"));
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
         if (reply != null) {
@@ -46,6 +41,25 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
+    try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      BlockLimit.Builder build = BlockLimit.newBuilder();
+      JsonFormat.merge(input, build);
+      long startNum = build.getStartNum();
+      long endNum = build.getEndNum();
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
+        if (reply != null) {
+          response.getWriter().println(JsonFormat.printToString(reply));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
+    }
   }
 }

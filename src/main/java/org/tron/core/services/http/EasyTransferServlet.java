@@ -30,6 +30,10 @@ public class EasyTransferServlet extends HttpServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
     try {
@@ -68,9 +72,5 @@ public class EasyTransferServlet extends HttpServlet {
       }
       return;
     }
-  }
-
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
   }
 }

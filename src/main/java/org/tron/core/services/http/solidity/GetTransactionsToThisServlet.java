@@ -48,6 +48,6 @@ public class GetTransactionsToThisServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
-    doPost(req, resp);
+
   }
 }
