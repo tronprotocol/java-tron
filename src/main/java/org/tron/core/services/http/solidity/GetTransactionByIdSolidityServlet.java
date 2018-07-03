@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -29,7 +30,7 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
       Transaction reply = walletSolidity
           .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(Util.printTransaction(reply));
       } else {
         response.getWriter().println("{}");
       }
@@ -48,7 +49,7 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
       JsonFormat.merge(input, build);
       Transaction reply = walletSolidity.getTransactionById(build.build().getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(Util.printTransaction(reply));
       } else {
         response.getWriter().println("{}");
       }

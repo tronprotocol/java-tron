@@ -28,7 +28,7 @@ public class GetTransactionByIdServlet extends HttpServlet {
       Transaction reply = wallet
           .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(Util.printTransaction(reply));
       } else {
         response.getWriter().println("{}");
       }
@@ -47,7 +47,7 @@ public class GetTransactionByIdServlet extends HttpServlet {
       JsonFormat.merge(input, build);
       Transaction reply = wallet.getTransactionById(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(Util.printTransaction(reply));
       } else {
         response.getWriter().println("{}");
       }

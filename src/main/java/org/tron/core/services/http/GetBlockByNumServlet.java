@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -10,9 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Block;
 
