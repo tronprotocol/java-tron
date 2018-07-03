@@ -102,7 +102,7 @@ public class FullNodeHttpApiService implements Service {
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-      context.setContextPath("/");
+      context.setContextPath("/wallet/");
       server.setHandler(context);
       context.addServlet(new ServletHolder(accountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
