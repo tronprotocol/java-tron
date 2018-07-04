@@ -1335,7 +1335,11 @@ public class JsonFormat {
 //    }
 //
 //    return ByteString.copyFrom(result, 0, pos);
-    return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
+    try {
+      return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
+    } catch (Exception e) {
+      throw new InvalidEscapeSequence("invalidate hex String");
+    }
   }
 
   /**
