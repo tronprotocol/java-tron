@@ -145,7 +145,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       server.start();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 
