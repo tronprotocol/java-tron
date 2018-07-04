@@ -12,7 +12,7 @@ import org.tron.core.config.args.Args;
 //@Slf4j
 public class FullNodeHttpApiService implements Service {
 
-  private int port = Args.getInstance().getFullnodeHttpPort();
+  private int port = Args.getInstance().getFullNodeHttpPort();
 
   private Server server;
 
