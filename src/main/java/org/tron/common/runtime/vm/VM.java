@@ -633,7 +633,11 @@ public class VM {
                 break;
                 case CALLER: {
                     DataWord callerAddress = program.getCallerAddress();
-
+                    /**
+                      since we use 21 bytes address instead of 20 as etherum, we need to make sure
+                      the address length in vm is matching with 20
+                     */
+                    callerAddress = new DataWord(callerAddress.getLast20Bytes());
                     if (logger.isInfoEnabled())
                         hint = "address: " + Hex.toHexString(callerAddress.getLast20Bytes());
 

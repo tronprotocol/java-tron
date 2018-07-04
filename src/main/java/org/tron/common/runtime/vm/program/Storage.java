@@ -31,11 +31,11 @@ import org.tron.protos.Protocol;
 public class Storage implements Deposit, ProgramListenerAware {
 
     private  Deposit deposit;
-    private final DataWord address;
+    private final DataWord address;  // contract address
     private ProgramListener programListener;
 
     public Storage(ProgramInvoke programInvoke) {
-        this.address = programInvoke.getOwnerAddress();
+        this.address = programInvoke.getOwnerAddress(); // contract address
         this.deposit = programInvoke.getDeposit();
     }
 

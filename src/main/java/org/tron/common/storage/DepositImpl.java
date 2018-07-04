@@ -1,7 +1,10 @@
 package org.tron.common.storage;
 
 import com.google.protobuf.ByteString;
+import io.netty.handler.codec.http2.StreamBufferingEncoder.Http2ChannelClosedException;
+import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.Constant;
 import org.tron.core.capsule.*;
 import org.tron.core.db.*;
 import org.tron.core.exception.BadItemException;
@@ -168,6 +171,13 @@ public class DepositImpl implements Deposit{
 
     @Override
     public synchronized void addStorageValue(byte[] address, DataWord key, DataWord value) {
+        if (address.length == 20) {
+            byte [] newAddress = new byte [21];
+            byte[] temp = new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET};
+            System.arraycopy(temp, 0, newAddress, 0, temp.length);
+            System.arraycopy(address, 0, newAddress, temp.length, address.length);
+            address = newAddress;
+        }
         if (getAccount(address) == null) return;
         Key addressKey = Key.create(address);
         if (storageCache.containsKey(addressKey)) {
@@ -199,6 +209,13 @@ public class DepositImpl implements Deposit{
 
     @Override
     public synchronized DataWord getStorageValue(byte[] address, DataWord key) {
+        if (address.length == 20) {
+            byte [] newAddress = new byte [21];
+            byte[] temp = new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET};
+            System.arraycopy(temp, 0, newAddress, 0, temp.length);
+            System.arraycopy(address, 0, newAddress, temp.length, address.length);
+            address = newAddress;
+        }
         if (getAccount(address) == null) return null;
         Key addressKey = Key.create(address);
         if (storageCache.containsKey(addressKey)) {
