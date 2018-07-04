@@ -355,9 +355,9 @@ public class JsonFormat {
    */
   protected static class JsonGenerator {
 
-    Appendable output;
-    boolean atStartOfLine = true;
-    StringBuilder indent = new StringBuilder();
+    private Appendable output;
+    private boolean atStartOfLine = true;
+    private StringBuilder indent = new StringBuilder();
 
     public JsonGenerator(Appendable output) {
       this.output = output;

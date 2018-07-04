@@ -42,7 +42,7 @@ public class TransferAssetServlet extends HttpServlet {
       try {
         response.getWriter().println(Util.printErrorMsg(e));
       } catch (IOException ioe) {
-        ioe.printStackTrace();
+        logger.debug("IOException: {}", ioe.getMessage());
       }
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());

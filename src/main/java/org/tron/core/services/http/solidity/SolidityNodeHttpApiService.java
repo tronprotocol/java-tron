@@ -1,5 +1,6 @@
 package org.tron.core.services.http.solidity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -15,7 +16,7 @@ import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 
 @Component
-//@Slf4j
+@Slf4j
 public class SolidityNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getSolidityHttpPort();
@@ -103,7 +104,7 @@ public class SolidityNodeHttpApiService implements Service {
     try {
       server.stop();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug("Exception: {}", e.getMessage());
     }
   }
 }
