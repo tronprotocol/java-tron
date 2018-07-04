@@ -461,10 +461,10 @@ public class Args {
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
     INSTANCE.fullNodeHttpPort =
-        config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8080;
+        config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8090;
 
     INSTANCE.solidityHttpPort =
-        config.hasPath("node.http.solidityPort") ? config.getInt("node.http.solidityPort") : 8081;
+        config.hasPath("node.http.solidityPort") ? config.getInt("node.http.solidityPort") : 8091;
 
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
