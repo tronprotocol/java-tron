@@ -26,7 +26,7 @@ public class GetTransactionInfoByIdServlet extends HttpServlet {
   private WalletSolidity walletSolidity;
 
   @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
       TransactionInfo transInfo = walletSolidity.getTransactionInfoById(ByteString.copyFrom(
@@ -39,12 +39,12 @@ public class GetTransactionInfoByIdServlet extends HttpServlet {
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+      logger.debug("IPostOException: {}", e.getMessage());
     }
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
