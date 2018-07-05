@@ -136,3 +136,19 @@ message UpdateAssetContract {
   int64 new_limit = 4;
   int64 new_public_limit = 5;
 }
+
+message ProposalCreateContract {
+  bytes owner_address = 1;
+  repeated ChainParameter parameters = 2;
+}
+
+message ProposalApproveContract {
+  bytes owner_address = 1;
+  bytes proposal_id = 2;
+  bool is_add_approval = 3; // add or remove approval
+}
+
+message ProposalDeleteContract {
+  bytes owner_address = 1;
+  bytes proposal_id = 2;
+}
