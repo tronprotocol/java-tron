@@ -66,17 +66,17 @@ public class StorageCapsule implements ProtoCapsule<StorageItem> {
   }
 
   public DataWord get(DataWord key) {
-    if (!this.storage.containsItems(key.toUTF8String())) {
+    if (!this.storage.containsItems(key.toHexString())) {
       return null;
     }
 
-    DataWord value = new DataWord(this.storage.getItemsMap().get(key.toUTF8String()).toByteArray());
+    DataWord value = new DataWord(this.storage.getItemsMap().get(key.toHexString()).toByteArray());
     return value;
   }
 
   public void put(DataWord key, DataWord value) {
     this.storage = this.storage.toBuilder().
-            putItems(key.toUTF8String(), ByteString.copyFrom(value.getData())).build();
+            putItems(key.toHexString(), ByteString.copyFrom(value.getData())).build();
   }
 
   @Override

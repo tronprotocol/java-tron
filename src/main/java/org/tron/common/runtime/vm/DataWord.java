@@ -410,11 +410,7 @@ public class DataWord implements Comparable<DataWord> {
         return new String(getNoLeadZeroesData());
     }
 
-    public String toUTF8String() {
-        try {
-            return new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
+    public String toHexString() {
+            return Hex.toHexString(data);
     }
 }
