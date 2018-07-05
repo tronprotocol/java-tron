@@ -41,7 +41,7 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build);
-      byte[] privateKey = wallet.pass2Key(build.getPrivateKey().toByteArray());
+      byte[] privateKey = build.getPrivateKey().toByteArray();
       ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();

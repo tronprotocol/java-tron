@@ -470,7 +470,7 @@ public class RpcApiService implements Service {
     @Override
     public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPrivateKey().toByteArray());
+      byte[] privateKey = req.getPrivateKey().toByteArray();
       EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
       responseObserver.onNext(response);
       responseObserver.onCompleted();
