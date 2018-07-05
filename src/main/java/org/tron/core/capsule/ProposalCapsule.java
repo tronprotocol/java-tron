@@ -3,9 +3,9 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Protocol.ChainParameter;
 import org.tron.protos.Protocol.Proposal;
 
 @Slf4j
@@ -52,13 +52,13 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
-  public List<ChainParameter> getParameters() {
-    return this.proposal.getParametersList();
+  public Map<Long, Long> getParameters() {
+    return this.proposal.getParametersMap();
   }
 
-  public void setParameters(List<ChainParameter> parameters) {
+  public void setParameters(Map<Long, Long> parameters) {
     this.proposal = this.proposal.toBuilder()
-        .addAllParameters(parameters)
+        .putAllParameters(parameters)
         .build();
   }
 
@@ -69,6 +69,16 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
   public void setExpirationTime(long time) {
     this.proposal = this.proposal.toBuilder()
         .setExpirationTime(time)
+        .build();
+  }
+
+  public long getEffectivePeriodTime() {
+    return this.proposal.getEffectivePeriodTime();
+  }
+
+  public void setEffectivePeriodTime(long time) {
+    this.proposal = this.proposal.toBuilder()
+        .setEffectivePeriodTime(time)
         .build();
   }
 
